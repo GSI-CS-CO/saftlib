@@ -19,8 +19,17 @@ if test "x$USE_MAINTAINER_MODE" != "xno"; then
   CXXFLAGS="$CXXFLAGS -Wall -O0 -g"
 fi
 
+PKG_PROG_PKG_CONFIG([0.25])
 PKG_CHECK_MODULES([EB], [etherbone])
-PKG_CHECK_MODULES([DBUS], [dbus-glib-1])
+PKG_CHECK_MODULES([DBUS], [dbus-glib-1], 
+  [ac_dbus_confdir=`$PKG_CONFIG --variable=system_bus_services_dir dbus-1`],
+  [ac_dbus_confdir=;])
+
+if test "x$ac_dbus_confdir" = x ; then
+  AC_MSG_ERROR([could not find dbus-1 system_bus_service_dir])
+fi
+
+AC_SUBST(DBUS_CONFDIR, $ac_dbus_confdir)
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT

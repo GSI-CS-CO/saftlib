@@ -1,5 +1,6 @@
 #include <dbus/dbus-glib-bindings.h>
 
+/*
 typedef struct
 {
   DBusGConnection *connection;
@@ -9,7 +10,7 @@ class_init(ServerObjectClass *klass)
 {
   GError *error = NULL;
   
-  /* Init the DBus connection */
+  // Init the DBus connection
   klass->connection = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
   if (klass->connection == NULL)
   {
@@ -20,9 +21,11 @@ class_init(ServerObjectClass *klass)
   
   dbus_g_object_type_install_info(OBJECT_TYPE_SERVER, &dbus_glib__object_info);
 }
+*/
 
 int main() {
-  DBusGConnection *connection;
+//  DBusGConnection *connection;
   
-  dbus_g_connection_register_g_object(conjection, 
+//  dbus_g_connection_register_g_object(conjection, 
+  return 0;
 }
