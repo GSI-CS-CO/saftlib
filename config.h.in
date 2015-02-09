@@ -1,0 +1,7 @@
+#ifndef SAFTLIB_CONFIG_H
+#define SAFTLIB_CONFIG_H
+
+#define VERSION @VERSION@
+
+#endif
+
