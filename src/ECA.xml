@@ -1,0 +1,52 @@
+<node>
+  <!-- de.gsi.saftlib.ECA
+       @short_description: Monitor the timing network for events
+       @since: 0.1
+
+       This D-Bus interface is used to control the Event-Condition-Action
+       (ECA) hardware present in timing receivers. It operates as a routing
+       table that matches incoming events and dispatches them either to
+       other hardware components or software.
+    -->
+  <interface name="de.gsi.saftlib.ECA">
+    <!-- Frequency: The base operating frequency of the ECA.
+         @since:    0.1
+
+         This determines the resolution of events. If the frequency is
+         125MHz then the ECA can only output one action per 8ns interval.
+    -->
+    <property name="Frequency" type="s" access="read"/>
+
+    <!--
+        Listen:  Create a filter rule to match incoming events
+        @event:  Event prefix to monitor
+        @bits:   Number of significant bits in the prefix
+        @offset: Delay in clock cycles between event timestamp and signal
+        @data:   Data provided
+        @since:  0.1
+
+        This method configures the saftlib to deliver signals upon receipt
+        of a timing event whose ID matches the prefix in the first bits. The
+        returned integer is the name of an object with the desired signal,
+        /de/gsi/saftlib/ECA/<integer>. The object conforms to the ECAsignal
+        interface.
+      -->
+    <method name="Listen">
+      <arg direction="in" type="t" name="event"/>
+      <arg direction="in" type="y" name="bits"/>
+      <arg direction="in" type="t" name="offset"/>
+      <arg direction="in" type="t" name="data"/>
+      <arg direction="out" type="n" name="result"/>
+    </method>
+    
+    <method name="Hack">
+      <arg direction="in" type="t" name="event"/>
+      <arg direction="in" type="y" name="bits"/>
+      <arg direction="in" type="t" name="offset"/>
+      <arg direction="out" type="t" name="data"/>
+      <arg direction="out" type="n" name="result"/>
+    </method>
+    
+    <method name="Poke"/>
+  </interface>
+</node>

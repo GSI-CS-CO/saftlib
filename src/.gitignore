@@ -1,2 +1,4 @@
 eb-dbus
 *.o
+ECA.cpp
+ECA.h
