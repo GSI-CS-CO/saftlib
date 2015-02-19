@@ -1,6 +1,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
 <xsl:output method="text" encoding="utf-8" indent="no"/>
+<xsl:include href="./common.xsl"/>
 
 <xsl:template match="/node">// This is a generated file. Do not modify.
 
@@ -35,11 +36,18 @@ static void on_method_call_<xsl:value-of select="$iface"/>(
   
   <xsl:for-each select="method">if (method_name == "<xsl:value-of select="@name"/>") {
     // Input parameters<xsl:for-each select="arg[@direction='in']">
-    Glib::Variant&lt;Glib::ustring&gt; iv_<xsl:value-of select="@name"/>;
+    Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; iv_<xsl:value-of select="@name"/>;
     parameters.get_child(iv_<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);
-    const Glib::ustring ip_<xsl:value-of select="@name"/> = iv_<xsl:value-of select="@name"/>.get();</xsl:for-each>
-    // Output parameters<xsl:for-each select="arg[@direction='out']">
-    Glib::ustring op_<xsl:value-of select="@name"/>;</xsl:for-each>
+    const <xsl:apply-templates mode="iface-type" select="."/> ip_<xsl:value-of select="@name"/> = iv_<xsl:value-of select="@name"/>.get();</xsl:for-each>
+    // Output parameters
+    <xsl:for-each select="arg[@direction='out']">
+      <xsl:text></xsl:text>
+      <xsl:apply-templates mode="iface-type" select="."/>
+      <xsl:text> op_</xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>;
+    </xsl:text>
+    </xsl:for-each>
     try {
       object-><xsl:value-of select="@name"/>
     <xsl:text>(</xsl:text>
@@ -52,7 +60,9 @@ static void on_method_call_<xsl:value-of select="$iface"/>(
     <xsl:text>);</xsl:text>
       std::vector&lt;Glib::VariantBase&gt; response_vector;
       <xsl:for-each select="arg[@direction='out']">
-        <xsl:text>response_vector.push_back(Glib::Variant&lt;Glib::ustring&gt;::create(op_</xsl:text>
+        <xsl:text>response_vector.push_back(Glib::Variant&lt; </xsl:text>
+        <xsl:apply-templates mode="iface-type" select="."/>
+        <xsl:text> &gt;::create(op_</xsl:text>
         <xsl:value-of select="@name"/>));
       </xsl:for-each>Glib::VariantContainerBase response = Glib::VariantContainerBase::create_tuple(response_vector);
       invocation->return_value(response);
@@ -111,7 +121,7 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
     <xsl:if test="position()>1">, </xsl:if>
   <xsl:text>
   </xsl:text>
-  <xsl:if test="@direction='in'">const </xsl:if>Glib::ustring&amp; <xsl:value-of select="@name"/>
+  <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
   </xsl:for-each>
 <xsl:text>) {</xsl:text>
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Method unimplemented.");
@@ -121,84 +131,6 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
 </xsl:for-each>
 }
 
-</xsl:template>
-
-<xsl:template match="*" mode="iface-name">
-  <xsl:call-template name="iface-name">
-    <xsl:with-param name="input" select="@name"/>
-  </xsl:call-template>
-</xsl:template>
-
-<xsl:template name="iface-name">
-  <xsl:param name="input"/>
-  <xsl:choose>
-    <xsl:when test="contains($input,'.')">
-      <xsl:call-template name="iface-name">
-        <xsl:with-param name="input" select="substring-after($input,'.')" />
-      </xsl:call-template>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:value-of select="$input" />
-    </xsl:otherwise>
-  </xsl:choose>
-</xsl:template>
-
-<xsl:template match="*" mode="escape">
-    <!-- Begin opening tag -->
-    <xsl:text>&lt;</xsl:text>
-    <xsl:value-of select="name()"/>
-
-    <!-- Attributes -->
-    <xsl:for-each select="@*">
-        <xsl:text> </xsl:text>
-        <xsl:value-of select="name()"/>
-        <xsl:text>='</xsl:text>
-        <xsl:call-template name="escape-xml">
-            <xsl:with-param name="text" select="."/>
-        </xsl:call-template>
-        <xsl:text>'</xsl:text>
-    </xsl:for-each>
-
-    <!-- End opening tag -->
-    <xsl:if test="not(node())">/</xsl:if>
-    <xsl:text>&gt;</xsl:text>
-
-    <!-- Content (child elements, text nodes, and PIs) -->
-    <xsl:apply-templates select="node()" mode="escape" />
-
-    <!-- Closing tag -->
-    <xsl:if test="node()">
-      <xsl:text>&lt;/</xsl:text>
-      <xsl:value-of select="name()"/>
-    <xsl:text>&gt;</xsl:text>
-</xsl:if>
-</xsl:template>
-
-<xsl:template match="text()" mode="escape">
-<!--
-    <xsl:call-template name="escape-xml">
-        <xsl:with-param name="text" select="."/>
-    </xsl:call-template>
--->
-</xsl:template>
-
-<xsl:template name="escape-xml">
-    <xsl:param name="text"/>
-    <xsl:if test="$text != ''">
-        <xsl:variable name="head" select="substring($text, 1, 1)"/>
-        <xsl:variable name="tail" select="substring($text, 2)"/>
-        <xsl:choose>
-            <xsl:when test="$head = '&amp;'">&amp;amp;</xsl:when>
-            <xsl:when test="$head = '&lt;'">&amp;lt;</xsl:when>
-            <xsl:when test="$head = '&gt;'">&amp;gt;</xsl:when>
-            <xsl:when test="$head = '&quot;'">&amp;quot;</xsl:when>
-            <xsl:when test="$head = &quot;&apos;&quot;">&amp;apos;</xsl:when>
-            <xsl:otherwise><xsl:value-of select="$head"/></xsl:otherwise>
-        </xsl:choose>
-        <xsl:call-template name="escape-xml">
-            <xsl:with-param name="text" select="$tail"/>
-        </xsl:call-template>
-    </xsl:if>
 </xsl:template>
 
 </xsl:stylesheet>

@@ -1,6 +1,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
 <xsl:output method="text" encoding="utf-8" indent="no"/>
+<xsl:include href="./common.xsl"/>
 
 <xsl:template match="/node">// This is a generated file. Do not modify.
 <xsl:for-each select="interface">
@@ -24,7 +25,7 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     <xsl:if test="position()>1">, </xsl:if>
     <xsl:text>
     </xsl:text>
-    <xsl:if test="@direction='in'">const </xsl:if>Glib::ustring&amp; <xsl:value-of select="@name"/>
+    <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
   </xsl:for-each>);</xsl:for-each>
 };
 
@@ -34,26 +35,6 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
 
 </xsl:for-each>
 
-</xsl:template>
-
-<xsl:template match="*" mode="iface-name">
-  <xsl:call-template name="iface-name">
-    <xsl:with-param name="input" select="@name"/>
-  </xsl:call-template>
-</xsl:template>
-
-<xsl:template name="iface-name">
-  <xsl:param name="input"/>
-  <xsl:choose>
-    <xsl:when test="contains($input,'.')">
-      <xsl:call-template name="iface-name">
-        <xsl:with-param name="input" select="substring-after($input,'.')" />
-      </xsl:call-template>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:value-of select="$input" />
-    </xsl:otherwise>
-  </xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet>
