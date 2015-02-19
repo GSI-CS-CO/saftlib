@@ -1,4 +1,5 @@
 eb-dbus
+client
 *.o
 ECA.cpp
 ECA.h

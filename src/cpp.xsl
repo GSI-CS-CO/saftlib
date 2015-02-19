@@ -64,7 +64,7 @@ static void on_method_call_<xsl:value-of select="$iface"/>(
         <xsl:apply-templates mode="iface-type" select="."/>
         <xsl:text> &gt;::create(op_</xsl:text>
         <xsl:value-of select="@name"/>));
-      </xsl:for-each>Glib::VariantContainerBase response = Glib::VariantContainerBase::create_tuple(response_vector);
+      </xsl:for-each>const Glib::VariantContainerBase&amp; response = Glib::VariantContainerBase::create_tuple(response_vector);
       invocation->return_value(response);
     } catch (const Gio::DBus::Error&amp; error) {
       invocation->return_error(error);
@@ -126,6 +126,31 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
 <xsl:text>) {</xsl:text>
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Method unimplemented.");
 }
+</xsl:for-each>
+
+<xsl:for-each select="method">
+void <xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="@name"/>
+  <xsl:text>(</xsl:text>
+  <xsl:for-each select="arg">
+    <xsl:if test="position()>1">, </xsl:if>
+  <xsl:text>
+  </xsl:text>
+  <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
+  </xsl:for-each>
+<xsl:text>) {</xsl:text>
+  std::vector&lt;Glib::VariantBase&gt; query_vector;
+  <xsl:for-each select="arg[@direction='in']">
+   <xsl:text>query_vector.push_back(Glib::Variant&lt; </xsl:text>
+   <xsl:apply-templates mode="iface-type" select="."/>
+   <xsl:text> &gt;::create(</xsl:text>
+   <xsl:value-of select="@name"/>));
+  </xsl:for-each>const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);
+  const Glib::VariantContainerBase&amp; response = call_sync("<xsl:value-of select="@name"/>", query);
+  // Output parameters<xsl:for-each select="arg[@direction='out']">
+  Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; ov_<xsl:value-of select="@name"/>;
+  response.get_child(ov_<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);
+  <xsl:value-of select="@name"/> = ov_<xsl:value-of select="@name"/>.get();</xsl:for-each>
+}  
 </xsl:for-each>
 
 <xsl:text>

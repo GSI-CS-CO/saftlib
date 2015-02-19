@@ -7,12 +7,20 @@
 class ECA : public saftlib::ECA_Service {
   public:
     void Listen(
-      const Glib::ustring& event,
-      const Glib::ustring& bits,
-      const Glib::ustring& offset,
-      const Glib::ustring& data,
-      Glib::ustring& result) {
+      const guint64& event,
+      const unsigned char& bits,
+      const guint64& offset,
+      std::map< std::string, std::vector< gint32 > >& data,
+      gint16& result) 
+    {
       result = event;
+      for (std::map< std::string, std::vector< gint32 > >::iterator i = data.begin();
+           i != data.end(); ++i) {
+        std::cout << i->first << " => [";
+        for (unsigned j = 0; j < i->second.size(); ++j)
+          std::cout << " " << i->second[j] << std::endl;
+        std::cout << " ]" << std::endl;
+      }
     }
     void Poke();
     ~ECA();

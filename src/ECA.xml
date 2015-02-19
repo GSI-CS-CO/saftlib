@@ -15,7 +15,7 @@
          This determines the resolution of events. If the frequency is
          125MHz then the ECA can only output one action per 8ns interval.
     -->
-    <property name="Frequency" type="s" access="read"/>
+    <property name="Frequency" type="s" access="readwrite"/>
 
     <!--
         Listen:  Create a filter rule to match incoming events
@@ -35,7 +35,7 @@
       <arg direction="in" type="t" name="event"/>
       <arg direction="in" type="y" name="bits"/>
       <arg direction="in" type="t" name="offset"/>
-      <arg direction="in" type="t" name="data"/>
+      <arg direction="in" type="a{sai}" name="data"/>
       <arg direction="out" type="n" name="result"/>
     </method>
     
