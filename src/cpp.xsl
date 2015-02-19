@@ -128,9 +128,231 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
 }
 </xsl:for-each>
 
-</xsl:for-each>
+<xsl:text>
+</xsl:text>
+
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name,   
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(connection, name, object_path, interface_name, slot, cancellable, info, flags)
+{
 }
 
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(connection, name, object_path, interface_name, slot, info, flags)
+{
+}
+
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name, 
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(connection, name, object_path, interface_name, cancellable, info, flags)
+{
+}
+
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(connection, name, object_path, interface_name, info, flags)
+{
+}
+
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,  
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(bus_type, name, object_path, interface_name, slot, cancellable, info, flags)
+{
+}
+
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,  
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(bus_type, name, object_path, interface_name, slot, info, flags)
+{
+}
+
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,  
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(bus_type, name, object_path, interface_name, cancellable, info, flags)
+{
+}
+
+<xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,  
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+: Proxy(bus_type, name, object_path, interface_name, info, flags)
+{
+}
+
+void <xsl:value-of select="$iface"/>_Proxy::create(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  <xsl:value-of select="$iface"/>_Proxy(connection, name, object_path, interface_name, slot,
+    cancellable, info, flags);
+}
+
+void <xsl:value-of select="$iface"/>_Proxy::create(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  <xsl:value-of select="$iface"/>_Proxy(connection, name, object_path, interface_name, slot, info, flags);
+}
+
+Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_sync(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(connection, name,
+    object_path, interface_name, cancellable, info, flags));
+}
+
+Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_sync(
+  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(connection, name,
+    object_path, interface_name, info, flags));
+}
+
+void <xsl:value-of select="$iface"/>_Proxy::create_for_bus(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  <xsl:value-of select="$iface"/>_Proxy(bus_type, name, object_path, interface_name, slot, cancellable,
+    info, flags);
+}
+
+void <xsl:value-of select="$iface"/>_Proxy::create_for_bus(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Gio::SlotAsyncReady&amp; slot,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  <xsl:value-of select="$iface"/>_Proxy(bus_type, name, object_path, interface_name, slot, info, flags);
+}
+
+Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_for_bus_sync(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(bus_type, name,
+    object_path, interface_name, cancellable, info, flags));
+}
+
+Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_for_bus_sync(
+  Gio::DBus::BusType bus_type,
+  const Glib::ustring&amp; name,
+  const Glib::ustring&amp; object_path,
+  const Glib::ustring&amp; interface_name,
+  const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
+  Gio::DBus::ProxyFlags flags)
+{
+  return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(bus_type, name,
+    object_path, interface_name, info, flags));
+}
+
+static Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; wrap_<xsl:value-of select="$iface"/>(GDBusProxy* object)
+{
+  return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(dynamic_cast&lt;<xsl:value-of select="$iface"/>_Proxy*&gt;(Glib::wrap_auto((GObject*)object, false)));
+}
+
+Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_finish(const Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; res)
+{
+  GError* gerror = 0;  
+  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; retvalue = wrap_<xsl:value-of select="$iface"/>(g_dbus_proxy_new_finish(Glib::unwrap(res), &amp;(gerror)));
+  if (gerror)
+    ::Glib::Error::throw_exception(gerror);
+  return retvalue;
+} 
+
+Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_for_bus_finish(const Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; res)
+{
+  GError* gerror = 0;
+  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; retvalue = wrap_<xsl:value-of select="$iface"/>(g_dbus_proxy_new_for_bus_finish(Glib::unwrap(res), &amp;(gerror)));
+  if(gerror)
+    ::Glib::Error::throw_exception(gerror);
+  return retvalue;
+}
+</xsl:for-each>
+}
 </xsl:template>
 
 </xsl:stylesheet>
