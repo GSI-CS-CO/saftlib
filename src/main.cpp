@@ -10,15 +10,15 @@ class ECA : public saftlib::ECA_Service {
       const guint64& event,
       const unsigned char& bits,
       const guint64& offset,
-      std::map< std::string, std::vector< gint32 > >& data,
+      const std::map< Glib::ustring, std::vector< gint32 > >& data, 
       gint16& result) 
     {
       result = event;
-      for (std::map< std::string, std::vector< gint32 > >::iterator i = data.begin();
+      for (std::map< Glib::ustring, std::vector< gint32 > >::const_iterator i = data.begin();
            i != data.end(); ++i) {
         std::cout << i->first << " => [";
         for (unsigned j = 0; j < i->second.size(); ++j)
-          std::cout << " " << i->second[j] << std::endl;
+          std::cout << " " << i->second[j];
         std::cout << " ]" << std::endl;
       }
     }

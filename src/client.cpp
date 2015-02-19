@@ -13,7 +13,7 @@ int main(int, char**)
       
     proxy->Poke();
     
-    std::map<std::string, std::vector< gint32 > > demo;
+    std::map<Glib::ustring, std::vector< gint32 > > demo;
     demo["hello"].push_back(5);
     demo["hello"].push_back(8);
     demo["hello"].push_back(9);
