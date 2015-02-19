@@ -21,14 +21,40 @@ namespace saftlib {
 
 class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
   public:
-    guint register_object(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path);
-    virtual ~<xsl:value-of select="$iface"/>_Service();<xsl:for-each select="method">
+    <xsl:value-of select="$iface"/>_Service();
+    virtual ~<xsl:value-of select="$iface"/>_Service();
+    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_, const Glib::ustring&amp; object_path_);
+    void unregister_self();
+    // Methods -- implement these in a derived class!<xsl:for-each select="method">
     virtual void <xsl:value-of select="@name"/>(<xsl:for-each select="arg">
       <xsl:if test="position()>1">, </xsl:if>
       <xsl:text>
       </xsl:text>
       <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
     </xsl:for-each>);</xsl:for-each>
+    // Signals<xsl:for-each select="signal">
+    void <xsl:value-of select="@name"/>(<xsl:for-each select="arg">
+      <xsl:if test="position()>1">, </xsl:if>
+      <xsl:text>
+      const </xsl:text>
+      <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
+    </xsl:for-each>);</xsl:for-each>
+    // Properties<xsl:for-each select="property">
+    const <xsl:apply-templates mode="iface-type" select="."/>&amp; get<xsl:value-of select="@name"/>() const;
+    void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
+  private:<xsl:for-each select="property">
+    <xsl:text>
+    </xsl:text><xsl:apply-templates mode="iface-type" select="."/>
+    <xsl:text> </xsl:text>
+    <xsl:value-of select="@name"/>;</xsl:for-each>
+    // non copyable
+    <xsl:value-of select="$iface"/>_Service(const <xsl:value-of select="$iface"/>_Service&amp;);
+    <xsl:value-of select="$iface"/>_Service&amp; operator = (const <xsl:value-of select="$iface"/>_Service&amp;);
+  protected:
+    void report_property_change(const char* name, const Glib::VariantBase&amp; value);
+    Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
+    Glib::ustring object_path;
+    guint id;
 };
 
 class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
@@ -50,7 +76,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Gio::SlotAsyncReady&amp; slot,
       const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
@@ -60,7 +85,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Gio::SlotAsyncReady&amp; slot,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
       Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
@@ -71,7 +95,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
       Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
@@ -80,7 +103,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
       Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
 
@@ -88,7 +110,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       Gio::DBus::BusType bus_type,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Gio::SlotAsyncReady&amp; slot,
       const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
@@ -98,7 +119,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       Gio::DBus::BusType bus_type,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Gio::SlotAsyncReady&amp; slot,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
       Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
@@ -109,7 +129,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       Gio::DBus::BusType bus_type,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
       Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
@@ -118,7 +137,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
       Gio::DBus::BusType bus_type,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
       const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info = Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(),
       Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
 

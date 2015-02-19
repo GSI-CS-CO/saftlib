@@ -9,7 +9,7 @@ int main(int, char**)
   try {
   
     Glib::RefPtr<saftlib::ECA_Proxy> proxy = saftlib::ECA_Proxy::create_for_bus_sync(
-      Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/ECA", "de.gsi.saftlib.ECA");
+      Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/ECA");
       
     proxy->Poke();
     

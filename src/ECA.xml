@@ -15,7 +15,8 @@
          This determines the resolution of events. If the frequency is
          125MHz then the ECA can only output one action per 8ns interval.
     -->
-    <property name="Frequency" type="s" access="readwrite"/>
+    <property name="Frequency" type="s" access="read"/>
+    <property name="Name" type="s" access="readwrite"/>
 
     <!--
         Listen:  Create a filter rule to match incoming events
@@ -46,6 +47,10 @@
       <arg direction="out" type="t" name="data"/>
       <arg direction="out" type="n" name="result"/>
     </method>
+    
+    <signal name="Cry">
+      <arg type="s" name="reason"/>
+    </signal>
     
     <method name="Poke"/>
   </interface>

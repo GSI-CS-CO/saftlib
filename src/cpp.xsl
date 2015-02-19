@@ -12,6 +12,7 @@
 namespace saftlib
 {
 <xsl:for-each select="interface">
+<xsl:variable name="iface_full" select="@name"/>
 <xsl:variable name="iface">
   <xsl:apply-templates mode="iface-name" select="."/>
 </xsl:variable>
@@ -81,7 +82,14 @@ void on_get_property_ECA(
   const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
   const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name)
 {
-  property = Glib::Variant&lt;Glib::ustring&gt;::create("hello world");
+  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry_<xsl:value-of select="$iface"/>[object_path];
+  if (!object) return;
+
+  <xsl:for-each select="property[@access='read' or @access='readwrite']">if (property_name == "<xsl:value-of select="@name"/>") {
+    property = Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(object->get<xsl:value-of select="@name"/>());
+  } else </xsl:for-each>{
+    // no property found
+  }
 }
 
 bool on_set_property_ECA(
@@ -90,7 +98,17 @@ bool on_set_property_ECA(
   const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
   const Glib::VariantBase&amp; value) 
 {
-  return false; 
+  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry_<xsl:value-of select="$iface"/>[object_path];
+  if (!object) return false;
+
+  <xsl:for-each select="property[@access='write' or @access='readwrite']">if (property_name == "<xsl:value-of select="@name"/>") {
+    const Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;&amp; derived = 
+      Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(value);
+    object->set<xsl:value-of select="@name"/>(derived.get());
+    return true;
+  } else </xsl:for-each>{
+    return false;// no property found
+  }
 }
 
 static const Gio::DBus::InterfaceVTable interface_vtable_<xsl:value-of select="$iface"/>(
@@ -98,21 +116,38 @@ static const Gio::DBus::InterfaceVTable interface_vtable_<xsl:value-of select="$
   sigc::ptr_fun(&amp;on_get_property_<xsl:value-of select="$iface"/>),
   sigc::ptr_fun(&amp;on_set_property_<xsl:value-of select="$iface"/>));
 
-<xsl:value-of select="$iface"/>_Service::~<xsl:value-of select="$iface"/>_Service() {
+<xsl:value-of select="$iface"/>_Service::<xsl:value-of select="$iface"/>_Service()
+{
 }
 
-guint <xsl:value-of select="$iface"/>_Service::register_object(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path) {
+<xsl:value-of select="$iface"/>_Service::~<xsl:value-of select="$iface"/>_Service() {
+  unregister_self();
+}
+
+void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_, const Glib::ustring&amp; object_path_) {
   static Glib::RefPtr&lt;Gio::DBus::NodeInfo&gt; introspection;
   if (!introspection)
     introspection = Gio::DBus::NodeInfo::create_for_xml(xml_<xsl:value-of select="$iface"/>);
 
-  guint out = connection->register_object(
-    object_path,
+  guint id_ = connection_->register_object(
+    object_path_,
     introspection->lookup_interface(),
     interface_vtable_<xsl:value-of select="$iface"/>);
+
+  connection = connection_;
+  object_path = object_path_;
+  id = id_;
+
   this->reference();
   registry_<xsl:value-of select="$iface"/>[object_path] = Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt;(this);
-  return out;
+}
+
+void <xsl:value-of select="$iface"/>_Service::unregister_self() {
+  if (!connection) return;
+  connection->unregister_object(id);
+  connection.reset();
+  registry_<xsl:value-of select="$iface"/>.erase(object_path);
+  object_path.clear();
 }
 <xsl:for-each select="method">
 void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
@@ -125,6 +160,49 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
   </xsl:for-each>
 <xsl:text>) {</xsl:text>
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Method unimplemented.");
+}
+</xsl:for-each>
+
+<xsl:for-each select="signal">
+void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
+  <xsl:text>(</xsl:text>
+  <xsl:for-each select="arg">
+    <xsl:if test="position()>1">, </xsl:if>
+  <xsl:text>
+  const </xsl:text>
+  <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
+  </xsl:for-each>
+<xsl:text>) {</xsl:text>
+  std::vector&lt;Glib::VariantBase&gt; data_vector;
+  <xsl:for-each select="arg">
+   <xsl:text>data_vector.push_back(Glib::Variant&lt; </xsl:text>
+   <xsl:apply-templates mode="iface-type" select="."/>
+   <xsl:text> &gt;::create(</xsl:text>
+   <xsl:value-of select="@name"/>));
+  </xsl:for-each>const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(data_vector);
+  connection->emit_signal(object_path, "<xsl:value-of select="$iface_full"/>", "<xsl:value-of select="@name"/>", "", query);
+}
+</xsl:for-each>
+void <xsl:value-of select="$iface"/>_Service::report_property_change(const char* property, const Glib::VariantBase&amp; value) {
+    std::map&lt; Glib::ustring, Glib::VariantBase &gt; updated;
+    std::vector&lt; Glib::ustring &gt; invalidated;
+    std::vector&lt;Glib::VariantBase&gt; message_vector;
+    updated[property] = value;
+    message_vector.push_back(Glib::Variant&lt;Glib::ustring&gt;::create("<xsl:value-of select="$iface_full"/>"));
+    message_vector.push_back(Glib::Variant&lt; std::map&lt; Glib::ustring, Glib::VariantBase &gt; &gt;::create(updated));
+    message_vector.push_back(Glib::Variant&lt; std::vector&lt; Glib::ustring &gt; &gt;::create(invalidated));
+    connection->emit_signal(object_path, "org.freedesktop.DBus.Properties", "PropertiesChanged", "", 
+      Glib::VariantContainerBase::create_tuple(message_vector));
+}
+<xsl:for-each select="property">
+const <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="$iface"/>_Service::get<xsl:value-of select="@name"/>() const {
+  return <xsl:value-of select="@name"/>;
+}
+
+void <xsl:value-of select="$iface"/>_Service::set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val) {
+  if (connection &amp;&amp; <xsl:value-of select="@name"/> != val)
+    report_property_change("<xsl:value-of select="@name"/>", Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(val));
+  <xsl:value-of select="@name"/> = val;
 }
 </xsl:for-each>
 
@@ -256,13 +334,12 @@ void <xsl:value-of select="$iface"/>_Proxy::create(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Gio::SlotAsyncReady&amp; slot,
   const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
-  <xsl:value-of select="$iface"/>_Proxy(connection, name, object_path, interface_name, slot,
+  <xsl:value-of select="$iface"/>_Proxy(connection, name, object_path, "<xsl:value-of select="$iface_full"/>", slot,
     cancellable, info, flags);
 }
 
@@ -270,50 +347,46 @@ void <xsl:value-of select="$iface"/>_Proxy::create(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Gio::SlotAsyncReady&amp; slot,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
-  <xsl:value-of select="$iface"/>_Proxy(connection, name, object_path, interface_name, slot, info, flags);
+  <xsl:value-of select="$iface"/>_Proxy(connection, name, object_path, "<xsl:value-of select="$iface_full"/>", slot, info, flags);
 }
 
 Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_sync(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
   return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(connection, name,
-    object_path, interface_name, cancellable, info, flags));
+    object_path, "<xsl:value-of select="$iface_full"/>", cancellable, info, flags));
 }
 
 Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_sync(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
   return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(connection, name,
-    object_path, interface_name, info, flags));
+    object_path, "<xsl:value-of select="$iface_full"/>", info, flags));
 }
 
 void <xsl:value-of select="$iface"/>_Proxy::create_for_bus(
   Gio::DBus::BusType bus_type,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Gio::SlotAsyncReady&amp; slot,
   const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
-  <xsl:value-of select="$iface"/>_Proxy(bus_type, name, object_path, interface_name, slot, cancellable,
+  <xsl:value-of select="$iface"/>_Proxy(bus_type, name, object_path, "<xsl:value-of select="$iface_full"/>", slot, cancellable,
     info, flags);
 }
 
@@ -321,37 +394,34 @@ void <xsl:value-of select="$iface"/>_Proxy::create_for_bus(
   Gio::DBus::BusType bus_type,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Gio::SlotAsyncReady&amp; slot,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
-  <xsl:value-of select="$iface"/>_Proxy(bus_type, name, object_path, interface_name, slot, info, flags);
+  <xsl:value-of select="$iface"/>_Proxy(bus_type, name, object_path, "<xsl:value-of select="$iface_full"/>", slot, info, flags);
 }
 
 Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_for_bus_sync(
   Gio::DBus::BusType bus_type,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Glib::RefPtr&lt;Gio::Cancellable&gt;&amp; cancellable,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
   return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(bus_type, name,
-    object_path, interface_name, cancellable, info, flags));
+    object_path, "<xsl:value-of select="$iface_full"/>", cancellable, info, flags));
 }
 
 Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; <xsl:value-of select="$iface"/>_Proxy::create_for_bus_sync(
   Gio::DBus::BusType bus_type,
   const Glib::ustring&amp; name,
   const Glib::ustring&amp; object_path,
-  const Glib::ustring&amp; interface_name,
   const Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;&amp; info,
   Gio::DBus::ProxyFlags flags)
 {
   return Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt;(new <xsl:value-of select="$iface"/>_Proxy(bus_type, name,
-    object_path, interface_name, info, flags));
+    object_path, "<xsl:value-of select="$iface_full"/>", info, flags));
 }
 
 static Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; wrap_<xsl:value-of select="$iface"/>(GDBusProxy* object)
