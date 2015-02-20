@@ -36,34 +36,33 @@ static void on_method_call_<xsl:value-of select="$iface"/>(
   }
   
   <xsl:for-each select="method">if (method_name == "<xsl:value-of select="@name"/>") {<xsl:for-each select="arg[@direction='in']">
-    Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; iv_<xsl:value-of select="@name"/>;
-    parameters.get_child(iv_<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);
-    const <xsl:apply-templates mode="iface-type" select="."/> ip_<xsl:value-of select="@name"/> = iv_<xsl:value-of select="@name"/>.get();</xsl:for-each>
+    Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; <xsl:value-of select="@name"/>;</xsl:for-each>
     <xsl:for-each select="arg[@direction='out']">
-      <xsl:text></xsl:text>
-      <xsl:apply-templates mode="iface-type" select="."/>
-      <xsl:text> op_</xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text>;
+      <xsl:text>
     </xsl:text>
-    </xsl:for-each>try {
+      <xsl:apply-templates mode="iface-type" select="."/>
+      <xsl:text> </xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    <xsl:for-each select="arg[@direction='in']">
+    parameters.get_child(<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);</xsl:for-each>
+    try {
       object-><xsl:value-of select="@name"/>
     <xsl:text>(</xsl:text>
     <xsl:for-each select="arg">
       <xsl:if test="position()>1">, </xsl:if>
-      <xsl:if test="@direction='in'">ip_</xsl:if>
-      <xsl:if test="@direction='out'">op_</xsl:if>
       <xsl:value-of select="@name"/>
+      <xsl:if test="@direction='in'">.get()</xsl:if>
     </xsl:for-each>
     <xsl:text>);</xsl:text>
       std::vector&lt;Glib::VariantBase&gt; response_vector;
       <xsl:for-each select="arg[@direction='out']">
         <xsl:text>response_vector.push_back(Glib::Variant&lt; </xsl:text>
         <xsl:apply-templates mode="iface-type" select="."/>
-        <xsl:text> &gt;::create(op_</xsl:text>
+        <xsl:text> &gt;::create(</xsl:text>
         <xsl:value-of select="@name"/>));
-      </xsl:for-each>const Glib::VariantContainerBase&amp; response = Glib::VariantContainerBase::create_tuple(response_vector);
-      invocation->return_value(response);
+      </xsl:for-each>invocation->return_value(Glib::VariantContainerBase::create_tuple(response_vector));
     } catch (const Gio::DBus::Error&amp; error) {
       invocation->return_error(error);
     }
@@ -99,9 +98,7 @@ bool on_set_property_ECA(
   if (!object) return false;
 
   <xsl:for-each select="property[@access='write' or @access='readwrite']">if (property_name == "<xsl:value-of select="@name"/>") {
-    const Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;&amp; derived = 
-      Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(value);
-    object->set<xsl:value-of select="@name"/>(derived.get());
+    object->set<xsl:value-of select="@name"/>(Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(value).get());
     return true;
   } else </xsl:for-each>{
     return false;// no property found
@@ -182,8 +179,8 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
    <xsl:apply-templates mode="iface-type" select="."/>
    <xsl:text> &gt;::create(</xsl:text>
    <xsl:value-of select="@name"/>));
-  </xsl:for-each>const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(data_vector);
-  connection->emit_signal(object_path, "<xsl:value-of select="$iface_full"/>", "<xsl:value-of select="@name"/>", "", query);
+  </xsl:for-each>connection->emit_signal(object_path, "<xsl:value-of select="$iface_full"/>", "<xsl:value-of select="@name"/>", "", 
+    Glib::VariantContainerBase::create_tuple(data_vector));
 }
 </xsl:for-each>
 void <xsl:value-of select="$iface"/>_Service::report_property_change(const char* property, const Glib::VariantBase&amp; value)
@@ -245,9 +242,7 @@ void <xsl:value-of select="$iface"/>_Proxy::on_properties_changed(
 
   for (MapChangedProperties::const_iterator i = changed_properties.begin(); i != changed_properties.end(); ++i) {
     <xsl:for-each select="property[@access='read' or @access='readwrite']">if (i->first == "<xsl:value-of select="@name"/>") {
-      const Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;&amp; derived =
-        Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(i->second);
-      <xsl:value-of select="@name"/>(derived.get());
+      <xsl:value-of select="@name"/>(Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(i->second).get());
     } else </xsl:for-each>{
       // noop
      }
