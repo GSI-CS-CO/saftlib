@@ -133,11 +133,13 @@ void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&l
     introspection->lookup_interface(),
     interface_vtable_<xsl:value-of select="$iface"/>);
 
+  this->reference();
+  unregister_self();
+
   connection = connection_;
   object_path = object_path_;
   id = id_;
 
-  this->reference();
   registry_<xsl:value-of select="$iface"/>[object_path] = Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt;(this);
 }
 
