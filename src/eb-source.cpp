@@ -1,0 +1,159 @@
+#include <giomm.h>
+#include <etherbone.h>
+
+class EB_Source : public Glib::Source
+{
+  public:
+    static Glib::RefPtr<EB_Source> create(etherbone::Socket socket);
+    sigc::connection connect(const sigc::slot<bool>& slot);
+    
+  protected:
+    explicit EB_Source(etherbone::Socket socket_);
+    virtual ~EB_Source();
+    
+    static int add_fd(eb_user_data_t, eb_descriptor_t, uint8_t mode);
+    static int get_fd(eb_user_data_t, eb_descriptor_t, uint8_t mode);
+  
+    virtual bool prepare(int& timeout);
+    virtual bool check();
+    virtual bool dispatch(sigc::slot_base* slot);
+    
+  private:
+    etherbone::Socket socket;
+    
+    typedef std::map<int, Glib::PollFD> fd_map;
+    fd_map fds;
+};
+
+Glib::RefPtr<EB_Source> EB_Source::create(etherbone::Socket socket)
+{
+  return Glib::RefPtr<EB_Source>(new EB_Source(socket));
+}
+
+sigc::connection EB_Source::connect(const sigc::slot<bool>& slot)
+{
+  return connect_generic(slot);
+}
+
+EB_Source::EB_Source(etherbone::Socket socket_)
+ : socket(socket_)
+{
+}
+
+EB_Source::~EB_Source()
+{
+  for (fd_map::iterator i = fds.begin(); i != fds.end(); ++i)
+    remove_poll(i->second);
+  fds.clear();
+}
+
+int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
+{
+  EB_Source* self = (EB_Source*)data;
+  
+  std::pair<fd_map::iterator, bool> res = 
+    self->fds.insert(fd_map::value_type(fd, Glib::PollFD(fd, Glib::IO_ERR)));
+  
+  if (res.second) // new element; add to poll
+    self->add_poll(res.first->second);
+  
+  Glib::IOCondition flags = Glib::IO_ERR | Glib::IO_HUP;
+  if ((mode & EB_DESCRIPTOR_IN)  != 0) flags |= Glib::IO_IN;
+  if ((mode & EB_DESCRIPTOR_OUT) != 0) flags |= Glib::IO_OUT;
+  
+  res.first->second.set_events(flags | res.first->second.get_events());
+  return 0;
+}
+
+int EB_Source::get_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
+{
+  EB_Source* self = (EB_Source*)data;
+  
+  fd_map::iterator i = self->fds.find(fd);
+  if (i == self->fds.end()) return 0;
+  
+  Glib::IOCondition flags = i->second.get_revents();
+  
+  return 
+    ((mode & EB_DESCRIPTOR_IN)  != 0 && (flags & (Glib::IO_IN  | Glib::IO_ERR | Glib::IO_HUP)) != 0) ||
+    ((mode & EB_DESCRIPTOR_OUT) != 0 && (flags & (Glib::IO_OUT | Glib::IO_ERR | Glib::IO_HUP)) != 0);
+}
+
+static int no_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
+{
+  return 0;
+}
+
+bool EB_Source::prepare(int& timeout_ms)
+{
+  // Retrieve cached current time
+  gint64 now_ms = get_time();
+  
+  // Work-around for no TX flow control: flush data now
+  socket.check(now_ms/1000, 0, &no_fd);
+  
+  // Clear the old requested FD status
+  for (fd_map::iterator i = fds.begin(); i != fds.end(); ++i)
+    i->second.set_events(Glib::IO_ERR);
+  
+  // Find descriptors we need to watch
+  socket.descriptors(this, &EB_Source::add_fd);
+  
+  // Eliminate any descriptors no one cares about any more
+  fd_map::iterator i = fds.begin();
+  while (i != fds.end()) {
+    fd_map::iterator j = i;
+    ++j;
+    if ((i->second.get_events() & Glib::IO_HUP) == 0) {
+      remove_poll(i->second);
+      fds.erase(i);
+    }
+    i = j;
+  }
+  
+  // Determine timeout
+  uint32_t timeout = socket.timeout();
+  if (timeout) {
+    timeout_ms = static_cast<gint64>(timeout)*1000 - now_ms;
+    if (timeout_ms < 0) timeout_ms = 0;
+  } else {
+    timeout_ms = -1;
+  }
+  
+  return (timeout_ms == 0); // true means immediately ready
+}
+
+bool EB_Source::check()
+{
+  bool ready = false;
+  
+  // Descriptors ready?
+  for (fd_map::const_iterator i = fds.begin(); i != fds.end(); ++i)
+    ready |= (i->second.get_revents() & i->second.get_events()) != 0;
+  
+  // Timeout ready?
+  ready |= socket.timeout() >= get_time()/1000;
+  
+  return ready;
+}
+
+bool EB_Source::dispatch(sigc::slot_base* slot)
+{
+  // Process any pending packets
+  socket.check(get_time()/1000, this, &EB_Source::get_fd);
+  
+  // Run the no-op signal
+  return (*static_cast<sigc::slot<bool>*>(slot))();
+}
+
+static bool my_noop()
+{
+  return true; // Keep running the loop
+}
+
+sigc::connection eb_attach_source(const Glib::RefPtr<Glib::MainLoop>& loop, etherbone::Socket socket) {
+  Glib::RefPtr<EB_Source> source = EB_Source::create(socket);
+  sigc::connection out = source->connect(sigc::ptr_fun(&my_noop));
+  source->attach(loop->get_context());
+  return out;
+}

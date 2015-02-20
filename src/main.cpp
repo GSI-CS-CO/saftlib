@@ -1,8 +1,8 @@
-#include <giomm.h>
-#include <glibmm.h>
 #include <iostream>
+#include <giomm.h>
 
 #include "ECA.h"
+#include "eb-source.h"
 
 class ECA : public saftlib::ECA_Service {
   public:
@@ -71,14 +71,18 @@ int main(int, char**)
 {
   std::locale::global(std::locale(""));
   Gio::init();
+  
+  etherbone::Socket socket;
+  socket.open();
 
   const guint id = Gio::DBus::own_name(Gio::DBus::BUS_TYPE_SESSION,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
     sigc::ptr_fun(&on_name_acquired),
     sigc::ptr_fun(&on_name_lost));
-
+  
   Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+  eb_attach_source(loop, socket);
   loop->run();
 
   Gio::DBus::unown_name(id);
