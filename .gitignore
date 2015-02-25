@@ -1,11 +1,20 @@
-# Automake junk
+# Automake junk dirs
+tools
+m4
+# Compilation junk
+*.o
+*.lo
+.libs
+.deps
+# Automake junk files
 Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
 config.h
+config.h.in
 config.log
 config.status
 configure
-.deps
 stamp-h1
+libtool

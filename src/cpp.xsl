@@ -110,7 +110,8 @@ static const Gio::DBus::InterfaceVTable interface_vtable_<xsl:value-of select="$
   sigc::ptr_fun(&amp;on_get_property_<xsl:value-of select="$iface"/>),
   sigc::ptr_fun(&amp;on_set_property_<xsl:value-of select="$iface"/>));
 
-<xsl:value-of select="$iface"/>_Service::<xsl:value-of select="$iface"/>_Service()
+<xsl:value-of select="$iface"/>_Service::<xsl:value-of select="$iface"/>_Service(const Glib::ustring&amp; object_path_)
+ : object_path(object_path_)
 {
 }
 
@@ -119,14 +120,16 @@ static const Gio::DBus::InterfaceVTable interface_vtable_<xsl:value-of select="$
   unregister_self();
 }
 
-void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_, const Glib::ustring&amp; object_path_) 
+void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_) 
 {
   static Glib::RefPtr&lt;Gio::DBus::NodeInfo&gt; introspection;
   if (!introspection)
     introspection = Gio::DBus::NodeInfo::create_for_xml(xml_<xsl:value-of select="$iface"/>);
 
+  if (connection_ == connection) return;
+
   guint id_ = connection_->register_object(
-    object_path_,
+    object_path,
     introspection->lookup_interface(),
     interface_vtable_<xsl:value-of select="$iface"/>);
 
@@ -134,7 +137,6 @@ void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&l
   unregister_self();
 
   connection = connection_;
-  object_path = object_path_;
   id = id_;
 
   registry_<xsl:value-of select="$iface"/>[object_path] = Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt;(this);
@@ -147,6 +149,14 @@ void <xsl:value-of select="$iface"/>_Service::unregister_self()
   connection.reset();
   registry_<xsl:value-of select="$iface"/>.erase(object_path);
   object_path.clear();
+}
+
+void <xsl:value-of select="$iface"/>_Service::setObjectPath(const Glib::ustring&amp; object_path_)
+{
+  if (object_path == object_path_) return;
+  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection_ = connection;
+  unregister_self();
+  if (connection_) register_self(connection_);
 }
 <xsl:for-each select="method">
 void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>

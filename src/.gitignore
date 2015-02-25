@@ -1,5 +1,7 @@
+# targets
+libsaftlib.la
 eb-dbus
 client
-*.o
+# interfaces
 ECA.cpp
 ECA.h

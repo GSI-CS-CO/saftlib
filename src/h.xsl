@@ -13,8 +13,8 @@
   <xsl:variable name="smallcase" select="'abcdefghijklmnopqrstuvwxyz'"/>
   <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
   <xsl:variable name="big_iface" select="translate($iface, $smallcase, $uppercase)"/>
-#ifndef <xsl:value-of select="$big_iface"/>_H
-#define <xsl:value-of select="$big_iface"/>_H
+#ifndef <xsl:value-of select="$big_iface"/>_IFACE_H
+#define <xsl:value-of select="$big_iface"/>_IFACE_H
 
 namespace saftlib {
 
@@ -38,13 +38,20 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     const <xsl:apply-templates mode="iface-type" select="."/>&amp; get<xsl:value-of select="@name"/>() const;</xsl:for-each>
     <xsl:for-each select="property">
     void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
-
-  public:
-    <xsl:value-of select="$iface"/>_Service();
+  protected:
+    // Standard Service methods
+    <xsl:value-of select="$iface"/>_Service(const Glib::ustring&amp; object_path_);
     virtual ~<xsl:value-of select="$iface"/>_Service();
-    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_, const Glib::ustring&amp; object_path_);
+    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_);
     void unregister_self();
-  private:<xsl:for-each select="property">
+    const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const { return connection; }
+    const Glib::ustring&amp; getObjectPath() const { return object_path; }
+    void setObjectPath(const Glib::ustring&amp; object_path);
+  private:
+    void report_property_change(const char* name, const Glib::VariantBase&amp; value);
+    Glib::ustring object_path;
+    Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
+    guint id;<xsl:for-each select="property">
     <xsl:text>
     </xsl:text><xsl:apply-templates mode="iface-type" select="."/>
     <xsl:text> </xsl:text>
@@ -52,11 +59,6 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     // non copyable
     <xsl:value-of select="$iface"/>_Service(const <xsl:value-of select="$iface"/>_Service&amp;);
     <xsl:value-of select="$iface"/>_Service&amp; operator = (const <xsl:value-of select="$iface"/>_Service&amp;);
-  protected:
-    void report_property_change(const char* name, const Glib::VariantBase&amp; value);
-    Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
-    Glib::ustring object_path;
-    guint id;
 };
 
 class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
