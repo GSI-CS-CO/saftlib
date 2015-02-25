@@ -1,3 +1,6 @@
+# Targets
+eb-dbus
+client
 # Automake junk dirs
 tools
 m4
@@ -8,6 +11,7 @@ m4
 *.la
 .libs
 .deps
+.dirstamp
 # Automake junk files
 Makefile
 Makefile.in

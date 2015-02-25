@@ -6,7 +6,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(tools)
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 AM_MAINTAINER_MODE
 
 AC_PROG_LIBTOOL
@@ -35,5 +35,5 @@ if test "x$ac_dbus_servicedir" = x ; then
 fi
 AC_SUBST(DBUS_SERVICEDIR, $ac_dbus_servicedir)
 
-AC_CONFIG_FILES([Makefile interfaces/Makefile devices/Makefile drivers/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile interfaces/Makefile])
 AC_OUTPUT

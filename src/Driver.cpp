@@ -2,6 +2,8 @@
 
 namespace saftlib {
 
+// !!! dangerous because the order of static initialization might leave this
+// uninitialized at the time of .insert_self
 static std::list<DriverBase*> driver_set;
 
 void DriverBase::insert_self()
