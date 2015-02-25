@@ -10,6 +10,7 @@ AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddi
 eb_dbus_SOURCES = \
 	src/ObjectRegistry.cpp	src/ObjectRegistry.h	\
 	src/Driver.cpp		src/Driver.h		\
+	src/Device.cpp		src/Device.h		\
 	src/eb-source.cpp	src/eb-source.h		\
 	drivers/ECA.cpp					\
 	devices/pexaria5.cpp				\

@@ -16,16 +16,16 @@ void DriverBase::remove_self()
   driver_set.erase(index);
 }
 
-void Drivers::start()
+void Drivers::start(Devices& devices)
 {
   for (std::list<DriverBase*>::const_iterator i = driver_set.begin(); i != driver_set.end(); ++i)
-    (*i)->start();
+    (*i)->start(devices);
 }
 
 void Drivers::stop()
 {
   for (std::list<DriverBase*>::const_iterator i = driver_set.begin(); i != driver_set.end(); ++i)
-    (*i)->start();
+    (*i)->stop();
 }
 
 }

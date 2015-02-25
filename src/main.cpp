@@ -55,6 +55,11 @@ int main(int argc, char** argv)
     return 1;
   }
   
+  // !!! FIXME, probe stuff intelligently
+  saftlib::Devices devices;
+  devices.push_back(saftlib::Device(device, 0x30000, 0x3ffff));
+  saftlib::Device::hook_it_all(socket);
+  
   const guint id = Gio::DBus::own_name(Gio::DBus::BUS_TYPE_SESSION,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
@@ -64,7 +69,7 @@ int main(int argc, char** argv)
   Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   eb_attach_source(loop, socket);
   
-  saftlib::Drivers::start();
+  saftlib::Drivers::start(devices);
   
   loop->run();
   
