@@ -72,7 +72,7 @@ static void on_method_call_<xsl:value-of select="$iface"/>(
   }
 }
 
-void on_get_property_ECA(
+void on_get_property_<xsl:value-of select="$iface"/>(
   Glib::VariantBase&amp; property,
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
   const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
@@ -88,7 +88,7 @@ void on_get_property_ECA(
   }
 }
 
-bool on_set_property_ECA(
+bool on_set_property_<xsl:value-of select="$iface"/>(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */, 
   const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path, 
   const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
