@@ -1,0 +1,27 @@
+<node>
+  <!-- de.gsi.saftlib.TLU:
+       @short_description: Track the timestamps of incoming pulses
+       
+       This D-Bus interface is used to control the Timestamp-Latch-Unit
+       (TLU) hardware present in timing receivers. This interface merely
+       reports the available TLU_Channels and provides the current time.
+    -->
+  <interface name="de.gsi.saftlib.TLU">
+    <!-- Channels: List of channels provided by available TLUs.
+
+         This returns an array of object paths, each path has the format:
+         /de/gsi/saftlib/TLU/[x]-[y]. [x] is the TLU device and [y] is the
+         channel on that device.
+    -->
+    <property name="Channels" type="as" access="read"/>
+
+    <!-- GetTime: Return the current time
+         @result: The number of 1ns ticks since 1970
+
+         This method grabs the current time from the first TLU.
+      -->
+    <method name="GetTime">
+      <arg direction="out" type="t" name="result"/>
+    </method>
+  </interface>
+</node>

@@ -29,6 +29,8 @@ PKG_CHECK_MODULES([DBUS], [dbus-1 >= 1.8.12],
   [ac_dbus_servicedir=;])
 PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.42])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
+AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
+AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
 
 if test "x$ac_dbus_servicedir" = x ; then
   AC_MSG_ERROR([could not find dbus-1 system_bus_service_dir])
