@@ -1,6 +1,6 @@
 #include <iostream>
 #include <giomm.h>
-#include "ECA.h"
+#include "../interfaces/ECA.h"
 
 // The main loop.
 Glib::RefPtr<Glib::MainLoop> loop;
@@ -14,7 +14,6 @@ void on_prop(const Glib::ustring& val) {
 void on_signal(const Glib::ustring& reason) {
   std::cout << "They cry? " << reason << std::endl;
 }
-
 
 int main(int, char**)
 {

@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = interfaces src
 EXTRA_DIST = saftlib.conf
 
 dbusconfdir = @DBUS_CONFDIR@
