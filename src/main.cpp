@@ -1,7 +1,8 @@
 #include <iostream>
 #include <giomm.h>
 
-#include "GlobalObject.h"
+#include "ObjectRegistry.h"
+#include "Driver.h"
 #include "eb-source.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9,7 +10,7 @@
 void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   try {
-    saftlib::GlobalObject::register_all(connection);
+    saftlib::ObjectRegistry::register_all(connection);
   } catch(const Glib::Error& ex) {
     std::cerr << "Registration of object failed." << std::endl;
   }
@@ -42,6 +43,8 @@ int main(int argc, char** argv)
     return 1;
   }
   
+  // saftlib::WishboneDevices::probe(argc, argv);
+  
   if ((status = device.open(socket, argv[1])) != EB_OK) {
     std::cerr << "failed to open etherbone master: " << eb_status(status) << std::endl;
     return 1;
@@ -61,9 +64,13 @@ int main(int argc, char** argv)
   Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   eb_attach_source(loop, socket);
   
+  saftlib::Drivers::start();
+  
   loop->run();
+  
+  saftlib::Drivers::stop();
 
-  saftlib::GlobalObject::unregister_all();
+  saftlib::ObjectRegistry::unregister_all();
   Gio::DBus::unown_name(id);
   
   device.close();

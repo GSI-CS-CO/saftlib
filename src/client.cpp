@@ -32,16 +32,6 @@ int main(int, char**)
     std::cout << "name: " << proxy->getName() << std::endl;
     proxy->Poke();
       
-    std::map<Glib::ustring, std::vector< gint32 > > demo;
-    demo["hello"].push_back(5);
-    demo["hello"].push_back(8);
-    demo["hello"].push_back(9);
-    demo["cat"].push_back(42);
-    
-    gint16 result;
-    proxy->Listen(44, 0, 2, demo, result);
-    std::cout << "Result: " << result << std::endl;
-    
     loop->run();
     
   } catch (const Glib::Error& error) {

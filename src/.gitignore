@@ -2,6 +2,3 @@
 libsaftlib.la
 eb-dbus
 client
-# interfaces
-ECA.cpp
-ECA.h
