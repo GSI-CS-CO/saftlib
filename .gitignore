@@ -5,6 +5,7 @@ m4
 *.o
 *.a
 *.lo
+*.la
 .libs
 .deps
 # Automake junk files

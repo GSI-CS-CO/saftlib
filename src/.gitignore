@@ -1,4 +1,3 @@
 # targets
-libsaftlib.la
 eb-dbus
 client

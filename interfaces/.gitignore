@@ -1,5 +1,3 @@
-# Targets
-libsaftlib.la
 # Interfaces
 *.cpp
 *.h

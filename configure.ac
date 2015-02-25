@@ -23,15 +23,17 @@ fi
 PKG_PROG_PKG_CONFIG([0.25])
 PKG_CHECK_MODULES([EB], [etherbone >= 0.1])
 PKG_CHECK_MODULES([DBUS], [dbus-1 >= 1.8.12],
-  [ac_dbus_confdir=`$PKG_CONFIG --variable=system_bus_services_dir dbus-1`],
-  [ac_dbus_confdir=;])
+  [ac_dbus_rawservicedir="$($PKG_CONFIG --variable=system_bus_services_dir dbus-1)"
+   ac_dbus_prefixdir="$($PKG_CONFIG --variable=prefix dbus-1)"
+   ac_dbus_servicedir="\${prefix}/${ac_dbus_rawservicedir#${ac_dbus_prefixdir}}"],
+  [ac_dbus_servicedir=;])
 PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.42])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
 
-if test "x$ac_dbus_confdir" = x ; then
+if test "x$ac_dbus_servicedir" = x ; then
   AC_MSG_ERROR([could not find dbus-1 system_bus_service_dir])
 fi
-AC_SUBST(DBUS_CONFDIR, $ac_dbus_confdir)
+AC_SUBST(DBUS_SERVICEDIR, $ac_dbus_servicedir)
 
 AC_CONFIG_FILES([Makefile interfaces/Makefile devices/Makefile drivers/Makefile src/Makefile])
 AC_OUTPUT

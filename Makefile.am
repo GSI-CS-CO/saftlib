@@ -1,7 +1,6 @@
 SUBDIRS = interfaces devices drivers src
-EXTRA_DIST = saftlib.conf
 
-dbusconfdir = @DBUS_CONFDIR@
-dbusconf_DATA = saftlib.conf
+dbus_servicedir = @DBUS_SERVICEDIR@
+dist_dbus_service_DATA = saftlib.conf
 
 ACLOCAL_AMFLAGS = -I m4
