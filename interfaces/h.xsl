@@ -35,9 +35,9 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
       <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
     </xsl:for-each>);</xsl:for-each>
     // Property accessors<xsl:for-each select="property">
-    const <xsl:apply-templates mode="iface-type" select="."/>&amp; get<xsl:value-of select="@name"/>() const;</xsl:for-each>
+    virtual const <xsl:apply-templates mode="iface-type" select="."/>&amp; get<xsl:value-of select="@name"/>() const;</xsl:for-each>
     <xsl:for-each select="property">
-    void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
+    virtual void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
   protected:
     // Standard Service methods
     <xsl:value-of select="$iface"/>_Service(const Glib::ustring&amp; object_path_);
