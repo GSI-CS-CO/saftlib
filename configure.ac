@@ -33,5 +33,5 @@ if test "x$ac_dbus_confdir" = x ; then
 fi
 AC_SUBST(DBUS_CONFDIR, $ac_dbus_confdir)
 
-AC_CONFIG_FILES([Makefile interfaces/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile interfaces/Makefile devices/Makefile drivers/Makefile src/Makefile])
 AC_OUTPUT

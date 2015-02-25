@@ -1,6 +1,6 @@
 #include "ObjectRegistry.h"
 #include "Driver.h"
-#include "../interfaces/ECA.h"
+#include "ECA.h"
 
 namespace saftlib {
 

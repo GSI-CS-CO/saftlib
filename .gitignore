@@ -3,6 +3,7 @@ tools
 m4
 # Compilation junk
 *.o
+*.a
 *.lo
 .libs
 .deps
