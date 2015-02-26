@@ -5,10 +5,8 @@
 namespace saftlib {
 
 Device::Device(etherbone::Device d, eb_address_t low_, eb_address_t high_)
- : etherbone::Device(d)
+ : etherbone::Device(d), low(low_), high(high_), name("pex0")
 {
-  low  = low_;
-  high = high_;
 }
 
 // Must use IRQs that are globally unique
