@@ -1,18 +1,9 @@
 #include <iostream>
 #include <giomm.h>
-#include "../interfaces/ECA.h"
+#include "TLU_Channel.h"
 
-// The main loop.
-Glib::RefPtr<Glib::MainLoop> loop;
-Glib::RefPtr<saftlib::ECA_Proxy> proxy;
-
-void on_prop(const Glib::ustring& val) {
-  std::cout << "Saw name change: " << val << std::endl;
-  std::cout << "name: " << proxy->getName() << std::endl;
-}
-
-void on_signal(const Glib::ustring& reason) {
-  std::cout << "They cry? " << reason << std::endl;
+void on_edge(const guint64& time) {
+  std::cout << "Pulse detected: " << time << std::endl;
 }
 
 int main(int, char**)
@@ -21,17 +12,22 @@ int main(int, char**)
 
   try {
   
-    loop = Glib::MainLoop::create();
-    proxy = saftlib::ECA_Proxy::create_for_bus_sync(
-      Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/ECA");
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     
-    // Listen for signals
-    proxy->Name.connect(sigc::ptr_fun(&on_prop));
-    proxy->Cry.connect(sigc::ptr_fun(&on_signal));
+    Glib::RefPtr<saftlib::TLU_Channel_Proxy> channel =
+      saftlib::TLU_Channel_Proxy::create_for_bus_sync(
+        Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/TLU/pex0_100_0");
+    
+    // Was it already active?
+    std::cout << "Channel was: " << (channel->getEnabled()?"active":"inactive") << std::endl;
+    
+    // Listen for edges
+    channel->Edge.connect(sigc::ptr_fun(&on_edge));
+    channel->setLatchEdge(false);
+    channel->setStableTime(16);
+    channel->setEnabled(true);
 
-    std::cout << "name: " << proxy->getName() << std::endl;
-    proxy->Poke();
-      
+    std::cout << "Waiting for edges" << std::endl;
     loop->run();
     
   } catch (const Glib::Error& error) {
