@@ -297,7 +297,7 @@ void <xsl:value-of select="$iface"/>_Proxy::update_property(const char* name, co
   params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name)); 
   params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));
   get_connection()->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set", 
-    Glib::VariantContainerBase::create_tuple(params));
+    Glib::VariantContainerBase::create_tuple(params), get_name());
 }
 <xsl:for-each select="property[@access='write' or @access='readwrite']">
 void <xsl:value-of select="$iface"/>_Proxy::set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val)
