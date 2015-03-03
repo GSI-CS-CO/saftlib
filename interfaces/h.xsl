@@ -44,11 +44,13 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_);
     void unregister_self();
     const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const { return connection; }
+    const Glib::ustring&amp; getSender() const { return sender; }
     const Glib::ustring&amp; getObjectPath() const { return object_path; }
     void setObjectPath(const Glib::ustring&amp; object_path);
   private:
     void report_property_change(const char* name, const Glib::VariantBase&amp; value);
     Glib::ustring object_path;
+    Glib::ustring sender;
     Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
     guint id;<xsl:for-each select="property">
     <xsl:text>
