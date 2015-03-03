@@ -23,7 +23,7 @@ class <xsl:value-of select="$iface"/>_Service_Binding {
 
     static void on_method_call(
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
-      const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
       const Glib::VariantContainerBase&amp; parameters,
       const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation);
@@ -31,12 +31,12 @@ class <xsl:value-of select="$iface"/>_Service_Binding {
     static void on_get_property(
       Glib::VariantBase&amp; property,
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
-      const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name);
 
     static bool on_set_property(
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */, 
-      const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path, 
+      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path, 
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
       const Glib::VariantBase&amp; value) ;
 
@@ -76,14 +76,18 @@ void <xsl:value-of select="$iface"/>_Service_Binding::on_method_call(
     <xsl:for-each select="arg[@direction='in']">
     parameters.get_child(<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);</xsl:for-each>
     try {
-      object-><xsl:value-of select="@name"/>
-    <xsl:text>(</xsl:text>
-    <xsl:for-each select="arg">
-      <xsl:if test="position()>1">, </xsl:if>
-      <xsl:value-of select="@name"/>
-      <xsl:if test="@direction='in'">.get()</xsl:if>
-    </xsl:for-each>
-    <xsl:text>);</xsl:text>
+      try {
+        object-><xsl:value-of select="@name"/>
+        <xsl:text>(</xsl:text>
+        <xsl:for-each select="arg">
+          <xsl:if test="position()>1">, </xsl:if>
+          <xsl:value-of select="@name"/>
+          <xsl:if test="@direction='in'">.get()</xsl:if>
+        </xsl:for-each>
+        <xsl:text>);</xsl:text>
+      } catch (...) {
+        object->rethrow("<xsl:value-of select="@name"/>");
+      }
       std::vector&lt;Glib::VariantBase&gt; response_vector;
       <xsl:for-each select="arg[@direction='out']">
         <xsl:text>response_vector.push_back(Glib::Variant&lt; </xsl:text>
@@ -111,7 +115,11 @@ void <xsl:value-of select="$iface"/>_Service_Binding::on_get_property(
 
   object->sender = sender;
   <xsl:for-each select="property[@access='read' or @access='readwrite']">if (property_name == "<xsl:value-of select="@name"/>") {
-    property = Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(object->get<xsl:value-of select="@name"/>());
+    try {
+      property = Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(object->get<xsl:value-of select="@name"/>());
+    } catch (...) {
+      object->rethrow("get<xsl:value-of select="@name"/>");
+    }
   } else </xsl:for-each>{
     // no property found
   }
@@ -128,8 +136,13 @@ bool <xsl:value-of select="$iface"/>_Service_Binding::on_set_property(
 
   object->sender = sender;
   <xsl:for-each select="property[@access='write' or @access='readwrite']">if (property_name == "<xsl:value-of select="@name"/>") {
-    object->set<xsl:value-of select="@name"/>(Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(value).get());
-    return true;
+    try {
+      object->set<xsl:value-of select="@name"/>(Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(value).get());
+      return true;
+    } catch (...) {
+      object->rethrow("set<xsl:value-of select="@name"/>");
+      return false;
+    }
   } else </xsl:for-each>{
     return false;// no property found
   }
@@ -148,6 +161,11 @@ const Gio::DBus::InterfaceVTable <xsl:value-of select="$iface"/>_Service_Binding
 <xsl:value-of select="$iface"/>_Service::~<xsl:value-of select="$iface"/>_Service() 
 {
   unregister_self();
+}
+
+void <xsl:value-of select="$iface"/>_Service::rethrow(const char *method)
+{
+  throw;
 }
 
 void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_) 

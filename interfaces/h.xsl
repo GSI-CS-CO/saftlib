@@ -41,6 +41,7 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     // Standard Service methods
     <xsl:value-of select="$iface"/>_Service(const Glib::ustring&amp; object_path_);
     virtual ~<xsl:value-of select="$iface"/>_Service();
+    virtual void rethrow(const char *method);
     void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_);
     void unregister_self();
     const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const { return connection; }
