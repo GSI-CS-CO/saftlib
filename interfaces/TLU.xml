@@ -14,14 +14,5 @@
          channel on that device.
     -->
     <property name="Channels" type="as" access="read"/>
-
-    <!-- GetTime: Return the current time
-         @result: The number of 1ns ticks since 1970
-
-         This method grabs the current time from the first TLU.
-      -->
-    <method name="GetTime">
-      <arg direction="out" type="t" name="result"/>
-    </method>
   </interface>
 </node>

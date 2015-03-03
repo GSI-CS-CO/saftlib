@@ -21,7 +21,7 @@ class TLU_Channel : public RegisteredObject<TLU_Channel_Service>
     void setLatchEdge(const bool& val);
     void setStableTime(const guint32& val);
     
-    void GetTime(guint64& result);
+    void CurrentTime(guint64& result);
     
     static Glib::RefPtr<TLU_Channel> create(saftlib::Device& device, eb_address_t base, int channel);
     
@@ -118,7 +118,7 @@ void TLU_Channel::setStableTime(const guint32& val)
   TLU_Channel_Service::setStableTime(val);
 }
 
-void TLU_Channel::GetTime(guint64& val)
+void TLU_Channel::CurrentTime(guint64& val)
 {
   eb_data_t hi, lo;
   etherbone::Cycle cycle;
@@ -162,7 +162,6 @@ class TLU : public RegisteredObject<TLU_Service>
 {
   public:
     TLU(Devices& devices);
-    void GetTime(guint64& result);
     
   protected:
     std::vector<Glib::RefPtr<TLU_Channel> > channels;
@@ -203,12 +202,6 @@ TLU::TLU(Devices& devices)
   }
   
   setChannels(channel_names);
-}
-
-void TLU::GetTime(guint64& result)
-{
-  if (!channels.empty())
-    channels.front()->GetTime(result);
 }
 
 static Driver<TLU> tlu;
