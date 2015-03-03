@@ -1,3 +1,5 @@
+#define ETHERBONE_THROWS 1
+
 #include <stdlib.h>
 #include <string.h>
 #include "Device.h"

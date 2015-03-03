@@ -1,3 +1,5 @@
+#define ETHERBONE_THROWS 1
+
 #include <giomm.h>
 #include <etherbone.h>
 

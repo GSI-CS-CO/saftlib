@@ -48,6 +48,7 @@ TLU_Channel::TLU_Channel(Device& device_, eb_address_t base_, int channel_)
    device(device_), base(base_), channel(channel_), 
    irq(device.request_irq(sigc::mem_fun(*this, &TLU_Channel::irq_handler)))
 {
+  // throw through
   setEnabled(false);
   setHandler(true, irq, 0xdeadbeef);
   setLatchEdge(true);
@@ -56,9 +57,13 @@ TLU_Channel::TLU_Channel(Device& device_, eb_address_t base_, int channel_)
 
 TLU_Channel::~TLU_Channel()
 {
-  setHandler(false);
-  setEnabled(false);
-  device.release_irq(irq);
+  try { // destructors cannot throw
+    device.release_irq(irq);
+    setHandler(false);
+    setEnabled(false);
+  } catch (const etherbone::exception_t& e) {
+    std::cerr << "TLU_Channel::~TLU_Channel: " << e << std::endl;
+  }
 }
 
 Glib::RefPtr<TLU_Channel> TLU_Channel::create(Device& device, eb_address_t base, int channel)
@@ -68,85 +73,109 @@ Glib::RefPtr<TLU_Channel> TLU_Channel::create(Device& device, eb_address_t base,
 
 void TLU_Channel::setHandler(bool enable, eb_data_t address, eb_data_t message)
 {
-  etherbone::Cycle cycle;
-  cycle.open(device);
-  
-  if (enable) {
-    cycle.write(base + SLAVE_MSK_SET, EB_DATA32, 1<<channel);
-  } else {
-    cycle.write(base + SLAVE_MSK_CLR, EB_DATA32, 1<<channel);
+  try {
+    etherbone::Cycle cycle;
+    cycle.open(device);
+    
+    if (enable) {
+      cycle.write(base + SLAVE_MSK_SET, EB_DATA32, 1<<channel);
+    } else {
+      cycle.write(base + SLAVE_MSK_CLR, EB_DATA32, 1<<channel);
+    }
+    
+    cycle.write(base + SLAVE_CH_SEL_RW,     EB_DATA32, channel);
+    cycle.write(base + SLAVE_TS_MSG_RW,     EB_DATA32, message);
+    cycle.write(base + SLAVE_TS_DST_ADR_RW, EB_DATA32, address);
+    cycle.close();
+  } catch (const etherbone::exception_t& e) {
+    throw eb_error("TLU_Channel::setHandler", e);
   }
-  
-  cycle.write(base + SLAVE_CH_SEL_RW,     EB_DATA32, channel);
-  cycle.write(base + SLAVE_TS_MSG_RW,     EB_DATA32, message);
-  cycle.write(base + SLAVE_TS_DST_ADR_RW, EB_DATA32, address);
-  cycle.close();
 }
 
 void TLU_Channel::setEnabled(const bool& val)
 {
-  if (val) {
-    device.write(base + SLAVE_ACT_SET, EB_DATA32, 1<<channel);
-  } else {
-    device.write(base + SLAVE_ACT_CLR, EB_DATA32, 1<<channel);
+  try {
+    if (val) {
+      device.write(base + SLAVE_ACT_SET, EB_DATA32, 1<<channel);
+    } else {
+      device.write(base + SLAVE_ACT_CLR, EB_DATA32, 1<<channel);
+    }
+    TLU_Channel_Service::setEnabled(val);
+  } catch (const etherbone::exception_t& e) {
+    throw eb_error("TLU_Channel::setEnabled", e);
   }
-  TLU_Channel_Service::setEnabled(val);
 }
 
 void TLU_Channel::setLatchEdge(const bool& val)
 {
-  if (val) {
-    device.write(base + SLAVE_EDG_SET, EB_DATA32, 1<<channel);
-  } else {
-    device.write(base + SLAVE_EDG_CLR, EB_DATA32, 1<<channel);
+  try {
+    if (val) {
+      device.write(base + SLAVE_EDG_SET, EB_DATA32, 1<<channel);
+    } else {
+      device.write(base + SLAVE_EDG_CLR, EB_DATA32, 1<<channel);
+    }
+    TLU_Channel_Service::setLatchEdge(val);
+  } catch (const etherbone::exception_t& e) {
+    throw eb_error("TLU_Channel::setLatchEdge", e);
   }
-  TLU_Channel_Service::setLatchEdge(val);
 }
 
 void TLU_Channel::setStableTime(const guint32& val)
 {
-  etherbone::Cycle cycle;
-  cycle.open(device);
-  cycle.write(base + SLAVE_CH_SEL_RW, EB_DATA32, channel);
-  cycle.write(base + SLAVE_STABLE_RW, EB_DATA32, val);
-  cycle.close();
-  TLU_Channel_Service::setStableTime(val);
+  try {
+    etherbone::Cycle cycle;
+    cycle.open(device);
+    cycle.write(base + SLAVE_CH_SEL_RW, EB_DATA32, channel);
+    cycle.write(base + SLAVE_STABLE_RW, EB_DATA32, val);
+    cycle.close();
+    TLU_Channel_Service::setStableTime(val);
+  } catch (const etherbone::exception_t& e) {
+    throw eb_error("TLU_Channel::setStableTime", e);
+  }
 }
 
 void TLU_Channel::GetTime(guint64& val)
 {
-  eb_data_t hi, lo;
-  etherbone::Cycle cycle;
-  cycle.open(device);
-  cycle.read(base + SLAVE_TC_GET_0, EB_DATA32, &hi);
-  cycle.read(base + SLAVE_TC_GET_1, EB_DATA32, &lo);
-  cycle.close();
-  
-  val = hi;
-  val <<= 32;
-  val |= lo;
+  try {
+    eb_data_t hi, lo;
+    etherbone::Cycle cycle;
+    cycle.open(device);
+    cycle.read(base + SLAVE_TC_GET_0, EB_DATA32, &hi);
+    cycle.read(base + SLAVE_TC_GET_1, EB_DATA32, &lo);
+    cycle.close();
+    
+    val = hi;
+    val <<= 32;
+    val |= lo;
+  } catch (const etherbone::exception_t& e) {
+    throw eb_error("TLU_Channel::GetTime", e);
+  }
 }
 
 void TLU_Channel::irq_handler(eb_data_t)
 {
-  etherbone::Cycle cycle;
-  eb_data_t hi, lo, sub;
-  cycle.open(device);
-  cycle.write(base + SLAVE_CH_SEL_RW,  EB_DATA32, channel);
-  cycle.read (base + SLAVE_TS_GET_0,   EB_DATA32, &hi);
-  cycle.read (base + SLAVE_TS_GET_1,   EB_DATA32, &lo);
-  cycle.read (base + SLAVE_TS_GET_2,   EB_DATA32, &sub);
-  cycle.write(base + SLAVE_TS_POP_OWR, EB_DATA32, 1);
-  cycle.close();
-  
-  guint64 time;
-  time = hi;
-  time <<= 32;
-  time |= lo;
-  time <<= 3;
-  time |= sub;
-  
-  Edge(time);
+  try { // irq handlers cannot throw
+    etherbone::Cycle cycle;
+    eb_data_t hi, lo, sub;
+    cycle.open(device);
+    cycle.write(base + SLAVE_CH_SEL_RW,  EB_DATA32, channel);
+    cycle.read (base + SLAVE_TS_GET_0,   EB_DATA32, &hi);
+    cycle.read (base + SLAVE_TS_GET_1,   EB_DATA32, &lo);
+    cycle.read (base + SLAVE_TS_GET_2,   EB_DATA32, &sub);
+    cycle.write(base + SLAVE_TS_POP_OWR, EB_DATA32, 1);
+    cycle.close();
+    
+    guint64 time;
+    time = hi;
+    time <<= 32;
+    time |= lo;
+    time <<= 3;
+    time |= sub;
+    
+    Edge(time);
+  } catch (const etherbone::exception_t& e) {
+    std::cerr << "TLU_Channel::irq_handler: " << e << std::endl;
+  }
 }
 
 class TLU : public RegisteredObject<TLU_Service>
@@ -165,6 +194,8 @@ TLU::TLU(Devices& devices)
 {
   std::vector<Glib::ustring> channel_names;
   std::vector<struct sdb_device> sdbs;
+  
+  // throw through
   
   // Scan all devices
   for (Devices::iterator device = devices.begin(); device != devices.end(); ++device) {

@@ -1,3 +1,5 @@
+#define ETHERBONE_THROWS 1
+
 #include "ObjectRegistry.h"
 #include "Driver.h"
 #include "ECA.h"
@@ -44,7 +46,6 @@ ECA::ECA(Devices& devices)
 
 void ECA::Poke()
 {
-  Cry("That hurt!");
   setName("xx");
 }
 
@@ -55,7 +56,6 @@ void ECA::ready(eb_data_t)
   ecas[0].channels[1].queue.front().pop(ae);
   std::ostringstream stream;
   stream << "ECA says: " << std::hex << ae.event;
-  Cry(stream.str());
 }
 
 static Driver<ECA> eca;

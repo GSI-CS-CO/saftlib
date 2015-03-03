@@ -1,3 +1,5 @@
+#define ETHERBONE_THROWS 1
+
 #include <iostream>
 #include <giomm.h>
 #include "TLU_Channel.h"

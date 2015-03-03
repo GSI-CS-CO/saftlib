@@ -1,3 +1,5 @@
+#define ETHERBONE_THROWS 1
+
 #include <iostream>
 #include <giomm.h>
 
@@ -34,24 +36,16 @@ int main(int argc, char** argv)
     return 1;
   }
   
-  eb_status_t status;
   etherbone::Socket socket;
   etherbone::Device device;
   
-  if ((status = socket.open()) != EB_OK) {
-    std::cerr << "failed to open etherbone socket: " << eb_status(status) << std::endl;
-    return 1;
-  }
-  
-  // saftlib::WishboneDevices::probe(argc, argv);
-  
-  if ((status = device.open(socket, argv[1])) != EB_OK) {
-    std::cerr << "failed to open etherbone master: " << eb_status(status) << std::endl;
-    return 1;
-  }
-  
-  if ((status = socket.passive(argv[2])) != EB_OK) {
-    std::cerr << "failed to open etherbone slave: " << eb_status(status) << std::endl;
+  try {
+    socket.open();
+    // saftlib::WishboneDevices::probe(argc, argv);
+    device.open(socket, argv[1]);
+    socket.passive(argv[2]);
+  } catch (const etherbone::exception_t& e) {
+    std::cerr << e << std::endl;
     return 1;
   }
   
