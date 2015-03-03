@@ -1,5 +1,5 @@
 # Targets
-eb-dbus
+saftd
 client
 # Automake junk dirs
 tools
