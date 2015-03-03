@@ -13,7 +13,7 @@ saftd_SOURCES = \
 	src/Device.cpp		src/Device.h		\
 	src/eb-source.cpp	src/eb-source.h		\
 	drivers/ECA.cpp					\
-	drivers/TLU.cpp					\
+	drivers/TLU.cpp		drivers/tlu_regs.h	\
 	devices/pexaria5.cpp				\
 	src/main.cpp
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) -leca interfaces/libsaftlib.la
