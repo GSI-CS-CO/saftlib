@@ -1,57 +1,97 @@
 <node>
-  <!-- de.gsi.saftlib.ECA
-       @short_description: Monitor the timing network for events
-       @since: 0.1
+  <!-- de.gsi.saftlib.ECA:
+       @short_description: Trigger actions upon receipt of timing events.
 
-       This D-Bus interface is used to control the Event-Condition-Action
-       (ECA) hardware present in timing receivers. It operates as a routing
-       table that matches incoming events and dispatches them either to
-       other hardware components or software.
+       This interface controls Event-Condition-Action (ECA) hardware present
+       in timing receivers.  It configures both hardware and software filter
+       rules (conditions) which may match a range of event IDs. When a
+       an event is received, each matching condition creates an action which
+       is forwarded to either a hardware channel or a software callback.
     -->
   <interface name="de.gsi.saftlib.ECA">
+    <!-- Name: A human-readable string describing this instance of the ECA.
+         Typically, this describes the VHDL project file which instantiated
+         the ECA hardware.
+      -->
+    <property name="Name" type="s" access="read"/>
+    
     <!-- Frequency: The base operating frequency of the ECA.
-         @since:    0.1
-
          This determines the resolution of events. If the frequency is
          125MHz then the ECA can only output one action per 8ns interval.
-    -->
-    <property name="Frequency" type="s" access="read"/>
-    <property name="Name" type="s" access="readwrite"/>
-
-    <!--
-        Listen:  Create a filter rule to match incoming events
-        @event:  Event prefix to monitor
-        @bits:   Number of significant bits in the prefix
-        @offset: Delay in clock cycles between event timestamp and signal
-        @data:   Data provided
-        @since:  0.1
-
-        This method configures the saftlib to deliver signals upon receipt
-        of a timing event whose ID matches the prefix in the first bits. The
-        returned integer is the name of an object with the desired signal,
-        /de/gsi/saftlib/ECA/<integer>. The object conforms to the ECAsignal
-        interface.
       -->
-    <method name="Listen">
-      <arg direction="in" type="t" name="event"/>
-      <arg direction="in" type="y" name="bits"/>
-      <arg direction="in" type="t" name="offset"/>
-      <arg direction="in" type="a{sai}" name="data"/>
-      <arg direction="out" type="n" name="result"/>
+    <property name="Frequency" type="s" access="read"/>
+    
+    <!-- Channels: The hardware output channels of the ECA.
+         Each returned object path implements the ECA_Channel interface.
+      -->
+    <property name="Channels" type="ao" accress="read"/>
+    
+    <!-- Free: The number of additional conditions that may be created.
+         The ECA has limited hardware resources in its match table. This
+         software interface does its best to pack as many conditions as
+         possible into the table via compression.  This property reports the
+         worst-case remaining space in the hardware.  If this property
+         returns 5, then you are guaranteed to be able to create at least 5
+         more conditions. Note that (de)activating a condition will also
+         affect resource consumption and thus this property.
+      -->
+    <property name="Free" type="u" access="read"/>
+    
+    <!-- Conditions: All configured conditions.
+         This lists all conditions currently managed by this ECA instance.
+         Each returned object path implements the ECA_Condition interface.
+      -->
+    <property name="Conditions" type="ao" access="read"/>
+
+    <!-- NewCondition: Create a condition to match incoming events
+         @first:  First event ID to monitor (inclusive)
+         @last:   Last event ID to monitor (exclusive)
+         @offset: Delay in ECA clock cycles between event and action
+         @result: Object path to the created ECA_Condition
+
+         This method creates a new condition that matches events whose
+         identifier lies in the range [first, last). The offset acts as a
+         delay which is added to the event's execution timestamp to
+         determine the timestamp when the matching condition fires its
+         action. The returned object path implements the ECA_Condition
+         interface and has SoftwareActive=true.
+      -->
+    <method name="NewCondition">
+      <arg direction="in" type="t" name="first"/>
+      <arg direction="in" type="t" name="last"/>
+      <arg direction="in" type="x" name="offset"/>
+      <arg direction="out" type="o" name="result"/>
     </method>
     
-    <method name="Hack">
+    <!-- InjectEvent: Simulate the receipt of a timing event.
+         @event: The event identifier which is matched against [first, last)
+         @param: The parameter field, whose meaning depends on the event ID.
+         @time:  The execution time for the event, added to condition offsets.
+         @tef:   The timing extension field, used for sub-cycle timing (use 0).
+         
+         Sometimes it is useful to simulate the receipt of a timing event. 
+         This allows software to test that configured conditions lead to the
+         desired behaviour without needing the data master to send anything.
+      -->
+    <method name="InjectEvent">
       <arg direction="in" type="t" name="event"/>
-      <arg direction="in" type="y" name="bits"/>
-      <arg direction="in" type="t" name="offset"/>
-      <arg direction="out" type="t" name="data"/>
-      <arg direction="out" type="n" name="result"/>
+      <arg direction="in" type="t" name="param"/>
+      <arg direction="in" type="t" name="time"/>
+      <arg direction="in" type="u" name="tef"/>
     </method>
     
-    <signal name="Cry">
-      <arg type="s" name="reason"/>
-    </signal>
+    <!-- Overflow: Software is unable to keep up with hardware.
+         When the ECA is configured to report actions to software via the
+         SoftwareActive property of an ECA_Condition, matching events are
+         translated into actions put into a hardware FIFO.  The saftlib ECA
+         service drains this FIFO as quickly as it can, but it may be the
+         case that the configured conditions match so many events that the
+         software cannot empty the FIFO as fast as it is filled.  In this
+         case, the FIFO can overflow and this signal will be raised.  This
+         indicates a fatal ECA configuration error and operator intervention
+         is likely required.
+      -->
+    <signal name="Overflow"/>
     
-    <method name="Poke"/>
   </interface>
 </node>

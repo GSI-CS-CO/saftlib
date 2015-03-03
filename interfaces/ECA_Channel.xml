@@ -1,0 +1,109 @@
+<node>
+  <!-- de.gsi.saftlib.ECA_Channel:
+       @short_description: A hardware output path from the ECA.
+
+       Typically, an action channel is connected to a receiving component.
+       That component processes actions generated when conditions match
+       events. This object describes the state of the communication to the
+       receiving component.
+    -->
+  <interface name="de.gsi.saftlib.ECA_Channel">
+    <!-- Name: A human-readable string describing this channel.
+         Typically, this gives some indication of what receiving component
+         is connected to the action chanenl.
+       -->
+    <property name="Name" type="s" access="read"/>
+    
+    <!-- Conditions: A list of all conditions that output to this channel.
+         This is a subset of the conditions reported by the ECA Conditions
+         property. Only those conditions which were created by the
+         NewCondition method on this object are listed here.
+      -->
+    <property name="Conditions" type="ao" access="read"/>
+    
+    <!-- NewCondition: Create a new condition which targets this channel.
+         @first:  First event ID to monitor (inclusive)
+         @last:   Last event ID to monitor (exclusive)
+         @offset: Delay in ECA clock cycles between event and action
+         @tag:    Interpretted by the receiving component to determine effect.
+         @result: Object path to the created ECA_Condition
+         
+         This method creates a new condition that matches events whose
+         identifier lies in the range [first, last).  The offset acts as a
+         delay which is added to the event's execution timestamp.  The tag
+         is a field used to indicate to the receiving component what it
+         should do. The returned object path implements the ECA_Condition
+         interface and has HardwareActive=true.
+      -->
+    <method name="NewCondition">
+      <arg direction="in" type="t" name="first"/>
+      <arg direction="in" type="t" name="last"/>
+      <arg direction="in" type="x" name="offset"/>
+      <arg direction="in" type="u" name="tag"/>
+      <arg direction="out" type="o" name="result"/>
+    </method>
+    
+    <!-- Fill: The total number of actions pending.
+         When a timing message is received and a condition matches, it is
+         transformed into an action. That action sits in a priority queue
+         until its execution timestamp is due. This property reports how
+         many actions are pending.
+      -->
+    <property name="Fill" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+    
+    <!-- MaxFill: The most actions that have ever been pending.
+         The priority queue holding actions has finite size. This property
+         reports how many actions have ever been in the queue at once. This
+         can be compared against Size to ensure that there is
+         sufficient space to deal with worst-case behaviour.
+       -->
+    <property name="MaxFill" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+    
+    <!-- Size: The total number of pending actions the channel can store.
+         If MaxFill ever gets close to Size, the system is unsafe. Once a
+         Channel becomes full, it exerts back-pressure through the ECA,
+         potentially blocking other timing critical actions, leading to
+         their silent loss or late execution.
+         !!! maybe i should discard actions instead, and report an exception
+      -->
+    <property name="Size" type="u" access="read"/>
+    
+    <!-- ActionCount: The total number of actions forwarded by this channel. -->
+    <property name="ActionCount" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+    <!-- ActionCount: The total number of conflicting actions forwarded by this channel. -->
+    <property name="ConflictCount" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+    <!-- ActionCount: The total number of late actions forwarded by this channel. -->
+    <property name="LateCount" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+    
+    <!-- Reset: Clear MaxFill and the Counters to zero. -->
+    <method name="Reset"/>
+    
+    <!-- Conflict: Raised if the channel must schedule two actions simultaneously.
+         The hardware can only output a single action at a time. If two
+         events arrive which are transformed into actions on this channel
+         with identical timestamps, only one will execute on time. The other
+         will be arrive after an implementation-defined delay (4us). This
+         signal informs the operator of the misconfigured hardware.
+      -->
+    <signal name="Conflict"/>
+    
+    <!-- Late: An action must be executed in the past.
+         If a timing event arrives which is late, resulting actions may have
+         been scheduled for execution in the past.  This may also be the
+         result of large negative offsets.  In either case, the action will
+         be executed after an implementation-defined delay (<4us).  This
+         signal is raised to inform the operator of the misconfiguration.
+      -->
+    <signal name="Late"/>
+  </interface>
+</node>
