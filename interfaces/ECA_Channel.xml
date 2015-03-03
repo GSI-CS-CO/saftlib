@@ -14,13 +14,6 @@
        -->
     <property name="Name" type="s" access="read"/>
     
-    <!-- Conditions: A list of all conditions that output to this channel.
-         This is a subset of the conditions reported by the ECA Conditions
-         property. Only those conditions which were created by the
-         NewCondition method on this object are listed here.
-      -->
-    <property name="Conditions" type="ao" access="read"/>
-    
     <!-- NewCondition: Create a new condition which targets this channel.
          @first:  First event ID to monitor (inclusive)
          @last:   Last event ID to monitor (exclusive)

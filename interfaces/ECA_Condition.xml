@@ -79,6 +79,6 @@
          This property is only set if the condition was created via the
          NewCondition method on an ECA_Channel.
       -->
-    <property name="Channel" type="o" access="read"/>
+    <property name="Channel" type="i" access="read"/>
   </interface>
 </node>

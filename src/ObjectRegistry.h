@@ -41,7 +41,7 @@ class RegisteredObject : public T, private RegisteredObjectBase
     
     void rethrow(const char *method);
   
-  private:
+  protected:
     void register_self(const Glib::RefPtr<Gio::DBus::Connection>& connection) { T::register_self(connection); }
     void unregister_self() { T::unregister_self(); }
 };

@@ -12,10 +12,10 @@ saftd_SOURCES = \
 	src/Driver.cpp		src/Driver.h		\
 	src/Device.cpp		src/Device.h		\
 	src/eb-source.cpp	src/eb-source.h		\
-	drivers/ECA.cpp					\
+	drivers/ECA.cpp		drivers/eca_regs.h	\
 	drivers/TLU.cpp		drivers/tlu_regs.h	\
 	src/main.cpp
-saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) -leca interfaces/libsaftlib.la
+saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
