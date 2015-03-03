@@ -3,6 +3,7 @@
 
 #include <list>
 #include <giomm.h>
+#include <etherbone.h>
 
 namespace saftlib {
 
@@ -37,11 +38,25 @@ class RegisteredObject : public T, private RegisteredObjectBase
   public:
     RegisteredObject(const Glib::ustring& object_path) : T(object_path) { insert_self(); }
     ~RegisteredObject() { remove_self(); }
+    
+    void rethrow(const char *method);
   
   private:
     void register_self(const Glib::RefPtr<Gio::DBus::Connection>& connection) { T::register_self(connection); }
     void unregister_self() { T::unregister_self(); }
 };
+
+template <typename T>
+void RegisteredObject<T>::rethrow(const char *method)
+{
+  try {
+    T::rethrow(method);
+  } catch (const etherbone::exception_t& e) {
+    std::ostringstream str;
+    str << method << ": " << e;
+    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
+  }
+}
 
 class ObjectRegistry
 {

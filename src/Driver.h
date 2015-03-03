@@ -6,8 +6,6 @@
 
 namespace saftlib {
 
-extern Gio::DBus::Error eb_error(const char *method, const etherbone::exception_t& e);
-
 class DriverBase
 {
   public:

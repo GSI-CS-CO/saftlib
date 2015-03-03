@@ -1,15 +1,8 @@
 #define ETHERBONE_THROWS 1
 
-#include <sstream>
 #include "Driver.h"
 
 namespace saftlib {
-
-Gio::DBus::Error eb_error(const char *method, const etherbone::exception_t& e) {
-  std::ostringstream str;
-  str << method << ": " << e;
-  return Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
-}
 
 // !!! dangerous because the order of static initialization might leave this
 // uninitialized at the time of .insert_self
