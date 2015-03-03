@@ -76,11 +76,11 @@
     <property name="ActionCount" type="u" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>
-    <!-- ActionCount: The total number of conflicting actions forwarded by this channel. -->
+    <!-- ConflictCount: The total number of conflicting actions forwarded by this channel. -->
     <property name="ConflictCount" type="u" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>
-    <!-- ActionCount: The total number of late actions forwarded by this channel. -->
+    <!-- LateCount: The total number of late actions forwarded by this channel. -->
     <property name="LateCount" type="u" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>

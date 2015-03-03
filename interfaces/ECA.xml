@@ -24,7 +24,7 @@
     <!-- Channels: The hardware output channels of the ECA.
          Each returned object path implements the ECA_Channel interface.
       -->
-    <property name="Channels" type="ao" accress="read"/>
+    <property name="Channels" type="ao" access="read"/>
     
     <!-- Free: The number of additional conditions that may be created.
          The ECA has limited hardware resources in its match table. This
