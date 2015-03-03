@@ -58,6 +58,7 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     // non copyable
     <xsl:value-of select="$iface"/>_Service(const <xsl:value-of select="$iface"/>_Service&amp;);
     <xsl:value-of select="$iface"/>_Service&amp; operator = (const <xsl:value-of select="$iface"/>_Service&amp;);
+  friend class <xsl:value-of select="$iface"/>_Service_Binding;
 };
 
 class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {

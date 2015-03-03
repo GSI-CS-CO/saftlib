@@ -11,24 +11,51 @@
 </xsl:for-each>
 namespace saftlib
 {
-<xsl:for-each select="interface">
-<xsl:variable name="iface_full" select="@name"/>
-<xsl:variable name="iface">
-  <xsl:apply-templates mode="iface-name" select="."/>
-</xsl:variable>
-static Glib::ustring xml_<xsl:value-of select="$iface"/> = 
+    <xsl:for-each select="interface">
+    <xsl:variable name="iface_full" select="@name"/>
+    <xsl:variable name="iface">
+      <xsl:apply-templates mode="iface-name" select="."/>
+    </xsl:variable>
+class <xsl:value-of select="$iface"/>_Service_Binding {
+  public:
+    static const Glib::ustring xml;
+    static std::map&lt;Glib::ustring, Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; &gt; registry;
+
+    static void on_method_call(
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
+      const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
+      const Glib::VariantContainerBase&amp; parameters,
+      const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation);
+
+    static void on_get_property(
+      Glib::VariantBase&amp; property,
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
+      const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name);
+
+    static bool on_set_property(
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */, 
+      const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path, 
+      const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
+      const Glib::VariantBase&amp; value) ;
+
+    static const Gio::DBus::InterfaceVTable interface_vtable;
+}; // <xsl:value-of select="$iface"/>_Service_Binding
+
+const Glib::ustring <xsl:value-of select="$iface"/>_Service_Binding::xml =
   "&lt;node&gt;<xsl:apply-templates select="." mode="escape"/>&lt;/node&gt;";
 
-static std::map&lt;Glib::ustring, Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; &gt; registry_<xsl:value-of select="$iface"/>;
+std::map&lt;Glib::ustring, Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; &gt; <xsl:value-of select="$iface"/>_Service_Binding::registry;
 
-static void on_method_call_<xsl:value-of select="$iface"/>(
+void <xsl:value-of select="$iface"/>_Service_Binding::on_method_call(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
   const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
   const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
   const Glib::VariantContainerBase&amp; parameters,
   const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation)
 {
-  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry_<xsl:value-of select="$iface"/>[object_path];
+  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry[object_path];
   if (!object) {
     Gio::DBus::Error error(Gio::DBus::Error::UNKNOWN_OBJECT, "Non-existant object.");
     invocation->return_error(error);
@@ -72,13 +99,13 @@ static void on_method_call_<xsl:value-of select="$iface"/>(
   }
 }
 
-void on_get_property_<xsl:value-of select="$iface"/>(
+void <xsl:value-of select="$iface"/>_Service_Binding::on_get_property(
   Glib::VariantBase&amp; property,
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
   const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path,
   const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name)
 {
-  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry_<xsl:value-of select="$iface"/>[object_path];
+  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry[object_path];
   if (!object) return;
 
   <xsl:for-each select="property[@access='read' or @access='readwrite']">if (property_name == "<xsl:value-of select="@name"/>") {
@@ -88,13 +115,13 @@ void on_get_property_<xsl:value-of select="$iface"/>(
   }
 }
 
-bool on_set_property_<xsl:value-of select="$iface"/>(
+bool <xsl:value-of select="$iface"/>_Service_Binding::on_set_property(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */, 
   const Glib::ustring&amp; /* sender */, const Glib::ustring&amp; object_path, 
   const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
   const Glib::VariantBase&amp; value) 
 {
-  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry_<xsl:value-of select="$iface"/>[object_path];
+  Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object = registry[object_path];
   if (!object) return false;
 
   <xsl:for-each select="property[@access='write' or @access='readwrite']">if (property_name == "<xsl:value-of select="@name"/>") {
@@ -105,10 +132,10 @@ bool on_set_property_<xsl:value-of select="$iface"/>(
   }
 }
 
-static const Gio::DBus::InterfaceVTable interface_vtable_<xsl:value-of select="$iface"/>(
-  sigc::ptr_fun(&amp;on_method_call_<xsl:value-of select="$iface"/>),
-  sigc::ptr_fun(&amp;on_get_property_<xsl:value-of select="$iface"/>),
-  sigc::ptr_fun(&amp;on_set_property_<xsl:value-of select="$iface"/>));
+const Gio::DBus::InterfaceVTable <xsl:value-of select="$iface"/>_Service_Binding::interface_vtable(
+  sigc::ptr_fun(&amp;on_method_call),
+  sigc::ptr_fun(&amp;on_get_property),
+  sigc::ptr_fun(&amp;on_set_property));
 
 <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="$iface"/>_Service(const Glib::ustring&amp; object_path_)
  : object_path(object_path_)
@@ -124,14 +151,14 @@ void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&l
 {
   static Glib::RefPtr&lt;Gio::DBus::NodeInfo&gt; introspection;
   if (!introspection)
-    introspection = Gio::DBus::NodeInfo::create_for_xml(xml_<xsl:value-of select="$iface"/>);
+    introspection = Gio::DBus::NodeInfo::create_for_xml(<xsl:value-of select="$iface"/>_Service_Binding::xml);
 
   if (connection_ == connection) return;
 
   guint id_ = connection_->register_object(
     object_path,
     introspection->lookup_interface(),
-    interface_vtable_<xsl:value-of select="$iface"/>);
+    <xsl:value-of select="$iface"/>_Service_Binding::interface_vtable);
 
   this->reference();
   unregister_self();
@@ -139,7 +166,7 @@ void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&l
   connection = connection_;
   id = id_;
 
-  registry_<xsl:value-of select="$iface"/>[object_path] = Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt;(this);
+  <xsl:value-of select="$iface"/>_Service_Binding::registry[object_path] = Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt;(this);
 }
 
 void <xsl:value-of select="$iface"/>_Service::unregister_self() 
@@ -147,7 +174,7 @@ void <xsl:value-of select="$iface"/>_Service::unregister_self()
   if (!connection) return;
   connection->unregister_object(id);
   connection.reset();
-  registry_<xsl:value-of select="$iface"/>.erase(object_path);
+  <xsl:value-of select="$iface"/>_Service_Binding::registry.erase(object_path);
   object_path.clear();
 }
 
