@@ -161,6 +161,7 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
   protected:
     void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties);
     void on_signal(const Glib::ustring&amp; sender_name, const Glib::ustring&amp; signal_name, const Glib::VariantContainerBase&amp; parameters);
+    void fetch_property(const char* name, Glib::VariantBase&amp; val) const;
     void update_property(const char* name, const Glib::VariantBase&amp; val);
 
     <xsl:value-of select="$iface"/>_Proxy(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,

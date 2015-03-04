@@ -260,10 +260,11 @@ const <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of sel
 }
 
 void <xsl:value-of select="$iface"/>_Service::set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val)
-{
+{<xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
   if (connection &amp;&amp; <xsl:value-of select="@name"/> != val)
-    report_property_change("<xsl:value-of select="@name"/>", Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(val));
-  <xsl:value-of select="@name"/> = val;
+    report_property_change("<xsl:value-of select="@name"/>", Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(val));</xsl:if>
+  <xsl:text>
+  </xsl:text><xsl:value-of select="@name"/> = val;
 }
 </xsl:for-each>
 
@@ -291,7 +292,6 @@ void <xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="@name"/>
   <xsl:value-of select="@name"/> = ov_<xsl:value-of select="@name"/>.get();</xsl:for-each>
 }  
 </xsl:for-each>
-
 void <xsl:value-of select="$iface"/>_Proxy::on_properties_changed(
   const MapChangedProperties&amp; changed_properties,
   const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties)
@@ -326,6 +326,23 @@ void <xsl:value-of select="$iface"/>_Proxy::on_signal(
     // noop
   }
 }
+
+void <xsl:value-of select="$iface"/>_Proxy::fetch_property(const char* name, Glib::VariantBase&amp; val) const
+{
+  std::vector&lt; Glib::VariantBase &gt; params;
+  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create("<xsl:value-of select="$iface_full"/>"));
+  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name)); 
+  Glib::RefPtr&lt;const Gio::DBus::Connection&gt; const_connection = get_connection();
+  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection = 
+    Glib::RefPtr&lt;Gio::DBus::Connection&gt;::cast_const(const_connection);
+  connection->reference(); // work around get_connection does not increase reference bug
+  const Glib::VariantContainerBase&amp; result =
+    connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", 
+      Glib::VariantContainerBase::create_tuple(params), get_name());
+  Glib::Variant&lt;Glib::VariantBase&gt; variant;
+  result.get_child(variant, 0);
+  variant.get(val);
+}
 <xsl:for-each select="property[@access='read' or @access='readwrite']">
   <xsl:text>
 </xsl:text>
@@ -333,8 +350,15 @@ void <xsl:value-of select="$iface"/>_Proxy::on_signal(
   <xsl:text> </xsl:text>
   <xsl:value-of select="$iface"/>_Proxy::get<xsl:value-of select="@name"/>() const
 {
-  Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; value;
-  get_cached_property(value, "<xsl:value-of select="@name"/>");
+  Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; value;<xsl:text/>
+  <xsl:choose>
+    <xsl:when test="annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false']">
+  fetch_property("<xsl:value-of select="@name"/>", value);<xsl:text/>
+    </xsl:when>
+    <xsl:otherwise>
+  get_cached_property(value, "<xsl:value-of select="@name"/>");<xsl:text/>
+    </xsl:otherwise>
+  </xsl:choose>
   return value.get();
 }
 </xsl:for-each>
@@ -345,7 +369,7 @@ void <xsl:value-of select="$iface"/>_Proxy::update_property(const char* name, co
   params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name)); 
   params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));
   Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection = get_connection();
-  connection->reference(); // work around bug
+  connection->reference(); // work around get_connection does not increase reference bug
   connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set", 
     Glib::VariantContainerBase::create_tuple(params), get_name());
 }
