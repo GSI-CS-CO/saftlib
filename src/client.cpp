@@ -4,8 +4,12 @@
 #include <giomm.h>
 #include "TLU_Channel.h"
 
+Glib::RefPtr<saftlib::TLU_Channel_Proxy> channel;
+
 void on_edge(const guint64& time) {
-  std::cout << "Pulse detected: " << time << std::endl;
+  guint64 now;
+  channel->CurrentTime(now);
+  std::cout << "Pulse detected: " << time << " @ " << now << " = " << (now-time) << std::endl;
 }
 
 int main(int, char**)
@@ -15,8 +19,7 @@ int main(int, char**)
   try {
   
     Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-    
-    Glib::RefPtr<saftlib::TLU_Channel_Proxy> channel =
+    channel =
       saftlib::TLU_Channel_Proxy::create_for_bus_sync(
         Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/TLU/pex0_100_0");
     
