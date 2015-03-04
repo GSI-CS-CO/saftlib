@@ -52,7 +52,7 @@
          can be compared against Size to ensure that there is
          sufficient space to deal with worst-case behaviour.
        -->
-    <property name="MaxFill" type="u" access="read">
+    <property name="MaxFill" type="u" access="readwrite">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>
     
@@ -66,20 +66,17 @@
     <property name="Size" type="u" access="read"/>
     
     <!-- ActionCount: The total number of actions forwarded by this channel. -->
-    <property name="ActionCount" type="u" access="read">
+    <property name="ActionCount" type="u" access="readwrite">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>
     <!-- ConflictCount: The total number of conflicting actions forwarded by this channel. -->
-    <property name="ConflictCount" type="u" access="read">
+    <property name="ConflictCount" type="u" access="readwrite">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>
     <!-- LateCount: The total number of late actions forwarded by this channel. -->
-    <property name="LateCount" type="u" access="read">
+    <property name="LateCount" type="u" access="readwrite">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>
-    
-    <!-- Reset: Clear MaxFill and the Counters to zero. -->
-    <method name="Reset"/>
     
     <!-- Conflict: Raised if the channel must schedule two actions simultaneously.
          The hardware can only output a single action at a time. If two
