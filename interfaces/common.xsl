@@ -40,8 +40,6 @@
     <xsl:when test="$input='d'">double</xsl:when>
     <xsl:when test="$input='h'">int</xsl:when>
     <xsl:when test="$input='s'">Glib::ustring</xsl:when>
-    <xsl:when test="$input='o'">Glib::ustring</xsl:when>
-    <xsl:when test="$input='g'">Glib::ustring</xsl:when>
     <xsl:when test="$input='v'">Glib::VariantBase</xsl:when>
     <xsl:when test="substring($input,1,1)='(' and substring($input,string-length($input),1)=')'">
       <xsl:message terminate="yes">

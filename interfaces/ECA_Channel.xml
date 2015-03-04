@@ -33,7 +33,7 @@
       <arg direction="in" type="t" name="last"/>
       <arg direction="in" type="x" name="offset"/>
       <arg direction="in" type="u" name="tag"/>
-      <arg direction="out" type="o" name="result"/>
+      <arg direction="out" type="s" name="result"/>
     </method>
     
     <!-- Fill: The total number of actions pending.

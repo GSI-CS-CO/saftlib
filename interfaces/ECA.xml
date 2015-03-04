@@ -31,7 +31,7 @@
     <!-- Channels: The hardware output channels of the ECA.
          Each returned object path implements the ECA_Channel interface.
       -->
-    <property name="Channels" type="ao" access="read"/>
+    <property name="Channels" type="as" access="read"/>
     
     <!-- Free: The number of additional conditions that may be created.
          The ECA has limited hardware resources in its match table. This
@@ -48,7 +48,7 @@
          This lists all conditions currently managed by this ECA instance.
          Each returned object path implements the ECA_Condition interface.
       -->
-    <property name="Conditions" type="ao" access="read"/>
+    <property name="Conditions" type="as" access="read"/>
 
     <!-- NewCondition: Create a condition to match incoming events
          @first:  First event ID to monitor (inclusive)
@@ -67,7 +67,7 @@
       <arg direction="in" type="t" name="first"/>
       <arg direction="in" type="t" name="last"/>
       <arg direction="in" type="x" name="offset"/>
-      <arg direction="out" type="o" name="result"/>
+      <arg direction="out" type="s" name="result"/>
     </method>
     
     <!-- InjectEvent: Simulate the receipt of a timing event.
