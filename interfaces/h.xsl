@@ -81,7 +81,9 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
     <xsl:for-each select="property[@access='write' or @access='readwrite']">
     void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
     <xsl:for-each select="property[@access='read' or @access='readwrite']">
-    sigc::signal&lt; void, const <xsl:apply-templates mode="iface-type" select="."/>&amp; &gt; <xsl:value-of select="@name"/>;</xsl:for-each>
+    <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
+    sigc::signal&lt; void, const <xsl:apply-templates mode="iface-type" select="."/>&amp; &gt; <xsl:value-of select="@name"/>;</xsl:if>
+    </xsl:for-each>
 
   public:
     // See Gio::DBus::Proxy; these methods are the same

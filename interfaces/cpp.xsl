@@ -300,10 +300,17 @@ void <xsl:value-of select="$iface"/>_Proxy::on_properties_changed(
 
   for (MapChangedProperties::const_iterator i = changed_properties.begin(); i != changed_properties.end(); ++i) {
     <xsl:for-each select="property[@access='read' or @access='readwrite']">if (i->first == "<xsl:value-of select="@name"/>") {
-      <xsl:value-of select="@name"/>(Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(i->second).get());
+      <xsl:choose>
+        <xsl:when test="annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false']">
+          <xsl:text>// EmitsChangedSignal = false</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="@name"/>(Glib::VariantBase::cast_dynamic&lt; Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; &gt;(i->second).get());<xsl:text/>
+        </xsl:otherwise>
+      </xsl:choose>
     } else </xsl:for-each>{
       // noop
-     }
+    }
   }
 }
 
