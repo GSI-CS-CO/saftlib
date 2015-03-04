@@ -64,7 +64,6 @@ TLU::~TLU()
   } catch (const etherbone::exception_t& e) {
     std::cerr << "TLU::~TLU: " << e << std::endl;
   }
-  std::cout << "TLU destroyed" << std::endl;
 }
 
 Glib::RefPtr<TLU> TLU::create(Device& device, eb_address_t base, int channel)

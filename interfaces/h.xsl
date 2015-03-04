@@ -44,6 +44,8 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     virtual void rethrow(const char *method);
     void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_, const Glib::ustring&amp; path);
     void unregister_self();
+  private:
+    const Gio::DBus::InterfaceVTable interface_vtable;
   protected:
     // export state
     struct Export {
@@ -65,7 +67,24 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     // non copyable
     <xsl:value-of select="$iface"/>_Service(const <xsl:value-of select="$iface"/>_Service&amp;);
     <xsl:value-of select="$iface"/>_Service&amp; operator = (const <xsl:value-of select="$iface"/>_Service&amp;);
-  friend class <xsl:value-of select="$iface"/>_Service_Binding;
+    // parsers
+    static const Glib::ustring xml;
+    void on_method_call(
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
+      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
+      const Glib::VariantContainerBase&amp; parameters,
+      const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation);
+    void on_get_property(
+      Glib::VariantBase&amp; property,
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
+      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name);
+    bool on_set_property(
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */, 
+      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path, 
+      const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
+      const Glib::VariantBase&amp; value) ;
 };
 
 class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {

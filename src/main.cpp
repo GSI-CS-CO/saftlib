@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   
   Gio::DBus::unown_name(id);
   saftlib::Directory::get()->resetConnection();
-  eb_source.disconnect();
+  //eb_source.disconnect();
   
   device.close();
   socket.close();
