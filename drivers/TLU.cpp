@@ -5,17 +5,16 @@
 #include "RegisteredObject.h"
 #include "Driver.h"
 #include "interfaces/TLU.h"
-#include "interfaces/TLU_Channel.h"
 #include "tlu_regs.h"
 
 #define OBJECT_PATH "/de/gsi/saftlib/TLU"
 
 namespace saftlib {
 
-class TLU_Channel : public RegisteredObject<TLU_Channel_Service>
+class TLU : public RegisteredObject<TLU_Service>
 {
   public:
-    ~TLU_Channel();
+    ~TLU();
     
     void setEnabled(const bool& val);
     void setLatchEdge(const bool& val);
@@ -23,10 +22,11 @@ class TLU_Channel : public RegisteredObject<TLU_Channel_Service>
     
     void CurrentTime(guint64& result);
     
-    static Glib::RefPtr<TLU_Channel> create(saftlib::Device& device, eb_address_t base, int channel);
+    static Glib::RefPtr<TLU> create(saftlib::Device& device, eb_address_t base, int channel);
+    static void probe();
     
   protected:
-    TLU_Channel(Device& device, eb_address_t base, int channel);
+    TLU(Device& device, eb_address_t base, int channel);
     void irq_handler(eb_data_t);
     void setHandler(bool enable, eb_data_t address = 0, eb_data_t message = 0);
     
@@ -43,10 +43,10 @@ static Glib::ustring path(Device& device_, eb_address_t base_, int channel_)
   return stream.str();
 }
 
-TLU_Channel::TLU_Channel(Device& device_, eb_address_t base_, int channel_)
- : RegisteredObject<TLU_Channel_Service>(path(device_, base_, channel_)),
+TLU::TLU(Device& device_, eb_address_t base_, int channel_)
+ : RegisteredObject<TLU_Service>(path(device_, base_, channel_)),
    device(device_), base(base_), channel(channel_), 
-   irq(device.request_irq(sigc::mem_fun(*this, &TLU_Channel::irq_handler)))
+   irq(device.request_irq(sigc::mem_fun(*this, &TLU::irq_handler)))
 {
   // throw through
   setEnabled(false);
@@ -55,23 +55,24 @@ TLU_Channel::TLU_Channel(Device& device_, eb_address_t base_, int channel_)
   setStableTime(8);
 }
 
-TLU_Channel::~TLU_Channel()
+TLU::~TLU()
 {
   try { // destructors cannot throw
     device.release_irq(irq);
     setHandler(false);
     setEnabled(false);
   } catch (const etherbone::exception_t& e) {
-    std::cerr << "TLU_Channel::~TLU_Channel: " << e << std::endl;
+    std::cerr << "TLU::~TLU: " << e << std::endl;
   }
+  std::cout << "TLU destroyed" << std::endl;
 }
 
-Glib::RefPtr<TLU_Channel> TLU_Channel::create(Device& device, eb_address_t base, int channel)
+Glib::RefPtr<TLU> TLU::create(Device& device, eb_address_t base, int channel)
 {
-  return Glib::RefPtr<TLU_Channel>(new TLU_Channel(device, base, channel));
+  return Glib::RefPtr<TLU>(new TLU(device, base, channel));
 }
 
-void TLU_Channel::setHandler(bool enable, eb_data_t address, eb_data_t message)
+void TLU::setHandler(bool enable, eb_data_t address, eb_data_t message)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
@@ -88,37 +89,37 @@ void TLU_Channel::setHandler(bool enable, eb_data_t address, eb_data_t message)
   cycle.close();
 }
 
-void TLU_Channel::setEnabled(const bool& val)
+void TLU::setEnabled(const bool& val)
 {
   if (val) {
     device.write(base + SLAVE_ACT_SET, EB_DATA32, 1<<channel);
   } else {
     device.write(base + SLAVE_ACT_CLR, EB_DATA32, 1<<channel);
   }
-  TLU_Channel_Service::setEnabled(val);
+  TLU_Service::setEnabled(val);
 }
 
-void TLU_Channel::setLatchEdge(const bool& val)
+void TLU::setLatchEdge(const bool& val)
 {
   if (val) {
     device.write(base + SLAVE_EDG_SET, EB_DATA32, 1<<channel);
   } else {
     device.write(base + SLAVE_EDG_CLR, EB_DATA32, 1<<channel);
   }
-  TLU_Channel_Service::setLatchEdge(val);
+  TLU_Service::setLatchEdge(val);
 }
 
-void TLU_Channel::setStableTime(const guint32& val)
+void TLU::setStableTime(const guint32& val)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
   cycle.write(base + SLAVE_CH_SEL_RW, EB_DATA32, channel);
   cycle.write(base + SLAVE_STABLE_RW, EB_DATA32, val);
   cycle.close();
-  TLU_Channel_Service::setStableTime(val);
+  TLU_Service::setStableTime(val);
 }
 
-void TLU_Channel::CurrentTime(guint64& val)
+void TLU::CurrentTime(guint64& val)
 {
   eb_data_t hi, lo;
   etherbone::Cycle cycle;
@@ -133,7 +134,7 @@ void TLU_Channel::CurrentTime(guint64& val)
   val <<= 3;
 }
 
-void TLU_Channel::irq_handler(eb_data_t)
+void TLU::irq_handler(eb_data_t)
 {
   try { // irq handlers cannot throw
     etherbone::Cycle cycle;
@@ -155,25 +156,8 @@ void TLU_Channel::irq_handler(eb_data_t)
     
     Edge(time);
   } catch (const etherbone::exception_t& e) {
-    std::cerr << "TLU_Channel::irq_handler: " << e << std::endl;
+    std::cerr << "TLU::irq_handler: " << e << std::endl;
   }
-}
-
-class TLU : public RegisteredObject<TLU_Service>
-{
-  public:
-    TLU();
-    
-    static void probe();
-    
-  protected:
-    std::vector<Glib::RefPtr<TLU_Channel> > channels;
-    void setIRQEnable(bool on);
-};
-
-TLU::TLU()
- : RegisteredObject<TLU_Service>(OBJECT_PATH)
-{
 }
 
 void TLU::probe() 
@@ -194,7 +178,7 @@ void TLU::probe()
       
       // Create all dbus channel objects
       for (eb_data_t channel = 0; channel < num_channels; ++channel) {
-        Glib::RefPtr<TLU_Channel> object = TLU_Channel::create(*device, address, channel);
+        Glib::RefPtr<TLU> object = TLU::create(*device, address, channel);
         Directory::get()->add("TLU", object->getObjectPath(), object);
       }
       

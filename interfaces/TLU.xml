@@ -1,18 +1,55 @@
 <node>
   <!-- de.gsi.saftlib.TLU:
-       @short_description: Track the timestamps of incoming pulses
-       
+       @short_description: Track the timestamps of incoming edges
+
        This D-Bus interface is used to control the Timestamp-Latch-Unit
-       (TLU) hardware present in timing receivers. This interface merely
-       reports the available TLU_Channels and provides the current time.
+       (TLU) hardware present in timing receivers. Whenever an edge is
+       received on an input, the current time is recorded and then reported
+       via a signal on corresponding TLU Channel.
     -->
   <interface name="de.gsi.saftlib.TLU">
-    <!-- Channels: List of channels provided by available TLUs.
+    <!-- Enabled: Whether or not the Channel is active.
 
-         This returns an array of object paths, each path has the format:
-         /de/gsi/saftlib/TLU/[x]-[y]. [x] is the TLU device and [y] is the
-         channel on that device.
+         When true, the hardware reports edges received, which this
+         interface then reports via the Edge signal. Even when no clients
+         are listening, processing edges still takes time, so the channel
+         should be disabled in that case.
     -->
-    <property name="Channels" type="as" access="read"/>
+    <property name="Enabled" type="b" access="readwrite"/>
+    
+    <!-- LatchEdge: Which edge to record for timestamps
+
+         A positive LatchEdge will instruct the TLU to capture the
+         timestamp of the rising edge on its input. A negative LatchEdge
+         captures on timestamps for the falling edge.
+    -->
+    <property name="LatchEdge" type="b" access="readwrite"/>
+    
+    <!-- StableTime: Deglitch threshold
+
+         A positive LatchEdge will instruct the TLU to capture the
+         timestamp of the rising edge on its input. A negative LatchEdge
+         captures on timestamps for the falling edge.
+    -->
+    <property name="StableTime" type="u" access="readwrite"/>
+    
+    <!-- Edge:       Reports a received edge
+         @timestamp: The received timestamp in 1ns ticks since 1970.
+
+         Every time the TLU input channel sees an edge, this signal will be
+         generated.  Please set the properties appropriately, to select
+         which edge (if any) to report.  Also keep in mind that pulses
+         shorter than 1ns are not guaranteed to be recognized.
+    -->
+    <signal name="Edge">
+      <arg type="t" name="timestamp"/>
+    </signal>
+    
+    <!-- CurrentTime: Return the current time
+         @result: The number of 1ns ticks since 1970
+      -->
+    <method name="CurrentTime">
+      <arg direction="out" type="t" name="result"/>
+    </method>
   </interface>
 </node>

@@ -2,9 +2,9 @@
 
 #include <iostream>
 #include <giomm.h>
-#include "interfaces/TLU_Channel.h"
+#include "interfaces/TLU.h"
 
-Glib::RefPtr<saftlib::TLU_Channel_Proxy> channel;
+Glib::RefPtr<saftlib::TLU_Proxy> channel;
 
 void on_edge(const guint64& time) {
   guint64 now;
@@ -20,7 +20,7 @@ int main(int, char**)
   
     Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     channel =
-      saftlib::TLU_Channel_Proxy::create_for_bus_sync(
+      saftlib::TLU_Proxy::create_for_bus_sync(
         Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/TLU/pex0_100_0");
     
     // Was it already active?

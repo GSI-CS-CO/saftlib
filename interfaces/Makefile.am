@@ -1,12 +1,12 @@
 lib_LTLIBRARIES = libsaftlib.la
-doc_DATA = TLU.pdf TLU_Channel.pdf ECA.pdf ECA_Condition.pdf ECA_Channel.pdf
+doc_DATA = TLU.pdf ECA.pdf ECA_Condition.pdf ECA_Channel.pdf
 
 EXTRA_DIST = h.xsl cpp.xsl common.xsl
 CLEANFILES = *.cpp *.h *.pdf
 
 AM_CPPFLAGS = $(GIOMM_CFLAGS)
 
-libsaftlib_la_SOURCES = Directory.xml ECA.xml ECA_Condition.xml ECA_Channel.xml TLU.xml TLU_Channel.xml
+libsaftlib_la_SOURCES = Directory.xml ECA.xml ECA_Condition.xml ECA_Channel.xml TLU.xml
 libsaftlib_la_LIBADD = $(GIOMM_LIBS)
 
 .xml.cpp:
