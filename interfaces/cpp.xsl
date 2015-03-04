@@ -339,9 +339,8 @@ void <xsl:value-of select="$iface"/>_Proxy::fetch_property(const char* name, Gli
   std::vector&lt; Glib::VariantBase &gt; params;
   params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create("<xsl:value-of select="$iface_full"/>"));
   params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name)); 
-  Glib::RefPtr&lt;const Gio::DBus::Connection&gt; const_connection = get_connection();
   Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection = 
-    Glib::RefPtr&lt;Gio::DBus::Connection&gt;::cast_const(const_connection);
+    Glib::RefPtr&lt;Gio::DBus::Connection&gt;::cast_const(get_connection());
   connection->reference(); // work around get_connection does not increase reference bug
   const Glib::VariantContainerBase&amp; result =
     connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", 
