@@ -47,8 +47,6 @@
     
     <!-- CurrentTime: Return the current time
          @result: The number of 1ns ticks since 1970
-
-         This method grabs the current time from the first TLU.
       -->
     <method name="CurrentTime">
       <arg direction="out" type="t" name="result"/>

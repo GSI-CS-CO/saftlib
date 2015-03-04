@@ -88,6 +88,7 @@ class ECA : public RegisteredObject<ECA_Service>
       Glib::ustring& result);
     void InjectEvent(
       const guint64& event, const guint64& param, const guint64& time, const guint32& tef);
+    void CurrentTime(guint64& result);
       
     void recompile();
     
@@ -114,7 +115,8 @@ class ECA : public RegisteredObject<ECA_Service>
 static Glib::ustring condition_path(ECA* e, ECA_Condition* c)
 {
   std::ostringstream str;
-  str << e->getObjectPath() << "/cond-" << std::hex << c;
+  str.imbue(std::locale("C"));
+  str << e->getObjectPath() << "/cond_" << std::hex << (uintptr_t)c;
   return str.str();
 }
 
@@ -192,7 +194,8 @@ void ECA_Condition::setHardwareActive(const bool& val)
 static Glib::ustring channel_path(ECA* e, int channel)
 {
   std::ostringstream str;
-  str << e->getObjectPath() << "/chan-" << std::hex << channel;
+  str.imbue(std::locale("C"));
+  str << e->getObjectPath() << "/chan_" << std::hex << channel;
   return str.str();
 }
 
@@ -400,8 +403,16 @@ void ECA_Channel::irq_handler(eb_data_t)
   }
 }
 
+static Glib::ustring eca_path(Device& d, eb_address_t a)
+{
+  std::ostringstream str;
+  str.imbue(std::locale("C"));
+  str << "/de/gsi/saftlib/ECA_" << d.getName() << "_" << std::hex << a;
+  return str.str();
+}
+
 ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
- : RegisteredObject<ECA_Service>("..."),
+ : RegisteredObject<ECA_Service>(eca_path(d, b)),
    device(d), base(b), stream(s), aq(a),
    overflow_irq(device.request_irq(sigc::mem_fun(*this, &ECA::overflow_handler))),
    arrival_irq (device.request_irq(sigc::mem_fun(*this, &ECA::arrival_handler)))
@@ -415,7 +426,8 @@ ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
   for (unsigned i = 0; i < 64; ++i)
     cycle.read(base + ECA_CTL, EB_DATA32, &name[i]);
   cycle.read(base + ECA_INFO, EB_DATA32, &sizes);
-  // enable
+  // disable ECA actions and interrupts
+  cycle.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
   cycle.close();
   
   channels.resize((sizes >> 8) & 0xFF);
@@ -434,8 +446,11 @@ ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
   setHandlers(true, arrival_irq, overflow_irq);
   // !!! hook name change
   
-  // updates Free and Conditions
+  // sets Free and Conditions
   recompile();
+  
+  // enable interrupts and actions
+  device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_DISABLE<<8 | ECA_CTL_INT_ENABLE);
 }
 
 ECA::~ECA()
@@ -455,6 +470,11 @@ ECA::~ECA()
   } catch (const etherbone::exception_t& e) {
     std::cerr << "ECA::~ECA: " << e << std::endl;
   }
+}
+
+Glib::RefPtr<ECA> ECA::create(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
+{
+  return Glib::RefPtr<ECA>(new ECA(d, b, s, a));
 }
 
 void ECA::setHandlers(bool enable, eb_address_t arrival, eb_address_t overflow)
@@ -494,10 +514,32 @@ void ECA::InjectEvent(
   cycle.close();
 }
 
+void ECA::CurrentTime(guint64& result)
+{
+  etherbone::Cycle cycle;
+  eb_data_t time1, time0;
+  cycle.open(device);
+  cycle.read(base + ECA_TIME1, EB_DATA32, &time1);
+  cycle.read(base + ECA_TIME0, EB_DATA32, &time0);
+  cycle.close();
+  
+  result = time1;
+  result <<= 32;
+  result |= time0;
+}
+
 void ECA::recompile()
 {
-  setFree(22);
-  // !!! setConditions(...); ... based on conditions
+  unsigned free = 43;
+  
+  // !!! do something sensible
+  
+  std::vector<Glib::ustring> paths;
+  for (ConditionSet::iterator i = conditions.begin(); i != conditions.end(); ++i) {
+    paths.push_back((*i)->getObjectPath());
+  }
+  setConditions(paths);
+  setFree(free);
 }
 
 void ECA::overflow_handler(eb_data_t)
@@ -570,7 +612,8 @@ class ECA_Probe
 
 ECA_Probe::ECA_Probe(Devices& devices)
 {
-  // !!!
+  // !!! so wrong ...
+  ECA::create(devices[0], 0x80, 0x7ffffff0, 0x40)->reference();
 }
 
 static Driver<ECA_Probe> eca;

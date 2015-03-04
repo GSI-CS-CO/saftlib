@@ -21,6 +21,13 @@
       -->
     <property name="Frequency" type="s" access="read"/>
     
+    <!-- CurrentTime: Return the current time.
+         @result: The number of cycles since 1970
+      -->
+    <method name="CurrentTime">
+      <arg direction="out" type="t" name="result"/>
+    </method>
+    
     <!-- Channels: The hardware output channels of the ECA.
          Each returned object path implements the ECA_Channel interface.
       -->
