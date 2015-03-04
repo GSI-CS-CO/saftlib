@@ -14,8 +14,7 @@ class DriverBase
     void remove_self();
     
   protected:
-    virtual void start(Devices&) = 0;
-    virtual void stop() = 0;
+    virtual void probe() = 0;
     
   private:
     // secret
@@ -36,15 +35,13 @@ class Driver : private DriverBase
     ~Driver() { remove_self(); }
   
   private:
-    void start(Devices& devices) { new T(devices); }
-    void stop() { }
+    void probe() { return T::probe(); }
 };
 
 class Drivers
 {
   public:
-    static void start(Devices& devices);
-    static void stop();
+    static void probe();
 };
 
 }

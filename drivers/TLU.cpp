@@ -2,10 +2,10 @@
 
 #include <sstream>
 #include <iostream>
-#include "ObjectRegistry.h"
+#include "RegisteredObject.h"
 #include "Driver.h"
-#include "TLU.h"
-#include "TLU_Channel.h"
+#include "interfaces/TLU.h"
+#include "interfaces/TLU_Channel.h"
 #include "tlu_regs.h"
 
 #define OBJECT_PATH "/de/gsi/saftlib/TLU"
@@ -162,24 +162,26 @@ void TLU_Channel::irq_handler(eb_data_t)
 class TLU : public RegisteredObject<TLU_Service>
 {
   public:
-    TLU(Devices& devices);
+    TLU();
+    
+    static void probe();
     
   protected:
     std::vector<Glib::RefPtr<TLU_Channel> > channels;
     void setIRQEnable(bool on);
 };
 
-TLU::TLU(Devices& devices)
+TLU::TLU()
  : RegisteredObject<TLU_Service>(OBJECT_PATH)
 {
-  std::vector<Glib::ustring> channel_names;
-  std::vector<struct sdb_device> sdbs;
-  
-  // throw through
-  
+}
+
+void TLU::probe() 
+{
   // Scan all devices
+  Devices& devices = Directory::get()->devices();
   for (Devices::iterator device = devices.begin(); device != devices.end(); ++device) {
-    sdbs.clear();
+    std::vector<struct sdb_device> sdbs;
     device->sdb_find_by_identity(TLU_SLAVE_VENDOR_ID, TLU_SLAVE_DEVICE_ID, sdbs);
     // Scan all cores
     for (unsigned core = 0; core < sdbs.size(); ++core) {
@@ -192,8 +194,8 @@ TLU::TLU(Devices& devices)
       
       // Create all dbus channel objects
       for (eb_data_t channel = 0; channel < num_channels; ++channel) {
-        channels.push_back(TLU_Channel::create(*device, address, channel));
-        channel_names.push_back(channels.back()->getObjectPath());
+        Glib::RefPtr<TLU_Channel> object = TLU_Channel::create(*device, address, channel);
+        Directory::get()->add("TLU", object->getObjectPath(), object);
       }
       
       // Flush all FIFOs and enable interrupts
@@ -201,8 +203,6 @@ TLU::TLU(Devices& devices)
       device->write(address + SLAVE_IE_RW,     EB_DATA32, 1);
     }
   }
-  
-  setChannels(channel_names);
 }
 
 static Driver<TLU> tlu;

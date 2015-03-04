@@ -6,7 +6,7 @@ CLEANFILES = *.cpp *.h *.pdf
 
 AM_CPPFLAGS = $(GIOMM_CFLAGS)
 
-libsaftlib_la_SOURCES = ECA.xml ECA_Condition.xml ECA_Channel.xml TLU.xml TLU_Channel.xml
+libsaftlib_la_SOURCES = Directory.xml ECA.xml ECA_Condition.xml ECA_Channel.xml TLU.xml TLU_Channel.xml
 libsaftlib_la_LIBADD = $(GIOMM_LIBS)
 
 .xml.cpp:

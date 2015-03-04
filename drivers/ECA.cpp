@@ -3,11 +3,11 @@
 #include <list>
 #include <iostream>
 #include <sstream>
-#include "ObjectRegistry.h"
+#include "RegisteredObject.h"
 #include "Driver.h"
-#include "ECA.h"
-#include "ECA_Channel.h"
-#include "ECA_Condition.h"
+#include "interfaces/ECA.h"
+#include "interfaces/ECA_Channel.h"
+#include "interfaces/ECA_Condition.h"
 #include "eca_regs.h"
 
 namespace saftlib {
@@ -161,7 +161,7 @@ Glib::RefPtr<ECA_Condition> ECA_Condition::create(
 
 void ECA_Condition::Disown()
 {
-  if (getSender() == getOwner()) {
+  if (sender == getOwner()) {
     setOwner("");
   } else {
     throw Gio::DBus::Error(Gio::DBus::Error::ACCESS_DENIED, "You are not my owner");
@@ -170,7 +170,7 @@ void ECA_Condition::Disown()
 
 void ECA_Condition::Delete()
 {
-  if (getOwner().empty() || getOwner() == getSender()) {
+  if (getOwner().empty() || getOwner() == sender) {
     // remove references => self destruct
     unregister_self();
     eca->conditions.erase(index);
@@ -291,7 +291,7 @@ void ECA_Channel::NewCondition(
   Glib::ustring& result)
 {
   Glib::RefPtr<ECA_Condition> condition = ECA_Condition::create(
-    eca, first, last, offset, tag, getSender(), false, true, channel);
+    eca, first, last, offset, tag, sender, false, true, channel);
   result = condition->getObjectPath();
 }
 
@@ -526,7 +526,7 @@ void ECA::NewCondition(
   Glib::ustring& result)
 {
   Glib::RefPtr<ECA_Condition> condition = ECA_Condition::create(
-    this, first, last, offset, 0, getSender(), true, false, -1);
+    this, first, last, offset, 0, sender, true, false, -1);
   result = condition->getObjectPath();
 }
 
@@ -640,14 +640,14 @@ void ECA::name_owner_changed_handler(const Glib::ustring& name, const Glib::ustr
 class ECA_Probe
 {
   public:
-    ECA_Probe(Devices& devices);
+    static void probe();
     // start/stop maybe keep reference ... and add ctrl+c => cleanup
 };
 
-ECA_Probe::ECA_Probe(Devices& devices)
+void ECA_Probe::probe()
 {
   // !!! so wrong ...
-  ECA::create(devices[0], 0x80, 0x7ffffff0, 0x40)->reference();
+//  ECA::create(Directory::get()->devices()[0], 0x80, 0x7ffffff0, 0x40)->reference();
 }
 
 static Driver<ECA_Probe> eca;

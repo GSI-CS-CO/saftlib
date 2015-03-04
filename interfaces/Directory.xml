@@ -1,0 +1,20 @@
+<node>
+  <!-- de.gsi.saftlib.Directory:
+       @short_description: Report instances of managed hardware
+       
+       This D-Bus interface is the main entry point into the saftlib. All
+       device drivers register their top-level hardware objects here.
+    -->
+  <interface name="de.gsi.saftlib.Directory">
+    <!-- Devices: List of all object instances of various hardware.
+         The key in the dictionary is the name of the interface.
+         The value is al object paths to hardware implementing that interface.
+      -->
+    <property name="Devices" type="a{sas}" access="read"/>
+    
+    <!-- Quit: Instructs the saftlib daemon to quit.
+         Be absolutely certain before calling this method!
+      -->
+    <method name="Quit"/>
+  </interface>
+</node>

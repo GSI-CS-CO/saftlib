@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <giomm.h>
-#include "TLU_Channel.h"
+#include "interfaces/TLU_Channel.h"
 
 Glib::RefPtr<saftlib::TLU_Channel_Proxy> channel;
 

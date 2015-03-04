@@ -39,21 +39,25 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     <xsl:for-each select="property">
     virtual void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
     // Standard Service methods
-    <xsl:value-of select="$iface"/>_Service(const Glib::ustring&amp; object_path_);
+    <xsl:value-of select="$iface"/>_Service();
     virtual ~<xsl:value-of select="$iface"/>_Service();
     virtual void rethrow(const char *method);
-    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_);
+    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_, const Glib::ustring&amp; path);
     void unregister_self();
-    const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const { return connection; }
-    const Glib::ustring&amp; getSender() const { return sender; }
-    const Glib::ustring&amp; getObjectPath() const { return object_path; }
-    void setObjectPath(const Glib::ustring&amp; object_path);
+  protected:
+    // export state
+    struct Export {
+      Export(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) : 
+       connection(c), object_path(o), id(i) { }
+      Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
+      Glib::ustring object_path;
+      int id;
+    };
+    std::vector&lt;Export&gt; exports;
+    Glib::ustring sender;
   private:
     void report_property_change(const char* name, const Glib::VariantBase&amp; value);
-    Glib::ustring object_path;
-    Glib::ustring sender;
-    Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
-    guint id;<xsl:for-each select="property">
+    // property variables<xsl:for-each select="property">
     <xsl:text>
     </xsl:text><xsl:apply-templates mode="iface-type" select="."/>
     <xsl:text> </xsl:text>

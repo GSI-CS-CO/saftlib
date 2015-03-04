@@ -6,9 +6,11 @@
 
 namespace saftlib {
 
-Device::Device(etherbone::Device d, eb_address_t low_, eb_address_t high_)
- : etherbone::Device(d), low(low_), high(high_), name("pex0")
+Device::Device(etherbone::Device d)
+ : etherbone::Device(d), 
+   low(0x30000), high(0x3ffff), name("pex0") // !!! probe out of config space
 {
+  // !!! enable interrupts
 }
 
 // Must use IRQs that are globally unique

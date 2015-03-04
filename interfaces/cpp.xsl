@@ -153,8 +153,7 @@ const Gio::DBus::InterfaceVTable <xsl:value-of select="$iface"/>_Service_Binding
   sigc::ptr_fun(&amp;on_get_property),
   sigc::ptr_fun(&amp;on_set_property));
 
-<xsl:value-of select="$iface"/>_Service::<xsl:value-of select="$iface"/>_Service(const Glib::ustring&amp; object_path_)
- : object_path(object_path_)
+<xsl:value-of select="$iface"/>_Service::<xsl:value-of select="$iface"/>_Service() 
 {
 }
 
@@ -168,43 +167,30 @@ void <xsl:value-of select="$iface"/>_Service::rethrow(const char *method)
   throw;
 }
 
-void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_) 
+void <xsl:value-of select="$iface"/>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path) 
 {
   static Glib::RefPtr&lt;Gio::DBus::NodeInfo&gt; introspection;
   if (!introspection)
     introspection = Gio::DBus::NodeInfo::create_for_xml(<xsl:value-of select="$iface"/>_Service_Binding::xml);
 
-  if (connection_ == connection) return;
-
-  guint id_ = connection_->register_object(
+  guint id = connection->register_object(
     object_path,
     introspection->lookup_interface(),
     <xsl:value-of select="$iface"/>_Service_Binding::interface_vtable);
 
+  exports.push_back(Export(connection, object_path, id));
+
   this->reference();
-  unregister_self();
-
-  connection = connection_;
-  id = id_;
-
   <xsl:value-of select="$iface"/>_Service_Binding::registry[object_path] = Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt;(this);
 }
 
 void <xsl:value-of select="$iface"/>_Service::unregister_self() 
 {
-  if (!connection) return;
-  connection->unregister_object(id);
-  connection.reset();
-  <xsl:value-of select="$iface"/>_Service_Binding::registry.erase(object_path);
-  object_path.clear();
-}
-
-void <xsl:value-of select="$iface"/>_Service::setObjectPath(const Glib::ustring&amp; object_path_)
-{
-  if (object_path == object_path_) return;
-  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection_ = connection;
-  unregister_self();
-  if (connection_) register_self(connection_);
+  for (unsigned i = 0; i &lt; exports.size(); ++i) {
+    exports[i].connection->unregister_object(exports[i].id);
+    <xsl:value-of select="$iface"/>_Service_Binding::registry.erase(exports[i].object_path);
+  }
+  exports.clear();
 }
 <xsl:for-each select="method">
 void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
@@ -237,8 +223,11 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
    <xsl:apply-templates mode="iface-type" select="."/>
    <xsl:text> &gt;::create(</xsl:text>
    <xsl:value-of select="@name"/>));
-  </xsl:for-each>connection->emit_signal(object_path, "<xsl:value-of select="$iface_full"/>", "<xsl:value-of select="@name"/>", "", 
-    Glib::VariantContainerBase::create_tuple(data_vector));
+  </xsl:for-each>for (unsigned i = 0; i &lt; exports.size(); ++i) {
+    exports[i].connection->emit_signal(exports[i].object_path, 
+      "<xsl:value-of select="$iface_full"/>", "<xsl:value-of select="@name"/>", "", 
+      Glib::VariantContainerBase::create_tuple(data_vector));
+  }
 }
 </xsl:for-each>
 void <xsl:value-of select="$iface"/>_Service::report_property_change(const char* property, const Glib::VariantBase&amp; value)
@@ -250,8 +239,11 @@ void <xsl:value-of select="$iface"/>_Service::report_property_change(const char*
   message_vector.push_back(Glib::Variant&lt;Glib::ustring&gt;::create("<xsl:value-of select="$iface_full"/>"));
   message_vector.push_back(Glib::Variant&lt; std::map&lt; Glib::ustring, Glib::VariantBase &gt; &gt;::create(updated));
   message_vector.push_back(Glib::Variant&lt; std::vector&lt; Glib::ustring &gt; &gt;::create(invalidated));
-  connection->emit_signal(object_path, "org.freedesktop.DBus.Properties", "PropertiesChanged", "", 
-    Glib::VariantContainerBase::create_tuple(message_vector));
+  for (unsigned i = 0; i &lt; exports.size(); ++i) {
+    exports[i].connection->emit_signal(exports[i].object_path, 
+      "org.freedesktop.DBus.Properties", "PropertiesChanged", "", 
+      Glib::VariantContainerBase::create_tuple(message_vector));
+  }
 }
 <xsl:for-each select="property">
 const <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="$iface"/>_Service::get<xsl:value-of select="@name"/>() const
@@ -261,7 +253,7 @@ const <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of sel
 
 void <xsl:value-of select="$iface"/>_Service::set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val)
 {<xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
-  if (connection &amp;&amp; <xsl:value-of select="@name"/> != val)
+  if (<xsl:value-of select="@name"/> != val)
     report_property_change("<xsl:value-of select="@name"/>", Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(val));</xsl:if>
   <xsl:text>
   </xsl:text><xsl:value-of select="@name"/> = val;
