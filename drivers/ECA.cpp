@@ -244,13 +244,26 @@ ECA_Channel::ECA_Channel(Device& d, eb_address_t b, int c, ECA* e)
   setName(eca_extract_name(name));
   setSize(1 << ((sizes >> 16) & 0xff));
   setHandler(true, irq);
+  
+  // We are in charge now. Clean all old state out.
+  setMaxFill(0);
+  setActionCount(0);
+  setConflictCount(0);
+  setLateCount(0);
 }
 
 ECA_Channel::~ECA_Channel()
 {
   try {
-    setHandler(false);
     device.release_irq(irq);
+    setHandler(false);
+    etherbone::Cycle cycle;
+    
+    // drain+freeze the channel
+    cycle.open(device);
+    cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+    cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE));
+    cycle.close();
   } catch (const etherbone::exception_t& e) {
     std::cerr << "ECA_Channel::~ECA_Channel: " << e << std::endl;
   }
@@ -418,7 +431,7 @@ ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
    arrival_irq (device.request_irq(sigc::mem_fun(*this, &ECA::arrival_handler)))
 {
   eb_data_t name[64];
-  eb_data_t sizes;
+  eb_data_t sizes, queued;
   etherbone::Cycle cycle;
   
   cycle.open(device);
@@ -429,6 +442,23 @@ ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
   // disable ECA actions and interrupts
   cycle.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
   cycle.close();
+  
+  cycle.open(device);
+  // Clear old counters
+  cycle.write(aq + ECAQ_DROPPED, EB_DATA32, 0);
+  // How much old Q junk to flush?
+  cycle.read(aq + ECAQ_QUEUED, EB_DATA32, &queued);
+  cycle.close();
+  
+  unsigned pop = 0;
+  while (pop < queued) {
+    unsigned batch = ((queued-pop)>64)?64:(queued-pop); // pop 64 at once
+    cycle.open(device);
+    for (unsigned i = 0; i < batch; ++i)
+      cycle.write(aq + ECAQ_CTL, EB_DATA32, 1);
+    cycle.close();
+    pop += batch;
+  }
   
   channels.resize((sizes >> 8) & 0xFF);
   table_size = 1 << ((sizes >> 24) & 0xFF);
@@ -459,6 +489,9 @@ ECA::~ECA()
     device.release_irq(overflow_irq);
     device.release_irq(arrival_irq);
     setHandlers(false);
+    
+    // Disable interrupts and the ECA
+    device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
     
     while (!conditions.empty())
       conditions.front()->Delete();
@@ -608,6 +641,7 @@ class ECA_Probe
 {
   public:
     ECA_Probe(Devices& devices);
+    // start/stop maybe keep reference ... and add ctrl+c => cleanup
 };
 
 ECA_Probe::ECA_Probe(Devices& devices)
