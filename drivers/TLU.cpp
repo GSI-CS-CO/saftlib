@@ -130,6 +130,7 @@ void TLU_Channel::CurrentTime(guint64& val)
   val = hi;
   val <<= 32;
   val |= lo;
+  val <<= 3;
 }
 
 void TLU_Channel::irq_handler(eb_data_t)
