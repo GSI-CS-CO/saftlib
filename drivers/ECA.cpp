@@ -46,28 +46,34 @@ class ECA_Channel : public RegisteredObject<ECA_Channel_Service>
 {
   public:
     ~ECA_Channel();
-    static Glib::RefPtr<ECA_Channel> create(Device& device, ECA* eca, int channel);
+    static Glib::RefPtr<ECA_Channel> create(Device& device, eb_address_t base, int channel, ECA* eca);
     
     void NewCondition(
       const guint64& first, const guint64& last, const gint64& offset, const guint32& tag,
       Glib::ustring& result);
-    void Reset();
     
     const guint32& getFill() const;
     const guint32& getMaxFill() const;
     const guint32& getActionCount() const;
     const guint32& getConflictCount() const;
     const guint32& getLateCount() const;
+    void setMaxFill(const guint32& getMaxFill);
+    void setActionCount(const guint32&);
+    void setConflictCount(const guint32&);
+    void setLateCount(const guint32&);
     
   protected:
-    ECA_Channel(Device& device, ECA* eca, int channel);
+    ECA_Channel(Device& device, eb_address_t base, int channel, ECA* eca);
     void irq_handler(eb_data_t);
     void setHandler(bool enable, eb_address_t irq = 0);
     
     Device& device;
-    ECA* eca;
+    eb_address_t base;
     int channel;
+    ECA* eca;
     eb_address_t irq;
+
+  friend class ECA;
 };
 
 class ECA : public RegisteredObject<ECA_Service>
@@ -91,6 +97,7 @@ class ECA : public RegisteredObject<ECA_Service>
     ECA(Device& device, eb_address_t base, eb_address_t stream, eb_address_t aq);
     void overflow_handler(eb_data_t);
     void arrival_handler(eb_data_t);
+    void setHandlers(bool enable, eb_address_t arrival = 0, eb_address_t overflow = 0);
     void name_owner_changed_handler(const Glib::ustring&, const Glib::ustring&, const Glib::ustring&);
     
     Device& device;
@@ -99,6 +106,9 @@ class ECA : public RegisteredObject<ECA_Service>
     eb_address_t aq;
     eb_address_t overflow_irq;
     eb_address_t arrival_irq;
+    unsigned table_size;
+    
+    std::vector<Glib::RefPtr<ECA_Channel> > channels;
 };
 
 static Glib::ustring condition_path(ECA* e, ECA_Condition* c)
@@ -186,14 +196,50 @@ static Glib::ustring channel_path(ECA* e, int channel)
   return str.str();
 }
 
-ECA_Channel::ECA_Channel(Device& d, ECA* e, int c)
+static std::string eca_extract_name(eb_data_t* data) {
+  char name8[64];
+  
+  /* Unshift/extract the name from the control register */
+  int zero = -1;
+  int nonzero = -1;
+  for (unsigned j = 0; j < 64; ++j) {
+    name8[j] = ((data[j] >> 16) & 0xFF);
+    if (zero == -1 && nonzero == -1 && !name8[j])
+      zero = j;
+    if (zero != -1 && nonzero == -1 && name8[j])
+      nonzero = j;
+  }
+  if (zero == -1) return std::string(&name8[0], 63); /* Not terminated => cannot unwrap */
+  if (nonzero == -1) nonzero = 0; /* If was zeros till end, no shift needed */
+  for (unsigned j = 0; j < 64; ++j) {
+    name8[j] = ((data[(j+nonzero)&0x3f] >> 16) & 0xFF);
+  }
+    
+  return std::string(&name8[0]);
+}
+
+ECA_Channel::ECA_Channel(Device& d, eb_address_t b, int c, ECA* e)
  : RegisteredObject<ECA_Channel_Service>(channel_path(e, c)), 
-   device(d), eca(e), channel(c), 
+   device(d), base(b), channel(c), eca(e),
    irq(device.request_irq(sigc::mem_fun(*this, &ECA_Channel::irq_handler)))
 {
-  // !!!
-  setName("...");
-  setSize(33);
+  eb_data_t name[64];
+  eb_data_t sizes;
+  etherbone::Cycle cycle;
+  
+  cycle.open(device);
+  // select
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  // grab info
+  for (unsigned i = 0; i < 64; ++i)
+    cycle.read(base + ECAC_CTL, EB_DATA32, &name[i]);
+  cycle.read(base + ECA_INFO, EB_DATA32, &sizes);
+  // enable (clear drain and freeze flags)
+  cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE)<<8);
+  cycle.close();
+  
+  setName(eca_extract_name(name));
+  setSize(1 << ((sizes >> 16) & 0xff));
   setHandler(true, irq);
 }
 
@@ -207,9 +253,21 @@ ECA_Channel::~ECA_Channel()
   }
 }
 
-Glib::RefPtr<ECA_Channel> ECA_Channel::create(Device& device, ECA* eca, int channel)
+Glib::RefPtr<ECA_Channel> ECA_Channel::create(Device& device, eb_address_t base, int channel, ECA* eca)
 {
-  return Glib::RefPtr<ECA_Channel>(new ECA_Channel(device, eca, channel));
+  return Glib::RefPtr<ECA_Channel>(new ECA_Channel(device, base, channel, eca));
+}
+
+void ECA_Channel::setHandler(bool enable, eb_address_t irq)
+{
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT,   EB_DATA32|EB_BIG_ENDIAN, channel << 16);
+  cycle.write(base + ECAC_CTL,      EB_DATA32|EB_BIG_ENDIAN, ECAC_CTL_INT_MASK<<8);
+  cycle.write(base + ECAC_INT_DEST, EB_DATA32|EB_BIG_ENDIAN, irq);
+  if (enable)
+    cycle.write(base + ECAC_CTL,    EB_DATA32|EB_BIG_ENDIAN, ECAC_CTL_INT_MASK);
+  cycle.close();
 }
             
 void ECA_Channel::NewCondition(
@@ -221,51 +279,125 @@ void ECA_Channel::NewCondition(
   result = condition->getObjectPath();
 }
 
-void ECA_Channel::Reset()
-{
-  // !!!
-}
-
 const guint32& ECA_Channel::getFill() const
 {
-  // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (base + ECAC_FILL,   EB_DATA32, &data);
+  cycle.close();
+  const_cast<ECA_Channel*>(this)->ECA_Channel_Service::setFill((data >> 16) & 0xFFFFU);
   return ECA_Channel_Service::getFill();
 }
 
 const guint32& ECA_Channel::getMaxFill() const
 {
-  // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (base + ECAC_FILL,   EB_DATA32, &data);
+  cycle.close();
+  const_cast<ECA_Channel*>(this)->ECA_Channel_Service::setMaxFill(data & 0xFFFFU);
   return ECA_Channel_Service::getMaxFill();
+}
+
+void ECA_Channel::setMaxFill(const guint32& value)
+{
+  if (value > 0xFFFFU)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "setMaxFill: value too large");
+  
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.write(base + ECAC_FILL,   EB_DATA32, value);
+  cycle.close();
+  ECA_Channel_Service::setMaxFill(value);
 }
 
 const guint32& ECA_Channel::getActionCount() const
 {
-  // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (base + ECAC_VALID,  EB_DATA32, &data);
+  cycle.close();
+  const_cast<ECA_Channel*>(this)->ECA_Channel_Service::setActionCount(data);
   return ECA_Channel_Service::getActionCount();
+}
+
+void ECA_Channel::setActionCount(const guint32& value)
+{
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.write(base + ECAC_VALID,  EB_DATA32, value);
+  cycle.close();
+  ECA_Channel_Service::setActionCount(value);
 }
 
 const guint32& ECA_Channel::getConflictCount() const
 {
-  // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT,   EB_DATA32, channel << 16);
+  cycle.read (base + ECAC_CONFLICT, EB_DATA32, &data);
+  cycle.close();
+  const_cast<ECA_Channel*>(this)->ECA_Channel_Service::setConflictCount(data);
   return ECA_Channel_Service::getConflictCount();
+}
+
+void ECA_Channel::setConflictCount(const guint32& value)
+{
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT,   EB_DATA32, channel << 16);
+  cycle.write(base + ECAC_CONFLICT, EB_DATA32, value);
+  cycle.close();
+  ECA_Channel_Service::setConflictCount(value);
 }
 
 const guint32& ECA_Channel::getLateCount() const
 {
-  // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (base + ECAC_LATE,   EB_DATA32, &data);
+  cycle.close();
+  const_cast<ECA_Channel*>(this)->ECA_Channel_Service::setLateCount(data);
   return ECA_Channel_Service::getLateCount();
+}
+
+void ECA_Channel::setLateCount(const guint32& value)
+{
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.write(base + ECAC_LATE,   EB_DATA32, value);
+  cycle.close();
+  ECA_Channel_Service::setLateCount(value);
 }
 
 void ECA_Channel::irq_handler(eb_data_t)
 {
-  // ... decide which
-  Conflict();
-  Late();
-}
-
-void ECA_Channel::setHandler(bool enable, eb_address_t irq)
-{
-  // !!!
+  try { // interrupt handlers may not throw
+    guint32 late_old, conflict_old;
+    guint32 late_new, conflict_new;
+    
+    late_old = ECA_Channel_Service::getLateCount();
+    late_new = getLateCount();
+    if (late_old != late_new) Late();
+    
+    conflict_old = ECA_Channel_Service::getConflictCount();
+    conflict_new = getConflictCount();
+    if (conflict_old != conflict_new) Conflict();
+  } catch (const etherbone::exception_t& e) {
+    std::cerr << "ECA_Channel::irq_handler: " << e << std::endl;
+  }
 }
 
 ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
@@ -274,15 +406,66 @@ ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
    overflow_irq(device.request_irq(sigc::mem_fun(*this, &ECA::overflow_handler))),
    arrival_irq (device.request_irq(sigc::mem_fun(*this, &ECA::arrival_handler)))
 {
+  eb_data_t name[64];
+  eb_data_t sizes;
+  etherbone::Cycle cycle;
+  
+  cycle.open(device);
+  // probe
+  for (unsigned i = 0; i < 64; ++i)
+    cycle.read(base + ECA_CTL, EB_DATA32, &name[i]);
+  cycle.read(base + ECA_INFO, EB_DATA32, &sizes);
+  // enable
+  cycle.close();
+  
+  channels.resize((sizes >> 8) & 0xFF);
+  table_size = 1 << ((sizes >> 24) & 0xFF);
+  
+  std::vector<Glib::ustring> paths;
+  for (unsigned c = 0; c < channels.size(); ++c) {
+    channels[c] = ECA_Channel::create(device, base, c, this);
+    paths.push_back(channels[c]->getObjectPath());
+  }
+  
+  setName(eca_extract_name(name));
+  setFrequency("125MHz");
+  setChannels(paths);
+
+  setHandlers(true, arrival_irq, overflow_irq);
   // !!! hook name change
-  // !!! setName setFrequency setChannels
+  
+  // updates Free and Conditions
   recompile();
 }
 
 ECA::~ECA()
 {
-  device.release_irq(overflow_irq);
-  device.release_irq(arrival_irq);
+  try { // destructors may not throw
+    device.release_irq(overflow_irq);
+    device.release_irq(arrival_irq);
+    setHandlers(false);
+    
+    while (!conditions.empty())
+      conditions.front()->Delete();
+    
+    for (unsigned c = 0; c < channels.size(); ++c) {
+      channels[c]->unregister_self();
+      channels[c].reset();
+    }
+  } catch (const etherbone::exception_t& e) {
+    std::cerr << "ECA::~ECA: " << e << std::endl;
+  }
+}
+
+void ECA::setHandlers(bool enable, eb_address_t arrival, eb_address_t overflow)
+{
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(aq + ECAQ_INT_MASK, EB_DATA32, 0);
+  cycle.write(aq + ECAQ_ARRIVAL,  EB_DATA32, arrival);
+  cycle.write(aq + ECAQ_OVERFLOW, EB_DATA32, overflow);
+  if (enable) cycle.write(aq + ECAQ_INT_MASK, EB_DATA32, 3);
+  cycle.close();
 }
 
 void ECA::NewCondition(
@@ -297,13 +480,24 @@ void ECA::NewCondition(
 void ECA::InjectEvent(
   const guint64& event, const guint64& param, const guint64& time, const guint32& tef)
 {
-  // !!!
+  etherbone::Cycle cycle;
+  
+  cycle.open(device);
+  cycle.write(stream, EB_DATA32, event >> 32);
+  cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+  cycle.write(stream, EB_DATA32, param >> 32);
+  cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+  cycle.write(stream, EB_DATA32, 0); // reserved
+  cycle.write(stream, EB_DATA32, tef);
+  cycle.write(stream, EB_DATA32, time >> 32);
+  cycle.write(stream, EB_DATA32, time & 0xFFFFFFFFUL);
+  cycle.close();
 }
 
 void ECA::recompile()
 {
   setFree(22);
-  // setConditions(...); ... based on conditions
+  // !!! setConditions(...); ... based on conditions
 }
 
 void ECA::overflow_handler(eb_data_t)
@@ -313,12 +507,59 @@ void ECA::overflow_handler(eb_data_t)
 
 void ECA::arrival_handler(eb_data_t)
 {
-  // !!! walk conditions looking for matching rule
+  try { // interrupt handlers may not throw
+    etherbone::Cycle cycle;
+    eb_data_t flags;
+    eb_data_t event1, event0;
+    eb_data_t param1, param0;
+    eb_data_t tag,    tef;
+    eb_data_t time1,  time0;
+    
+    cycle.open(device);
+    cycle.read (aq + ECAQ_FLAGS,  EB_DATA32, &flags);
+    cycle.read (aq + ECAQ_EVENT1, EB_DATA32, &event1);
+    cycle.read (aq + ECAQ_EVENT0, EB_DATA32, &event0);
+    cycle.read (aq + ECAQ_PARAM1, EB_DATA32, &param1);
+    cycle.read (aq + ECAQ_PARAM0, EB_DATA32, &param0);
+    cycle.read (aq + ECAQ_TAG,    EB_DATA32, &tag);
+    cycle.read (aq + ECAQ_TEF,    EB_DATA32, &tef);
+    cycle.read (aq + ECAQ_TIME1,  EB_DATA32, &time1);
+    cycle.read (aq + ECAQ_TIME0,  EB_DATA32, &time0);
+    cycle.write(aq + ECAQ_CTL,    EB_DATA32, 1); // pop
+    cycle.close();
+    
+    guint64 event, param, time;
+    event = event1; event <<= 32; event |= event0;
+    param = event1; param <<= 32; param |= param0;
+    time  = time1;  time  <<= 32; time  |= time0;
+    
+    // !!! do something with the flags
+    
+    for (ConditionSet::iterator i = conditions.begin(); i != conditions.end(); ++i) {
+      if ((*i)->getFirst() <= event && event < (*i)->getLast()) {
+        (*i)->Action(event, param, time, tef);
+      }
+    }
+  } catch (const etherbone::exception_t& e) {
+    std::cerr << "ECA::arrival_handler: " << e << std::endl;
+  }
 }
 
-void ECA::name_owner_changed_handler(const Glib::ustring&, const Glib::ustring&, const Glib::ustring&)
+void ECA::name_owner_changed_handler(const Glib::ustring& name, const Glib::ustring& old_owner, const Glib::ustring& new_owner)
 {
-  // !!! walk conditions looking for name
+  // We only care about people losing their name
+  if (!new_owner.empty()) return;
+  if (old_owner.empty()) return;
+  
+  // Kill any conditions they owned
+  ConditionSet::iterator i = conditions.begin();
+  while (i != conditions.end()) {
+    if ((*i)->getOwner() == name) {
+      (*i++)->Delete();
+    } else {
+      ++i;
+    }
+  }
 }
 
 class ECA_Probe
