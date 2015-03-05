@@ -33,6 +33,17 @@
       -->
     <property name="Channels" type="as" access="read"/>
     
+    <!-- Free: The number of additional conditions that may be created.
+         The ECA has limited hardware resources in its match table. This
+         software interface does its best to pack as many conditions as
+         possible into the table via compression.  This property reports the
+         worst-case remaining space in the hardware.  If this property
+         returns 5, then you are guaranteed to be able to create at least 5
+         more conditions. Note that (de)activating a condition will also
+         affect resource consumption and thus this property.
+      -->
+    <property name="Free" type="u" access="read"/>
+    
     <!-- Conditions: All configured conditions.
          This lists all conditions currently managed by this ECA instance.
          Each returned object path implements the ECA_Condition interface.
