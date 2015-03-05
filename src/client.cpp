@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <giomm.h>
+#include "interfaces/Directory.h"
 #include "interfaces/TLU.h"
 #include "interfaces/ECA.h"
 #include "interfaces/ECA_Condition.h"
@@ -10,7 +11,6 @@
 #define create_(x) create_for_bus_sync(Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", x)
 
 Glib::RefPtr<saftlib::TLU_Proxy> channel;
-
 void on_edge(const guint64& time) {
   guint64 now;
   channel->CurrentTime(now);
@@ -30,8 +30,11 @@ int main(int, char**)
   auto loop = Glib::MainLoop::create();
   
   try {
+    // Open the saftlib directory
+    auto directory = saftlib::Directory_Proxy::create_("/de/gsi/saftlib/Directory");
+    
     // Play with the TLU
-    channel = saftlib::TLU_Proxy::create_("/de/gsi/saftlib/TLU_pex0_100/in_0");
+    channel = saftlib::TLU_Proxy::create_(directory->getDevices()["TLU"][0]);
     
     // Was it already active?
     std::cout << "Channel was: " << (channel->getEnabled()?"active":"inactive") << std::endl;
@@ -43,9 +46,9 @@ int main(int, char**)
     channel->setEnabled(true);
     
     // Play with the ECA
-    auto eca = saftlib::ECA_Proxy::create_("/de/gsi/saftlib/ECA_pex0_80");
+    auto eca = saftlib::ECA_Proxy::create_(directory->getDevices()["ECA"][0]);
     
-    // Create a condition
+    // Create a condition, watching events 5-100 delayed by +100*8 nanoseconds
     Glib::ustring path;
     eca->NewCondition(5, 100, 100, path);
     auto condition = saftlib::ECA_Condition_Proxy::create_(path);
