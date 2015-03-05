@@ -7,8 +7,6 @@
 #include "interfaces/TLU.h"
 #include "tlu_regs.h"
 
-#define OBJECT_PATH "/de/gsi/saftlib/TLU"
-
 namespace saftlib {
 
 class TLU : public RegisteredObject<TLU_Service>
@@ -39,7 +37,8 @@ class TLU : public RegisteredObject<TLU_Service>
 static Glib::ustring path(Device& device_, eb_address_t base_, int channel_)
 {
   std::ostringstream stream;
-  stream << OBJECT_PATH "/" << device_.getName() << "_" << std::hex << base_ << "_" << channel_;
+  stream.imbue(std::locale("C"));
+  stream << "/de/gsi/saftlib/TLU_" << device_.getName() << "_" << std::hex << base_ << "/in_" << channel_;
   return stream.str();
 }
 

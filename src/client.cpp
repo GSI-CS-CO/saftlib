@@ -21,7 +21,7 @@ int main(int, char**)
     Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     channel =
       saftlib::TLU_Proxy::create_for_bus_sync(
-        Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/TLU/pex0_100_0");
+        Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", "/de/gsi/saftlib/TLU_pex0_100/in_0");
     
     // Was it already active?
     std::cout << "Channel was: " << (channel->getEnabled()?"active":"inactive") << std::endl;
