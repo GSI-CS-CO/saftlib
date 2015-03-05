@@ -230,8 +230,8 @@ void ECA_Condition::owner_quit_handler(
     ptr->recompile(); // "this" might be deleted by this line (hence ptr)
   } catch (const etherbone::exception_t& e) {
     std::cerr << "ECA_Condition::owner_quit_handler: " << e << std::endl;
-  } catch (const Gio::DBus::Error& e) {
-    std::cerr << "ECA_Condition::owner_quit_handler: GIO" << std::endl;
+  } catch (const Glib::Error& e) {
+    std::cerr << "ECA_Condition::owner_quit_handler: " << e.what() << std::endl;
   }
 }
 
