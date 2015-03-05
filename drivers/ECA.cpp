@@ -182,8 +182,10 @@ void ECA_Condition::Disown()
 void ECA_Condition::Delete()
 {
   if (getOwner().empty() || getOwner() == sender) {
+    ECA* ptr = eca;
     // remove reference => self destruct
-    eca->conditions.erase(index);
+    ptr->conditions.erase(index);
+    ptr->recompile(); // "this" might be deleted by this line (hence ptr)
   } else {
     throw Gio::DBus::Error(Gio::DBus::Error::ACCESS_DENIED, "You are not my owner");
   }
@@ -192,13 +194,23 @@ void ECA_Condition::Delete()
 void ECA_Condition::setSoftwareActive(const bool& val)
 {
   ECA_Condition_Service::setSoftwareActive(val);
-  eca->recompile();
+  try {
+    eca->recompile();
+  } catch (...) {
+    ECA_Condition_Service::setSoftwareActive(false);
+    throw;
+  }
 }
 
 void ECA_Condition::setHardwareActive(const bool& val)
 {
   ECA_Condition_Service::setHardwareActive(val);
-  eca->recompile();
+  try {
+    eca->recompile();
+  } catch (...) {
+    ECA_Condition_Service::setHardwareActive(false);
+    throw;
+  }
 }
 
 void ECA_Condition::owner_quit_handler(
@@ -494,7 +506,7 @@ ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
 
   setHandlers(true, arrival_irq, overflow_irq);
   
-  // sets Free and Conditions
+  // sets Conditions
   recompile();
   
   // enable interrupts and actions
@@ -580,16 +592,14 @@ void ECA::CurrentTime(guint64& result)
 
 void ECA::recompile()
 {
-  unsigned free = 43;
-  
-  // !!! do something sensible
+  // !!! do not allow hardware conditions on channel with AQ
+  // !!! do not allow conflicts in hardware rules
   
   std::vector<Glib::ustring> paths;
   for (ConditionSet::iterator i = conditions.begin(); i != conditions.end(); ++i) {
     paths.push_back((*i)->getObjectPath());
   }
   setConditions(paths);
-  setFree(free);
 }
 
 void ECA::overflow_handler(eb_data_t)
@@ -625,11 +635,18 @@ void ECA::arrival_handler(eb_data_t)
     param = event1; param <<= 32; param |= param0;
     time  = time1;  time  <<= 32; time  |= time0;
     
-    // !!! do something with the flags
+    bool conflict = (flags & 2) != 0;
+    bool late     = (flags & 2) != 0;
+    
+    /* Report error cases */
+    if (late)     Late    (event, param, time, tef);
+    if (conflict) Conflict(event, param, time, tef);
     
     for (ConditionSet::iterator i = conditions.begin(); i != conditions.end(); ++i) {
-      if ((*i)->getFirst() <= event && event < (*i)->getLast()) {
-        (*i)->Action(event, param, time, tef);
+      // Software rules use tag=offset to filter conditions intelligently
+      if ((*i)->getFirst() <= event && event < (*i)->getLast() && 
+          (*i)->getOffset() == tag) {
+        (*i)->Action(event, param, time, tef, late, conflict);
       }
     }
   } catch (const etherbone::exception_t& e) {
@@ -646,6 +663,7 @@ class ECA_Probe
 
 void ECA_Probe::probe()
 {
+  // !!! probe for real
   Glib::RefPtr<ECA> object = ECA::create(Directory::get()->devices()[0], 0x80, 0x7ffffff0, 0x40);
   Directory::get()->add("ECA", object->getObjectPath(), object);
 }
