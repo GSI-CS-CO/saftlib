@@ -1,6 +1,6 @@
 #define ETHERBONE_THROWS 1
 // #define DEBUG_COMPRESS
-#define DEBUG_COMPILE 1
+// #define DEBUG_COMPILE 1
 
 #include <list>
 #include <algorithm>
@@ -152,7 +152,6 @@ ECA_Condition::ECA_Condition(
 ECA_Condition::~ECA_Condition()
 {
   if (subscription) getConnection()->signal_unsubscribe(subscription);
-  std::cerr << "Condition destructor" << std::endl;
 }
 
 Glib::RefPtr<ECA_Condition> ECA_Condition::create(
