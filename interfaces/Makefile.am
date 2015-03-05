@@ -1,5 +1,5 @@
 lib_LTLIBRARIES = libsaftlib.la
-doc_DATA = TLU.pdf ECA.pdf ECA_Condition.pdf ECA_Channel.pdf
+doc_DATA = TLU.pdf ECA.pdf ECA_Condition.pdf ECA_Channel.pdf Directory.pdf
 
 EXTRA_DIST = h.xsl cpp.xsl common.xsl
 CLEANFILES = *.cpp *.h *.pdf
