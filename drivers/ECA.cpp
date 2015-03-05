@@ -37,9 +37,11 @@ class ECA_Condition : public RegisteredObject<ECA_Condition_Service>
     ECA_Condition(
       ECA* eca, guint64 first, guint64 last, guint64 offset, guint32 tag,
       const Glib::ustring& owner, bool sw, bool hw, int channel);
+    void owner_quit_handler(const Glib::RefPtr<Gio::DBus::Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&);
 
     ECA* eca;
     ConditionSet::iterator index;
+    guint subscription;
 };
 
 class ECA_Channel : public RegisteredObject<ECA_Channel_Service>
@@ -99,7 +101,6 @@ class ECA : public RegisteredObject<ECA_Service>
     void overflow_handler(eb_data_t);
     void arrival_handler(eb_data_t);
     void setHandlers(bool enable, eb_address_t arrival = 0, eb_address_t overflow = 0);
-    void name_owner_changed_handler(const Glib::ustring&, const Glib::ustring&, const Glib::ustring&);
     
     Device& device;
     eb_address_t base;
@@ -123,7 +124,15 @@ static Glib::ustring condition_path(ECA* e, ECA_Condition* c)
 ECA_Condition::ECA_Condition(
   ECA* e, guint64 first, guint64 last, guint64 offset, guint32 tag,
   const Glib::ustring& owner, bool sw, bool hw, int channel)
- : RegisteredObject<ECA_Condition_Service>(condition_path(e, this)), eca(e)
+ : RegisteredObject<ECA_Condition_Service>(condition_path(e, this)), eca(e),
+   subscription(
+    getConnection()->signal_subscribe(
+      sigc::mem_fun(this, &ECA_Condition::owner_quit_handler),
+      "org.freedesktop.DBus",
+      "org.freedesktop.DBus",
+      "NameOwnerChanged",
+      "/org/freedesktop/DBus",
+      owner))
 {
   setFirst(first);
   setLast(last);
@@ -137,6 +146,7 @@ ECA_Condition::ECA_Condition(
 
 ECA_Condition::~ECA_Condition()
 {
+  if (subscription) getConnection()->signal_unsubscribe(subscription);
   std::cerr << "Condition destructor" << std::endl;
 }
 
@@ -147,11 +157,10 @@ Glib::RefPtr<ECA_Condition> ECA_Condition::create(
   Glib::RefPtr<ECA_Condition> output(new ECA_Condition(
     eca, first, last, offset, tag, owner, sw, hw, channel));
   
+  output->index = eca->conditions.insert(eca->conditions.begin(), output);
   try {
-    output->index = eca->conditions.insert(eca->conditions.begin(), output);
     eca->recompile(); // can throw if a conflict is found
   } catch (...) {
-    output->unregister_self();
     eca->conditions.erase(output->index);
     throw;
   }
@@ -163,6 +172,8 @@ void ECA_Condition::Disown()
 {
   if (sender == getOwner()) {
     setOwner("");
+    getConnection()->signal_unsubscribe(subscription);
+    subscription = 0;
   } else {
     throw Gio::DBus::Error(Gio::DBus::Error::ACCESS_DENIED, "You are not my owner");
   }
@@ -171,8 +182,7 @@ void ECA_Condition::Disown()
 void ECA_Condition::Delete()
 {
   if (getOwner().empty() || getOwner() == sender) {
-    // remove references => self destruct
-    unregister_self();
+    // remove reference => self destruct
     eca->conditions.erase(index);
   } else {
     throw Gio::DBus::Error(Gio::DBus::Error::ACCESS_DENIED, "You are not my owner");
@@ -189,6 +199,15 @@ void ECA_Condition::setHardwareActive(const bool& val)
 {
   ECA_Condition_Service::setHardwareActive(val);
   eca->recompile();
+}
+
+void ECA_Condition::owner_quit_handler(
+  const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, 
+  const Glib::ustring& /* sender */, const Glib::ustring& /* object_path */, 
+  const Glib::ustring& /* interface_name */, const Glib::ustring& /* method_name */, 
+  const Glib::VariantContainerBase& /* parameters */)
+{
+  Delete();
 }
 
 static Glib::ustring channel_path(ECA* e, int channel)
@@ -474,7 +493,6 @@ ECA::ECA(Device& d, eb_address_t b, eb_address_t s, eb_address_t a)
   setChannels(paths);
 
   setHandlers(true, arrival_irq, overflow_irq);
-  // !!! hook name change
   
   // sets Free and Conditions
   recompile();
@@ -497,7 +515,6 @@ ECA::~ECA()
       conditions.front()->Delete();
     
     for (unsigned c = 0; c < channels.size(); ++c) {
-      channels[c]->unregister_self();
       channels[c].reset();
     }
   } catch (const etherbone::exception_t& e) {
@@ -620,23 +637,6 @@ void ECA::arrival_handler(eb_data_t)
   }
 }
 
-void ECA::name_owner_changed_handler(const Glib::ustring& name, const Glib::ustring& old_owner, const Glib::ustring& new_owner)
-{
-  // We only care about people losing their name
-  if (!new_owner.empty()) return;
-  if (old_owner.empty()) return;
-  
-  // Kill any conditions they owned
-  ConditionSet::iterator i = conditions.begin();
-  while (i != conditions.end()) {
-    if ((*i)->getOwner() == name) {
-      (*i++)->Delete();
-    } else {
-      ++i;
-    }
-  }
-}
-
 class ECA_Probe
 {
   public:
@@ -646,8 +646,8 @@ class ECA_Probe
 
 void ECA_Probe::probe()
 {
-  // !!! so wrong ...
-//  ECA::create(Directory::get()->devices()[0], 0x80, 0x7ffffff0, 0x40)->reference();
+  Glib::RefPtr<ECA> object = ECA::create(Directory::get()->devices()[0], 0x80, 0x7ffffff0, 0x40);
+  Directory::get()->add("ECA", object->getObjectPath(), object);
 }
 
 static Driver<ECA_Probe> eca;

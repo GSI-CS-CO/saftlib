@@ -14,6 +14,7 @@ class RegisteredObject : public T
     RegisteredObject(const Glib::ustring& object_path);
     
     const Glib::ustring& getObjectPath();
+    const Glib::RefPtr<Gio::DBus::Connection>& getConnection();
     void rethrow(const char *method);
 };
 
@@ -27,6 +28,12 @@ template <typename T>
 const Glib::ustring& RegisteredObject<T>::getObjectPath()
 { 
   return T::exports[0].object_path;
+}
+
+template <typename T>
+const Glib::RefPtr<Gio::DBus::Connection>& RegisteredObject<T>::getConnection()
+{
+  return T::exports[0].connection;
 }
 
 template <typename T>
