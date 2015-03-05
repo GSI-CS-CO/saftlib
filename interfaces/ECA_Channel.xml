@@ -78,21 +78,38 @@
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
     </property>
     
-    <!-- Conflict: Raised if the channel must schedule two actions simultaneously.
-         The hardware can only output a single action at a time. If two
-         events arrive which are transformed into actions on this channel
-         with identical timestamps, only one will execute on time. The other
-         will be arrive after an implementation-defined delay (4us). This
-         signal informs the operator of the misconfigured hardware.
+    <!-- Conflict: Raised if the channel schedules two actions simultaneously.
+    
+         The hardware can only output a single action at a time. Saftlib
+         ensures that a single event message can not create conflicting
+         actions.  It does this by raising an exception when a condition
+         would have been created that can conflict with an existing
+         condition (they have identical offset and overlapping event id
+         subscriptions).
+         
+         However, if two different events arrive which are transformed into
+         conflicting actions on this channel with identical timestamps, only
+         one will execute on time.  The other will be arrive after an
+         implementation-defined delay (4us). 
+         
+         This signal informs the operator of the misconfigured hardware.  In
+         the case of a conflict in actions delivered to software, the ECA
+         object's Conflict signal can report the details of the exact failed
+         action; for hardware channels only this signal is available.
       -->
     <signal name="Conflict"/>
     
     <!-- Late: An action must be executed in the past.
+    
          If a timing event arrives which is late, resulting actions may have
          been scheduled for execution in the past.  This may also be the
          result of large negative offsets.  In either case, the action will
-         be executed after an implementation-defined delay (<4us).  This
-         signal is raised to inform the operator of the misconfiguration.
+         be executed after an implementation-defined delay (<4us).  
+         
+         This signal is raised to inform the operator of the misconfiguration. 
+         In the case of a late action delivered to software, the ECA
+         object's Late signal can report the details of the exact failed
+         action; for hardware channels only this signal is available.
       -->
     <signal name="Late"/>
   </interface>

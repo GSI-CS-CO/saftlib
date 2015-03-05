@@ -48,22 +48,32 @@
       -->
     <property name="SoftwareActive" type="b" access="readwrite"/>
     
-    <!-- Action: Emitted whenever the condition matches a timing event.
-         @event: The event identifier that matched this rule.
-         @param: The parameter field, whose meaning depends on the event ID.
-         @time:  The action execution timestamp (event time + offset).
-         @tef:   The timing extension field.
+    <!-- Action:    Emitted whenever the condition matches a timing event.
+         @event:    The event identifier that matched this rule.
+         @param:    The parameter field, whose meaning depends on the event ID.
+         @time:     The action execution timestamp (event time + offset).
+         @tef:      The timing extension field.
+         @late:     The action was not delivered on time by hardware.
+         @conflict: The action arrived at the same time as another.
          
          The Action signal is only generated if SoftwareActive is true.
          While the underlying hardware will deliver the action at precisely
          time-o-clock, the software stack adds non-deterministic delay, so
-         the time field may be milliseconds in the past.
+         the time field may be milliseconds in the past. The late field only
+         indicates if the hardware was unable to meet the requested
+         deadline. The saftlib guarantees that a single timing message can
+         never lead to conflicting actions. It does this by combining
+         overlapping conditions at the software level and dispatching the
+         single resulting action to all interested clients. However, two
+         different timing messages may still lead to conflicting actions.
       -->
     <signal name="Action">
       <arg name="event"    type="t"/>
       <arg name="param"    type="t"/>
       <arg name="time"     type="t"/>
       <arg name="tef"      type="u"/>
+      <arg name="late"     type="b"/>
+      <arg name="conflict" type="b"/>
     </signal>
     
     <!-- HardwareActive: Should this condition fire actions to the channel.

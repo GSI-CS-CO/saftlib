@@ -100,5 +100,57 @@
       -->
     <signal name="Overflow"/>
     
+    <!-- Conflict:  Two software actions should be run simultaneously.
+         @event:    The event identifier of the conflicting action.
+         @param:    The parameter field, whose meaning depends on the event ID.
+         @time:     The action execution timestamp (event time + offset).
+         @tef:      The timing extension field.
+
+         Saftlib ensures that a single timing message will never generate
+         conflicting actions in software.  In the case of multiple
+         interested clients, it internally creates a single condition and
+         replicates the resulting action to all interested parties. 
+         
+         However, two different timing events can still lead to a conflict. 
+         This is especially likely if both events have the same execution
+         timestamp, but it can also occur if there exist two conditions
+         whose offsets combine with the timing events to produce conflicting
+         action timestamps. This signal only reports the conflicting action
+         which was arbitrarily (4us) delayed.
+         
+         This signal is only generated for conflicting software actions.
+         To monitor conflicting actions in hardware, see the ECA_Channel's
+         Conflict signal.
+      -->
+    <signal name="Conflict">
+      <arg name="event"    type="t"/>
+      <arg name="param"    type="t"/>
+      <arg name="time"     type="t"/>
+      <arg name="tef"      type="u"/>
+    </signal>
+    
+    <!-- Late:      A software action should have been run in the past.
+         @event:    The event identifier of the late action.
+         @param:    The parameter field, whose meaning depends on the event ID.
+         @time:     The desired execution timestamp (event time + offset).
+         @tef:      The timing extension field.
+
+         If a timing event arrives which is late, resulting actions may have
+         been scheduled for execution in the past.  This may also be the
+         result of large negative offsets.  In either case, the action will
+         be executed after an implementation-defined delay (<4us).  This
+         signal is raised to inform the operator of the misconfiguration. 
+
+         This signal is only generated for late software actions, and does
+         not include lateness due to delays in software. To monitor late
+         actions in hardware, see the ECA_Channel's Late signal.
+      -->
+    <signal name="Late">
+      <arg name="event"    type="t"/>
+      <arg name="param"    type="t"/>
+      <arg name="time"     type="t"/>
+      <arg name="tef"      type="u"/>
+    </signal>
+    
   </interface>
 </node>
