@@ -16,13 +16,13 @@
     
     <!-- NewCondition: Create a new condition which targets this channel.
          @first:  First event ID to monitor (inclusive)
-         @last:   Last event ID to monitor (exclusive)
+         @last:   Last event ID to monitor  (inclusive)
          @offset: Delay in ECA clock cycles between event and action
          @tag:    Interpretted by the receiving component to determine effect.
          @result: Object path to the created ECA_Condition
          
          This method creates a new condition that matches events whose
-         identifier lies in the range [first, last).  The offset acts as a
+         identifier lies in the range [first, last].  The offset acts as a
          delay which is added to the event's execution timestamp.  The tag
          is a field used to indicate to the receiving component what it
          should do. The returned object path implements the ECA_Condition

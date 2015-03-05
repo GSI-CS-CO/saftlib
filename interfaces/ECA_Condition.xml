@@ -9,7 +9,7 @@
     <!-- First: The first event identifier which this condition matches.
       -->
     <property name="First"  type="t" access="read"/>
-    <!-- Last: The first event identifier which this condition does not match.
+    <!-- Last: The last event identifier which this condition matches.
       -->
     <property name="Last"   type="t" access="read"/>
     <!-- Offset: Added to an event's time to calculate the action's time.

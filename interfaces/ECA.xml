@@ -52,12 +52,12 @@
 
     <!-- NewCondition: Create a condition to match incoming events
          @first:  First event ID to monitor (inclusive)
-         @last:   Last event ID to monitor (exclusive)
+         @last:   Last event ID to monitor (inclusive)
          @offset: Delay in ECA clock cycles between event and action
          @result: Object path to the created ECA_Condition
 
          This method creates a new condition that matches events whose
-         identifier lies in the range [first, last). The offset acts as a
+         identifier lies in the range [first, last]. The offset acts as a
          delay which is added to the event's execution timestamp to
          determine the timestamp when the matching condition fires its
          action. The returned object path implements the ECA_Condition
@@ -71,7 +71,7 @@
     </method>
     
     <!-- InjectEvent: Simulate the receipt of a timing event.
-         @event: The event identifier which is matched against [first, last)
+         @event: The event identifier which is matched against [first, last]
          @param: The parameter field, whose meaning depends on the event ID.
          @time:  The execution time for the event, added to condition offsets.
          @tef:   The timing extension field, used for sub-cycle timing (use 0).
