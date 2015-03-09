@@ -20,24 +20,29 @@ namespace saftlib {
 
 class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
   public:
-    // Methods -- implement these in a derived class!<xsl:for-each select="method">
-    virtual void <xsl:value-of select="@name"/>(<xsl:for-each select="arg">
-      <xsl:if test="position()>1">, </xsl:if>
-      <xsl:text>
-      </xsl:text>
-      <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
-    </xsl:for-each>);</xsl:for-each>
-    // Emit signals<xsl:for-each select="signal">
-    void <xsl:value-of select="@name"/>(<xsl:for-each select="arg">
-      <xsl:if test="position()>1">, </xsl:if>
-      <xsl:text>
-      const </xsl:text>
-      <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
-    </xsl:for-each>);</xsl:for-each>
-    // Property accessors<xsl:for-each select="property">
-    virtual const <xsl:apply-templates mode="iface-type" select="."/>&amp; get<xsl:value-of select="@name"/>() const;</xsl:for-each>
+    // Methods -- implement these in a derived class!<xsl:text/>
+    <xsl:for-each select="method">
+      <xsl:text>&#10;    virtual </xsl:text>
+      <xsl:call-template name="method-service-type"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    // Emit signals<xsl:text/>
+    <xsl:for-each select="signal">
+      <xsl:text>&#10;    virtual </xsl:text>
+      <xsl:call-template name="signal-service-type"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    // Property accessors<xsl:text/>
     <xsl:for-each select="property">
-    virtual void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
+      <xsl:text>&#10;    virtual </xsl:text>
+      <xsl:call-template name="prop-service-gettype"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    <xsl:for-each select="property">
+      <xsl:text>&#10;    virtual </xsl:text>
+      <xsl:call-template name="prop-service-settype"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
     // Standard Service methods
     <xsl:value-of select="$iface"/>_Service();
     virtual ~<xsl:value-of select="$iface"/>_Service();
@@ -89,23 +94,35 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
 
 class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
   public:
-    // Methods<xsl:for-each select="method">
-    void <xsl:value-of select="@name"/>(<xsl:for-each select="arg">
-      <xsl:if test="position()>1">, </xsl:if>
-      <xsl:text>
-      </xsl:text>
-      <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
-    </xsl:for-each>);</xsl:for-each>
-    // Signals<xsl:for-each select="signal">
-    sigc::signal&lt; void<xsl:for-each select="arg">,
-      const <xsl:apply-templates mode="iface-type" select="."/>&amp;</xsl:for-each> &gt; <xsl:value-of select="@name"/>;</xsl:for-each>
-    // Property accessors<xsl:for-each select="property[@access='read' or @access='readwrite']"><xsl:text>
-    </xsl:text><xsl:apply-templates mode="iface-type" select="."/> get<xsl:value-of select="@name"/>() const;</xsl:for-each>
-    <xsl:for-each select="property[@access='write' or @access='readwrite']">
-    void set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val);</xsl:for-each>
+    // Methods<xsl:text/>
+    <xsl:for-each select="method">
+      <xsl:text>&#10;    </xsl:text>
+      <xsl:call-template name="method-proxy-type"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    // Signals<xsl:text/>
+    <xsl:for-each select="signal">
+      <xsl:text>&#10;    </xsl:text>
+      <xsl:call-template name="signal-proxy-type"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    // Property accessors<xsl:text/>
     <xsl:for-each select="property[@access='read' or @access='readwrite']">
-    <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
-    sigc::signal&lt; void, const <xsl:apply-templates mode="iface-type" select="."/>&amp; &gt; <xsl:value-of select="@name"/>;</xsl:if>
+      <xsl:text>&#10;    </xsl:text>
+      <xsl:call-template name="prop-proxy-gettype"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    <xsl:for-each select="property[@access='write' or @access='readwrite']">
+      <xsl:text>&#10;    </xsl:text>
+      <xsl:call-template name="prop-proxy-settype"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
+    <xsl:for-each select="property[@access='read' or @access='readwrite']">
+      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
+        <xsl:text>&#10;    </xsl:text>
+        <xsl:call-template name="prop-proxy-sigtype"/>
+        <xsl:text>;</xsl:text>
+      </xsl:if>
     </xsl:for-each>
 
   public:

@@ -72,6 +72,117 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template name="method-service-type">
+  <xsl:param name="namespace"/>
+  <xsl:text>void</xsl:text>
+  <xsl:text> </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:value-of select="@name"/>
+  <xsl:text>(</xsl:text>
+  <xsl:for-each select="arg">
+    <xsl:if test="position()>1">, </xsl:if>
+    <xsl:if test="@direction='in'">const </xsl:if>
+    <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
+  </xsl:for-each>
+  <xsl:text>)</xsl:text>
+</xsl:template>
+
+<xsl:template name="method-proxy-type">
+  <xsl:param name="namespace"/>
+  <xsl:text>void</xsl:text>
+  <xsl:text> </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:value-of select="@name"/>
+  <xsl:text>(</xsl:text>
+  <xsl:for-each select="arg">
+    <xsl:if test="position()>1">, </xsl:if>
+    <xsl:if test="@direction='in'">const </xsl:if>
+    <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
+  </xsl:for-each>
+  <xsl:text>)</xsl:text>
+</xsl:template>
+
+<xsl:template name="signal-service-type">
+  <xsl:param name="namespace"/>
+  <xsl:text>void </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:value-of select="@name"/>
+  <xsl:text>(</xsl:text>
+  <xsl:for-each select="arg">
+    <xsl:if test="position()>1">, </xsl:if>
+    <xsl:text>const </xsl:text>
+    <xsl:apply-templates mode="iface-type" select="."/>
+    <xsl:text>&amp; </xsl:text>
+    <xsl:value-of select="@name"/>
+  </xsl:for-each>
+  <xsl:text>)</xsl:text>
+</xsl:template>
+
+<xsl:template name="signal-proxy-type">
+  <xsl:param name="namespace"/>
+  <xsl:text>sigc::signal&lt; void </xsl:text>
+  <xsl:for-each select="arg">
+    <xsl:text>, const </xsl:text>
+    <xsl:apply-templates mode="iface-type" select="."/>
+    <xsl:text>&amp; </xsl:text>
+  </xsl:for-each>
+  <xsl:text>&gt; </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:value-of select="@name"/>
+</xsl:template>
+
+<xsl:template name="prop-service-gettype">
+  <xsl:param name="namespace"/>
+  <xsl:text>const </xsl:text>
+  <xsl:apply-templates mode="iface-type" select="."/>
+  <xsl:text>&amp; </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:text>get</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>() const</xsl:text>
+</xsl:template>
+
+<xsl:template name="prop-proxy-gettype">
+  <xsl:param name="namespace"/>
+  <xsl:apply-templates mode="iface-type" select="."/>
+  <xsl:text> </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:text>get</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>() const</xsl:text>
+</xsl:template>
+
+<xsl:template name="prop-service-settype">
+  <xsl:param name="namespace"/>
+  <xsl:text>void </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:text>set</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>(const </xsl:text>
+  <xsl:apply-templates mode="iface-type" select="."/>
+  <xsl:text>&amp;)</xsl:text>
+</xsl:template>
+
+<xsl:template name="prop-proxy-settype">
+  <xsl:param name="namespace"/>
+  <xsl:text>void </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:text>set</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>(const </xsl:text>
+  <xsl:apply-templates mode="iface-type" select="."/>
+  <xsl:text>&amp;)</xsl:text>
+</xsl:template>
+
+<xsl:template name="prop-proxy-sigtype">
+  <xsl:param name="namespace"/>
+  <xsl:text>sigc::signal&lt; void, const </xsl:text>
+  <xsl:apply-templates mode="iface-type" select="."/>
+  <xsl:text>&amp; &gt; </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:value-of select="@name"/>
+</xsl:template>
+
 <xsl:template match="*" mode="escape">
     <!-- Begin opening tag -->
     <xsl:text>&lt;</xsl:text>
