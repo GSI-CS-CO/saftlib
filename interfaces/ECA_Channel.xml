@@ -8,6 +8,8 @@
        receiving component.
     -->
   <interface name="de.gsi.saftlib.ECA_Channel">
+    <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+    
     <!-- Name: A human-readable string describing this channel.
          Typically, this gives some indication of what receiving component
          is connected to the action chanenl.

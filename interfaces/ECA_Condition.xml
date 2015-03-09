@@ -6,6 +6,8 @@
        monitor the condition to receive matching actions via software. 
     -->
   <interface name="de.gsi.saftlib.ECA_Condition">
+    <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+    
     <!-- First: The first event identifier which this condition matches.
       -->
     <property name="First"  type="t" access="read"/>

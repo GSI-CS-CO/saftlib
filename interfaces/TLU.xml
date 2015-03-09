@@ -8,6 +8,8 @@
        via a signal on corresponding TLU Channel.
     -->
   <interface name="de.gsi.saftlib.TLU">
+    <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+    
     <!-- Enabled: Whether or not the Channel is active.
 
          When true, the hardware reports edges received, which this

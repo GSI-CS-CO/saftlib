@@ -9,6 +9,8 @@
        is forwarded to either a hardware channel or a software callback.
     -->
   <interface name="de.gsi.saftlib.ECA">
+    <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+    
     <!-- Name: A human-readable string describing this instance of the ECA.
          Typically, this describes the VHDL project file which instantiated
          the ECA hardware.

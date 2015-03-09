@@ -6,6 +6,9 @@
        device drivers register their top-level hardware objects here.
     -->
   <interface name="de.gsi.saftlib.Directory">
+    <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+    <annotation name="de.gsi.saftlib.path" value="/de/gsi/saftlib/Directory"/>
+    
     <!-- Devices: List of all object instances of various hardware.
          The key in the dictionary is the name of the interface.
          The value is al object paths to hardware implementing that interface.
