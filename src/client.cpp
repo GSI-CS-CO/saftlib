@@ -11,14 +11,12 @@
 #define create_(x) create_for_bus_sync(Gio::DBus::BUS_TYPE_SESSION, "de.gsi.saftlib", x)
 
 Glib::RefPtr<saftlib::TLU_Proxy> channel;
-void on_edge(const guint64& time) {
+void on_edge(guint64 time) {
   guint64 now = channel->CurrentTime();
   std::cout << "Pulse detected: " << time << " @ " << now << " = " << (now-time) << std::endl;
 }
 
-void on_action(
-  const guint64& id, const guint64& param, const guint64& time, 
-  const guint32& tef, const bool& late, const bool& conflict)
+void on_action(guint64 id, guint64 param, guint64 time, guint32 tef, bool late, bool conflict)
 {
   std::cout << "Saw a timing event!" << std::endl;
 }
@@ -47,10 +45,10 @@ int main(int, char**)
     // Play with the ECA
     auto eca = saftlib::ECA_Proxy::create_(directory->getDevices()["ECA"][0]);
     
-    // Create a condition, watching events 5-100 delayed by +100*8 nanoseconds
+    // Create a condition, watching events 5-200 delayed by +100*8 nanoseconds
     auto condition = 
       saftlib::ECA_Condition_Proxy::create_(
-        eca->NewCondition(5, 100, 100));
+        eca->NewCondition(5, 200, 100));
   
     // Watch the condition
     condition->Action.connect(sigc::ptr_fun(&on_action));
