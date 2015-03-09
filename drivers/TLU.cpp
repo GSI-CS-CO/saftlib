@@ -18,7 +18,7 @@ class TLU : public RegisteredObject<TLU_Service>
     void setLatchEdge(bool val);
     void setStableTime(guint32 val);
     
-    void CurrentTime(guint64& result);
+    guint64 CurrentTime();
     
     static Glib::RefPtr<TLU> create(saftlib::Device& device, eb_address_t base, int channel);
     static void probe();
@@ -117,7 +117,7 @@ void TLU::setStableTime(guint32 val)
   TLU_Service::setStableTime(val);
 }
 
-void TLU::CurrentTime(guint64& val)
+guint64 TLU::CurrentTime()
 {
   eb_data_t hi, lo;
   etherbone::Cycle cycle;
@@ -126,10 +126,12 @@ void TLU::CurrentTime(guint64& val)
   cycle.read(base + SLAVE_TC_GET_1, EB_DATA32, &lo);
   cycle.close();
   
+  guint64 val;
   val = hi;
   val <<= 32;
   val |= lo;
   val <<= 3;
+  return val;
 }
 
 void TLU::irq_handler(eb_data_t)

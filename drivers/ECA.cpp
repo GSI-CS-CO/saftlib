@@ -53,7 +53,7 @@ class ECA_Channel : public RegisteredObject<ECA_Channel_Service>
     ~ECA_Channel();
     static Glib::RefPtr<ECA_Channel> create(Device& device, eb_address_t base, int channel, ECA* eca);
     
-    void NewCondition(guint64 first, guint64 last, gint64 offset, guint32 tag, Glib::ustring& result);
+    Glib::ustring NewCondition(guint64 first, guint64 last, gint64 offset, guint32 tag);
     
     guint32 getFill() const;
     guint32 getMaxFill() const;
@@ -86,9 +86,9 @@ class ECA : public RegisteredObject<ECA_Service>
     
     static Glib::RefPtr<ECA> create(Device& device, eb_address_t base, eb_address_t stream, eb_address_t aq);
     
-    void NewCondition(guint64 first, guint64 last, gint64 offset, Glib::ustring& result);
+    Glib::ustring NewCondition(guint64 first, guint64 last, gint64 offset);
     void InjectEvent(guint64 event, guint64 param, guint64 time, guint32 tef);
-    void CurrentTime(guint64& result);
+    guint64 CurrentTime();
       
     void recompile();
     
@@ -325,11 +325,11 @@ void ECA_Channel::setHandler(bool enable, eb_address_t irq)
   cycle.close();
 }
             
-void ECA_Channel::NewCondition(guint64 first, guint64 last, gint64 offset, guint32 tag, Glib::ustring& result)
+Glib::ustring ECA_Channel::NewCondition(guint64 first, guint64 last, gint64 offset, guint32 tag)
 {
   Glib::RefPtr<ECA_Condition> condition = ECA_Condition::create(
     eca, first, last, offset, tag, sender, false, true, channel);
-  result = condition->getObjectPath();
+  return condition->getObjectPath();
 }
 
 guint32 ECA_Channel::getFill() const
@@ -555,11 +555,11 @@ void ECA::setHandlers(bool enable, eb_address_t arrival, eb_address_t overflow)
   cycle.close();
 }
 
-void ECA::NewCondition(guint64 first, guint64 last, gint64 offset, Glib::ustring& result)
+Glib::ustring ECA::NewCondition(guint64 first, guint64 last, gint64 offset)
 {
   Glib::RefPtr<ECA_Condition> condition = ECA_Condition::create(
     this, first, last, offset, 0, sender, true, false, -1);
-  result = condition->getObjectPath();
+  return condition->getObjectPath();
 }
 
 void ECA::InjectEvent(guint64 event, guint64 param, guint64 time, guint32 tef)
@@ -578,7 +578,7 @@ void ECA::InjectEvent(guint64 event, guint64 param, guint64 time, guint32 tef)
   cycle.close();
 }
 
-void ECA::CurrentTime(guint64& result)
+guint64 ECA::CurrentTime()
 {
   etherbone::Cycle cycle;
   eb_data_t time1, time0;
@@ -587,9 +587,11 @@ void ECA::CurrentTime(guint64& result)
   cycle.read(base + ECA_TIME0, EB_DATA32, &time0);
   cycle.close();
   
+  guint64 result;
   result = time1;
   result <<= 32;
   result |= time0;
+  return result;
 }
 
 struct ECA_Merge {
