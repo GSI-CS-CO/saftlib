@@ -20,12 +20,6 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="*" mode="iface-type">
-  <xsl:call-template name="iface-type">
-    <xsl:with-param name="input" select="@type"/>
-  </xsl:call-template>
-</xsl:template>
-
 <xsl:template name="iface-type">
   <xsl:param name="input"/>
   <xsl:choose>
@@ -46,6 +40,7 @@
         Error: Anonymous tuples currently unsupported.
       </xsl:message>
     </xsl:when>
+    <!-- a{Bt} . B always basic type -->
     <xsl:when test="substring($input,1,2)='a{' and substring($input,string-length($input),1)='}' and string-length($input) >= 5">
       <xsl:text>std::map&lt; </xsl:text>
       <xsl:call-template name="iface-type">
@@ -57,7 +52,7 @@
       </xsl:call-template>
       <xsl:text> &gt;</xsl:text>
     </xsl:when>
-    <xsl:when test="substring($input,1,1)='a'"> <!-- a{Bt} . B always basic type -->
+    <xsl:when test="substring($input,1,1)='a'">
       <xsl:text>std::vector&lt; </xsl:text>
       <xsl:call-template name="iface-type">
         <xsl:with-param name="input" select="substring($input,2)"/>
@@ -72,6 +67,66 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template name="simple-type">
+  <xsl:variable name="input" select="@type"/>
+  <xsl:choose>
+    <xsl:when test="$input='y'">true</xsl:when>
+    <xsl:when test="$input='b'">true</xsl:when>
+    <xsl:when test="$input='n'">true</xsl:when>
+    <xsl:when test="$input='q'">true</xsl:when>
+    <xsl:when test="$input='i'">true</xsl:when>
+    <xsl:when test="$input='u'">true</xsl:when>
+    <xsl:when test="$input='x'">true</xsl:when>
+    <xsl:when test="$input='t'">true</xsl:when>
+    <xsl:when test="$input='d'">true</xsl:when>
+    <xsl:when test="$input='h'">true</xsl:when>
+    <xsl:when test="$input='s'">false</xsl:when>
+    <xsl:when test="$input='v'">false</xsl:when>
+    <xsl:when test="substring($input,1,1)='('">false</xsl:when>
+    <xsl:when test="substring($input,1,1)='a'">false</xsl:when>
+    <xsl:otherwise>
+      <xsl:message terminate="yes">
+        Error: Unknown type string '<xsl:value-of select="$input"/>'
+      </xsl:message>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template name="raw-type">
+  <xsl:call-template name="iface-type">
+    <xsl:with-param name="input" select="@type"/>
+  </xsl:call-template>
+</xsl:template>
+
+<xsl:template name="variant-type">
+  <xsl:text>Glib::Variant&lt; </xsl:text>
+  <xsl:call-template name="raw-type"/>
+  <xsl:text> &gt;</xsl:text>
+</xsl:template>
+
+<xsl:template name="input-type">
+  <xsl:variable name="simple">
+   <xsl:call-template name="simple-type"/>
+  </xsl:variable>
+  <xsl:variable name="use_ref" select="$simple!='fixme'"/>
+  <xsl:if test="$use_ref">const </xsl:if>
+  <xsl:call-template name="raw-type"/>
+  <xsl:if test="$use_ref">&amp;</xsl:if>
+</xsl:template>
+
+<xsl:template name="output-type">
+  <xsl:call-template name="raw-type"/>
+  <xsl:text>&amp;</xsl:text>
+</xsl:template>
+
+<xsl:template name="inout-type">
+  <xsl:choose>
+    <xsl:when test="@direction='in'"><xsl:call-template name="input-type"/></xsl:when>
+    <xsl:when test="@direction='out'"><xsl:call-template name="output-type"/></xsl:when>
+    <xsl:otherwise><xsl:message terminate="yes">Error: no direction</xsl:message></xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template name="method-service-type">
   <xsl:param name="namespace"/>
   <xsl:text>void</xsl:text>
@@ -81,8 +136,9 @@
   <xsl:text>(</xsl:text>
   <xsl:for-each select="arg">
     <xsl:if test="position()>1">, </xsl:if>
-    <xsl:if test="@direction='in'">const </xsl:if>
-    <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
+    <xsl:call-template name="inout-type"/>
+    <xsl:text> </xsl:text>
+    <xsl:value-of select="@name"/>
   </xsl:for-each>
   <xsl:text>)</xsl:text>
 </xsl:template>
@@ -96,8 +152,9 @@
   <xsl:text>(</xsl:text>
   <xsl:for-each select="arg">
     <xsl:if test="position()>1">, </xsl:if>
-    <xsl:if test="@direction='in'">const </xsl:if>
-    <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
+    <xsl:call-template name="inout-type"/>
+    <xsl:text> </xsl:text>
+    <xsl:value-of select="@name"/>
   </xsl:for-each>
   <xsl:text>)</xsl:text>
 </xsl:template>
@@ -110,9 +167,8 @@
   <xsl:text>(</xsl:text>
   <xsl:for-each select="arg">
     <xsl:if test="position()>1">, </xsl:if>
-    <xsl:text>const </xsl:text>
-    <xsl:apply-templates mode="iface-type" select="."/>
-    <xsl:text>&amp; </xsl:text>
+    <xsl:call-template name="input-type"/>
+    <xsl:text> </xsl:text>
     <xsl:value-of select="@name"/>
   </xsl:for-each>
   <xsl:text>)</xsl:text>
@@ -122,9 +178,9 @@
   <xsl:param name="namespace"/>
   <xsl:text>sigc::signal&lt; void </xsl:text>
   <xsl:for-each select="arg">
-    <xsl:text>, const </xsl:text>
-    <xsl:apply-templates mode="iface-type" select="."/>
-    <xsl:text>&amp; </xsl:text>
+    <xsl:text>, </xsl:text>
+    <xsl:call-template name="input-type"/>
+    <xsl:text> </xsl:text>
   </xsl:for-each>
   <xsl:text>&gt; </xsl:text>
   <xsl:value-of select="$namespace"/>
@@ -133,9 +189,8 @@
 
 <xsl:template name="prop-service-gettype">
   <xsl:param name="namespace"/>
-  <xsl:text>const </xsl:text>
-  <xsl:apply-templates mode="iface-type" select="."/>
-  <xsl:text>&amp; </xsl:text>
+  <xsl:call-template name="input-type"/>
+  <xsl:text> </xsl:text>
   <xsl:value-of select="$namespace"/>
   <xsl:text>get</xsl:text>
   <xsl:value-of select="@name"/>
@@ -144,7 +199,7 @@
 
 <xsl:template name="prop-proxy-gettype">
   <xsl:param name="namespace"/>
-  <xsl:apply-templates mode="iface-type" select="."/>
+  <xsl:call-template name="raw-type"/>
   <xsl:text> </xsl:text>
   <xsl:value-of select="$namespace"/>
   <xsl:text>get</xsl:text>
@@ -158,9 +213,9 @@
   <xsl:value-of select="$namespace"/>
   <xsl:text>set</xsl:text>
   <xsl:value-of select="@name"/>
-  <xsl:text>(const </xsl:text>
-  <xsl:apply-templates mode="iface-type" select="."/>
-  <xsl:text>&amp; val)</xsl:text>
+  <xsl:text>(</xsl:text>
+  <xsl:call-template name="input-type"/>
+  <xsl:text> val)</xsl:text>
 </xsl:template>
 
 <xsl:template name="prop-proxy-settype">
@@ -169,16 +224,16 @@
   <xsl:value-of select="$namespace"/>
   <xsl:text>set</xsl:text>
   <xsl:value-of select="@name"/>
-  <xsl:text>(const </xsl:text>
-  <xsl:apply-templates mode="iface-type" select="."/>
-  <xsl:text>&amp; val)</xsl:text>
+  <xsl:text>(</xsl:text>
+  <xsl:call-template name="input-type"/>
+  <xsl:text> val)</xsl:text>
 </xsl:template>
 
 <xsl:template name="prop-proxy-sigtype">
   <xsl:param name="namespace"/>
-  <xsl:text>sigc::signal&lt; void, const </xsl:text>
-  <xsl:apply-templates mode="iface-type" select="."/>
-  <xsl:text>&amp; &gt; </xsl:text>
+  <xsl:text>sigc::signal&lt; void, </xsl:text>
+  <xsl:call-template name="input-type"/>
+  <xsl:text> &gt; </xsl:text>
   <xsl:value-of select="$namespace"/>
   <xsl:value-of select="@name"/>
 </xsl:template>

@@ -66,7 +66,7 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
     void report_property_change(const char* name, const Glib::VariantBase&amp; value);
     // property variables<xsl:for-each select="property">
     <xsl:text>
-    </xsl:text><xsl:apply-templates mode="iface-type" select="."/>
+    </xsl:text><xsl:call-template name="raw-type"/>
     <xsl:text> </xsl:text>
     <xsl:value-of select="@name"/>;</xsl:for-each>
     // non copyable
@@ -124,7 +124,6 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
         <xsl:text>;</xsl:text>
       </xsl:if>
     </xsl:for-each>
-
   public:
     // See Gio::DBus::Proxy; these methods are the same
     static void create(
