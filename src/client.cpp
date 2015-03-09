@@ -25,11 +25,11 @@ int main(int, char**)
   
   try {
     // Open the saftlib directory
-    Glib::RefPtr<saftlib::Directory_Proxy> directory = 
-      saftlib::Directory_Proxy::create();
+    std::map< Glib::ustring, std::vector< Glib::ustring > > devices = 
+      saftlib::Directory_Proxy::create()->getDevices();
     
     // Play with the TLU
-    channel = saftlib::TLU_Proxy::create(directory->getDevices()["TLU"][0]);
+    channel = saftlib::TLU_Proxy::create(devices["TLU"][0]);
     
     // Was it already active?
     std::cout << "Channel was: " << (channel->getEnabled()?"active":"inactive") << std::endl;
@@ -42,7 +42,7 @@ int main(int, char**)
     
     // Play with the ECA
     Glib::RefPtr<saftlib::ECA_Proxy> eca = 
-      saftlib::ECA_Proxy::create(directory->getDevices()["ECA"][0]);
+      saftlib::ECA_Proxy::create(devices["ECA"][0]);
     
     // Create a condition, watching events 5-200 delayed by +100*8 nanoseconds
     Glib::RefPtr<saftlib::ECA_Condition_Proxy> condition = 
