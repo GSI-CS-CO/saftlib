@@ -24,11 +24,12 @@ void on_action(guint64 id, guint64 param, guint64 time, guint32 tef, bool late, 
 int main(int, char**)
 {
   Gio::init();
-  auto loop = Glib::MainLoop::create();
+  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   try {
     // Open the saftlib directory
-    auto directory = saftlib::Directory_Proxy::create_("/de/gsi/saftlib/Directory");
+    Glib::RefPtr<saftlib::Directory_Proxy> directory = 
+      saftlib::Directory_Proxy::create_("/de/gsi/saftlib/Directory");
     
     // Play with the TLU
     channel = saftlib::TLU_Proxy::create_(directory->getDevices()["TLU"][0]);
@@ -43,10 +44,11 @@ int main(int, char**)
     channel->setEnabled(true);
     
     // Play with the ECA
-    auto eca = saftlib::ECA_Proxy::create_(directory->getDevices()["ECA"][0]);
+    Glib::RefPtr<saftlib::ECA_Proxy> eca = 
+      saftlib::ECA_Proxy::create_(directory->getDevices()["ECA"][0]);
     
     // Create a condition, watching events 5-200 delayed by +100*8 nanoseconds
-    auto condition = 
+    Glib::RefPtr<saftlib::ECA_Condition_Proxy> condition = 
       saftlib::ECA_Condition_Proxy::create_(
         eca->NewCondition(5, 200, 100));
   
