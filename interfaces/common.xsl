@@ -108,7 +108,7 @@
   <xsl:variable name="simple">
    <xsl:call-template name="simple-type"/>
   </xsl:variable>
-  <xsl:variable name="use_ref" select="$simple!='fixme'"/>
+  <xsl:variable name="use_ref" select="$simple!='true'"/>
   <xsl:if test="$use_ref">const </xsl:if>
   <xsl:call-template name="raw-type"/>
   <xsl:if test="$use_ref">&amp;</xsl:if>

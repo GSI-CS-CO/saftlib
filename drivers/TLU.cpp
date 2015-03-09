@@ -14,9 +14,9 @@ class TLU : public RegisteredObject<TLU_Service>
   public:
     ~TLU();
     
-    void setEnabled(const bool& val);
-    void setLatchEdge(const bool& val);
-    void setStableTime(const guint32& val);
+    void setEnabled(bool val);
+    void setLatchEdge(bool val);
+    void setStableTime(guint32 val);
     
     void CurrentTime(guint64& result);
     
@@ -87,7 +87,7 @@ void TLU::setHandler(bool enable, eb_data_t address, eb_data_t message)
   cycle.close();
 }
 
-void TLU::setEnabled(const bool& val)
+void TLU::setEnabled(bool val)
 {
   if (val) {
     device.write(base + SLAVE_ACT_SET, EB_DATA32, 1<<channel);
@@ -97,7 +97,7 @@ void TLU::setEnabled(const bool& val)
   TLU_Service::setEnabled(val);
 }
 
-void TLU::setLatchEdge(const bool& val)
+void TLU::setLatchEdge(bool val)
 {
   if (val) {
     device.write(base + SLAVE_EDG_SET, EB_DATA32, 1<<channel);
@@ -107,7 +107,7 @@ void TLU::setLatchEdge(const bool& val)
   TLU_Service::setLatchEdge(val);
 }
 
-void TLU::setStableTime(const guint32& val)
+void TLU::setStableTime(guint32 val)
 {
   etherbone::Cycle cycle;
   cycle.open(device);

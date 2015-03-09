@@ -33,8 +33,8 @@ class ECA_Condition : public RegisteredObject<ECA_Condition_Service>
     void Disown();
     void Delete();
     
-    void setSoftwareActive(const bool& val);
-    void setHardwareActive(const bool& val);
+    void setSoftwareActive(bool val);
+    void setHardwareActive(bool val);
     
   protected:
     ECA_Condition(
@@ -53,19 +53,17 @@ class ECA_Channel : public RegisteredObject<ECA_Channel_Service>
     ~ECA_Channel();
     static Glib::RefPtr<ECA_Channel> create(Device& device, eb_address_t base, int channel, ECA* eca);
     
-    void NewCondition(
-      const guint64& first, const guint64& last, const gint64& offset, const guint32& tag,
-      Glib::ustring& result);
+    void NewCondition(guint64 first, guint64 last, gint64 offset, guint32 tag, Glib::ustring& result);
     
-    const guint32& getFill() const;
-    const guint32& getMaxFill() const;
-    const guint32& getActionCount() const;
-    const guint32& getConflictCount() const;
-    const guint32& getLateCount() const;
-    void setMaxFill(const guint32& getMaxFill);
-    void setActionCount(const guint32&);
-    void setConflictCount(const guint32&);
-    void setLateCount(const guint32&);
+    guint32 getFill() const;
+    guint32 getMaxFill() const;
+    guint32 getActionCount() const;
+    guint32 getConflictCount() const;
+    guint32 getLateCount() const;
+    void setMaxFill(guint32);
+    void setActionCount(guint32);
+    void setConflictCount(guint32);
+    void setLateCount(guint32);
     
   protected:
     ECA_Channel(Device& device, eb_address_t base, int channel, ECA* eca);
@@ -88,11 +86,8 @@ class ECA : public RegisteredObject<ECA_Service>
     
     static Glib::RefPtr<ECA> create(Device& device, eb_address_t base, eb_address_t stream, eb_address_t aq);
     
-    void NewCondition(
-      const guint64& first, const guint64& last, const gint64& offset,
-      Glib::ustring& result);
-    void InjectEvent(
-      const guint64& event, const guint64& param, const guint64& time, const guint32& tef);
+    void NewCondition(guint64 first, guint64 last, gint64 offset, Glib::ustring& result);
+    void InjectEvent(guint64 event, guint64 param, guint64 time, guint32 tef);
     void CurrentTime(guint64& result);
       
     void recompile();
@@ -195,7 +190,7 @@ void ECA_Condition::Delete()
   }
 }
 
-void ECA_Condition::setSoftwareActive(const bool& val)
+void ECA_Condition::setSoftwareActive(bool val)
 {
   ECA_Condition_Service::setSoftwareActive(val);
   try {
@@ -206,7 +201,7 @@ void ECA_Condition::setSoftwareActive(const bool& val)
   }
 }
 
-void ECA_Condition::setHardwareActive(const bool& val)
+void ECA_Condition::setHardwareActive(bool val)
 {
   ECA_Condition_Service::setHardwareActive(val);
   try {
@@ -330,16 +325,14 @@ void ECA_Channel::setHandler(bool enable, eb_address_t irq)
   cycle.close();
 }
             
-void ECA_Channel::NewCondition(
-  const guint64& first, const guint64& last, const gint64& offset, const guint32& tag,
-  Glib::ustring& result)
+void ECA_Channel::NewCondition(guint64 first, guint64 last, gint64 offset, guint32 tag, Glib::ustring& result)
 {
   Glib::RefPtr<ECA_Condition> condition = ECA_Condition::create(
     eca, first, last, offset, tag, sender, false, true, channel);
   result = condition->getObjectPath();
 }
 
-const guint32& ECA_Channel::getFill() const
+guint32 ECA_Channel::getFill() const
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -351,7 +344,7 @@ const guint32& ECA_Channel::getFill() const
   return ECA_Channel_Service::getFill();
 }
 
-const guint32& ECA_Channel::getMaxFill() const
+guint32 ECA_Channel::getMaxFill() const
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -363,7 +356,7 @@ const guint32& ECA_Channel::getMaxFill() const
   return ECA_Channel_Service::getMaxFill();
 }
 
-void ECA_Channel::setMaxFill(const guint32& value)
+void ECA_Channel::setMaxFill(guint32 value)
 {
   if (value > 0xFFFFU)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "setMaxFill: value too large");
@@ -376,7 +369,7 @@ void ECA_Channel::setMaxFill(const guint32& value)
   ECA_Channel_Service::setMaxFill(value);
 }
 
-const guint32& ECA_Channel::getActionCount() const
+guint32 ECA_Channel::getActionCount() const
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -388,7 +381,7 @@ const guint32& ECA_Channel::getActionCount() const
   return ECA_Channel_Service::getActionCount();
 }
 
-void ECA_Channel::setActionCount(const guint32& value)
+void ECA_Channel::setActionCount(guint32 value)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
@@ -398,7 +391,7 @@ void ECA_Channel::setActionCount(const guint32& value)
   ECA_Channel_Service::setActionCount(value);
 }
 
-const guint32& ECA_Channel::getConflictCount() const
+guint32 ECA_Channel::getConflictCount() const
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -410,7 +403,7 @@ const guint32& ECA_Channel::getConflictCount() const
   return ECA_Channel_Service::getConflictCount();
 }
 
-void ECA_Channel::setConflictCount(const guint32& value)
+void ECA_Channel::setConflictCount(guint32 value)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
@@ -420,7 +413,7 @@ void ECA_Channel::setConflictCount(const guint32& value)
   ECA_Channel_Service::setConflictCount(value);
 }
 
-const guint32& ECA_Channel::getLateCount() const
+guint32 ECA_Channel::getLateCount() const
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -432,7 +425,7 @@ const guint32& ECA_Channel::getLateCount() const
   return ECA_Channel_Service::getLateCount();
 }
 
-void ECA_Channel::setLateCount(const guint32& value)
+void ECA_Channel::setLateCount(guint32 value)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
@@ -562,17 +555,14 @@ void ECA::setHandlers(bool enable, eb_address_t arrival, eb_address_t overflow)
   cycle.close();
 }
 
-void ECA::NewCondition(
-  const guint64& first, const guint64& last, const gint64& offset,
-  Glib::ustring& result)
+void ECA::NewCondition(guint64 first, guint64 last, gint64 offset, Glib::ustring& result)
 {
   Glib::RefPtr<ECA_Condition> condition = ECA_Condition::create(
     this, first, last, offset, 0, sender, true, false, -1);
   result = condition->getObjectPath();
 }
 
-void ECA::InjectEvent(
-  const guint64& event, const guint64& param, const guint64& time, const guint32& tef)
+void ECA::InjectEvent(guint64 event, guint64 param, guint64 time, guint32 tef)
 {
   etherbone::Cycle cycle;
   
