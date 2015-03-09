@@ -12,8 +12,7 @@
 
 Glib::RefPtr<saftlib::TLU_Proxy> channel;
 void on_edge(const guint64& time) {
-  guint64 now;
-  channel->CurrentTime(now);
+  guint64 now = channel->CurrentTime();
   std::cout << "Pulse detected: " << time << " @ " << now << " = " << (now-time) << std::endl;
 }
 
@@ -49,9 +48,9 @@ int main(int, char**)
     auto eca = saftlib::ECA_Proxy::create_(directory->getDevices()["ECA"][0]);
     
     // Create a condition, watching events 5-100 delayed by +100*8 nanoseconds
-    Glib::ustring path;
-    eca->NewCondition(5, 100, 100, path);
-    auto condition = saftlib::ECA_Condition_Proxy::create_(path);
+    auto condition = 
+      saftlib::ECA_Condition_Proxy::create_(
+        eca->NewCondition(5, 100, 100));
   
     // Watch the condition
     condition->Action.connect(sigc::ptr_fun(&on_action));
