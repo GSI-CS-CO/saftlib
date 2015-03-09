@@ -153,31 +153,22 @@ void <xsl:value-of select="$iface"/>_Service::unregister_self()
     exports[i].connection->unregister_object(exports[i].id);
   exports.clear();
 }
+
 <xsl:for-each select="method">
-void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
-  <xsl:text>(</xsl:text>
-  <xsl:for-each select="arg">
-    <xsl:if test="position()>1">, </xsl:if>
-  <xsl:text>
-  </xsl:text>
-  <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; /* <xsl:value-of select="@name"/> */</xsl:for-each>
-<xsl:text>)
-{</xsl:text>
+  <xsl:call-template name="method-service-type">
+    <xsl:with-param name="namespace"><xsl:value-of select="$iface"/>_Service::</xsl:with-param>
+  </xsl:call-template>
+{
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Method unimplemented.");
 }
+
 </xsl:for-each>
 
 <xsl:for-each select="signal">
-void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
-  <xsl:text>(</xsl:text>
-  <xsl:for-each select="arg">
-    <xsl:if test="position()>1">, </xsl:if>
-  <xsl:text>
-  const </xsl:text>
-  <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
-  </xsl:for-each>
-<xsl:text>)
-{</xsl:text>
+  <xsl:call-template name="signal-service-type">
+    <xsl:with-param name="namespace"><xsl:value-of select="$iface"/>_Service::</xsl:with-param>
+  </xsl:call-template>
+{
   std::vector&lt;Glib::VariantBase&gt; data_vector;
   <xsl:for-each select="arg">
    <xsl:text>data_vector.push_back(Glib::Variant&lt; </xsl:text>
@@ -190,6 +181,7 @@ void <xsl:value-of select="$iface"/>_Service::<xsl:value-of select="@name"/>
       Glib::VariantContainerBase::create_tuple(data_vector));
   }
 }
+
 </xsl:for-each>
 void <xsl:value-of select="$iface"/>_Service::report_property_change(const char* property, const Glib::VariantBase&amp; value)
 {
@@ -206,32 +198,35 @@ void <xsl:value-of select="$iface"/>_Service::report_property_change(const char*
       Glib::VariantContainerBase::create_tuple(message_vector));
   }
 }
+
 <xsl:for-each select="property">
-const <xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="$iface"/>_Service::get<xsl:value-of select="@name"/>() const
+  <xsl:call-template name="prop-service-gettype">
+    <xsl:with-param name="namespace"><xsl:value-of select="$iface"/>_Service::</xsl:with-param>
+  </xsl:call-template>
 {
   return <xsl:value-of select="@name"/>;
 }
 
-void <xsl:value-of select="$iface"/>_Service::set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val)
+</xsl:for-each>
+
+<xsl:for-each select="property">
+  <xsl:call-template name="prop-service-settype">
+    <xsl:with-param name="namespace"><xsl:value-of select="$iface"/>_Service::</xsl:with-param>
+  </xsl:call-template>
 {<xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
   if (<xsl:value-of select="@name"/> != val)
     report_property_change("<xsl:value-of select="@name"/>", Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(val));</xsl:if>
   <xsl:text>
   </xsl:text><xsl:value-of select="@name"/> = val;
 }
+
 </xsl:for-each>
 
 <xsl:for-each select="method">
-void <xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="@name"/>
-  <xsl:text>(</xsl:text>
-  <xsl:for-each select="arg">
-    <xsl:if test="position()>1">, </xsl:if>
-  <xsl:text>
-  </xsl:text>
-  <xsl:if test="@direction='in'">const </xsl:if><xsl:apply-templates mode="iface-type" select="."/>&amp; <xsl:value-of select="@name"/>
-  </xsl:for-each>
-<xsl:text>)
-{</xsl:text>
+  <xsl:call-template name="method-proxy-type">
+    <xsl:with-param name="namespace"><xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
+  </xsl:call-template>
+{
   std::vector&lt;Glib::VariantBase&gt; query_vector;
   <xsl:for-each select="arg[@direction='in']">
    <xsl:text>query_vector.push_back(Glib::Variant&lt; </xsl:text>
@@ -244,8 +239,8 @@ void <xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="@name"/>
   response.get_child(ov_<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);
   <xsl:value-of select="@name"/> = ov_<xsl:value-of select="@name"/>.get();</xsl:for-each>
 }  
-</xsl:for-each>
-void <xsl:value-of select="$iface"/>_Proxy::on_properties_changed(
+
+</xsl:for-each>void <xsl:value-of select="$iface"/>_Proxy::on_properties_changed(
   const MapChangedProperties&amp; changed_properties,
   const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties)
 {
@@ -302,12 +297,11 @@ void <xsl:value-of select="$iface"/>_Proxy::fetch_property(const char* name, Gli
   result.get_child(variant, 0);
   variant.get(val);
 }
+
 <xsl:for-each select="property[@access='read' or @access='readwrite']">
-  <xsl:text>
-</xsl:text>
-  <xsl:apply-templates mode="iface-type" select="."/>
-  <xsl:text> </xsl:text>
-  <xsl:value-of select="$iface"/>_Proxy::get<xsl:value-of select="@name"/>() const
+  <xsl:call-template name="prop-proxy-gettype">
+    <xsl:with-param name="namespace"><xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
+  </xsl:call-template>
 {
   Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt; value;<xsl:text/>
   <xsl:choose>
@@ -320,8 +314,8 @@ void <xsl:value-of select="$iface"/>_Proxy::fetch_property(const char* name, Gli
   </xsl:choose>
   return value.get();
 }
-</xsl:for-each>
-void <xsl:value-of select="$iface"/>_Proxy::update_property(const char* name, const Glib::VariantBase&amp; val)
+
+</xsl:for-each>void <xsl:value-of select="$iface"/>_Proxy::update_property(const char* name, const Glib::VariantBase&amp; val)
 {
   std::vector&lt; Glib::VariantBase &gt; params;
   params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create("<xsl:value-of select="$iface_full"/>"));
@@ -332,15 +326,16 @@ void <xsl:value-of select="$iface"/>_Proxy::update_property(const char* name, co
   connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set", 
     Glib::VariantContainerBase::create_tuple(params), get_name());
 }
+
 <xsl:for-each select="property[@access='write' or @access='readwrite']">
-void <xsl:value-of select="$iface"/>_Proxy::set<xsl:value-of select="@name"/>(const <xsl:apply-templates mode="iface-type" select="."/>&amp; val)
+  <xsl:call-template name="prop-proxy-settype">
+    <xsl:with-param name="namespace"><xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
+  </xsl:call-template>
 {
   update_property("<xsl:value-of select="@name"/>", Glib::Variant&lt; <xsl:apply-templates mode="iface-type" select="."/> &gt;::create(val));
 }
-</xsl:for-each>
 
-<xsl:text>
-</xsl:text>
+</xsl:for-each>
 
 <xsl:value-of select="$iface"/>_Proxy::<xsl:value-of select="$iface"/>_Proxy(
   const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,

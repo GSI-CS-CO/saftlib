@@ -160,7 +160,7 @@
   <xsl:value-of select="@name"/>
   <xsl:text>(const </xsl:text>
   <xsl:apply-templates mode="iface-type" select="."/>
-  <xsl:text>&amp;)</xsl:text>
+  <xsl:text>&amp; val)</xsl:text>
 </xsl:template>
 
 <xsl:template name="prop-proxy-settype">
@@ -171,7 +171,7 @@
   <xsl:value-of select="@name"/>
   <xsl:text>(const </xsl:text>
   <xsl:apply-templates mode="iface-type" select="."/>
-  <xsl:text>&amp;)</xsl:text>
+  <xsl:text>&amp; val)</xsl:text>
 </xsl:template>
 
 <xsl:template name="prop-proxy-sigtype">
