@@ -29,24 +29,41 @@ void <xsl:value-of select="$iface"/>_Service::on_method_call(
   Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Service&gt; object(this);
   reference();
 
-  object->sender = sender;
-  <xsl:for-each select="method">if (method_name == "<xsl:value-of select="@name"/>") {<xsl:for-each select="arg[@direction='in']">
-    <xsl:call-template name="variant-type"/> <xsl:value-of select="@name"/>;</xsl:for-each>
+  object->sender = sender;<xsl:text/>
+  <xsl:for-each select="method">
+  if (method_name == "<xsl:value-of select="@name"/>") {<xsl:text/>
+    <xsl:for-each select="arg[@direction='in']">
+      <xsl:text>&#10;    </xsl:text>
+      <xsl:call-template name="variant-type"/> 
+      <xsl:text> </xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>;</xsl:text>
+    </xsl:for-each>
     <xsl:for-each select="arg[@direction='out']">
-      <xsl:text>
-    </xsl:text>
+      <xsl:text>&#10;    </xsl:text>
       <xsl:call-template name="raw-type"/>
       <xsl:text> </xsl:text>
       <xsl:value-of select="@name"/>
       <xsl:text>;</xsl:text>
     </xsl:for-each>
     <xsl:for-each select="arg[@direction='in']">
-    parameters.get_child(<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);</xsl:for-each>
+      <xsl:text>&#10;    parameters.get_child(</xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>, </xsl:text>
+      <xsl:value-of select="position()-1"/>
+      <xsl:text>);</xsl:text>
+    </xsl:for-each>
     try {
       try {
-        object-><xsl:value-of select="@name"/>
+        <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/>
+        <xsl:if test="not($void)">
+          <xsl:value-of select="arg[@direction='out']/@name"/>
+          <xsl:text> = </xsl:text>
+        </xsl:if>
+        <xsl:text>object-></xsl:text>
+        <xsl:value-of select="@name"/>
         <xsl:text>(</xsl:text>
-        <xsl:for-each select="arg">
+        <xsl:for-each select="arg[$void or @direction='in']">
           <xsl:if test="position()>1">, </xsl:if>
           <xsl:value-of select="@name"/>
           <xsl:if test="@direction='in'">.get()</xsl:if>
@@ -189,7 +206,7 @@ void <xsl:value-of select="$iface"/>_Service::report_property_change(const char*
   std::vector&lt; Glib::ustring &gt; invalidated;
   std::vector&lt;Glib::VariantBase&gt; message_vector;
   updated[property] = value;
-  message_vector.push_back(Glib::Variant&lt;Glib::ustring&gt;::create("<xsl:value-of select="$iface_full"/>"));
+  message_vector.push_back(Glib::Variant&lt; Glib::ustring &gt;::create("<xsl:value-of select="$iface_full"/>"));
   message_vector.push_back(Glib::Variant&lt; std::map&lt; Glib::ustring, Glib::VariantBase &gt; &gt;::create(updated));
   message_vector.push_back(Glib::Variant&lt; std::vector&lt; Glib::ustring &gt; &gt;::create(invalidated));
   for (unsigned i = 0; i &lt; exports.size(); ++i) {
@@ -234,10 +251,31 @@ void <xsl:value-of select="$iface"/>_Service::report_property_change(const char*
    <xsl:text>::create(</xsl:text>
    <xsl:value-of select="@name"/>));
   </xsl:for-each>const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);
-  const Glib::VariantContainerBase&amp; response = call_sync("<xsl:value-of select="@name"/>", query);<xsl:for-each select="arg[@direction='out']">
-  <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>;
-  response.get_child(ov_<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);
-  <xsl:value-of select="@name"/> = ov_<xsl:value-of select="@name"/>.get();</xsl:for-each>
+  const Glib::VariantContainerBase&amp; response = call_sync("<xsl:value-of select="@name"/>", query);<xsl:text/>
+  <xsl:for-each select="arg[@direction='out']">
+    <xsl:text>&#10;  </xsl:text>
+    <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
+    <xsl:text>;</xsl:text>
+  </xsl:for-each>
+  <xsl:for-each select="arg[@direction='out']">
+  response.get_child(ov_<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);<xsl:text/>
+  </xsl:for-each>
+  <xsl:choose>
+    <xsl:when test="count(arg[@direction='out']) = 1">
+      <xsl:text>&#10;  return ov_</xsl:text>
+      <xsl:value-of select="arg[@direction='out']/@name"/>
+      <xsl:text>.get();</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:for-each select="arg[@direction='out']">
+        <xsl:text>&#10;  </xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text> = ov_</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>.get();</xsl:text>
+      </xsl:for-each>
+    </xsl:otherwise>
+  </xsl:choose>
 }  
 
 </xsl:for-each>void <xsl:value-of select="$iface"/>_Proxy::on_properties_changed(
@@ -269,11 +307,13 @@ void <xsl:value-of select="$iface"/>_Proxy::on_signal(
 {
   Gio::DBus::Proxy::on_signal(sender_name, signal_name, parameters);
 
-  <xsl:for-each select="signal">if (signal_name == "<xsl:value-of select="@name"/>") {<xsl:for-each select="arg">
-    <xsl:call-template name="variant-type"/> <xsl:value-of select="@name"/>;
-    parameters.get_child(<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);</xsl:for-each>
-    <xsl:text>
-    </xsl:text>
+  <xsl:for-each select="signal">if (signal_name == "<xsl:value-of select="@name"/>") {<xsl:text/>
+    <xsl:for-each select="arg">
+      <xsl:text>&#10;    </xsl:text>
+      <xsl:call-template name="variant-type"/> <xsl:value-of select="@name"/>;
+      parameters.get_child(<xsl:value-of select="@name"/>, <xsl:value-of select="position()-1"/>);
+    </xsl:for-each>
+    <xsl:text>&#10;    </xsl:text>
     <xsl:value-of select="@name"/>(<xsl:for-each select="arg">
       <xsl:if test="position()>1">, </xsl:if>
       <xsl:value-of select="@name"/>.get()</xsl:for-each>);

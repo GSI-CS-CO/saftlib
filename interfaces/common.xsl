@@ -129,12 +129,20 @@
 
 <xsl:template name="method-service-type">
   <xsl:param name="namespace"/>
-  <xsl:text>void</xsl:text>
+  <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/>
+  <xsl:choose>
+    <xsl:when test="$void">void</xsl:when>
+    <xsl:otherwise>
+      <xsl:for-each select="arg[@direction='out']">
+        <xsl:call-template name="raw-type"/>
+      </xsl:for-each>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:text> </xsl:text>
   <xsl:value-of select="$namespace"/>
   <xsl:value-of select="@name"/>
   <xsl:text>(</xsl:text>
-  <xsl:for-each select="arg">
+  <xsl:for-each select="arg[$void or @direction='in']">
     <xsl:if test="position()>1">, </xsl:if>
     <xsl:call-template name="inout-type"/>
     <xsl:text> </xsl:text>
@@ -145,18 +153,9 @@
 
 <xsl:template name="method-proxy-type">
   <xsl:param name="namespace"/>
-  <xsl:text>void</xsl:text>
-  <xsl:text> </xsl:text>
-  <xsl:value-of select="$namespace"/>
-  <xsl:value-of select="@name"/>
-  <xsl:text>(</xsl:text>
-  <xsl:for-each select="arg">
-    <xsl:if test="position()>1">, </xsl:if>
-    <xsl:call-template name="inout-type"/>
-    <xsl:text> </xsl:text>
-    <xsl:value-of select="@name"/>
-  </xsl:for-each>
-  <xsl:text>)</xsl:text>
+  <xsl:call-template name="method-service-type">
+    <xsl:with-param name="namespace" select="$namespace"/>
+  </xsl:call-template>
 </xsl:template>
 
 <xsl:template name="signal-service-type">
