@@ -16,10 +16,6 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_LANG(C++)
 
-if test "x$USE_MAINTAINER_MODE" != "xno"; then
-  CXXFLAGS="$CXXFLAGS -Wall -O0 -g"
-fi
-
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 0.1])
 PKG_CHECK_MODULES([DBUS], [dbus-1 >= 1.2.24],
@@ -29,6 +25,9 @@ PKG_CHECK_MODULES([DBUS], [dbus-1 >= 1.2.24],
   [ac_dbus_servicedir=;])
 PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
+if test "x$XSLTPROC" = "x"; then
+  AC_MSG_ERROR([could not find xsltproc -- needed to processs interfaces])
+fi
 
 # Generate documentation, only if we can
 AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
