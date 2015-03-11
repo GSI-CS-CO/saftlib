@@ -1,6 +1,8 @@
 SUBDIRS = interfaces
 
-bin_PROGRAMS = saftd client
+bin_PROGRAMS = saftd
+noinst_PROGRAMS = client
+
 dbussystemdir = @sysconfdir@/dbus-1/system.d
 dist_dbussystem_DATA = saftlib.conf
 
