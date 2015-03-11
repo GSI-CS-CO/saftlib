@@ -4,24 +4,25 @@
 
 namespace saftlib {
 
-// !!! dangerous because the order of static initialization might leave this
-// uninitialized at the time of .insert_self
-static std::list<DriverBase*> driver_set;
+static DriverBase *top = 0;
 
 void DriverBase::insert_self()
 {
-  index = driver_set.insert(driver_set.begin(), this);
+  next = top;
+  top = this;
 }
 
 void DriverBase::remove_self()
 {
-  driver_set.erase(index);
+  DriverBase **i;
+  for (i = &top; *i != this; i = &(*i)->next) { }
+  *i = next;
 }
 
 void Drivers::probe()
 {
-  for (std::list<DriverBase*>::const_iterator i = driver_set.begin(); i != driver_set.end(); ++i)
-    (*i)->probe();
+  for (DriverBase *i = top; i; i = i->next)
+    i->probe();
 }
 
 }

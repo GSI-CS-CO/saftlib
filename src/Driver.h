@@ -1,7 +1,6 @@
 #ifndef SAFTLIB_DRIVER_H
 #define SAFTLIB_DRIVER_H
 
-#include <list>
 #include "Device.h"
 
 namespace saftlib {
@@ -17,8 +16,7 @@ class DriverBase
     virtual void probe() = 0;
     
   private:
-    // secret
-    std::list<DriverBase*>::iterator index;
+    DriverBase *next;
     
     // non-copyable
     DriverBase(const DriverBase&);
