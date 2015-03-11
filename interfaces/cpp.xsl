@@ -344,14 +344,11 @@ void <xsl:value-of select="$iface"/>_Proxy::fetch_property(const char* name, Gli
   </xsl:call-template>
 {
   <xsl:call-template name="variant-type"/> value;<xsl:text/>
-  <xsl:choose>
-    <xsl:when test="annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false']">
-  fetch_property("<xsl:value-of select="@name"/>", value);<xsl:text/>
-    </xsl:when>
-    <xsl:otherwise>
-  get_cached_property(value, "<xsl:value-of select="@name"/>");<xsl:text/>
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
+  get_cached_property(value, "<xsl:value-of select="@name"/>");
+  if (value.gobj()) return value.get();<xsl:text/>
+  </xsl:if>
+  fetch_property("<xsl:value-of select="@name"/>", value);
   return value.get();
 }
 
