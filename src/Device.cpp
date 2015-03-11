@@ -64,7 +64,7 @@ void Device::hook_it_all(etherbone::Socket socket)
   everything.abi_ver_minor = 0;
   everything.bus_specific  = SDB_WISHBONE_WIDTH;
   everything.sdb_component.addr_first = 0x4000;
-  everything.sdb_component.addr_last  = EB_ADDR_C(0xffffffff);
+  everything.sdb_component.addr_last  = 0xffffffffULL;
   everything.sdb_component.product.vendor_id = 0x651;
   everything.sdb_component.product.device_id = 0xefaa70;
   everything.sdb_component.product.version   = 1;

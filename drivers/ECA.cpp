@@ -809,25 +809,25 @@ void ECA::recompile()
   for (unsigned i = 0; i < 2*table_size; ++i) {
     /* Duplicate last entry to fill out the table */
     const SearchEntry& se = (i<search.size())?search[i]:search.back();
-    eb_data_t first = (se.index==-1)?0:(UINT32_C(0x80000000)|se.index);
+    eb_data_t first = (se.index==-1)?0:(0x80000000UL|se.index);
     
     cycle.open(device);
     cycle.write(base + ECA_SEARCH, EB_DATA32, i);
     cycle.write(base + ECA_FIRST,  EB_DATA32, first);
     cycle.write(base + ECA_EVENT1, EB_DATA32, se.event >> 32);
-    cycle.write(base + ECA_EVENT0, EB_DATA32, se.event & UINT32_C(0xFFFFFFFF));
+    cycle.write(base + ECA_EVENT0, EB_DATA32, se.event & 0xFFFFFFFFUL);
     cycle.close();
   }
   
   for (unsigned i = 0; i < walk.size(); ++i) {
     const WalkEntry& we = walk[i];
-    eb_data_t next = (we.next==-1)?0:(UINT32_C(0x80000000)|we.next);
+    eb_data_t next = (we.next==-1)?0:(0x80000000UL|we.next);
     
     cycle.open(device);
     cycle.write(base + ECA_WALK,    EB_DATA32, i);
     cycle.write(base + ECA_NEXT,    EB_DATA32, next);
     cycle.write(base + ECA_DELAY1,  EB_DATA32, we.offset >> 32);
-    cycle.write(base + ECA_DELAY0,  EB_DATA32, we.offset & UINT32_C(0xFFFFFFFF));
+    cycle.write(base + ECA_DELAY0,  EB_DATA32, we.offset & 0xFFFFFFFFUL);
     cycle.write(base + ECA_TAG,     EB_DATA32, we.tag);
     cycle.write(base + ECA_CHANNEL, EB_DATA32, we.channel);
     cycle.close();
