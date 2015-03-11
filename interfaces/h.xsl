@@ -130,7 +130,7 @@ class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
         <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>,
       const Glib::ustring&amp; name<xsl:text/>
         <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>,
-      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SESSION,
+      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,
       Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
 
   private:

@@ -34,6 +34,7 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
 void on_name_lost(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   // Something else claimed the saftlib name
+  std::cerr << "Unable to acquire name---dbus saftlib.conf installed?" << std::endl;
   saftlib::Directory::get()->loop()->quit();
 }
 
@@ -65,7 +66,7 @@ int main(int argc, char** argv)
   sigc::connection eb_source = 
     eb_attach_source(saftlib::Directory::get()->loop(), socket);
   
-  const guint id = Gio::DBus::own_name(Gio::DBus::BUS_TYPE_SESSION,
+  const guint id = Gio::DBus::own_name(Gio::DBus::BUS_TYPE_SYSTEM,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
     sigc::ptr_fun(&on_name_acquired),
