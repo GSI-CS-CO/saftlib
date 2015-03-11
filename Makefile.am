@@ -1,8 +1,8 @@
 SUBDIRS = interfaces
 
 bin_PROGRAMS = saftd client
-dbus_servicedir = @DBUS_SERVICEDIR@
-dist_dbus_service_DATA = saftlib.conf
+dbussystemdir = @sysconfdir@/dbus-1/system.d
+dist_dbussystem_DATA = saftlib.conf
 
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)
