@@ -17,6 +17,6 @@ libsaftlib_la_LIBADD = $(GIOMM_LIBS)
 
 .xml.pdf:
 	$(GDBUS_CODEGEN) --generate-docbook=docfoo --interface-prefix=de.gsi.saftlib $<
-	$(DOCBOOK2PDF) docfoo-*.xml
-	mv docfoo-*.pdf $@
-	rm -f docfoo-*
+	$(DOCBOOK2PDF) docfoo-*.$*.xml
+	mv docfoo-*.$*.pdf $@
+	rm -f docfoo-*.$*.*

@@ -2,3 +2,5 @@
 *.cpp
 *.h
 *.pdf
+# Temporary build files
+docfoo-*
