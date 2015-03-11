@@ -20,14 +20,14 @@ if test "x$USE_MAINTAINER_MODE" != "xno"; then
   CXXFLAGS="$CXXFLAGS -Wall -O0 -g"
 fi
 
-PKG_PROG_PKG_CONFIG([0.25])
+PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 0.1])
-PKG_CHECK_MODULES([DBUS], [dbus-1 >= 1.8.12],
+PKG_CHECK_MODULES([DBUS], [dbus-1 >= 1.2.24],
   [ac_dbus_rawservicedir="$($PKG_CONFIG --variable=system_bus_services_dir dbus-1)"
    ac_dbus_prefixdir="$($PKG_CONFIG --variable=prefix dbus-1)"
    ac_dbus_servicedir="\${prefix}/${ac_dbus_rawservicedir#${ac_dbus_prefixdir}}"],
   [ac_dbus_servicedir=;])
-PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.42])
+PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
 AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
