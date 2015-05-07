@@ -6,6 +6,13 @@
   </xsl:call-template>
 </xsl:template>
 
+<xsl:template name="caps-name">
+  <xsl:param name="name"/>
+  <xsl:variable name="smallcase" select="'abcdefghijklmnopqrstuvwxyz'"/>
+  <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
+  <xsl:value-of select="translate($name, $smallcase, $uppercase)"/>
+</xsl:template>
+
 <xsl:template name="iface-name">
   <xsl:param name="input"/>
   <xsl:choose>
@@ -127,7 +134,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template name="method-service-type">
+<xsl:template name="method-type">
   <xsl:param name="namespace"/>
   <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/>
   <xsl:choose>
@@ -151,14 +158,31 @@
   <xsl:text>)</xsl:text>
 </xsl:template>
 
-<xsl:template name="method-proxy-type">
-  <xsl:param name="namespace"/>
-  <xsl:call-template name="method-service-type">
-    <xsl:with-param name="namespace" select="$namespace"/>
-  </xsl:call-template>
+<xsl:template name="method-invoke">
+  <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/>
+  <xsl:value-of select="@name"/>
+  <xsl:text>(</xsl:text>
+  <xsl:for-each select="arg[$void or @direction='in']">
+    <xsl:if test="position()>1">, </xsl:if>
+    <xsl:value-of select="@name"/>
+  </xsl:for-each>
+  <xsl:text>);</xsl:text>
 </xsl:template>
 
-<xsl:template name="signal-service-type">
+<xsl:template name="signal-type">
+  <xsl:param name="namespace"/>
+  <xsl:text>sigc::signal&lt; void </xsl:text>
+  <xsl:for-each select="arg">
+    <xsl:text>, </xsl:text>
+    <xsl:call-template name="input-type"/>
+    <xsl:text> </xsl:text>
+  </xsl:for-each>
+  <xsl:text>&gt; </xsl:text>
+  <xsl:value-of select="$namespace"/>
+  <xsl:value-of select="@name"/>
+</xsl:template>
+
+<xsl:template name="signal-mtype">
   <xsl:param name="namespace"/>
   <xsl:text>void </xsl:text>
   <xsl:value-of select="$namespace"/>
@@ -173,30 +197,7 @@
   <xsl:text>)</xsl:text>
 </xsl:template>
 
-<xsl:template name="signal-proxy-type">
-  <xsl:param name="namespace"/>
-  <xsl:text>sigc::signal&lt; void </xsl:text>
-  <xsl:for-each select="arg">
-    <xsl:text>, </xsl:text>
-    <xsl:call-template name="input-type"/>
-    <xsl:text> </xsl:text>
-  </xsl:for-each>
-  <xsl:text>&gt; </xsl:text>
-  <xsl:value-of select="$namespace"/>
-  <xsl:value-of select="@name"/>
-</xsl:template>
-
-<xsl:template name="prop-service-gettype">
-  <xsl:param name="namespace"/>
-  <xsl:call-template name="input-type"/>
-  <xsl:text> </xsl:text>
-  <xsl:value-of select="$namespace"/>
-  <xsl:text>get</xsl:text>
-  <xsl:value-of select="@name"/>
-  <xsl:text>() const</xsl:text>
-</xsl:template>
-
-<xsl:template name="prop-proxy-gettype">
+<xsl:template name="prop-gettype">
   <xsl:param name="namespace"/>
   <xsl:call-template name="raw-type"/>
   <xsl:text> </xsl:text>
@@ -206,7 +207,13 @@
   <xsl:text>() const</xsl:text>
 </xsl:template>
 
-<xsl:template name="prop-service-settype">
+<xsl:template name="prop-getinvoke">
+  <xsl:text>get</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>();</xsl:text>
+</xsl:template>
+
+<xsl:template name="prop-settype">
   <xsl:param name="namespace"/>
   <xsl:text>void </xsl:text>
   <xsl:value-of select="$namespace"/>
@@ -217,18 +224,13 @@
   <xsl:text> val)</xsl:text>
 </xsl:template>
 
-<xsl:template name="prop-proxy-settype">
-  <xsl:param name="namespace"/>
-  <xsl:text>void </xsl:text>
-  <xsl:value-of select="$namespace"/>
+<xsl:template name="prop-setinvoke">
   <xsl:text>set</xsl:text>
   <xsl:value-of select="@name"/>
-  <xsl:text>(</xsl:text>
-  <xsl:call-template name="input-type"/>
-  <xsl:text> val)</xsl:text>
+  <xsl:text>(val);</xsl:text>
 </xsl:template>
 
-<xsl:template name="prop-proxy-sigtype">
+<xsl:template name="prop-sigtype">
   <xsl:param name="namespace"/>
   <xsl:text>sigc::signal&lt; void, </xsl:text>
   <xsl:call-template name="input-type"/>

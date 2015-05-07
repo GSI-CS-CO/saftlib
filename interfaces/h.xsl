@@ -3,77 +3,350 @@
 <xsl:output method="text" encoding="utf-8" indent="no"/>
 <xsl:include href="./common.xsl"/>
 
-<xsl:template match="/node">// This is a generated file. Do not modify.
-#include &lt;giomm/dbusproxy.h&gt;
-<xsl:for-each select="interface">
-  <xsl:variable name="iface">
+<xsl:template match="/node">
+  <xsl:variable name="name" select="@name"/>
+  <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
+  <xsl:text>#ifndef </xsl:text>
+  <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$name"/></xsl:call-template>
+  <xsl:text>_OBJECT_H&#10;</xsl:text>
+  <xsl:text>#define </xsl:text>
+  <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$name"/></xsl:call-template>
+  <xsl:text>_OBJECT_H&#10;&#10;</xsl:text>
+  
+  <!-- Include the interface definitions -->
+  <xsl:for-each select="interface">
+    <xsl:text>#include "i</xsl:text>
     <xsl:apply-templates mode="iface-name" select="."/>
-  </xsl:variable>
+    <xsl:text>.h"&#10;</xsl:text>
+  </xsl:for-each>
+  <xsl:text>&#10;</xsl:text>
 
-  <xsl:variable name="smallcase" select="'abcdefghijklmnopqrstuvwxyz'"/>
-  <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
-  <xsl:variable name="big_iface" select="translate($iface, $smallcase, $uppercase)"/>
-#ifndef <xsl:value-of select="$big_iface"/>_IFACE_H
-#define <xsl:value-of select="$big_iface"/>_IFACE_H
+  <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
-namespace saftlib {
+  <!-- Proxy class implements all interfaces -->
+  <xsl:text>class </xsl:text>
+  <xsl:value-of select="$name"/>
+  <xsl:text>_Proxy :</xsl:text>
+  <xsl:for-each select="interface">
+    <xsl:if test="position()>1">,</xsl:if>
+    <xsl:text> public i</xsl:text>
+    <xsl:apply-templates mode="iface-name" select="."/>
+  </xsl:for-each>
+  <xsl:text> {&#10;</xsl:text>
+  <xsl:text>  public:&#10;</xsl:text>
 
-class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
-  public:
-    // Methods -- implement these in a derived class!<xsl:text/>
+  <!-- Constructor -->
+  <xsl:text>    </xsl:text>
+  <xsl:value-of select="$name"/>_Proxy(
+      const Glib::ustring&amp; object_path<xsl:text/>
+        <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>,
+      const Glib::ustring&amp; name<xsl:text/>
+        <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>,
+      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,
+      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;<xsl:text/>
+
+  <xsl:text>    ~</xsl:text>
+  <xsl:value-of select="$name"/>
+  <xsl:text>_Proxy();&#10;&#10;</xsl:text>
+
+  <!-- Methods -->
+  <xsl:text>    // Proxy all methods to interfaces&#10;</xsl:text>
+  <xsl:for-each select="interface">
     <xsl:for-each select="method">
-      <xsl:text>&#10;    virtual </xsl:text>
-      <xsl:call-template name="method-service-type"/>
-      <xsl:text>;</xsl:text>
+      <xsl:text>    </xsl:text>
+      <xsl:call-template name="method-type"/>
+      <xsl:text> { return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select=".."/>
+      <xsl:text>-></xsl:text>
+      <xsl:call-template name="method-invoke"/>
+      <xsl:text> };&#10;</xsl:text>
     </xsl:for-each>
-    // Emit signals<xsl:text/>
+  </xsl:for-each>
+
+  <!-- Property Getters -->
+  <xsl:text>    // Proxy all property gets to interfaces&#10;</xsl:text>
+  <xsl:for-each select="interface">
+    <xsl:for-each select="property[@access='read' or @access='readwrite']">
+      <xsl:text>    </xsl:text>
+      <xsl:call-template name="prop-gettype"/>
+      <xsl:text> { return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select=".."/>
+      <xsl:text>-></xsl:text>
+      <xsl:call-template name="prop-getinvoke"/>
+      <xsl:text> };&#10;</xsl:text>
+    </xsl:for-each>
+  </xsl:for-each>
+
+  <!-- Property Setters -->
+  <xsl:text>    // Proxy all property sets to interfaces&#10;</xsl:text>
+  <xsl:for-each select="interface">
+    <xsl:for-each select="property[@access='write' or @access='readwrite']">
+      <xsl:text>    </xsl:text>
+      <xsl:call-template name="prop-settype"/>
+      <xsl:text> { return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select=".."/>
+      <xsl:text>-></xsl:text>
+      <xsl:call-template name="prop-setinvoke"/>
+      <xsl:text> };&#10;</xsl:text>
+    </xsl:for-each>
+  </xsl:for-each>
+
+  <!-- Property Signal pointers -->
+  <xsl:text>    // These property signals are available from base classes&#10;</xsl:text>
+  <xsl:for-each select="interface">
+    <xsl:for-each select="property[@access='read' or @access='readwrite']">
+      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+        <xsl:text>    //   </xsl:text>
+        <xsl:call-template name="prop-sigtype"/>
+        <xsl:text>;&#10;</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+  </xsl:for-each>
+
+  <!-- Signal pointers -->
+  <xsl:text>    // These signals are available from base classes&#10;</xsl:text>
+  <xsl:for-each select="interface">
     <xsl:for-each select="signal">
-      <xsl:text>&#10;    virtual </xsl:text>
-      <xsl:call-template name="signal-service-type"/>
-      <xsl:text>;</xsl:text>
+      <xsl:text>    //   </xsl:text>
+      <xsl:call-template name="signal-type"/>
+      <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
-    // Property accessors<xsl:text/>
-    <xsl:for-each select="property">
-      <xsl:text>&#10;    virtual </xsl:text>
-      <xsl:call-template name="prop-service-gettype"/>
-      <xsl:text>;</xsl:text>
+  </xsl:for-each>
+
+  <!-- The proxy objects -->
+  <xsl:text>  protected:&#10;</xsl:text>
+  <xsl:for-each select="interface">
+    <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
+    <xsl:apply-templates mode="iface-name" select="."/>
+    <xsl:text>_Proxy&gt; </xsl:text>
+    <xsl:apply-templates mode="iface-name" select="."/>
+    <xsl:text>;&#10;</xsl:text>
+  </xsl:for-each>
+
+  <!-- Connections to the embedded signals -->
+  <xsl:for-each select="interface">
+    <xsl:for-each select="property[@access='read' or @access='readwrite']">
+      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+        <xsl:text>    sigc::connection con_prop</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>;&#10;</xsl:text>
+      </xsl:if>
     </xsl:for-each>
-    <xsl:for-each select="property">
-      <xsl:text>&#10;    virtual </xsl:text>
-      <xsl:call-template name="prop-service-settype"/>
-      <xsl:text>;</xsl:text>
+  </xsl:for-each>
+
+  <xsl:for-each select="interface">
+    <xsl:for-each select="signal">
+      <xsl:text>    sigc::connection con_sig</xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
-    // Standard Service methods
-    <xsl:value-of select="$iface"/>_Service();
-    virtual ~<xsl:value-of select="$iface"/>_Service();
-    virtual void rethrow(const char *method);
-    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_, const Glib::ustring&amp; path);
-    void unregister_self();
-  private:
-    const Gio::DBus::InterfaceVTable interface_vtable;
+  </xsl:for-each>
+
+  <!-- End of proxy class -->
+  <xsl:text>};&#10;&#10;</xsl:text>
+
+  <!-- Service class implements all interfaces -->
+  <xsl:text>class </xsl:text>
+  <xsl:value-of select="$name"/>
+  <xsl:text>_Service :</xsl:text>
+  <xsl:for-each select="interface">
+    <xsl:if test="position()>1">,</xsl:if>
+    <xsl:text> public i</xsl:text>
+    <xsl:apply-templates mode="iface-name" select="."/>
+  </xsl:for-each>
+  <xsl:text> {&#10;</xsl:text>
+  <xsl:text>  public:&#10;</xsl:text>
+  <xsl:text>    </xsl:text>
+  <xsl:value-of select="$name"/>
+  <xsl:text>_Service();&#10;&#10;</xsl:text>
+  <xsl:text>    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
+  <xsl:text>    void unregister_self();&#10;</xsl:text>
+  <xsl:text>    virtual void rethrow(const char *name) const;&#10;</xsl:text>
+  <xsl:text>&#10;</xsl:text>
+
+  <!-- The service objects -->
+  <xsl:text>  private:&#10;</xsl:text>
+  <xsl:for-each select="interface">
+    <xsl:text>    i</xsl:text>
+    <xsl:apply-templates mode="iface-name" select="."/>
+    <xsl:text>_Service </xsl:text>
+    <xsl:apply-templates mode="iface-name" select="."/>
+    <xsl:text>;&#10;</xsl:text>
+  </xsl:for-each>
+
+  <xsl:text>};&#10;&#10;</xsl:text>
+
+  <xsl:text>}&#10;&#10;</xsl:text>
+  <xsl:text>#endif&#10;</xsl:text>
+
+  <!-- Generate interface headers -->
+  <xsl:for-each select="interface">
+    <xsl:variable name="iface">
+      <xsl:apply-templates mode="iface-name" select="."/>
+    </xsl:variable>
+
+    <xsl:document href="i{$iface}.h" method="text" encoding="utf-8" indent="no">
+      <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
+      <xsl:text>#ifndef </xsl:text>
+      <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$iface"/></xsl:call-template>
+      <xsl:text>_IFACE_H&#10;</xsl:text>
+      <xsl:text>#define </xsl:text>
+      <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$iface"/></xsl:call-template>
+      <xsl:text>_IFACE_H&#10;&#10;</xsl:text>
+
+      <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;&#10;</xsl:text>
+      <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
+
+      <!-- The base interface class -->
+      <xsl:text>class i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text> {&#10;</xsl:text>
+      <xsl:text>  public:&#10;</xsl:text>
+      <xsl:text>    virtual ~i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>();&#10;</xsl:text>
+
+      <xsl:text>    // Methods&#10;</xsl:text>
+      <xsl:for-each select="method">
+        <xsl:text>    virtual </xsl:text>
+        <xsl:call-template name="method-type"/>
+        <xsl:text> = 0;&#10;</xsl:text>
+      </xsl:for-each>
+
+      <xsl:text>    // Property getters&#10;</xsl:text>
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:text>    virtual </xsl:text>
+        <xsl:call-template name="prop-gettype"/>
+        <xsl:text> = 0;&#10;</xsl:text>
+      </xsl:for-each>
+
+      <xsl:text>    // Property setters&#10;</xsl:text>
+      <xsl:for-each select="property[@access='write' or @access='readwrite']">
+        <xsl:text>    virtual </xsl:text>
+        <xsl:call-template name="prop-settype"/>
+        <xsl:text> = 0;&#10;</xsl:text>
+      </xsl:for-each>
+
+      <!-- Property Signal pointers -->
+      <xsl:text>    // Property signals&#10;</xsl:text>
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+          <xsl:text>    </xsl:text>
+          <xsl:call-template name="prop-sigtype"/>
+          <xsl:text>;&#10;</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+
+      <!-- Signal pointers -->
+      <xsl:text>    // Signals&#10;</xsl:text>
+      <xsl:for-each select="signal">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="signal-type"/>
+        <xsl:text>;&#10;</xsl:text>
+      </xsl:for-each>
+
+      <xsl:text>};&#10;&#10;</xsl:text>
+
+      <!-- The proxy interface class -->
+      <xsl:text>class i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>_Proxy : public Gio::DBus::Proxy, public i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text> {&#10;</xsl:text>
+      <xsl:text>  public:</xsl:text>
+    static Glib::RefPtr&lt;i<xsl:value-of select="$iface"/>_Proxy&gt; create(
+      const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; name,
+      Gio::DBus::BusType bus_type, 
+      Gio::DBus::ProxyFlags flags);&#10;&#10;<xsl:text/>
+      
+      <!-- Concrete implementations -->
+      <xsl:text>    // Implement abstract base class methods&#10;</xsl:text>
+      <xsl:for-each select="method">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="method-type"/>
+        <xsl:text>;&#10;</xsl:text>
+      </xsl:for-each>
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="prop-gettype"/>
+        <xsl:text>;&#10;</xsl:text>
+      </xsl:for-each>
+      <xsl:for-each select="property[@access='write' or @access='readwrite']">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="prop-settype"/>
+        <xsl:text>;&#10;</xsl:text>
+      </xsl:for-each>
+
+      <!-- Forbid copy -->
+      <xsl:text>&#10;  private:&#10;</xsl:text>
+      <xsl:text>    // noncopyable&#10;</xsl:text>
+      <xsl:text>    i</xsl:text>
+      <xsl:value-of select="$iface"/>_Proxy(const i<xsl:value-of select="$iface"/>_Proxy&amp;);&#10;<xsl:text/>
+      <xsl:text>    i</xsl:text>
+      <xsl:value-of select="$iface"/>_Proxy&amp; operator=(const i<xsl:value-of select="$iface"/>_Proxy&amp;);&#10;<xsl:text/>
+
+      <!-- Implementation -->
   protected:
-    // export state
+    void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties);
+    void on_signal(const Glib::ustring&amp; sender_name, const Glib::ustring&amp; signal_name, const Glib::VariantContainerBase&amp; parameters);
+    void fetch_property(const char* name, Glib::VariantBase&amp; val) const;
+    void update_property(const char* name, const Glib::VariantBase&amp; val);
+
+    i<xsl:value-of select="$iface"/>_Proxy(
+      Gio::DBus::BusType bus_type,
+      const Glib::ustring&amp; name,
+      const Glib::ustring&amp; object_path,
+      const Glib::ustring&amp; interface_name,
+      Gio::DBus::ProxyFlags flags);
+};
+
+class i<xsl:value-of select="$iface"/>_Service {
+  public:
+    i<xsl:value-of select="$iface"/>_Service(i<xsl:value-of select="$iface"/>* impl, sigc::slot&lt;void, const char*&gt; rethrow);
+    ~i<xsl:value-of select="$iface"/>_Service();
+    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
+    void unregister_self();
+    Glib::ustring sender;
+    // virtual void rethrow(const char *method);
+  private:
+    iECA *impl;
+    sigc::slot&lt;void, const char*&gt; rethrow;<xsl:text/>
+    <xsl:for-each select="property">
+      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+    sigc::connection con_prop<xsl:value-of select="@name"/>;<xsl:text/>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:for-each select="signal">
+    sigc::connection con_sig<xsl:value-of select="@name"/>;<xsl:text/>
+    </xsl:for-each>
+    const Gio::DBus::InterfaceVTable interface_vtable;
     struct Export {
-      Export(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) : 
-       connection(c), object_path(o), id(i) { }
+      Export(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) :
+        connection(c), object_path(o), id(i) { }
       Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
       Glib::ustring object_path;
-      int id;
+      guint id;
     };
     std::vector&lt;Export&gt; exports;
-    Glib::ustring sender;
-  private:
-    void report_property_change(const char* name, const Glib::VariantBase&amp; value);
-    // property variables<xsl:for-each select="property">
-    <xsl:text>
-    </xsl:text><xsl:call-template name="raw-type"/>
-    <xsl:text> </xsl:text>
-    <xsl:value-of select="@name"/>;</xsl:for-each>
-    // non copyable
-    <xsl:value-of select="$iface"/>_Service(const <xsl:value-of select="$iface"/>_Service&amp;);
-    <xsl:value-of select="$iface"/>_Service&amp; operator = (const <xsl:value-of select="$iface"/>_Service&amp;);
-    // parsers
     static const Glib::ustring xml;
+    void report_property_change(const char* name, const Glib::VariantBase&amp; value);&#10;<xsl:text/>
+    <xsl:for-each select="property">
+      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+        <xsl:text>    void on_prop</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>(</xsl:text>
+        <xsl:call-template name="input-type"/>
+        <xsl:text>);&#10;</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:for-each select="signal">
+      <xsl:text>    </xsl:text>
+      <xsl:call-template name="signal-mtype">
+        <xsl:with-param name="namespace" select="'on_sig'"/>
+      </xsl:call-template>
+      <xsl:text>;&#10;</xsl:text>
+    </xsl:for-each>
     void on_method_call(
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
@@ -89,72 +362,13 @@ class <xsl:value-of select="$iface"/>_Service : public Glib::Object {
       const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */, 
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path, 
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
-      const Glib::VariantBase&amp; value) ;
-};
-
-class <xsl:value-of select="$iface"/>_Proxy : public Gio::DBus::Proxy {
-  public:
-    // Methods<xsl:text/>
-    <xsl:for-each select="method">
-      <xsl:text>&#10;    </xsl:text>
-      <xsl:call-template name="method-proxy-type"/>
-      <xsl:text>;</xsl:text>
-    </xsl:for-each>
-    // Signals<xsl:text/>
-    <xsl:for-each select="signal">
-      <xsl:text>&#10;    </xsl:text>
-      <xsl:call-template name="signal-proxy-type"/>
-      <xsl:text>;</xsl:text>
-    </xsl:for-each>
-    // Property accessors<xsl:text/>
-    <xsl:for-each select="property[@access='read' or @access='readwrite']">
-      <xsl:text>&#10;    </xsl:text>
-      <xsl:call-template name="prop-proxy-gettype"/>
-      <xsl:text>;</xsl:text>
-    </xsl:for-each>
-    <xsl:for-each select="property[@access='write' or @access='readwrite']">
-      <xsl:text>&#10;    </xsl:text>
-      <xsl:call-template name="prop-proxy-settype"/>
-      <xsl:text>;</xsl:text>
-    </xsl:for-each>
-    <xsl:for-each select="property[@access='read' or @access='readwrite']">
-      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
-        <xsl:text>&#10;    </xsl:text>
-        <xsl:call-template name="prop-proxy-sigtype"/>
-        <xsl:text>;</xsl:text>
-      </xsl:if>
-    </xsl:for-each>
-  public:
-    static Glib::RefPtr&lt;<xsl:value-of select="$iface"/>_Proxy&gt; create(
-      const Glib::ustring&amp; object_path<xsl:text/>
-        <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>,
-      const Glib::ustring&amp; name<xsl:text/>
-        <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>,
-      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,
-      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);
-
-  private:
-    // noncopyable
-    <xsl:value-of select="$iface"/>_Proxy(const <xsl:value-of select="$iface"/>_Proxy&amp;);
-    <xsl:value-of select="$iface"/>_Proxy&amp; operator=(const <xsl:value-of select="$iface"/>_Proxy&amp;);
-
-  protected:
-    void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties);
-    void on_signal(const Glib::ustring&amp; sender_name, const Glib::ustring&amp; signal_name, const Glib::VariantContainerBase&amp; parameters);
-    void fetch_property(const char* name, Glib::VariantBase&amp; val) const;
-    void update_property(const char* name, const Glib::VariantBase&amp; val);
-
-    <xsl:value-of select="$iface"/>_Proxy(
-      Gio::DBus::BusType bus_type,
-      const Glib::ustring&amp; name,
-      const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
-      Gio::DBus::ProxyFlags flags);
+      const Glib::VariantBase&amp; value);
 };
 
 }
 
 #endif
+</xsl:document>
 </xsl:for-each>
 </xsl:template>
 
