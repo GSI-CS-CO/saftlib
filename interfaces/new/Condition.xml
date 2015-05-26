@@ -1,0 +1,41 @@
+<!-- de.gsi.saftlib.Condition:
+     @short_description: A rule matched against incoming events
+     
+     Conditions are created for ActionSinks to select which events the
+     sink should respond to. Different ActionSinks return handles to 
+     different Conditions. This interface is the common denominator.
+  -->
+<interface name="de.gsi.saftlib.Condition">
+  <!-- First: The first event identifier which this condition matches.
+    -->
+  <property name="First"  type="t" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Last: The last event identifier which this condition matches.
+    -->
+  <property name="Last"   type="t" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Offset: Added to an event's time to calculate the action's time.
+    -->
+  <property name="Offset" type="x" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Guards: The guards in this bitmask must be true 4us before the action.
+    -->
+  <property name="Guards" type="x" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Active: The condition should be actively matched against events.
+       An inactive condition is not used to match against events.
+       You can toggle the active state of this condition via this property,
+       or if multiple Conditions should be automically adjusted, use the
+       ToggleActive method on the ActionSink.
+    -->
+  <property name="Active" type="b" access="readwrite"/>
+  
+</interface>

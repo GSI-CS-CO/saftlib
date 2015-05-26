@@ -1,0 +1,41 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  
+  <!-- Include base interfaces -->
+  <xi:include href="Owned.xml"/>
+  <xi:include href="Condition.xml"/>
+  
+  <!-- de.gsi.saftlib.SoftwareCondition:
+       @short_description: A rule matched against incoming events on a SoftwareActionSink.
+       
+       SoftwareConditions are created by SoftwareActionSinks to select which
+       events the should generate callbacks. This interface always implies
+       that the object also implements the general Condition interface.
+    -->
+  <interface name="de.gsi.saftlib.SoftwareCondition">
+    <!-- Action:    Emitted whenever the condition matches a timing event.
+         @event:    The event identifier that matched this rule.
+         @param:    The parameter field, whose meaning depends on the event ID.
+         @time:     The action execution timestamp (event time + offset).
+         @late:     The action was not delivered on time by the data master.
+         @conflict: Two actions should have been delivered simultaneously.
+         
+         While the underlying hardware will deliver the action at precisely
+         time-o-clock, the software stack adds non-deterministic delay, so
+         the time field may be milliseconds in the past.  The late field
+         only indicates if the data master failed to meet the required
+         deadline.  The saftlib guarantees that a single timing message can
+         never lead to conflicting actions.  It does this by combining
+         overlapping conditions at the software level and dispatching the
+         single resulting action to all interested clients.  However, two
+         different timing messages may still lead to conflicting actions.
+      -->
+    <signal name="Action">
+      <arg name="event"    type="t"/>
+      <arg name="param"    type="t"/>
+      <arg name="time"     type="t"/>
+      <arg name="late"     type="b"/>
+      <arg name="conflict" type="b"/>
+    </signal>
+  </interface>
+</node>

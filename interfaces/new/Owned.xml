@@ -1,0 +1,47 @@
+<!-- de.gsi.saftlib.Owned:
+     @short_description: An object which can grant exclusive access.
+     
+     This interface allows clients to claim ownership of the object.
+     When the object has no owner, full access is granted to all clients.
+     When owned, only the owner may execute priveledged methods.
+     If the object is Destructible and has an Owner, the object will
+     be automatically Destroyed when the Owner quits.
+  -->
+<interface name="de.gsi.saftlib.Owned">
+  <!-- Owner: The dbus client which owns this object.
+       If there is no Owners, the empty string is returned.
+       Only the owner may access privileged methods on the object.
+       When the owning client disconnects, ownership will be 
+       automatically released, and if the object is Destructable,
+       the object will also be automatically Destroyed.
+    -->
+  <property name="Owner"  type="s" access="read"/>
+  
+  <!-- Destructible: Can the object be destroyed.
+       A destructible object represents a temporary allocated resource. 
+       When the owner quits, the object will be automatically Destoyed.
+       Some objects are indestructible, representing a physical resource.
+    -->
+  <property name="Destructible" type="b" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Disown: Release ownership of the object.
+       This method may only be invoked by the current owner of the
+       object. A disowned object may be accessed by all clients
+       and will persist until its Destroy method is called.
+    -->
+  <method name="Disown"/>
+  
+  <!-- Own: Claim ownership of the object.
+       This method may only be invoked if the object is unowned.
+    -->
+  <method name="Own"/>
+  
+  <!-- Destroy: Remove this condition from the ECA table.
+       This method may only be invoked by the current owner of the
+       condition. However, if the condition has been disowned, it may
+       be invoked by anyone.
+    -->
+  <method name="Destroy"/>
+</interface>
