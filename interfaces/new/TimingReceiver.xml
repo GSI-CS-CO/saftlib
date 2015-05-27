@@ -1,0 +1,106 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="TimingReceiver">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  
+  <xi:include href="Device.xml"/>
+
+  <!-- de.gsi.saftlib.TimingReceiver:
+       @short_description: A rule matched against incoming events on a SoftwareActionSink.
+    -->
+  <interface name="de.gsi.saftlib.TimingReceiver">
+  
+    <!-- CurrentTime: The current time in nanoseconds since 1970.
+         Due to delays in software, the returned value is probably several
+         milliseconds behind the true time.
+      -->
+    <property name="CurrentTime" type="t" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+    
+    <!-- NewSoftwareActionSink: Create a new SoftwareActionSink.
+         @name: A name for the SoftwareActionSink. Can be left blank.
+         
+         SoftwareActionSinks allow a program to create conditions that match
+         incoming timing events.  These conditions may have callback methods
+         attached to them in order to receive notification.  The returned
+         path corresponds to a SoftwareActionSink that is owned by the
+         process which claimed it, and can thus be certain that no other
+         processes can interfere with the results.
+      -->
+    <method name="NewSoftwareActionSink">
+      <arg direction="in"  type="s" name="name"/>
+      <arg direction="out" type="s" name="result"/>
+    </method>
+    
+    <!-- SoftwareActionSinks: A list of all current SoftwareActionSinks.
+         Typically, these SoftwareActionSinks will be owned by their
+         processes and not of much interest to others.  However, it is
+         possible for a SoftwareActionSink to be Disowned, in which case it
+         may be persistent and shared between programs under a well known
+         name.
+      -->
+    <property name="SoftwareActionSinks" type="a{ss}" access="read"/>
+    
+    <!-- Outputs: A list of all the high/low outputs on the receiver.
+         Each path refers to an object of type Output.
+      -->
+    <property name="Outputs" type="a{ss}" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- Outputs: A list of all the high/low inputs on the receiver.
+         Each path refers to an object of type Input.
+      -->
+    <property name="Inputs" type="a{ss}" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- Outputs: A list of all the high/low inoutputs on the receiver.
+         Each path refers to an object of type Inoutput.
+      -->
+    <property name="Inoutputs" type="a{ss}" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- Guards: An array of all the guards on the receiver.
+         Each path refers to an object of type Output.
+         Guards may be used in Conditions to dynamically block the emission
+         of actions. Guards are number by their index in this array and each
+         index corresponds to a bit in the 'guards' field of NewCondition.
+      -->
+    <property name="Guards" type="as" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- Devices: List of all object instances of various hardware.
+         The key in the dictionary is the name of the interface.
+         The value is all object paths to hardware implementing that interface.
+      -->
+    <property name="Interfacees" type="a{sas}" access="read"/>
+    
+    <!-- InjectEvent: Simulate the receipt of a timing event.
+         @event: The event identifier which is matched against [first, last]
+         @param: The parameter field, whose meaning depends on the event ID.
+         @time:  The execution time for the event, added to condition offsets.
+         
+         Sometimes it is useful to simulate the receipt of a timing event. 
+         This allows software to test that configured conditions lead to the
+         desired behaviour without needing the data master to send anything.
+      -->
+    <method name="InjectEvent">
+      <arg direction="in" type="t" name="event"/>
+      <arg direction="in" type="t" name="param"/>
+      <arg direction="in" type="t" name="time"/>
+    </method>
+    
+    <!-- Free: The number of additional conditions that may be created.
+         The ECA has limited hardware resources in its match table. The
+         software interface does its best to pack as many conditions as
+         possible into the table via compression.  This property reports the
+         worst-case remaining space in the hardware.  If this property
+         returns 5, then you are guaranteed to be able to create at least 5
+         more conditions. Note that (de)activating a condition will also
+         affect resource consumption and thus this property.
+      -->
+    <property name="Free" type="u" access="read"/>
+  </interface>  
+</node>

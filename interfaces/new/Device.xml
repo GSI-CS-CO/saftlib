@@ -1,0 +1,11 @@
+<interface name="de.gsi.saftlib.Device">
+  <!-- EtherbonePath: The path under which the device was opened.
+    -->
+  <property name="EtherbonePath"  type="s" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Remove: Remove the device from saftlib management.
+    -->
+  <method name="Remove"/>
+</interface>
