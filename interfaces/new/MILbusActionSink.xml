@@ -20,7 +20,7 @@
          @active: Should the condition be immediately active
          @first:  First event ID to monitor (inclusive)
          @last:   Last event ID to monitor (inclusive)
-         @offset: Delay in ECA clock cycles between event and action
+         @offset: Delay in nanoseconds between event and action
          @guards: The specified guard must be true 4us before action
          @tag:    The  16-bit value to send on the MILbus
          @result: Object path to the created MILbusCondition

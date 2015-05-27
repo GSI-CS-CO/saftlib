@@ -9,7 +9,7 @@
        @short_description: A rule matched against incoming events on a SCUbusActionSink.
        
        SCUbusConditions are created by SCUbusActionSinks to select which
-       events the should generate callbacks. This interface always implies
+       events should generate callbacks. This interface always implies
        that the object also implements the general Condition interface.
     -->
   <interface name="de.gsi.saftlib.SCUbusCondition">

@@ -1,21 +1,21 @@
-<node xmlns:xi="http://www.w3.org/2001/XInclude" name="MILbusCondition">
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="OutputCondition">
   <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
   
   <!-- Include base interfaces -->
   <xi:include href="Owned.xml"/>
   <xi:include href="Condition.xml"/>
   
-  <!-- de.gsi.saftlib.MILbusCondition:
-       @short_description: A rule matched against incoming events on a MILbusActionSink.
+  <!-- de.gsi.saftlib.OutputCondition:
+       @short_description: A rule matched against incoming events on an OutputActionSink.
        
-       MILbusConditions are created by MILbusActionSinks to select which
+       OutputConditions are created by OutputActionSinks to select which
        events should generate callbacks. This interface always implies
        that the object also implements the general Condition interface.
     -->
-  <interface name="de.gsi.saftlib.MILbusCondition">
-    <!-- Tag: The tag which is sent to the MILbus by this condition
+  <interface name="de.gsi.saftlib.OutputCondition">
+    <!-- On: Should the Output be turned on or off
       -->
-    <property name="Tag" type="q" access="read">
+    <property name="On" type="b" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
   </interface>

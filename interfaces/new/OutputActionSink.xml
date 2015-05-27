@@ -1,0 +1,50 @@
+<!-- de.gsi.saftlib.OutputActionSink:
+    @short_description: An output through which on/off actions flow.
+    
+    This inteface allows the generation of Output pulses.
+    An OutputActionSink is also an ActionSink and Owned.
+    
+    If two SoftwareConditions are created on the same SoftwareActionSink
+    which require simultaneous delivery of two Actions, then they will be
+    delivered in arbitrary order, both having the 'conflict' flag set.
+ -->
+<interface name="de.gsi.saftlib.OutputActionSink">
+  <!-- NewCondition: Create a condition to match incoming events
+       @active: Should the condition be immediately active
+       @first:  First event ID to monitor (inclusive)
+       @last:   Last event ID to monitor (inclusive)
+       @offset: Delay in nanoseconds between event and action
+       @guards: The specified guard must be true 4us before action
+       @on:     The output should be toggled on (or off)
+       @result: Object path to the created OutputCondition
+
+       This method creates a new condition that matches events whose
+       identifier lies in the range [first, last]. The offset acts as a
+       delay which is added to the event's execution timestamp to
+       determine the timestamp when the matching condition fires its
+       action. The returned object path is a OutputCondition object.
+    -->
+  <method name="NewCondition">
+    <arg direction="in" type="b" name="active"/>
+    <arg direction="in" type="t" name="first"/>
+    <arg direction="in" type="t" name="last"/>
+    <arg direction="in" type="x" name="offset"/>
+    <arg direction="in" type="u" name="guards"/>
+    <arg direction="in" type="q" name="tag"/>
+    <arg direction="out" type="s" name="result"/>
+  </method>
+  
+  <!-- OutputEnable: Is the output driver enabled.
+       When OutputEnable is false, the output is not driven.
+    -->
+  <property name="OutputEnable" type="b" access="readwrite"/>
+  
+  <!-- Output: Directly manipulate the output value.
+       This property reflects the current value which would be output when
+       OutputEnable is true.  It may be modified directly via this property
+       and indirectly by OutputConditions created with NewCondition.
+    -->
+  <property name="Output" type="b" access="readwrite">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+  </property>
+</interface>
