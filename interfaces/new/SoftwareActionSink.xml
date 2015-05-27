@@ -1,4 +1,4 @@
-<node xmlns:xi="http://www.w3.org/2001/XInclude">
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="SoftwareActionSink">
   <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
   
   <!-- Include base interfaces -->
