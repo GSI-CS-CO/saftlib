@@ -5,37 +5,54 @@
 
 <xsl:template match="/node">
   <xsl:variable name="name" select="@name"/>
-  <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
-  <xsl:text>#include &lt;giomm.h&gt;&#10;</xsl:text>
-  <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text>
-  <xsl:text>#include "</xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>.h"&#10;</xsl:text>
-  <xsl:text>&#10;</xsl:text>
-  <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
-  <!-- Proxy Constructor -->
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Proxy::</xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Proxy(&#10;</xsl:text>
-  <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
-  <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
-  <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
-  <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;</xsl:text>
-  <xsl:text>: </xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:if test="position()>1">,&#10;  </xsl:if>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>(i</xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>_Proxy::create(object_path, name, bus_type, flags))</xsl:text>
-  </xsl:for-each>
-  <xsl:for-each select="interface">
-    <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
-    <xsl:for-each select="property[@access='read' or @access='readwrite']">
-      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-        <xsl:text>,&#10;  con_prop</xsl:text>
+  <xsl:document href="{$name}.cpp" method="text" encoding="utf-8" indent="no">
+    <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
+    <xsl:text>#include &lt;giomm.h&gt;&#10;</xsl:text>
+    <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text>
+    <xsl:text>#include "</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>.h"&#10;</xsl:text>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
+
+    <!-- Proxy Constructor -->
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy::</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy(&#10;</xsl:text>
+    <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
+    <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
+    <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
+    <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;</xsl:text>
+    <xsl:text>: </xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:if test="position()>1">,&#10;  </xsl:if>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>(i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>_Proxy::create(object_path, name, bus_type, flags))</xsl:text>
+    </xsl:for-each>
+    <xsl:for-each select="interface">
+      <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+          <xsl:text>,&#10;  con_prop</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>(</xsl:text>
+          <xsl:value-of select="$iface"/>
+          <xsl:text>-&gt;</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>.connect(</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>.make_slot()))</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:for-each>
+    <xsl:for-each select="interface">
+      <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
+      <xsl:for-each select="signal">
+        <xsl:text>,&#10;  con_sig</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>(</xsl:text>
         <xsl:value-of select="$iface"/>
@@ -44,94 +61,80 @@
         <xsl:text>.connect(</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>.make_slot()))</xsl:text>
-      </xsl:if>
+      </xsl:for-each>
     </xsl:for-each>
-  </xsl:for-each>
-  <xsl:for-each select="interface">
-    <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
-    <xsl:for-each select="signal">
-      <xsl:text>,&#10;  con_sig</xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text>(</xsl:text>
-      <xsl:value-of select="$iface"/>
-      <xsl:text>-&gt;</xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text>.connect(</xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text>.make_slot()))</xsl:text>
-    </xsl:for-each>
-  </xsl:for-each>
-  <xsl:text>&#10;{&#10;}&#10;&#10;</xsl:text>
+    <xsl:text>&#10;{&#10;}&#10;&#10;</xsl:text>
 
-  <!-- Proxy Destructor -->
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Proxy::~</xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Proxy()&#10;{&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
-    <xsl:for-each select="property[@access='read' or @access='readwrite']">
-      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-        <xsl:text>  con_prop</xsl:text>
+    <!-- Proxy Destructor -->
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy::~</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy()&#10;{&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+          <xsl:text>  con_prop</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>.disconnect();&#10;</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:for-each>
+    <xsl:for-each select="interface">
+      <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
+      <xsl:for-each select="signal">
+        <xsl:text>  con_sig</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>.disconnect();&#10;</xsl:text>
-      </xsl:if>
+      </xsl:for-each>
     </xsl:for-each>
-  </xsl:for-each>
-  <xsl:for-each select="interface">
-    <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
-    <xsl:for-each select="signal">
-      <xsl:text>  con_sig</xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text>.disconnect();&#10;</xsl:text>
-    </xsl:for-each>
-  </xsl:for-each>
-  <xsl:text>}&#10;&#10;</xsl:text>
+    <xsl:text>}&#10;&#10;</xsl:text>
 
-  <!-- Service Constructor -->
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Service::</xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Service()&#10;</xsl:text>
-  <xsl:text>: </xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:if test="position()>1">,&#10;  </xsl:if>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>(this, sigc::mem_fun(this, &amp;</xsl:text>
+    <!-- Service Constructor -->
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service::rethrow))</xsl:text>
-  </xsl:for-each>
-  <xsl:text>&#10;{&#10;}&#10;&#10;</xsl:text>
+    <xsl:text>_Service::</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service()&#10;</xsl:text>
+    <xsl:text>: </xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:if test="position()>1">,&#10;  </xsl:if>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>(this, sigc::mem_fun(this, &amp;</xsl:text>
+      <xsl:value-of select="$name"/>
+      <xsl:text>_Service::rethrow))</xsl:text>
+    </xsl:for-each>
+    <xsl:text>&#10;{&#10;}&#10;&#10;</xsl:text>
 
-  <!-- Register all interfaces -->
-  <xsl:text>void </xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path)&#10;{&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:text>  </xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>.register_self(con, path);&#10;</xsl:text>
-  </xsl:for-each>
-  <xsl:text>}&#10;&#10;</xsl:text>
+    <!-- Register all interfaces -->
+    <xsl:text>void </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path)&#10;{&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>  </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.register_self(con, path);&#10;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>}&#10;&#10;</xsl:text>
 
-  <!-- Unegister all interfaces -->
-  <xsl:text>void </xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Service::unregister_self()&#10;{&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:text>  </xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>.unregister_self();&#10;</xsl:text>
-  </xsl:for-each>
-  <xsl:text>}&#10;&#10;</xsl:text>
+    <!-- Unegister all interfaces -->
+    <xsl:text>void </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service::unregister_self()&#10;{&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>  </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.unregister_self();&#10;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>}&#10;&#10;</xsl:text>
 
-  <!-- Default rethrow -->
-  <xsl:text>void </xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Service::rethrow(const char *name) const&#10;{&#10;</xsl:text>
-  <xsl:text>  throw;&#10;}&#10;&#10;</xsl:text>
+    <!-- Default rethrow -->
+    <xsl:text>void </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service::rethrow(const char *name) const&#10;{&#10;</xsl:text>
+    <xsl:text>  throw;&#10;}&#10;&#10;</xsl:text>
 
-  <xsl:text>}&#10;</xsl:text>
+    <xsl:text>}&#10;</xsl:text>
+  </xsl:document>
 
   <xsl:for-each select="interface">
     <xsl:variable name="iface_full" select="@name"/>

@@ -5,179 +5,182 @@
 
 <xsl:template match="/node">
   <xsl:variable name="name" select="@name"/>
-  <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
-  <xsl:text>#ifndef </xsl:text>
-  <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$name"/></xsl:call-template>
-  <xsl:text>_OBJECT_H&#10;</xsl:text>
-  <xsl:text>#define </xsl:text>
-  <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$name"/></xsl:call-template>
-  <xsl:text>_OBJECT_H&#10;&#10;</xsl:text>
-  
-  <!-- Include the interface definitions -->
-  <xsl:for-each select="interface">
-    <xsl:text>#include "i</xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>.h"&#10;</xsl:text>
-  </xsl:for-each>
-  <xsl:text>&#10;</xsl:text>
 
-  <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
-
-  <!-- Proxy class implements all interfaces -->
-  <xsl:text>class </xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Proxy :</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:if test="position()>1">,</xsl:if>
-    <xsl:text> public i</xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-  </xsl:for-each>
-  <xsl:text> {&#10;</xsl:text>
-  <xsl:text>  public:&#10;</xsl:text>
-
-  <!-- Constructor -->
-  <xsl:text>    </xsl:text>
-  <xsl:value-of select="$name"/>_Proxy(
-      const Glib::ustring&amp; object_path<xsl:text/>
-        <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>,
-      const Glib::ustring&amp; name<xsl:text/>
-        <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>,
-      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,
-      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;<xsl:text/>
-
-  <xsl:text>    ~</xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Proxy();&#10;&#10;</xsl:text>
-
-  <!-- Methods -->
-  <xsl:text>    // Proxy all methods to interfaces&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:for-each select="method">
-      <xsl:text>    </xsl:text>
-      <xsl:call-template name="method-type"/>
-      <xsl:text> { return </xsl:text>
-      <xsl:apply-templates mode="iface-name" select=".."/>
-      <xsl:text>-></xsl:text>
-      <xsl:call-template name="method-invoke"/>
-      <xsl:text> };&#10;</xsl:text>
+  <xsl:document href="{$name}.cpp" method="text" encoding="utf-8" indent="no">
+    <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
+    <xsl:text>#ifndef </xsl:text>
+    <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$name"/></xsl:call-template>
+    <xsl:text>_OBJECT_H&#10;</xsl:text>
+    <xsl:text>#define </xsl:text>
+    <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$name"/></xsl:call-template>
+    <xsl:text>_OBJECT_H&#10;&#10;</xsl:text>
+    
+    <!-- Include the interface definitions -->
+    <xsl:for-each select="interface">
+      <xsl:text>#include "i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.h"&#10;</xsl:text>
     </xsl:for-each>
-  </xsl:for-each>
+    <xsl:text>&#10;</xsl:text>
 
-  <!-- Property Getters -->
-  <xsl:text>    // Proxy all property gets to interfaces&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:for-each select="property[@access='read' or @access='readwrite']">
-      <xsl:text>    </xsl:text>
-      <xsl:call-template name="prop-gettype"/>
-      <xsl:text> { return </xsl:text>
-      <xsl:apply-templates mode="iface-name" select=".."/>
-      <xsl:text>-></xsl:text>
-      <xsl:call-template name="prop-getinvoke"/>
-      <xsl:text> };&#10;</xsl:text>
+    <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
+
+    <!-- Proxy class implements all interfaces -->
+    <xsl:text>class </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy :</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:if test="position()>1">,</xsl:if>
+      <xsl:text> public i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
     </xsl:for-each>
-  </xsl:for-each>
+    <xsl:text> {&#10;</xsl:text>
+    <xsl:text>  public:&#10;</xsl:text>
 
-  <!-- Property Setters -->
-  <xsl:text>    // Proxy all property sets to interfaces&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:for-each select="property[@access='write' or @access='readwrite']">
-      <xsl:text>    </xsl:text>
-      <xsl:call-template name="prop-settype"/>
-      <xsl:text> { return </xsl:text>
-      <xsl:apply-templates mode="iface-name" select=".."/>
-      <xsl:text>-></xsl:text>
-      <xsl:call-template name="prop-setinvoke"/>
-      <xsl:text> };&#10;</xsl:text>
+    <!-- Constructor -->
+    <xsl:text>    </xsl:text>
+    <xsl:value-of select="$name"/>_Proxy(
+        const Glib::ustring&amp; object_path<xsl:text/>
+          <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>,
+        const Glib::ustring&amp; name<xsl:text/>
+          <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>,
+        Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,
+        Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;<xsl:text/>
+
+    <xsl:text>    ~</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy();&#10;&#10;</xsl:text>
+
+    <!-- Methods -->
+    <xsl:text>    // Proxy all methods to interfaces&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:for-each select="method">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="method-type"/>
+        <xsl:text> { return </xsl:text>
+        <xsl:apply-templates mode="iface-name" select=".."/>
+        <xsl:text>-></xsl:text>
+        <xsl:call-template name="method-invoke"/>
+        <xsl:text> };&#10;</xsl:text>
+      </xsl:for-each>
     </xsl:for-each>
-  </xsl:for-each>
 
-  <!-- Property Signal pointers -->
-  <xsl:text>    // These property signals are available from base classes&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:for-each select="property[@access='read' or @access='readwrite']">
-      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+    <!-- Property Getters -->
+    <xsl:text>    // Proxy all property gets to interfaces&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="prop-gettype"/>
+        <xsl:text> { return </xsl:text>
+        <xsl:apply-templates mode="iface-name" select=".."/>
+        <xsl:text>-></xsl:text>
+        <xsl:call-template name="prop-getinvoke"/>
+        <xsl:text> };&#10;</xsl:text>
+      </xsl:for-each>
+    </xsl:for-each>
+
+    <!-- Property Setters -->
+    <xsl:text>    // Proxy all property sets to interfaces&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:for-each select="property[@access='write' or @access='readwrite']">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="prop-settype"/>
+        <xsl:text> { return </xsl:text>
+        <xsl:apply-templates mode="iface-name" select=".."/>
+        <xsl:text>-></xsl:text>
+        <xsl:call-template name="prop-setinvoke"/>
+        <xsl:text> };&#10;</xsl:text>
+      </xsl:for-each>
+    </xsl:for-each>
+
+    <!-- Property Signal pointers -->
+    <xsl:text>    // These property signals are available from base classes&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+          <xsl:text>    //   </xsl:text>
+          <xsl:call-template name="prop-sigtype"/>
+          <xsl:text>;&#10;</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:for-each>
+
+    <!-- Signal pointers -->
+    <xsl:text>    // These signals are available from base classes&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:for-each select="signal">
         <xsl:text>    //   </xsl:text>
-        <xsl:call-template name="prop-sigtype"/>
+        <xsl:call-template name="signal-type"/>
         <xsl:text>;&#10;</xsl:text>
-      </xsl:if>
+      </xsl:for-each>
     </xsl:for-each>
-  </xsl:for-each>
 
-  <!-- Signal pointers -->
-  <xsl:text>    // These signals are available from base classes&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:for-each select="signal">
-      <xsl:text>    //   </xsl:text>
-      <xsl:call-template name="signal-type"/>
+    <!-- The proxy objects -->
+    <xsl:text>  protected:&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>_Proxy&gt; </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
-  </xsl:for-each>
 
-  <!-- The proxy objects -->
-  <xsl:text>  protected:&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>_Proxy&gt; </xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>;&#10;</xsl:text>
-  </xsl:for-each>
+    <!-- Connections to the embedded signals -->
+    <xsl:for-each select="interface">
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+          <xsl:text>    sigc::connection con_prop</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>;&#10;</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:for-each>
 
-  <!-- Connections to the embedded signals -->
-  <xsl:for-each select="interface">
-    <xsl:for-each select="property[@access='read' or @access='readwrite']">
-      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-        <xsl:text>    sigc::connection con_prop</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:for-each select="signal">
+        <xsl:text>    sigc::connection con_sig</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>;&#10;</xsl:text>
-      </xsl:if>
+      </xsl:for-each>
     </xsl:for-each>
-  </xsl:for-each>
 
-  <xsl:for-each select="interface">
-    <xsl:for-each select="signal">
-      <xsl:text>    sigc::connection con_sig</xsl:text>
-      <xsl:value-of select="@name"/>
+    <!-- End of proxy class -->
+    <xsl:text>};&#10;&#10;</xsl:text>
+
+    <!-- Service class implements all interfaces -->
+    <xsl:text>class </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service :</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:if test="position()>1">,</xsl:if>
+      <xsl:text> public i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+    </xsl:for-each>
+    <xsl:text> {&#10;</xsl:text>
+    <xsl:text>  public:&#10;</xsl:text>
+    <xsl:text>    </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service();&#10;&#10;</xsl:text>
+    <xsl:text>    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
+    <xsl:text>    void unregister_self();&#10;</xsl:text>
+    <xsl:text>    virtual void rethrow(const char *name) const;&#10;</xsl:text>
+    <xsl:text>&#10;</xsl:text>
+
+    <!-- The service objects -->
+    <xsl:text>  private:&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>    i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>_Service </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
-  </xsl:for-each>
 
-  <!-- End of proxy class -->
-  <xsl:text>};&#10;&#10;</xsl:text>
+    <xsl:text>};&#10;&#10;</xsl:text>
 
-  <!-- Service class implements all interfaces -->
-  <xsl:text>class </xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Service :</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:if test="position()>1">,</xsl:if>
-    <xsl:text> public i</xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-  </xsl:for-each>
-  <xsl:text> {&#10;</xsl:text>
-  <xsl:text>  public:&#10;</xsl:text>
-  <xsl:text>    </xsl:text>
-  <xsl:value-of select="$name"/>
-  <xsl:text>_Service();&#10;&#10;</xsl:text>
-  <xsl:text>    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
-  <xsl:text>    void unregister_self();&#10;</xsl:text>
-  <xsl:text>    virtual void rethrow(const char *name) const;&#10;</xsl:text>
-  <xsl:text>&#10;</xsl:text>
-
-  <!-- The service objects -->
-  <xsl:text>  private:&#10;</xsl:text>
-  <xsl:for-each select="interface">
-    <xsl:text>    i</xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>_Service </xsl:text>
-    <xsl:apply-templates mode="iface-name" select="."/>
-    <xsl:text>;&#10;</xsl:text>
-  </xsl:for-each>
-
-  <xsl:text>};&#10;&#10;</xsl:text>
-
-  <xsl:text>}&#10;&#10;</xsl:text>
-  <xsl:text>#endif&#10;</xsl:text>
+    <xsl:text>}&#10;&#10;</xsl:text>
+    <xsl:text>#endif&#10;</xsl:text>
+  </xsl:document>
 
   <!-- Generate interface headers -->
   <xsl:for-each select="interface">
