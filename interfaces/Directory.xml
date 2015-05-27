@@ -1,4 +1,7 @@
-<node>
+<node name="Directory">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  <annotation name="de.gsi.saftlib.path" value="/de/gsi/saftlib/Directory"/>
+  
   <!-- de.gsi.saftlib.Directory:
        @short_description: Report instances of managed hardware
        
@@ -6,14 +9,18 @@
        device drivers register their top-level hardware objects here.
     -->
   <interface name="de.gsi.saftlib.Directory">
-    <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
-    <annotation name="de.gsi.saftlib.path" value="/de/gsi/saftlib/Directory"/>
     
-    <!-- Devices: List of all object instances of various hardware.
-         The key in the dictionary is the name of the interface.
-         The value is al object paths to hardware implementing that interface.
+    <!-- Devices: List of all Wishbone buses attached to saftd.
+         The key is the name of the device as provided to AttachDevice.
+         The value is the object path to the Device object.
       -->
-    <property name="Devices" type="a{sas}" access="read"/>
+    <property name="Devices" type="a{ss}" access="read"/>
+    
+    <!-- Attach a new device -->
+    <method name="AttachDevice">
+      <arg direction="in" type="s" name="name"/>
+      <arg direction="in" type="s" name="path"/>
+    </method>
     
     <!-- Quit: Instructs the saftlib daemon to quit.
          Be absolutely certain before calling this method!

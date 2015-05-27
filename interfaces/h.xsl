@@ -310,7 +310,7 @@ class i<xsl:value-of select="$iface"/>_Service {
     Glib::ustring sender;
     // virtual void rethrow(const char *method);
   private:
-    iECA *impl;
+    i<xsl:value-of select="$iface"/> *impl;
     sigc::slot&lt;void, const char*&gt; rethrow;<xsl:text/>
     <xsl:for-each select="property">
       <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
