@@ -25,27 +25,58 @@
 
     <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
+    <!-- Forward definitions -->
+    <xsl:text>class </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>;&#10;</xsl:text>
+    <xsl:text>class </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy;&#10;</xsl:text>
+    <xsl:text>class </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service;&#10;&#10;</xsl:text>
+
+    <!-- Convenience method -->
+    <xsl:text>class </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text> {&#10;</xsl:text>
+    <xsl:text>  public:&#10;</xsl:text>
+    <xsl:text>    static Glib::RefPtr&lt;</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&gt; create(&#10;</xsl:text>
+    <xsl:text>      const Glib::ustring&amp; object_path</xsl:text>
+    <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>
+    <xsl:text>,&#10;</xsl:text>
+    <xsl:text>      const Glib::ustring&amp; name</xsl:text>
+    <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>
+    <xsl:text>,&#10;</xsl:text>
+    <xsl:text>      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
+    <xsl:text>      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;</xsl:text>
+    <xsl:text>};&#10;&#10;</xsl:text>
+
     <!-- Proxy class implements all interfaces -->
     <xsl:text>class </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Proxy :</xsl:text>
+    <xsl:text>_Proxy : public Glib::Object</xsl:text>
     <xsl:for-each select="interface">
-      <xsl:if test="position()>1">,</xsl:if>
-      <xsl:text> public i</xsl:text>
+      <xsl:text>, public i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
     </xsl:for-each>
     <xsl:text> {&#10;</xsl:text>
     <xsl:text>  public:&#10;</xsl:text>
 
     <!-- Constructor -->
-    <xsl:text>    </xsl:text>
-    <xsl:value-of select="$name"/>_Proxy(
-        const Glib::ustring&amp; object_path<xsl:text/>
-          <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>,
-        const Glib::ustring&amp; name<xsl:text/>
-          <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>,
-        Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,
-        Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;<xsl:text/>
+    <xsl:text>    static Glib::RefPtr&lt;</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&gt; create(&#10;</xsl:text>
+    <xsl:text>      const Glib::ustring&amp; object_path</xsl:text>
+    <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>
+    <xsl:text>,&#10;</xsl:text>
+    <xsl:text>      const Glib::ustring&amp; name</xsl:text>
+    <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>
+    <xsl:text>,&#10;</xsl:text>
+    <xsl:text>      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
+    <xsl:text>      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;</xsl:text>
 
     <xsl:text>    ~</xsl:text>
     <xsl:value-of select="$name"/>
@@ -115,8 +146,17 @@
       </xsl:for-each>
     </xsl:for-each>
 
-    <!-- The proxy objects -->
+    <!-- Constructor -->
     <xsl:text>  protected:&#10;</xsl:text>
+    <xsl:text>    </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy(&#10;</xsl:text>
+    <xsl:text>      const Glib::ustring&amp; object_path,&#10;</xsl:text>
+    <xsl:text>      const Glib::ustring&amp; name,&#10;</xsl:text>
+    <xsl:text>      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
+    <xsl:text>      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;</xsl:text>
+
+    <!-- The proxy objects -->
     <xsl:for-each select="interface">
       <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -143,6 +183,20 @@
         <xsl:text>;&#10;</xsl:text>
       </xsl:for-each>
     </xsl:for-each>
+
+    <!-- Non-copyable -->
+    <xsl:text>  private:&#10;</xsl:text>
+    <xsl:text>    // non-copyable&#10;</xsl:text>
+    <xsl:text>    </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy(const </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&amp;);&#10;</xsl:text>
+    <xsl:text>    </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&amp; operator = (const </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&amp;);&#10;</xsl:text>
 
     <!-- End of proxy class -->
     <xsl:text>};&#10;&#10;</xsl:text>
@@ -199,6 +253,17 @@
 
       <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;&#10;</xsl:text>
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
+
+      <!-- Forward definitions -->
+      <xsl:text>class i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>;&#10;</xsl:text>
+      <xsl:text>class i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>_Proxy;&#10;</xsl:text>
+      <xsl:text>class i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>_Service;&#10;&#10;</xsl:text>
 
       <!-- The base interface class -->
       <xsl:text>class i</xsl:text>
@@ -311,7 +376,10 @@ class i<xsl:value-of select="$iface"/>_Service {
     void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
     void unregister_self();
     Glib::ustring sender;
-    // virtual void rethrow(const char *method);
+  private:
+    // non-copyable
+    i<xsl:value-of select="$iface"/>_Service(const i<xsl:value-of select="$iface"/>_Service&amp;);
+    i<xsl:value-of select="$iface"/>_Service&amp; operator=(const i<xsl:value-of select="$iface"/>_Service&amp;);
   private:
     i<xsl:value-of select="$iface"/> *impl;
     sigc::slot&lt;void, const char*&gt; rethrow;<xsl:text/>

@@ -16,6 +16,35 @@
     <xsl:text>&#10;</xsl:text>
     <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
+    <!-- Proxy create -->
+    <xsl:text>Glib::RefPtr&lt;</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&gt; </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>::create(&#10;</xsl:text>
+    <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
+    <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
+    <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
+    <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;{&#10;</xsl:text>
+    <xsl:text>  return </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy::create(object_path, name, bus_type, flags);&#10;}&#10;&#10;</xsl:text>
+
+    <xsl:text>Glib::RefPtr&lt;</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&gt; </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy::create(&#10;</xsl:text>
+    <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
+    <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
+    <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
+    <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;{&#10;</xsl:text>
+    <xsl:text>  return Glib::RefPtr&lt;</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy&gt;(new </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Proxy(object_path, name, bus_type, flags));&#10;}&#10;&#10;</xsl:text>
+
     <!-- Proxy Constructor -->
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy::</xsl:text>
