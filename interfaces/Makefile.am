@@ -3,14 +3,8 @@ if INTERFACE_DOCS
 doc_DATA = TLU.pdf ECA.pdf ECA_Condition.pdf ECA_Channel.pdf Directory.pdf
 endif
 
-EXTRA_DIST = h.xsl cpp.xsl common.xsl
-CLEANFILES = *.cpp *.h *.pdf
-
-AM_CPPFLAGS = $(GIOMM_CFLAGS)
-
-libsaftlib_la_SOURCES = 	\
+NODES =				\
 	Directory.xml		\
-	TimingReceiver.xml	\
 	Inoutput.xml		\
 	Input.xml		\
 	MILbusActionSink.xml	\
@@ -20,12 +14,56 @@ libsaftlib_la_SOURCES = 	\
 	SCUbusActionSink.xml	\
 	SCUbusCondition.xml	\
 	SoftwareActionSink.xml	\
-	SoftwareCondition.xml
-libsaftlib_la_LIBADD = $(GIOMM_LIBS)
+	SoftwareCondition.xml	\
+	TimingReceiver.xml
+INTERFACES =			\
+	ActionSink.xml		\
+	Condition.xml		\
+	Device.xml		\
+	EventSource.xml		\
+	InputEventSource.xml	\
+	OutputActionSink.xml	\
+	Owned.xml
 
-.xml.cpp:
-	$(XSLTPROC) --xinclude $(srcdir)/cpp.xsl $< > $*.cpp
-	$(XSLTPROC) --xinclude $(srcdir)/h.xsl $< > $*.h
+EXTRA_DIST = h.xsl cpp.xsl common.xsl $(NODES) $(INTERFACES)
+CLEANFILES = *.cpp *.h *.pdf
+
+AM_CPPFLAGS = $(GIOMM_CFLAGS)
+
+libsaftlib_la_LIBADD = $(GIOMM_LIBS)
+nodist_libsaftlib_la_SOURCES =	\
+	Directory.cpp		\
+	iActionSink.cpp		\
+	iCondition.cpp		\
+	iDevice.cpp		\
+	iDirectory.cpp		\
+	iEventSource.cpp	\
+	iInputEventSource.cpp	\
+	iMILbusActionSink.cpp	\
+	iMILbusCondition.cpp	\
+	Inoutput.cpp		\
+	Input.cpp		\
+	iOutputActionSink.cpp	\
+	iOutputCondition.cpp	\
+	iOwned.cpp		\
+	iSCUbusActionSink.cpp	\
+	iSCUbusCondition.cpp	\
+	iSoftwareActionSink.cpp	\
+	iSoftwareCondition.cpp	\
+	iTimingReceiver.cpp	\
+	MILbusActionSink.cpp	\
+	MILbusCondition.cpp	\
+	OutputCondition.cpp	\
+	Output.cpp		\
+	SCUbusActionSink.cpp	\
+	SCUbusCondition.cpp	\
+	SoftwareActionSink.cpp	\
+	SoftwareCondition.cpp	\
+	TimingReceiver.cpp
+
+$(nodist_libsaftlib_la_SOURCES):	$(NODES)
+	$(XSLTPROC) --xinclude $(srcdir)/cpp.xsl $(NODES)
+	$(XSLTPROC) --xinclude $(srcdir)/h.xsl $(NODES)
 
 .xml.pdf:
 	$(GDBUS_CODEGEN) --generate-docbook=docfoo --interface-prefix=de.gsi.saftlib $<
