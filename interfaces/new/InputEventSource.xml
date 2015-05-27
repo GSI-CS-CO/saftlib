@@ -1,0 +1,36 @@
+<!-- de.gsi.saftlib.InputEventSource:
+    @short_description: An input used to generate timing events
+    
+    An InputEventSource is also an EventSource and Owned.
+    
+    InputEventSources generate two events: high and low transition.
+    These are encoded in the resulting event ID's lowest bit.
+ -->
+<interface name="de.gsi.saftlib.InputEventSource">
+
+  <!-- StableTime: Deglitch threshold for the input
+       The number of nanoseconds a signal must remain high or low in order
+       to be considered a valid transition. Increasing this value will not
+       impact the resulting timestamps, but will hide transitions smaller
+       than the threshold. For example, if StableTime=400, then a 5MHz
+       signal would be completely ignored.
+    -->
+  <property name="StableTime" type="u" access="readwrite"/>
+  
+  <!-- Termination: Set the input termination
+       Some inputs need termination to receive a clean input signal. 
+       However, if the same IO is used as an Output, termination should
+       probably be disabled.  This defaults to on.  See also OutputEnable if
+       this is an Inoutput.
+    -->
+  <property name="Termination" type="b" access="readwrite"/>
+  
+  <!-- Input: Read the current state of the input.
+       To receive a signal on changes, use the EventSource interface to
+       create timing events and monitor these via a SoftwareActionSink.
+    -->
+  <property name="Input" type="b" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+  </property>
+  
+</interface>

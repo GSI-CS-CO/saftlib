@@ -1,0 +1,36 @@
+<!-- de.gsi.saftlib.EventSource:
+     @short_description: An external source of timing events.
+     
+     Normally, timing events come from the data master in the timing
+     network.  However, external inputs to the timing receiver can also 
+     be used as a source of timing events.  For example, a LEMO input
+     can be configured to generate a timing event on edge transitions.
+     
+     When the external trigger occurs, it is timestamped and an event 
+     is created which will be processed as normal by the timing receiver.
+     The event identifier comes from the EventPrefix. However, some 
+     external devices additionally provide data which is filled into the 
+     low EventBits of the generated event identifier.
+  -->
+<interface name="de.gsi.saftlib.EventSource">
+
+  <!-- Resolution: The precision of generated timestamps in nanoseconds.
+    -->
+  <property name="Resolution" value="t" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- EventBits: How many bits of external data are included in the ID
+    -->
+  <property name="EventBits" value="u" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- EventEnable: Should the event source generate events -->
+  <property name="EventEnable" value="b" access="readwrite"/>
+  
+  <!-- EventPrefix: Combined with low EventBits to create generated IDs
+    -->
+  <property name="EventPrefix" value="t" access="readwrite"/>
+  
+</interface>

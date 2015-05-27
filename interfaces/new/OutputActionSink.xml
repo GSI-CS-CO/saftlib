@@ -36,6 +36,8 @@
   
   <!-- OutputEnable: Is the output driver enabled.
        When OutputEnable is false, the output is not driven.
+       This defaults to off.
+       See also Termination if this is an Inoutput.
     -->
   <property name="OutputEnable" type="b" access="readwrite"/>
   
