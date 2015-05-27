@@ -296,8 +296,8 @@
         <xsl:value-of select="@name"/>
         <xsl:text>") {&#10;</xsl:text>
         <xsl:choose>
-          <xsl:when test="annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false']">
-            <xsl:text>      // EmitsChangedSignal = false&#10;</xsl:text>
+          <xsl:when test="annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true']">
+            <xsl:text>      // EmitsChangedSignal != true&#10;</xsl:text>
           </xsl:when>
           <xsl:otherwise>
             <xsl:text>      </xsl:text>
