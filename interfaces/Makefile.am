@@ -24,8 +24,9 @@ INTERFACES =			\
 	InputEventSource.xml	\
 	OutputActionSink.xml	\
 	Owned.xml
+XSL = h.xsl cpp.xsl common.xsl
 
-EXTRA_DIST = h.xsl cpp.xsl common.xsl $(NODES) $(INTERFACES)
+EXTRA_DIST = $(XSL) $(NODES) $(INTERFACES)
 CLEANFILES = *.cpp *.h *.pdf
 
 AM_CPPFLAGS = $(GIOMM_CFLAGS)
@@ -61,7 +62,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	SoftwareCondition.cpp	\
 	TimingReceiver.cpp
 
-$(nodist_libsaftlib_la_SOURCES):	$(NODES)
+$(nodist_libsaftlib_la_SOURCES):	$(NODES) $(XSL)
 	$(XSLTPROC) --xinclude $(srcdir)/cpp.xsl $(NODES)
 	$(XSLTPROC) --xinclude $(srcdir)/h.xsl $(NODES)
 

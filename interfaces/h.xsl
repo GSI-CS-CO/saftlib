@@ -6,7 +6,7 @@
 <xsl:template match="/node">
   <xsl:variable name="name" select="@name"/>
 
-  <xsl:document href="{$name}.cpp" method="text" encoding="utf-8" indent="no">
+  <xsl:document href="{$name}.h" method="text" encoding="utf-8" indent="no">
     <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
     <xsl:text>#ifndef </xsl:text>
     <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$name"/></xsl:call-template>
