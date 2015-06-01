@@ -166,7 +166,7 @@
        rapidly. If an overflow occurs, the Overflow signal is guaranteed to
        be executed within 100ms.
     -->
-  <property name="OverflowCount" type="u" access="readwrite/">
+  <property name="OverflowCount" type="u" access="readwrite">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
   </property>
 
