@@ -44,9 +44,9 @@ EB_Source::EB_Source(etherbone::Socket socket_)
 
 EB_Source::~EB_Source()
 {
-  for (fd_map::iterator i = fds.begin(); i != fds.end(); ++i)
-    remove_poll(i->second);
-  fds.clear();
+  // This is not needed (and emits warnings) because all polls already removed by glib
+  // for (fd_map::iterator i = fds.begin(); i != fds.end(); ++i)
+  //   remove_poll(i->second);
 }
 
 int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
