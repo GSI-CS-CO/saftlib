@@ -32,6 +32,7 @@ CLEANFILES = *.cpp *.h *.pdf
 AM_CPPFLAGS = $(GIOMM_CFLAGS)
 
 libsaftlib_la_LIBADD = $(GIOMM_LIBS)
+libsaftlib_la_LDFLAGS = -version-info 1:1:0
 nodist_libsaftlib_la_SOURCES =	\
 	Directory.cpp		\
 	iActionSink.cpp		\
