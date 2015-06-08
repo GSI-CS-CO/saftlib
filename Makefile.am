@@ -1,6 +1,6 @@
 SUBDIRS = interfaces
 
-bin_PROGRAMS = saftd
+# bin_PROGRAMS = saftd
 noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d

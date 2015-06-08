@@ -37,6 +37,7 @@ void detect_danger(guint32 capacity, guint32 mostFull)
 }
 
 using namespace saftlib;
+using namespace std;
 
 int main(int, char**)
 {
@@ -46,7 +47,7 @@ int main(int, char**)
   try {
     // Get a list of devices from the saftlib directory
     // The dbus type 'a{ss}' means: map<string, string>
-    auto devices = Directory::create()->getDevices();
+    map<Glib::ustring, Glib::ustring> devices = Directory::create()->getDevices();
     
     // Grab a handle to the timing receiver attached to an SCU
     // 
@@ -54,13 +55,13 @@ int main(int, char**)
     // program with access to the remote object stored inside saftd. 
     // Returned is a smart pointer (with copy constructor).  Once the number
     // of references reaches zero, the proxy object is automatically freed.
-    auto receiver = TimingReceiver::create(devices["baseboard"]);
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices["baseboard"]);
     
     // Direct saftd to create a new SoftwareActionSink for this program.
     // The name is "", so one is chosen automatically that does not conflict.
     // The returned object (a SoftwareActionSink) implements these interfaces:
     //   iOwned, iActionSink, and iSoftwareActionSink
-    auto sink = SoftwareActionSink::create(receiver->NewSoftwareActionSink(""));
+    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
     // No one should care if software actions are delayed (false is default)
     sink->setGenerateDelayed(false);
@@ -77,7 +78,7 @@ int main(int, char**)
     sink->setConflictCount(0);
   
     // Read the Capacity property of the ActionSink
-    auto capacity = sink->getCapacity();
+    guint32 capacity = sink->getCapacity();
     
     // Clear the MostFull property to zero
     // Unlike {Late,Overflow,Conflict}Count, the MostFull count may be non-zero
@@ -91,7 +92,7 @@ int main(int, char**)
     // Create an active(true) condition, watching events 5-200 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
     // SoftwareConditions implement iOwned, iCondition, iSoftwareCondition.
-    auto condition = SoftwareCondition::create(sink->NewCondition(true, 5, 200, 100, 0));
+    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition::create(sink->NewCondition(true, 5, 200, 100, 0));
     
     // Call on_action whenever the condition above matches incoming events.
     condition->Action.connect(sigc::ptr_fun(&on_action));
