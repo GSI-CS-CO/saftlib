@@ -47,7 +47,7 @@ int main(int, char**)
   try {
     // Get a list of devices from the saftlib directory
     // The dbus type 'a{ss}' means: map<string, string>
-    map<Glib::ustring, Glib::ustring> devices = Directory::create()->getDevices();
+    map<Glib::ustring, Glib::ustring> devices = Directory_Proxy::create()->getDevices();
     
     // Grab a handle to the timing receiver attached to an SCU
     // 
@@ -92,7 +92,7 @@ int main(int, char**)
     // Create an active(true) condition, watching events 5-200 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
     // SoftwareConditions implement iOwned, iCondition, iSoftwareCondition.
-    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition::create(sink->NewCondition(true, 5, 200, 100, 0));
+    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 5, 200, 100, 0));
     
     // Call on_action whenever the condition above matches incoming events.
     condition->Action.connect(sigc::ptr_fun(&on_action));

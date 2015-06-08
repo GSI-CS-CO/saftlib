@@ -25,35 +25,6 @@
 
     <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
-    <!-- Forward definitions -->
-    <xsl:text>class </xsl:text>
-    <xsl:value-of select="$name"/>
-    <xsl:text>;&#10;</xsl:text>
-    <xsl:text>class </xsl:text>
-    <xsl:value-of select="$name"/>
-    <xsl:text>_Proxy;&#10;</xsl:text>
-    <xsl:text>class </xsl:text>
-    <xsl:value-of select="$name"/>
-    <xsl:text>_Service;&#10;&#10;</xsl:text>
-
-    <!-- Convenience method -->
-    <xsl:text>class </xsl:text>
-    <xsl:value-of select="$name"/>
-    <xsl:text> {&#10;</xsl:text>
-    <xsl:text>  public:&#10;</xsl:text>
-    <xsl:text>    static Glib::RefPtr&lt;</xsl:text>
-    <xsl:value-of select="$name"/>
-    <xsl:text>_Proxy&gt; create(&#10;</xsl:text>
-    <xsl:text>      const Glib::ustring&amp; object_path</xsl:text>
-    <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>
-    <xsl:text>,&#10;</xsl:text>
-    <xsl:text>      const Glib::ustring&amp; name</xsl:text>
-    <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>
-    <xsl:text>,&#10;</xsl:text>
-    <xsl:text>      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
-    <xsl:text>      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;</xsl:text>
-    <xsl:text>};&#10;&#10;</xsl:text>
-
     <!-- Proxy class implements all interfaces -->
     <xsl:text>class </xsl:text>
     <xsl:value-of select="$name"/>
