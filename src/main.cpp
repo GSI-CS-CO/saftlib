@@ -26,9 +26,23 @@ void on_sigint(int)
   saftlib::Directory::get()->loop()->quit();
 }
 
-void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, const Glib::ustring& /* name */, char** argv)
+void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, const Glib::ustring& /* name */, int argc, char** argv)
 {
-  std::cout << "Up and running" << std::endl;
+  for (int i = 1; i < argc; ++i) {
+    // parse the string
+    std::string command = argv[i];
+    std::string::size_type pos = command.find_first_of(':');
+    if (pos == std::string::npos) {
+      std::cerr << "Argument '" << command << "' is not of form <logical-name>:<etherbone-path>" << std::endl;
+      exit(1);
+    }
+    
+    std::string name = command.substr(0, pos);
+    std::string path = command.substr(pos+1, std::string::npos);
+    saftlib::Directory::get()->AttachDevice(name, path);
+  }
+  
+  // std::cout << "Up and running" << std::endl;
 }
 
 void on_name_lost(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
@@ -43,8 +57,8 @@ int main(int argc, char** argv)
   std::locale::global(std::locale(""));
   Gio::init();
   
-  if (argc != 4) {
-    std::cerr << "expecting three non-optional arguments <logical-name> <master-device> <slave-device>" << std::endl;
+  if (argc < 2) {
+    std::cerr << "expecting at least one argument <logical-name>:<etherbone-path> ..." << std::endl;
     return 1;
   }
   
@@ -52,8 +66,7 @@ int main(int argc, char** argv)
   try {
     socket.open();
     saftlib::Device::hook_it_all(socket);
-//    saftlib::Directory::get()->AttachDevice(argv[1], argv[2]);
-//    socket.passive(argv[3]);
+    socket.passive("dev/wbs0"); // !!! remove this once dev/wbm0 and dev/wbs0 are unified
   } catch (const etherbone::exception_t& e) {
     std::cerr << e << std::endl;
     return 1;
@@ -66,7 +79,7 @@ int main(int argc, char** argv)
   const guint id = Gio::DBus::own_name(Gio::DBus::BUS_TYPE_SYSTEM,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
-    sigc::bind(sigc::ptr_fun(&on_name_acquired), argv),
+    sigc::bind(sigc::bind(sigc::ptr_fun(&on_name_acquired), argv), argc),
     sigc::ptr_fun(&on_name_lost));
   
   // Catch control-C for clean shutdown
