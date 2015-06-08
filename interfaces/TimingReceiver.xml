@@ -4,7 +4,31 @@
   <xi:include href="Device.xml"/>
 
   <!-- de.gsi.saftlib.TimingReceiver:
-       @short_description: A rule matched against incoming events on a SoftwareActionSink.
+       @short_description: A timing receiver.
+       
+       Timing receivers can respond to timing events from the data master.
+       The can also respond to external timing triggers via inputs.
+       
+       The general idea is that a TimingReceiver has ActionSinks to which it
+       sends actions in response to incoming timing events. Timing events
+       are matched with Conditions to create the Actions sent to the Sinks.
+       
+       EventSources are objects which create timing events, to be matched
+       by the conditions. The data master is a global EventSource to which
+       all TimingReceivers listen. However, external inputs can also be
+       configured to generate timing events. Furthermore, a TimingReceiver
+       can simulate the receipt of a timing event by calling the InjectEvent
+       method.
+       
+       Timing receivers always typically have binary outputs lines
+       (OutputActionSinks), which are listed in the Outputs property. 
+       Similarly, they often have digital inputs (InputEventSources).
+       
+       Some timing receivers have special purpose interfaces. For example,
+       an SCU has the SCUbusActionSink which generates 32-bit messages over
+       the SCU backplane. These special interfaces can be found in the
+       interfaces property. The SCU backplane would be found under the
+       SCUbusActionSink key, and as thre is only one, it would be the 0th.
     -->
   <interface name="de.gsi.saftlib.TimingReceiver">
   
@@ -47,14 +71,14 @@
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
     
-    <!-- Outputs: A list of all the high/low inputs on the receiver.
+    <!-- Inputs: A list of all the high/low inputs on the receiver.
          Each path refers to an object of type Input.
       -->
     <property name="Inputs" type="a{ss}" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
     
-    <!-- Outputs: A list of all the high/low inoutputs on the receiver.
+    <!-- Inoutputs: A list of all the high/low inoutputs on the receiver.
          Each path refers to an object of type Inoutput.
       -->
     <property name="Inoutputs" type="a{ss}" access="read">
@@ -71,11 +95,11 @@
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
     
-    <!-- Devices: List of all object instances of various hardware.
+    <!-- Interfaces: List of all object instances of various hardware.
          The key in the dictionary is the name of the interface.
          The value is all object paths to hardware implementing that interface.
       -->
-    <property name="Interfacees" type="a{sas}" access="read"/>
+    <property name="Interfaces" type="a{sas}" access="read"/>
     
     <!-- InjectEvent: Simulate the receipt of a timing event.
          @event: The event identifier which is matched against [first, last]

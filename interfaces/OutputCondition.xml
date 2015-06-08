@@ -6,7 +6,7 @@
   <xi:include href="Condition.xml"/>
   
   <!-- de.gsi.saftlib.OutputCondition:
-       @short_description: A rule matched against incoming events on an OutputActionSink.
+       @short_description: Matched against incoming events on an OutputActionSink.
        
        OutputConditions are created by OutputActionSinks to select which
        events should generate callbacks. This interface always implies

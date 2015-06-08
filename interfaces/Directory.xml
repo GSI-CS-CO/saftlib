@@ -12,11 +12,29 @@
     
     <!-- Devices: List of all Wishbone buses attached to saftd.
          The key is the name of the device as provided to AttachDevice.
-         The value is the object path to the Device object.
+         The value is the dbus path to the Device object, NOT the etherbone
+         path of the device. Each object is guaranteed to implement at least
+         the Device interface, however, typically the objects implement the
+         TimingReceiver interface.
       -->
     <property name="Devices" type="a{ss}" access="read"/>
     
-    <!-- Attach a new device -->
+    <!-- AttachDevice: Instruct saftd to control a new device.
+         @name:        The logical name for the device.
+         @path:        The etherbone path where the device can be found.
+         
+         Devices are attached to saftlib by specifying a name and a path.  The
+         name should denote the logical relationship of the device to saftd. 
+         For example, baseboard would be a good name for the timing receiver
+         attached to an SCU.  If an exploder is being used to output events to
+         an oscilloscope, a good logical name might be scope.  In these
+         examples, the path for the SCU baseboard would be dev/wbm0, and the
+         scope exploder would be dev/ttyUSB3 or similar.
+         
+         This scheme is intended to make it easy to hot-swap hardware. If the
+         exploder dies, you can simply attach a new one under the same logical
+         name, even though the path might be different.
+      -->
     <method name="AttachDevice">
       <arg direction="in" type="s" name="name"/>
       <arg direction="in" type="s" name="path"/>
@@ -24,6 +42,7 @@
     
     <!-- Quit: Instructs the saftlib daemon to quit.
          Be absolutely certain before calling this method!
+         All clients will have their future calls throw exceptions.
       -->
     <method name="Quit"/>
   </interface>

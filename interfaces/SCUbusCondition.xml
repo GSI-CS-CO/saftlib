@@ -6,7 +6,7 @@
   <xi:include href="Condition.xml"/>
   
   <!-- de.gsi.saftlib.SCUbusCondition:
-       @short_description: A rule matched against incoming events on a SCUbusActionSink.
+       @short_description: Matched against incoming events on a SCUbusActionSink.
        
        SCUbusConditions are created by SCUbusActionSinks to select which
        events should generate callbacks. This interface always implies

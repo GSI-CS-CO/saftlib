@@ -6,7 +6,7 @@
   <xi:include href="Condition.xml"/>
   
   <!-- de.gsi.saftlib.MILbusCondition:
-       @short_description: A rule matched against incoming events on a MILbusActionSink.
+       @short_description: Matched against incoming events on a MILbusActionSink.
        
        MILbusConditions are created by MILbusActionSinks to select which
        events should generate callbacks. This interface always implies

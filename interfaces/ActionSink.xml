@@ -147,7 +147,7 @@
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
   </property>
   
-  <!-- MosFull: Report the largest number of pending actions seen.
+  <!-- MostFull: Report the largest number of pending actions seen.
        The timing receiver hardware can only queue a limited number of
        actions.  This property reports the highest Fill level seen by the
        hardware since it was last reset to 0.  Keep in mind that the queue

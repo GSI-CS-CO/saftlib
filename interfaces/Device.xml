@@ -1,7 +1,28 @@
+<!-- de.gsi.saftlib.Device:
+     @short_description: A device attached to saftd via Etherbone.
+     
+     Devices are attached to saftlib by specifying a name and a path.  The
+     name should denote the logical relationship of the device to saftd. 
+     For example, baseboard would be a good name for the timing receiver
+     attached to an SCU.  If an exploder is being used to output events to
+     an oscilloscope, a good logical name might be scope.  In these
+     examples, the path for the SCU baseboard would be dev/wbm0, and the
+     scope exploder would be dev/ttyUSB3 or similar.
+     
+     This scheme is intended to make it easy to hot-swap hardware. If the
+     exploder dies, you can simply attach a new one under the same logical
+     name, even though the path might be different.
+  -->
 <interface name="de.gsi.saftlib.Device">
-  <!-- EtherbonePath: The path under which the device was opened.
+  <!-- EtherbonePath: The path through which the device is reached.
     -->
   <property name="EtherbonePath"  type="s" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Name: The logical name with which the device was connected.
+    -->
+  <property name="Name" type="s" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   
