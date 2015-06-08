@@ -8,7 +8,7 @@ namespace saftlib {
 
 Device::Device(etherbone::Device d)
  : etherbone::Device(d), 
-   low(0x30000), high(0x3ffff), name("pex0") // !!! probe out of config space
+   low(0x30000), high(0x3ffff)
 {
   // !!! enable interrupts
 }

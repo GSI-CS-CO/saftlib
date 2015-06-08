@@ -13,7 +13,7 @@ void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, cons
   try {
     saftlib::Directory::get()->setConnection(connection);
   } catch(const Glib::Error& ex) {
-//    std::cerr << "Could not create directory: " << ex << std::endl;
+    std::cerr << "Could not create directory: " << ex.what() << std::endl;
     exit(1);
   } catch(const etherbone::exception_t& ex) {
     std::cerr << "Could not create directory: " << ex << std::endl;
@@ -26,7 +26,7 @@ void on_sigint(int)
   saftlib::Directory::get()->loop()->quit();
 }
 
-void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, const Glib::ustring& /* name */)
+void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, const Glib::ustring& /* name */, char** argv)
 {
   std::cout << "Up and running" << std::endl;
 }
@@ -43,20 +43,17 @@ int main(int argc, char** argv)
   std::locale::global(std::locale(""));
   Gio::init();
   
-  if (argc != 3) {
-    std::cerr << "expecting two non-optional arguments <master-device> <slave-device>" << std::endl;
+  if (argc != 4) {
+    std::cerr << "expecting three non-optional arguments <logical-name> <master-device> <slave-device>" << std::endl;
     return 1;
   }
   
   etherbone::Socket socket;
-  etherbone::Device device;
-  
   try {
     socket.open();
     saftlib::Device::hook_it_all(socket);
-    device.open(socket, argv[1]);
-    saftlib::Directory::get()->devices().push_back(device);
-    socket.passive(argv[2]); // !!! remove once interrupts come via master
+//    saftlib::Directory::get()->AttachDevice(argv[1], argv[2]);
+//    socket.passive(argv[3]);
   } catch (const etherbone::exception_t& e) {
     std::cerr << e << std::endl;
     return 1;
@@ -69,7 +66,7 @@ int main(int argc, char** argv)
   const guint id = Gio::DBus::own_name(Gio::DBus::BUS_TYPE_SYSTEM,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
-    sigc::ptr_fun(&on_name_acquired),
+    sigc::bind(sigc::ptr_fun(&on_name_acquired), argv),
     sigc::ptr_fun(&on_name_lost));
   
   // Catch control-C for clean shutdown
@@ -77,13 +74,13 @@ int main(int argc, char** argv)
   signal(SIGTERM, &on_sigint);
   signal(SIGQUIT, &on_sigint);
   
+  // Run the main event loop
   saftlib::Directory::get()->loop()->run();
   
+  // Cleanup
   Gio::DBus::unown_name(id);
   saftlib::Directory::get()->resetConnection();
-  //eb_source.disconnect();
-  
-  device.close();
+  eb_source.disconnect();
   socket.close();
 
   return 0;

@@ -11,10 +11,6 @@ Directory::Directory()
 {
 }
 
-Directory::~Directory()
-{
-}
-
 const Glib::RefPtr<Directory>& Directory::get()
 {
   static Glib::RefPtr<Directory> top;
@@ -29,25 +25,23 @@ void Directory::Quit()
 
 void Directory::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
 {
+  if (m_connection) resetConnection();
   m_connection = c;
-  Drivers::probe();
-  setDevices(devs);
+  // !!! objects.register_self
   register_self(m_connection, "/de/gsi/saftlib/Directory");
 }
 
 void Directory::resetConnection()
 {
+  // !!! objects.unregister_self
   unregister_self();
-  devs.clear();
-  setDevices(devs);
-  refs.clear(); // destroys and unregisters all child objects
   m_connection.reset();
 }
 
-void Directory::add(const Glib::ustring& iface, const Glib::ustring& path, const Glib::RefPtr<Glib::Object>& object)
+void Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
-  devs[iface].push_back(path);
-  refs.push_back(object);
+  // !!!
+  // Drivers::probe();
 }
 
 } // saftlib

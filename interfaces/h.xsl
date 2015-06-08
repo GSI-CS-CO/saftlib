@@ -175,10 +175,9 @@
     <!-- Service class implements all interfaces -->
     <xsl:text>class </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service :</xsl:text>
+    <xsl:text>_Service : public Glib::Object</xsl:text>
     <xsl:for-each select="interface">
-      <xsl:if test="position()>1">,</xsl:if>
-      <xsl:text> public i</xsl:text>
+      <xsl:text>, public i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
     </xsl:for-each>
     <xsl:text> {&#10;</xsl:text>

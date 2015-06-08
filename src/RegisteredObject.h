@@ -3,12 +3,12 @@
 
 #include <giomm.h>
 #include <etherbone.h>
-#include "Directory.h"
+#include "Server.h"
 
 namespace saftlib {
 
-template <typename T>
-class RegisteredObject : public T
+template <typename I, typename P>
+class RegisteredObject : public I
 {
   public:
     RegisteredObject(const Glib::ustring& object_path);
@@ -16,12 +16,15 @@ class RegisteredObject : public T
     const Glib::ustring& getObjectPath();
     const Glib::RefPtr<Gio::DBus::Connection>& getConnection();
     void rethrow(const char *method);
+  
+  protected:
+    P export;
 };
 
 template <typename T>
 RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path)
 {
-  T::register_self(Directory::get()->connection(), object_path);
+  export.register_self(Server::get()->connection(), object_path);
 }
 
 template <typename T>
