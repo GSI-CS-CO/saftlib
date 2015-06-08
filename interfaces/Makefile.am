@@ -1,8 +1,3 @@
-lib_LTLIBRARIES = libsaftlib.la
-if INTERFACE_DOCS
-doc_DATA = TLU.pdf ECA.pdf ECA_Condition.pdf ECA_Channel.pdf Directory.pdf
-endif
-
 NODES =				\
 	Directory.xml		\
 	Inoutput.xml		\
@@ -27,9 +22,61 @@ INTERFACES =			\
 XSL = h.xsl cpp.xsl common.xsl
 
 EXTRA_DIST = $(XSL) $(NODES) $(INTERFACES)
-CLEANFILES = *.cpp *.h *.pdf
+CLEANFILES = *.cpp *.h *.pdf *.doc-xml
 
 AM_CPPFLAGS = $(GIOMM_CFLAGS)
+
+lib_LTLIBRARIES = libsaftlib.la
+saftlibdir = $(includedir)/saftlib
+saftlib_HEADERS = 		\
+	Directory.h		\
+	iActionSink.h		\
+	iCondition.h		\
+	iDevice.h		\
+	iDirectory.h		\
+	iEventSource.h		\
+	iInputEventSource.h	\
+	iMILbusActionSink.h	\
+	iMILbusCondition.h	\
+	Inoutput.h		\
+	Input.h			\
+	iOutputActionSink.h	\
+	iOutputCondition.h	\
+	iOwned.h		\
+	iSCUbusActionSink.h	\
+	iSCUbusCondition.h	\
+	iSoftwareActionSink.h	\
+	iSoftwareCondition.h	\
+	iTimingReceiver.h	\
+	MILbusActionSink.h	\
+	MILbusCondition.h	\
+	OutputCondition.h	\
+	Output.h		\
+	SCUbusActionSink.h	\
+	SCUbusCondition.h	\
+	SoftwareActionSink.h	\
+	SoftwareCondition.h	\
+	TimingReceiver.h
+
+if INTERFACE_DOCS
+doc_DATA = 			\
+	ActionSink.pdf		\
+	Condition.pdf		\
+	Device.pdf		\
+	Directory.pdf		\
+	EventSource.pdf		\
+	InputEventSource.pdf	\
+	MILbusActionSink.pdf	\
+	MILbusCondition.pdf	\
+	OutputActionSink.pdf	\
+	OutputCondition.pdf	\
+	Owned.pdf		\
+	SCUbusActionSink.pdf	\
+	SCUbusCondition.pdf	\
+	SoftwareActionSink.pdf	\
+	SoftwareCondition.pdf	\
+	TimingReceiver.pdf
+endif
 
 libsaftlib_la_LIBADD = $(GIOMM_LIBS)
 libsaftlib_la_LDFLAGS = -version-info 1:1:0
@@ -63,11 +110,12 @@ nodist_libsaftlib_la_SOURCES =	\
 	SoftwareCondition.cpp	\
 	TimingReceiver.cpp
 
-$(nodist_libsaftlib_la_SOURCES):	$(NODES) $(XSL)
-	$(XSLTPROC) --xinclude $(srcdir)/cpp.xsl $(NODES)
+$(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES):	$(NODES) $(XSL)
 	$(XSLTPROC) --xinclude $(srcdir)/h.xsl $(NODES)
+	$(XSLTPROC) --xinclude $(srcdir)/cpp.xsl $(NODES)
+	$(XSLTPROC) --xinclude $(srcdir)/doc.xsl $(NODES)
 
-.xml.pdf:
+.doc-xml.pdf:
 	$(GDBUS_CODEGEN) --generate-docbook=docfoo --interface-prefix=de.gsi.saftlib $<
 	$(DOCBOOK2PDF) docfoo-*.$*.xml
 	mv docfoo-*.$*.pdf $@
