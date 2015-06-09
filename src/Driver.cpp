@@ -19,10 +19,10 @@ void DriverBase::remove_self()
   *i = next;
 }
 
-void Drivers::probe()
+void Drivers::probe(OpenDevice& od)
 {
   for (DriverBase *i = top; i; i = i->next)
-    i->probe();
+    i->probe(od);
 }
 
 }

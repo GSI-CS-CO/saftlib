@@ -1,7 +1,7 @@
 #ifndef SAFTLIB_DRIVER_H
 #define SAFTLIB_DRIVER_H
 
-#include "Device.h"
+#include "OpenDevice.h"
 
 namespace saftlib {
 
@@ -13,7 +13,7 @@ class DriverBase
     void remove_self();
     
   protected:
-    virtual void probe() = 0;
+    virtual void probe(OpenDevice& od) = 0;
     
   private:
     DriverBase *next;
@@ -33,13 +33,13 @@ class Driver : private DriverBase
     ~Driver() { remove_self(); }
   
   private:
-    void probe() { return T::probe(); }
+    void probe(OpenDevice& od) { return T::probe(od); }
 };
 
 class Drivers
 {
   public:
-    static void probe();
+    static void probe(OpenDevice& od);
 };
 
 }

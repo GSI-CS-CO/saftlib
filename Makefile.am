@@ -11,14 +11,13 @@ AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddi
 
 saftd_SOURCES = \
 	src/Device.cpp			src/Device.h		\
+	src/OpenDevice.cpp		src/OpenDevice.h	\
+	src/Driver.cpp			src/Driver.h		\
 	src/Directory.cpp		src/Directory.h		\
+	src/RegisteredObject.cpp	src/RegisteredObject.h	\
 	src/eb-source.cpp		src/eb-source.h		\
 	src/main.cpp
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
-#	src/Driver.cpp			src/Driver.h		\
-#	src/RegisteredObject.cpp	src/RegisteredObject.h	\
-#	drivers/ECA.cpp			drivers/eca_regs.h	\
-#	drivers/TLU.cpp			drivers/tlu_regs.h
 
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la

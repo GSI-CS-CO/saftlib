@@ -20,8 +20,6 @@ class Device : public etherbone::Device {
     eb_address_t low, high;
 };
 
-typedef std::vector<Device> Devices;
-
 }
 
 #endif

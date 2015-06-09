@@ -6,7 +6,6 @@
 #include <signal.h>
 
 #include "Directory.h"
-#include "eb-source.h"
 
 void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
@@ -19,11 +18,6 @@ void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, cons
     std::cerr << "Could not create directory: " << ex << std::endl;
     exit(1);
   }
-}
-
-void on_sigint(int)
-{
-  saftlib::Directory::get()->loop()->quit();
 }
 
 void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, const Glib::ustring& /* name */, int argc, char** argv)
@@ -39,16 +33,26 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
     
     std::string name = command.substr(0, pos);
     std::string path = command.substr(pos+1, std::string::npos);
-    saftlib::Directory::get()->AttachDevice(name, path);
+    try {
+      saftlib::Directory::get()->AttachDevice(name, path);
+    } catch (const Glib::Error& ex) {
+      std::cerr << "Could not open device " << path << ": " << ex.what() << std::endl;
+      exit(1);
+    }
   }
   
-  // std::cout << "Up and running" << std::endl;
+  std::cout << "Up and running" << std::endl;
 }
 
 void on_name_lost(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   // Something else claimed the saftlib name
   std::cerr << "Unable to acquire name---dbus saftlib.conf installed?" << std::endl;
+  saftlib::Directory::get()->loop()->quit();
+}
+
+void on_sigint(int)
+{
   saftlib::Directory::get()->loop()->quit();
 }
 
@@ -62,20 +66,7 @@ int main(int argc, char** argv)
     return 1;
   }
   
-  etherbone::Socket socket;
-  try {
-    socket.open();
-    saftlib::Device::hook_it_all(socket);
-    socket.passive("dev/wbs0"); // !!! remove this once dev/wbm0 and dev/wbs0 are unified
-  } catch (const etherbone::exception_t& e) {
-    std::cerr << e << std::endl;
-    return 1;
-  }
-  
-  // Connect etherbone to glib loop
-  sigc::connection eb_source = 
-    eb_attach_source(saftlib::Directory::get()->loop(), socket);
-  
+  // Connect to the dbus system daemon
   const guint id = Gio::DBus::own_name(Gio::DBus::BUS_TYPE_SYSTEM,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
@@ -92,9 +83,6 @@ int main(int argc, char** argv)
   
   // Cleanup
   Gio::DBus::unown_name(id);
-  saftlib::Directory::get()->resetConnection();
-  eb_source.disconnect();
-  socket.close();
 
   return 0;
 }

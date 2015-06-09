@@ -3,44 +3,38 @@
 
 #include <giomm.h>
 #include <etherbone.h>
-#include "Server.h"
+#include "Directory.h"
 
 namespace saftlib {
 
-template <typename I, typename P>
-class RegisteredObject : public I
+template <typename T>
+class RegisteredObject : public T
 {
   public:
     RegisteredObject(const Glib::ustring& object_path);
     
     const Glib::ustring& getObjectPath();
-    const Glib::RefPtr<Gio::DBus::Connection>& getConnection();
-    void rethrow(const char *method);
+    void rethrow(const char *method) const;
   
   protected:
-    P export;
+    Glib::ustring path;
 };
 
 template <typename T>
 RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path)
+ : path(object_path)
 {
-  export.register_self(Server::get()->connection(), object_path);
+  T::register_self(Directory::get()->connection(), object_path);
 }
 
 template <typename T>
 const Glib::ustring& RegisteredObject<T>::getObjectPath()
 { 
-  return T::exports[0].object_path;
+  return path;
 }
 
 template <typename T>
-const Glib::RefPtr<Gio::DBus::Connection>& RegisteredObject<T>::getConnection()
-{
-  return T::exports[0].connection;
-}
-
-template <typename T>
-void RegisteredObject<T>::rethrow(const char *method)
+void RegisteredObject<T>::rethrow(const char *method) const
 {
   try {
     T::rethrow(method);
