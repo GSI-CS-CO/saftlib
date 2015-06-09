@@ -31,25 +31,30 @@ class TimingReceiver : public RegisteredObject<TimingReceiver_Service> {
 
   protected:
     saftlib::Device dev;
+    Glib::ustring name;
+    Glib::ustring etherbonePath;
 };
 
 TimingReceiver::TimingReceiver(OpenDevice& od)
- : RegisteredObject(od.path), dev(od.device) { 
+ : RegisteredObject(od.objectPath), 
+   dev(od.device),
+   name(od.name),
+   etherbonePath(od.etherbonePath) { 
 }
 
 void TimingReceiver::Remove()
 {
-  // !!!
+  Directory::get()->RemoveDevice(name);
 }
 
 Glib::ustring TimingReceiver::getEtherbonePath() const
 {
-  return "wtf";
+  return etherbonePath;
 }
 
 Glib::ustring TimingReceiver::getName() const
 {
-  return "bah";
+  return name;
 }
 
 Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name)

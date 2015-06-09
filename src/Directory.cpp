@@ -71,7 +71,7 @@ std::map< Glib::ustring, Glib::ustring > Directory::getDevices() const
 {
   std::map< Glib::ustring, Glib::ustring > out;
   for (std::map< Glib::ustring, OpenDevice >::const_iterator i = devs.begin(); i != devs.end(); ++i) {
-    out[i->first] = i->second.path;
+    out[i->first] = i->second.objectPath;
   }
   return out;
 }
@@ -83,7 +83,7 @@ void Directory::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
   register_self(m_connection, "/de/gsi/saftlib/Directory");
 }
 
-void Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
+Glib::ustring Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
   if (devs.find(name) != devs.end() || name == "Directory")
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "device already exists");
@@ -98,16 +98,34 @@ void Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& pat
   }
   
   struct OpenDevice od(edev);
-  od.path = "/de/gsi/saftlib/" + name;
+  od.name = name;
+  od.objectPath = "/de/gsi/saftlib/" + name;
+  od.etherbonePath = path;
+  
   Drivers::probe(od);
   
   if (od.ref) {
     devs.insert(std::make_pair(name, od));
     // inform clients of updated property
     Devices(getDevices());
+    return od.objectPath;
   } else {
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no driver available for this device");
   }
+}
+
+void Directory::RemoveDevice(const Glib::ustring& name)
+{
+  std::map< Glib::ustring, OpenDevice >::iterator elem = devs.find(name);
+  if (elem == devs.end())
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no such device");
+  
+  elem->second.ref.clear();
+  elem->second.device.close();
+  devs.erase(elem);
+  
+  // inform clients of updated property 
+  Devices(getDevices());
 }
 
 } // saftlib

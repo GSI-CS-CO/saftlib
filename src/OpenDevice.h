@@ -7,7 +7,9 @@ namespace saftlib {
 
 struct OpenDevice {
   Device device;
-  Glib::ustring path;
+  Glib::ustring name;
+  Glib::ustring objectPath;
+  Glib::ustring etherbonePath;
   Glib::RefPtr<Glib::Object> ref;
   
   OpenDevice(etherbone::Device d);

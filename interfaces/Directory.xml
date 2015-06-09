@@ -20,8 +20,9 @@
     <property name="Devices" type="a{ss}" access="read"/>
     
     <!-- AttachDevice: Instruct saftd to control a new device.
-         @name:        The logical name for the device.
-         @path:        The etherbone path where the device can be found.
+         @name:        The logical name for the device
+         @path:        The etherbone path where the device can be found
+         @result:      Object path of the created device
          
          Devices are attached to saftlib by specifying a name and a path.  The
          name should denote the logical relationship of the device to saftd. 
@@ -38,6 +39,13 @@
     <method name="AttachDevice">
       <arg direction="in" type="s" name="name"/>
       <arg direction="in" type="s" name="path"/>
+      <arg direction="out" type="s" name="result"/>
+    </method>
+    
+    <!-- RemoveDevice: Remove the device from saftlib management.
+      -->
+    <method name="RemoveDevice">
+      <arg direction="in" type="s" name="name"/>
     </method>
     
     <!-- Quit: Instructs the saftlib daemon to quit.

@@ -17,7 +17,8 @@ class Directory : public Directory_Service
     const Glib::RefPtr<Glib::MainLoop>&        loop()       { return m_loop; }
     const Glib::RefPtr<Gio::DBus::Connection>& connection() { return m_connection; }
     
-    void AttachDevice(const Glib::ustring& name, const Glib::ustring& path);
+    Glib::ustring AttachDevice(const Glib::ustring& name, const Glib::ustring& path);
+    void RemoveDevice(const Glib::ustring& name);
     void Quit();
     std::map< Glib::ustring, Glib::ustring > getDevices() const;
     
