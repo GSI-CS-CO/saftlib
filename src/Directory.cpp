@@ -102,7 +102,12 @@ Glib::ustring Directory::AttachDevice(const Glib::ustring& name, const Glib::ust
   od.objectPath = "/de/gsi/saftlib/" + name;
   od.etherbonePath = path;
   
-  Drivers::probe(od);
+  try {
+    Drivers::probe(od);
+  } catch (...) {
+    edev.close();
+    throw;
+  }
   
   if (od.ref) {
     devs.insert(std::make_pair(name, od));
@@ -110,6 +115,7 @@ Glib::ustring Directory::AttachDevice(const Glib::ustring& name, const Glib::ust
     Devices(getDevices());
     return od.objectPath;
   } else {
+    edev.close();
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no driver available for this device");
   }
 }
