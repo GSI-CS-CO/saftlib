@@ -6,12 +6,12 @@
 #include "interfaces/SoftwareActionSink.h"
 #include "interfaces/SoftwareCondition.h"
 
-void on_action(guint64 id, guint64 param, guint64 time, bool late, bool conflict)
+void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool late, bool delayed, bool conflict)
 {
   std::cout << "Saw a timing event!" << std::endl;
 }
 
-void on_late(guint64 event, guint64 param, guint64 time)
+void on_late(guint64 event, guint64 param, guint64 time, guint64 overtime)
 {
   // Report this to the operator
   std::cerr << "FATAL ERROR: late action!" << std::endl;

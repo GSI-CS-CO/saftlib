@@ -17,7 +17,9 @@
          @event:    The event identifier that matched this rule.
          @param:    The parameter field, whose meaning depends on the event ID.
          @time:     The action execution timestamp (event time + offset).
+         @overtime: How many nanoseconds late/delayed is the action.
          @late:     The action was scheduled for execution in the past.
+         @delayed:  The action was delayed by the receiving hardware.
          @conflict: Two actions should have been delivered simultaneously.
          
          While the underlying hardware will deliver the action at precisely
@@ -34,7 +36,9 @@
       <arg name="event"    type="t"/>
       <arg name="param"    type="t"/>
       <arg name="time"     type="t"/>
+      <arg name="overtime" type="t"/>
       <arg name="late"     type="b"/>
+      <arg name="delayed"  type="b"/>
       <arg name="conflict" type="b"/>
     </signal>
   </interface>

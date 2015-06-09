@@ -241,10 +241,11 @@
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
   </property>
   
-  <!-- Late:   LateCount increased since the last Late signal.
-       @event: The event identifier of the late action.
-       @param: The parameter field, whose meaning depends on the event ID.
-       @time:  The desired execution timestamp (event time + offset).
+  <!-- Late:      LateCount increased since the last Late signal.
+       @event:    The event identifier of the late action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @time:     The desired execution timestamp (event time + offset).
+       @overtime: How many nanoseconds late is the action.
 
        In the case late actions occure, this signal will be emitted with an
        example of a late action. This signal is emitted regardless of
@@ -254,9 +255,10 @@
        slow receiver is a delayed (not late) action.
     -->
   <signal name="Late">
-    <arg name="event" type="t"/>
-    <arg name="param" type="t"/>
-    <arg name="time"  type="t"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="time"     type="t"/>
+    <arg name="overtime" type="t"/>
   </signal>
   
   <!-- GenerateDelayed: Should a delayed action cause the Delayed signal.
@@ -279,19 +281,21 @@
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
   </property>
   
-  <!-- Delayed: DelayedCount increased since the last Delayed signal.
-       @event: The event identifier of the delayed action.
-       @param: The parameter field, whose meaning depends on the event ID.
-       @time:  The desired execution timestamp (event time + offset).
+  <!-- Delayed:   DelayedCount increased since the last Delayed signal.
+       @event:    The event identifier of the delayed action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @time:     The desired execution timestamp (event time + offset).
+       @overtime: How many nanoseconds delayed is the action.
 
        If GenerateDelayed is true, this signal provides an example of an
        action which was delayed. For SoftwareActionSinks this should never
        be considered an error, as software is inherently slow.
     -->
   <signal name="Delayed">
-    <arg name="event" type="t"/>
-    <arg name="param" type="t"/>
-    <arg name="time"  type="t"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="time"     type="t"/>
+    <arg name="overtime" type="t"/>
   </signal>
   
   <!-- ActionCount: Total number of actions output by this ActionSink.
