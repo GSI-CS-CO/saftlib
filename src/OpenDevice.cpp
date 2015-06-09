@@ -4,11 +4,7 @@
 
 namespace saftlib {
 
-OpenDevice::OpenDevice(etherbone::Device d) : dev(d) { 
-}
-
-OpenDevice::~OpenDevice() {
-  dev.close();
+OpenDevice::OpenDevice(etherbone::Device d) : device(d) { 
 }
 
 }

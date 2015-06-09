@@ -29,13 +29,27 @@ Directory::Directory()
 
 Directory::~Directory()
 {
-  devs.clear(); // should destroy all objects
-  if (m_connection) {
-    unregister_self();
-    m_connection.reset();
+  try {
+    for (std::map< Glib::ustring, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
+      i->second.ref.clear(); // should destroy the driver
+      i->second.device.close();
+    }
+    devs.clear();
+    
+    if (m_connection) {
+      unregister_self();
+      m_connection.reset();
+    }
+    eb_source.disconnect();
+    socket.close();
+  } catch (const Glib::Error& ex) {
+    std::cerr << "Could not clean up: " << ex.what() << std::endl;
+    exit(1);
+  } catch(const etherbone::exception_t& ex) {
+    std::cerr << "Could not clean up: " << ex << std::endl;
+    exit(1);
   }
-  eb_source.disconnect();
-  socket.close();
+  
   std::cout << "Clean shutdown" << std::endl;
 }
 
@@ -71,7 +85,7 @@ void Directory::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
 
 void Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
-  if (devs.find(name) != devs.end())
+  if (devs.find(name) != devs.end() || name == "Directory")
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "device already exists");
   
   etherbone::Device edev;
@@ -84,6 +98,7 @@ void Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& pat
   }
   
   struct OpenDevice od(edev);
+  od.path = "/de/gsi/saftlib/" + name;
   Drivers::probe(od);
   
   if (od.ref) {

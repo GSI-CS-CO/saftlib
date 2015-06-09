@@ -6,12 +6,11 @@
 namespace saftlib {
 
 struct OpenDevice {
-  Device dev;
-  Glib::RefPtr<Glib::Object> ref;
+  Device device;
   Glib::ustring path;
+  Glib::RefPtr<Glib::Object> ref;
   
   OpenDevice(etherbone::Device d);
-  ~OpenDevice();
 };
 
 }

@@ -16,6 +16,7 @@ saftd_SOURCES = \
 	src/Directory.cpp		src/Directory.h		\
 	src/RegisteredObject.cpp	src/RegisteredObject.h	\
 	src/eb-source.cpp		src/eb-source.h		\
+	drivers/TimingReceiver.cpp				\
 	src/main.cpp
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
 
