@@ -18,8 +18,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink, public
     
     static Glib::RefPtr<SoftwareActionSink> create(Glib::ustring& objectPath, ConstructorType args);
     
-    void destroy();
-    
+    // iSoftwareAcitonSink
     Glib::ustring NewCondition(bool active, guint64 first, guint64 last, gint64 offset, guint32 guards);
     
   protected:

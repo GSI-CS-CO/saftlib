@@ -17,6 +17,8 @@ saftd_SOURCES = \
 	src/RegisteredObject.cpp	src/RegisteredObject.h		\
 	src/eb-source.cpp		src/eb-source.h			\
 	drivers/Owned.cpp		drivers/Owned.h			\
+	drivers/Condition.cpp		drivers/Condition.h		\
+	drivers/SoftwareCondition.cpp	drivers/SoftwareCondition.h	\
 	drivers/ActionSink.cpp		drivers/ActionSink.h		\
 	drivers/SoftwareActionSink.cpp	drivers/SoftwareActionSink.h	\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\

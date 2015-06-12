@@ -121,6 +121,11 @@ guint32 TimingReceiver::getFree() const
   return 0; // !!!
 }
 
+void TimingReceiver::compile()
+{
+  // !!!
+}
+
 void TimingReceiver::probe(OpenDevice& od)
 {
   // !!! check board ID

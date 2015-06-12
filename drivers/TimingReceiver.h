@@ -31,6 +31,9 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     std::vector< Glib::ustring > getGuards() const;
     std::map< Glib::ustring, std::vector< Glib::ustring > > getInterfaces() const;
     guint32 getFree() const;
+    
+    // Compile the condition table
+    void compile();
 
     // provided by RegisteredObject
     virtual const Glib::ustring& getSender() const = 0;
