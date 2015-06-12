@@ -9,11 +9,19 @@ namespace saftlib {
 
 class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Object {
   public:
-    typedef OpenDevice& ConstructorType;
+    struct ConstructorType {
+      Device device;
+      Glib::ustring name;
+      Glib::ustring etherbonePath;
+      eb_address_t base;
+      eb_address_t stream;
+      eb_address_t queue;
+    };
     typedef TimingReceiver_Service ServiceType;
     
     static void probe(OpenDevice& od);
-    TimingReceiver(OpenDevice& device);
+    TimingReceiver(ConstructorType args);
+    ~TimingReceiver();
     
     // iDevice
     void Remove();
@@ -34,6 +42,8 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     
     // Compile the condition table
     void compile();
+    int getQueueSize() { return queue_size; }
+    int getTableSize() { return table_size; }
 
     // provided by RegisteredObject
     virtual const Glib::ustring& getSender() const = 0;
@@ -41,13 +51,24 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     virtual const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const = 0;
     
   protected:
-    saftlib::Device dev;
+    saftlib::Device device;
     Glib::ustring name;
     Glib::ustring etherbonePath;
+    eb_address_t base;
+    eb_address_t stream;
+    eb_address_t queue;
     int sas_count;
+    eb_address_t overflow_irq;
+    eb_address_t arrival_irq;
+    int queue_size;
+    int table_size;
+    int aq_channel;
     std::map< Glib::ustring, Glib::RefPtr<ActionSink> > actionSinks;
     
     void do_remove(Glib::ustring name);
+    void setHandlers(bool enable, eb_address_t arrival = 0, eb_address_t overflow = 0);
+    void overflow_handler(eb_data_t);
+    void arrival_handler(eb_data_t); 
 };
 
 }

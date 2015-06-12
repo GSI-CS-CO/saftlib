@@ -8,7 +8,7 @@
 namespace saftlib {
 
 ActionSink::ActionSink(TimingReceiver* dev_, int channel_, sigc::slot<void> destroy)
- : Owned(destroy), dev(dev), channel(channel_), cond_count(0), 
+ : Owned(destroy), dev(dev_), channel(channel_), cond_count(0), 
    minOffset(-100000),  maxOffset(1000000000L), executeLateActions(false), generateDelayed(false)
 {
 }
@@ -76,7 +76,7 @@ gint64 ActionSink::getMaxOffset() const
 
 guint32 ActionSink::getCapacity() const
 {
-  return 256; // !!!
+  return dev->getQueueSize();
 }
 
 guint32 ActionSink::getFill() const
