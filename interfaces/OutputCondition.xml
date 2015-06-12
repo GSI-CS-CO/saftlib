@@ -9,7 +9,7 @@
        @short_description: Matched against incoming events on an OutputActionSink.
        
        OutputConditions are created by OutputActionSinks to select which
-       events should generate callbacks. This interface always implies
+       events should generate signal toggles. This interface always implies
        that the object also implements the general Condition interface.
     -->
   <interface name="de.gsi.saftlib.OutputCondition">

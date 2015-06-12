@@ -28,7 +28,7 @@
        an SCU has the SCUbusActionSink which generates 32-bit messages over
        the SCU backplane. These special interfaces can be found in the
        interfaces property. The SCU backplane would be found under the
-       SCUbusActionSink key, and as thre is only one, it would be the 0th.
+       SCUbusActionSink key, and as there is only one, it would be the 0th.
     -->
   <interface name="de.gsi.saftlib.TimingReceiver">
   
@@ -57,10 +57,11 @@
     
     <!-- SoftwareActionSinks: A list of all current SoftwareActionSinks.
          Typically, these SoftwareActionSinks will be owned by their
-         processes and not of much interest to others.  However, it is
-         possible for a SoftwareActionSink to be Disowned, in which case it
-         may be persistent and shared between programs under a well known
-         name.
+         processes and not of much interest to others.  Therefore, many of
+         the entries here may be of no interest to a particular client. 
+         However, it is possible for a SoftwareActionSink to be Disowned, in
+         which case it may be persistent and shared between programs under a
+         well known name.
       -->
     <property name="SoftwareActionSinks" type="a{ss}" access="read"/>
     

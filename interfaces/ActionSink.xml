@@ -67,7 +67,7 @@
      state. The severity of this failure mode depends on the scenario. For
      SoftwareActionSinks, this can probably always be ignored because the
      handler is much much slower than the hardware anyway. For a kicker, on
-     the other hand, a delay is probably a cirtical error. DelayedActions
+     the other hand, a delay is probably a critical error. DelayedActions
      are counted, and, as usual, reported after at most 100ms.
   -->
 <interface name="de.gsi.saftlib.ActionSink">
@@ -92,13 +92,14 @@
     -->
   <property name="InactiveConditions" type="as" access="read"/>
   
-  <!-- ToggleActive: Atomically toggle the active status of all conditions.
+  <!-- ToggleActive: Atomically toggle the active status of conditions.
        When reconfiguring an ActionSink, it is sometimes necessary to apply
        many changes simultaneously.  To achieve this, simply use
        NewCondition to create all the new conditions in the inactive state. 
-       Then use this method to simultaneous toggle all conditions.  The new
-       active conditions will be applied such that on one nanosecond, the
-       old set is active and on the next nanosecond the new set is active.
+       Then use this method to simultaneous toggle all conditions on this
+       ActionSink.  The new active conditions will be applied such that on
+       one nanosecond, the old set is active and on the next nanosecond the
+       new set is active.
     -->
   <method name="ToggleActive"/>
   
@@ -171,6 +172,8 @@
   </property>
 
   <!-- Overflow: OverflowCount has increased since last the Overflow signal.
+       @count:   The value of OverflowCount when this signal was raised.
+       
        The underlying hardware queue may overflow once Fill=Capacity. This
        is a critical error condition that must be handlded.  The causes may
        be either: 1- the actions have an execution time far enough in the
@@ -181,8 +184,13 @@
        frequency events.  SoftwareActionSinks share a common queue, and when
        it overflows ALL SoftwareActionSinks are notified of overflow since
        it impossible to determine which sink the action belonged to.
+       
+       Because overlows may occur rapidly, this signal only guarantees to
+       report at least one new overflow since the last Overflow emission.
     -->
-  <signal name="Overflow"/>
+  <signal name="Overflow">
+    <arg name="count" type="u"/>
+  </signal>
   
   <!-- ConflictCount: The number of actions which conflicted. 
        If two actions should have been executed simultaneously by the same
@@ -196,6 +204,7 @@
   </property>
   
   <!-- Conflict: ConflictCount increased since the last Conflict signal.
+       @count:   The value of ConflictCount when this signal was raised.
        @event1:  The event identifier of a conflicting action.
        @param1:  The parameter field, whose meaning depends on the event ID.
        @time1:   The action execution timestamp (event time + offset).
@@ -212,6 +221,7 @@
        The fields of the conflicting action are presented for diagnostics.
     -->
   <signal name="Conflict">
+    <arg name="count"  type="u"/>
     <arg name="event1" type="t"/>
     <arg name="param1" type="t"/>
     <arg name="time1"  type="t"/>
@@ -224,7 +234,7 @@
        If an action is scheduled that should be executed in the past, a
        critical error has occured. However, it might be possible to recover
        by executing the action regardless or dropping the action. This
-       property sets the desired behaviour.
+       property sets the desired behaviour. Defaults to false.
     -->
   <property name="ExecuteLateActions" type="b" access="readwrite"/>
   
@@ -236,12 +246,16 @@
        counter.  It might increase very rapidly, so is not signalled. 
        Instead, it is guaranteed that within 100ms a Late signal will be
        generated.
+       
+       Because late actions may occur rapidly, this signal only guarantees to
+       report at least one new late action since the last Late emission.
     -->
   <property name="LateCount" type="u" access="readwrite">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
   </property>
   
   <!-- Late:      LateCount increased since the last Late signal.
+       @count:    The value of LateCount when this signal was raised.
        @event:    The event identifier of the late action.
        @param:    The parameter field, whose meaning depends on the event ID.
        @time:     The desired execution timestamp (event time + offset).
@@ -252,9 +266,10 @@
        whether or not ExecuteLateActions is true/false. Keep in mind that an
        action is only counted as late if it is scheduled for the past. An
        action which leaves the timing receiver after its deadline, due to a
-       slow receiver is a delayed (not late) action.
+       slow consumer, is a delayed (not late) action.
     -->
   <signal name="Late">
+    <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
     <arg name="time"     type="t"/>
@@ -282,6 +297,7 @@
   </property>
   
   <!-- Delayed:   DelayedCount increased since the last Delayed signal.
+       @count:    The value of DelayedCount when this signal was raised.
        @event:    The event identifier of the delayed action.
        @param:    The parameter field, whose meaning depends on the event ID.
        @time:     The desired execution timestamp (event time + offset).
@@ -292,6 +308,7 @@
        be considered an error, as software is inherently slow.
     -->
   <signal name="Delayed">
+    <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
     <arg name="time"     type="t"/>

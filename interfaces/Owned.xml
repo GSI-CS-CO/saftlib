@@ -1,5 +1,5 @@
 <!-- de.gsi.saftlib.Owned:
-     @short_description: An object which can grant exclusive access.
+     @short_description: A DBus object which can grant exclusive access.
      
      This interface allows clients to claim ownership of the object.
      When the object has no owner, full access is granted to all clients.
@@ -38,9 +38,9 @@
     -->
   <method name="Own"/>
   
-  <!-- Destroy: Remove this condition from the ECA table.
+  <!-- Destroy: Destroy this object.
        This method may only be invoked by the current owner of the
-       condition. However, if the condition has been disowned, it may
+       object. However, if the condition has been disowned, it may
        be invoked by anyone.
     -->
   <method name="Destroy"/>

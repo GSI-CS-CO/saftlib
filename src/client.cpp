@@ -11,18 +11,19 @@ void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool l
   std::cout << "Saw a timing event!" << std::endl;
 }
 
-void on_late(guint64 event, guint64 param, guint64 time, guint64 overtime)
+void on_late(guint64 count, guint64 event, guint64 param, guint64 time, guint64 overtime)
 {
   // Report this to the operator
   std::cerr << "FATAL ERROR: late action!" << std::endl;
 }
 
-void on_overflow()
+void on_overflow(guint64 count)
 {
   std::cerr << "FATAL ERROR: lost action!" << std::endl;
 }
 
-void on_conflict(guint64 event1, guint64 param1, guint64 time1, 
+void on_conflict(guint64 count, 
+                 guint64 event1, guint64 param1, guint64 time1, 
                  guint64 event2, guint64 param2, guint64 time2)
 {
   std::cerr << "FATAL ERROR: actions potentially misordered!" << std::endl;
