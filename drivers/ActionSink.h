@@ -2,7 +2,7 @@
 #define ACTION_SINK_H
 
 #include "interfaces/iActionSink.h"
-#include "Owned.h"
+#include "Condition.h"
 
 namespace saftlib {
 
@@ -53,6 +53,23 @@ class ActionSink : public Owned, public iActionSink
     //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 , guint64 , guint64 > Conflict;
     //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 > Late;
     //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 > Delayed;
+  
+    // Emit AllConditions, ActiveConditions, InactiveConditions
+    void notify(bool active = true, bool inactive = true);
+    void compile();
+    
+    // Useful for Condition destroy methods
+    void removeCondition(std::list< Glib::RefPtr<Condition> >::iterator i);
+
+  protected:
+    TimingReceiver* dev;
+    int channel;
+    int cond_count;
+    gint64 minOffset, maxOffset;
+    bool executeLateActions;
+    bool generateDelayed;
+    
+    std::list< Glib::RefPtr<Condition> > conditions;
 };
 
 }

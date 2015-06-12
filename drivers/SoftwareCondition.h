@@ -6,12 +6,13 @@
 
 namespace saftlib {
 
-class SoftwareCondition : public Condition, public iSoftwareCondition, public Glib::Object
+class SoftwareCondition : public Condition, public iSoftwareCondition
 {
   public:
     typedef SoftwareCondition_Service ServiceType;
     struct ConstructorType {
-      TimingReceiver* dev;
+      ActionSink* sink;
+      int channel;
       bool active;
       guint64 first;
       guint64 last;

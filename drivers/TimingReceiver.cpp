@@ -1,6 +1,7 @@
 #define ETHERBONE_THROWS 1
 
 #include <sstream>
+#include <algorithm>
 
 #include "RegisteredObject.h"
 #include "Driver.h"
@@ -11,7 +12,8 @@ namespace saftlib {
 TimingReceiver::TimingReceiver(OpenDevice& od)
  : dev(od.device),
    name(od.name),
-   etherbonePath(od.etherbonePath)
+   etherbonePath(od.etherbonePath),
+   sas_count(0)
 {
 }
 
@@ -36,20 +38,27 @@ void TimingReceiver::do_remove(Glib::ustring name)
   SoftwareActionSinks(getSoftwareActionSinks());
 }
 
+
+static inline bool not_isalnum_(char c)
+{
+  return !(isalnum(c) || c == '_');
+}
+
 Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
 {
   Glib::ustring name(name_);
   if (name == "") {
-    // pick randomly until we get a name
-    do {
-        std::ostringstream str;
-        str.imbue(std::locale("C"));
-        str << "_" << std::hex << random();
-        name = str.str();
-    } while (softwareActionSinks.find(name) != softwareActionSinks.end());
+    std::ostringstream str;
+    str.imbue(std::locale("C"));
+    str << "_" << ++sas_count;
+    name = str.str();
   } else {
     if (softwareActionSinks.find(name) != softwareActionSinks.end())
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Name already in use");
+    if (name[0] == '_')
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
+    if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
   }
   
   // nest the object under our own name

@@ -88,10 +88,17 @@ void Directory::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
   m_service.register_self(m_connection, "/de/gsi/saftlib/Directory");
 }
 
+static inline bool not_isalnum_(char c) 
+{ 
+  return !(isalnum(c) || c == '_');
+}
+
 Glib::ustring Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
   if (devs.find(name) != devs.end() || name == "Directory")
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "device already exists");
+  if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
   
   etherbone::Device edev;
   try {

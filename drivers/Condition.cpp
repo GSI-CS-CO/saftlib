@@ -1,17 +1,14 @@
 #define ETHERBONE_THROWS 1
 
 #include "Condition.h"
+#include "ActionSink.h"
 #include "TimingReceiver.h"
 
 namespace saftlib {
 
-Condition::Condition(TimingReceiver* dev_, bool active_, guint64 first_, guint64 last_, guint64 offset_, guint64 guards_, guint32 tag_, sigc::slot<void> destroy)
- : Owned(destroy),
-   dev(dev_), active(active_), first(first_), last(last_), offset(offset_), guards(guards_), tag(tag_)
-{
-}
-
-Condition::~Condition()
+Condition::Condition(ActionSink* sink_, int channel_, bool active_, guint64 first_, guint64 last_, guint64 offset_, guint64 guards_, guint32 tag_, sigc::slot<void> destroy)
+ : Owned(destroy), sink(sink_), channel(channel_), 
+   active(active_), first(first_), last(last_), offset(offset_), guards(guards_), tag(tag_)
 {
 }
 
@@ -47,8 +44,9 @@ void Condition::setActive(bool val)
   
   active = val;
   try {
-    dev->compile();
+    sink->compile();
     Active(active);
+    sink->notify(true, true);
   } catch (...) {
     active = !val;
   }

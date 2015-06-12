@@ -6,7 +6,7 @@
 namespace saftlib {
 
 SoftwareCondition::SoftwareCondition(ConstructorType args)
- : Condition(args.dev, args.active, args.first, args.last, args.offset, args.guards, args.tag, args.destroy)
+ : Condition(args.sink, args.channel, args.active, args.first, args.last, args.offset, args.guards, args.tag, args.destroy)
 {
 }
 

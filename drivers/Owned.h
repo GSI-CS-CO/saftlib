@@ -5,7 +5,7 @@
 
 namespace saftlib {
 
-class Owned : public iOwned
+class Owned : public iOwned, public Glib::Object
 {
   public:
     Owned(sigc::slot<void> destroy_ = sigc::slot<void>());

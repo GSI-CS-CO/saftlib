@@ -6,14 +6,13 @@
 
 namespace saftlib {
 
-class TimingReceiver;
+class ActionSink;
 
 class Condition : public Owned, public iCondition
 {
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
-    Condition(TimingReceiver* dev, bool active, guint64 first, guint64 last, guint64 offset, guint64 guards, guint32 tag, sigc::slot<void> destroy = sigc::slot<void>());
-    ~Condition();
+    Condition(ActionSink* sink, int channel, bool active, guint64 first, guint64 last, guint64 offset, guint64 guards, guint32 tag, sigc::slot<void> destroy = sigc::slot<void>());
     
     // iCondition
     guint64 getFirst() const;
@@ -24,17 +23,20 @@ class Condition : public Owned, public iCondition
     void setActive(bool val);
     // sigc::signal< void, bool > Active;
     
-    // used by TimingReceiver
+    // used by TimingReceiver and ActionSink
     guint32 getRawTag() const { return tag; }
+    int getRawChannel() const { return channel; }
+    void setRawActive(bool val) { active = val; }
     
   protected:
-     TimingReceiver* dev;
-     bool active;
-     guint64 first;
-     guint64 last;
-     guint64 offset;
-     guint64 guards;
-     guint32 tag;
+    ActionSink* sink;
+    int channel;
+    bool active;
+    guint64 first;
+    guint64 last;
+    guint64 offset;
+    guint64 guards;
+    guint32 tag;
 };
 
 }

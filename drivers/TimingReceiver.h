@@ -44,6 +44,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     saftlib::Device dev;
     Glib::ustring name;
     Glib::ustring etherbonePath;
+    int sas_count;
     
     std::map< Glib::ustring, Glib::RefPtr<SoftwareActionSink> > softwareActionSinks;
     

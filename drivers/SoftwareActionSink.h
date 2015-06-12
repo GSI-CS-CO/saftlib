@@ -6,7 +6,7 @@
 
 namespace saftlib {
 
-class SoftwareActionSink : public ActionSink, public iSoftwareActionSink, public Glib::Object
+class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
 {
   public:
     typedef SoftwareActionSink_Service ServiceType;
