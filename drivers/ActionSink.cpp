@@ -4,7 +4,8 @@
 
 namespace saftlib {
 
-ActionSink::ActionSink(TimingReceiver* dev, int channel)
+ActionSink::ActionSink(TimingReceiver* dev, int channel, sigc::slot<void> destroy)
+ : Owned(destroy)
 {
 }
 

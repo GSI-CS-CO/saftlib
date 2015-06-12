@@ -13,9 +13,12 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink, public
     struct ConstructorType {
       TimingReceiver* dev;
       int channel;
+      sigc::slot<void> destroy;
     };
     
     static Glib::RefPtr<SoftwareActionSink> create(Glib::ustring& objectPath, ConstructorType args);
+    
+    void destroy();
     
     Glib::ustring NewCondition(bool active, guint64 first, guint64 last, gint64 offset, guint32 guards);
     

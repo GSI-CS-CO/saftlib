@@ -11,7 +11,7 @@ class TimingReceiver;
 class ActionSink : public Owned, public iActionSink
 {
   public:
-    ActionSink(TimingReceiver* dev, int channel);
+    ActionSink(TimingReceiver* dev, int channel, sigc::slot<void> destroy = sigc::slot<void>());
     
     void ToggleActive();
     std::vector< Glib::ustring > getAllConditions() const;

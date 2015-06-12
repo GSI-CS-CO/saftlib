@@ -6,7 +6,7 @@
 namespace saftlib {
 
 SoftwareActionSink::SoftwareActionSink(ConstructorType args)
- : ActionSink(args.dev, args.channel)
+ : ActionSink(args.dev, args.channel, args.destroy)
 {
 }
 
@@ -14,7 +14,6 @@ Glib::ustring SoftwareActionSink::NewCondition(bool active, guint64 first, guint
 {
   // !!!
 }
-
 
 Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(Glib::ustring& objectPath, ConstructorType args)
 {
