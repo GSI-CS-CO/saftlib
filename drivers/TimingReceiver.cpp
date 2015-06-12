@@ -41,7 +41,6 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   //channels = (sizes >> 8) & 0xFF;
   table_size = 1 << ((sizes >> 24) & 0xFF);
   queue_size = 1 << ((sizes >> 16) & 0xFF);
-  aq_channel = (id >> 16) & 0xFF;
   
   // remove all old rules
   compile();
@@ -54,6 +53,8 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   // Which channel does this sit on?
   cycle.read(queue + ECAQ_META, EB_DATA32, &id);
   cycle.close();
+  
+  aq_channel = (id >> 16) & 0xFF;
   
   // drain the Q
   unsigned pop = 0;
