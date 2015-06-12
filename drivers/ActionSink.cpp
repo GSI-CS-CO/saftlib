@@ -43,7 +43,7 @@ std::vector< Glib::ustring > ActionSink::getAllConditions() const
   std::list< Glib::RefPtr<Condition> >::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     out.push_back((*i)->getObjectPath());
-  out;
+  return out;
 }
 
 std::vector< Glib::ustring > ActionSink::getActiveConditions() const
@@ -52,7 +52,7 @@ std::vector< Glib::ustring > ActionSink::getActiveConditions() const
   std::list< Glib::RefPtr<Condition> >::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     if ((*i)->getActive()) out.push_back((*i)->getObjectPath());
-  out;
+  return out;
 }
 
 std::vector< Glib::ustring > ActionSink::getInactiveConditions() const
@@ -61,7 +61,7 @@ std::vector< Glib::ustring > ActionSink::getInactiveConditions() const
   std::list< Glib::RefPtr<Condition> >::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     if (!(*i)->getActive()) out.push_back((*i)->getObjectPath());
-  out;
+  return out;
 }
 
 gint64 ActionSink::getMinOffset() const
