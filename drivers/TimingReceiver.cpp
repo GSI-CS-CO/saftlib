@@ -70,6 +70,14 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   // Hook interrupts
   setHandlers(true, arrival_irq, overflow_irq);
   
+  // Enable aq channel
+  cycle.open(device);
+  // select
+  cycle.write(base + ECAC_SELECT, EB_DATA32, aq_channel << 16);
+  // enable (clear drain and freeze flags)
+  cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE)<<8);
+  cycle.close();
+  
   // enable interrupts and actions
   device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_DISABLE<<8 | ECA_CTL_INT_ENABLE);
 }
@@ -80,6 +88,13 @@ TimingReceiver::~TimingReceiver()
     device.release_irq(overflow_irq);
     device.release_irq(arrival_irq);
     setHandlers(false);
+    
+    // disable aq channel
+    etherbone::Cycle cycle;
+    cycle.open(device);
+    cycle.write(base + ECAC_SELECT, EB_DATA32, aq_channel << 16);
+    cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE));
+    cycle.close();
     
     // Disable interrupts and the ECA
     device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
@@ -118,6 +133,7 @@ void TimingReceiver::do_remove(Glib::ustring name)
 {
   actionSinks.erase(name);
   SoftwareActionSinks(getSoftwareActionSinks());
+  Interfaces(getInterfaces());
 }
 
 static inline bool not_isalnum_(char c)
@@ -285,9 +301,10 @@ void TimingReceiver::arrival_handler(eb_data_t)
       for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
         Glib::RefPtr<SoftwareCondition> softwareCondition =
           Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition);
+        if (!softwareCondition) continue;
         
         if (softwareCondition->getFirst() <= event && event <= softwareCondition->getLast() &&
-            softwareCondition->getOffset() == tag2delay[tag]) {
+            softwareCondition->getOffset()/8 == tag2delay[tag]) { // !!! remove /8 with new hardware
           softwareCondition->Action(event, param, time, -1, late, false, conflict);
           match = true;
         }
@@ -377,7 +394,7 @@ void TimingReceiver::compile()
     for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
       guint64 first  = (*condition)->getFirst();
       guint64 last   = (*condition)->getLast();
-      guint64 offset = (*condition)->getOffset()/8; // !!! change with new hardware
+      guint64 offset = (*condition)->getOffset()/8; // !!! remove /8 with new hardware
       gint32  channel= sink->second->getChannel();
       guint32 tag    = (*condition)->getRawTag();
       
