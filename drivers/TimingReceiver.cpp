@@ -243,6 +243,9 @@ guint32 TimingReceiver::getFree() const
 
 void TimingReceiver::overflow_handler(eb_data_t)
 {
+  for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
+    // !!! sink->Overflow();
+  }
 }
 
 void TimingReceiver::arrival_handler(eb_data_t)
@@ -276,7 +279,21 @@ void TimingReceiver::arrival_handler(eb_data_t)
     bool conflict = (flags & 2) != 0;
     bool late     = (flags & 2) != 0;
     
-    // do something with this !!!
+    for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
+      bool match = false;
+      for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
+        Glib::RefPtr<SoftwareCondition> softwareCondition =
+          Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition);
+        
+        if (softwareCondition->getFirst() <= event && event <= softwareCondition->getLast() &&
+            softwareCondition->getOffset() == tag2delay[tag]) {
+          softwareCondition->Action(event, param, time, -1, late, false, conflict);
+          match = true;
+        }
+      }
+      // !!! if (match && conflict) sink->second->sawConflict();
+      // !!! if (match && late)     sink->second->sawLate();
+    }
   } catch (const etherbone::exception_t& e) {
     std::cerr << "ECA::arrival_handler: " << e << std::endl;
   }
@@ -355,7 +372,6 @@ void TimingReceiver::compile()
   guint32 next_tag = 0;
   
   // Step one is to merge overlapping, but compatible, ranges
-  //for (ConditionSet::iterator i = conditions.begin(); i != conditions.end(); ++i) {
   for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
     for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
       guint64 first  = (*condition)->getFirst();
