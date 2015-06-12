@@ -60,6 +60,9 @@ class ActionSink : public Owned, public iActionSink
     
     // Useful for Condition destroy methods
     void removeCondition(std::list< Glib::RefPtr<Condition> >::iterator i);
+    
+    // The name under which this ActionSink is listed in TimingReceiver::Iterfaces
+    virtual const char *getInterfaceName() const = 0;
 
   protected:
     TimingReceiver* dev;

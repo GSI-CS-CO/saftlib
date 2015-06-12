@@ -34,7 +34,7 @@ Glib::ustring TimingReceiver::getName() const
 
 void TimingReceiver::do_remove(Glib::ustring name)
 {
-  softwareActionSinks.erase(name);
+  actionSinks.erase(name);
   SoftwareActionSinks(getSoftwareActionSinks());
 }
 
@@ -53,7 +53,7 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
     str << "_" << ++sas_count;
     name = str.str();
   } else {
-    if (softwareActionSinks.find(name) != softwareActionSinks.end())
+    if (actionSinks.find(name) != actionSinks.end())
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Name already in use");
     if (name[0] == '_')
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
@@ -62,16 +62,17 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   }
   
   // nest the object under our own name
-  Glib::ustring path = getObjectPath() + "/SoftwareActionSinks/" + name;
+  Glib::ustring path = getObjectPath() + "/" + name;
   
   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), name);
   
   SoftwareActionSink::ConstructorType args = { this, 0, destroy };
-  Glib::RefPtr<SoftwareActionSink> softwareActionSink = SoftwareActionSink::create(path, args);
+  Glib::RefPtr<ActionSink> softwareActionSink = SoftwareActionSink::create(path, args);
   softwareActionSink->initOwner(getConnection(), getSender());
   
-  softwareActionSinks[name] = softwareActionSink;
+  actionSinks[name] = softwareActionSink;
   SoftwareActionSinks(getSoftwareActionSinks());
+  Interfaces(getInterfaces());
   
   return path;
 }
@@ -88,10 +89,14 @@ guint64 TimingReceiver::getCurrentTime() const
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks() const
 {
-  typedef std::map< Glib::ustring, Glib::RefPtr<SoftwareActionSink> >::const_iterator iterator;
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  for (iterator i = softwareActionSinks.begin(); i != softwareActionSinks.end(); ++i)
-    out[i->first] = i->second->getObjectPath();
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    Glib::RefPtr<SoftwareActionSink> softwareActionSink =
+      Glib::RefPtr<SoftwareActionSink>::cast_dynamic(i->second);
+    if (!softwareActionSink) continue;
+    out[i->first] = softwareActionSink->getObjectPath();
+  }
   return out;
 }
 
@@ -119,10 +124,14 @@ std::vector< Glib::ustring > TimingReceiver::getGuards() const
   return out; // !!! not for cryring
 }
 
-std::map< Glib::ustring, std::vector< Glib::ustring > > TimingReceiver::getInterfaces() const
+std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiver::getInterfaces() const
 {
-  std::map< Glib::ustring, std::vector< Glib::ustring > > out;
-  return out; // !!!
+  std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > out;
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    out[i->second->getInterfaceName()][i->first] = i->second->getObjectPath();
+  }
+  return out;
 }
 
 guint32 TimingReceiver::getFree() const

@@ -29,7 +29,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     std::map< Glib::ustring, Glib::ustring > getInputs() const;
     std::map< Glib::ustring, Glib::ustring > getInoutputs() const;
     std::vector< Glib::ustring > getGuards() const;
-    std::map< Glib::ustring, std::vector< Glib::ustring > > getInterfaces() const;
+    std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > getInterfaces() const;
     guint32 getFree() const;
     
     // Compile the condition table
@@ -45,8 +45,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     Glib::ustring name;
     Glib::ustring etherbonePath;
     int sas_count;
-    
-    std::map< Glib::ustring, Glib::RefPtr<SoftwareActionSink> > softwareActionSinks;
+    std::map< Glib::ustring, Glib::RefPtr<ActionSink> > actionSinks;
     
     void do_remove(Glib::ustring name);
 };

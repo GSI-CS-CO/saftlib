@@ -100,7 +100,7 @@
          The key in the dictionary is the name of the interface.
          The value is all object paths to hardware implementing that interface.
       -->
-    <property name="Interfaces" type="a{sas}" access="read"/>
+    <property name="Interfaces" type="a{sa{ss}}" access="read"/>
     
     <!-- InjectEvent: Simulate the receipt of a timing event.
          @event: The event identifier which is matched against [first, last]

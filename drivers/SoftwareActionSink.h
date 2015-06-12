@@ -18,6 +18,8 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     
     static Glib::RefPtr<SoftwareActionSink> create(Glib::ustring& objectPath, ConstructorType args);
     
+    const char *getInterfaceName() const;
+    
     // iSoftwareAcitonSink
     Glib::ustring NewCondition(bool active, guint64 first, guint64 last, gint64 offset, guint32 guards);
     

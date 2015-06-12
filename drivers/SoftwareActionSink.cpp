@@ -11,6 +11,11 @@ SoftwareActionSink::SoftwareActionSink(ConstructorType args)
 {
 }
 
+const char *SoftwareActionSink::getInterfaceName() const
+{
+  return "SoftwareActionSink";
+}
+
 Glib::ustring SoftwareActionSink::NewCondition(bool active, guint64 first, guint64 last, gint64 offset, guint32 guards)
 {
   ownerOnly();
