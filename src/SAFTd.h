@@ -1,16 +1,16 @@
-#ifndef SAFTLIB_DIRECTORY_H
-#define SAFTLIB_DIRECTORY_H
+#ifndef SAFTLIB_SAFTD_H
+#define SAFTLIB_SAFTD_H
 
-#include "interfaces/Directory.h"
+#include "interfaces/SAFTd.h"
 #include "OpenDevice.h"
 
 namespace saftlib {
 
-class Directory : public iDirectory, public Glib::Object
+class SAFTd : public iSAFTd, public Glib::Object
 {
   public:
-    static const Glib::RefPtr<Directory>& get();
-    ~Directory();
+    static const Glib::RefPtr<SAFTd>& get();
+    ~SAFTd();
     
     void setConnection(const Glib::RefPtr<Gio::DBus::Connection>& connection);
     
@@ -23,9 +23,9 @@ class Directory : public iDirectory, public Glib::Object
     std::map< Glib::ustring, Glib::ustring > getDevices() const;
     
   protected:
-    Directory();
+    SAFTd();
     
-    Directory_Service m_service;
+    SAFTd_Service m_service;
     Glib::RefPtr<Glib::MainLoop> m_loop;
     Glib::RefPtr<Gio::DBus::Connection> m_connection;
     etherbone::Socket socket;

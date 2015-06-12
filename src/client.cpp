@@ -1,7 +1,7 @@
 #include <iostream>
 #include <giomm.h>
 
-#include "interfaces/Directory.h"
+#include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
 #include "interfaces/SoftwareCondition.h"
@@ -48,7 +48,7 @@ int main(int, char**)
   try {
     // Get a list of devices from the saftlib directory
     // The dbus type 'a{ss}' means: map<string, string>
-    map<Glib::ustring, Glib::ustring> devices = Directory_Proxy::create()->getDevices();
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     
     // Grab a handle to the timing receiver attached to an SCU
     // 

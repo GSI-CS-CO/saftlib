@@ -19,7 +19,7 @@ TimingReceiver::TimingReceiver(OpenDevice& od)
 
 void TimingReceiver::Remove()
 {
-  Directory::get()->RemoveDevice(name);
+  SAFTd::get()->RemoveDevice(name);
 }
 
 Glib::ustring TimingReceiver::getEtherbonePath() const

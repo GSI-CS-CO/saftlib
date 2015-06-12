@@ -1,14 +1,14 @@
-<node name="Directory">
+<node name="SAFTd">
   <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
-  <annotation name="de.gsi.saftlib.path" value="/de/gsi/saftlib/Directory"/>
+  <annotation name="de.gsi.saftlib.path" value="/de/gsi/saftlib"/>
   
-  <!-- de.gsi.saftlib.Directory:
+  <!-- de.gsi.saftlib.SAFTd:
        @short_description: Report instances of managed hardware
        
        This D-Bus interface is the main entry point into the saftlib. All
        device drivers register their top-level hardware objects here.
     -->
-  <interface name="de.gsi.saftlib.Directory">
+  <interface name="de.gsi.saftlib.SAFTd">
     
     <!-- Devices: List of all devices attached to saftd.
          The key is the name of the device as provided to AttachDevice.

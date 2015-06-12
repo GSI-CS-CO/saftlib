@@ -1,5 +1,5 @@
 NODES =				\
-	Directory.xml		\
+	SAFTd.xml		\
 	Inoutput.xml		\
 	Input.xml		\
 	MILbusActionSink.xml	\
@@ -29,11 +29,11 @@ AM_CPPFLAGS = $(GIOMM_CFLAGS)
 lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib
 saftlib_HEADERS = 		\
-	Directory.h		\
+	SAFTd.h			\
 	iActionSink.h		\
 	iCondition.h		\
 	iDevice.h		\
-	iDirectory.h		\
+	iSAFTd.h		\
 	iEventSource.h		\
 	iInputEventSource.h	\
 	iMILbusActionSink.h	\
@@ -63,7 +63,7 @@ doc_DATA = 			\
 	ActionSink.pdf		\
 	Condition.pdf		\
 	Device.pdf		\
-	Directory.pdf		\
+	SAFTd.pdf		\
 	EventSource.pdf		\
 	InputEventSource.pdf	\
 	MILbusActionSink.pdf	\
@@ -81,11 +81,11 @@ endif
 libsaftlib_la_LIBADD = $(GIOMM_LIBS)
 libsaftlib_la_LDFLAGS = -version-info 2:1:0
 nodist_libsaftlib_la_SOURCES =	\
-	Directory.cpp		\
+	SAFTd.cpp		\
 	iActionSink.cpp		\
 	iCondition.cpp		\
 	iDevice.cpp		\
-	iDirectory.cpp		\
+	iSAFTd.cpp		\
 	iEventSource.cpp	\
 	iInputEventSource.cpp	\
 	iMILbusActionSink.cpp	\

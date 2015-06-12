@@ -4,7 +4,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "Directory.h"
+#include "SAFTd.h"
 #include "Driver.h"
 #include "eb-source.h"
 
@@ -15,7 +15,7 @@ static void just_rethrow(const char*)
   throw;
 }
 
-Directory::Directory()
+SAFTd::SAFTd()
  : m_service(this, sigc::ptr_fun(&just_rethrow)), m_loop(Glib::MainLoop::create())
 {
   // Setup the global etherbone socket
@@ -32,7 +32,7 @@ Directory::Directory()
   sigc::connection eb_source = eb_attach_source(m_loop, socket);
 }
 
-Directory::~Directory()
+SAFTd::~SAFTd()
 {
   try {
     for (std::map< Glib::ustring, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
@@ -58,21 +58,21 @@ Directory::~Directory()
   std::cout << "Clean shutdown" << std::endl;
 }
 
-// Note: the destructor for top will run on program termination => ~Directory
-static Glib::RefPtr<Directory> top;
+// Note: the destructor for top will run on program termination => ~SAFTd
+static Glib::RefPtr<SAFTd> top;
 
-const Glib::RefPtr<Directory>& Directory::get()
+const Glib::RefPtr<SAFTd>& SAFTd::get()
 {
-  if (!top) top = Glib::RefPtr<Directory>(new Directory);
+  if (!top) top = Glib::RefPtr<SAFTd>(new SAFTd);
   return top;
 }
 
-void Directory::Quit()
+void SAFTd::Quit()
 {
   m_loop->quit();
 }
 
-std::map< Glib::ustring, Glib::ustring > Directory::getDevices() const
+std::map< Glib::ustring, Glib::ustring > SAFTd::getDevices() const
 {
   std::map< Glib::ustring, Glib::ustring > out;
   for (std::map< Glib::ustring, OpenDevice >::const_iterator i = devs.begin(); i != devs.end(); ++i) {
@@ -81,11 +81,11 @@ std::map< Glib::ustring, Glib::ustring > Directory::getDevices() const
   return out;
 }
 
-void Directory::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
+void SAFTd::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
 {
   assert (!m_connection);
   m_connection = c;
-  m_service.register_self(m_connection, "/de/gsi/saftlib/Directory");
+  m_service.register_self(m_connection, "/de/gsi/saftlib");
 }
 
 static inline bool not_isalnum_(char c) 
@@ -93,9 +93,9 @@ static inline bool not_isalnum_(char c)
   return !(isalnum(c) || c == '_');
 }
 
-Glib::ustring Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
+Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
-  if (devs.find(name) != devs.end() || name == "Directory")
+  if (devs.find(name) != devs.end())
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "device already exists");
   if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
@@ -132,7 +132,7 @@ Glib::ustring Directory::AttachDevice(const Glib::ustring& name, const Glib::ust
   }
 }
 
-void Directory::RemoveDevice(const Glib::ustring& name)
+void SAFTd::RemoveDevice(const Glib::ustring& name)
 {
   std::map< Glib::ustring, OpenDevice >::iterator elem = devs.find(name);
   if (elem == devs.end())

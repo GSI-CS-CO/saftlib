@@ -5,12 +5,12 @@
 #include <glibmm.h>
 #include <signal.h>
 
-#include "Directory.h"
+#include "SAFTd.h"
 
 void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   try {
-    saftlib::Directory::get()->setConnection(connection);
+    saftlib::SAFTd::get()->setConnection(connection);
   } catch(const Glib::Error& ex) {
     std::cerr << "Could not create directory: " << ex.what() << std::endl;
     exit(1);
@@ -34,7 +34,7 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
     std::string name = command.substr(0, pos);
     std::string path = command.substr(pos+1, std::string::npos);
     try {
-      saftlib::Directory::get()->AttachDevice(name, path);
+      saftlib::SAFTd::get()->AttachDevice(name, path);
     } catch (const Glib::Error& ex) {
       std::cerr << "Could not open device " << path << ": " << ex.what() << std::endl;
       exit(1);
@@ -48,12 +48,12 @@ void on_name_lost(const Glib::RefPtr<Gio::DBus::Connection>& connection, const G
 {
   // Something else claimed the saftlib name
   std::cerr << "Unable to acquire name---dbus saftlib.conf installed?" << std::endl;
-  saftlib::Directory::get()->loop()->quit();
+  saftlib::SAFTd::get()->loop()->quit();
 }
 
 void on_sigint(int)
 {
-  saftlib::Directory::get()->loop()->quit();
+  saftlib::SAFTd::get()->loop()->quit();
 }
 
 int main(int argc, char** argv)
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
   signal(SIGQUIT, &on_sigint);
   
   // Run the main event loop
-  saftlib::Directory::get()->loop()->run();
+  saftlib::SAFTd::get()->loop()->run();
   
   // Cleanup
   Gio::DBus::unown_name(id);
