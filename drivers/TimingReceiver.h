@@ -64,6 +64,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     int table_size;
     int aq_channel;
     std::map< Glib::ustring, Glib::RefPtr<ActionSink> > actionSinks;
+    std::vector<guint64> tag2delay;
     
     void do_remove(Glib::ustring name);
     void setHandlers(bool enable, eb_address_t arrival = 0, eb_address_t overflow = 0);

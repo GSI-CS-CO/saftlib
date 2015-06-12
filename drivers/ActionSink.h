@@ -12,6 +12,7 @@ class ActionSink : public Owned, public iActionSink
 {
   public:
     ActionSink(TimingReceiver* dev, int channel, sigc::slot<void> destroy = sigc::slot<void>());
+    ~ActionSink();
     
     void ToggleActive();
     std::vector< Glib::ustring > getAllConditions() const;
@@ -64,6 +65,10 @@ class ActionSink : public Owned, public iActionSink
     // The name under which this ActionSink is listed in TimingReceiver::Iterfaces
     virtual const char *getInterfaceName() const = 0;
 
+    // Used by TimingReciever::compile
+    const std::list< Glib::RefPtr<Condition> >& getConditions() const { return conditions; }
+    int getChannel() const { return channel; }
+    
   protected:
     TimingReceiver* dev;
     int channel;
@@ -71,7 +76,7 @@ class ActionSink : public Owned, public iActionSink
     gint64 minOffset, maxOffset;
     bool executeLateActions;
     bool generateDelayed;
-    
+    // conditions must come after dev to ensure safe cleanup on ~Condition
     std::list< Glib::RefPtr<Condition> > conditions;
 };
 

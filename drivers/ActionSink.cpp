@@ -13,6 +13,17 @@ ActionSink::ActionSink(TimingReceiver* dev_, int channel_, sigc::slot<void> dest
 {
 }
 
+ActionSink::~ActionSink()
+{
+  try {
+    conditions.clear();
+    dev->compile();
+  } catch (...) {
+    // !!! do something to prevent this
+    std::cerr << "Failed to recompile during ActionSink destruction" << std::endl;
+  }
+}
+
 void ActionSink::ToggleActive()
 {
   ownerOnly();

@@ -1,4 +1,6 @@
 #define ETHERBONE_THROWS 1
+//#define DEBUG_COMPRESS 1
+//#define DEBUG_COMPILE 1
 
 #include <sstream>
 #include <iostream>
@@ -7,6 +9,7 @@
 #include "RegisteredObject.h"
 #include "Driver.h"
 #include "TimingReceiver.h"
+#include "SoftwareCondition.h"
 #include "eca_regs.h"
 
 namespace saftlib {
@@ -35,6 +38,14 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   cycle.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
   cycle.close();
   
+  //channels = (sizes >> 8) & 0xFF;
+  table_size = 1 << ((sizes >> 24) & 0xFF);
+  queue_size = 1 << ((sizes >> 16) & 0xFF);
+  aq_channel = (id >> 16) & 0xFF;
+  
+  // remove all old rules
+  compile();
+  
   cycle.open(device);
   // Clear old counters
   cycle.write(queue + ECAQ_DROPPED, EB_DATA32, 0);
@@ -44,6 +55,7 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   cycle.read(queue + ECAQ_META, EB_DATA32, &id);
   cycle.close();
   
+  // drain the Q
   unsigned pop = 0;
   while (pop < queued) {
     unsigned batch = ((queued-pop)>64)?64:(queued-pop); // pop 64 at once
@@ -54,11 +66,7 @@ TimingReceiver::TimingReceiver(ConstructorType args)
     pop += batch;
   }
   
-  //channels = (sizes >> 8) & 0xFF;
-  table_size = 1 << ((sizes >> 24) & 0xFF);
-  queue_size = 1 << ((sizes >> 16) & 0xFF);
-  aq_channel = (id >> 16) & 0xFF;
-  
+  // Hook interrupts
   setHandlers(true, arrival_irq, overflow_irq);
   
   // enable interrupts and actions
@@ -274,9 +282,248 @@ void TimingReceiver::arrival_handler(eb_data_t)
   }
 }
 
+struct ECA_Merge {
+  gint32  channel;
+  gint64  offset;
+  guint64 first;
+  guint64 last;
+  guint32 tag;
+  ECA_Merge(gint32 c, gint64 o, guint64 f, guint64 l, guint32 t)
+   : channel(c), offset(o), first(f), last(l), tag(t) { }
+};
+
+bool operator < (const ECA_Merge& a, const ECA_Merge& b)
+{
+  if (a.channel < b.channel) return true;
+  if (a.channel > b.channel) return false;
+  if (a.offset < b.offset) return true;
+  if (a.offset > b.offset) return false;
+  if (a.first < b.first) return true;
+  if (a.first > b.first) return false;
+  return false;
+}
+
+struct ECA_OpenClose {
+  guint64 key;
+  bool    open;
+  guint64 subkey;
+  gint64  offset;
+  gint32  channel;
+  guint32 tag;
+  ECA_OpenClose(guint64 k, bool x, guint64 s, guint64 o, gint32 c, guint32 t)
+   : key(k), open(x), subkey(s), offset(o), channel(c), tag(t) { }
+};
+
+// Using this heuristic, perfect containment never duplicates walk records
+bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
+{
+  if (a.key < b.key) return true;
+  if (a.key > b.key) return false;
+  if (!a.open && b.open) return true; // close first
+  if (a.open && !b.open) return false;
+  if (a.subkey > b.subkey) return true; // open largest first, close smallest last
+  if (a.subkey < b.subkey) return false;
+  if (a.offset < b.offset) return a.open; // open smallest first, close largest last
+  if (a.offset > b.offset) return !a.open;
+  if (a.channel < b.channel) return a.open;
+  if (a.channel > b.channel) return !a.open;
+  if (a.tag < b.tag) return a.open;
+  if (a.tag > b.tag) return !a.open;
+  return false;
+}
+
+struct SearchEntry {
+  guint64 event;
+  gint16  index;
+  SearchEntry(guint64 e, gint16 i) : event(e), index(i) { }
+};
+
+struct WalkEntry {
+  gint64  offset;
+  guint32 tag;
+  gint16  next;
+  guint8  channel;
+  WalkEntry(gint64 o, guint32 t, gint16 n, guint8 c) : offset(o), tag(t), next(n), channel(c) { }
+};
+
 void TimingReceiver::compile()
 {
-  // !!!
+  typedef std::map<guint64, int> Offsets;
+  typedef std::vector<ECA_Merge> Merges;
+  Offsets offsets;
+  Merges merges;
+  guint32 next_tag = 0;
+  
+  // Step one is to merge overlapping, but compatible, ranges
+  //for (ConditionSet::iterator i = conditions.begin(); i != conditions.end(); ++i) {
+  for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
+    for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
+      guint64 first  = (*condition)->getFirst();
+      guint64 last   = (*condition)->getLast();
+      guint64 offset = (*condition)->getOffset()/8; // !!! change with new hardware
+      gint32  channel= sink->second->getChannel();
+      guint32 tag    = (*condition)->getRawTag();
+      
+      // reject idiocy
+      if (first > last)
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "first must be <= last");
+      
+      // software tag is based on offset
+      if (Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition)) {
+        std::pair<Offsets::iterator,bool> result = 
+          offsets.insert(std::pair<guint64, guint32>(offset, next_tag));
+        guint32 aq_tag = result.first->second;
+        if (result.second) ++next_tag; // tag now used
+        
+        merges.push_back(ECA_Merge(aq_channel, offset, first, last, aq_tag));
+      } else {
+        merges.push_back(ECA_Merge(channel, offset, first, last, tag));
+      }
+    }
+  }
+  
+  // Sort it by the merge criteria
+  std::sort(merges.begin(), merges.end());
+  
+  // Compress the conditions: merging overlaps and convert to id-space
+  typedef std::vector<ECA_OpenClose> ID_Space;
+  ID_Space id_space;
+  
+  unsigned i = 0, j;
+  while (i < merges.size()) {
+    // Merge overlapping/touching records
+    while ((j=i+1) < merges.size() && 
+           merges[i].channel == merges[j].channel &&
+           merges[i].offset  == merges[j].offset  &&
+           (merges[j].first   == 0                ||
+            merges[i].last    >= merges[j].first-1)) {
+#if DEBUG_COMPRESS
+      std::cerr << "I: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
+      std::cerr << "I: " << merges[j].first << " " << merges[j].last << " " << merges[j].offset << " " << merges[j].channel << " " << merges[j].tag << std::endl;
+#endif
+      // they overlap, so tags must match!
+      if (merges[i].tag != merges[j].tag)
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Conflicting tags for overlapping conditions (same channel, same offset, same event)");
+      // merge!
+      merges[j].first = merges[i].first;
+      merges[j].last  = std::max(merges[j].last, merges[i].last);
+      i = j;
+    }
+    // push combined record to open/close pass
+#if DEBUG_COMPRESS
+    std::cerr << "O: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
+#endif
+    id_space.push_back(ECA_OpenClose(merges[i].first,  true,  merges[i].last,  merges[i].offset, merges[i].channel, merges[i].tag));
+    if (merges[i].last != G_MAXUINT64)
+      id_space.push_back(ECA_OpenClose(merges[i].last+1, false, merges[i].first, merges[i].offset, merges[i].channel, merges[i].tag));
+    i = j;
+  }
+  
+  // Don't need this any more
+  merges.clear();
+  
+  // Sort it by the open/close criteria
+  std::sort(id_space.begin(), id_space.end());
+  
+  // Representation used in hardware
+  typedef std::vector<SearchEntry> Search;
+  typedef std::vector<WalkEntry> Walk;
+  Search search;
+  Walk walk;
+  Walk reflow;
+  gint16 next = -1;
+  guint64 cursor = 0;
+  int reflows = 0;
+  
+  // Special-case at zero: skip closes and push leading record
+  if (id_space.empty() || id_space[0].key != 0)
+    search.push_back(SearchEntry(0, next));
+  
+  // Walk the remaining records and transform them to hardware!
+  i = 0;
+  while (i < id_space.size()) {
+    cursor = id_space[i].key;
+    
+    while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
+      while (walk[next].offset  != id_space[i].offset ||
+             walk[next].tag     != id_space[i].tag    ||
+             walk[next].channel != id_space[i].channel) {
+        reflow.push_back(walk[next]);
+        next = walk[next].next;
+        if (next == -1)
+          throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Wes promised this was impossible");
+      }
+      next = walk[next].next;
+      ++i;
+    }
+    
+    // restore reflow records
+    for (j = reflow.size(); j > 0; --j) {
+      walk.push_back(reflow[j-1]);
+      walk.back().next = next;
+      next = walk.size()-1;
+      ++reflows;
+    }
+    reflow.clear();
+    
+    // push the opens
+    while (i < id_space.size() && cursor == id_space[i].key && id_space[i].open) {
+      // ... could try to find an existing tail to re-use here
+      walk.push_back(WalkEntry(id_space[i].offset, id_space[i].tag, next, id_space[i].channel));
+      next = walk.size()-1;
+      ++i;
+    }
+    
+    search.push_back(SearchEntry(cursor, next));
+  }
+  
+#if DEBUG_COMPILE
+  std::cerr << "Table compilation complete! Reflows necessary: " << reflows << "\n";
+  for (i = 0; i < search.size(); ++i)
+    std::cerr << "S: " << search[i].event << " " << search[i].index << "\n";
+  for (i = 0; i < walk.size(); ++i)
+    std::cerr << "W: " << walk[i].offset << " " << walk[i].tag << " " << walk[i].next << " " << (int)walk[i].channel << "\n";
+  std::cerr << std::flush; 
+#endif
+
+  if (walk.size() > table_size || search.size() > table_size*2)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Too many conditions to fit in hardware");
+  
+  etherbone::Cycle cycle;
+  for (unsigned i = 0; i < 2*table_size; ++i) {
+    /* Duplicate last entry to fill out the table */
+    const SearchEntry& se = (i<search.size())?search[i]:search.back();
+    eb_data_t first = (se.index==-1)?0:(0x80000000UL|se.index);
+    
+    cycle.open(device);
+    cycle.write(base + ECA_SEARCH, EB_DATA32, i);
+    cycle.write(base + ECA_FIRST,  EB_DATA32, first);
+    cycle.write(base + ECA_EVENT1, EB_DATA32, se.event >> 32);
+    cycle.write(base + ECA_EVENT0, EB_DATA32, se.event & 0xFFFFFFFFUL);
+    cycle.close();
+  }
+  
+  for (unsigned i = 0; i < walk.size(); ++i) {
+    const WalkEntry& we = walk[i];
+    eb_data_t next = (we.next==-1)?0:(0x80000000UL|we.next);
+    
+    cycle.open(device);
+    cycle.write(base + ECA_WALK,    EB_DATA32, i);
+    cycle.write(base + ECA_NEXT,    EB_DATA32, next);
+    cycle.write(base + ECA_DELAY1,  EB_DATA32, we.offset >> 32);
+    cycle.write(base + ECA_DELAY0,  EB_DATA32, we.offset & 0xFFFFFFFFUL);
+    cycle.write(base + ECA_TAG,     EB_DATA32, we.tag);
+    cycle.write(base + ECA_CHANNEL, EB_DATA32, we.channel);
+    cycle.close();
+  }
+  
+  // Flip the tables
+  device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_FLIP);
+  
+  // !!! fuck - not atomic WRT table flip
+  tag2delay.resize(next_tag);
+  for (Offsets::iterator o = offsets.begin(); o != offsets.end(); ++o)
+    tag2delay[o->second] = o->first;
 }
 
 void TimingReceiver::probe(OpenDevice& od)
