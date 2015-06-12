@@ -38,6 +38,9 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
     } catch (const Glib::Error& ex) {
       std::cerr << "Could not open device " << path << ": " << ex.what() << std::endl;
       exit(1);
+    } catch(const etherbone::exception_t& ex) {
+      std::cerr << "Could not open device " << path << ": " << ex << std::endl;
+      exit(1);
     }
   }
   
