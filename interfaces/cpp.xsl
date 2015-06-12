@@ -105,21 +105,6 @@
     </xsl:for-each>
     <xsl:text>}&#10;&#10;</xsl:text>
 
-    <!-- Service Constructor -->
-    <xsl:value-of select="$name"/>
-    <xsl:text>_Service::</xsl:text>
-    <xsl:value-of select="$name"/>
-    <xsl:text>_Service()&#10;</xsl:text>
-    <xsl:text>: </xsl:text>
-    <xsl:for-each select="interface">
-      <xsl:if test="position()>1">,&#10;  </xsl:if>
-      <xsl:apply-templates mode="iface-name" select="."/>
-      <xsl:text>(this, sigc::mem_fun(this, &amp;</xsl:text>
-      <xsl:value-of select="$name"/>
-      <xsl:text>_Service::rethrow))</xsl:text>
-    </xsl:for-each>
-    <xsl:text>&#10;{&#10;}&#10;&#10;</xsl:text>
-
     <!-- Register all interfaces -->
     <xsl:text>void </xsl:text>
     <xsl:value-of select="$name"/>
@@ -142,11 +127,59 @@
     </xsl:for-each>
     <xsl:text>}&#10;&#10;</xsl:text>
 
-    <!-- Default rethrow -->
-    <xsl:text>void </xsl:text>
+    <!-- isActive method -->
+    <xsl:text>bool </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service::rethrow(const char *name) const&#10;{&#10;</xsl:text>
-    <xsl:text>  throw;&#10;}&#10;&#10;</xsl:text>
+    <xsl:text>_Service::isActive() const&#10;{&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>  if (</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.isActive()) return true;&#10;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>  return false;&#10;</xsl:text>
+    <xsl:text>}&#10;&#10;</xsl:text>
+
+    <!-- getSender method -->
+    <xsl:text>const Glib::ustring&amp; </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service::getSender() const&#10;{&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>  if (</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.isActive()) return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.getSender();&#10;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>}&#10;&#10;</xsl:text>
+
+    <!-- getObjectPath method -->
+    <xsl:text>const Glib::ustring&amp; </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service::getObjectPath() const&#10;{&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>  if (</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.isActive()) return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.getObjectPath();&#10;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>}&#10;&#10;</xsl:text>
+
+    <!-- getConnection method -->
+    <xsl:text>const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; </xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>  if (</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.isActive()) return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>.getConnection();&#10;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>}&#10;&#10;</xsl:text>
 
     <xsl:text>}&#10;</xsl:text>
   </xsl:document>
@@ -423,16 +456,49 @@
       <xsl:text>  exports.clear();&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
+      <!-- isActive method -->
+      <xsl:text>bool i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>_Service::isActive() const&#10;{&#10;</xsl:text>
+      <xsl:text>  return connection;&#10;</xsl:text>
+      <xsl:text>}&#10;&#10;</xsl:text>
+
+      <!-- getSender method -->
+      <xsl:text>const Glib::ustring&amp; i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>_Service::getSender() const&#10;{&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  return *sender;&#10;</xsl:text>
+      <xsl:text>}&#10;&#10;</xsl:text>
+
+      <!-- getObjectPath method -->
+      <xsl:text>const Glib::ustring&amp; i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>_Service::getObjectPath() const&#10;{&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  return *objectPath;&#10;</xsl:text>
+      <xsl:text>}&#10;&#10;</xsl:text>
+
+      <!-- getConnection method -->
+      <xsl:text>const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; i</xsl:text>
+      <xsl:value-of select="$iface"/>
+      <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  return connection;&#10;</xsl:text>
+      <xsl:text>}&#10;&#10;</xsl:text>
+
       <!-- Service methods -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_method_call(&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,&#10;</xsl:text>
+      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp;  sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; parameters,&#10;</xsl:text>
       <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
-      <xsl:text>  sender = sender_;&#10;</xsl:text>
+      <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
+      <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
+      <xsl:text>  connection = connection_;&#10;</xsl:text>
       <xsl:text>  </xsl:text>
       <xsl:for-each select="method">
         <xsl:text>if (method_name == "</xsl:text>
@@ -478,7 +544,9 @@
           </xsl:if>
         </xsl:for-each>
         <xsl:text>);&#10;</xsl:text>
+        <xsl:text>        connection.reset();&#10;</xsl:text>
         <xsl:text>      } catch (...) {&#10;</xsl:text>
+        <xsl:text>        connection.reset();&#10;</xsl:text>
         <xsl:text>        rethrow("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>");&#10;</xsl:text>
@@ -499,6 +567,7 @@
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
       <xsl:text>{&#10;</xsl:text>
+      <xsl:text>    connection.reset();&#10;</xsl:text>
       <xsl:text>    Gio::DBus::Error error(Gio::DBus::Error::UNKNOWN_METHOD, "No such method.");&#10;</xsl:text>
       <xsl:text>    invocation->return_error(error);&#10;</xsl:text>
       <xsl:text>  }&#10;}&#10;&#10;</xsl:text>
@@ -508,10 +577,12 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_get_property(&#10;</xsl:text>
       <xsl:text>  Glib::VariantBase&amp; property,&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,&#10;</xsl:text>
+      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name)&#10;{&#10;</xsl:text>
-      <xsl:text>  sender = sender_;&#10;</xsl:text>
+      <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
+      <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
+      <xsl:text>  connection = connection_;&#10;</xsl:text>
       <xsl:text>  </xsl:text>
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
         <xsl:text>if (property_name == "</xsl:text>
@@ -523,7 +594,9 @@
         <xsl:text>::create(impl-&gt;get</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>());&#10;</xsl:text>
+        <xsl:text>      connection.reset();&#10;</xsl:text>
         <xsl:text>    } catch (...) {&#10;</xsl:text>
+        <xsl:text>      connection.reset();&#10;</xsl:text>
         <xsl:text>      rethrow("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>");&#10;</xsl:text>
@@ -531,17 +604,19 @@
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
-      <xsl:text>{&#10;    // no property found&#10;  }&#10;}&#10;&#10;</xsl:text>
+      <xsl:text>{&#10;    // no property found&#10;    connection.reset();&#10;  }&#10;}&#10;&#10;</xsl:text>
 
       <!-- Property setters -->
       <xsl:text>bool i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_set_property(&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,&#10;</xsl:text>
+      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantBase&amp; value)&#10;{&#10;</xsl:text>
-      <xsl:text>  sender = sender_;&#10;</xsl:text>
+      <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
+      <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
+      <xsl:text>  connection = connection_;&#10;</xsl:text>
       <xsl:text>  </xsl:text>
       <xsl:for-each select="property[@access='write' or @access='readwrite']">
         <xsl:text>if (property_name == "</xsl:text>
@@ -553,8 +628,10 @@
         <xsl:text>(Glib::VariantBase::cast_dynamic&lt; </xsl:text>
         <xsl:call-template name="variant-type"/>
         <xsl:text> &gt;(value).get());&#10;</xsl:text>
+        <xsl:text>      connection.reset();&#10;</xsl:text>
         <xsl:text>      return true;&#10;</xsl:text>
         <xsl:text>    } catch (...) {&#10;</xsl:text>
+        <xsl:text>      connection.reset();&#10;</xsl:text>
         <xsl:text>      rethrow("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>");&#10;</xsl:text>
@@ -562,8 +639,7 @@
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
-      <xsl:text>{&#10;</xsl:text>
-      <xsl:text>    return false; // no property found&#10;  }&#10;}&#10;&#10;</xsl:text>
+      <xsl:text>{&#10;    // no property found&#10;    connection.reset();&#10;    return false;&#10;  }&#10;}&#10;&#10;</xsl:text>
 
       <!-- Forward property changes -->
       <xsl:for-each select="property">

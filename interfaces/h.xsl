@@ -175,19 +175,18 @@
     <!-- Service class implements all interfaces -->
     <xsl:text>class </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service : public Glib::Object</xsl:text>
-    <xsl:for-each select="interface">
-      <xsl:text>, public i</xsl:text>
-      <xsl:apply-templates mode="iface-name" select="."/>
-    </xsl:for-each>
-    <xsl:text> {&#10;</xsl:text>
+    <xsl:text>_Service {&#10;</xsl:text>
     <xsl:text>  public:&#10;</xsl:text>
+    <xsl:text>    template &lt;typename T&gt;&#10;</xsl:text>
     <xsl:text>    </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service();&#10;&#10;</xsl:text>
+    <xsl:text>_Service(T* impl, sigc::slot&lt;void, const char*&gt; rethrow);&#10;&#10;</xsl:text>
     <xsl:text>    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
     <xsl:text>    void unregister_self();&#10;</xsl:text>
-    <xsl:text>    virtual void rethrow(const char *name) const;&#10;</xsl:text>
+    <xsl:text>    bool isActive() const;&#10;</xsl:text>
+    <xsl:text>    const Glib::ustring&amp; getSender() const;&#10;</xsl:text>
+    <xsl:text>    const Glib::ustring&amp; getObjectPath() const;&#10;</xsl:text>
+    <xsl:text>    const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const;&#10;</xsl:text>
     <xsl:text>&#10;</xsl:text>
 
     <!-- The service objects -->
@@ -201,6 +200,20 @@
     </xsl:for-each>
 
     <xsl:text>};&#10;&#10;</xsl:text>
+
+    <!-- Service Constructor -->
+    <xsl:text>template &lt;typename T&gt;&#10;</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service::</xsl:text>
+    <xsl:value-of select="$name"/>
+    <xsl:text>_Service(T* impl, sigc::slot&lt;void, const char*&gt; rethrow)&#10;</xsl:text>
+    <xsl:text>: </xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:if test="position()>1">,&#10;  </xsl:if>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>(impl, rethrow)</xsl:text>
+    </xsl:for-each>
+    <xsl:text>&#10;{&#10;}&#10;&#10;</xsl:text>
 
     <xsl:text>}&#10;&#10;</xsl:text>
     <xsl:text>#endif&#10;</xsl:text>
@@ -221,7 +234,8 @@
       <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$iface"/></xsl:call-template>
       <xsl:text>_IFACE_H&#10;&#10;</xsl:text>
 
-      <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;&#10;</xsl:text>
+      <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;</xsl:text>
+      <xsl:text>#include &lt;giomm/dbuserror.h&gt;&#10;&#10;</xsl:text>
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
       <!-- Forward definitions -->
@@ -345,7 +359,12 @@ class i<xsl:value-of select="$iface"/>_Service {
     ~i<xsl:value-of select="$iface"/>_Service();
     void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
     void unregister_self();
-    Glib::ustring sender;
+
+    bool isActive() const;
+    const Glib::ustring&amp; getSender() const;
+    const Glib::ustring&amp; getObjectPath() const;
+    const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const;
+
   private:
     // non-copyable
     i<xsl:value-of select="$iface"/>_Service(const i<xsl:value-of select="$iface"/>_Service&amp;);
@@ -362,6 +381,9 @@ class i<xsl:value-of select="$iface"/>_Service {
     sigc::connection con_sig<xsl:value-of select="@name"/>;<xsl:text/>
     </xsl:for-each>
     const Gio::DBus::InterfaceVTable interface_vtable;
+    const Glib::ustring* sender;
+    const Glib::ustring* objectPath;
+    Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
     struct Export {
       Export(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) :
         connection(c), object_path(o), id(i) { }
@@ -389,18 +411,18 @@ class i<xsl:value-of select="$iface"/>_Service {
       <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
     void on_method_call(
-      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
       const Glib::VariantContainerBase&amp; parameters,
       const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation);
     void on_get_property(
       Glib::VariantBase&amp; property,
-      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */,
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name);
     bool on_set_property(
-      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; /* connection */, 
+      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path, 
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
       const Glib::VariantBase&amp; value);
