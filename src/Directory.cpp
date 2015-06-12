@@ -10,8 +10,13 @@
 
 namespace saftlib {
 
+static void just_rethrow(const char*)
+{
+  throw;
+}
+
 Directory::Directory()
- : Directory_Service(), m_loop(Glib::MainLoop::create())
+ : m_service(this, sigc::ptr_fun(&just_rethrow)), m_loop(Glib::MainLoop::create())
 {
   // Setup the global etherbone socket
   try {
@@ -37,7 +42,7 @@ Directory::~Directory()
     devs.clear();
     
     if (m_connection) {
-      unregister_self();
+      m_service.unregister_self();
       m_connection.reset();
     }
     eb_source.disconnect();
@@ -80,7 +85,7 @@ void Directory::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
 {
   assert (!m_connection);
   m_connection = c;
-  register_self(m_connection, "/de/gsi/saftlib/Directory");
+  m_service.register_self(m_connection, "/de/gsi/saftlib/Directory");
 }
 
 Glib::ustring Directory::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)

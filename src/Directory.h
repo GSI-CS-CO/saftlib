@@ -6,7 +6,7 @@
 
 namespace saftlib {
 
-class Directory : public Directory_Service
+class Directory : public iDirectory, public Glib::Object
 {
   public:
     static const Glib::RefPtr<Directory>& get();
@@ -25,6 +25,7 @@ class Directory : public Directory_Service
   protected:
     Directory();
     
+    Directory_Service m_service;
     Glib::RefPtr<Glib::MainLoop> m_loop;
     Glib::RefPtr<Gio::DBus::Connection> m_connection;
     etherbone::Socket socket;

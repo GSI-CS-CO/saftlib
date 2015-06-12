@@ -1,14 +1,16 @@
 #define ETHERBONE_THROWS 1
 
-#include <iostream>
 #include "RegisteredObject.h"
 #include "Driver.h"
 #include "interfaces/TimingReceiver.h"
 
 namespace saftlib {
 
-class TimingReceiver : public RegisteredObject<TimingReceiver_Service> {
+class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Object {
   public:
+    typedef OpenDevice& ConstructorType;
+    typedef TimingReceiver_Service ServiceType;
+    
     static void probe(OpenDevice& od);
     TimingReceiver(OpenDevice& device);
     
@@ -36,10 +38,10 @@ class TimingReceiver : public RegisteredObject<TimingReceiver_Service> {
 };
 
 TimingReceiver::TimingReceiver(OpenDevice& od)
- : RegisteredObject(od.objectPath), 
-   dev(od.device),
+ : dev(od.device),
    name(od.name),
-   etherbonePath(od.etherbonePath) { 
+   etherbonePath(od.etherbonePath)
+{
 }
 
 void TimingReceiver::Remove()
@@ -81,25 +83,25 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks(
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
 {
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!!
+  return out; // !!! not for cryring
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
 {
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!!
+  return out; // !!! not for cryring
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInoutputs() const
 {
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!!
+  return out; // !!! not for cryring
 }
 
 std::vector< Glib::ustring > TimingReceiver::getGuards() const
 {
   std::vector< Glib::ustring > out;
-  return out; // !!!
+  return out; // !!! not for cryring
 }
 
 std::map< Glib::ustring, std::vector< Glib::ustring > > TimingReceiver::getInterfaces() const
@@ -116,7 +118,7 @@ guint32 TimingReceiver::getFree() const
 void TimingReceiver::probe(OpenDevice& od)
 {
   // !!! check board ID
-  od.ref = Glib::RefPtr<Glib::Object>(new TimingReceiver(od));
+  od.ref = RegisteredObject<TimingReceiver>::create(od.objectPath, od);
 }
 
 static Driver<TimingReceiver> timingReceiver;
