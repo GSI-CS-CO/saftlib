@@ -178,6 +178,8 @@ void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
 {
   etherbone::Cycle cycle;
   
+  time /= 8; // !!! remove with new hardware
+  
   cycle.open(device);
   cycle.write(stream, EB_DATA32, event >> 32);
   cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
