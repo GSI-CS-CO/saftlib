@@ -6,9 +6,14 @@
 #include "interfaces/SoftwareActionSink.h"
 #include "interfaces/SoftwareCondition.h"
 
+static guint64 mask(int i) {
+  return i ? (((guint64)-1) << (64-i)) : 0;
+}
+
 void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool late, bool delayed, bool conflict)
 {
   std::cout << "Saw a timing event!" << std::endl;
+  std::cout << "  " << id << " " << time << " " << conflict << std::endl;
 }
 
 void on_late(guint64 count, guint64 event, guint64 param, guint64 time, guint64 overtime)
@@ -90,10 +95,10 @@ int main(int, char**)
     // Here, we provide the first function parameter via 'bind'.
     sink->MostFull.connect(sigc::bind(sigc::ptr_fun(&detect_danger), capacity));
     
-    // Create an active(true) condition, watching events 5-200 delayed by 100 nanoseconds
+    // Create an active(true) condition, watching events 64-127 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
     // SoftwareConditions implement iOwned, iCondition, iSoftwareCondition.
-    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 5, 200, 100, 0));
+    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 100, 0));
     
     // Call on_action whenever the condition above matches incoming events.
     condition->Action.connect(sigc::ptr_fun(&on_action));

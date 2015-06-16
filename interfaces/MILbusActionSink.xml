@@ -18,23 +18,23 @@
   <interface name="de.gsi.saftlib.MILbusActionSink">
     <!-- NewCondition: Create a condition to match incoming events
          @active: Should the condition be immediately active
-         @first:  First event ID to monitor (inclusive)
-         @last:   Last event ID to monitor (inclusive)
+         @id:     Event ID to match incoming event IDs against
+         @mask:   Set of bits for which the event ID and id must agree
          @offset: Delay in nanoseconds between event and action
          @guards: The specified guard must be true 4us before action
          @tag:    The  16-bit value to send on the MILbus
          @result: Object path to the created MILbusCondition
 
          This method creates a new condition that matches events whose
-         identifier lies in the range [first, last]. The offset acts as a
-         delay which is added to the event's execution timestamp to
-         determine the timestamp when the matching condition fires its
-         action. The returned object path is a MILBUSCondition object.
+         identifier lies in the range [id & mask, id | ~mask].  The offset
+         acts as a delay which is added to the event's execution timestamp
+         to determine the timestamp when the matching condition fires its
+         action.  The returned object path is a MILBUSCondition object.
       -->
     <method name="NewCondition">
       <arg direction="in" type="b" name="active"/>
-      <arg direction="in" type="t" name="first"/>
-      <arg direction="in" type="t" name="last"/>
+      <arg direction="in" type="t" name="id"/>
+      <arg direction="in" type="t" name="mask"/>
       <arg direction="in" type="x" name="offset"/>
       <arg direction="in" type="u" name="guards"/>
       <arg direction="in" type="q" name="tag"/>

@@ -103,7 +103,7 @@
     <property name="Interfaces" type="a{sa{ss}}" access="read"/>
     
     <!-- InjectEvent: Simulate the receipt of a timing event.
-         @event: The event identifier which is matched against [first, last]
+         @event: The event identifier which is matched against Conditions
          @param: The parameter field, whose meaning depends on the event ID.
          @time:  The execution time for the event, added to condition offsets.
          

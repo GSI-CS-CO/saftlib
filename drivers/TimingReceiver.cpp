@@ -303,7 +303,7 @@ void TimingReceiver::arrival_handler(eb_data_t)
           Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition);
         if (!softwareCondition) continue;
         
-        if (softwareCondition->getFirst() <= event && event <= softwareCondition->getLast() &&
+        if (((softwareCondition->getID() ^ event) & softwareCondition->getMask()) == 0 &&
             softwareCondition->getOffset()/8 == tag2delay[tag]) { // !!! remove /8 with new hardware
           softwareCondition->Action(event, param, time, -1, late, false, conflict);
           match = true;
@@ -392,8 +392,8 @@ void TimingReceiver::compile()
   // Step one is to merge overlapping, but compatible, ranges
   for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
     for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
-      guint64 first  = (*condition)->getFirst();
-      guint64 last   = (*condition)->getLast();
+      guint64 first  = (*condition)->getID() & (*condition)->getMask();
+      guint64 last   = (*condition)->getID() | ~(*condition)->getMask();
       guint64 offset = (*condition)->getOffset()/8; // !!! remove /8 with new hardware
       gint32  channel= sink->second->getChannel();
       guint32 tag    = (*condition)->getRawTag();

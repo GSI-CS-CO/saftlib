@@ -6,15 +6,19 @@
      different Conditions. This interface is the common denominator.
   -->
 <interface name="de.gsi.saftlib.Condition">
-  <!-- First: The first event identifier which this condition matches.
+  <!-- ID: The event identifier which this condition matches against.
+       An incoming event matches if its ID and this ID agree on all the bits
+       set in this condition's Mask.
     -->
-  <property name="First"  type="t" access="read">
+  <property name="ID"  type="t" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   
-  <!-- Last: The last event identifier which this condition matches.
+  <!-- Mask: The mask used when comparing event IDs.
+       An incoming event matches if its ID and the ID property of this
+       Condition agree on all the bits set in this Mask.
     -->
-  <property name="Last"   type="t" access="read">
+  <property name="Mask"   type="t" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   

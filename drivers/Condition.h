@@ -12,11 +12,11 @@ class Condition : public Owned, public iCondition
 {
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
-    Condition(ActionSink* sink, int channel, bool active, guint64 first, guint64 last, guint64 offset, guint64 guards, guint32 tag, sigc::slot<void> destroy = sigc::slot<void>());
+    Condition(ActionSink* sink, int channel, bool active, guint64 id, guint64 mask, guint64 offset, guint64 guards, guint32 tag, sigc::slot<void> destroy = sigc::slot<void>());
     
     // iCondition
-    guint64 getFirst() const;
-    guint64 getLast() const;
+    guint64 getID() const;
+    guint64 getMask() const;
     gint64 getOffset() const;
     gint64 getGuards() const;
     bool getActive() const;
@@ -32,8 +32,8 @@ class Condition : public Owned, public iCondition
     ActionSink* sink;
     int channel;
     bool active;
-    guint64 first;
-    guint64 last;
+    guint64 id;
+    guint64 mask;
     guint64 offset;
     guint64 guards;
     guint32 tag;
