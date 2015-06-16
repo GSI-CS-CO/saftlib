@@ -1,6 +1,7 @@
 # Targets
 saftd
 client
+dm-snoop
 # Automake junk dirs
 tools
 m4

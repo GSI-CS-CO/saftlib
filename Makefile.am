@@ -1,6 +1,7 @@
 SUBDIRS = interfaces
 
-bin_PROGRAMS = saftd
+sbin_PROGRAMS = saftd
+bin_PROGRAMS = dm-snoop
 noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
@@ -27,3 +28,6 @@ saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+
+dm_snoop_SOURCES = src/dm-snoop.cpp
+dm_snoop_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la

@@ -305,7 +305,7 @@ void TimingReceiver::arrival_handler(eb_data_t)
         
         if (((softwareCondition->getID() ^ event) & softwareCondition->getMask()) == 0 &&
             softwareCondition->getOffset()/8 == tag2delay[tag]) { // !!! remove /8 with new hardware
-          softwareCondition->Action(event, param, time, -1, late, false, conflict);
+          softwareCondition->Action(event, param, time*8, -1, late, false, conflict); // !!! remove *8 with new hardware
           match = true;
         }
       }
