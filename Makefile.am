@@ -23,7 +23,7 @@ saftd_SOURCES = \
 	drivers/ActionSink.cpp		drivers/ActionSink.h		\
 	drivers/SoftwareActionSink.cpp	drivers/SoftwareActionSink.h	\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
-	src/main.cpp
+	src/main.cpp			drivers/eca_regs.h
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 client_SOURCES = src/client.cpp

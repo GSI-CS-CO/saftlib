@@ -19,7 +19,7 @@ INTERFACES =			\
 	InputEventSource.xml	\
 	OutputActionSink.xml	\
 	Owned.xml
-XSL = h.xsl cpp.xsl common.xsl
+XSL = h.xsl cpp.xsl doc.xsl common.xsl
 
 EXTRA_DIST = $(XSL) $(NODES) $(INTERFACES)
 CLEANFILES = *.cpp *.h *.pdf *.doc-xml
@@ -28,7 +28,7 @@ AM_CPPFLAGS = $(GIOMM_CFLAGS)
 
 lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib
-saftlib_HEADERS = 		\
+nodist_saftlib_HEADERS = 	\
 	SAFTd.h			\
 	iActionSink.h		\
 	iCondition.h		\
@@ -110,10 +110,10 @@ nodist_libsaftlib_la_SOURCES =	\
 	SoftwareCondition.cpp	\
 	TimingReceiver.cpp
 
-$(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES):	$(NODES) $(XSL)
-	$(XSLTPROC) --xinclude $(srcdir)/h.xsl $(NODES)
-	$(XSLTPROC) --xinclude $(srcdir)/cpp.xsl $(NODES)
-	$(XSLTPROC) --xinclude $(srcdir)/doc.xsl $(NODES)
+$(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES) $(nodist_saftlib_HEADERS):	$(NODES) $(XSL)
+	$(XSLTPROC) --path $(srcdir) --xinclude $(srcdir)/h.xsl $(NODES)
+	$(XSLTPROC) --path $(srcdir) --xinclude $(srcdir)/cpp.xsl $(NODES)
+	$(XSLTPROC) --path $(srcdir) --xinclude $(srcdir)/doc.xsl $(NODES)
 
 .doc-xml.pdf:
 	$(GDBUS_CODEGEN) --generate-docbook=docfoo --interface-prefix=de.gsi.saftlib $<
