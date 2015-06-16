@@ -203,7 +203,7 @@ guint64 TimingReceiver::getCurrentTime() const
   result = time1;
   result <<= 32;
   result |= time0;
-  return result;
+  return result*8; // !!! remove *8 with new hardware
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks() const
