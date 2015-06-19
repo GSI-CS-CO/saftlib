@@ -4,19 +4,52 @@
 #include <giomm.h>
 #include <glibmm.h>
 #include <signal.h>
+#include <execinfo.h> // GNU extension for backtrace
 
 #include "SAFTd.h"
+
+void print_backtrace(const char *where)
+{
+  std::cerr << where << ": ";
+  
+  try {
+    throw;
+  } catch (const std::exception &ex) {
+    std::cerr << "std::exception: " << ex.what() << std::endl;
+  } catch(const Glib::Error& ex) {
+    std::cerr << "Glib::Error: " << ex.what() << std::endl;
+  } catch(const etherbone::exception_t& ex) {
+    std::cerr << "etherbone::exception_t: " << ex << std::endl;
+  } catch(...) {
+    std::cerr << "unknown exception" << std::endl;
+  }
+  
+  void * array[50];
+  int size = backtrace(array, sizeof(array)/sizeof(array[0]));
+  char ** messages = backtrace_symbols(array, size);
+  
+  if (messages) {
+    std::cerr << "Stack-trace:\n" ;
+    for (int i = 0; i < size; ++i)
+      std::cerr << "  " << messages[i] << std::endl;
+    free(messages);
+  } else {
+    std::cerr << "Unable to generate stack trace" << std::endl;
+  }
+  
+  abort();
+}
+
+// Handle uncaught exceptions
+void my_terminate() { print_backtrace("Unhandled exception "); }
+static const bool SET_TERMINATE = std::set_terminate(my_terminate);
 
 void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   try {
     saftlib::SAFTd::get()->setConnection(connection);
-  } catch(const Glib::Error& ex) {
-    std::cerr << "Could not create directory: " << ex.what() << std::endl;
-    exit(1);
-  } catch(const etherbone::exception_t& ex) {
-    std::cerr << "Could not create directory: " << ex << std::endl;
-    exit(1);
+  } catch (...) {
+    print_backtrace("Could not setConnection");
   }
 }
 
@@ -33,14 +66,11 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
     
     std::string name = command.substr(0, pos);
     std::string path = command.substr(pos+1, std::string::npos);
+    
     try {
       saftlib::SAFTd::get()->AttachDevice(name, path);
-    } catch (const Glib::Error& ex) {
-      std::cerr << "Could not open device " << path << ": " << ex.what() << std::endl;
-      exit(1);
-    } catch(const etherbone::exception_t& ex) {
-      std::cerr << "Could not open device " << path << ": " << ex << std::endl;
-      exit(1);
+    } catch (...) {
+      print_backtrace(("Could not attach " + name).c_str());
     }
   }
   
