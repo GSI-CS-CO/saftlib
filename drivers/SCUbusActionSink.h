@@ -1,0 +1,32 @@
+#ifndef SCUBUS_ACTION_SINK_H
+#define SCUBUS_ACTION_SINK_H
+
+#include "interfaces/SCUbusActionSink.h"
+#include "ActionSink.h"
+
+namespace saftlib {
+
+class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
+{
+  public:
+    typedef SCUbusActionSink_Service ServiceType;
+    struct ConstructorType {
+      TimingReceiver* dev;
+      int channel;
+    };
+    
+    static Glib::RefPtr<SCUbusActionSink> create(Glib::ustring& objectPath, ConstructorType args);
+    
+    const char *getInterfaceName() const;
+    
+    // iSCUbusAcitonSink
+    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, guint32 tag);
+    void InjectTag(guint32 tag);
+    
+  protected:
+    SCUbusActionSink(ConstructorType args);
+};
+
+}
+
+#endif
