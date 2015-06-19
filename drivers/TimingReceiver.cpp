@@ -299,24 +299,15 @@ void TimingReceiver::arrival_handler(eb_data_t)
     param = event1; param <<= 32; param |= param0;
     time  = time1;  time  <<= 32; time  |= time0;
     
-    bool conflict = (flags & 2) != 0;
-    bool late     = (flags & 2) != 0;
+    // bool conflict = (flags & 2) != 0;
+    bool late     = (flags & 1) != 0;
+    // !!! delayed ?
     
     for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
-      bool match = false;
-      for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
-        Glib::RefPtr<SoftwareCondition> softwareCondition =
-          Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition);
-        if (!softwareCondition) continue;
-        
-        if (((softwareCondition->getID() ^ event) & softwareCondition->getMask()) == 0 &&
-            softwareCondition->getOffset()/8 == tag2delay[tag]) { // !!! remove /8 with new hardware
-          softwareCondition->Action(event, param, time*8, -1, late, false, conflict); // !!! remove *8 with new hardware
-          match = true;
-        }
-      }
-      // !!! if (match && conflict) sink->second->sawConflict();
-      // !!! if (match && late)     sink->second->sawLate();
+      Glib::RefPtr<SoftwareActionSink> softwareActionSink =
+        Glib::RefPtr<SoftwareActionSink>::cast_dynamic(sink->second);
+      if (softwareActionSink)
+        softwareActionSink->emit(event, param, time*8, -1, tag2delay[tag]*8, late, false); // !!! remove *8 with new hardware
     }
   } catch (const etherbone::exception_t& e) {
     std::cerr << "ECA::arrival_handler: " << e << std::endl;
