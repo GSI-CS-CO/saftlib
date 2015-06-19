@@ -565,8 +565,24 @@ void TimingReceiver::compile()
 void TimingReceiver::probe(OpenDevice& od)
 {
   // !!! check board ID
-  // !!! probe for real
-  TimingReceiver::ConstructorType args = { od.device, od.name, od.etherbonePath, 0x80, 0x7ffffff0, 0x40 };
+  
+  std::vector<sdb_device> ecas, queues, streams;
+  od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECA_DEVICE_ID,  ecas);
+  od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAQ_DEVICE_ID, queues);
+  od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAE_DEVICE_ID, streams);
+  
+  // only support super basic hardware for now
+  if (ecas.size() != 1 || queues.size() != 1 || streams.size() != 1)
+    return;
+  
+  TimingReceiver::ConstructorType args = { 
+    od.device, 
+    od.name, 
+    od.etherbonePath, 
+    ecas[0].sdb_component.addr_first,
+    streams[0].sdb_component.addr_first,
+    queues[0].sdb_component.addr_first
+  };
   od.ref = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
 }
 
