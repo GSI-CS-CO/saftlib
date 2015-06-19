@@ -31,7 +31,7 @@ void print_backtrace(const char *where)
   
   if (messages) {
     std::cerr << "Stack-trace:\n" ;
-    for (int i = 0; i < size; ++i) {
+    for (int i = 1; i < size; ++i) { // Skip 0 = this function
       std::string line(messages[i]);
       // Demangle the symbols
       int status;
@@ -84,7 +84,8 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
     try {
       saftlib::SAFTd::get()->AttachDevice(name, path);
     } catch (...) {
-      print_backtrace(("Could not attach " + name).c_str());
+      print_backtrace(("Attaching " + name + "(" + path + ")").c_str());
+      throw;
     }
   }
   

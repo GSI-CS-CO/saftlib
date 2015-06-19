@@ -116,6 +116,10 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
   
   try {
     Drivers::probe(od);
+  } catch (const etherbone::exception_t& ex) {
+    std::ostringstream str;
+    str << "AttachDevice: failed to probe: " << ex;
+    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
   } catch (...) {
     edev.close();
     throw;
