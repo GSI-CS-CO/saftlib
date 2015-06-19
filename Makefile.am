@@ -20,6 +20,8 @@ saftd_SOURCES = \
 	drivers/Owned.cpp		drivers/Owned.h			\
 	drivers/Condition.cpp		drivers/Condition.h		\
 	drivers/SoftwareCondition.cpp	drivers/SoftwareCondition.h	\
+	drivers/SCUbusCondition.cpp	drivers/SCUbusCondition.h	\
+	drivers/MILbusCondition.cpp	drivers/MILbusCondition.h	\
 	drivers/ActionSink.cpp		drivers/ActionSink.h		\
 	drivers/SoftwareActionSink.cpp	drivers/SoftwareActionSink.h	\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
