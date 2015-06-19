@@ -80,7 +80,7 @@ int main(int, char**)
     // Our SoftwareActionSink was freshly created, so these are already 0
     // We set them to 0 anyway, for illustration
     sink->setLateCount(0);
-    sink->setOverflowCount(0);
+    // sink->setOverflowCount(0);
     sink->setConflictCount(0);
   
     // Read the Capacity property of the ActionSink
