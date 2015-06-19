@@ -71,6 +71,8 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     void setHandlers(bool enable, eb_address_t arrival = 0, eb_address_t overflow = 0);
     void overflow_handler(eb_data_t);
     void arrival_handler(eb_data_t); 
+  
+  friend class ActionSink;
 };
 
 }

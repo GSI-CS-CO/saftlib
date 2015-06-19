@@ -4,6 +4,7 @@
 
 #include "ActionSink.h"
 #include "TimingReceiver.h"
+#include "eca_regs.h"
 
 namespace saftlib {
 
@@ -19,8 +20,7 @@ ActionSink::~ActionSink()
     conditions.clear();
     dev->compile();
   } catch (...) {
-    // !!! do something to prevent this
-    std::cerr << "Failed to recompile during ActionSink destruction" << std::endl;
+    std::cerr << "Failed to recompile during ActionSink destruction (should be impossible)" << std::endl;
   }
 }
 
@@ -92,12 +92,24 @@ guint32 ActionSink::getCapacity() const
 
 guint32 ActionSink::getFill() const
 {
-  return 0; // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (dev->base + ECAC_FILL,   EB_DATA32, &data);
+  cycle.close();
+  return (data >> 16) & 0xFFFFU;
 }
 
 guint32 ActionSink::getMostFull() const
 {
-  return 0; // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (dev->base + ECAC_FILL,   EB_DATA32, &data);
+  cycle.close();
+  return (data & 0xFFFFU);
 }
 
 guint32 ActionSink::getOverflowCount() const
@@ -107,7 +119,13 @@ guint32 ActionSink::getOverflowCount() const
 
 guint32 ActionSink::getConflictCount() const
 {
-  return 0; // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT,   EB_DATA32, channel << 16);
+  cycle.read (dev->base + ECAC_CONFLICT, EB_DATA32, &data);
+  cycle.close();
+  return data;
 }
 
 bool ActionSink::getExecuteLateActions() const
@@ -117,7 +135,13 @@ bool ActionSink::getExecuteLateActions() const
 
 guint32 ActionSink::getLateCount() const
 {
-  return 0; // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (dev->base + ECAC_LATE,   EB_DATA32, &data);
+  cycle.close();
+  return data;
 }
 
 bool ActionSink::getGenerateDelayed() const
@@ -132,7 +156,13 @@ guint32 ActionSink::getDelayedCount() const
 
 guint32 ActionSink::getActionCount() const
 {
-  return 0; // !!!
+  eb_data_t data;
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.read (dev->base + ECAC_VALID,  EB_DATA32, &data);
+  cycle.close();
+  return data;
 }
 
 void ActionSink::setMinOffset(gint64 val)
@@ -152,7 +182,14 @@ void ActionSink::setMaxOffset(gint64 val)
 void ActionSink::setMostFull(guint32 val)
 {
   ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  if (val > 0xFFFFU)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "setMostFull: value too large");
+  
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.write(dev->base + ECAC_FILL,   EB_DATA32, val);
+  cycle.close();
 }
 
 void ActionSink::setOverflowCount(guint32 val)
@@ -164,7 +201,11 @@ void ActionSink::setOverflowCount(guint32 val)
 void ActionSink::setConflictCount(guint32 val)
 {
   ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT,   EB_DATA32, channel << 16);
+  cycle.write(dev->base + ECAC_CONFLICT, EB_DATA32, val);
+  cycle.close();
 }
 
 void ActionSink::setExecuteLateActions(bool val)
@@ -178,7 +219,11 @@ void ActionSink::setExecuteLateActions(bool val)
 void ActionSink::setLateCount(guint32 val)
 {
   ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.write(dev->base + ECAC_LATE,   EB_DATA32, val);
+  cycle.close();
 }
 
 void ActionSink::setGenerateDelayed(bool val)
@@ -198,7 +243,11 @@ void ActionSink::setDelayedCount(guint32 val)
 void ActionSink::setActionCount(guint32 val)
 {
   ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  etherbone::Cycle cycle;
+  cycle.open(dev->device);
+  cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
+  cycle.write(dev->base + ECAC_VALID,  EB_DATA32, val);
+  cycle.close();
 }
 
 void ActionSink::removeCondition(std::list< Glib::RefPtr<Condition> >::iterator i)
@@ -209,8 +258,7 @@ void ActionSink::removeCondition(std::list< Glib::RefPtr<Condition> >::iterator 
     notify(active, !active);
     dev->compile();
   } catch (...) {
-    // !!! do something to prevent this
-    std::cerr << "Failed to recompile after removing condition" << std::endl;
+    std::cerr << "Failed to recompile after removing condition (should be impossible)" << std::endl;
   }
 }
 
