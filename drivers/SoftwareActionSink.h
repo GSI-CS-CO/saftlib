@@ -21,7 +21,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     const char *getInterfaceName() const;
     
     // iSoftwareAcitonSink
-    Glib::ustring NewCondition(bool active, guint64 first, guint64 last, gint64 offset, guint32 guards);
+    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards);
     
   protected:
     SoftwareActionSink(ConstructorType args);

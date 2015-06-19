@@ -226,4 +226,36 @@ void ActionSink::compile()
   dev->compile();
 }
 
+Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, guint32 tag, ConditionConstructor constructor)
+{
+  ownerOnly();
+  
+  if (offset < minOffset || offset > maxOffset)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
+  
+  // Make a space for it in the container 
+  conditions.push_back(Glib::RefPtr<Condition>());
+  sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &ActionSink::removeCondition), --conditions.end());
+  
+  std::ostringstream str;
+  str.imbue(std::locale("C"));
+  str << getObjectPath() << "/_" << ++cond_count;
+  Glib::ustring path = str.str();
+  
+  Glib::RefPtr<Condition> condition;
+  try {
+    Condition::Condition_ConstructorType args = { this, channel, active, id, mask, offset, guards, tag, destroy };
+    condition = constructor(path, args);
+    condition->initOwner(getConnection(), getSender());
+    conditions.back() = condition;
+    if (active) compile();
+  } catch (...) {
+    destroy();
+    throw;
+  }
+  
+  notify(active, !active);
+  return condition->getObjectPath();
+}
+
 }

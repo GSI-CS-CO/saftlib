@@ -12,7 +12,18 @@ class Condition : public Owned, public iCondition
 {
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
-    Condition(ActionSink* sink, int channel, bool active, guint64 id, guint64 mask, guint64 offset, guint64 guards, guint32 tag, sigc::slot<void> destroy = sigc::slot<void>());
+    struct Condition_ConstructorType {
+      ActionSink* sink;
+      int channel;
+      bool active;
+      guint64 id;
+      guint64 mask;
+      guint64 offset;
+      guint64 guards;
+      guint32 tag;
+      sigc::slot<void> destroy;
+    };
+    Condition(Condition_ConstructorType args);
     
     // iCondition
     guint64 getID() const;

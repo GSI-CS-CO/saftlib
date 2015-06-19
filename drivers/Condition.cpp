@@ -6,9 +6,9 @@
 
 namespace saftlib {
 
-Condition::Condition(ActionSink* sink_, int channel_, bool active_, guint64 id_, guint64 mask_, guint64 offset_, guint64 guards_, guint32 tag_, sigc::slot<void> destroy)
- : Owned(destroy), sink(sink_), channel(channel_), 
-   active(active_), id(id_), mask(mask_), offset(offset_), guards(guards_), tag(tag_)
+Condition::Condition(Condition_ConstructorType args)
+ : Owned(args.destroy), sink(args.sink), channel(args.channel), 
+   active(args.active), id(args.id), mask(args.mask), offset(args.offset), guards(args.guards), tag(args.tag)
 {
 }
 

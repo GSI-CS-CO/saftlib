@@ -10,17 +10,7 @@ class SoftwareCondition : public Condition, public iSoftwareCondition
 {
   public:
     typedef SoftwareCondition_Service ServiceType;
-    struct ConstructorType {
-      ActionSink* sink;
-      int channel;
-      bool active;
-      guint64 first;
-      guint64 last;
-      guint64 offset;
-      guint64 guards;
-      guint32 tag;
-      sigc::slot<void> destroy;
-    };
+    typedef Condition_ConstructorType ConstructorType;
     
     static Glib::RefPtr<SoftwareCondition> create(Glib::ustring& objectPath, ConstructorType args);
     
