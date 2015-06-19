@@ -307,7 +307,7 @@ void TimingReceiver::arrival_handler(eb_data_t)
       Glib::RefPtr<SoftwareActionSink> softwareActionSink =
         Glib::RefPtr<SoftwareActionSink>::cast_dynamic(sink->second);
       if (softwareActionSink)
-        softwareActionSink->emit(event, param, time*8, -1, tag2delay[tag]*8, late, false); // !!! remove *8 with new hardware
+        softwareActionSink->emit(event, param, time*8, -1, tag2delay[tag], late, false); // !!! remove *8 with new hardware
     }
   } catch (const etherbone::exception_t& e) {
     std::cerr << "ECA::arrival_handler: " << e << std::endl;
@@ -391,7 +391,7 @@ void TimingReceiver::compile()
     for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
       guint64 first  = (*condition)->getID() & (*condition)->getMask();
       guint64 last   = (*condition)->getID() | ~(*condition)->getMask();
-      guint64 offset = (*condition)->getOffset()/8; // !!! remove /8 with new hardware
+      guint64 offset = (*condition)->getOffset();
       gint32  channel= sink->second->getChannel();
       guint32 tag    = (*condition)->getRawTag();
       
@@ -542,7 +542,7 @@ void TimingReceiver::compile()
     cycle.write(base + ECA_WALK,    EB_DATA32, i);
     cycle.write(base + ECA_NEXT,    EB_DATA32, next);
     cycle.write(base + ECA_DELAY1,  EB_DATA32, we.offset >> 32);
-    cycle.write(base + ECA_DELAY0,  EB_DATA32, we.offset & 0xFFFFFFFFUL);
+    cycle.write(base + ECA_DELAY0,  EB_DATA32, (we.offset/8) & 0xFFFFFFFFUL); // !!! new hardware removes /8
     cycle.write(base + ECA_TAG,     EB_DATA32, we.tag);
     cycle.write(base + ECA_CHANNEL, EB_DATA32, we.channel);
     cycle.close();
