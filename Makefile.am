@@ -25,6 +25,7 @@ saftd_SOURCES = \
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
 	src/main.cpp			drivers/eca_regs.h
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
+saftd_LDFLAGS = -rdynamic # needed for stack trace
 
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la

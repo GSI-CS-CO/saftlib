@@ -5,6 +5,7 @@
 #include <glibmm.h>
 #include <signal.h>
 #include <execinfo.h> // GNU extension for backtrace
+#include <cxxabi.h>   // GCC extension for __cxa_demangle
 
 #include "SAFTd.h"
 
@@ -30,8 +31,21 @@ void print_backtrace(const char *where)
   
   if (messages) {
     std::cerr << "Stack-trace:\n" ;
-    for (int i = 0; i < size; ++i)
-      std::cerr << "  " << messages[i] << std::endl;
+    for (int i = 0; i < size; ++i) {
+      std::string line(messages[i]);
+      // Demangle the symbols
+      int status;
+      std::string::size_type end   = line.rfind('+');
+      std::string::size_type start = line.rfind('(');
+      std::string symbol(line, start+1, end-start-1);
+      char *demangle = abi::__cxa_demangle(symbol.c_str(), 0, 0, &status);
+      if (status == 0) {
+        std::cerr << "  " << line.substr(0, start+1) << demangle << line.substr(end) << std::endl;
+        free(demangle);
+      } else {
+        std::cerr << "  " << messages[i] << std::endl;
+      }
+    }
     free(messages);
   } else {
     std::cerr << "Unable to generate stack trace" << std::endl;
