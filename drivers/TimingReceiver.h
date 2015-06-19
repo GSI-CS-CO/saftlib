@@ -2,7 +2,7 @@
 #define TIMING_RECEIVER_H
 
 #include "OpenDevice.h"
-#include "SoftwareActionSink.h"
+#include "ActionSink.h"
 #include "interfaces/TimingReceiver.h"
 
 namespace saftlib {
@@ -60,6 +60,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     int sas_count;
     eb_address_t overflow_irq;
     eb_address_t arrival_irq;
+    int channels;
     int queue_size;
     int table_size;
     int aq_channel;

@@ -9,6 +9,8 @@
 #include "RegisteredObject.h"
 #include "Driver.h"
 #include "TimingReceiver.h"
+#include "SCUbusActionSink.h"
+#include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
 #include "eca_regs.h"
 
@@ -38,7 +40,7 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   cycle.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
   cycle.close();
   
-  //channels = (sizes >> 8) & 0xFF;
+  channels = (sizes >> 8) & 0xFF;
   table_size = 1 << ((sizes >> 24) & 0xFF);
   queue_size = 1 << ((sizes >> 16) & 0xFF);
   
@@ -70,12 +72,12 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   // Hook interrupts
   setHandlers(true, arrival_irq, overflow_irq);
   
-  // Enable aq channel
+  // Enable all channels
   cycle.open(device);
-  // select
-  cycle.write(base + ECAC_SELECT, EB_DATA32, aq_channel << 16);
-  // enable (clear drain and freeze flags)
-  cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE)<<8);
+  for (int channel = 0; channel < channels; ++channel) {
+    cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+    cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE)<<8);
+  }
   cycle.close();
   
   // enable interrupts and actions
@@ -92,8 +94,10 @@ TimingReceiver::~TimingReceiver()
     // disable aq channel
     etherbone::Cycle cycle;
     cycle.open(device);
-    cycle.write(base + ECAC_SELECT, EB_DATA32, aq_channel << 16);
-    cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE));
+    for (int channel = 0; channel < channels; ++channel) {
+      cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
+      cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE));
+    }
     cycle.close();
     
     // Disable interrupts and the ECA
@@ -566,10 +570,11 @@ void TimingReceiver::probe(OpenDevice& od)
 {
   // !!! check board ID
   
-  std::vector<sdb_device> ecas, queues, streams;
+  std::vector<sdb_device> ecas, queues, streams, scubus;
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECA_DEVICE_ID,  ecas);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAQ_DEVICE_ID, queues);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAE_DEVICE_ID, streams);
+  od.device.sdb_find_by_identity(GSI_VENDOR_ID, 0x9602eb6f, scubus);
   
   // only support super basic hardware for now
   if (ecas.size() != 1 || queues.size() != 1 || streams.size() != 1)
@@ -583,7 +588,16 @@ void TimingReceiver::probe(OpenDevice& od)
     streams[0].sdb_component.addr_first,
     queues[0].sdb_component.addr_first
   };
-  od.ref = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
+  Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
+  od.ref = tr;
+  
+  if (scubus.size() == 1) {
+    // !!! hard-coded to #3
+    SCUbusActionSink::ConstructorType args = { tr.operator->(), 3 };
+    Glib::ustring path = od.objectPath + "/scubus";
+    Glib::RefPtr<ActionSink> actionSink = SCUbusActionSink::create(path, args);
+    tr->actionSinks["scubus"] = actionSink;
+  }
 }
 
 static Driver<TimingReceiver> timingReceiver;
