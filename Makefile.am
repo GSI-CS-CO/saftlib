@@ -26,6 +26,7 @@ saftd_SOURCES = \
 	drivers/SoftwareActionSink.cpp	drivers/SoftwareActionSink.h	\
 	drivers/SCUbusActionSink.cpp	drivers/SCUbusActionSink.h	\
 	drivers/MILbusActionSink.cpp	drivers/MILbusActionSink.h	\
+	drivers/FunctionGenerator.cpp	drivers/FunctionGenerator.h	\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
 	src/main.cpp			drivers/eca_regs.h
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
