@@ -8,6 +8,10 @@
 #include "interfaces/SCUbusCondition.h"
 #include "interfaces/FunctionGenerator.h" 
 
+using namespace saftlib;
+using namespace std;
+
+// The parsed contents of the datafile given to the demo program
 struct ParamSet {
   std::vector< gint16 > coeff_a;
   std::vector< gint16 > coeff_b;
@@ -18,13 +22,29 @@ struct ParamSet {
   std::vector< unsigned char > shift_b;
 };
 
-static guint64 mask(int i) {
-  return i ? (((guint64)-1) << (64-i)) : 0;
+// Hand off the entire datafile to SAFTd
+void fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+{
+  gen->AppendParameterSet(
+    params.coeff_a,
+    params.coeff_b,
+    params.coeff_c,
+    params.step,
+    params.freq,
+    params.shift_a,
+    params.shift_b);
 }
 
-using namespace saftlib;
-using namespace std;
+// Refill the function generator if the buffer fill gets low
+void on_lowFillLevel(bool aboveSafeFillLevel, Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+{
+  if (aboveSafeFillLevel) return;
+  
+  do fill(gen, params);
+  while (!gen->getAboveSafeFillLevel());
+}
 
+// Pretty print timestamp
 const char *format_time(guint64 time)
 {
   static char full[80];
@@ -38,40 +58,22 @@ const char *format_time(guint64 time)
   return full;
 }
 
-void fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
-{
-  gen->AppendParameterSet(
-    params.coeff_a,
-    params.coeff_b,
-    params.coeff_c,
-    params.step,
-    params.freq,
-    params.shift_a,
-    params.shift_b);
-}
-  
-void on_lowFillLevel(bool aboveSafeFillLevel,
-                     Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
-{
-  if (aboveSafeFillLevel) return;
-  
-  do fill(gen, params);
-  while (!gen->getAboveSafeFillLevel());
-}
-
+// Report when the function generator starts
 void on_start(guint64 time)
 {
   std::cout << "Function generator started at " << format_time(time) << std::endl;
 }
 
-void on_stop(guint64 time, bool hardwareMacroUnderflow, bool microControllerUnderflow,
-             Glib::RefPtr<Glib::MainLoop> loop)
+// Report when the function generator stops
+void on_stop(guint64 time, bool hardwareMacroUnderflow, bool microControllerUnderflow, Glib::RefPtr<Glib::MainLoop> loop)
 {
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
+  // was there an error?
   if (hardwareMacroUnderflow)
     std::cerr << "Fatal error: hardwareMacroUnderflow!" << std::endl;
   if (microControllerUnderflow)
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
+  // terminate the main event loop
   loop->quit();
 }
 
@@ -124,7 +126,7 @@ int main(int argc, char** argv)
   
   if (error) return 1;
   
-  // Read the data file ... maybe come up with a better format in the future !!!
+  // Read the data file from stdin ... maybe come up with a better format in the future !!!
   ParamSet params;
   gint32 a, la, b, lb, c, n, s;
   while(fscanf(stdin, "%d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n) == 6) {
@@ -142,7 +144,7 @@ int main(int argc, char** argv)
     params.shift_b.push_back(lb);
   }
   
-  if (params.shift_b.size() == 0) {
+  if (params.shift_b.empty()) {
     std::cerr << "Provided data file was empty" << std::endl;
     return 1;
   }
@@ -255,10 +257,13 @@ int main(int argc, char** argv)
     if (generate) { // Trigger the function generator ourselves?
       scu->InjectTag(tag);
     } else if (eventSet) { // Watch for a timing event? => generate tag on event
-      scu->NewCondition(true, event, mask(64), 0, 0, tag);
+      scu->NewCondition(true, event, ~0, 0, 0, tag);
     }
     
-    // Wait until done
+    // Wait until on_stop is called / function generator is done
+    // ... if we don't care to keep repeating the waveform, we could quit immediately;
+    //     SAFTd has been properly configured to run autonomously at this point.
+    // ... of course, then the user doesn't get the final error status message either
     loop->run();
     
     // Print summary
