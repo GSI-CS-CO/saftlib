@@ -23,6 +23,10 @@ void FunctionGenerator::AppendParameterSet(const std::vector< gint16 >& coeff_a,
 {
 }
 
+void FunctionGenerator::Flush()
+{
+}
+
 guint32 FunctionGenerator::getVersion() const
 {
 }

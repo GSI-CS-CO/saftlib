@@ -43,10 +43,12 @@
     </property>
     
     <!-- Enabled: Function generator begins execution when StartTag is received.
-         By default, a function generator does nothing. When Enabled is true,
-         if an SCUbus tag matching the StartTag property is sent, the function 
-         generator will begin generating the output waveform. A function generator
-         can only be Enabled if FillLevel is non-zero.
+         By default, a function generator does nothing. When Enabled is
+         true, if an SCUbus tag matching the StartTag property is sent, the
+         function generator will begin generating the output waveform.  
+         A function generator can only be Enabled if FillLevel is non-zero. 
+         A Running function generator can never be Enabled. Immediately
+         after a function generator is Started, it is disabled. 
     -->
     <property name="Enabled" type="b" access="readwrite"/>
 
@@ -59,8 +61,9 @@
     <!-- Running: The function generator is currently producing a waveform.
          Function generation is started by sending a SCUbus tag which matches the
          StartTag property of an Enabled function generator. When this property 
-         transitions to true, the Started signal is emitted. When this property 
-         transitions to false, the Stopped signal is emitted.
+         transitions to true, the Started signal is emitted and Enabled is
+         set to false. When this property transitions to false, Flush is run
+         and the Stopped signal is emitted.
       -->
     <property name="Running" type="b" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
@@ -169,6 +172,12 @@
       <arg direction="in" type="ay" name="shift_a"/>
       <arg direction="in" type="ay" name="shift_b"/>
     </method>
+    
+    <!-- Flush: Empty the parameter tuple set.
+         Flush may only be called when the FunctionGenerator is not Enabled
+         and not Running. Flush does not clear the ExecutedParameterCount.
+      -->
+    <method name="Flush"/>
 
   </interface>
 </node>

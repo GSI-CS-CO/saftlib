@@ -21,6 +21,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     
     // iFunctionGenerator overrides
     void AppendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
+    void Flush();
     guint32 getVersion() const;
     unsigned char getSCUbusSlot() const;
     unsigned char getDeviceNumber() const;
