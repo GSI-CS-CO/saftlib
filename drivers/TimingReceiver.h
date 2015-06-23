@@ -16,6 +16,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
       eb_address_t base;
       eb_address_t stream;
       eb_address_t queue;
+      eb_address_t pps;
     };
     typedef TimingReceiver_Service ServiceType;
     
@@ -32,6 +33,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     Glib::ustring NewSoftwareActionSink(const Glib::ustring& name);
     void InjectEvent(guint64 event, guint64 param, guint64 time);
     guint64 getCurrentTime() const;
+    bool getLocked() const;
     std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
     std::map< Glib::ustring, Glib::ustring > getOutputs() const;
     std::map< Glib::ustring, Glib::ustring > getInputs() const;
@@ -50,16 +52,22 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     virtual const Glib::ustring& getObjectPath() const = 0;
     virtual const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const = 0;
     
+    // Polling method
+    bool poll();
+    
   protected:
-    saftlib::Device device;
+    mutable saftlib::Device device;
     Glib::ustring name;
     Glib::ustring etherbonePath;
     eb_address_t base;
     eb_address_t stream;
     eb_address_t queue;
+    eb_address_t pps;
     int sas_count;
     eb_address_t overflow_irq;
     eb_address_t arrival_irq;
+    mutable bool locked;
+    sigc::connection pollConnection;
     int channels;
     int queue_size;
     int table_size;

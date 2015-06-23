@@ -32,6 +32,12 @@
     -->
   <interface name="de.gsi.saftlib.TimingReceiver">
   
+    <!-- Locked: The timing receiver is locked to the timing grandmaster.
+         Upon power-up it takes approximately one minute until the timing
+         receiver has a correct timestamp.
+      -->
+    <property name="Locked" type="b" access="read"/>
+  
     <!-- CurrentTime: The current time in nanoseconds since 1970.
          Due to delays in software, the returned value is probably several
          milliseconds behind the true time.

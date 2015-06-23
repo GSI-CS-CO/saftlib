@@ -23,9 +23,11 @@ TimingReceiver::TimingReceiver(ConstructorType args)
    base(args.base),
    stream(args.stream),
    queue(args.queue),
+   pps(args.pps),
    sas_count(0),
    overflow_irq(device.request_irq(sigc::mem_fun(*this, &TimingReceiver::overflow_handler))),
-   arrival_irq (device.request_irq(sigc::mem_fun(*this, &TimingReceiver::arrival_handler)))
+   arrival_irq (device.request_irq(sigc::mem_fun(*this, &TimingReceiver::arrival_handler))),
+   locked(false)
 {
   eb_data_t name[64];
   eb_data_t sizes, queued, id;
@@ -82,10 +84,17 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   
   // enable interrupts and actions
   device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_DISABLE<<8 | ECA_CTL_INT_ENABLE);
+  
+  // update locked status
+  getLocked();
+
+  // poll every 1s some registers
+  pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
 }
 
 TimingReceiver::~TimingReceiver()
 {
+  pollConnection.disconnect();
   try { // destructors may not throw
     device.release_irq(overflow_irq);
     device.release_irq(arrival_irq);
@@ -118,6 +127,12 @@ void TimingReceiver::setHandlers(bool enable, eb_address_t arrival, eb_address_t
   cycle.close();
 }
 
+bool TimingReceiver::poll()
+{
+  getLocked();
+  return true;
+}
+
 void TimingReceiver::Remove()
 {
   SAFTd::get()->RemoveDevice(name);
@@ -131,6 +146,24 @@ Glib::ustring TimingReceiver::getEtherbonePath() const
 Glib::ustring TimingReceiver::getName() const
 {
   return name;
+}
+
+#define WR_PPS_GEN_ESCR         0x1c        //External Sync Control Register
+#define WR_PPS_GEN_ESCR_MASK    0x6         //bit 1: PPS valid, bit 2: TS valid
+
+bool TimingReceiver::getLocked() const
+{
+  eb_data_t data;
+  device.read(pps + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+  bool newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
+  
+  /* Update signal */
+  if (newLocked != locked) {
+    locked = newLocked;
+    Locked(locked);
+  }
+  
+  return newLocked;
 }
 
 void TimingReceiver::do_remove(Glib::ustring name)
@@ -198,6 +231,9 @@ void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
 
 guint64 TimingReceiver::getCurrentTime() const
 {
+  if (!locked)
+    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "TimingReceiver is not Locked");
+
   etherbone::Cycle cycle;
   eb_data_t time1, time0;
   cycle.open(device);
@@ -561,14 +597,15 @@ void TimingReceiver::probe(OpenDevice& od)
 {
   // !!! check board ID
   
-  std::vector<sdb_device> ecas, queues, streams, scubus;
+  std::vector<sdb_device> ecas, queues, streams, scubus, pps;
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECA_DEVICE_ID,  ecas);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAQ_DEVICE_ID, queues);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAE_DEVICE_ID, streams);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, 0x9602eb6f, scubus);
+  od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
   
   // only support super basic hardware for now
-  if (ecas.size() != 1 || queues.size() != 1 || streams.size() != 1)
+  if (ecas.size() != 1 || queues.size() != 1 || streams.size() != 1 || pps.size() != 1)
     return;
   
   TimingReceiver::ConstructorType args = { 
@@ -577,7 +614,8 @@ void TimingReceiver::probe(OpenDevice& od)
     od.etherbonePath, 
     ecas[0].sdb_component.addr_first,
     streams[0].sdb_component.addr_first,
-    queues[0].sdb_component.addr_first
+    queues[0].sdb_component.addr_first,
+    pps[0].sdb_component.addr_first,
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;

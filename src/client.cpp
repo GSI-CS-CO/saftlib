@@ -10,6 +10,15 @@ static guint64 mask(int i) {
   return i ? (((guint64)-1) << (64-i)) : 0;
 }
 
+void on_locked(bool locked)
+{
+  if (locked) {
+    std::cout << "WR Locked!" << std::endl;
+  } else {
+    std::cout << "WR Lost Lock!" << std::endl;
+  }
+}
+
 void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool late, bool delayed, bool conflict)
 {
   std::cout << "Saw a timing event!" << std::endl;
@@ -63,6 +72,9 @@ int main(int, char**)
     // of references reaches zero, the proxy object is automatically freed.
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices["baseboard"]);
     
+    // Monitor the WR lock status
+    receiver->Locked.connect(sigc::ptr_fun(&on_locked));
+
     // Direct saftd to create a new SoftwareActionSink for this program.
     // The name is "", so one is chosen automatically that does not conflict.
     // The returned object (a SoftwareActionSink) implements these interfaces:
@@ -102,7 +114,7 @@ int main(int, char**)
     
     // Call on_action whenever the condition above matches incoming events.
     condition->Action.connect(sigc::ptr_fun(&on_action));
-
+    
     // Run the Glib event loop
     // Inside callbacks you can still run all the methods like we did above
     std::cout << "Waiting for timing events" << std::endl;
