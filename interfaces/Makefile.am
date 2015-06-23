@@ -1,5 +1,6 @@
 NODES =				\
 	SAFTd.xml		\
+	FunctionGenerator.xml	\
 	Inoutput.xml		\
 	Input.xml		\
 	MILbusActionSink.xml	\
@@ -30,6 +31,7 @@ lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib
 nodist_saftlib_HEADERS = 	\
 	SAFTd.h			\
+	FunctionGenerator.h	\
 	iActionSink.h		\
 	iCondition.h		\
 	iDevice.h		\
@@ -40,6 +42,7 @@ nodist_saftlib_HEADERS = 	\
 	iMILbusCondition.h	\
 	Inoutput.h		\
 	Input.h			\
+	iFunctionGenerator.h	\
 	iOutputActionSink.h	\
 	iOutputCondition.h	\
 	iOwned.h		\
@@ -65,6 +68,7 @@ doc_DATA = 			\
 	Device.pdf		\
 	SAFTd.pdf		\
 	EventSource.pdf		\
+	FunctionGenerator.pdf	\
 	InputEventSource.pdf	\
 	MILbusActionSink.pdf	\
 	MILbusCondition.pdf	\
@@ -82,11 +86,13 @@ libsaftlib_la_LIBADD = $(GIOMM_LIBS)
 libsaftlib_la_LDFLAGS = -version-info 2:1:0
 nodist_libsaftlib_la_SOURCES =	\
 	SAFTd.cpp		\
+	FunctionGenerator.cpp	\
 	iActionSink.cpp		\
 	iCondition.cpp		\
 	iDevice.cpp		\
 	iSAFTd.cpp		\
 	iEventSource.cpp	\
+	iFunctionGenerator.cpp	\
 	iInputEventSource.cpp	\
 	iMILbusActionSink.cpp	\
 	iMILbusCondition.cpp	\

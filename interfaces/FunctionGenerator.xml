@@ -1,0 +1,174 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="FunctionGenerator">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  
+  <!-- Include base interfaces -->
+  <xi:include href="Owned.xml"/>
+  
+  <!-- de.gsi.saftlib.FunctionGenerator:
+      @short_description: Function Generator for creating timing triggered waveforms
+
+      The function generator creates a waveform from a piecewise continuous sequence of
+      second order polynomials. These polynomials are specified using a fixed-width 
+      "parameter tuple" format. Once triggered, the function generator outputs samples
+      created from each tupled polynomial until it exhausts the specified piecewise
+      width of the polynomial, whereupon it begins outputting samples from the next
+      tupled polynomial.
+
+      The general work-flow to use the FunctionGenerator is to append sets of tuples
+      describing the waveform using the AppendParameterSet function. Then, select a
+      SCUbus timing tag (StartTag) whose appearance should trigger waveform generation.
+      Finally, the FunctionGenerator is armed by setting Enable, whereafter it may be
+      triggered manually via the SCUbusActionSink->InjectTag method, or by a timing
+      event sent by the data master.
+
+      If you need an unending waveform, follow the steps above, but additionally monitor 
+      the AboveSafeFillLevel signal, and append additional parameter tuples when 
+      AboveSafeFillLevel transitions to false.
+   -->
+  <interface name="de.gsi.saftlib.FunctionGenerator">
+    
+    <!-- Version: Version of the hardware macro -->
+    <property name="Version"      type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- SCUbusSlot: Slot number of the slave card -->
+    <property name="SCUbusSlot"   type="y" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- DeviceNumber: number of the hardware macro inside of the slave card -->
+    <property name="DeviceNumber" type="y" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- Enabled: Function generator begins execution when StartTag is received.
+         By default, a function generator does nothing. When Enabled is true,
+         if an SCUbus tag matching the StartTag property is sent, the function 
+         generator will begin generating the output waveform. A function generator
+         can only be Enabled if FillLevel is non-zero.
+    -->
+    <property name="Enabled" type="b" access="readwrite"/>
+
+    <!-- StartTag: The SCUbus tag which causes the function generation to begin.
+         If the function generator is Enabled and this tag is sent to the SCUbus, 
+         then the function generator will begin generating the output waveform.
+      -->
+    <property name="StartTag" type="u" access="readwrite"/>
+
+    <!-- Running: The function generator is currently producing a waveform.
+         Function generation is started by sending a SCUbus tag which matches the
+         StartTag property of an Enabled function generator. When this property 
+         transitions to true, the Started signal is emitted. When this property 
+         transitions to false, the Stopped signal is emitted.
+      -->
+    <property name="Running" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+
+    <!-- Started: Function generation has begun.
+         @time:   Time when function generation began in nanoseconds since 1970
+         This signal notifies software when function generation has begun,
+         possibly to update a GUI or other user-facing status information.
+      -->
+    <signal name="Started">
+      <arg name="time" type="t"/>
+    </signal>
+
+    <!-- Stopped:                   Function generation has ended.
+         @time:                     Time when function generation ended in nanoseconds since 1970
+         @hardwareMacroUnderflow:   A fatal error, indicating the SCUbus is congested
+         @microControllerUnderflow: A fatal error, indicating the host CPU is overloaded
+
+         The function generator stops either successfully (when all data has been sent), or 
+         it stops due to an error. When an error occurs, the function generator stops and 
+         holds its most recent value. This can occur due to two causes:
+
+         hardwareMacroUnderflow, a fatal error indicating the hardware ran out of data.
+         If the SCUbus is too busy, it can happen that the waveform data stored in the 
+         function generator HDL is not refilled in time. This error can only be mitigated 
+         by ensuring that the function generator does not share the SCUbus with other users.
+
+         microControllerUnderflow, a fatal error indicating the microcontroller ran out of data.
+         If the host CPU running this software is too busy, it can happen that the waveform
+         data is not delivered to the microcontroller before the microcontroller runs out of data.
+         This error can be mitigated by reducing the number of busy processes running on the system.
+
+         Once the function generator has stopped, ExecutedParameterCount remains valid until the
+         next time the function generator starts. After stopping, regardless of if the generation
+         was successful or not, the parameter FIFO is cleared, Enabled is false, and this signal emitted.
+      -->
+    <signal name="Stopped">
+      <arg name="time"                     type="t"/>
+      <arg name="hardwareMacroUnderflow"   type="b"/>
+      <arg name="microControllerUnderflow" type="b"/>
+    </signal>
+
+    <!-- FillLevel: Remaining waveform data in nanoseconds 
+         The SAFTd has sufficient parameters buffered to supply the function generator with 
+         data for the specified time in nanoseconds. Note, due to the slow nature of software,
+         if the function generator is currently running, the read value will already be 
+         out-of-date upon return. This property should be used for informational use only.
+      -->
+    <property name="FillLevel" type="t" access="read">
+       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+    </property>
+
+    <!-- SafeFillLevel: FillLevel should remain above this value (ns)
+         In order to guarantee an uninterrupted supply of data to the function generator,
+         there should be enough parameter data buffered in the SAFTd to last at least as 
+         long as this parameter (by default 100ms). This setting also affects the 
+         AboveSafeFillLevel property, which is used to indicate that waveform data should
+         be refilled.
+      -->
+    <property name="SafeFillLevel" type="t" access="readwrite"/>
+
+    <!-- AboveSafeFillLevel: Is FillLevel above SafeFillLevel
+         When this changes to false, consider refilling the buffer with AppendParameterSet.
+      -->
+    <property name="AboveSafeFillLevel" type="b" access="read"/>
+
+    <!-- OutputWindowSize: Number of bits output by the function generator -->
+    <property name="OutputWindowSize" type="y" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- ExecutedParameterCount: Number of parameter tuples executed by hardware.
+         This counts the total number of parameter tuples executed since the last
+         Started signal. Obviously, if the function generator is running, the returned
+         value will be old.
+      -->
+    <property name="ExecutedParameterCount" type="q" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+
+    <!-- AppendParameterSet: Append parameter tuples describing waveform to generate.
+         @coeff_a: Quadratic coefficient (a), 16-bit signed
+         @coeff_b: Linear coefficient (b),    16-bit signed
+         @coeff_c: Constant coefficient (c),  32-bit signed
+         @step:    Number of interpolated samples (0=250, 1=500, 2=1000, 3=2000, 4=4000, 5=8000, 6=16000, or 7=32000)
+         @freq:    Output sample frequency (0=16kHz, 1=32kHz, 2=64kHz, 3=125kHz, 4=250kHz, 5=500kHz, 6=1MHz, or 7=2MHz)
+         @shift_a: Exponent of coeff_a, 6-bit unsigned; a = coeff_a*2^shift_a
+         @shift_b: Exponent of coeff_b, 6-bit unsigned; b = coeff_b*2^shift_b
+
+         This function appends the parameter vectors (which must be equal in length)
+         to the FIFO of remaining waveform to generate. Each parameter set (coefficients)
+         describes a number of output samples in the generated wave form. Parameter
+         sets are executed in order until no more remain.
+
+         At each step, the function generator outputs high_bits(c*2^32 + b*t + c*t*t),
+         where t ranges from 0 to numSteps-1. high_bits are the high OutputWindowSize
+         bits of the resulting 64-bit signed value.
+      -->
+    <method name="AppendParameterSet">
+      <arg direction="in" type="an" name="coeff_a"/>
+      <arg direction="in" type="an" name="coeff_b"/>
+      <arg direction="in" type="ai" name="coeff_c"/>
+      <arg direction="in" type="ay" name="step"/>
+      <arg direction="in" type="ay" name="freq"/>
+      <arg direction="in" type="ay" name="shift_a"/>
+      <arg direction="in" type="ay" name="shift_b"/>
+    </method>
+
+  </interface>
+</node>
