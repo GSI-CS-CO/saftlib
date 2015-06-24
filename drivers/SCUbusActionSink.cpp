@@ -3,11 +3,12 @@
 #include "RegisteredObject.h"
 #include "SCUbusActionSink.h"
 #include "SCUbusCondition.h"
+#include "TimingReceiver.h"
 
 namespace saftlib {
 
 SCUbusActionSink::SCUbusActionSink(ConstructorType args)
- : ActionSink(args.dev, args.channel)
+ : ActionSink(args.dev, args.channel), scubus(args.scubus)
 {
 }
 
@@ -25,7 +26,13 @@ Glib::ustring SCUbusActionSink::NewCondition(bool active, guint64 id, guint64 ma
 void SCUbusActionSink::InjectTag(guint32 tag)
 {
   ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  etherbone::Cycle cycle;
+  cycle.open(dev->getDevice());
+#define SCUB_SOFTWARE_TAG_LO 0x20
+#define SCUB_SOFTWARE_TAG_HI 0x24
+  cycle.write(scubus + SCUB_SOFTWARE_TAG_LO, EB_DATA16, tag & 0xFFFF);
+  cycle.write(scubus + SCUB_SOFTWARE_TAG_HI, EB_DATA16, (tag >> 16) & 0xFFFF);
+  cycle.close();
 }
 
 Glib::RefPtr<SCUbusActionSink> SCUbusActionSink::create(Glib::ustring& objectPath, ConstructorType args)

@@ -622,7 +622,7 @@ void TimingReceiver::probe(OpenDevice& od)
   
   if (scubus.size() == 1) {
     // !!! hard-coded to #3
-    SCUbusActionSink::ConstructorType args = { tr.operator->(), 3 };
+    SCUbusActionSink::ConstructorType args = { tr.operator->(), 3, scubus[0].sdb_component.addr_first };
     Glib::ustring path = od.objectPath + "/scubus";
     Glib::RefPtr<ActionSink> actionSink = SCUbusActionSink::create(path, args);
     tr->actionSinks["scubus"] = actionSink;

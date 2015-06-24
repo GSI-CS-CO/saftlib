@@ -13,6 +13,7 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
     struct ConstructorType {
       TimingReceiver* dev;
       int channel;
+      eb_address_t scubus;
     };
     
     static Glib::RefPtr<SCUbusActionSink> create(Glib::ustring& objectPath, ConstructorType args);
@@ -25,6 +26,7 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
     
   protected:
     SCUbusActionSink(ConstructorType args);
+    eb_address_t scubus;
 };
 
 }

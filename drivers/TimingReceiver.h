@@ -55,6 +55,9 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     // Polling method
     bool poll();
     
+    // Allow hardware access to the underlying device
+    Device& getDevice() { return device; }
+    
   protected:
     mutable saftlib::Device device;
     Glib::ustring name;
