@@ -1,7 +1,5 @@
 #define ETHERBONE_THROWS 1
 
-#include <iostream>
-
 #include "RegisteredObject.h"
 #include "FunctionGenerator.h"
 #include "TimingReceiver.h"
@@ -24,7 +22,6 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
   cycle.read(fgb + FGSTAT + 0x4, EB_DATA32, &d_deviceNumber);
   cycle.read(fgb + FGSTAT + 0x8, EB_DATA32, &d_version);
   cycle.close();
-  std::cout << "Info: " << d_scubusSlot << " " << d_deviceNumber << " " << d_version << std::endl;
 
   safeFillLevel = 100000;
   startTag = 0xfeedbabe; // !!! missing hardware

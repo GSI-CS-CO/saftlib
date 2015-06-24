@@ -663,7 +663,6 @@ void TimingReceiver::probe(OpenDevice& od)
       eb_data_t fg_count;
       
       od.device.read(fgb + NUM_FGS_FOUND, EB_DATA32, &fg_count);
-      std::cout << "I found " << fg_count << " function generators" << std::endl;
 
       for (unsigned j = 0; j < fg_count; ++j) {
         std::ostringstream path;
