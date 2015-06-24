@@ -12,7 +12,9 @@
 #include "SCUbusActionSink.h"
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
+#include "FunctionGenerator.h"
 #include "eca_regs.h"
+#include "fg_regs.h"
 
 namespace saftlib {
 
@@ -288,10 +290,17 @@ std::vector< Glib::ustring > TimingReceiver::getGuards() const
 std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiver::getInterfaces() const
 {
   std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > out;
-  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
-  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+  
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink;
+  for (sink i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     out[i->second->getInterfaceName()][i->first] = i->second->getObjectPath();
   }
+  
+  typedef std::map< Glib::ustring, Glib::RefPtr<FunctionGenerator> >::const_iterator gen;
+  for (gen i = generators.begin(); i != generators.end(); ++i) {
+    out["FunctionGenerator"][i->first] = i->second->getObjectPath();
+  }
+  
   return out;
 }
 
@@ -620,12 +629,51 @@ void TimingReceiver::probe(OpenDevice& od)
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
   
+  // Add special SCU hardware
   if (scubus.size() == 1) {
     // !!! hard-coded to #3
     SCUbusActionSink::ConstructorType args = { tr.operator->(), 3, scubus[0].sdb_component.addr_first };
     Glib::ustring path = od.objectPath + "/scubus";
     Glib::RefPtr<ActionSink> actionSink = SCUbusActionSink::create(path, args);
     tr->actionSinks["scubus"] = actionSink;
+    
+    // Probe for function generators
+    eb_address_t fgb;
+    std::vector<sdb_device> fgs;
+    od.device.sdb_find_by_identity(LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, fgs);
+    
+    // Check them all for the function generator
+    unsigned i;
+    for (i = 0; i < fgs.size(); ++i) {
+      eb_data_t magic;
+      fgb = fgs[i].sdb_component.addr_first;
+      od.device.read(fgb + FG_MAGIC_NUMBER, EB_DATA32, &magic);
+      if (magic == 0xdeadbeef) break;
+    }
+    
+    // Did we find a function generator?
+    if (i != fgs.size()) {
+      // !!! hack:
+      eb_address_t swi = 0x20900;
+      eb_data_t fg_count;
+      
+      od.device.read(fgb + NUM_FGS_FOUND, EB_DATA32, &fg_count);
+      std::cout << "I found " << fg_count << " function generators" << std::endl;
+
+      for (unsigned j = 0; j < fg_count; ++j) {
+        std::ostringstream path;
+        path.imbue(std::locale("C"));
+        path << od.objectPath << "/fg_" << j;
+        
+        FunctionGenerator::ConstructorType args = { tr.operator->(), fgb, swi, j };
+        Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
+        
+        path.clear();
+        path << "fg-" << fg->getSCUbusSlot() << "-" << fg->getDeviceNumber();
+        
+        tr->generators[path.str()] = fg;
+      }
+    }
   }
 }
 

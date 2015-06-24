@@ -6,18 +6,20 @@
 
 namespace saftlib {
 
+class TimingReceiver;
+
 class FunctionGenerator : public iFunctionGenerator, public Owned
 {
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      eb_address_t fg;
+      TimingReceiver* dev;
+      eb_address_t fgb;
+      eb_address_t swi;
       int channel;
     };
     
-    static Glib::RefPtr<FunctionGenerator> create(Glib::ustring& objectPath, ConstructorType args);
-    
-    const char *getInterfaceName() const;
+    static Glib::RefPtr<FunctionGenerator> create(const Glib::ustring& objectPath, ConstructorType args);
     
     // iFunctionGenerator overrides
     void AppendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
@@ -47,7 +49,17 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
   protected:
     FunctionGenerator(ConstructorType args);
     
-    bool foo;
+    TimingReceiver* dev;
+    eb_address_t fgb;
+    eb_address_t swi;
+    int channel;
+
+    bool enabled;
+    guint64 safeFillLevel;
+    guint32 startTag;
+    guint32 version;
+    unsigned char scubusSlot;
+    unsigned char deviceNumber;
 };
 
 }

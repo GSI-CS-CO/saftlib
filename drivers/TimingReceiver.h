@@ -3,6 +3,7 @@
 
 #include "OpenDevice.h"
 #include "ActionSink.h"
+#include "FunctionGenerator.h"
 #include "interfaces/TimingReceiver.h"
 
 namespace saftlib {
@@ -69,6 +70,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     int sas_count;
     eb_address_t overflow_irq;
     eb_address_t arrival_irq;
+    eb_address_t generator_irq;
     mutable bool locked;
     sigc::connection pollConnection;
     int channels;
@@ -76,12 +78,14 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     int table_size;
     int aq_channel;
     std::map< Glib::ustring, Glib::RefPtr<ActionSink> > actionSinks;
+    std::map< Glib::ustring, Glib::RefPtr<FunctionGenerator> > generators;
     std::vector<guint64> tag2delay;
     
     void do_remove(Glib::ustring name);
     void setHandlers(bool enable, eb_address_t arrival = 0, eb_address_t overflow = 0);
     void overflow_handler(eb_data_t);
     void arrival_handler(eb_data_t); 
+    void generator_handler(eb_data_t);
   
   friend class ActionSink;
 };
