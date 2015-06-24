@@ -17,6 +17,7 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
 
   // different device, cannot be in same cycle
   dev->getDevice().write(swi + SWI_STATUS, EB_DATA32, channel);
+  Glib::usleep(10000); // ... lol
 
   cycle.open(dev->getDevice());
   cycle.read(fgb + FGSTAT + 0x0, EB_DATA32, &d_scubusSlot);
