@@ -15,7 +15,7 @@ guint16 MILbusCondition::getTag() const
   return getRawTag();
 }
 
-Glib::RefPtr<MILbusCondition> MILbusCondition::create(Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<MILbusCondition> MILbusCondition::create(const Glib::ustring& objectPath, ConstructorType args)
 {
   return RegisteredObject<MILbusCondition>::create(objectPath, args);
 }

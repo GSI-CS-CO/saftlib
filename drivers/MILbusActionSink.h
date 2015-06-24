@@ -15,7 +15,7 @@ class MILbusActionSink : public ActionSink, public iMILbusActionSink
       int channel;
     };
     
-    static Glib::RefPtr<MILbusActionSink> create(Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<MILbusActionSink> create(const Glib::ustring& objectPath, ConstructorType args);
     
     const char *getInterfaceName() const;
     

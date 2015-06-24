@@ -28,7 +28,7 @@ void MILbusActionSink::InjectTag(guint16 tag)
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-Glib::RefPtr<MILbusActionSink> MILbusActionSink::create(Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<MILbusActionSink> MILbusActionSink::create(const Glib::ustring& objectPath, ConstructorType args)
 {
   return RegisteredObject<MILbusActionSink>::create(objectPath, args);
 }

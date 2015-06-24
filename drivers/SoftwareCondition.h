@@ -12,7 +12,7 @@ class SoftwareCondition : public Condition, public iSoftwareCondition
     typedef SoftwareCondition_Service ServiceType;
     typedef Condition_ConstructorType ConstructorType;
     
-    static Glib::RefPtr<SoftwareCondition> create(Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<SoftwareCondition> create(const Glib::ustring& objectPath, ConstructorType args);
     
     // iSoftwareCondition
     // -> Action

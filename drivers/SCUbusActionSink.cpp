@@ -35,7 +35,7 @@ void SCUbusActionSink::InjectTag(guint32 tag)
   cycle.close();
 }
 
-Glib::RefPtr<SCUbusActionSink> SCUbusActionSink::create(Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SCUbusActionSink> SCUbusActionSink::create(const Glib::ustring& objectPath, ConstructorType args)
 {
   return RegisteredObject<SCUbusActionSink>::create(objectPath, args);
 }

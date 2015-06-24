@@ -16,7 +16,7 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
       eb_address_t scubus;
     };
     
-    static Glib::RefPtr<SCUbusActionSink> create(Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<SCUbusActionSink> create(const Glib::ustring& objectPath, ConstructorType args);
     
     const char *getInterfaceName() const;
     

@@ -10,7 +10,7 @@ SoftwareCondition::SoftwareCondition(ConstructorType args)
 {
 }
 
-Glib::RefPtr<SoftwareCondition> SoftwareCondition::create(Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SoftwareCondition> SoftwareCondition::create(const Glib::ustring& objectPath, ConstructorType args)
 {
   return RegisteredObject<SoftwareCondition>::create(objectPath, args);
 }

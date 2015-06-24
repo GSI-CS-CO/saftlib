@@ -56,7 +56,7 @@ class ActionSink : public Owned, public iActionSink
     //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 > Delayed;
 
     // Do the grunt work to create a condition
-    typedef sigc::slot<Glib::RefPtr<Condition>, Glib::ustring&, Condition::Condition_ConstructorType> ConditionConstructor;
+    typedef sigc::slot<Glib::RefPtr<Condition>, const Glib::ustring&, Condition::Condition_ConstructorType> ConditionConstructor;
     Glib::ustring NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, guint32 tag, ConditionConstructor constructor);
 
     // Emit AllConditions, ActiveConditions, InactiveConditions

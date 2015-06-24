@@ -15,7 +15,7 @@ guint32 SCUbusCondition::getTag() const
   return getRawTag();
 }
 
-Glib::RefPtr<SCUbusCondition> SCUbusCondition::create(Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SCUbusCondition> SCUbusCondition::create(const Glib::ustring& objectPath, ConstructorType args)
 {
   return RegisteredObject<SCUbusCondition>::create(objectPath, args);
 }

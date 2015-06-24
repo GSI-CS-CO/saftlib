@@ -16,7 +16,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
       sigc::slot<void> destroy;
     };
     
-    static Glib::RefPtr<SoftwareActionSink> create(Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<SoftwareActionSink> create(const Glib::ustring& objectPath, ConstructorType args);
     
     const char *getInterfaceName() const;
     

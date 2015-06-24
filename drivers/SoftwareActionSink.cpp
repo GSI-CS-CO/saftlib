@@ -26,7 +26,7 @@ Glib::ustring SoftwareActionSink::NewCondition(bool active, guint64 id, guint64 
     sigc::ptr_fun(&SoftwareCondition::create));
 }
 
-Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const Glib::ustring& objectPath, ConstructorType args)
 {
   return RegisteredObject<SoftwareActionSink>::create(objectPath, args);
 }
