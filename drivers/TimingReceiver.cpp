@@ -667,11 +667,11 @@ void TimingReceiver::probe(OpenDevice& od)
         
         FunctionGenerator::ConstructorType args = { tr.operator->(), fgb, swi, j };
         Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
+
+        std::ostringstream name;
+        name << "fg-" << (int)fg->getSCUbusSlot() << "-" << (int)fg->getDeviceNumber();
         
-        path.clear();
-        path << "fg-" << fg->getSCUbusSlot() << "-" << fg->getDeviceNumber();
-        
-        tr->generators[path.str()] = fg;
+        tr->generators[name.str()] = fg;
       }
     }
   }

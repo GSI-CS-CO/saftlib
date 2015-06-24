@@ -213,6 +213,7 @@ int main(int argc, char** argv)
       std::cerr << "Available function generators:" << std::endl;
       for (map<Glib::ustring, Glib::ustring>::iterator i = fgs.begin(); i != fgs.end(); ++i)
         std::cerr << "  " << i->first << std::endl;
+      return 1;
     }
     
     // Ok! Find all the devices is now out of the way. Let's get some work done.
