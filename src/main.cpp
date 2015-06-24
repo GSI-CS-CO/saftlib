@@ -61,7 +61,7 @@ static const bool SET_TERMINATE = std::set_terminate(my_terminate);
 void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   try {
-    saftlib::SAFTd::get()->setConnection(connection);
+    saftlib::SAFTd::get().setConnection(connection);
   } catch (...) {
     print_backtrace("Could not setConnection");
   }
@@ -82,7 +82,7 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
     std::string path = command.substr(pos+1, std::string::npos);
     
     try {
-      saftlib::SAFTd::get()->AttachDevice(name, path);
+      saftlib::SAFTd::get().AttachDevice(name, path);
     } catch (...) {
       print_backtrace(("Attaching " + name + "(" + path + ")").c_str());
       throw;
@@ -96,12 +96,12 @@ void on_name_lost(const Glib::RefPtr<Gio::DBus::Connection>& connection, const G
 {
   // Something else claimed the saftlib name
   std::cerr << "Unable to acquire name---dbus saftlib.conf installed?" << std::endl;
-  saftlib::SAFTd::get()->loop()->quit();
+  saftlib::SAFTd::get().loop()->quit();
 }
 
 void on_sigint(int)
 {
-  saftlib::SAFTd::get()->loop()->quit();
+  saftlib::SAFTd::get().loop()->quit();
 }
 
 int main(int argc, char** argv)
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
   signal(SIGQUIT, &on_sigint);
   
   // Run the main event loop
-  saftlib::SAFTd::get()->loop()->run();
+  saftlib::SAFTd::get().loop()->run();
   
   // Cleanup
   Gio::DBus::unown_name(id);

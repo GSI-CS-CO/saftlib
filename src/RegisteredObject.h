@@ -38,7 +38,7 @@ template <typename T>
 RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path, typename T::ConstructorType args)
  : T(args), service(this, sigc::mem_fun(this, &RegisteredObject<T>::rethrow)), path(object_path)
 {
-  service.register_self(SAFTd::get()->connection(), object_path);
+  service.register_self(SAFTd::get().connection(), object_path);
 }
 
 template <typename T>

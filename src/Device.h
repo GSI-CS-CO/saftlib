@@ -18,6 +18,11 @@ class Device : public etherbone::Device {
     
   private:
     eb_address_t low, high;
+    
+    typedef std::map<eb_address_t, sigc::slot<void, eb_data_t> > irqMap;
+    static irqMap irqs;
+
+  friend class IRQ_Handler;
 };
 
 }

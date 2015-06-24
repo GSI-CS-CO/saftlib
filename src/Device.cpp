@@ -26,10 +26,6 @@ Device::Device(etherbone::Device d)
   }
 }
 
-// Must use IRQs that are globally unique
-typedef std::map<eb_address_t, sigc::slot<void, eb_data_t> > irq_map;
-static irq_map irqs;
-
 eb_address_t Device::request_irq(const sigc::slot<void,eb_data_t>& slot)
 {
   eb_address_t irq;
@@ -58,11 +54,11 @@ void Device::release_irq(eb_address_t irq)
   irqs.erase(irq);
 }
 
-static struct IRQ_Handler : public etherbone::Handler
+struct IRQ_Handler : public etherbone::Handler
 {
   eb_status_t read (eb_address_t address, eb_width_t width, eb_data_t* data);
   eb_status_t write(eb_address_t address, eb_width_t width, eb_data_t data);
-} handler;
+};
 
 eb_status_t IRQ_Handler::read(eb_address_t address, eb_width_t width, eb_data_t* data)
 {
@@ -72,16 +68,18 @@ eb_status_t IRQ_Handler::read(eb_address_t address, eb_width_t width, eb_data_t*
 
 eb_status_t IRQ_Handler::write(eb_address_t address, eb_width_t width, eb_data_t data)
 {
-  irq_map::iterator i = irqs.find(address);
-  if (i != irqs.end()) {
+  Device::irqMap::iterator i = Device::irqs.find(address);
+  if (i != Device::irqs.end()) {
     i->second(data);
   }
   return EB_OK;
 }
 
-struct sdb_device everything;
 void Device::hook_it_all(etherbone::Socket socket)
 {
+  static sdb_device everything;
+  static IRQ_Handler handler;
+  
   everything.abi_class     = 0;
   everything.abi_ver_major = 0;
   everything.abi_ver_minor = 0;

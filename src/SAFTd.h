@@ -6,10 +6,10 @@
 
 namespace saftlib {
 
-class SAFTd : public iSAFTd, public Glib::Object
+class SAFTd : public iSAFTd
 {
   public:
-    static const Glib::RefPtr<SAFTd>& get();
+    static SAFTd& get() { return saftd; }
     ~SAFTd();
     
     void setConnection(const Glib::RefPtr<Gio::DBus::Connection>& connection);
@@ -32,6 +32,8 @@ class SAFTd : public iSAFTd, public Glib::Object
     sigc::connection eb_source;
     
     std::map< Glib::ustring, OpenDevice > devs;
+
+    static SAFTd saftd;
 };
 
 } // saftlib

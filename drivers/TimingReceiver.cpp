@@ -137,7 +137,7 @@ bool TimingReceiver::poll()
 
 void TimingReceiver::Remove()
 {
-  SAFTd::get()->RemoveDevice(name);
+  SAFTd::get().RemoveDevice(name);
 }
 
 Glib::ustring TimingReceiver::getEtherbonePath() const

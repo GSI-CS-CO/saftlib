@@ -17,6 +17,7 @@ saftd_SOURCES = \
 	src/SAFTd.cpp			src/SAFTd.h			\
 	src/RegisteredObject.cpp	src/RegisteredObject.h		\
 	src/eb-source.cpp		src/eb-source.h			\
+	drivers/eca_regs.h		drivers/fg_regs.h		\
 	drivers/Owned.cpp		drivers/Owned.h			\
 	drivers/Condition.cpp		drivers/Condition.h		\
 	drivers/SoftwareCondition.cpp	drivers/SoftwareCondition.h	\
@@ -28,7 +29,7 @@ saftd_SOURCES = \
 	drivers/MILbusActionSink.cpp	drivers/MILbusActionSink.h	\
 	drivers/FunctionGenerator.cpp	drivers/FunctionGenerator.h	\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
-	src/main.cpp			drivers/eca_regs.h
+	src/globals.cpp			src/main.cpp
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
 saftd_LDFLAGS = -rdynamic # needed for stack trace
 

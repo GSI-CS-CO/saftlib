@@ -58,15 +58,6 @@ SAFTd::~SAFTd()
   std::cout << "Clean shutdown" << std::endl;
 }
 
-// Note: the destructor for top will run on program termination => ~SAFTd
-static Glib::RefPtr<SAFTd> top;
-
-const Glib::RefPtr<SAFTd>& SAFTd::get()
-{
-  if (!top) top = Glib::RefPtr<SAFTd>(new SAFTd);
-  return top;
-}
-
 void SAFTd::Quit()
 {
   m_loop->quit();
