@@ -96,8 +96,13 @@ TimingReceiver::TimingReceiver(ConstructorType args)
 
 TimingReceiver::~TimingReceiver()
 {
-  pollConnection.disconnect();
   try { // destructors may not throw
+    pollConnection.disconnect();
+    
+    // destroy children before unhooking irqs/etc
+    actionSinks.clear();
+    generators.clear();
+    
     device.release_irq(overflow_irq);
     device.release_irq(arrival_irq);
     setHandlers(false);
