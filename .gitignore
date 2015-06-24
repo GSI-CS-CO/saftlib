@@ -2,6 +2,7 @@
 saftd
 client
 dm-snoop
+fg-ctl
 # Automake junk dirs
 tools
 m4
