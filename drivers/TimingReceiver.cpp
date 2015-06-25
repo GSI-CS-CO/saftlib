@@ -642,34 +642,48 @@ void TimingReceiver::probe(OpenDevice& od)
     Glib::RefPtr<ActionSink> actionSink = SCUbusActionSink::create(path, args);
     tr->actionSinks["scubus"] = actionSink;
     
-    // Probe for function generators
+    // Probe for LM32 block memories
     eb_address_t fgb;
     std::vector<sdb_device> fgs;
     od.device.sdb_find_by_identity(LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, fgs);
     
-    // Check them all for the function generator
+    // Check them all for the function generator microcontroller
     unsigned i;
     for (i = 0; i < fgs.size(); ++i) {
-      eb_data_t magic;
+      eb_data_t magic, version;
       fgb = fgs[i].sdb_component.addr_first;
-      od.device.read(fgb + FG_MAGIC_NUMBER, EB_DATA32, &magic);
-      if (magic == 0xdeadbeef) break;
+      
+      etherbone::Cycle cycle;
+      cycle.open(od.device);
+      cycle.read(fgb + SHM_BASE + FG_MAGIC_NUMBER, EB_DATA32, &magic);
+      cycle.read(fgb + SHM_BASE + FG_VERSION,      EB_DATA32, &version);
+      cycle.close();
+      if (magic == 0xdeadbeef && version == 2) break;
     }
     
     // Did we find a function generator?
     if (i != fgs.size()) {
       // !!! hack:
       eb_address_t swi = 0x20900;
-      eb_data_t fg_count;
+      eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
       
-      od.device.read(fgb + NUM_FGS_FOUND, EB_DATA32, &fg_count);
+      // Probe the configuration and hardware macros
+      etherbone::Cycle cycle;
+      cycle.open(od.device);
+      cycle.read(fgb + SHM_BASE + FG_NUM_CHANNELS, EB_DATA32, &num_channels);
+      cycle.read(fgb + SHM_BASE + FG_BUFFER_SIZE,  EB_DATA32, &buffer_size);
+      for (unsigned j = 0; j < FG_MACROS_SIZE; ++j)
+        cycle.read(fgb + SHM_BASE + FG_MACROS + j*4, EB_DATA32, &macros[j]);
+      cycle.close();
 
-      for (unsigned j = 0; j < fg_count; ++j) {
+      for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
+        if (!macros[j]) continue; // no hardware
+        
         std::ostringstream path;
         path.imbue(std::locale("C"));
         path << od.objectPath << "/fg_" << j;
         
-        FunctionGenerator::ConstructorType args = { tr.operator->(), fgb, swi, j };
+        FunctionGenerator::ConstructorType args = { tr.operator->(), fgb, swi, num_channels, buffer_size, j, macros[j] };
         Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
 
         std::ostringstream name;

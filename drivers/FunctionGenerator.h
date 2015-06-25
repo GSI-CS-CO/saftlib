@@ -1,6 +1,8 @@
 #ifndef FUNCTION_GENERATOR_H
 #define FUNCTION_GENERATOR_H
 
+#include <deque>
+
 #include "interfaces/FunctionGenerator.h"
 #include "Owned.h"
 
@@ -16,7 +18,10 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
       TimingReceiver* dev;
       eb_address_t fgb;
       eb_address_t swi;
-      int channel;
+      unsigned num_channels;
+      unsigned buffer_size;
+      int index;
+      guint32 macro;
     };
     
     static Glib::RefPtr<FunctionGenerator> create(const Glib::ustring& objectPath, ConstructorType args);
@@ -40,26 +45,55 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     void setSafeFillLevel(guint64 val);
     
     // sigc::signal< void, bool > Enabled;
-    // sigc::signal< void, guint32 > StartTag;
-    // sigc::signal< void, guint64 > SafeFillLevel;
     // sigc::signal< void, bool > AboveSafeFillLevel;
     // sigc::signal< void , guint64 > Started;
     // sigc::signal< void , guint64 , bool , bool > Stopped;
     
   protected:
     FunctionGenerator(ConstructorType args);
+    ~FunctionGenerator();
+    void updateAboveSafeFillLevel();
+    void irq_handler(eb_data_t status);
+    void refill();
+    void releaseChannel();
+    int acquireChannel();
     
     TimingReceiver* dev;
-    eb_address_t fgb;
+    eb_address_t shm;
     eb_address_t swi;
-    int channel;
-
-    bool enabled;
-    guint64 safeFillLevel;
-    guint32 startTag;
-    guint32 version;
+    unsigned num_channels;
+    unsigned buffer_size;
+    int index;
     unsigned char scubusSlot;
     unsigned char deviceNumber;
+    unsigned char version;
+    unsigned char outputWindowSize;
+    eb_address_t irq;
+
+    int channel; // -1 if no channel assigned
+    bool enabled;
+    bool running;
+    guint32 startTag;
+    unsigned executedParameterCount;
+    
+    struct ParameterTuple {
+      gint16 coeff_a;
+      gint16 coeff_b;
+      gint32 coeff_c;
+      guint8 step;
+      guint8 freq;
+      guint8 shift_a;
+      guint8 shift_b;
+      
+      guint64 duration() const;
+    };
+    
+    // These 4 variables must be kept in sync:
+    bool aboveSafeFillLevel;
+    guint64 safeFillLevel;
+    guint64 fillLevel;
+    unsigned filled; // # of fifo entries currently on LM32
+    std::deque<ParameterTuple> fifo;
 };
 
 }

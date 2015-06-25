@@ -48,13 +48,17 @@
          function generator will begin generating the output waveform.  
          A function generator can only be Enabled if FillLevel is non-zero. 
          A Running function generator can never be Enabled. Immediately
-         after a function generator is Started, it is disabled. 
+         after a function generator is Started, it is disabled. Setting
+         Enabled to false by hand is dangerous. If StartTag is received at
+         the same time, the FunctionGenerator can enter an undefined state.
+         It is the caller's responsibility to ensure this does not happen.
     -->
     <property name="Enabled" type="b" access="readwrite"/>
 
     <!-- StartTag: The SCUbus tag which causes the function generation to begin.
          If the function generator is Enabled and this tag is sent to the SCUbus, 
          then the function generator will begin generating the output waveform.
+         StartTag may only be set when the FunctionGenerator is not Enabled.
       -->
     <property name="StartTag" type="u" access="readwrite"/>
 
@@ -122,7 +126,7 @@
          there should be enough parameter data buffered in the SAFTd to last at least as 
          long as this parameter (by default 100ms). This setting also affects the 
          AboveSafeFillLevel property, which is used to indicate that waveform data should
-         be refilled.
+         be refilled. Values below 1ms are forbidden.
       -->
     <property name="SafeFillLevel" type="t" access="readwrite"/>
 
