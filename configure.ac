@@ -34,8 +34,8 @@ AC_CACHE_CHECK([for operating system], [ac_cv_OPERATING_SYSTEM],
    ac_cv_OPERATING_SYSTEM="${os#\"}"])
 
 AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OPERATING_SYSTEM"], [The operating system of the build system])
-AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:=unknown}"], [The hostname of the build system])
-AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:=unknown}"], [The username of the person compiling saftlib])
+AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the build system])
+AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
 
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 0.1])
