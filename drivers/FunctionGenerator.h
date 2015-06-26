@@ -10,12 +10,19 @@ namespace saftlib {
 
 class TimingReceiver;
 
+class FunctionGeneratorChannelAllocation : public Glib::Object
+{
+  public:
+    std::vector<int> indexes;
+};
+
 class FunctionGenerator : public iFunctionGenerator, public Owned
 {
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
       TimingReceiver* dev;
+      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
       eb_address_t fgb;
       eb_address_t swi;
       unsigned num_channels;
@@ -59,6 +66,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     int acquireChannel();
     
     TimingReceiver* dev;
+    Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
     eb_address_t shm;
     eb_address_t swi;
     unsigned num_channels;

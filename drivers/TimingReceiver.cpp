@@ -675,7 +675,32 @@ void TimingReceiver::probe(OpenDevice& od)
       for (unsigned j = 0; j < FG_MACROS_SIZE; ++j)
         cycle.read(fgb + SHM_BASE + FG_MACROS + j*4, EB_DATA32, &macros[j]);
       cycle.close();
-
+      
+      // Create an allocation buffer
+      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation(
+        new FunctionGeneratorChannelAllocation);
+      allocation->indexes.resize(num_channels, -1);
+      
+      // Clear IRQ and index for all macros
+      cycle.open(od.device);
+      for (unsigned j = 0; j < num_channels; ++j) {
+        eb_address_t regs = fgb + SHM_BASE + FG_REGS_BASE(j, num_channels);
+        cycle.write(regs + FG_IRQ,        EB_DATA32, 0);
+        cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, (guint32)-1);
+        cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
+        cycle.write(regs + FG_TAG,        EB_DATA32, 0);
+      }
+      cycle.close();
+      
+      // Disable and flush all hardware macros
+      cycle.open(od.device);
+      for (unsigned j = 0; j < num_channels; ++j) {
+        cycle.write(swi + SWI_DISABLE, EB_DATA32, j);
+        cycle.write(swi + SWI_FLUSH,   EB_DATA32, j);
+      }
+      cycle.close();
+      
+      // Create the objects to control the channels
       for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
         if (!macros[j]) continue; // no hardware
         
@@ -683,7 +708,7 @@ void TimingReceiver::probe(OpenDevice& od)
         path.imbue(std::locale("C"));
         path << od.objectPath << "/fg_" << j;
         
-        FunctionGenerator::ConstructorType args = { tr.operator->(), fgb, swi, num_channels, buffer_size, j, macros[j] };
+        FunctionGenerator::ConstructorType args = { tr.operator->(), allocation, fgb, swi, num_channels, buffer_size, j, macros[j] };
         Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
 
         std::ostringstream name;

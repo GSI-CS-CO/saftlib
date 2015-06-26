@@ -10,7 +10,7 @@
 namespace saftlib {
 
 FunctionGenerator::FunctionGenerator(ConstructorType args)
- : dev(args.dev), shm(args.fgb + SHM_BASE), swi(args.swi), 
+ : dev(args.dev), allocation(args.allocation), shm(args.fgb + SHM_BASE), swi(args.swi), 
    num_channels(args.num_channels), buffer_size(args.buffer_size), index(args.index),
    scubusSlot      ((args.macro >> 24) & 0xFF),
    deviceNumber    ((args.macro >> 16) & 0xFF),
@@ -286,8 +286,20 @@ guint16 FunctionGenerator::getExecutedParameterCount() const
 int FunctionGenerator::acquireChannel()
 {
   assert (channel == -1);
-  // !!! acquire channel, throw if can't
-  channel = 0;
+  
+  unsigned i;
+  for (i = 0; i < allocation->indexes.size(); ++i)
+    if (allocation->indexes[i] == -1) break;
+  
+  if (i == allocation->indexes.size()) {
+    std::ostringstream str;
+    str.imbue(std::locale("C"));
+    str << "All " << allocation->indexes.size() << " microcontroller channels are in use";
+    throw Gio::DBus::Error(Gio::DBus::Error::FAILED, str.str());
+  }
+  
+  allocation->indexes[i] = index;
+  channel = i;
 }
 
 void FunctionGenerator::releaseChannel()
@@ -302,6 +314,7 @@ void FunctionGenerator::releaseChannel()
   eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
   dev->getDevice().write(regs + FG_IRQ, EB_DATA32, 0);
   
+  allocation->indexes[channel] = -1;
   channel = -1;
   filled = 0;
 }
