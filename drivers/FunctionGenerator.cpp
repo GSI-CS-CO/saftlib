@@ -112,11 +112,14 @@ void FunctionGenerator::irq_handler(eb_data_t status)
 {
   assert (channel != -1);
   
+  // !!! imprecise; should be timestamped by the hardware
+  guint64 time = dev->getCurrentTime();
+  
   if (status == IRQ_DAT_REFILL) {
     refill();
   } else if (status == IRQ_DAT_START) {
     running = true;
-    Started(-1);
+    Started(time);
     enabled = false; // hardware just flipped this itself
     Enabled(enabled);
   } else { // stopped?
@@ -128,7 +131,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     fillLevel = 0;
     fifo.clear();
     releaseChannel();
-    Stopped(-1, hardwareMacroUnderflow, microControllerUnderflow);
+    Stopped(time, hardwareMacroUnderflow, microControllerUnderflow);
     updateAboveSafeFillLevel();
   }
 }
