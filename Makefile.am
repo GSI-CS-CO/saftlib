@@ -10,13 +10,17 @@ dist_dbussystem_DATA = saftlib.conf
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)
 
-saftd_SOURCES = \
+BUILT_SOURCES = version.h
+.PHONY: version.h # causes build.cpp to be rebuilt every run
+
+saftd_SOURCES = version.h \
 	src/Device.cpp			src/Device.h			\
 	src/OpenDevice.cpp		src/OpenDevice.h		\
 	src/Driver.cpp			src/Driver.h			\
 	src/SAFTd.cpp			src/SAFTd.h			\
 	src/RegisteredObject.cpp	src/RegisteredObject.h		\
 	src/eb-source.cpp		src/eb-source.h			\
+	src/build.cpp			src/build.h			\
 	drivers/eca_regs.h		drivers/fg_regs.h		\
 	drivers/Owned.cpp		drivers/Owned.h			\
 	drivers/Condition.cpp		drivers/Condition.h		\
@@ -41,3 +45,10 @@ dm_snoop_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 fg_ctl_SOURCES = src/fg-ctl.cpp
 fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+
+if GIT_TREE
+version.h:
+	echo '#define GIT_ID "'$$(git describe --dirty --always --tags)'"' > version.h.tmp
+	echo '#define SOURCE_DATE "'$$(date +'%b %d %Y %H:%M:%S' --date=@$$(git log -n1 --pretty='format:%ct'))'"' >> version.h.tmp
+	mv version.h.tmp version.h
+endif

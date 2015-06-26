@@ -9,6 +9,21 @@
        device drivers register their top-level hardware objects here.
     -->
   <interface name="de.gsi.saftlib.SAFTd">
+    <!-- SourceVersion: SAFTd source version.
+         The version of the SAFTd source code this daemon was compiled from.
+         Format is "#.# (git-id): MMM DD YYYY HH:MM:SS".
+      -->
+    <property name="SourceVersion" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- BuildInfo: SAFTd build information.
+         Information about when and where the SAFTd was compiled.
+         Format is "built by USERNAME on MMM DD YYYY HH:MM:SS with HOSTNAME running OPERATING-SYSTEM".
+      -->
+    <property name="BuildInfo" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
     
     <!-- Devices: List of all devices attached to saftd.
          The key is the name of the device as provided to AttachDevice.

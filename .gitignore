@@ -14,6 +14,7 @@ m4
 .libs
 .deps
 .dirstamp
+version.h
 # Automake junk files
 Makefile
 Makefile.in

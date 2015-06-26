@@ -22,6 +22,9 @@ class SAFTd : public iSAFTd
     void Quit();
     std::map< Glib::ustring, Glib::ustring > getDevices() const;
     
+    Glib::ustring getSourceVersion() const;
+    Glib::ustring getBuildInfo() const;
+    
   protected:
     SAFTd();
     

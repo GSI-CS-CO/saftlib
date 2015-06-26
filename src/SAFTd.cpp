@@ -7,6 +7,7 @@
 #include "SAFTd.h"
 #include "Driver.h"
 #include "eb-source.h"
+#include "build.h"
 
 namespace saftlib {
 
@@ -139,6 +140,16 @@ void SAFTd::RemoveDevice(const Glib::ustring& name)
   
   // inform clients of updated property 
   Devices(getDevices());
+}
+
+Glib::ustring SAFTd::getSourceVersion() const
+{
+  return sourceVersion;
+}
+
+Glib::ustring SAFTd::getBuildInfo() const
+{
+  return buildInfo;
 }
 
 } // saftlib
