@@ -303,6 +303,20 @@ int FunctionGenerator::acquireChannel()
   
   allocation->indexes[i] = index;
   channel = i;
+
+  try {
+    eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
+    etherbone::Cycle cycle;
+    cycle.open(dev->getDevice());
+    cycle.write(regs + FG_IRQ,        EB_DATA32, irq);
+    cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, index);
+    cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
+    cycle.write(regs + FG_TAG,        EB_DATA32, startTag);
+    cycle.close();
+  } catch (...) {
+    releaseChannel();
+    throw;
+  }
 }
 
 void FunctionGenerator::releaseChannel()
@@ -315,7 +329,13 @@ void FunctionGenerator::releaseChannel()
   // in case release races with function start, unhook IRQ so that
   // only hardware is confused and it doesn't crash the saftlib
   eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
-  dev->getDevice().write(regs + FG_IRQ, EB_DATA32, 0);
+  etherbone::Cycle cycle;
+  cycle.open(dev->getDevice());
+  cycle.write(regs + FG_IRQ,        EB_DATA32, 0);
+  cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, (guint32)-1);
+  cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
+  cycle.write(regs + FG_TAG,        EB_DATA32, 0);
+  cycle.close();
   
   allocation->indexes[channel] = -1;
   channel = -1;
@@ -339,18 +359,6 @@ void FunctionGenerator::setEnabled(bool val)
     } else {
       channel = acquireChannel();
       refill();
-      
-      eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
-      
-      etherbone::Cycle cycle;
-      cycle.open(dev->getDevice());
-      cycle.write(regs + FG_IRQ,        EB_DATA32, irq);
-      cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, index);
-      cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
-      cycle.write(regs + FG_TAG,        EB_DATA32, startTag);
-      cycle.close();
-      
-      // different device => different cycle
       dev->getDevice().write(swi + SWI_ENABLE, EB_DATA32, channel);
     }
     enabled = val;
