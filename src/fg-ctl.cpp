@@ -156,8 +156,11 @@ int main(int argc, char** argv)
     // Find the requested device
     Glib::RefPtr<TimingReceiver_Proxy> receiver;
     if (device.empty()) {
-      if (devices.size() != 1) {
-        std::cerr << "Not exactly one device; specify a device with '-d <device>'" << std::endl;
+      if (devices.empty()) {
+        std::cerr << "No devices found" << std::endl;
+        return 1;
+      } else if (devices.size() != 1) {
+        std::cerr << "More than one device; specify a device with '-d <device>'" << std::endl;
         error = 1;
       } else {
        receiver = TimingReceiver_Proxy::create(devices.begin()->second);
@@ -193,8 +196,11 @@ int main(int argc, char** argv)
     // Find the target FunctionGenerator
     Glib::RefPtr<FunctionGenerator_Proxy> gen;
     if (fg.empty()) {
-      if (fgs.size() != 1) {
-        std::cerr << "Not exactly one function generator; specify a device with '-f <function-generator>'" << std::endl;
+      if (fgs.empty()) {
+        std::cerr << "No function generators found" << std::endl;
+        return 1;
+      } else if (fgs.size() != 1) {
+        std::cerr << "More than one function generator; specify one with '-f <function-generator>'" << std::endl;
         error = 1;
       } else {
         gen = FunctionGenerator_Proxy::create(fgs.begin()->second);
