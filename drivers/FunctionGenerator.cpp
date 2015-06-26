@@ -128,9 +128,8 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     enabled = false; // hardware just flipped this itself
     Enabled(enabled);
   } else { // stopped?
-    refill(); // clears any completed data
-    bool hardwareMacroUnderflow = (status == IRQ_DAT_STOP_NOT_EMPTY);
-    bool microControllerUnderflow = !fifo.empty() && !hardwareMacroUnderflow;
+    bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY);
+    bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow;
     executedParameterCount = getExecutedParameterCount();
     running = false;
     fillLevel = 0;
