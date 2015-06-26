@@ -229,7 +229,9 @@
           <xsl:text>));&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;</xsl:text>
-        <xsl:text>  const Glib::VariantContainerBase&amp; response = call_sync("</xsl:text>
+        <xsl:text>  </xsl:text>
+        <xsl:if test="arg[@direction='out']">const Glib::VariantContainerBase&amp; response = </xsl:if>
+        <xsl:text>call_sync("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>", query);&#10;</xsl:text>
         <xsl:for-each select="arg[@direction='out']">
