@@ -79,6 +79,10 @@ void Owned::ownerOnly() const
     throw Gio::DBus::Error(Gio::DBus::Error::ACCESS_DENIED, "You are not my Owner");
 }
 
+void Owned::ownerQuit()
+{
+}
+
 void Owned::owner_quit_handler(
   const Glib::RefPtr<Gio::DBus::Connection>&,
   const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
@@ -87,6 +91,7 @@ void Owned::owner_quit_handler(
   unsubscribe();
   owner.clear();
   Owner(owner);
+  ownerQuit(); // inform base classes, in case they have clean-up code
   if (getDestructible()) destroy();
 }
 

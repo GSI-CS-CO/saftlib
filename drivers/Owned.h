@@ -28,7 +28,8 @@ class Owned : public iOwned, public Glib::Object
     virtual const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const = 0;
   
   protected:
-    virtual void owner_quit_handler(
+    virtual void ownerQuit();
+    void owner_quit_handler(
       const Glib::RefPtr<Gio::DBus::Connection>&,
       const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
       const Glib::ustring&, const Glib::VariantContainerBase&);
