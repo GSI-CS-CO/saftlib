@@ -78,7 +78,7 @@ TimingReceiver::TimingReceiver(ConstructorType args)
   
   // Enable all channels
   cycle.open(device);
-  for (int channel = 0; channel < channels; ++channel) {
+  for (unsigned int channel = 0; channel < channels; ++channel) {
     cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
     cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE)<<8);
   }
@@ -110,7 +110,7 @@ TimingReceiver::~TimingReceiver()
     // disable aq channel
     etherbone::Cycle cycle;
     cycle.open(device);
-    for (int channel = 0; channel < channels; ++channel) {
+    for (unsigned int channel = 0; channel < channels; ++channel) {
       cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
       cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE));
     }
@@ -708,7 +708,7 @@ void TimingReceiver::probe(OpenDevice& od)
         path.imbue(std::locale("C"));
         path << od.objectPath << "/fg_" << j;
         
-        FunctionGenerator::ConstructorType args = { tr.operator->(), allocation, fgb, swi, num_channels, buffer_size, j, macros[j] };
+        FunctionGenerator::ConstructorType args = { tr.operator->(), allocation, fgb, swi, (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
         Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
 
         std::ostringstream name;

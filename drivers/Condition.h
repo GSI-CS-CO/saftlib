@@ -18,7 +18,7 @@ class Condition : public Owned, public iCondition
       bool active;
       guint64 id;
       guint64 mask;
-      guint64 offset;
+      gint64 offset;
       guint64 guards;
       guint32 tag;
       sigc::slot<void> destroy;

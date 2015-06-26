@@ -283,7 +283,7 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
   if ((~mask & (~mask+1)) != 0)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "mask is not a prefix");
-  if (id & mask != id)
+  if ((id & mask) != id)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
   if (guards)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "guard requested which is unavailable in hardware");

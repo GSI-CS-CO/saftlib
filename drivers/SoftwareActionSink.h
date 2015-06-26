@@ -37,7 +37,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     // iSoftwareAcitonSink
     Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards);
     
-    void emit(guint64 id, guint64 param, guint64 time, guint64 overtime, guint64 offset, bool late, bool delayed);
+    void emit(guint64 id, guint64 param, guint64 time, guint64 overtime, gint64 offset, bool late, bool delayed);
     
   protected:
     SoftwareActionSink(ConstructorType args);

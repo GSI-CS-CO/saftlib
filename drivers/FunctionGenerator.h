@@ -27,7 +27,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
       eb_address_t swi;
       unsigned num_channels;
       unsigned buffer_size;
-      int index;
+      unsigned int index;
       guint32 macro;
     };
     
@@ -63,7 +63,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     void irq_handler(eb_data_t status);
     void refill();
     void releaseChannel();
-    int acquireChannel();
+    void acquireChannel();
     void ownerQuit();
     
     TimingReceiver* dev;
@@ -72,7 +72,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     eb_address_t swi;
     unsigned num_channels;
     unsigned buffer_size;
-    int index;
+    unsigned int index;
     unsigned char scubusSlot;
     unsigned char deviceNumber;
     unsigned char version;

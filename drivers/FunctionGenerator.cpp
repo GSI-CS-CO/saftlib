@@ -290,7 +290,7 @@ guint16 FunctionGenerator::getExecutedParameterCount() const
   }
 }
 
-int FunctionGenerator::acquireChannel()
+void FunctionGenerator::acquireChannel()
 {
   assert (channel == -1);
   
@@ -361,7 +361,7 @@ void FunctionGenerator::setEnabled(bool val)
       // this is unavoidable and documented.
       if (!running) releaseChannel();
     } else {
-      channel = acquireChannel();
+      acquireChannel();
       refill();
       dev->getDevice().write(swi + SWI_ENABLE, EB_DATA32, channel);
     }

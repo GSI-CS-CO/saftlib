@@ -22,7 +22,7 @@ void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool l
   char date[40], full[80];
   
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-  snprintf(full, sizeof(full), "%s.%09d", date, ns);
+  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
   
   std::cout << std::hex << "Time: " << full << " ID: 0x" << id << " Param: 0x" << param << " " << ((conflict||late||delayed)?"!":"") << std::endl;
 }

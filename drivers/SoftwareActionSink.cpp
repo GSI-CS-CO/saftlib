@@ -97,7 +97,7 @@ void SoftwareActionSink::setGenerateDelayed(bool val)
   generateDelayed = val;
 }
 
-void SoftwareActionSink::emit(guint64 id, guint64 param, guint64 time, guint64 overtime, guint64 offset, bool late, bool delayed)
+void SoftwareActionSink::emit(guint64 id, guint64 param, guint64 time, guint64 overtime, gint64 offset, bool late, bool delayed)
 {
   bool conflict = time == lastTime;
   

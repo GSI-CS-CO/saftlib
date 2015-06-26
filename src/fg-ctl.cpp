@@ -54,7 +54,7 @@ const char *format_time(guint64 time)
   char date[40];
   
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-  snprintf(full, sizeof(full), "%s.%09d", date, ns);
+  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
   return full;
 }
 
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
   Glib::ustring device;
   Glib::ustring fg;
   guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
-  guint64 event;
+  guint64 event = 0;
   bool eventSet = false;
   bool repeat = false;
   bool generate = false;

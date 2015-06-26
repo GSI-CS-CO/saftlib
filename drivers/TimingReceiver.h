@@ -73,9 +73,9 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     eb_address_t generator_irq;
     mutable bool locked;
     sigc::connection pollConnection;
-    int channels;
-    int queue_size;
-    int table_size;
+    unsigned int channels;
+    unsigned int queue_size;
+    unsigned int table_size;
     int aq_channel;
     std::map< Glib::ustring, Glib::RefPtr<ActionSink> > actionSinks;
     std::map< Glib::ustring, Glib::RefPtr<FunctionGenerator> > generators;
