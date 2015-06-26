@@ -29,7 +29,9 @@ AC_CACHE_CHECK([for lsb_release supporting -d -s], [ac_cv_path_LSB_RELEASE_CMD],
   [[$ac_path_LSB_RELEASE_CMD -d -s > /dev/null && ac_cv_path_LSB_RELEASE_CMD=$ac_path_LSB_RELEASE_CMD]],
   [AC_MSG_ERROR([could not find acceptable lsb_release])])])
 AC_CACHE_CHECK([for operating system], [ac_cv_OPERATING_SYSTEM],
-  [ac_cv_OPERATING_SYSTEM=$($ac_cv_path_LSB_RELEASE_CMD -d -s)])
+  [os="$($ac_cv_path_LSB_RELEASE_CMD -d -s)"
+   os="${os%\"}"
+   ac_cv_OPERATING_SYSTEM="${os#\"}"])
 
 AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OPERATING_SYSTEM"], [The operating system of the build system])
 AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:=unknown}"], [The hostname of the build system])
