@@ -358,6 +358,12 @@ void FunctionGenerator::setEnabled(bool val)
   }
 }
 
+void FunctionGenerator::ownerQuit()
+{
+  // owner quit without Disown? probably a crash => turn off the function generator
+  setEnabled(false);
+}
+
 void FunctionGenerator::setStartTag(guint32 val)
 {
   ownerOnly();

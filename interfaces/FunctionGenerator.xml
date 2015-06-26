@@ -52,6 +52,8 @@
          Enabled to false by hand is dangerous. If StartTag is received at
          the same time, the FunctionGenerator can enter an undefined state.
          It is the caller's responsibility to ensure this does not happen.
+         If the Owner of a FunctionGenerator quits without running Disown,
+         the FunctionGenerator automatically has Enabled set to false.
     -->
     <property name="Enabled" type="b" access="readwrite"/>
 

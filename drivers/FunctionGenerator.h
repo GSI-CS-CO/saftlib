@@ -64,6 +64,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     void refill();
     void releaseChannel();
     int acquireChannel();
+    void ownerQuit();
     
     TimingReceiver* dev;
     Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
