@@ -69,16 +69,21 @@ void FunctionGenerator::refill()
   
   for (unsigned i = 0; i < completed; ++i) {
     fillLevel -= fifo.front().duration();
+    --filled;
     fifo.pop_front();
   }
   updateAboveSafeFillLevel();
   
-  unsigned refill = buffer_size-1 - remaining; // fill to at most almost full
-  if (refill > fifo.size()) refill = fifo.size();
+  // our buffers should now agree
+  assert (filled == remaining);
+  
+  unsigned todo = fifo.size() - filled; // # of records not yet on LM32
+  unsigned space = buffer_size-1 - filled;  // free space on LM32
+  unsigned refill = std::min(todo, space); // add this many records
   
   cycle.open(dev->getDevice());
   for (unsigned i = 0; i < refill; ++i) {
-    ParameterTuple& tuple = fifo[i+remaining];
+    ParameterTuple& tuple = fifo[filled+i];
     guint32 coeff_a, coeff_b, coeff_ab, coeff_c, control;
     
     coeff_a = (gint32)tuple.coeff_a; // sign extended
@@ -105,7 +110,7 @@ void FunctionGenerator::refill()
   cycle.write(regs + FG_WPTR, EB_DATA32, offset);
   cycle.close();
   
-  filled = remaining + refill;
+  filled += refill;
 }
 
 void FunctionGenerator::irq_handler(eb_data_t status)
