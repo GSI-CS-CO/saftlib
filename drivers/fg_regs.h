@@ -7,6 +7,12 @@
 #define LM32_RAM_USER_VMAJOR      1           //major revision
 #define LM32_RAM_USER_VMINOR      1           //minor revision
 
+#define LM32_CLUSTER_ROM_VENDOR   0x651
+#define LM32_CLUSTER_ROM_PRODUCT  0x10040086
+
+#define LM32_IRQ_EP_VENDOR        0x651
+#define LM32_IRQ_EP_PRODUCT       0x10050083
+
 // Shared memory base address
 #define SHM_BASE	0x500
 #define BOARD_ID	0x0	// 64-bit

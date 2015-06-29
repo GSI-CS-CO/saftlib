@@ -610,6 +610,7 @@ void TimingReceiver::compile()
 void TimingReceiver::probe(OpenDevice& od)
 {
   // !!! check board ID
+  etherbone::Cycle cycle;
   
   std::vector<sdb_device> ecas, queues, streams, scubus, pps;
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECA_DEVICE_ID,  ecas);
@@ -644,8 +645,25 @@ void TimingReceiver::probe(OpenDevice& od)
     
     // Probe for LM32 block memories
     eb_address_t fgb;
-    std::vector<sdb_device> fgs;
-    od.device.sdb_find_by_identity(LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, fgs);
+    std::vector<sdb_device> fgs, eps, rom;
+    od.device.sdb_find_by_identity(LM32_RAM_USER_VENDOR,    LM32_RAM_USER_PRODUCT,    fgs);
+    od.device.sdb_find_by_identity(LM32_IRQ_EP_VENDOR,      LM32_IRQ_EP_PRODUCT,      eps);
+    od.device.sdb_find_by_identity(LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT, rom);
+    
+    if (rom.size() != 1)
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
+    
+    eb_address_t rom_address = rom[0].sdb_component.addr_first;
+    eb_data_t cpus, eps_per;
+    cycle.open(od.device);
+    cycle.read(rom_address + 0x0, EB_DATA32, &cpus);
+    cycle.read(rom_address + 0x4, EB_DATA32, &eps_per);
+    cycle.close();
+    
+    if (cpus != fgs.size())
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
+    if (eps_per * cpus != eps.size())
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 EPs does not equal ROM cpu_count*ep_count");
     
     // Check them all for the function generator microcontroller
     unsigned i;
@@ -653,7 +671,6 @@ void TimingReceiver::probe(OpenDevice& od)
       eb_data_t magic, version;
       fgb = fgs[i].sdb_component.addr_first;
       
-      etherbone::Cycle cycle;
       cycle.open(od.device);
       cycle.read(fgb + SHM_BASE + FG_MAGIC_NUMBER, EB_DATA32, &magic);
       cycle.read(fgb + SHM_BASE + FG_VERSION,      EB_DATA32, &version);
@@ -663,12 +680,11 @@ void TimingReceiver::probe(OpenDevice& od)
     
     // Did we find a function generator?
     if (i != fgs.size()) {
-      // !!! hack:
-      eb_address_t swi = 0x20900;
+      // SWI is always the second (+1th) IRQ endpoint on the microcontroller
+      eb_address_t swi = eps[i*eps_per + 1].sdb_component.addr_first;
       eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
       
       // Probe the configuration and hardware macros
-      etherbone::Cycle cycle;
       cycle.open(od.device);
       cycle.read(fgb + SHM_BASE + FG_NUM_CHANNELS, EB_DATA32, &num_channels);
       cycle.read(fgb + SHM_BASE + FG_BUFFER_SIZE,  EB_DATA32, &buffer_size);
