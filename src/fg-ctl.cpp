@@ -1,6 +1,7 @@
 #include <iostream>
 #include <giomm.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -77,81 +78,127 @@ void on_stop(guint64 time, bool hardwareMacroUnderflow, bool microControllerUnde
   loop->quit();
 }
 
+void help(Glib::RefPtr<SAFTd_Proxy> saftd)
+{
+  std::cerr << "Usage: fg-ctl [OPTION] < wavedata.txt\n";
+  std::cerr << "\n";
+  std::cerr << "  -d <device>   saftlib timing receiver device name\n";
+  std::cerr << "  -f <fg-name>  name of function generator on device\n";
+  std::cerr << "  -t <tag>      tag to use when triggering function generator\n";
+  std::cerr << "  -e <id>       generate tag when timing event id is received\n";
+  std::cerr << "  -g            generate tag immediately\n";
+  std::cerr << "  -r            repeat the waveform over and over forever\n";
+  std::cerr << "  -h            print this message\n";
+  std::cerr << "\n";
+  std::cerr << "SAFTd version: " << std::flush;
+  std::cerr << saftd->getSourceVersion() << "\n";
+  std::cerr << saftd->getBuildInfo() << std::endl;
+}
+
+void slow_warning(int sig)
+{
+  std::cerr << "warning: no input data received via stdin within 2s, run with '-h' for help. continuing to wait ..." << std::endl;
+}
+
 int main(int argc, char** argv)
 {
-  Gio::init();
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-  
-  // Options
-  Glib::ustring device;
-  Glib::ustring fg;
-  guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
-  guint64 event = 0;
-  bool eventSet = false;
-  bool repeat = false;
-  bool generate = false;
-  
-  // Process command-line
-  int opt, error = 0;
-  while ((opt = getopt(argc, argv, "d:f:rgt:e:")) != -1) {
-    switch (opt) {
-      case 'd':
-        device = optarg;
-        break;
-      case 'f':
-        fg = optarg;
-        break;
-      case 'r':
-        repeat = true;
-        break;
-      case 'g':
-        generate = true;
-        break;
-      case 't':
-        tag = strtoul(optarg, 0, 0);
-        break;
-      case 'e':
-        event = strtoul(optarg, 0, 0);
-        eventSet = true;
-        break;
-      case ':':
-      case '?':
-        error = 1;
-        break;
-      default:
-        std::cerr << argv[0] << ": bad getopt result" << std::endl;
-        error = 1;
-    }
-  }
-  
-  if (error) return 1;
-  
-  // Read the data file from stdin ... maybe come up with a better format in the future !!!
-  ParamSet params;
-  gint32 a, la, b, lb, c, n, s;
-  while(fscanf(stdin, "%d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n) == 6) {
-    #define ACCU_OFFSET 40 /* don't ask */
-    la += ACCU_OFFSET;
-    lb += ACCU_OFFSET;
-    s = 5; // 500kHz
-    
-    params.coeff_a.push_back(a);
-    params.coeff_b.push_back(b);
-    params.coeff_c.push_back(c);
-    params.step.push_back(n);
-    params.freq.push_back(s);
-    params.shift_a.push_back(la);
-    params.shift_b.push_back(lb);
-  }
-  
-  if (params.shift_b.empty()) {
-    std::cerr << "Provided data file was empty" << std::endl;
-    return 1;
-  }
-  
   try {
+    Gio::init();
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    
+    // Options
+    Glib::ustring device;
+    Glib::ustring fg;
+    guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
+    guint64 event = 0;
+    bool eventSet = false;
+    bool repeat = false;
+    bool generate = false;
+    
+    // Process command-line
+    int opt, error = 0;
+    while ((opt = getopt(argc, argv, "d:f:rgt:e:")) != -1) {
+      switch (opt) {
+        case 'd':
+          device = optarg;
+          break;
+        case 'f':
+          fg = optarg;
+          break;
+        case 'r':
+          repeat = true;
+          break;
+        case 'g':
+          generate = true;
+          break;
+        case 't':
+          tag = strtoul(optarg, 0, 0);
+          break;
+        case 'e':
+          event = strtoul(optarg, 0, 0);
+          eventSet = true;
+          break;
+        case 'h':
+          help(saftd);
+          return 0;
+        case ':':
+        case '?':
+          error = 1;
+          break;
+        default:
+          std::cerr << argv[0] << ": bad getopt result" << std::endl;
+          error = 1;
+      }
+    }
+    
+    if (error) {
+      help(saftd);
+      return 1;
+    }
+    
+    if (optind != argc) {
+      std::cerr << "Unexpected argument: " << argv[optind] << std::endl;
+      help(saftd);
+      return 1;
+    }
+    
+    // Setup a warning on too slow data
+    signal(SIGALRM, &slow_warning);
+    alarm(2);
+    
+    // Read the data file from stdin ... maybe come up with a better format in the future !!!
+    ParamSet params;
+    gint32 a, la, b, lb, c, n, s, num;
+    while((num = fscanf(stdin, "%d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n)) == 6) {
+      // turn off warning
+      if (params.coeff_a.empty()) alarm(0);
+      
+      #define ACCU_OFFSET 40 /* don't ask */
+      la += ACCU_OFFSET;
+      lb += ACCU_OFFSET;
+      s = 5; // 500kHz
+      
+      params.coeff_a.push_back(a);
+      params.coeff_b.push_back(b);
+      params.coeff_c.push_back(c);
+      params.step.push_back(n);
+      params.freq.push_back(s);
+      params.shift_a.push_back(la);
+      params.shift_b.push_back(lb);
+    }
+    
+    if (num != EOF || !feof(stdin)) {
+      std::cerr << "warning: junk data at end of input file" << std::endl;
+    }
+    
+    if (params.shift_b.empty()) {
+      std::cerr << "Provided data file was empty" << std::endl;
+      return 1;
+    }
+    
     // Get a list of devices from the saftlib directory
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<Glib::ustring, Glib::ustring> devices = saftd->getDevices();
     
     // Find the requested device
     Glib::RefPtr<TimingReceiver_Proxy> receiver;
@@ -185,7 +232,7 @@ int main(int argc, char** argv)
     // Confirm this device is an SCU
     map<Glib::ustring, Glib::ustring> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1) {
-      std::cerr << "Device '" << device << "' is not an SCU" << std::endl;
+      std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
     Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);

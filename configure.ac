@@ -45,7 +45,7 @@ if test "x$XSLTPROC" = "x"; then
   AC_MSG_ERROR([could not find xsltproc -- needed to processs interfaces])
 fi
 
-# Generate documentation, only if we can
+dnl Generate documentation, only if we can
 AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
 AC_PATH_PROGS([GIT], [git])
