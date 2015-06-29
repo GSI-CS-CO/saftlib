@@ -54,7 +54,6 @@ void FunctionGenerator::refill()
   assert (channel != -1);
   
   eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
-  eb_address_t buff = shm + FG_BUFF_BASE(channel, 0, num_channels, buffer_size);
   
   cycle.open(dev->getDevice());
   cycle.read(regs + FG_WPTR, EB_DATA32, &write_offset_d);
@@ -101,9 +100,10 @@ void FunctionGenerator::refill()
       ((tuple.shift_a & 0x3f) << 12);
     
     unsigned offset = wrapping_add(write_offset, i, buffer_size);
-    cycle.write(buff + offset*4, EB_DATA32, coeff_ab);
-    cycle.write(buff + offset*4, EB_DATA32, coeff_c);
-    cycle.write(buff + offset*4, EB_DATA32, control);
+    eb_address_t buff = shm + FG_BUFF_BASE(channel, offset, num_channels, buffer_size);
+    cycle.write(buff + PARAM_COEFF_AB, EB_DATA32, coeff_ab);
+    cycle.write(buff + PARAM_COEFF_C,  EB_DATA32, coeff_c);
+    cycle.write(buff + PARAM_CONTROL,  EB_DATA32, control);
   }
   // update write pointer
   unsigned offset = wrapping_add(write_offset, refill, buffer_size);
