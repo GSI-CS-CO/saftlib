@@ -118,7 +118,7 @@ int main(int argc, char** argv)
     
     // Process command-line
     int opt, error = 0;
-    while ((opt = getopt(argc, argv, "d:f:rgt:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "d:f:rght:e:")) != -1) {
       switch (opt) {
         case 'd':
           device = optarg;
