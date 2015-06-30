@@ -288,7 +288,10 @@ int main(int argc, char** argv)
     gen->Abort();
     
     // Wait until the function generator is idle
-    while (gen->getEnabled()) Glib::usleep(1000);
+    for (unsigned count = 0; gen->getEnabled(); ++count) {
+      if (count > 2999 && count % 1000 == 0) std::cerr << "Warning, hardware did not reset after " << (count/1000) << " seconds ..." << std::endl;
+      Glib::usleep(1000);
+    }
     
     // Clear any old waveform data
     gen->Flush();
