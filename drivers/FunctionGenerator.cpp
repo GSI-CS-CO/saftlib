@@ -318,7 +318,7 @@ void FunctionGenerator::acquireChannel()
   }
   
   // if this throws, it is not a problem
-  eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
+  eb_address_t regs = shm + FG_REGS_BASE(i, num_channels);
   etherbone::Cycle cycle;
   cycle.open(dev->getDevice());
   cycle.write(regs + FG_WPTR,       EB_DATA32, 0);
