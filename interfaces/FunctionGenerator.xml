@@ -124,8 +124,7 @@
          A function generator can only be Armed if FillLevel is non-zero. 
          An Enabled function generator can not be Armed again until it
          either completes waveform generation or the user calls Abort.
-         After an Abort, a function generator may only be re-Armed after 
-         a 10ms cooldown period. Arming a function generator takes time.
+         Arming a function generator takes time.
          Wait for Armed to transition to true before sending StartTag.
       -->
     <method name="Arm"/>

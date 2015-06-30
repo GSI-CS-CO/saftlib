@@ -59,10 +59,9 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     void updateAboveSafeFillLevel();
     void irq_handler(eb_data_t status);
     void refill();
-    void releaseChannel(bool immediate);
+    void releaseChannel();
     void acquireChannel();
     void ownerQuit();
-    bool cooldownChannel(int oldChannel);
     
     TimingReceiver* dev;
     Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
@@ -76,7 +75,6 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     unsigned char version;
     unsigned char outputWindowSize;
     eb_address_t irq;
-    sigc::connection busyConnection;
 
     int channel; // -1 if no channel assigned
     bool enabled;

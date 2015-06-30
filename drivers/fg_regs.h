@@ -60,5 +60,6 @@
 #define IRQ_DAT_STOP_EMPTY	2
 #define IRQ_DAT_STOP_NOT_EMPTY	3
 #define IRQ_DAT_ARMED		4
+#define IRQ_DAT_DISARMED	5
 
 #endif

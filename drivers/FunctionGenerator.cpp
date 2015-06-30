@@ -17,14 +17,13 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
    irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
-   busyConnection(), channel(-1), enabled(false), armed(false), running(false), abort(false), 
+   channel(-1), enabled(false), armed(false), running(false), abort(false), 
    startTag(0), aboveSafeFillLevel(false), safeFillLevel(100000000), fillLevel(0), filled(0)
 {
 }
 
 FunctionGenerator::~FunctionGenerator()
 {
-  busyConnection.disconnect(); // do run cooldownChannel any more
   dev->getDevice().release_irq(irq);
 }
 
@@ -127,6 +126,12 @@ void FunctionGenerator::irq_handler(eb_data_t status)
   } else if (status == IRQ_DAT_ARMED) {
     armed = true;
     Armed(armed);
+  } else if (status == IRQ_DAT_DISARMED) {
+    releaseChannel();
+    armed = false;
+    Armed(armed);
+    enabled = false;
+    Enabled(enabled);
   } else if (status == IRQ_DAT_START) {
     armed = false;
     Armed(armed);
@@ -140,7 +145,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
       fifo.clear();
     }
     executedParameterCount = getExecutedParameterCount();
-    releaseChannel(true); // true = can be re-used immediately
+    releaseChannel();
     running = false;
     Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
     updateAboveSafeFillLevel(); // should be a no-op (?)
@@ -333,27 +338,11 @@ void FunctionGenerator::acquireChannel()
   channel = i;
 }
 
-bool FunctionGenerator::cooldownChannel(int oldChannel)
-{
-  busyConnection.disconnect();
-  allocation->indexes[oldChannel] = -1;
-  return false;
-}
-
-void FunctionGenerator::releaseChannel(bool immediate)
+void FunctionGenerator::releaseChannel()
 {
   assert (channel != -1);
   
-  if (immediate) {
-    allocation->indexes[channel] = -1;
-  } else {
-    // schedule availability for re-use in 10 milliseconds
-    // this allows time for the hardware to cleanly stop
-    busyConnection = Glib::signal_timeout().connect(
-      sigc::bind(sigc::mem_fun(*this, &FunctionGenerator::cooldownChannel), channel),
-      10);
-  }
-  
+  allocation->indexes[channel] = -1;
   channel = -1;
   filled = 0;
 }
@@ -365,8 +354,6 @@ void FunctionGenerator::Arm()
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
   if (fillLevel == 0)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
-  if (busyConnection)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "On 10ms cooldown, cannot Arm");
   
   // actually enable it
   acquireChannel();
@@ -390,8 +377,10 @@ void FunctionGenerator::Arm()
 void FunctionGenerator::Abort()
 {
   ownerOnly();
+  if (channel == -1) return; // nothing to abort
+  
   dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
-  releaseChannel(false); // false - go into 10ms cooldown
+  // expect disarm or started+stopped
 }
 
 void FunctionGenerator::ownerQuit()
