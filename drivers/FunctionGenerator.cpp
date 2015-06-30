@@ -17,8 +17,8 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
    irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
-   busyConnection(), channel(-1), enabled(false), running(false), startTag(0),
-   aboveSafeFillLevel(false), safeFillLevel(100000000), fillLevel(0), filled(0)
+   busyConnection(), channel(-1), enabled(false), armed(false), running(false), abort(false), 
+   startTag(0), aboveSafeFillLevel(false), safeFillLevel(100000000), fillLevel(0), filled(0)
 {
 }
 
@@ -124,21 +124,28 @@ void FunctionGenerator::irq_handler(eb_data_t status)
   
   if (status == IRQ_DAT_REFILL) {
     refill();
+  } else if (status == IRQ_DAT_ARMED) {
+    armed = true;
+    Armed(armed);
   } else if (status == IRQ_DAT_START) {
+    armed = false;
+    Armed(armed);
     running = true;
     Started(time);
-    enabled = false; // hardware just flipped this itself
-    Enabled(enabled);
   } else { // stopped?
-    bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY);
-    bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow;
+    bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY) && !abort;
+    bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow && !abort;
+    if (!hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
+      fillLevel = 0;
+      fifo.clear();
+    }
     executedParameterCount = getExecutedParameterCount();
-    running = false;
-    fillLevel = 0;
-    fifo.clear();
     releaseChannel(true); // true = can be re-used immediately
-    Stopped(time, hardwareMacroUnderflow, microControllerUnderflow);
-    updateAboveSafeFillLevel();
+    running = false;
+    Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
+    updateAboveSafeFillLevel(); // should be a no-op (?)
+    enabled = false;
+    Enabled(enabled);
   }
 }
 
@@ -218,8 +225,6 @@ void FunctionGenerator::Flush()
 {
   ownerOnly();
   
-  if (running)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Running, cannot Flush");
   if (enabled)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot Flush");
     
@@ -245,19 +250,29 @@ unsigned char FunctionGenerator::getDeviceNumber() const
   return deviceNumber;
 }
 
+unsigned char FunctionGenerator::getOutputWindowSize() const
+{
+  return outputWindowSize;
+}
+
 bool FunctionGenerator::getEnabled() const
 {
   return enabled;
 }
 
-guint32 FunctionGenerator::getStartTag() const
+bool FunctionGenerator::getArmed() const
 {
-  return startTag;
+  return armed;
 }
 
 bool FunctionGenerator::getRunning() const
 {
   return running;
+}
+
+guint32 FunctionGenerator::getStartTag() const
+{
+  return startTag;
 }
 
 guint64 FunctionGenerator::getFillLevel() const
@@ -273,11 +288,6 @@ guint64 FunctionGenerator::getSafeFillLevel() const
 bool FunctionGenerator::getAboveSafeFillLevel() const
 {
   return aboveSafeFillLevel;
-}
-
-unsigned char FunctionGenerator::getOutputWindowSize() const
-{
-  return outputWindowSize;
 }
 
 guint16 FunctionGenerator::getExecutedParameterCount() const
@@ -334,9 +344,6 @@ void FunctionGenerator::releaseChannel(bool immediate)
 {
   assert (channel != -1);
   
-  // disable the channel
-  dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
-  
   if (immediate) {
     allocation->indexes[channel] = -1;
   } else {
@@ -351,45 +358,53 @@ void FunctionGenerator::releaseChannel(bool immediate)
   filled = 0;
 }
 
-void FunctionGenerator::setEnabled(bool val)
+void FunctionGenerator::Arm()
 {
   ownerOnly();
+  if (enabled)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
+  if (fillLevel == 0)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
+  if (busyConnection)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "On 10ms cooldown, cannot Arm");
   
-  if (val != enabled) {
-    if (!val) {
-      // there is a race condition here. potentially the tag arrives while we are disabling.
-      // this is unavoidable and documented.
-      if (!running) releaseChannel(false); // false - go into 10ms cooldown
-    } else {
-      // check for all the reasons we might not allow enable
-      if (fillLevel == 0)
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FillLevel is zero, cannot Enable");
-      if (running)
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Running, cannot Enable");
-      if (busyConnection)
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "On 10ms cooldown, cannot Enable");
-      
-      // actually enable it
-      acquireChannel();
-      refill();
-      dev->getDevice().write(swi + SWI_ENABLE, EB_DATA32, channel);
-    }
-    enabled = val;
-    Enabled(enabled);
+  // actually enable it
+  acquireChannel();
+  try {
+    refill();
+    dev->getDevice().write(swi + SWI_ENABLE, EB_DATA32, channel);
+  } catch (...) {
+    Abort();
+    throw;
   }
+  
+  // !enabled, so:
+  assert(!armed);
+  assert(!running);
+  
+  abort = false;
+  enabled = true;
+  Enabled(enabled);
+}
+
+void FunctionGenerator::Abort()
+{
+  ownerOnly();
+  dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
+  releaseChannel(false); // false - go into 10ms cooldown
 }
 
 void FunctionGenerator::ownerQuit()
 {
   // owner quit without Disown? probably a crash => turn off the function generator
-  setEnabled(false);
+  Abort();
 }
 
 void FunctionGenerator::setStartTag(guint32 val)
 {
   ownerOnly();
   if (enabled)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot setStartTag");
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot set StartTag");
   
   if (val != startTag) {
     startTag = val;

@@ -17,7 +17,7 @@
       The general work-flow to use the FunctionGenerator is to append sets of tuples
       describing the waveform using the AppendParameterSet function. Then, select a
       SCUbus timing tag (StartTag) whose appearance should trigger waveform generation.
-      Finally, the FunctionGenerator is armed by setting Enable, whereafter it may be
+      Finally, the FunctionGenerator is armed by calling Arm, whereafter it may be
       triggered manually via the SCUbusActionSink->InjectTag method, or by a timing
       event sent by the data master.
 
@@ -42,37 +42,32 @@
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
     
-    <!-- Enabled: Function generator begins execution when StartTag is received.
-         By default, a function generator does nothing. When Enabled is
-         true, if an SCUbus tag matching the StartTag property is sent, the
-         function generator will begin generating the output waveform.  
-         A function generator can only be Enabled if FillLevel is non-zero. 
-         A Running function generator can never be Enabled. Immediately
-         after a function generator is Started, it is disabled. Setting
-         Enabled to false by hand is dangerous. If StartTag is received at
-         the same time, the FunctionGenerator might produce a truncated
-         waveform. It is the caller's responsibility to ensure this does 
-         not happen. After setting Enabled to false manually, the
-         FunctionGenerator goes into a 10ms safety cooldown, during which
-         time it may not be re-Enabled. If the Owner of a FunctionGenerator 
-         quits without running Disown, the FunctionGenerator automatically 
-         has Enabled set to false.
-    -->
-    <property name="Enabled" type="b" access="readwrite"/>
-
-    <!-- StartTag: The SCUbus tag which causes the function generation to begin.
-         If the function generator is Enabled and this tag is sent to the SCUbus, 
-         then the function generator will begin generating the output waveform.
-         StartTag may only be set when the FunctionGenerator is not Enabled.
+    <!-- OutputWindowSize: Number of bits output by the function generator -->
+    <property name="OutputWindowSize" type="y" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- Enabled: Hardware is allowed to generate an output waveform.
+         If a function generator is disabled, its output is constant.
+         Enabled is set to true using Arm and transitions to false
+         either upon completion or after a call to Abort.
       -->
-    <property name="StartTag" type="u" access="readwrite"/>
+    <property name="Enabled" type="b" access="read"/>
 
+    <!-- Armed: Upon receipt of StartTag, output will begin.
+         If a function generator is Armed, it is also Enabled. Once waveform
+         data has been loaded into the function generator, Arm it. Shortly
+         thereafter (once the hardware is ready), the Armed property will
+         transition to true, indicating the hardware is ready to react. Once
+         StartTag is received, Armed changes to false and Started is emitted.
+      -->
+    <property name="Armed" type="b" access="read"/>
+    
     <!-- Running: The function generator is currently producing a waveform.
          Function generation is started by sending a SCUbus tag which matches the
-         StartTag property of an Enabled function generator. When this property 
-         transitions to true, the Started signal is emitted and Enabled is
-         set to false. When this property transitions to false, Flush is run
-         and the Stopped signal is emitted.
+         StartTag property of an Armed function generator. When this property 
+         transitions to true, the Started signal is emitted. When this property
+         transitions to false, the Stopped signal is emitted.
       -->
     <property name="Running" type="b" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
@@ -89,6 +84,7 @@
 
     <!-- Stopped:                   Function generation has ended.
          @time:                     Time when function generation ended in nanoseconds since 1970
+         @abort:                    stopped due to a call to Abort
          @hardwareMacroUnderflow:   A fatal error, indicating the SCUbus is congested
          @microControllerUnderflow: A fatal error, indicating the host CPU is overloaded
 
@@ -112,10 +108,41 @@
       -->
     <signal name="Stopped">
       <arg name="time"                     type="t"/>
+      <arg name="aborted"                  type="b"/>
       <arg name="hardwareMacroUnderflow"   type="b"/>
       <arg name="microControllerUnderflow" type="b"/>
     </signal>
 
+    <!-- StartTag: The SCUbus tag which causes function generation to begin.
+         If the function generator is Armed and this tag is sent to the SCUbus, 
+         then the function generator will begin generating the output waveform.
+         StartTag may only be set when the FunctionGenerator is not Enabled.
+      -->
+    <property name="StartTag" type="u" access="readwrite"/>
+
+    <!-- Arm: Enable the function generator and arm it.
+         A function generator can only be Armed if FillLevel is non-zero. 
+         An Enabled function generator can not be Armed again until it
+         either completes waveform generation or the user calls Abort.
+         After an Abort, a function generator may only be re-Armed after 
+         a 10ms cooldown period. Arming a function generator takes time.
+         Wait for Armed to transition to true before sending StartTag.
+      -->
+    <method name="Arm"/>
+    
+    <!-- Abort: Abort waveform generation.
+         This directs the hardware to stop waveform generation. If the
+         function generator was Armed, it is disarmed and disabled, without
+         outputting any waveform data. If the function generator is running, 
+         output is Stopped at the current value and disabled. Aborting a
+         function generator takes time, so even after a call to Abort,
+         the function generator might still be Started. However, it will
+         reach the disabled state as quickly as it can, transitioning
+         through Stopped as usual. If the Owner of a FunctionGenerator 
+         quits without running Disown, the Abort is run automatically.
+      -->
+    <method name="Abort"/>
+    
     <!-- FillLevel: Remaining waveform data in nanoseconds 
          The SAFTd has sufficient parameters buffered to supply the function generator with 
          data for the specified time in nanoseconds. Note, due to the slow nature of software,
@@ -140,11 +167,6 @@
       -->
     <property name="AboveSafeFillLevel" type="b" access="read"/>
 
-    <!-- OutputWindowSize: Number of bits output by the function generator -->
-    <property name="OutputWindowSize" type="y" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
-    
     <!-- ExecutedParameterCount: Number of parameter tuples executed by hardware.
          This counts the total number of parameter tuples executed since the last
          Started signal. Obviously, if the function generator is running, the returned
@@ -183,8 +205,8 @@
     </method>
     
     <!-- Flush: Empty the parameter tuple set.
-         Flush may only be called when the FunctionGenerator is not Enabled
-         and not Running. Flush does not clear the ExecutedParameterCount.
+         Flush may only be called when not Enabled.
+         Flush does not clear the ExecutedParameterCount.
       -->
     <method name="Flush"/>
 

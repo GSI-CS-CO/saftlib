@@ -59,6 +59,14 @@ const char *format_time(guint64 time)
   return full;
 }
 
+void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
+{
+  if (armed) {
+    std::cout << "Generating StartTag" << std::endl;
+    scu->InjectTag(tag);
+  }
+}
+
 // Report when the function generator starts
 void on_start(guint64 time)
 {
@@ -66,10 +74,12 @@ void on_start(guint64 time)
 }
 
 // Report when the function generator stops
-void on_stop(guint64 time, bool hardwareMacroUnderflow, bool microControllerUnderflow, Glib::RefPtr<Glib::MainLoop> loop)
+void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow, Glib::RefPtr<Glib::MainLoop> loop)
 {
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
   // was there an error?
+  if (abort)
+    std::cerr << "Fatal error: Abort was called!" << std::endl;
   if (hardwareMacroUnderflow)
     std::cerr << "Fatal error: hardwareMacroUnderflow!" << std::endl;
   if (microControllerUnderflow)
@@ -274,14 +284,11 @@ int main(int argc, char** argv)
     // Claim the function generator for ourselves
     gen->Own();
     
-    // Make sure it will not trigger behind our back during configuration
-    gen->setEnabled(false);
+    // Stop whatever the function generator was doing
+    gen->Abort();
     
-    // Better not be already running!
-    if (gen->getRunning()) {
-      std::cerr << "Function generator is already running!" << std::endl;
-      return 1;
-    }
+    // Wait until the function generator is idle
+    while (gen->getEnabled()) Glib::usleep(1000);
     
     // Clear any old waveform data
     gen->Flush();
@@ -304,15 +311,15 @@ int main(int argc, char** argv)
     // FYI, how much data is this?
     std::cout << "Loaded " << gen->getFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
     
+    // Watch for a timing event? => generate tag on event
+    if (eventSet) scu->NewCondition(true, event, ~0, 0, 0, tag);
+
+    // Trigger the function generator ourselves?
+    if (generate) gen->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
+    
     // Ready to execute!
     gen->setStartTag(tag);
-    gen->setEnabled(true);
-    
-    if (generate) { // Trigger the function generator ourselves?
-      scu->InjectTag(tag);
-    } else if (eventSet) { // Watch for a timing event? => generate tag on event
-      scu->NewCondition(true, event, ~0, 0, 0, tag);
-    }
+    gen->Arm();
     
     // Wait until on_stop is called / function generator is done
     // ... if we don't care to keep repeating the waveform, we could quit immediately;
