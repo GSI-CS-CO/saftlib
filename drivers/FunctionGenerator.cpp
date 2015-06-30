@@ -61,13 +61,13 @@ void FunctionGenerator::refill()
   cycle.read(regs + FG_RPTR, EB_DATA32, &read_offset_d);
   cycle.close();
   
-  unsigned write_offset = write_offset_d;
-  unsigned read_offset  = read_offset_d;
+  unsigned write_offset = write_offset_d % buffer_size;
+  unsigned read_offset  = read_offset_d  % buffer_size;
   
   unsigned remaining = wrapping_sub(write_offset, read_offset, buffer_size);
   unsigned completed = filled - remaining;
   
-  for (unsigned i = 0; i < completed; ++i) {
+  for (unsigned i = 0; i < completed && !fifo.empty(); ++i) {
     fillLevel -= fifo.front().duration();
     --filled;
     fifo.pop_front();
