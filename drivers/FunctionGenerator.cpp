@@ -17,13 +17,14 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
    irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
-   channel(-1), enabled(false), running(false), startTag(0),
+   busyConnection(), channel(-1), enabled(false), running(false), startTag(0),
    aboveSafeFillLevel(false), safeFillLevel(100000000), fillLevel(0), filled(0)
 {
 }
 
 FunctionGenerator::~FunctionGenerator()
 {
+  busyConnection.disconnect(); // do run cooldownChannel any more
   dev->getDevice().release_irq(irq);
 }
 
@@ -115,7 +116,8 @@ void FunctionGenerator::refill()
 
 void FunctionGenerator::irq_handler(eb_data_t status)
 {
-  assert (channel != -1);
+  // ignore spurious interrupt
+  if (channel == -1) return;
   
   // !!! imprecise; should be timestamped by the hardware
   guint64 time = dev->getCurrentTime();
@@ -134,7 +136,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     running = false;
     fillLevel = 0;
     fifo.clear();
-    releaseChannel();
+    releaseChannel(true); // true = can be re-used immediately
     Stopped(time, hardwareMacroUnderflow, microControllerUnderflow);
     updateAboveSafeFillLevel();
   }
@@ -305,43 +307,46 @@ void FunctionGenerator::acquireChannel()
     throw Gio::DBus::Error(Gio::DBus::Error::FAILED, str.str());
   }
   
-  allocation->indexes[i] = index;
-  channel = i;
-
-  try {
-    eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
-    etherbone::Cycle cycle;
-    cycle.open(dev->getDevice());
-    cycle.write(regs + FG_IRQ,        EB_DATA32, irq);
-    cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, index);
-    cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
-    cycle.write(regs + FG_TAG,        EB_DATA32, startTag);
-    cycle.close();
-  } catch (...) {
-    releaseChannel();
-    throw;
-  }
-}
-
-void FunctionGenerator::releaseChannel()
-{
-  assert (channel != -1);
-  
-  dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
-  dev->getDevice().write(swi + SWI_FLUSH,   EB_DATA32, channel);
-  
-  // in case release races with function start, unhook IRQ so that
-  // only hardware is confused and it doesn't crash the saftlib
+  // if this throws, it is not a problem
   eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
   etherbone::Cycle cycle;
   cycle.open(dev->getDevice());
-  cycle.write(regs + FG_IRQ,        EB_DATA32, 0);
-  cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, (guint32)-1);
+  cycle.write(regs + FG_WPTR,       EB_DATA32, 0);
+  cycle.write(regs + FG_RPTR,       EB_DATA32, 0);
+  cycle.write(regs + FG_IRQ,        EB_DATA32, irq);
+  cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, index);
   cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
-  cycle.write(regs + FG_TAG,        EB_DATA32, 0);
+  cycle.write(regs + FG_TAG,        EB_DATA32, startTag);
   cycle.close();
   
-  allocation->indexes[channel] = -1;
+  allocation->indexes[i] = index;
+  channel = i;
+}
+
+bool FunctionGenerator::cooldownChannel(int oldChannel)
+{
+  busyConnection.disconnect();
+  allocation->indexes[oldChannel] = -1;
+  return false;
+}
+
+void FunctionGenerator::releaseChannel(bool immediate)
+{
+  assert (channel != -1);
+  
+  // disable the channel
+  dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
+  
+  if (immediate) {
+    allocation->indexes[channel] = -1;
+  } else {
+    // schedule availability for re-use in 10 milliseconds
+    // this allows time for the hardware to cleanly stop
+    busyConnection = Glib::signal_timeout().connect(
+      sigc::bind(sigc::mem_fun(*this, &FunctionGenerator::cooldownChannel), channel),
+      10);
+  }
+  
   channel = -1;
   filled = 0;
 }
@@ -350,17 +355,21 @@ void FunctionGenerator::setEnabled(bool val)
 {
   ownerOnly();
   
-  if (fillLevel == 0 && val)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FillLevel is zero, cannot Enable");
-  if (running && val)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Running, cannot Enable");
-  
   if (val != enabled) {
     if (!val) {
       // there is a race condition here. potentially the tag arrives while we are disabling.
       // this is unavoidable and documented.
-      if (!running) releaseChannel();
+      if (!running) releaseChannel(false); // false - go into 10ms cooldown
     } else {
+      // check for all the reasons we might not allow enable
+      if (fillLevel == 0)
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FillLevel is zero, cannot Enable");
+      if (running)
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Running, cannot Enable");
+      if (busyConnection)
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "On 10ms cooldown, cannot Enable");
+      
+      // actually enable it
       acquireChannel();
       refill();
       dev->getDevice().write(swi + SWI_ENABLE, EB_DATA32, channel);

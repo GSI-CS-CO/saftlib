@@ -51,7 +51,6 @@
 #define FG_BUFF_BASE(c,i,n,s) (FG_REGS_BASE(n,n)+(i+c*s)*PARAM_SIZE)
 
 // Software interrupt numbers; host=>lm32
-#define SWI_FLUSH	0x0
 #define SWI_ENABLE	0x8
 #define SWI_DISABLE	0xc
 

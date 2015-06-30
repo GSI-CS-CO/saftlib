@@ -662,8 +662,9 @@ void TimingReceiver::probe(OpenDevice& od)
     
     if (cpus != fgs.size())
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
-    if (eps_per * cpus != eps.size())
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 EPs does not equal ROM cpu_count*ep_count");
+//  currently EPs appear twice on crossbar. consult Mathias.
+//    if (eps_per * cpus != eps.size())
+//      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 EPs does not equal ROM cpu_count*ep_count");
     
     // Check them all for the function generator microcontroller
     unsigned i;
@@ -697,23 +698,10 @@ void TimingReceiver::probe(OpenDevice& od)
         new FunctionGeneratorChannelAllocation);
       allocation->indexes.resize(num_channels, -1);
       
-      // Clear IRQ and index for all macros
+      // Disable all channels
       cycle.open(od.device);
-      for (unsigned j = 0; j < num_channels; ++j) {
-        eb_address_t regs = fgb + SHM_BASE + FG_REGS_BASE(j, num_channels);
-        cycle.write(regs + FG_IRQ,        EB_DATA32, 0);
-        cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, (guint32)-1);
-        cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
-        cycle.write(regs + FG_TAG,        EB_DATA32, 0);
-      }
-      cycle.close();
-      
-      // Disable and flush all hardware macros
-      cycle.open(od.device);
-      for (unsigned j = 0; j < num_channels; ++j) {
+      for (unsigned j = 0; j < num_channels; ++j)
         cycle.write(swi + SWI_DISABLE, EB_DATA32, j);
-        cycle.write(swi + SWI_FLUSH,   EB_DATA32, j);
-      }
       cycle.close();
       
       // Create the objects to control the channels

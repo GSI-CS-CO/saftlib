@@ -50,10 +50,13 @@
          A Running function generator can never be Enabled. Immediately
          after a function generator is Started, it is disabled. Setting
          Enabled to false by hand is dangerous. If StartTag is received at
-         the same time, the FunctionGenerator can enter an undefined state.
-         It is the caller's responsibility to ensure this does not happen.
-         If the Owner of a FunctionGenerator quits without running Disown,
-         the FunctionGenerator automatically has Enabled set to false.
+         the same time, the FunctionGenerator might produce a truncated
+         waveform. It is the caller's responsibility to ensure this does 
+         not happen. After setting Enabled to false manually, the
+         FunctionGenerator goes into a 10ms safety cooldown, during which
+         time it may not be re-Enabled. If the Owner of a FunctionGenerator 
+         quits without running Disown, the FunctionGenerator automatically 
+         has Enabled set to false.
     -->
     <property name="Enabled" type="b" access="readwrite"/>
 
