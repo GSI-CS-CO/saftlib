@@ -18,13 +18,14 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
    irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
-   channel(-1), enabled(false), armed(false), running(false), abort(false), 
+   channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), aboveSafeFillLevel(false), safeFillLevel(100000000), fillLevel(0), filled(0)
 {
 }
 
 FunctionGenerator::~FunctionGenerator()
 {
+  resetTimeout.disconnect(); // do not run ResetFailed
   dev->getDevice().release_irq(irq);
 }
 
@@ -173,7 +174,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     } else {
       bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY) && !abort;
       bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow && !abort;
-      if (!hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
+      if (!abort && !hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
         fillLevel = 0;
         fifo.clear();
       }
@@ -376,6 +377,7 @@ void FunctionGenerator::releaseChannel()
 {
   assert (channel != -1);
   
+  resetTimeout.disconnect();
   allocation->indexes[channel] = -1;
   channel = -1;
   filled = 0;
@@ -407,19 +409,46 @@ void FunctionGenerator::Arm()
   }
 }
 
+bool FunctionGenerator::ResetFailed()
+{
+  assert(enabled);
+  std::cerr << "FunctionGenerator: failed to reset on index " << index << std::endl;
+  
+  if (running) { // synthesize missing Stopped
+    running = false;
+    Stopped(dev->getCurrentTime(), true, false, false);
+  } else {
+    // synthesize any missing Armed transitions
+    if (!armed) {
+      armed = true;
+      Armed(true);
+    }
+    armed = false;
+    Armed(armed);
+  }
+  releaseChannel();
+  return false;
+}
+
+void FunctionGenerator::Reset()
+{
+  if (channel == -1) return; // nothing to abort
+  dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
+  // expect disarm or started+stopped, but if not ... timeout:
+  resetTimeout = Glib::signal_timeout().connect(
+    sigc::mem_fun(*this, &FunctionGenerator::ResetFailed), 250); // 250ms
+}
+
 void FunctionGenerator::Abort()
 {
   ownerOnly();
-  if (channel == -1) return; // nothing to abort
-  
-  dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
-  // expect disarm or started+stopped
+  Reset();
 }
 
 void FunctionGenerator::ownerQuit()
 {
   // owner quit without Disown? probably a crash => turn off the function generator
-  Abort();
+  Reset();
 }
 
 void FunctionGenerator::setStartTag(guint32 val)

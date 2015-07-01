@@ -61,6 +61,8 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     void refill();
     void releaseChannel();
     void acquireChannel();
+    void Reset();
+    bool ResetFailed();
     void ownerQuit();
     
     TimingReceiver* dev;
@@ -81,6 +83,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     bool armed;
     bool running;
     bool abort;
+    sigc::connection resetTimeout;
     guint32 startTag;
     unsigned executedParameterCount;
     
