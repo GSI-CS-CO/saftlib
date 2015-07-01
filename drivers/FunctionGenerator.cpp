@@ -1,5 +1,6 @@
 #define ETHERBONE_THROWS 1
 
+#include <iostream>
 #include <assert.h>
 
 #include "RegisteredObject.h"
@@ -116,41 +117,72 @@ void FunctionGenerator::refill()
 void FunctionGenerator::irq_handler(eb_data_t status)
 {
   // ignore spurious interrupt
-  if (channel == -1) return;
+  if (channel == -1) {
+    std::cerr << "FunctionGenerator: received unsolicited IRQ on index " << index << std::endl;
+    return;
+  }
+  
+  // microcontroller cannot break this invariant; we always set channel and enabled together
+  assert (enabled);
   
   // !!! imprecise; should be timestamped by the hardware
   guint64 time = dev->getCurrentTime();
   
+  // make sure the evil microcontroller does not violate message sequencing
   if (status == IRQ_DAT_REFILL) {
-    refill();
-  } else if (status == IRQ_DAT_ARMED) {
-    armed = true;
-    Armed(armed);
-  } else if (status == IRQ_DAT_DISARMED) {
-    releaseChannel();
-    armed = false;
-    Armed(armed);
-    enabled = false;
-    Enabled(enabled);
-  } else if (status == IRQ_DAT_START) {
-    armed = false;
-    Armed(armed);
-    running = true;
-    Started(time);
-  } else { // stopped?
-    bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY) && !abort;
-    bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow && !abort;
-    if (!hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
-      fillLevel = 0;
-      fifo.clear();
+    if (!running) {
+      std::cerr << "FunctionGenerator: received refill while not running on index " << index << std::endl;
+    } else {
+      refill();
     }
-    executedParameterCount = getExecutedParameterCount();
-    releaseChannel();
-    running = false;
-    Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
-    updateAboveSafeFillLevel(); // should be a no-op (?)
-    enabled = false;
-    Enabled(enabled);
+  } else if (status == IRQ_DAT_ARMED) {
+    if (running) {
+      std::cerr << "FunctionGenerator: received armed while running on index " << index << std::endl;
+    } else if (armed) {
+      std::cerr << "FunctionGenerator: received armed while armed on index " << index << std::endl;
+    } else {
+      armed = true;
+      Armed(armed);
+    }
+  } else if (status == IRQ_DAT_DISARMED) {
+    if (running) {
+      std::cerr << "FunctionGenerator: received disarmed while running on index " << index << std::endl;
+    } else if (!armed) {
+      std::cerr << "FunctionGenerator: received disarmed while not armed on index " << index << std::endl;
+    } else {
+      armed = false;
+      Armed(armed);
+      releaseChannel();
+    }
+  } else if (status == IRQ_DAT_START) {
+    if (running) {
+      std::cerr << "FunctionGenerator: received start while running on index " << index << std::endl;
+    } else if (!armed) {
+      std::cerr << "FunctionGenerator: received start while not armed on index " << index << std::endl;
+    } else {
+      armed = false;
+      Armed(armed);
+      running = true;
+      Started(time);
+    }
+  } else { // stopped?
+    if (armed) {
+      std::cerr << "FunctionGenerator: received stop while armed on index " << index << std::endl;
+    } else if (!running) {
+      std::cerr << "FunctionGenerator: received stop while not running on index " << index << std::endl;
+    } else {
+      bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY) && !abort;
+      bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow && !abort;
+      if (!hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
+        fillLevel = 0;
+        fifo.clear();
+      }
+      executedParameterCount = getExecutedParameterCount();
+      running = false;
+      Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
+      updateAboveSafeFillLevel(); // should be a no-op (?)
+      releaseChannel();
+    }
   }
 }
 
@@ -336,6 +368,8 @@ void FunctionGenerator::acquireChannel()
   
   allocation->indexes[i] = index;
   channel = i;
+  enabled = true;
+  Enabled(enabled);
 }
 
 void FunctionGenerator::releaseChannel()
@@ -345,6 +379,8 @@ void FunctionGenerator::releaseChannel()
   allocation->indexes[channel] = -1;
   channel = -1;
   filled = 0;
+  enabled = false;
+  Enabled(enabled);
 }
 
 void FunctionGenerator::Arm()
@@ -355,23 +391,20 @@ void FunctionGenerator::Arm()
   if (fillLevel == 0)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
   
+  // !enabled, so:
+  assert(!armed);
+  assert(!running);
+  
   // actually enable it
+  abort = false;
   acquireChannel();
   try {
     refill();
     dev->getDevice().write(swi + SWI_ENABLE, EB_DATA32, channel);
   } catch (...) {
-    Abort();
+    dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
     throw;
   }
-  
-  // !enabled, so:
-  assert(!armed);
-  assert(!running);
-  
-  abort = false;
-  enabled = true;
-  Enabled(enabled);
 }
 
 void FunctionGenerator::Abort()
