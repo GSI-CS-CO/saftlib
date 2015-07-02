@@ -20,6 +20,7 @@ saftd_SOURCES = version.h \
 	src/SAFTd.cpp			src/SAFTd.h			\
 	src/RegisteredObject.cpp	src/RegisteredObject.h		\
 	src/eb-source.cpp		src/eb-source.h			\
+	src/clog.cpp			src/clog.h			\
 	src/build.cpp			src/build.h			\
 	drivers/eca_regs.h		drivers/fg_regs.h		\
 	drivers/Owned.cpp		drivers/Owned.h			\
