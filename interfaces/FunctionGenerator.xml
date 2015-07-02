@@ -19,11 +19,21 @@
       SCUbus timing tag (StartTag) whose appearance should trigger waveform generation.
       Finally, the FunctionGenerator is armed by calling Arm, whereafter it may be
       triggered manually via the SCUbusActionSink->InjectTag method, or by a timing
-      event sent by the data master.
+      event sent by the data master, which is configured to create the StartTag.
 
       If you need an unending waveform, follow the steps above, but additionally monitor 
-      the AboveSafeFillLevel signal, and append additional parameter tuples when 
-      AboveSafeFillLevel transitions to false.
+      the Refill signal, and append additional parameter tuples until low_fill is false.
+      
+      The sequence of signals of successful waveform generation occur in this order: 
+        Enabled(true)
+        Armed(true)
+        Armed(false)
+        Started
+        Running(true)
+        Refill
+        Running(false)
+        Stopped
+        Enabled(false)
    -->
   <interface name="de.gsi.saftlib.FunctionGenerator">
     
@@ -69,9 +79,7 @@
          transitions to true, the Started signal is emitted. When this property
          transitions to false, the Stopped signal is emitted.
       -->
-    <property name="Running" type="b" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-    </property>
+    <property name="Running" type="b" access="read"/>
 
     <!-- Started: Function generation has begun.
          @time:   Time when function generation began in nanoseconds since 1970
@@ -142,52 +150,43 @@
       -->
     <method name="Abort"/>
     
-    <!-- FillLevel: Remaining waveform data in nanoseconds 
+    <!-- ReadFillLevel: Remaining waveform data in nanoseconds 
          The SAFTd has sufficient parameters buffered to supply the function generator with 
          data for the specified time in nanoseconds. Note, due to the slow nature of software,
          if the function generator is currently running, the read value will already be 
          out-of-date upon return. This property should be used for informational use only.
       -->
-    <property name="FillLevel" type="t" access="read">
-       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-    </property>
+    <method name="ReadFillLevel">
+      <arg direction="out" type="t" name="result"/>
+    </method>
 
-    <!-- SafeFillLevel: FillLevel should remain above this value (ns)
-         In order to guarantee an uninterrupted supply of data to the function generator,
-         there should be enough parameter data buffered in the SAFTd to last at least as 
-         long as this parameter (by default 100ms). This setting also affects the 
-         AboveSafeFillLevel property, which is used to indicate that waveform data should
-         be refilled. Values below 1ms are forbidden.
+    <!-- Refill: More tuples must be appended to ensure uninterrupted waveform.
+         In order to guarantee an uninterrupted supply of data to the
+         function generator, there should be data buffered in the SAFTd. 
+         When the buffer fill level gets too low, this signal is emitted,
+         and you should run AppendParameterSet.  If you do not, function
+         generation will cease, signalling successful completion of the
+         waveform with Stopped.
       -->
-    <property name="SafeFillLevel" type="t" access="readwrite"/>
-
-    <!-- AboveSafeFillLevel: Is FillLevel above SafeFillLevel
-         When this changes to false, consider refilling the buffer with AppendParameterSet.
-      -->
-    <property name="AboveSafeFillLevel" type="b" access="read"/>
-
-    <!-- ExecutedParameterCount: Number of parameter tuples executed by hardware.
-         This counts the total number of parameter tuples executed since the last
-         Started signal. Obviously, if the function generator is running, the returned
-         value will be old.
-      -->
-    <property name="ExecutedParameterCount" type="q" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
+    <signal name="Refill"/>
 
     <!-- AppendParameterSet: Append parameter tuples describing waveform to generate.
-         @coeff_a: Quadratic coefficient (a), 16-bit signed
-         @coeff_b: Linear coefficient (b),    16-bit signed
-         @coeff_c: Constant coefficient (c),  32-bit signed
-         @step:    Number of interpolated samples (0=250, 1=500, 2=1000, 3=2000, 4=4000, 5=8000, 6=16000, or 7=32000)
-         @freq:    Output sample frequency (0=16kHz, 1=32kHz, 2=64kHz, 3=125kHz, 4=250kHz, 5=500kHz, 6=1MHz, or 7=2MHz)
-         @shift_a: Exponent of coeff_a, 6-bit unsigned; a = coeff_a*2^shift_a
-         @shift_b: Exponent of coeff_b, 6-bit unsigned; b = coeff_b*2^shift_b
+         @coeff_a:  Quadratic coefficient (a), 16-bit signed
+         @coeff_b:  Linear coefficient (b),    16-bit signed
+         @coeff_c:  Constant coefficient (c),  32-bit signed
+         @step:     Number of interpolated samples (0=250, 1=500, 2=1000, 3=2000, 4=4000, 5=8000, 6=16000, or 7=32000)
+         @freq:     Output sample frequency (0=16kHz, 1=32kHz, 2=64kHz, 3=125kHz, 4=250kHz, 5=500kHz, 6=1MHz, or 7=2MHz)
+         @shift_a:  Exponent of coeff_a, 6-bit unsigned; a = coeff_a*2^shift_a
+         @shift_b:  Exponent of coeff_b, 6-bit unsigned; b = coeff_b*2^shift_b
+         @low_fill: Fill level remains too low
 
          This function appends the parameter vectors (which must be equal in length)
          to the FIFO of remaining waveform to generate. Each parameter set (coefficients)
          describes a number of output samples in the generated wave form. Parameter
          sets are executed in order until no more remain.
+         
+         If the fill level is not high enough, this method returns true. 
+         Only once this function has returned false can you await the Refill signal.
 
          At each step, the function generator outputs high_bits(c*2^32 + b*t + c*t*t),
          where t ranges from 0 to numSteps-1. high_bits are the high OutputWindowSize
@@ -201,6 +200,7 @@
       <arg direction="in" type="ay" name="freq"/>
       <arg direction="in" type="ay" name="shift_a"/>
       <arg direction="in" type="ay" name="shift_b"/>
+      <arg direction="out" type="b" name="low_fill"/>
     </method>
     
     <!-- Flush: Empty the parameter tuple set.
@@ -209,5 +209,13 @@
       -->
     <method name="Flush"/>
 
+    <!-- ExecutedParameterCount: Number of parameter tuples executed by hardware.
+         This counts the total number of parameter tuples executed since the last
+         Started signal. Obviously, if the function generator is running, the returned
+         value will be old.
+      -->
+    <property name="ExecutedParameterCount" type="q" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
   </interface>
 </node>

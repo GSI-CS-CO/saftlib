@@ -19,7 +19,7 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
    outputWindowSize((args.macro >>  0) & 0xFF),
    irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
-   startTag(0), aboveSafeFillLevel(false), safeFillLevel(100000000), fillLevel(0), filled(0)
+   startTag(0), fillLevel(0), filled(0)
 {
 }
 
@@ -48,6 +48,11 @@ static unsigned wrapping_add(unsigned a, unsigned b, unsigned buffer_size)
   }
 }
 
+bool FunctionGenerator::lowFill() const
+{
+  return fifo.size() < buffer_size * 2;
+}
+
 void FunctionGenerator::refill()
 {
   etherbone::Cycle cycle;
@@ -68,12 +73,16 @@ void FunctionGenerator::refill()
   unsigned remaining = wrapping_sub(write_offset, read_offset, buffer_size);
   unsigned completed = filled - remaining;
   
+  bool wasLow = lowFill();
   for (unsigned i = 0; i < completed && !fifo.empty(); ++i) {
     fillLevel -= fifo.front().duration();
     --filled;
     fifo.pop_front();
   }
-  updateAboveSafeFillLevel();
+  bool amLow = lowFill();
+  
+  // should we get more data from the user?
+  if (amLow && !wasLow) Refill();
   
   // our buffers should now agree
   assert (filled == remaining);
@@ -163,8 +172,9 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     } else {
       armed = false;
       Armed(armed);
-      running = true;
       Started(time);
+      running = true;
+      Running(true);
     }
   } else { // stopped?
     if (armed) {
@@ -180,8 +190,8 @@ void FunctionGenerator::irq_handler(eb_data_t status)
       }
       executedParameterCount = getExecutedParameterCount();
       running = false;
+      Running(running);
       Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
-      updateAboveSafeFillLevel(); // should be a no-op (?)
       releaseChannel();
     }
   }
@@ -210,7 +220,7 @@ guint64 FunctionGenerator::ParameterTuple::duration() const
   return samples[step] * sample_len[freq];
 }
 
-void FunctionGenerator::AppendParameterSet(
+bool FunctionGenerator::AppendParameterSet(
   const std::vector< gint16 >& coeff_a,
   const std::vector< gint16 >& coeff_b,
   const std::vector< gint32 >& coeff_c,
@@ -252,11 +262,8 @@ void FunctionGenerator::AppendParameterSet(
     fillLevel += tuple.duration();
   }
   
-  if (channel == -1) {
-    updateAboveSafeFillLevel();
-  } else {
-    refill(); // calls updateAboveSafeFillLevel()
-  }
+  if (channel != -1) refill();
+  return lowFill();
 }
 
 void FunctionGenerator::Flush()
@@ -270,7 +277,6 @@ void FunctionGenerator::Flush()
   
   fillLevel = 0;
   fifo.clear();
-  updateAboveSafeFillLevel();
 }
 
 guint32 FunctionGenerator::getVersion() const
@@ -313,19 +319,9 @@ guint32 FunctionGenerator::getStartTag() const
   return startTag;
 }
 
-guint64 FunctionGenerator::getFillLevel() const
+guint64 FunctionGenerator::ReadFillLevel()
 {
   return fillLevel;
-}
-
-guint64 FunctionGenerator::getSafeFillLevel() const
-{
-  return safeFillLevel;
-}
-
-bool FunctionGenerator::getAboveSafeFillLevel() const
-{
-  return aboveSafeFillLevel;
 }
 
 guint16 FunctionGenerator::getExecutedParameterCount() const
@@ -416,12 +412,13 @@ bool FunctionGenerator::ResetFailed()
   
   if (running) { // synthesize missing Stopped
     running = false;
+    Running(running);
     Stopped(dev->ReadCurrentTime(), true, false, false);
   } else {
     // synthesize any missing Armed transitions
     if (!armed) {
       armed = true;
-      Armed(true);
+      Armed(armed);
     }
     armed = false;
     Armed(armed);
@@ -460,28 +457,6 @@ void FunctionGenerator::setStartTag(guint32 val)
   if (val != startTag) {
     startTag = val;
     StartTag(startTag);
-  }
-}
-
-void FunctionGenerator::setSafeFillLevel(guint64 val)
-{
-  ownerOnly();
-  if (safeFillLevel < 1000000)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "safeFillLevel must be at least 1ms");
-  
-  if (val != safeFillLevel) {
-    safeFillLevel = val;
-    SafeFillLevel(safeFillLevel);
-    updateAboveSafeFillLevel();
-  }
-}
-
-void FunctionGenerator::updateAboveSafeFillLevel()
-{
-  bool val = fillLevel >= safeFillLevel;
-  if (val != aboveSafeFillLevel) {
-    aboveSafeFillLevel = val;
-    AboveSafeFillLevel(aboveSafeFillLevel);
   }
 }
 

@@ -136,7 +136,7 @@
   
   <!-- ReadFill: Report the number of currently pending actions.
        The timing receiver hardware can only queue a limited number of
-       actions.  This property reports the current number of queued actions,
+       actions.  This method reports the current number of queued actions,
        which includes actions from all users of the underlying hardware.  So
        two programs each using a SoftwareActionSink will potentially see an
        increase in this value when both programs are active.  Also, this

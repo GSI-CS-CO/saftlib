@@ -24,9 +24,9 @@ struct ParamSet {
 };
 
 // Hand off the entire datafile to SAFTd
-void fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
-  gen->AppendParameterSet(
+  return gen->AppendParameterSet(
     params.coeff_a,
     params.coeff_b,
     params.coeff_c,
@@ -37,12 +37,9 @@ void fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 }
 
 // Refill the function generator if the buffer fill gets low
-void on_lowFillLevel(bool aboveSafeFillLevel, Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+void on_refill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
-  if (aboveSafeFillLevel) return;
-  
-  do fill(gen, params);
-  while (!gen->getAboveSafeFillLevel());
+  while (fill(gen, params)) { }
 }
 
 // Pretty print timestamp
@@ -74,7 +71,7 @@ void on_start(guint64 time)
 }
 
 // Report when the function generator stops
-void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow, Glib::RefPtr<Glib::MainLoop> loop)
+void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
   // was there an error?
@@ -84,6 +81,12 @@ void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microCo
     std::cerr << "Fatal error: hardwareMacroUnderflow!" << std::endl;
   if (microControllerUnderflow)
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
+}
+
+// When the function generator becomes disabled, stop the loop
+void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
+{
+  if (value) return;
   // terminate the main event loop
   loop->quit();
 }
@@ -287,32 +290,28 @@ int main(int argc, char** argv)
     // Stop whatever the function generator was doing
     gen->Abort();
     
-    // Wait until the function generator is idle
-    for (unsigned count = 0; gen->getEnabled(); ++count) {
-      if (count > 2999 && count % 1000 == 0) std::cerr << "Warning, hardware did not reset after " << (count/1000) << " seconds ..." << std::endl;
-      Glib::usleep(1000);
-    }
+    // Wait until not Enabled
+    gen->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
+    if (gen->getEnabled()) loop->run();
     
     // Clear any old waveform data
     gen->Flush();
     
     // Watch for events on the function generator
     gen->Started.connect(sigc::ptr_fun(&on_start));
-    gen->Stopped.connect(sigc::bind(sigc::ptr_fun(&on_stop), loop));
+    gen->Stopped.connect(sigc::ptr_fun(&on_stop));
     
-    // Load up the parameters
-    fill(gen, params);
+    // Load up the parameters, possibly repeating until full
+    while (fill(gen, params) && repeat) { }
     
     // Repeat the waveform forever?
     if (repeat) {
-      // repeat waveform till safely full
-      while (!gen->getAboveSafeFillLevel()) fill(gen, params); 
       // listen to refill indicator
-      gen->AboveSafeFillLevel.connect(sigc::bind(sigc::ptr_fun(&on_lowFillLevel), gen, params));
+      gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
     }
     
     // FYI, how much data is this?
-    std::cout << "Loaded " << gen->getFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
+    std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
     
     // Watch for a timing event? => generate tag on event
     if (eventSet) scu->NewCondition(true, event, ~0, 0, 0, tag);
@@ -324,7 +323,7 @@ int main(int argc, char** argv)
     gen->setStartTag(tag);
     gen->Arm();
     
-    // Wait until on_stop is called / function generator is done
+    // Wait until not enabled / function generator is done
     // ... if we don't care to keep repeating the waveform, we could quit immediately;
     //     SAFTd has been properly configured to run autonomously at this point.
     // ... of course, then the user doesn't get the final error status message either

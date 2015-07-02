@@ -36,7 +36,8 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     // iFunctionGenerator overrides
     void Arm();
     void Abort();
-    void AppendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
+    guint64 ReadFillLevel();
+    bool AppendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
     void Flush();
     guint32 getVersion() const;
     unsigned char getSCUbusSlot() const;
@@ -46,17 +47,13 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     bool getArmed() const;
     bool getRunning() const;
     guint32 getStartTag() const;
-    guint64 getFillLevel() const;
-    guint64 getSafeFillLevel() const;
-    bool getAboveSafeFillLevel() const;
     guint16 getExecutedParameterCount() const;
     void setStartTag(guint32 val);
-    void setSafeFillLevel(guint64 val);
     
   protected:
     FunctionGenerator(ConstructorType args);
     ~FunctionGenerator();
-    void updateAboveSafeFillLevel();
+    bool lowFill() const;
     void irq_handler(eb_data_t status);
     void refill();
     void releaseChannel();
@@ -99,9 +96,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
       guint64 duration() const;
     };
     
-    // These 4 variables must be kept in sync:
-    bool aboveSafeFillLevel;
-    guint64 safeFillLevel;
+    // These 3 variables must be kept in sync:
     guint64 fillLevel;
     unsigned filled; // # of fifo entries currently on LM32
     std::deque<ParameterTuple> fifo;
