@@ -116,7 +116,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	SoftwareCondition.cpp	\
 	TimingReceiver.cpp
 
-$(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES) $(nodist_saftlib_HEADERS):	$(NODES) $(XSL)
+$(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES) $(nodist_saftlib_HEADERS):	$(NODES) $(INTERFACES) $(XSL)
 	$(XSLTPROC) --path $(srcdir) --xinclude $(srcdir)/h.xsl $(NODES)
 	$(XSLTPROC) --path $(srcdir) --xinclude $(srcdir)/cpp.xsl $(NODES)
 	$(XSLTPROC) --path $(srcdir) --xinclude $(srcdir)/doc.xsl $(NODES)
