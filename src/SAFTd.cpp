@@ -30,7 +30,9 @@ SAFTd::SAFTd()
   }
   
   // Connect etherbone to glib loop
-  sigc::connection eb_source = eb_attach_source(m_loop, socket);
+  eb_source = eb_attach_source(m_loop, socket);
+  // Connect the IRQ buffer to glip loop
+  msi_source = Device::attach(m_loop);
 }
 
 SAFTd::~SAFTd()
@@ -47,6 +49,7 @@ SAFTd::~SAFTd()
       m_connection.reset();
     }
     eb_source.disconnect();
+    msi_source.disconnect();
     socket.close();
   } catch (const Glib::Error& ex) {
     std::cerr << "Could not clean up: " << ex.what() << std::endl;

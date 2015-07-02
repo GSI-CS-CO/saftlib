@@ -33,6 +33,7 @@ class SAFTd : public iSAFTd
     Glib::RefPtr<Gio::DBus::Connection> m_connection;
     etherbone::Socket socket;
     sigc::connection eb_source;
+    sigc::connection msi_source;
     
     std::map< Glib::ustring, OpenDevice > devs;
 

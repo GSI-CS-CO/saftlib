@@ -1,5 +1,6 @@
 #define ETHERBONE_THROWS 1
 
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include "Device.h"
@@ -68,10 +69,10 @@ eb_status_t IRQ_Handler::read(eb_address_t address, eb_width_t width, eb_data_t*
 
 eb_status_t IRQ_Handler::write(eb_address_t address, eb_width_t width, eb_data_t data)
 {
-  Device::irqMap::iterator i = Device::irqs.find(address);
-  if (i != Device::irqs.end()) {
-    i->second(data);
-  }
+  Device::MSI msi;
+  msi.address = address;
+  msi.data = data;
+  Device::msis.push_back(msi);
   return EB_OK;
 }
 
@@ -84,7 +85,7 @@ void Device::hook_it_all(etherbone::Socket socket)
   everything.abi_ver_major = 0;
   everything.abi_ver_minor = 0;
   everything.bus_specific  = SDB_WISHBONE_WIDTH;
-  everything.sdb_component.addr_first = 0x4000;
+  everything.sdb_component.addr_first = 0x4000; // !!! use 0 with new libetherbone
   everything.sdb_component.addr_last  = 0xffffffffULL;
   everything.sdb_component.product.vendor_id = 0x651;
   everything.sdb_component.product.device_id = 0xefaa70;
@@ -93,6 +94,82 @@ void Device::hook_it_all(etherbone::Socket socket)
   memcpy(everything.sdb_component.product.name, "SAFTLIB           ", 19);
   
   socket.attach(&everything, &handler);
+}
+
+class MSI_Source : public Glib::Source
+{
+  public:
+    static Glib::RefPtr<MSI_Source> create();
+    sigc::connection connect(const sigc::slot<bool>& slot);
+    
+  protected:
+    explicit MSI_Source();
+    
+    virtual bool prepare(int& timeout);
+    virtual bool check();
+    virtual bool dispatch(sigc::slot_base* slot);
+};
+
+Glib::RefPtr<MSI_Source> MSI_Source::create()
+{
+  return Glib::RefPtr<MSI_Source>(new MSI_Source());
+}
+
+sigc::connection MSI_Source::connect(const sigc::slot<bool>& slot)
+{
+  return connect_generic(slot);
+}
+
+MSI_Source::MSI_Source()
+{
+}
+
+bool MSI_Source::prepare(int& timeout_ms)
+{
+  // returning true means immediately ready
+  if (Device::msis.empty()) {
+    return false;
+  } else {
+    timeout_ms = 0;
+    return true;
+  }
+}
+
+bool MSI_Source::check()
+{
+  return !Device::msis.empty(); // true means ready after glib's poll
+}
+
+bool MSI_Source::dispatch(sigc::slot_base* slot)
+{
+  // Process any pending MSIs
+  while (!Device::msis.empty()) {
+    Device::MSI msi = Device::msis.front();
+    Device::msis.pop_front();
+    
+    Device::irqMap::iterator i = Device::irqs.find(msi.address);
+    if (i != Device::irqs.end()) {
+      i->second(msi.data);
+    } else {
+      std::cerr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
+    }
+  }
+  
+  // return the signal handler
+  return (*static_cast<sigc::slot<bool>*>(slot))();
+}
+
+static bool my_noop()
+{
+  return true;
+}
+
+sigc::connection Device::attach(const Glib::RefPtr<Glib::MainLoop>& loop)
+{
+  Glib::RefPtr<MSI_Source> source = MSI_Source::create();
+  sigc::connection out = source->connect(sigc::ptr_fun(&my_noop));
+  source->attach(loop->get_context());
+  return out;
 }
 
 } // saftlib

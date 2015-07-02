@@ -7,6 +7,7 @@
 namespace saftlib {
 
 Device::irqMap Device::irqs;
+Device::msiQueue Device::msis;
 SAFTd SAFTd::saftd;
 
 }
