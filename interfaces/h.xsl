@@ -226,6 +226,17 @@
     </xsl:variable>
 
     <xsl:document href="i{$iface}.h" method="text" encoding="utf-8" indent="no">
+      <xsl:for-each select="property">
+        <xsl:if test="annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false']">
+          <xsl:message terminate="no">
+            <xsl:text>Warning: </xsl:text>
+            <xsl:value-of select="$iface"/>
+            <xsl:text>::</xsl:text>
+            <xsl:value-of select="@name"/>
+            <xsl:text> is an uncached property. Deprecated!&#10;</xsl:text>
+          </xsl:message>
+        </xsl:if>
+      </xsl:for-each>
       <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
       <xsl:text>#ifndef </xsl:text>
       <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$iface"/></xsl:call-template>
