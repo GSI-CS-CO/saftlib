@@ -112,12 +112,12 @@ guint32 ActionSink::getMostFull() const
   return (data & 0xFFFFU);
 }
 
-guint32 ActionSink::getOverflowCount() const
+guint32 ActionSink::ReadOverflowCount()
 {
   return 0; // !!!
 }
 
-guint32 ActionSink::getConflictCount() const
+guint32 ActionSink::ReadConflictCount()
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -133,7 +133,7 @@ bool ActionSink::getExecuteLateActions() const
   return executeLateActions;
 }
 
-guint32 ActionSink::getLateCount() const
+guint32 ActionSink::ReadLateCount()
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -149,12 +149,12 @@ bool ActionSink::getGenerateDelayed() const
   return generateDelayed;
 }
 
-guint32 ActionSink::getDelayedCount() const
+guint32 ActionSink::ReadDelayedCount()
 {
   return 0; // !!!
 }
 
-guint32 ActionSink::getActionCount() const
+guint32 ActionSink::ReadActionCount()
 {
   eb_data_t data;
   etherbone::Cycle cycle;
@@ -192,19 +192,19 @@ void ActionSink::setMostFull(guint32 val)
   cycle.close();
 }
 
-void ActionSink::setOverflowCount(guint32 val)
+void ActionSink::ResetOverflowCount()
 {
   ownerOnly();
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-void ActionSink::setConflictCount(guint32 val)
+void ActionSink::ResetConflictCount()
 {
   ownerOnly();
   etherbone::Cycle cycle;
   cycle.open(dev->device);
   cycle.write(dev->base + ECAC_SELECT,   EB_DATA32, channel << 16);
-  cycle.write(dev->base + ECAC_CONFLICT, EB_DATA32, val);
+  cycle.write(dev->base + ECAC_CONFLICT, EB_DATA32, 0);
   cycle.close();
 }
 
@@ -216,13 +216,13 @@ void ActionSink::setExecuteLateActions(bool val)
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-void ActionSink::setLateCount(guint32 val)
+void ActionSink::ResetLateCount()
 {
   ownerOnly();
   etherbone::Cycle cycle;
   cycle.open(dev->device);
   cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
-  cycle.write(dev->base + ECAC_LATE,   EB_DATA32, val);
+  cycle.write(dev->base + ECAC_LATE,   EB_DATA32, 0);
   cycle.close();
 }
 
@@ -234,19 +234,19 @@ void ActionSink::setGenerateDelayed(bool val)
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-void ActionSink::setDelayedCount(guint32 val)
+void ActionSink::ResetDelayedCount()
 {
   ownerOnly();
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-void ActionSink::setActionCount(guint32 val)
+void ActionSink::ResetActionCount()
 {
   ownerOnly();
   etherbone::Cycle cycle;
   cycle.open(dev->device);
   cycle.write(dev->base + ECAC_SELECT, EB_DATA32, channel << 16);
-  cycle.write(dev->base + ECAC_VALID,  EB_DATA32, val);
+  cycle.write(dev->base + ECAC_VALID,  EB_DATA32, 0);
   cycle.close();
 }
 

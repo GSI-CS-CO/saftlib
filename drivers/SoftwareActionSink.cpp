@@ -31,22 +31,22 @@ Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const Glib::ustring&
   return RegisteredObject<SoftwareActionSink>::create(objectPath, args);
 }
 
-guint32 SoftwareActionSink::getConflictCount() const
+guint32 SoftwareActionSink::ReadConflictCount()
 {
   return conflictCount;
 }
 
-guint32 SoftwareActionSink::getLateCount() const
+guint32 SoftwareActionSink::ReadLateCount()
 {
   return lateCount;
 }
 
-guint32 SoftwareActionSink::getDelayedCount() const
+guint32 SoftwareActionSink::ReadDelayedCount()
 {
   return delayedCount;
 }
 
-guint32 SoftwareActionSink::getActionCount() const
+guint32 SoftwareActionSink::ReadActionCount()
 {
   return actionCount;
 }
@@ -61,28 +61,28 @@ bool SoftwareActionSink::getGenerateDelayed() const
   return generateDelayed;
 }
 
-void SoftwareActionSink::setConflictCount(guint32 val)
+void SoftwareActionSink::ResetConflictCount()
 {
   ownerOnly();
-  conflictCount = val;
+  conflictCount = 0;
 }
 
-void SoftwareActionSink::setLateCount(guint32 val)
+void SoftwareActionSink::ResetLateCount()
 {
   ownerOnly();
-  lateCount = val;
+  lateCount = 0;
 }
 
-void SoftwareActionSink::setDelayedCount(guint32 val)
+void SoftwareActionSink::ResetDelayedCount()
 {
   ownerOnly();
-  delayedCount = val;
+  delayedCount = 0;
 }
 
-void SoftwareActionSink::setActionCount(guint32 val)
+void SoftwareActionSink::ResetActionCount()
 {
   ownerOnly();
-  actionCount = val;
+  actionCount = 0;
 }
 
 void SoftwareActionSink::setExecuteLateActions(bool val)

@@ -15,6 +15,16 @@ class ActionSink : public Owned, public iActionSink
     ~ActionSink();
     
     void ToggleActive();
+    guint32 ReadOverflowCount();
+    guint32 ReadConflictCount();
+    guint32 ReadLateCount();
+    guint32 ReadDelayedCount();
+    guint32 ReadActionCount();
+    void ResetOverflowCount();
+    void ResetConflictCount();
+    void ResetLateCount();
+    void ResetDelayedCount();
+    void ResetActionCount();
     std::vector< Glib::ustring > getAllConditions() const;
     std::vector< Glib::ustring > getActiveConditions() const;
     std::vector< Glib::ustring > getInactiveConditions() const;
@@ -23,23 +33,13 @@ class ActionSink : public Owned, public iActionSink
     guint32 getCapacity() const;
     guint32 getFill() const;
     guint32 getMostFull() const;
-    guint32 getOverflowCount() const;
-    guint32 getConflictCount() const;
     bool getExecuteLateActions() const;
-    guint32 getLateCount() const;
     bool getGenerateDelayed() const;
-    guint32 getDelayedCount() const;
-    guint32 getActionCount() const;
     void setMinOffset(gint64 val);
     void setMaxOffset(gint64 val);
     void setMostFull(guint32 val);
-    void setOverflowCount(guint32 val);
-    void setConflictCount(guint32 val);
     void setExecuteLateActions(bool val);
-    void setLateCount(guint32 val);
     void setGenerateDelayed(bool val);
-    void setDelayedCount(guint32 val);
-    void setActionCount(guint32 val);
     // These property signals are available from base classes
     //   sigc::signal< void, const std::vector< Glib::ustring >& > AllConditions;
     //   sigc::signal< void, const std::vector< Glib::ustring >& > ActiveConditions;

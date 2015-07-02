@@ -21,16 +21,16 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     const char *getInterfaceName() const;
     
     // iActionSink overrides
-    guint32 getConflictCount() const;
-    guint32 getLateCount() const;
-    guint32 getDelayedCount() const;
-    guint32 getActionCount() const;
+    guint32 ReadConflictCount();
+    guint32 ReadLateCount();
+    guint32 ReadDelayedCount();
+    guint32 ReadActionCount();
+    void ResetConflictCount();
+    void ResetLateCount();
+    void ResetDelayedCount();
+    void ResetActionCount();
     bool getExecuteLateActions() const;
     bool getGenerateDelayed() const;
-    void setConflictCount(guint32 val);
-    void setLateCount(guint32 val);
-    void setDelayedCount(guint32 val);
-    void setActionCount(guint32 val);
     void setExecuteLateActions(bool val);
     void setGenerateDelayed(bool val);
     

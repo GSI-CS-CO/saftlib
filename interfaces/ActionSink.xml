@@ -22,7 +22,7 @@
      safety margin with respect to Capacity.  Note: several distinct
      ActionSinks may share underlying hardware, and the Fill property is
      shared amongst all instances.  Each occurrence is recorded in the
-     OverflowCount property.  Due the rate at which this counter might
+     OverflowCount register.  Due the rate at which this counter might
      increase, the API only guarantees that within 100ms after OverflowCount
      is increased, the Overflow signal is generated, covering all increases
      within the last 100ms.
@@ -41,7 +41,7 @@
      SoftwareActionSink do not need to be concerned about conflicts between
      their schedules.  As another example, two different LEMO output cables
      (corresponding to two OutputActionSinks) can be toggled high at the
-     same time. Every conflict increases the ConflictCount property, but the
+     same time. Every conflict increases the ConflictCount register, but the
      Conflict signal is only guaranteed to be generated within 100ms of a
      conflict.
      
@@ -160,16 +160,19 @@
     -->
   <property name="MostFull" type="u" access="readwrite"/>
   
-  <!-- OverflowCount: The number of actions lost due to Overflow.
+  <!-- ReadOverflowCount: The number of actions lost due to Overflow.
        Overflow, as explained in the interface overview, is a critical error
        that must be prevented.  This counter increases each time an overflow
        occurs.  It is not signalled, as multiple overflows can occur very
        rapidly. If an overflow occurs, the Overflow signal is guaranteed to
        be executed within 100ms.
     -->
-  <property name="OverflowCount" type="u" access="readwrite">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-  </property>
+  <method name="ReadOverflowCount">
+    <arg direction="out" type="u" name="result"/>
+  </method>
+  
+  <!-- ResetOverflowCount: Clear the OverflowCount to zero. -->
+  <method name="ResetOverflowCount"/>
 
   <!-- Overflow: OverflowCount has increased since last the Overflow signal.
        @count:   The value of OverflowCount when this signal was raised.
@@ -192,16 +195,19 @@
     <arg name="count" type="u"/>
   </signal>
   
-  <!-- ConflictCount: The number of actions which conflicted. 
+  <!-- ReadConflictCount: The number of actions which conflicted. 
        If two actions should have been executed simultaneously by the same
        ActionSink, they are executed in an undefined order. Each time this
        happens, the ConflictCount is increased. It is not signalled, as
        multiple conflicts can occur rapidly. If a conflict occurs, the
        Conflict signal is guaranteed to be executed with 100ms.
     -->
-  <property name="ConflictCount" type="u" access="readwrite">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-  </property>
+  <method name="ReadConflictCount">
+    <arg direction="out" type="u" name="result"/>
+  </method>
+  
+  <!-- ResetConflictCount: Clear the ConflictCounter to zero. -->
+  <method name="ResetConflictCount"/>
   
   <!-- Conflict: ConflictCount increased since the last Conflict signal.
        @count:   The value of ConflictCount when this signal was raised.
@@ -238,7 +244,7 @@
     -->
   <property name="ExecuteLateActions" type="b" access="readwrite"/>
   
-  <!-- LateCount: The number of actions delivered late.
+  <!-- ReadLateCount: The number of actions delivered late.
        As described in the interface overview, an action can be late due to
        a buggy data master, loss of clock synchronization, or very negative
        condition offset.  This is a critical failure as it can result in
@@ -250,9 +256,12 @@
        Because late actions may occur rapidly, this signal only guarantees to
        report at least one new late action since the last Late emission.
     -->
-  <property name="LateCount" type="u" access="readwrite">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-  </property>
+  <method name="ReadLateCount">
+    <arg direction="out" type="u" name="result"/>
+  </method>
+  
+  <!-- ResetLateCount: Clear the LateCounter to zero. -->
+  <method name="ResetLateCount"/>
   
   <!-- Late:      LateCount increased since the last Late signal.
        @count:    The value of LateCount when this signal was raised.
@@ -285,16 +294,19 @@
     -->
   <property name="GenerateDelayed" type="b" access="readwrite"/>
   
-  <!-- DelayedCount: The number of actions which have been delayed.
+  <!-- ReadDelayedCount: The number of actions which have been delayed.
        The timing receiver emits actions potentially every nanosecond. In
        the case that the receiver cannot immediately process an action, the
        timing receiver delays the action until the receiver is ready. This
        can happen either because the receiver was still busy with a previous
        action or the output was used externally (bus arbitration).
     -->
-  <property name="DelayedCount" type="u" access="readwrite">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-  </property>
+  <method name="ReadDelayedCount">
+    <arg direction="out" type="u" name="result"/>
+  </method>
+  
+  <!-- ResetDelayedCount: Clear the DelayedCounter to zero. -->
+  <method name="ResetDelayedCount"/>
   
   <!-- Delayed:   DelayedCount increased since the last Delayed signal.
        @count:    The value of DelayedCount when this signal was raised.
@@ -315,11 +327,14 @@
     <arg name="overtime" type="t"/>
   </signal>
   
-  <!-- ActionCount: Total number of actions output by this ActionSink.
+  <!-- ReadActionCount: Total number of actions output by this ActionSink.
        For debugging purposes, it is sometimes helpful to know the total
        number of actions that have been emitted by an ActionSink.
     -->
-  <property name="ActionCount" type="u" access="readwrite">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-  </property>
+  <method name="ReadActionCount">
+    <arg direction="out" type="u" name="result"/>
+  </method>
+  
+  <!-- ResetActionCount: Clear the ActionCounter to zero. -->
+  <method name="ResetActionCount"/>
 </interface>

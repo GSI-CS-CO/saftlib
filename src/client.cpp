@@ -89,11 +89,9 @@ int main(int, char**)
     sink->Overflow.connect(sigc::ptr_fun(&on_overflow));
     sink->Conflict.connect(sigc::ptr_fun(&on_conflict));
     
-    // Our SoftwareActionSink was freshly created, so these are already 0
-    // We set them to 0 anyway, for illustration
-    sink->setLateCount(0);
-    // sink->setOverflowCount(0);
-    sink->setConflictCount(0);
+    // Demonstrate setting some properties
+    sink->setExecuteLateActions(false);
+    sink->setGenerateDelayed(false);
   
     // Read the Capacity property of the ActionSink
     guint32 capacity = sink->getCapacity();
