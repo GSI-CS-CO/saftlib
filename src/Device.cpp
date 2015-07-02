@@ -1,9 +1,9 @@
 #define ETHERBONE_THROWS 1
 
-#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include "Device.h"
+#include "clog.h"
 
 namespace saftlib {
 
@@ -151,7 +151,7 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
     if (i != Device::irqs.end()) {
       i->second(msi.data);
     } else {
-      std::cerr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
+      clog << kLogErr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
     }
   }
   

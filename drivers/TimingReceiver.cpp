@@ -3,7 +3,6 @@
 //#define DEBUG_COMPILE 1
 
 #include <sstream>
-#include <iostream>
 #include <algorithm>
 
 #include "RegisteredObject.h"
@@ -15,6 +14,7 @@
 #include "FunctionGenerator.h"
 #include "eca_regs.h"
 #include "fg_regs.h"
+#include "clog.h"
 
 namespace saftlib {
 
@@ -119,7 +119,7 @@ TimingReceiver::~TimingReceiver()
     // Disable interrupts and the ECA
     device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
   } catch (const etherbone::exception_t& e) {
-    std::cerr << "ECA::~ECA: " << e << std::endl;
+    clog << kLogErr << "ECA::~ECA: " << e << std::endl;
   }
 }
 
@@ -360,7 +360,7 @@ void TimingReceiver::arrival_handler(eb_data_t)
         softwareActionSink->emit(event, param, time*8, -1, tag2delay[tag], late, false); // !!! remove *8 with new hardware
     }
   } catch (const etherbone::exception_t& e) {
-    std::cerr << "ECA::arrival_handler: " << e << std::endl;
+    clog << kLogErr << "ECA::arrival_handler: " << e << std::endl;
   }
 }
 
@@ -479,8 +479,8 @@ void TimingReceiver::compile()
            (merges[j].first   == 0                ||
             merges[i].last    >= merges[j].first-1)) {
 #if DEBUG_COMPRESS
-      std::cerr << "I: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
-      std::cerr << "I: " << merges[j].first << " " << merges[j].last << " " << merges[j].offset << " " << merges[j].channel << " " << merges[j].tag << std::endl;
+      clog << kLogDebug << "I: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
+      clog << kLogDebug << "I: " << merges[j].first << " " << merges[j].last << " " << merges[j].offset << " " << merges[j].channel << " " << merges[j].tag << std::endl;
 #endif
       // they overlap, so tags must match!
       if (merges[i].tag != merges[j].tag)
@@ -492,7 +492,7 @@ void TimingReceiver::compile()
     }
     // push combined record to open/close pass
 #if DEBUG_COMPRESS
-    std::cerr << "O: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
+    clog << kLogDebug << "O: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
 #endif
     id_space.push_back(ECA_OpenClose(merges[i].first,  true,  merges[i].last,  merges[i].offset, merges[i].channel, merges[i].tag));
     if (merges[i].last != G_MAXUINT64)
@@ -559,12 +559,12 @@ void TimingReceiver::compile()
   }
   
 #if DEBUG_COMPILE
-  std::cerr << "Table compilation complete! Reflows necessary: " << reflows << "\n";
+  clog << kLogDebug << "Table compilation complete! Reflows necessary: " << reflows << "\n";
   for (i = 0; i < search.size(); ++i)
-    std::cerr << "S: " << search[i].event << " " << search[i].index << "\n";
+    clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << "\n";
   for (i = 0; i < walk.size(); ++i)
-    std::cerr << "W: " << walk[i].offset << " " << walk[i].tag << " " << walk[i].next << " " << (int)walk[i].channel << "\n";
-  std::cerr << std::flush; 
+    clog << kLogDebug << "W: " << walk[i].offset << " " << walk[i].tag << " " << walk[i].next << " " << (int)walk[i].channel << "\n";
+  clog << kLogDebug << std::flush; 
 #endif
 
   if (walk.size() > table_size || search.size() > table_size*2)

@@ -1,12 +1,12 @@
 #define ETHERBONE_THROWS 1
 
-#include <iostream>
 #include <assert.h>
 
 #include "RegisteredObject.h"
 #include "FunctionGenerator.h"
 #include "TimingReceiver.h"
 #include "fg_regs.h"
+#include "clog.h"
 
 namespace saftlib {
 
@@ -128,7 +128,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
 {
   // ignore spurious interrupt
   if (channel == -1) {
-    std::cerr << "FunctionGenerator: received unsolicited IRQ on index " << index << std::endl;
+    clog << kLogErr << "FunctionGenerator: received unsolicited IRQ on index " << index << std::endl;
     return;
   }
   
@@ -141,24 +141,24 @@ void FunctionGenerator::irq_handler(eb_data_t status)
   // make sure the evil microcontroller does not violate message sequencing
   if (status == IRQ_DAT_REFILL) {
     if (!running) {
-      std::cerr << "FunctionGenerator: received refill while not running on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received refill while not running on index " << index << std::endl;
     } else {
       refill();
     }
   } else if (status == IRQ_DAT_ARMED) {
     if (running) {
-      std::cerr << "FunctionGenerator: received armed while running on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received armed while running on index " << index << std::endl;
     } else if (armed) {
-      std::cerr << "FunctionGenerator: received armed while armed on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received armed while armed on index " << index << std::endl;
     } else {
       armed = true;
       Armed(armed);
     }
   } else if (status == IRQ_DAT_DISARMED) {
     if (running) {
-      std::cerr << "FunctionGenerator: received disarmed while running on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received disarmed while running on index " << index << std::endl;
     } else if (!armed) {
-      std::cerr << "FunctionGenerator: received disarmed while not armed on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received disarmed while not armed on index " << index << std::endl;
     } else {
       armed = false;
       Armed(armed);
@@ -166,9 +166,9 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     }
   } else if (status == IRQ_DAT_START) {
     if (running) {
-      std::cerr << "FunctionGenerator: received start while running on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received start while running on index " << index << std::endl;
     } else if (!armed) {
-      std::cerr << "FunctionGenerator: received start while not armed on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received start while not armed on index " << index << std::endl;
     } else {
       armed = false;
       Armed(armed);
@@ -178,9 +178,9 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     }
   } else { // stopped?
     if (armed) {
-      std::cerr << "FunctionGenerator: received stop while armed on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received stop while armed on index " << index << std::endl;
     } else if (!running) {
-      std::cerr << "FunctionGenerator: received stop while not running on index " << index << std::endl;
+      clog << kLogErr << "FunctionGenerator: received stop while not running on index " << index << std::endl;
     } else {
       bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY) && !abort;
       bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow && !abort;
@@ -408,7 +408,7 @@ void FunctionGenerator::Arm()
 bool FunctionGenerator::ResetFailed()
 {
   assert(enabled);
-  std::cerr << "FunctionGenerator: failed to reset on index " << index << std::endl;
+  clog << kLogErr << "FunctionGenerator: failed to reset on index " << index << std::endl;
   
   if (running) { // synthesize missing Stopped
     running = false;

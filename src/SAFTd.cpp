@@ -8,6 +8,7 @@
 #include "Driver.h"
 #include "eb-source.h"
 #include "build.h"
+#include "clog.h"
 
 namespace saftlib {
 
@@ -25,6 +26,7 @@ SAFTd::SAFTd()
     saftlib::Device::hook_it_all(socket);
     socket.passive("dev/wbs0"); // !!! remove this once dev/wbm0 and dev/wbs0 are unified
   } catch (const etherbone::exception_t& e) {
+    // still attached to cerr at this point
     std::cerr << "Failed to initialize etherbone: " << e << std::endl;
     exit(1);
   }
@@ -37,6 +39,7 @@ SAFTd::SAFTd()
 
 SAFTd::~SAFTd()
 {
+  bool daemon = false;
   try {
     for (std::map< Glib::ustring, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
       i->second.ref.clear(); // should destroy the driver
@@ -45,6 +48,7 @@ SAFTd::~SAFTd()
     devs.clear();
     
     if (m_connection) {
+      daemon = true;
       m_service.unregister_self();
       m_connection.reset();
     }
@@ -52,14 +56,14 @@ SAFTd::~SAFTd()
     msi_source.disconnect();
     socket.close();
   } catch (const Glib::Error& ex) {
-    std::cerr << "Could not clean up: " << ex.what() << std::endl;
+    clog << kLogErr << "Could not clean up: " << ex.what() << std::endl;
     exit(1);
   } catch(const etherbone::exception_t& ex) {
-    std::cerr << "Could not clean up: " << ex << std::endl;
+    clog << kLogErr << "Could not clean up: " << ex << std::endl;
     exit(1);
   }
   
-  std::cout << "Clean shutdown" << std::endl;
+  if (daemon) clog << kLogNotice << "shutdown" << std::endl;
 }
 
 void SAFTd::Quit()

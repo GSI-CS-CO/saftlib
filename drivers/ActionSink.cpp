@@ -1,10 +1,9 @@
 #define ETHERBONE_THROWS 1
 
-#include <iostream>
-
 #include "ActionSink.h"
 #include "TimingReceiver.h"
 #include "eca_regs.h"
+#include "clog.h"
 
 namespace saftlib {
 
@@ -20,7 +19,7 @@ ActionSink::~ActionSink()
     conditions.clear();
     dev->compile();
   } catch (...) {
-    std::cerr << "Failed to recompile during ActionSink destruction (should be impossible)" << std::endl;
+    clog << kLogErr << "Failed to recompile during ActionSink destruction (should be impossible)" << std::endl;
   }
 }
 
@@ -258,7 +257,7 @@ void ActionSink::removeCondition(std::list< Glib::RefPtr<Condition> >::iterator 
     notify(active, !active);
     dev->compile();
   } catch (...) {
-    std::cerr << "Failed to recompile after removing condition (should be impossible)" << std::endl;
+    clog << kLogErr << "Failed to recompile after removing condition (should be impossible)" << std::endl;
   }
 }
 
