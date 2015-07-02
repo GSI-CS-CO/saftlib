@@ -134,7 +134,7 @@
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   
-  <!-- Fill: Report the number of currently pending actions.
+  <!-- ReadFill: Report the number of currently pending actions.
        The timing receiver hardware can only queue a limited number of
        actions.  This property reports the current number of queued actions,
        which includes actions from all users of the underlying hardware.  So
@@ -144,9 +144,9 @@
        Polling it is likely to miss short fluctuations.  See MostFull for a
        better approach to monitoring.
     -->
-  <property name="Fill" type="u" access="read">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-  </property>
+  <method name="ReadFill">
+    <arg direction="out" type="u" name="result"/>
+  </method>
   
   <!-- MostFull: Report the largest number of pending actions seen.
        The timing receiver hardware can only queue a limited number of

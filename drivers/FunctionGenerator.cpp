@@ -127,7 +127,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
   assert (enabled);
   
   // !!! imprecise; should be timestamped by the hardware
-  guint64 time = dev->getCurrentTime();
+  guint64 time = dev->ReadCurrentTime();
   
   // make sure the evil microcontroller does not violate message sequencing
   if (status == IRQ_DAT_REFILL) {
@@ -416,7 +416,7 @@ bool FunctionGenerator::ResetFailed()
   
   if (running) { // synthesize missing Stopped
     running = false;
-    Stopped(dev->getCurrentTime(), true, false, false);
+    Stopped(dev->ReadCurrentTime(), true, false, false);
   } else {
     // synthesize any missing Armed transitions
     if (!armed) {

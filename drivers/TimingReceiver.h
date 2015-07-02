@@ -33,7 +33,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     // iTimingReceiver
     Glib::ustring NewSoftwareActionSink(const Glib::ustring& name);
     void InjectEvent(guint64 event, guint64 param, guint64 time);
-    guint64 getCurrentTime() const;
+    guint64 ReadCurrentTime();
     bool getLocked() const;
     std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
     std::map< Glib::ustring, Glib::ustring > getOutputs() const;

@@ -20,6 +20,7 @@ class ActionSink : public Owned, public iActionSink
     guint32 ReadLateCount();
     guint32 ReadDelayedCount();
     guint32 ReadActionCount();
+    guint32 ReadFill();
     void ResetOverflowCount();
     void ResetConflictCount();
     void ResetLateCount();
@@ -31,7 +32,6 @@ class ActionSink : public Owned, public iActionSink
     gint64 getMinOffset() const;
     gint64 getMaxOffset() const;
     guint32 getCapacity() const;
-    guint32 getFill() const;
     guint32 getMostFull() const;
     bool getExecuteLateActions() const;
     bool getGenerateDelayed() const;

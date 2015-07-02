@@ -38,13 +38,13 @@
       -->
     <property name="Locked" type="b" access="read"/>
   
-    <!-- CurrentTime: The current time in nanoseconds since 1970.
+    <!-- ReadCurrentTime: The current time in nanoseconds since 1970.
          Due to delays in software, the returned value is probably several
          milliseconds behind the true time.
       -->
-    <property name="CurrentTime" type="t" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-    </property>
+    <method name="ReadCurrentTime">
+      <arg direction="out" type="t" name="result"/>
+    </method>
     
     <!-- NewSoftwareActionSink: Create a new SoftwareActionSink.
          @name: A name for the SoftwareActionSink. Can be left blank.

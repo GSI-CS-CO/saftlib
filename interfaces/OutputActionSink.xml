@@ -41,12 +41,21 @@
     -->
   <property name="OutputEnable" type="b" access="readwrite"/>
   
-  <!-- Output: Directly manipulate the output value.
-       This property reflects the current value which would be output when
-       OutputEnable is true.  It may be modified directly via this property
-       and indirectly by OutputConditions created with NewCondition.
+  <!-- WriteOutput: Directly manipulate the output value.
+       Set the output to on/off. Overwrite the previous state,
+       regardless of whether it came from WriteOutput or a matching
+       Condition. Similarly, the value may in turn be overwritten by
+       a subsequent matching Condition or WriteOutput.
     -->
-  <property name="Output" type="b" access="readwrite">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
-  </property>
+  <method name="WriteOutput">
+    <arg direction="in" type="b" name="value"/>
+  </method>
+  
+  <!-- ReadOutput: Read the output state.
+       This property reflects the current value which would be output when
+       OutputEnable is true. This may differ from ReadInput on an Inout.
+    -->
+  <method name="ReadOutput">
+    <arg direction="out" type="b" name="value"/>
+  </method>
 </interface>

@@ -236,7 +236,7 @@ void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
   cycle.close();
 }
 
-guint64 TimingReceiver::getCurrentTime() const
+guint64 TimingReceiver::ReadCurrentTime()
 {
   if (!locked)
     throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "TimingReceiver is not Locked");

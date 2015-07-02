@@ -90,7 +90,7 @@ guint32 ActionSink::getCapacity() const
   return dev->getQueueSize();
 }
 
-guint32 ActionSink::getFill() const
+guint32 ActionSink::ReadFill()
 {
   eb_data_t data;
   etherbone::Cycle cycle;
