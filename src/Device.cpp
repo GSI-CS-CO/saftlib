@@ -85,7 +85,7 @@ void Device::hook_it_all(etherbone::Socket socket)
   everything.abi_ver_major = 0;
   everything.abi_ver_minor = 0;
   everything.bus_specific  = SDB_WISHBONE_WIDTH;
-  everything.sdb_component.addr_first = 0x4000; // !!! use 0 with new libetherbone
+  everything.sdb_component.addr_first = 0;
   everything.sdb_component.addr_last  = 0xffffffffULL;
   everything.sdb_component.product.vendor_id = 0x651;
   everything.sdb_component.product.device_id = 0xefaa70;
@@ -147,6 +147,7 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
     Device::MSI msi = Device::msis.front();
     Device::msis.pop_front();
     
+    msi.address &= 0x7fffffffUL; // !!! work-around for ftm crossbar bug
     Device::irqMap::iterator i = Device::irqs.find(msi.address);
     if (i != Device::irqs.end()) {
       i->second(msi.data);
