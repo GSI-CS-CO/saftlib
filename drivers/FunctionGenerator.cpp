@@ -19,7 +19,7 @@ FunctionGenerator::FunctionGenerator(ConstructorType args)
    outputWindowSize((args.macro >>  0) & 0xFF),
    irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
-   startTag(0), fillLevel(0), filled(0)
+   startTag(0), executedParameterCount(0), fillLevel(0), filled(0)
 {
 }
 
@@ -188,7 +188,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
         fillLevel = 0;
         fifo.clear();
       }
-      executedParameterCount = getExecutedParameterCount();
+      executedParameterCount = ReadExecutedParameterCount();
       running = false;
       Running(running);
       Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
@@ -324,7 +324,7 @@ guint64 FunctionGenerator::ReadFillLevel()
   return fillLevel;
 }
 
-guint16 FunctionGenerator::getExecutedParameterCount() const
+guint16 FunctionGenerator::ReadExecutedParameterCount()
 {
   if (running) {
     eb_data_t count;

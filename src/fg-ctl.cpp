@@ -330,7 +330,7 @@ int main(int argc, char** argv)
     loop->run();
     
     // Print summary
-    std::cout << "Successful execution of " << gen->getExecutedParameterCount() << " polynomial tuples" << std::endl;
+    std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
 
   } catch (const Glib::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;

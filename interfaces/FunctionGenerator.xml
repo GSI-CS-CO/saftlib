@@ -209,13 +209,13 @@
       -->
     <method name="Flush"/>
 
-    <!-- ExecutedParameterCount: Number of parameter tuples executed by hardware.
+    <!-- ReadExecutedParameterCount: Number of parameter tuples executed by hardware.
          This counts the total number of parameter tuples executed since the last
          Started signal. Obviously, if the function generator is running, the returned
          value will be old.
       -->
-    <property name="ExecutedParameterCount" type="q" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
+    <method name="ReadExecutedParameterCount">
+      <arg direction="out" type="q" name="result"/>
+    </method>
   </interface>
 </node>

@@ -47,7 +47,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     bool getArmed() const;
     bool getRunning() const;
     guint32 getStartTag() const;
-    guint16 getExecutedParameterCount() const;
+    guint16 ReadExecutedParameterCount();
     void setStartTag(guint32 val);
     
   protected:
