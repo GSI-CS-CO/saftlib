@@ -58,6 +58,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     
     // Allow hardware access to the underlying device
     Device& getDevice() { return device; }
+    guint64 ReadRawCurrentTime();
     
   protected:
     mutable saftlib::Device device;

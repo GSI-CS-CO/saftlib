@@ -236,11 +236,8 @@ void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
   cycle.close();
 }
 
-guint64 TimingReceiver::ReadCurrentTime()
+guint64 TimingReceiver::ReadRawCurrentTime()
 {
-  if (!locked)
-    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "TimingReceiver is not Locked");
-
   etherbone::Cycle cycle;
   eb_data_t time1, time0;
   cycle.open(device);
@@ -253,6 +250,14 @@ guint64 TimingReceiver::ReadCurrentTime()
   result <<= 32;
   result |= time0;
   return result*8; // !!! remove *8 with new hardware
+}
+
+guint64 TimingReceiver::ReadCurrentTime()
+{
+  if (!locked)
+    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "TimingReceiver is not Locked");
+
+  return ReadRawCurrentTime();
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks() const
