@@ -150,7 +150,21 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
     msi.address &= 0x7fffffffUL; // !!! work-around for ftm crossbar bug
     Device::irqMap::iterator i = Device::irqs.find(msi.address);
     if (i != Device::irqs.end()) {
-      i->second(msi.data);
+      try {
+        i->second(msi.data);
+      } catch (const etherbone::exception_t& ex) {
+        clog << kLogErr << "Unhandled etherbone exception in MSI handler for 0x" 
+             << std::hex << msi.address << ": " << ex << std::endl;
+      } catch (const Glib::Error& ex) {
+        clog << kLogErr << "Unhandled Glib exception in MSI handler for 0x" 
+             << std::hex << msi.address << ": " << ex.what() << std::endl;
+      } catch (std::exception& ex) {
+        clog << kLogErr << "Unhandled std::exception exception in MSI handler for 0x" 
+             << std::hex << msi.address << ": " << ex.what() << std::endl;
+      } catch (...) {
+        clog << kLogErr << "Unhandled unknown exception in MSI handler for 0x" 
+             << std::hex << msi.address << std::endl;
+      }
     } else {
       clog << kLogErr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
     }
