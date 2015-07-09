@@ -465,7 +465,11 @@ void TimingReceiver::compile()
   // Compress the conditions: merging overlaps and convert to id-space
   typedef std::vector<ECA_OpenClose> ID_Space;
   ID_Space id_space;
-  
+
+#if DEBUG_COMPRESS || DEBUG_COMPILE
+  clog << std::dec;
+#endif
+
   unsigned i = 0, j;
   while (i < merges.size()) {
     // Merge overlapping/touching records
