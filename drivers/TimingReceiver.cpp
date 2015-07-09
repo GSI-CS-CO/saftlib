@@ -323,44 +323,40 @@ void TimingReceiver::overflow_handler(eb_data_t)
 
 void TimingReceiver::arrival_handler(eb_data_t)
 {
-  try { // interrupt handlers may not throw
-    etherbone::Cycle cycle;
-    eb_data_t flags;
-    eb_data_t event1, event0;
-    eb_data_t param1, param0;
-    eb_data_t tag,    tef;
-    eb_data_t time1,  time0;
-    
-    cycle.open(device);
-    cycle.read (queue + ECAQ_FLAGS,  EB_DATA32, &flags);
-    cycle.read (queue + ECAQ_EVENT1, EB_DATA32, &event1);
-    cycle.read (queue + ECAQ_EVENT0, EB_DATA32, &event0);
-    cycle.read (queue + ECAQ_PARAM1, EB_DATA32, &param1);
-    cycle.read (queue + ECAQ_PARAM0, EB_DATA32, &param0);
-    cycle.read (queue + ECAQ_TAG,    EB_DATA32, &tag);
-    cycle.read (queue + ECAQ_TEF,    EB_DATA32, &tef);
-    cycle.read (queue + ECAQ_TIME1,  EB_DATA32, &time1);
-    cycle.read (queue + ECAQ_TIME0,  EB_DATA32, &time0);
-    cycle.write(queue + ECAQ_CTL,    EB_DATA32, 1); // pop
-    cycle.close();
-    
-    guint64 event, param, time;
-    event = event1; event <<= 32; event |= event0;
-    param = event1; param <<= 32; param |= param0;
-    time  = time1;  time  <<= 32; time  |= time0;
-    
-    // bool conflict = (flags & 2) != 0;
-    bool late     = (flags & 1) != 0;
-    // !!! delayed ?
-    
-    for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
-      Glib::RefPtr<SoftwareActionSink> softwareActionSink =
-        Glib::RefPtr<SoftwareActionSink>::cast_dynamic(sink->second);
-      if (softwareActionSink)
-        softwareActionSink->emit(event, param, time*8, -1, tag2delay[tag], late, false); // !!! remove *8 with new hardware
-    }
-  } catch (const etherbone::exception_t& e) {
-    clog << kLogErr << "ECA::arrival_handler: " << e << std::endl;
+  etherbone::Cycle cycle;
+  eb_data_t flags;
+  eb_data_t event1, event0;
+  eb_data_t param1, param0;
+  eb_data_t tag,    tef;
+  eb_data_t time1,  time0;
+  
+  cycle.open(device);
+  cycle.read (queue + ECAQ_FLAGS,  EB_DATA32, &flags);
+  cycle.read (queue + ECAQ_EVENT1, EB_DATA32, &event1);
+  cycle.read (queue + ECAQ_EVENT0, EB_DATA32, &event0);
+  cycle.read (queue + ECAQ_PARAM1, EB_DATA32, &param1);
+  cycle.read (queue + ECAQ_PARAM0, EB_DATA32, &param0);
+  cycle.read (queue + ECAQ_TAG,    EB_DATA32, &tag);
+  cycle.read (queue + ECAQ_TEF,    EB_DATA32, &tef);
+  cycle.read (queue + ECAQ_TIME1,  EB_DATA32, &time1);
+  cycle.read (queue + ECAQ_TIME0,  EB_DATA32, &time0);
+  cycle.write(queue + ECAQ_CTL,    EB_DATA32, 1); // pop
+  cycle.close();
+  
+  guint64 event, param, time;
+  event = event1; event <<= 32; event |= event0;
+  param = event1; param <<= 32; param |= param0;
+  time  = time1;  time  <<= 32; time  |= time0;
+  
+  // bool conflict = (flags & 2) != 0;
+  bool late     = (flags & 1) != 0;
+  // !!! delayed ?
+  
+  for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
+    Glib::RefPtr<SoftwareActionSink> softwareActionSink =
+      Glib::RefPtr<SoftwareActionSink>::cast_dynamic(sink->second);
+    if (softwareActionSink)
+      softwareActionSink->emit(event, param, time*8, -1, tag2delay[tag], late, false); // !!! remove *8 with new hardware
   }
 }
 
