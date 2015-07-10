@@ -350,7 +350,7 @@ void TimingReceiver::arrival_handler(eb_data_t)
   
   guint64 event, param, time;
   event = event1; event <<= 32; event |= event0;
-  param = event1; param <<= 32; param |= param0;
+  param = param1; param <<= 32; param |= param0;
   time  = time1;  time  <<= 32; time  |= time0;
   
   // bool conflict = (flags & 2) != 0;
