@@ -85,12 +85,12 @@ static void help(void) {
   std::cout << "  -i                   display info about local environment" << std::endl;
   std::cout << std::endl;
   std::cout << "  inject <eventID> <param> <time> inject event locally" << std::endl;
-  std::cout << "  snoop  <eventID> <mask>         snoop events from DM, CTRL+C to exit (try 'snoop 0x0 0x0' for ALL)" << std::endl;
-  std::cout << "  attach <name> <path>            instruct saftd to control a new device" << std::endl;
-  std::cout << "  remove <name>                   remove the device from saftlib management" << std::endl;
-  std::cout << "  quit                            instructs the saftlib daemon to quit" << std::endl << std::endl;
+  std::cout << "  snoop  <eventID> <mask>         snoop events from DM, CTRL+C to exit (try 'snoop 0x0 0x0' for ALL)" << std::endl << std::endl;
+  std::cout << "  attach <name> <path>            instruct saftd to control a new device (admin only)" << std::endl;
+  std::cout << "  remove <name>                   remove the device from saftlib management (admin only)" << std::endl;
+  std::cout << "  quit                            instructs the saftlib daemon to quit (admin only)" << std::endl << std::endl;
   std::cout << "Report saftlib bugs to <w.terpstra@gsi.de> !!!" << std::endl;
-  std::cout << "Licensed under the LGPL v3." << std::endl;
+  std::cout << "Licensed under the GPL v3." << std::endl;
   std::cout << std::endl;
 } // help
 
@@ -259,8 +259,8 @@ int main(int argc, char** argv)
   if (optind + 1< argc) {
 	command = argv[optind+1];
 
-	// "send" 
-	if (strcasecmp(command, "send") == 0) {
+	// "inject" 
+	if (strcasecmp(command, "inject") == 0) {
 	  if (optind+5  != argc) {
 		std::cerr << program << ": expecting exactly three arguments: send <eventID> <param> <time>" << std::endl;
 		return 1;
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
 		std::cerr << program << ": invalid time -- " << argv[optind+4] << std::endl;
 		return 1;
 	  } // time
-	} // "send"
+	} // "inject"
 
 	else if (strcasecmp(command, "snoop") == 0) {
 	  if (optind+4  != argc) {
