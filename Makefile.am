@@ -1,7 +1,7 @@
 SUBDIRS = interfaces
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = dm-snoop fg-ctl
+bin_PROGRAMS = saft-ctl fg-ctl
 noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
@@ -41,8 +41,8 @@ saftd_LDFLAGS = -rdynamic # needed for stack trace
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
-dm_snoop_SOURCES = src/dm-snoop.cpp
-dm_snoop_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_ctl_SOURCES = src/saft-ctl.cpp
+saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 fg_ctl_SOURCES = src/fg-ctl.cpp
 fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
@@ -51,5 +51,5 @@ if GIT_TREE
 version.h:
 	echo '#define GIT_ID "'$$(git describe --dirty --always --tags)'"' > version.h.tmp
 	echo '#define SOURCE_DATE "'$$(date +'%b %d %Y %H:%M:%S' --date=@$$(git log -n1 --pretty='format:%ct'))'"' >> version.h.tmp
-	mv version.h.tmp version.h
+	mv -f version.h.tmp version.h
 endif
