@@ -4,6 +4,7 @@
 #include "RegisteredObject.h"
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
+#include "src/clog.h"
 
 namespace saftlib {
 
@@ -99,35 +100,41 @@ void SoftwareActionSink::setGenerateDelayed(bool val)
 
 void SoftwareActionSink::emit(guint64 id, guint64 param, guint64 time, guint64 overtime, gint64 offset, bool late, bool delayed)
 {
-  bool conflict = time == lastTime;
-  
-  if (conflict) {
-    ++conflictCount;
-    Conflict(conflictCount, lastID, lastParam, lastTime, id, param, time);
-  }
-  if (delayed) {
-    ++delayedCount;
-    if (generateDelayed)
-      Delayed(delayedCount, id, param, time, overtime);
-  }
-  if (late) {
-    ++lateCount;
-    Late(lateCount, id, param, time, overtime);
-  }
-  ++actionCount;
+  bool matched = false;
+  for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = conditions.begin(); condition != conditions.end(); ++condition) {
+    Glib::RefPtr<SoftwareCondition> softwareCondition =
+      Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition);
+    assert(softwareCondition);
     
-  lastID = id;
-  lastParam = param;
-  lastTime = time;
-  
-  if (executeLate || !late) {
-    for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = conditions.begin(); condition != conditions.end(); ++condition) {
-      Glib::RefPtr<SoftwareCondition> softwareCondition =
-        Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition);
-      assert(softwareCondition);
+    // matches?
+    if (((softwareCondition->getID() ^ id) & softwareCondition->getMask()) == 0 &&
+        softwareCondition->getOffset() == offset) {
+      // must happen only one time
+      if (matched) clog << kLogErr << "SoftwareActionSiink: single event triggered simultaneous actions on one SoftwareActionSink. Should be impossible!" << std::endl;
+      matched = true;
       
-      if (((softwareCondition->getID() ^ id) & softwareCondition->getMask()) == 0 &&
-          softwareCondition->getOffset() == offset) {
+      bool conflict = time == lastTime;
+      
+      if (conflict) {
+        ++conflictCount;
+        Conflict(conflictCount, lastID, lastParam, lastTime, id, param, time);
+      }
+      if (delayed) {
+        ++delayedCount;
+        if (generateDelayed)
+          Delayed(delayedCount, id, param, time, overtime);
+      }
+      if (late) {
+        ++lateCount;
+        Late(lateCount, id, param, time, overtime);
+      }
+      ++actionCount;
+        
+      lastID = id;
+      lastParam = param;
+      lastTime = time;
+      
+      if (executeLate || !late) {
         softwareCondition->Action(id, param, time, overtime, late, delayed, conflict);
       }
     }
