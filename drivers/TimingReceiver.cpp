@@ -632,10 +632,10 @@ void TimingReceiver::probe(OpenDevice& od)
     od.device, 
     od.name, 
     od.etherbonePath, 
-    ecas[0].sdb_component.addr_first,
-    streams[0].sdb_component.addr_first,
-    queues[0].sdb_component.addr_first,
-    pps[0].sdb_component.addr_first,
+    (eb_address_t)ecas[0].sdb_component.addr_first,
+    (eb_address_t)streams[0].sdb_component.addr_first,
+    (eb_address_t)queues[0].sdb_component.addr_first,
+    (eb_address_t)pps[0].sdb_component.addr_first,
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
@@ -643,13 +643,13 @@ void TimingReceiver::probe(OpenDevice& od)
   // Add special SCU hardware
   if (scubus.size() == 1) {
     // !!! hard-coded to #3
-    SCUbusActionSink::ConstructorType args = { tr.operator->(), 3, scubus[0].sdb_component.addr_first };
+    SCUbusActionSink::ConstructorType args = { tr.operator->(), 3, (eb_address_t)scubus[0].sdb_component.addr_first };
     Glib::ustring path = od.objectPath + "/scubus";
     Glib::RefPtr<ActionSink> actionSink = SCUbusActionSink::create(path, args);
     tr->actionSinks["scubus"] = actionSink;
     
     // Probe for LM32 block memories
-    eb_address_t fgb;
+    eb_address_t fgb = 0;
     std::vector<sdb_device> fgs, eps, rom;
     od.device.sdb_find_by_identity(LM32_RAM_USER_VENDOR,    LM32_RAM_USER_PRODUCT,    fgs);
     od.device.sdb_find_by_identity(LM32_IRQ_EP_VENDOR,      LM32_IRQ_EP_PRODUCT,      eps);
