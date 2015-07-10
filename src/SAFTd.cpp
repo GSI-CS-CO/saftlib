@@ -99,6 +99,13 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
   if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
   
+  // !!! remove this once MSI over EB supported
+  if (path != "dev/wbm0")
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "pre-alpha saftd does not support anything but dev/wbm0");
+  // !!! grab hardware mutual exclusion lock instead of this hack
+  if (devs.size() >= 1)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "etherbone device already opened by another saftd");
+  
   etherbone::Device edev;
   try {
     edev.open(socket, path.c_str());
