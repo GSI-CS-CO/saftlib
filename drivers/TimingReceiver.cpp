@@ -601,8 +601,8 @@ void TimingReceiver::compile()
     cycle.open(device);
     cycle.write(base + ECA_WALK,    EB_DATA32, i);
     cycle.write(base + ECA_NEXT,    EB_DATA32, next);
-    cycle.write(base + ECA_DELAY1,  EB_DATA32, we.offset >> 32);
-    cycle.write(base + ECA_DELAY0,  EB_DATA32, (we.offset/8) & 0xFFFFFFFFUL); // !!! new hardware removes /8
+    cycle.write(base + ECA_DELAY1,  EB_DATA32, ((we.offset/8) >> 32) & 0xFFFFFFFFUL); // !!! new hardware removes /8
+    cycle.write(base + ECA_DELAY0,  EB_DATA32, ((we.offset/8) >>  0) & 0xFFFFFFFFUL); // !!! new hardware removes /8
     cycle.write(base + ECA_TAG,     EB_DATA32, we.tag);
     cycle.write(base + ECA_CHANNEL, EB_DATA32, we.channel);
     cycle.close();
