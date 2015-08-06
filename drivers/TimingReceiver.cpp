@@ -431,7 +431,7 @@ struct WalkEntry {
 
 void TimingReceiver::compile()
 {
-  typedef std::map<guint64, int> Offsets;
+  typedef std::map<gint64, int> Offsets;
   typedef std::vector<ECA_Merge> Merges;
   Offsets offsets;
   Merges merges;
@@ -442,7 +442,7 @@ void TimingReceiver::compile()
     for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
       guint64 first  = (*condition)->getID() & (*condition)->getMask();
       guint64 last   = (*condition)->getID() | ~(*condition)->getMask();
-      guint64 offset = (*condition)->getOffset();
+      gint64  offset = (*condition)->getOffset();
       gint32  channel= sink->second->getChannel();
       guint32 tag    = (*condition)->getRawTag();
       
@@ -453,7 +453,7 @@ void TimingReceiver::compile()
       // software tag is based on offset
       if (Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition)) {
         std::pair<Offsets::iterator,bool> result = 
-          offsets.insert(std::pair<guint64, guint32>(offset, next_tag));
+          offsets.insert(std::pair<gint64, guint32>(offset, next_tag));
         guint32 aq_tag = result.first->second;
         if (result.second) ++next_tag; // tag now used
         
