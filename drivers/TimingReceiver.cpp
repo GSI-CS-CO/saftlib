@@ -488,8 +488,13 @@ void TimingReceiver::compile()
       clog << kLogDebug << "I: " << merges[j].first << " " << merges[j].last << " " << merges[j].offset << " " << merges[j].channel << " " << merges[j].tag << std::endl;
 #endif
       // they overlap, so tags must match!
-      if (merges[i].tag != merges[j].tag)
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Conflicting tags for overlapping conditions (same channel, same offset, same event)");
+      if (merges[i].tag != merges[j].tag) {
+        if (merges[i].last == merges[j].first-1) { 
+          break;
+        } else {
+          throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Conflicting tags for overlapping conditions (same channel, same offset, same event)");
+        }
+      }
       // merge!
       merges[j].first = merges[i].first;
       merges[j].last  = std::max(merges[j].last, merges[i].last);
