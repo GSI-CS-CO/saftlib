@@ -30,7 +30,7 @@
   
   <!-- Guards: The guards in this bitmask must be true 4us before the action.
     -->
-  <property name="Guards" type="x" access="read">
+  <property name="Guards" type="t" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   

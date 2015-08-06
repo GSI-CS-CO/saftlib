@@ -29,7 +29,7 @@ class Condition : public Owned, public iCondition
     guint64 getID() const;
     guint64 getMask() const;
     gint64 getOffset() const;
-    gint64 getGuards() const;
+    guint64 getGuards() const;
     bool getActive() const;
     void setActive(bool val);
     // sigc::signal< void, bool > Active;

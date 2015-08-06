@@ -27,7 +27,7 @@ gint64 Condition::getOffset() const
   return offset;
 }
 
-gint64 Condition::getGuards() const
+guint64 Condition::getGuards() const
 {
   return guards;
 }
