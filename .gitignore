@@ -1,7 +1,7 @@
 # Targets
 saftd
 client
-dm-snoop
+saft-ctl
 fg-ctl
 # Automake junk dirs
 tools
