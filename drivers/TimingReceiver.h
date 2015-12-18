@@ -4,6 +4,7 @@
 #include "OpenDevice.h"
 #include "ActionSink.h"
 #include "FunctionGenerator.h"
+#include "IOControl.h"
 #include "interfaces/TimingReceiver.h"
 
 namespace saftlib {
@@ -78,9 +79,13 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     unsigned int queue_size;
     unsigned int table_size;
     int aq_channel;
-    std::map< Glib::ustring, Glib::RefPtr<ActionSink> > actionSinks;
-    std::map< Glib::ustring, Glib::RefPtr<FunctionGenerator> > generators;
     std::vector<guint64> tag2delay;
+    typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> > ActionSinks;
+    typedef std::map< Glib::ustring, Glib::RefPtr<Owned> >      Owneds;
+    typedef std::map< Glib::ustring, Owneds >                   OtherStuff;
+    
+    ActionSinks actionSinks;
+    OtherStuff otherStuff;
     
     void do_remove(Glib::ustring name);
     void setHandlers(bool enable, eb_address_t arrival = 0, eb_address_t overflow = 0);

@@ -1,7 +1,7 @@
 SUBDIRS = interfaces
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl fg-ctl
+bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl
 noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
@@ -33,6 +33,7 @@ saftd_SOURCES = version.h \
 	drivers/SCUbusActionSink.cpp	drivers/SCUbusActionSink.h	\
 	drivers/MILbusActionSink.cpp	drivers/MILbusActionSink.h	\
 	drivers/FunctionGenerator.cpp	drivers/FunctionGenerator.h	\
+	drivers/IOControl.cpp				driver/IOControl.h	\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
 	src/globals.cpp			src/main.cpp
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
@@ -46,6 +47,9 @@ saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 fg_ctl_SOURCES = src/fg-ctl.cpp
 fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+
+saft_io_ctl_SOURCES = src/saft-io-ctl.cpp
+saft_io_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 if GIT_TREE
 version.h:

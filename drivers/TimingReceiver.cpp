@@ -14,6 +14,7 @@
 #include "FunctionGenerator.h"
 #include "eca_regs.h"
 #include "fg_regs.h"
+#include "io_control_regs.h"
 #include "clog.h"
 
 namespace saftlib {
@@ -101,7 +102,7 @@ TimingReceiver::~TimingReceiver()
     
     // destroy children before unhooking irqs/etc
     actionSinks.clear();
-    generators.clear();
+    otherStuff.clear();
     
     device.release_irq(overflow_irq);
     device.release_irq(arrival_irq);
@@ -306,10 +307,11 @@ std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiv
     out[i->second->getInterfaceName()][i->first] = i->second->getObjectPath();
   }
   
-  typedef std::map< Glib::ustring, Glib::RefPtr<FunctionGenerator> >::const_iterator gen;
-  for (gen i = generators.begin(); i != generators.end(); ++i) {
-    out["FunctionGenerator"][i->first] = i->second->getObjectPath();
-  }
+  typedef OtherStuff::const_iterator other;
+  typedef Owneds::const_iterator owned;
+  for (other i = otherStuff.begin(); i != otherStuff.end(); ++i)
+    for (owned j = i->second.begin(); j != i->second.end(); ++j)
+      out[i->first][j->first] = j->second->getObjectPath();
   
   return out;
 }
@@ -622,12 +624,13 @@ void TimingReceiver::probe(OpenDevice& od)
   // !!! check board ID
   etherbone::Cycle cycle;
   
-  std::vector<sdb_device> ecas, queues, streams, scubus, pps;
+  std::vector<sdb_device> ecas, queues, streams, scubus, pps, ioctl;
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECA_DEVICE_ID,  ecas);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAQ_DEVICE_ID, queues);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAE_DEVICE_ID, streams);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, 0x9602eb6f, scubus);
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
+  od.device.sdb_find_by_identity(GSI_VENDOR_ID, 0x10c05791, ioctl);
   
   // only support super basic hardware for now
   if (ecas.size() != 1 || queues.size() != 1 || streams.size() != 1 || pps.size() != 1)
@@ -644,6 +647,26 @@ void TimingReceiver::probe(OpenDevice& od)
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
+  
+  // Register io control device
+  if (ioctl.size() == 1) {
+    int device = 10;
+    unsigned int device_address = (eb_address_t)ioctl[0].sdb_component.addr_first;
+    
+    std::ostringstream path;
+    path.imbue(std::locale("C")); // Avoid commas in numbers
+    path << od.objectPath << "/ioctl";
+    std::ostringstream name;
+    name.imbue(std::locale("C"));
+    name << "ioctl-" << device;
+    
+    IOControl::ConstructorType args = { tr.operator->(), device_address };
+    Glib::RefPtr<IOControl> IOControl = IOControl::create(Glib::ustring(path.str()), args);
+    tr->otherStuff["IOControl"][name.str()] = IOControl;
+  }
+  else {
+    // !!! TBD: What is the best way to print a warning here? throw Gio::DBus? clog << kLogDebug?
+  }
   
   // Add special SCU hardware
   if (scubus.size() == 1) {
@@ -726,9 +749,9 @@ void TimingReceiver::probe(OpenDevice& od)
         Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
 
         std::ostringstream name;
+        name.imbue(std::locale("C"));
         name << "fg-" << (int)fg->getSCUbusSlot() << "-" << (int)fg->getDeviceNumber();
-        
-        tr->generators[name.str()] = fg;
+        tr->otherStuff["FunctionGenerator"][name.str()] = fg;
       }
     }
   }
