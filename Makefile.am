@@ -7,6 +7,11 @@ noinst_PROGRAMS = client
 dbussystemdir = @sysconfdir@/dbus-1/system.d
 dist_dbussystem_DATA = saftlib.conf
 
+pkgdir = @libdir@/pkgconfig
+pkg_DATA = saftlib.pc
+
+EXTRA_DIST = saftlib.pc.in
+
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)
 
