@@ -52,5 +52,5 @@ AC_PATH_PROGS([GIT], [git])
 AM_CONDITIONAL([INTERFACE_DOCS], [test x$DOCBOOK2PDF != x -a x$GDBUS_CODEGEN != x])
 AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -d .git])
 
-AC_CONFIG_FILES([Makefile interfaces/Makefile saftlib.pc])
+AC_CONFIG_FILES([Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
 AC_OUTPUT
