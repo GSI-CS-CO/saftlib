@@ -14,8 +14,11 @@
 #include "FunctionGenerator.h"
 #include "eca_regs.h"
 #include "fg_regs.h"
-#include "io_control_regs.h"
 #include "clog.h"
+#include "InoutImpl.h"
+#include "Output.h"
+#include "Inoutput.h"
+#include "Input.h"
 
 namespace saftlib {
 
@@ -276,20 +279,41 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks(
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
 {
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!! not for cryring
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    Glib::RefPtr<Output> output =
+      Glib::RefPtr<Output>::cast_dynamic(i->second);
+    if (!output) continue;
+    out[i->first] = output->getObjectPath();
+  }
+  return out;
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
 {
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!! not for cryring
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    Glib::RefPtr<Input> input =
+      Glib::RefPtr<Input>::cast_dynamic(i->second);
+    if (!input) continue;
+    out[i->first] = input->getObjectPath();
+  }
+  return out;
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInoutputs() const
 {
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!! not for cryring
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    Glib::RefPtr<Inoutput> inoutput =
+      Glib::RefPtr<Inoutput>::cast_dynamic(i->second);
+    if (!inoutput) continue;
+    out[i->first] = inoutput->getObjectPath();
+  }
+  return out;
 }
 
 std::vector< Glib::ustring > TimingReceiver::getGuards() const
@@ -624,13 +648,12 @@ void TimingReceiver::probe(OpenDevice& od)
   // !!! check board ID
   etherbone::Cycle cycle;
   
-  std::vector<sdb_device> ecas, queues, streams, scubus, pps, ioctl;
+  std::vector<sdb_device> ecas, queues, streams, scubus, pps;
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECA_DEVICE_ID,  ecas);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAQ_DEVICE_ID, queues);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAE_DEVICE_ID, streams);
   od.device.sdb_find_by_identity(GSI_VENDOR_ID, 0x9602eb6f, scubus);
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
-  od.device.sdb_find_by_identity(GSI_VENDOR_ID, 0x10c05791, ioctl);
   
   // only support super basic hardware for now
   if (ecas.size() != 1 || queues.size() != 1 || streams.size() != 1 || pps.size() != 1)
@@ -647,26 +670,8 @@ void TimingReceiver::probe(OpenDevice& od)
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
-  
-  // Register io control device
-  if (ioctl.size() == 1) {
-    int device = 10;
-    unsigned int device_address = (eb_address_t)ioctl[0].sdb_component.addr_first;
     
-    std::ostringstream path;
-    path.imbue(std::locale("C")); // Avoid commas in numbers
-    path << od.objectPath << "/ioctl";
-    std::ostringstream name;
-    name.imbue(std::locale("C"));
-    name << "ioctl-" << device;
-    
-    IOControl::ConstructorType args = { tr.operator->(), device_address };
-    Glib::RefPtr<IOControl> IOControl = IOControl::create(Glib::ustring(path.str()), args);
-    tr->otherStuff["IOControl"][name.str()] = IOControl;
-  }
-  else {
-    // !!! TBD: What is the best way to print a warning here? throw Gio::DBus? clog << kLogDebug?
-  }
+  InoutImpl::probe(tr.operator->(), tr->actionSinks);
   
   // Add special SCU hardware
   if (scubus.size() == 1) {

@@ -102,6 +102,6 @@ namespace saftlib
       
   };
 
-} /* namespace saftlib  */
+} /* namespace saftlib */
 
 #endif

@@ -30,7 +30,7 @@
     <arg direction="in" type="t" name="mask"/>
     <arg direction="in" type="x" name="offset"/>
     <arg direction="in" type="u" name="guards"/>
-    <arg direction="in" type="q" name="tag"/>
+    <arg direction="in" type="b" name="on"/>
     <arg direction="out" type="s" name="result"/>
   </method>
   
