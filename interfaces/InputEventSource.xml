@@ -23,7 +23,7 @@
        probably be disabled.  This defaults to on.  See also OutputEnable if
        this is an Inoutput.
     -->
-  <property name="Termination" type="b" access="readwrite"/>
+  <property name="InputTermination" type="b" access="readwrite"/>
   
   <!-- ReadInput: Read the current input value.
        For Inoutputs, this may differ from the Output value, if OutputEnable
@@ -34,5 +34,23 @@
   <method name="ReadInput">
     <arg direction="out" type="b" name="result"/>
   </method>
+  
+  <!-- InputTerminationAvailable: Can (input) termination be configured.
+    -->
+  <property name="InputTerminationAvailable" type="b" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- SpecialPurposeInAvailable: Can special configuration be configured.
+    -->
+  <property name="SpecialPurposeInAvailable" type="b" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- LogicLevelIn: Logic level of the input (LVDS, LVTTL, ...)
+    -->
+  <property name="LogicLevelIn" type="s" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
   
 </interface>

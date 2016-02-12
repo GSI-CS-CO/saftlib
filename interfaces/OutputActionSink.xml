@@ -58,4 +58,23 @@
   <method name="ReadOutput">
     <arg direction="out" type="b" name="value"/>
   </method>
+  
+  <!-- OutputEnableAvailable: Can output enable be configured.
+    -->
+  <property name="OutputEnableAvailable" type="b" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- SpecialPurposeOutAvailable: Can special configuration be configured.
+    -->
+  <property name="SpecialPurposeOutAvailable" type="b" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- LogicLevelOut: Logic level of the output (LVDS, LVTTL, ...)
+    -->
+  <property name="LogicLevelOut" type="s" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
 </interface>
