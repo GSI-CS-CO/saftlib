@@ -70,369 +70,12 @@ static void io_help (void)
   std::cout << "  -i: List every IO and it's capability" << std::endl;
   std::cout << std::endl;
   std::cout << "Example: " << program << " exploder5a_123t " << "IO1 " << "-o 1 -t 0 -d 1" << std::endl;
-  std::cout << "  This will enable the output and disable the (input) termination/resistor and drive the output high" << std::endl;
+  std::cout << "  This will enable the output and disable the input termination and drive the output high" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
   std::cout << "Licensed under the GPLv3" << std::endl;
   std::cout << std::endl;
 }
-
-///* Function io_setup() */
-///* ==================================================================================================== */
-//static int  io_setup (int io_oe, int io_term, int io_spec, int io_mux, int io_drive, 
-//                      bool set_oe, bool set_term, bool set_spec, bool set_mux, bool set_drive,
-//                      bool verbose_mode)
-//{
-//  /* Helpers */
-//  int  io_channel       = 0;
-//  int  io_direction     = 0;
-//  int  io_oe_cfg        = 0;
-//  int  io_term_cfg      = 0;
-//  int  io_spec_cfg      = 0;
-//  int  io_oe_status     = 0;
-//  int  io_term_status   = 0;
-//  int  io_spec_status   = 0;
-//  int  io_mux_status    = 0;
-//  int  io_current_state = 0;
-//  int  return_value     = 0;
-//  bool io_set           = false; /* IO set or get */
-//  
-//  /* Check if there is at least one parameter to set */
-//  io_set = set_oe | set_term | set_spec | set_mux | set_drive;
-//  
-//  /* Display information */
-//  if (io_set) { std::cout << "Checking configuration feasibility..." << std::endl; }
-//  else        { std::cout << "Checking configuration..." << std::endl; }
-//  
-//  /* Initialize SAFTLib components */
-//  Gio::init();
-//  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-//  
-//  /* Perform plausibility check and apply changes */
-//  try
-//  {
-//    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-//    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-//    map<Glib::ustring, Glib::ustring> ios_proxy = receiver->getInterfaces()["IOControl"];
-//    if (ios_proxy.size() != 1)
-//    {
-//      std::cout << "Interface(s) found: " << ios_proxy.size() << std::endl;
-//      std::cout << "Expecting 1 interface only!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    Glib::RefPtr<IOControl_Proxy> ioctrl = IOControl_Proxy::create(ios_proxy.begin()->second);
-//    
-//    /* Check if IO name really exists */
-//    if (ioctrl->CheckIoName(ioName))
-//    { 
-//      std::cout << "There is no IO with the name "<< ioName << "!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    
-//    /* Collect IO information for plausibility checks */
-//    io_channel     = ioctrl->GetIoTableParameterByName(ioName, eChannel);
-//    io_direction   = ioctrl->GetIoTableParameterByName(ioName, eDirection);
-//    io_oe_cfg      = ioctrl->GetIoTableParameterByName(ioName, eOutputEnable);
-//    io_term_cfg    = ioctrl->GetIoTableParameterByName(ioName, eTermination);
-//    io_spec_cfg    = ioctrl->GetIoTableParameterByName(ioName, eSpecial);
-//    
-//    /* Plausibility checks for setup */
-//    if (io_channel == IO_CFG_CHANNEL_FIXED) { std::cout << "There is no setup or information for " << ioName << "!" << std::endl; }
-//    
-//    /* Plausibility checks for setup */
-//    if (set_oe == true && io_oe_cfg == 0)
-//    {
-//      std::cout << "Output enable setup is not available for "<< ioName << "!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    if (set_term == true && io_term_cfg == 0)
-//    {
-//      std::cout << "Termination setup is not available for "<< ioName << "!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    if (set_spec == true && io_spec_cfg == 0)
-//    {
-//      std::cout << "Special setup is not available for "<< ioName << "!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    if (set_mux == true && io_direction == IO_CFG_FIELD_DIR_INPUT)
-//    {
-//      std::cout << "BuTiS t0 + TS multiplexer is not available for "<< ioName << "!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    if (set_drive == true && io_direction == IO_CFG_FIELD_DIR_INPUT)
-//    {
-//      std::cout << "There is not driver option for "<< ioName << "!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    
-//    /* Set/get IO configuration */
-//    if (io_set)
-//    {
-//      /* Set OE */
-//      if (set_oe)
-//      { 
-//        if (io_oe) { return_value = ioctrl->SetOe(ioName); }
-//        else       { return_value = ioctrl->ResetOe(ioName); }
-//      }
-//      /* Set TERM */
-//      if (set_term)
-//      { 
-//        if (io_term) { return_value = ioctrl->SetTerm(ioName); }
-//        else         { return_value = ioctrl->ResetTerm(ioName); }
-//      }
-//      /* Set SPEC */
-//      if (set_spec)
-//      { 
-//        /* Input */
-//        if (io_spec) { return_value = ioctrl->SetSpecIn(ioName); }
-//        else         { return_value = ioctrl->ResetSpecIn(ioName); }
-//        
-//        /* Check return value because we are setting two options here */
-//        if (return_value == __IO_RETURN_FAILURE) { return (return_value); }
-//        
-//        /* Output */
-//        if (io_spec) { return_value = ioctrl->SetSpecOut(ioName); }
-//        else         { return_value = ioctrl->ResetSpecOut(ioName); }
-//      }
-//      /* Set MUX */
-//      if (set_mux)
-//      { 
-//        if (io_mux) { return_value = ioctrl->SetMux(ioName); }
-//        else        { return_value = ioctrl->ResetMux(ioName); }
-//      }
-//      /* Drive output */
-//      if (set_drive)
-//      { 
-//        if (io_drive) { return_value = ioctrl->DriveHigh(ioName); }
-//        else          { return_value = ioctrl->DriveLow(ioName); }
-//      }
-//      /* Setup done */
-//      std::cout << "Setup for " << ioName << " done..." << std::endl;
-//    }
-//    else
-//    {
-//      /* Print IO configuration */
-//      if (io_oe_cfg | io_term_cfg | io_spec_cfg)
-//      {
-//        std::cout << "Current " << ioName << " configuration:" << std::endl;
-//        if (io_oe_cfg)
-//        {
-//          io_oe_status = ioctrl->GetOe(ioName); 
-//          std::cout << "  Output enable (OE):       ";
-//          if (io_oe_status)   { std::cout << "On"  << std::endl; }
-//          else                { std::cout << "Off" << std::endl; }
-//        }
-//        if (io_term_cfg)
-//        {
-//          io_term_status = ioctrl->GetTerm(ioName); 
-//          std::cout << "  Termination (Term):       ";
-//          if (io_term_status) { std::cout << "On"  << std::endl; }
-//          else                { std::cout << "Off" << std::endl; }
-//        }
-//        if (io_spec_cfg)
-//        {
-//          if ((io_direction == IO_CFG_FIELD_DIR_INPUT) || (io_direction == IO_CFG_FIELD_DIR_INOUT))
-//          {
-//            io_spec_status = ioctrl->GetSpecIn(ioName); 
-//            std::cout << "  Special mode in (Spec):   ";
-//            if (io_spec_status) { std::cout << "On"  << std::endl; }
-//            else                { std::cout << "Off" << std::endl; }
-//          }
-//          if ((io_direction == IO_CFG_FIELD_DIR_OUTPUT) || (io_direction == IO_CFG_FIELD_DIR_INOUT))
-//          {
-//            io_spec_status = ioctrl->GetSpecOut(ioName); 
-//            std::cout << "  Special mode out (Spec):  ";
-//            if (io_spec_status) { std::cout << "On"  << std::endl; }
-//            else                { std::cout << "Off" << std::endl; }
-//          }
-//        }
-//      }
-//      if ((io_direction == IO_CFG_FIELD_DIR_OUTPUT) || (io_direction == IO_CFG_FIELD_DIR_INOUT))
-//      {
-//        std::cout << "  Multiplexer (Mux):        ";
-//        io_mux_status = ioctrl->GetMux(ioName); 
-//        if (io_mux_status)  { std::cout << "BuTiS t0 + TS"  << std::endl; }
-//        else                { std::cout << "ECA/IOC/ClkGen" << std::endl; }
-//      }
-//      else
-//      {
-//        std::cout << "Note: This IO does not provide any configuration parameters!" << std::endl;
-//      }
-//      
-//      /* Check current state of the IO */
-//      if (io_channel != IO_CFG_CHANNEL_FIXED)
-//      {
-//        std::cout << "Current " << ioName << " status:" << std::endl;
-//        /* Print Input/Output */
-//        if ((io_direction == IO_CFG_FIELD_DIR_OUTPUT) || (io_direction == IO_CFG_FIELD_DIR_INOUT))
-//        {
-//          /* Output (combined) */
-//          io_current_state = ioctrl->GetOutputCombined(ioName);
-//          std::cout << "  Output (combined):        ";
-//          if      (io_current_state == 0xff) { std::cout << "High"; }
-//          else if (io_current_state == 0x00) { std::cout << "Low "; }
-//          else                               { std::cout << "Edge"; }
-//          std::cout << " [" << io_current_state << "/0x" << hex << io_current_state << "]" << dec << std::endl;
-//          
-//          /* Output (IO module) */
-//          io_current_state = ioctrl->GetOutput(ioName);
-//          std::cout << "  Output (IO module):       ";
-//          if      (io_current_state == 0xff) { std::cout << "High"; }
-//          else if (io_current_state == 0x00) { std::cout << "Low "; }
-//          else                               { std::cout << "Edge"; }
-//          std::cout << " [" << io_current_state << "/0x" << hex << io_current_state << "]" << dec << std::endl;
-//        }
-//        if ((io_direction == IO_CFG_FIELD_DIR_INPUT) || (io_direction == IO_CFG_FIELD_DIR_INOUT))
-//        {
-//          /* Input  */
-//          io_current_state = ioctrl->GetInput(ioName);
-//          std::cout << "  Input:                    ";
-//          if      (io_current_state == 0xff) { std::cout << "High"; }
-//          else if (io_current_state == 0x00) { std::cout << "Low "; }
-//          else                               { std::cout << "Edge"; }
-//          std::cout << " [" << io_current_state << "/0x" << hex << io_current_state << "]" << dec << std::endl;
-//        }
-//      }
-//    } /* try */
-//  }
-//  catch (const Glib::Error& error) 
-//  {
-//    /* Catch error(s) */
-//    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
-//    return (__IO_RETURN_FAILURE);
-//  }
-//  
-//  /* Done */
-//  std::cout << std::endl;
-//  return (return_value);
-//}
-//
-///* Function io_print_table() */
-///* ==================================================================================================== */
-//static int io_print_table(bool verbose_mode)
-//{
-//  /* Helpers */
-//  int ios_total = 0;     /* Total IOs */
-//  int item_iterator = 0; /* Iterate through IO table */
-//  
-//  /* Print help */
-//  std::cout << "Listing IOs and capabilities..." << std::endl;
-//  std::cout << std::endl;
-//  std::cout << "Direction/OE/Term/Special:" << std::endl;
-//  std::cout << "  Yes: This value can be modified" << std::endl;
-//  std::cout << "  No:  This property is fixed" << std::endl;
-//  std::cout << std::endl;
-//  std::cout << "Channel:" << std::endl;
-//  std::cout << "  GPIO/LVDS: Tells you the ECA/Clock generator channel" << std::endl;
-//  std::cout << "  FIXED:     IO behavior is fixed and can't be configured or driven manually" << std::endl;
-//  
-//  /* Print table header */
-//  std::cout << std::endl;
-//  if (verbose_mode)
-//  {
-//    std::cout << "Name          Delay[ns]   Internal ID   Direction   Channel   OE    Term   Special   Logic Level" << std::endl;
-//    std::cout << "------------------------------------------------------------------------------------------------" << std::endl;
-//  }
-//  else
-//  {
-//    std::cout << "Name          Direction   Channel   OE    Term   Special   Logic Level" << std::endl;
-//    std::cout << "----------------------------------------------------------------------" << std::endl;
-//  }
-//  
-//  /* Initialize SAFTLib components */
-//  Gio::init();
-//  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-//  
-//  /* Try to get the table */
-//  try
-//  {
-//    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-//    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-//    map<Glib::ustring, Glib::ustring> ios_proxy = receiver->getInterfaces()["IOControl"];
-//    if(ios_proxy.size() != 1)
-//    {
-//      std::cout << "Interface(s) found: " << ios_proxy.size() << std::endl;
-//      std::cout << "Expecting 1 interface only!" << std::endl;
-//      return (__IO_RETURN_FAILURE);
-//    }
-//    Glib::RefPtr<IOControl_Proxy> ioctrl = IOControl_Proxy::create(ios_proxy.begin()->second);
-//    ios_total = ioctrl->getGPIOTotal() + ioctrl->getLVDSTotal() + ioctrl->getFIXEDTotal();
-//    
-//    /* Print every IO with properties */
-//    for (item_iterator = 0; item_iterator < ios_total; item_iterator++)
-//    {
-//      /* Print formated values (setw(MAX_SIZE+ALIGNMENT_CHARS)) */
-//      std::cout << std::left;
-//      std::cout << std::setw(12+2) << ioctrl->GetIoTableName(item_iterator);
-//      if (verbose_mode)
-//      {
-//        std::cout << std::setw(3+9) << ioctrl->GetIoTableParameterByNumber(item_iterator, eDelay);
-//        std::cout << std::setw(3+11) << ioctrl->GetIoTableParameterByNumber(item_iterator, eInternalId);
-//        std::cout << std::setw(7+5);
-//      }
-//      else
-//      {
-//        std::cout << std::setw(12);
-//      }
-//      switch(ioctrl->GetIoTableParameterByNumber(item_iterator, eDirection))
-//      {
-//        case IO_CFG_FIELD_DIR_OUTPUT: { std::cout << "Output  " << std::left; break; }
-//        case IO_CFG_FIELD_DIR_INPUT:  { std::cout << "Input   " << std::left; break; }
-//        case IO_CFG_FIELD_DIR_INOUT:  { std::cout << "Inout   " << std::left; break; }
-//        default:                      { std::cout << "Unknown " << std::left; break; }
-//      }
-//      std::cout << std::setw(5+5);
-//      switch(ioctrl->GetIoTableParameterByNumber(item_iterator, eChannel))
-//      {
-//        case IO_CFG_CHANNEL_GPIO:  { std::cout << "GPIO  " << std::left; break; }
-//        case IO_CFG_CHANNEL_LVDS:  { std::cout << "LVDS  " << std::left; break; }
-//        case IO_CFG_CHANNEL_FIXED: { std::cout << "FIXED " << std::left; break; }
-//        default:                   { std::cout << "?     " << std::left; break; }
-//      }
-//      std::cout << std::setw(3+3);
-//      switch(ioctrl->GetIoTableParameterByNumber(item_iterator, eOutputEnable))
-//      {
-//        case IO_CFG_OE_UNAVAILABLE: { std::cout << "No  " << std::left; break; }
-//        case IO_CFG_OE_AVAILABLE:   { std::cout << "Yes " << std::left; break; }
-//        default:                    { std::cout << "?   " << std::left; break; }
-//      }
-//      std::cout << std::setw(3+4);
-//      switch(ioctrl->GetIoTableParameterByNumber(item_iterator, eTermination))
-//      {
-//        case IO_CFG_TERM_UNAVAILABLE: { std::cout << "No  " << std::left; break; }
-//        case IO_CFG_TERM_AVAILABLE:   { std::cout << "Yes " << std::left; break; }
-//        default:                      { std::cout << "?   " << std::left; break; }
-//      }
-//      std::cout << std::setw(3+7);
-//      switch(ioctrl->GetIoTableParameterByNumber(item_iterator, eSpecial))
-//      {
-//        case IO_CFG_SPEC_UNAVAILABLE: { std::cout << "No  " << std::left; break; }
-//        case IO_CFG_SPEC_AVAILABLE:   { std::cout << "Yes " << std::left; break; }
-//        default:                      { std::cout << "?   " << std::left; break; }
-//      }
-//      switch(ioctrl->GetIoTableParameterByNumber(item_iterator, eLogicLevel))
-//      {
-//        case IO_LOGIC_LEVEL_TTL:   { std::cout << "TTL   " << std::left; break; }
-//        case IO_LOGIC_LEVEL_LVTTL: { std::cout << "LVTTL " << std::left; break; }
-//        case IO_LOGIC_LEVEL_LVDS:  { std::cout << "LVDS  " << std::left; break; }
-//        case IO_LOGIC_LEVEL_NIM:   { std::cout << "NIM   " << std::left; break; }
-//        default:                   { std::cout << "?     " << std::left; break; }
-//      }
-//      std::cout << std::endl;
-//    }
-//  } 
-//  catch (const Glib::Error& error) 
-//  {
-//    /* Catch error(s) */
-//    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
-//    return (__IO_RETURN_FAILURE);
-//  }
-//  
-//  /* Done */
-//  std::cout << std::endl;
-//  return (__IO_RETURN_SUCCESS);
-//}
 
 /* Function io_setup() */
 /* ==================================================================================================== */
@@ -440,12 +83,12 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
                       bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_drive,
                       bool verbose_mode)
 {
-  unsigned io_type = 0; /* Out, Inout or In? */
-  bool     io_found = false;
-  bool     io_set = false; /* IO set or get */
+  unsigned io_type  = 0;     /* Out, Inout or In? */
+  bool     io_found = false; /* IO exists? */
+  bool     io_set   = false; /* IO set or get configuration */
   
   /* Check if there is at least one parameter to set */
-  io_set = set_oe | set_term | io_spec_out | io_spec_in | set_mux | set_drive;
+  io_set = set_oe | set_term | set_spec_out | set_spec_in | set_mux | set_drive;
   
   /* Display information */
   if (verbose_mode)
@@ -528,7 +171,7 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl; 
+          std::cout << "Error: This option is not available for inputs!" << std::endl; 
           return (__IO_RETURN_FAILURE);
         }
         /* Check if OE option is available */
@@ -555,11 +198,56 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
           return (__IO_RETURN_FAILURE);
         }
       }
+      
+      /* Check special out configuration */
+      if (set_spec_out)
+      {
+        if (io_type == IO_CFG_FIELD_DIR_INPUT)
+        {
+          std::cout << "Error: This option is not available for inputs!" << std::endl; 
+          return (__IO_RETURN_FAILURE);
+        }
+        /* Check if SPEC OUT option is available */
+        if (!(output_proxy->getSpecialPurposeOutAvailable()))
+        {
+          std::cout << "Error: This option does not exist for this IO!" << std::endl; 
+          return (__IO_RETURN_FAILURE);
+        }
+      }
+      
+      /* Check special out configuration */
+      if (set_spec_in)
+      {
+        if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
+        {
+          std::cout << "Error: This option is not available for outputs!" << std::endl; 
+          return (__IO_RETURN_FAILURE);
+        }
+        /* Check if SPEC OUT option is available */
+        if (!(input_proxy->getSpecialPurposeInAvailable()))
+        {
+          std::cout << "Error: This option does not exist for this IO!" << std::endl; 
+          return (__IO_RETURN_FAILURE);
+        }
+      }
+      
+      /* Check if IO can be driven */
+      if (set_drive)
+      {
+        /* Plausibility check */
+        if (io_type == IO_CFG_FIELD_DIR_INPUT)
+        {
+          std::cout << "Error: This option is not available for inputs!" << std::endl; 
+          return (__IO_RETURN_FAILURE);
+        }
+      }
     
       /* Set configuration */
-      if (set_oe)    { output_proxy->setOutputEnable(io_oe); }
-      if (set_term)  { input_proxy->setInputTermination(io_term); }
-      if (set_drive) { output_proxy->WriteOutput(io_drive); }
+      if (set_oe)       { output_proxy->setOutputEnable(io_oe); }
+      if (set_term)     { input_proxy->setInputTermination(io_term); }
+      if (set_spec_out) { output_proxy->setSpecialPurposeOut(io_spec_out); }
+      if (set_spec_in)  { input_proxy->setSpecialPurposeIn(io_spec_in); }
+      if (set_drive)    { output_proxy->WriteOutput(io_drive); }
       
     }
     else
@@ -574,28 +262,42 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
       if (io_type != IO_CFG_FIELD_DIR_INPUT)
       {
         /* Display output */
-        if (output_proxy->ReadOutput())           { std::cout << "  Output:           High" << std::endl; }
-        else                                      { std::cout << "  Output:           Low" << std::endl; }
+        if (output_proxy->ReadOutput())             { std::cout << "  Output:           High" << std::endl; }
+        else                                        { std::cout << "  Output:           Low" << std::endl; }
         
         /* Display output enable state */
         if (output_proxy->getOutputEnableAvailable())
         {
-          if (output_proxy->getOutputEnable())    { std::cout << "  OutputEnable:     On" << std::endl; }
-          else                                    { std::cout << "  OutputEnable:     Off" << std::endl; }
+          if (output_proxy->getOutputEnable())      { std::cout << "  OutputEnable:     On" << std::endl; }
+          else                                      { std::cout << "  OutputEnable:     Off" << std::endl; }
+        }
+        
+        /* Display special out state */
+        if (output_proxy->getSpecialPurposeOutAvailable())
+        {
+          if (output_proxy->getSpecialPurposeOut()) { std::cout << "  SpecialOut:       On" << std::endl; }
+          else                                      { std::cout << "  SpecialOut:       Off" << std::endl; }
         }
       }
       
       if (io_type != IO_CFG_FIELD_DIR_OUTPUT)
       {
         /* Display input */
-        if (input_proxy->ReadInput())             { std::cout << "  Input:            High" << std::endl; }
-        else                                      { std::cout << "  Input:            Low" << std::endl; }
+        if (input_proxy->ReadInput())               { std::cout << "  Input:            High" << std::endl; }
+        else                                        { std::cout << "  Input:            Low" << std::endl; }
         
         /* Display output enable state */
         if (input_proxy->getInputTerminationAvailable())
         {
-          if (input_proxy->getInputTermination()) { std::cout << "  InputTermination: On" << std::endl; }
-          else                                    { std::cout << "  InputTermination: Off" << std::endl; }
+          if (input_proxy->getInputTermination())   { std::cout << "  InputTermination: On" << std::endl; }
+          else                                      { std::cout << "  InputTermination: Off" << std::endl; }
+        }
+        
+        /* Display special in state */
+        if (input_proxy->getSpecialPurposeInAvailable())
+        {
+          if (input_proxy->getSpecialPurposeIn())   { std::cout << "  SpecialIn:        On" << std::endl; }
+          else                                      { std::cout << "  SpecialIn:        Off" << std::endl; }
         }
       }
       
@@ -656,7 +358,6 @@ static int io_print_table(bool verbose_mode)
     /* Print help */
     if (verbose_mode) { std::cout << "Listing IOs and capabilities..." << std::endl << std::endl; }
     std::cout << "Device:" << std::endl;
-    std::cout << "  Name: " << receiver->getName() << std::endl;
     std::cout << "  Path: " << receiver->getEtherbonePath() << std::endl;
     std::cout << std::endl;
     std::cout << "OutputEnable/InputTermination/SpecialOut/In:" << std::endl;
@@ -832,8 +533,8 @@ int main (int argc, char** argv)
     /* Plausibility check */
     if (io_oe > 1       || io_oe < 0)       { std::cout << "Error: Output enable setting is invalid!"             << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
     if (io_term > 1     || io_term < 0)     { std::cout << "Error: Input termination setting is invalid"          << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
-    if (io_spec_in > 1  || io_spec_in < 0)  { std::cout << "Error: Special (input) function setting is invalid!"  << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
     if (io_spec_out > 1 || io_spec_out < 0) { std::cout << "Error: Special (output) function setting is invalid!" << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
+    if (io_spec_in > 1  || io_spec_in < 0)  { std::cout << "Error: Special (input) function setting is invalid!"  << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
     if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 multiplexer setting is invalid!"      << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
     if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
     

@@ -34,7 +34,9 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     bool getOutputEnable() const; // done
     void setOutputEnable(bool val); // done 
     bool getOutputEnableAvailable() const; // done
-    bool getSpecialPurposeOutAvailable() const;
+    bool getSpecialPurposeOut() const; // done
+    void setSpecialPurposeOut(bool val); // done
+    bool getSpecialPurposeOutAvailable() const; // done
     Glib::ustring getLogicLevelOut() const; // done
     
     // iEventSource
@@ -51,9 +53,11 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     bool getInputTermination() const; // done
     void setStableTime(guint32 val);
     void setInputTermination(bool val); // done
-    bool getInputTerminationAvailable() const;
-    bool getSpecialPurposeInAvailable() const;
-    Glib::ustring getLogicLevelIn() const;
+    bool getInputTerminationAvailable() const; // done
+    bool getSpecialPurposeIn() const; // done
+    void setSpecialPurposeIn(bool val); // done
+    bool getSpecialPurposeInAvailable() const; // done
+    Glib::ustring getLogicLevelIn() const; // done
     
   protected:
     unsigned io_channel;

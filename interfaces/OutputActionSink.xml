@@ -40,6 +40,10 @@
        See also Termination if this is an Inoutput.
     -->
   <property name="OutputEnable" type="b" access="readwrite"/>
+
+  <!-- SpecialPurposeOut: Is the special function enabled.
+    -->
+  <property name="SpecialPurposeOut" type="b" access="readwrite"/>
   
   <!-- WriteOutput: Directly manipulate the output value.
        Set the output to on/off. Overwrite the previous state,

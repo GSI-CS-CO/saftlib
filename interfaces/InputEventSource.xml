@@ -25,6 +25,10 @@
     -->
   <property name="InputTermination" type="b" access="readwrite"/>
   
+  <!-- SpecialPurposeIn: Is the special function enabled.
+    -->
+  <property name="SpecialPurposeIn" type="b" access="readwrite"/>
+  
   <!-- ReadInput: Read the current input value.
        For Inoutputs, this may differ from the Output value, if OutputEnable
        is false.  To receive a signal on Input changes, use the EventSource

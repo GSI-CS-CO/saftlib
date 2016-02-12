@@ -202,7 +202,7 @@ guint32 InoutImpl::getStableTime() const
 bool InoutImpl::getInputTermination() const
 {
   unsigned access_position = 0;
-  unsigned internal_id = 0;
+  unsigned internal_id = io_index;
   eb_data_t readInputTermination;
   etherbone::Cycle cycle;
   
@@ -243,7 +243,7 @@ void InoutImpl::setStableTime(guint32 val)
 void InoutImpl::setInputTermination(bool val)
 {
   unsigned access_position = 0;
-  unsigned internal_id = 0;
+  unsigned internal_id = io_index;
   etherbone::Cycle cycle;
     
   ownerOnly();
@@ -305,6 +305,166 @@ bool InoutImpl::getSpecialPurposeInAvailable() const
   return io_spec_available;
 }
 
+bool InoutImpl::getSpecialPurposeOut() const
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  eb_data_t readSpecialPurposeOut;
+  etherbone::Cycle cycle;
+  
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(dev->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Spec_Out_Set_low,  EB_DATA32, &readSpecialPurposeOut); }
+    else                      { cycle.read(io_control_addr+eGPIO_Spec_Out_Set_high, EB_DATA32, &readSpecialPurposeOut); }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Spec_Out_Set_low,  EB_DATA32, &readSpecialPurposeOut); }
+    else                      { cycle.read(io_control_addr+eLVDS_Spec_Out_Set_high, EB_DATA32, &readSpecialPurposeOut); }
+  }
+  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  cycle.close();
+        
+  readSpecialPurposeOut = readSpecialPurposeOut&(1<<internal_id);
+  readSpecialPurposeOut = readSpecialPurposeOut>>internal_id;
+  
+  if (readSpecialPurposeOut) { return true; }
+  else                      { return false; }
+}
+
+void InoutImpl::setSpecialPurposeOut(bool val)
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  etherbone::Cycle cycle;
+    
+  ownerOnly();
+  
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(dev->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Spec_Out_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_Spec_Out_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Spec_Out_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_Spec_Out_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Spec_Out_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_Spec_Out_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Spec_Out_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_Spec_Out_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  cycle.close();
+}
+
+bool InoutImpl::getSpecialPurposeIn() const
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  eb_data_t readSpecialPurposeIn;
+  etherbone::Cycle cycle;
+  
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(dev->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Spec_In_Set_low,  EB_DATA32, &readSpecialPurposeIn); }
+    else                      { cycle.read(io_control_addr+eGPIO_Spec_In_Set_high, EB_DATA32, &readSpecialPurposeIn); }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Spec_In_Set_low,  EB_DATA32, &readSpecialPurposeIn); }
+    else                      { cycle.read(io_control_addr+eLVDS_Spec_In_Set_high, EB_DATA32, &readSpecialPurposeIn); }
+  }
+  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  cycle.close();
+        
+  readSpecialPurposeIn = readSpecialPurposeIn&(1<<internal_id);
+  readSpecialPurposeIn = readSpecialPurposeIn>>internal_id;
+  
+  if (readSpecialPurposeIn) { return true; }
+  else                      { return false; }
+}
+
+void InoutImpl::setSpecialPurposeIn(bool val)
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  etherbone::Cycle cycle;
+    
+  ownerOnly();
+  
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(dev->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Spec_In_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_Spec_In_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Spec_In_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_Spec_In_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Spec_In_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_Spec_In_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Spec_In_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_Spec_In_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  cycle.close();
+}
+
 int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<ActionSink> >& actionSinks)
 {
   /* Helpers */
@@ -325,7 +485,7 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
   std::vector<sdb_device> ioctl;
   
   /* Find IO control module */
-  tr->getDevice().sdb_find_by_identity(GSI_VENDOR_ID, 0x10c05791, ioctl);
+  tr->getDevice().sdb_find_by_identity(GSI_VENDOR_ID, IO_CONTROL_PRODUCT_ID, ioctl);
   eb_address_t ioctl_address = ioctl[0].sdb_component.addr_first;
   
   /* Get number of IOs */
