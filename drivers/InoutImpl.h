@@ -29,15 +29,17 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     
     // iOutputActionSink
     Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, bool on);
-    void WriteOutput(bool value); // done
-    bool ReadOutput(); // done
-    bool getOutputEnable() const; // done
-    void setOutputEnable(bool val); // done 
-    bool getOutputEnableAvailable() const; // done
-    bool getSpecialPurposeOut() const; // done
-    void setSpecialPurposeOut(bool val); // done
-    bool getSpecialPurposeOutAvailable() const; // done
-    Glib::ustring getLogicLevelOut() const; // done
+    void WriteOutput(bool value);
+    bool ReadOutput();
+    bool getOutputEnable() const;
+    void setOutputEnable(bool val);
+    bool getOutputEnableAvailable() const;
+    bool getSpecialPurposeOut() const;
+    void setSpecialPurposeOut(bool val);
+    bool getSpecialPurposeOutAvailable() const;
+    bool getBuTiSMultiplexer() const;
+    void setBuTiSMultiplexer(bool val);
+    Glib::ustring getLogicLevelOut() const;
     
     // iEventSource
     guint64 getResolution() const;
@@ -50,14 +52,14 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     // iInputEventSource
     bool ReadInput(); // done
     guint32 getStableTime() const;
-    bool getInputTermination() const; // done
+    bool getInputTermination() const;
     void setStableTime(guint32 val);
-    void setInputTermination(bool val); // done
-    bool getInputTerminationAvailable() const; // done
-    bool getSpecialPurposeIn() const; // done
-    void setSpecialPurposeIn(bool val); // done
-    bool getSpecialPurposeInAvailable() const; // done
-    Glib::ustring getLogicLevelIn() const; // done
+    void setInputTermination(bool val);
+    bool getInputTerminationAvailable() const;
+    bool getSpecialPurposeIn() const;
+    void setSpecialPurposeIn(bool val);
+    bool getSpecialPurposeInAvailable() const;
+    Glib::ustring getLogicLevelIn() const;
     
   protected:
     unsigned io_channel;

@@ -337,7 +337,7 @@ bool InoutImpl::getSpecialPurposeOut() const
   readSpecialPurposeOut = readSpecialPurposeOut>>internal_id;
   
   if (readSpecialPurposeOut) { return true; }
-  else                      { return false; }
+  else                       { return false; }
 }
 
 void InoutImpl::setSpecialPurposeOut(bool val)
@@ -596,6 +596,86 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
   
   /* Done */
   return 0;
+}
+
+bool InoutImpl::getBuTiSMultiplexer() const
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  eb_data_t readBuTiSMultiplexer;
+  etherbone::Cycle cycle;
+  
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(dev->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Mux_Set_low,  EB_DATA32, &readBuTiSMultiplexer); }
+    else                      { cycle.read(io_control_addr+eGPIO_Mux_Set_high, EB_DATA32, &readBuTiSMultiplexer); }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Mux_Set_low,  EB_DATA32, &readBuTiSMultiplexer); }
+    else                      { cycle.read(io_control_addr+eLVDS_Mux_Set_high, EB_DATA32, &readBuTiSMultiplexer); }
+  }
+  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  cycle.close();
+        
+  readBuTiSMultiplexer = readBuTiSMultiplexer&(1<<internal_id);
+  readBuTiSMultiplexer = readBuTiSMultiplexer>>internal_id;
+  
+  if (readBuTiSMultiplexer) { return true; }
+  else                      { return false; }
+}
+
+void InoutImpl::setBuTiSMultiplexer(bool val)
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  etherbone::Cycle cycle;
+    
+  ownerOnly();
+  
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(dev->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Mux_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_Mux_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Mux_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_Mux_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Mux_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_Mux_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Mux_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_Mux_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  cycle.close();
 }
 
 Glib::ustring InoutImpl::getLogicLevelOut() const { return getLogicLevel(); }

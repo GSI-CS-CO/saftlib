@@ -45,6 +45,10 @@
     -->
   <property name="SpecialPurposeOut" type="b" access="readwrite"/>
   
+  <!-- BuTiSMultiplexer: Output BuTiS t0 with timestamp.
+    -->
+  <property name="BuTiSMultiplexer" type="b" access="readwrite"/>
+  
   <!-- WriteOutput: Directly manipulate the output value.
        Set the output to on/off. Overwrite the previous state,
        regardless of whether it came from WriteOutput or a matching

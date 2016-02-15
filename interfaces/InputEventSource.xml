@@ -17,7 +17,7 @@
     -->
   <property name="StableTime" type="u" access="readwrite"/>
   
-  <!-- Termination: Set the input termination
+  <!-- InputTermination: Set the input termination
        Some inputs need termination to receive a clean input signal. 
        However, if the same IO is used as an Output, termination should
        probably be disabled.  This defaults to on.  See also OutputEnable if

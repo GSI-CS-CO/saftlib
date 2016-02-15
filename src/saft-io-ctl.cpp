@@ -231,6 +231,17 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
         }
       }
       
+      /* Check multiplexer (BuTiS support) */
+      if (set_mux)
+      {
+        /* Plausibility check */
+        if (io_type == IO_CFG_FIELD_DIR_INPUT)
+        {
+          std::cout << "Error: This option is not available for inputs!" << std::endl; 
+          return (__IO_RETURN_FAILURE);
+        }
+      }
+      
       /* Check if IO can be driven */
       if (set_drive)
       {
@@ -241,14 +252,14 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
           return (__IO_RETURN_FAILURE);
         }
       }
-    
+      
       /* Set configuration */
       if (set_oe)       { output_proxy->setOutputEnable(io_oe); }
       if (set_term)     { input_proxy->setInputTermination(io_term); }
       if (set_spec_out) { output_proxy->setSpecialPurposeOut(io_spec_out); }
       if (set_spec_in)  { input_proxy->setSpecialPurposeIn(io_spec_in); }
+      if (set_mux)      { output_proxy->setBuTiSMultiplexer(io_mux); }
       if (set_drive)    { output_proxy->WriteOutput(io_drive); }
-      
     }
     else
     {
@@ -278,6 +289,10 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
           if (output_proxy->getSpecialPurposeOut()) { std::cout << "  SpecialOut:       On" << std::endl; }
           else                                      { std::cout << "  SpecialOut:       Off" << std::endl; }
         }
+        
+        /* Display BuTiS multiplexer state */
+        if (output_proxy->getBuTiSMultiplexer())    { std::cout << "  Multiplexer:      BuTiS t0 + TS" << std::endl; }
+        else                                        { std::cout << "  Multiplexer:      ECA/IOC/ClkGen" << std::endl; }
       }
       
       if (io_type != IO_CFG_FIELD_DIR_OUTPUT)
@@ -300,9 +315,7 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
           else                                      { std::cout << "  SpecialIn:        Off" << std::endl; }
         }
       }
-      
     }
-    
   }
   catch (const Glib::Error& error) 
   {
