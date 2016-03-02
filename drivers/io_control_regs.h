@@ -6,8 +6,6 @@
 #define IO_CONTROL_PRODUCT_ID        0x10c05791
 #define IO_CONTROL_VENDOR_ID         0x00000651
 
-#define IO_DEVICE_NAME_BYTES         32
-#define IO_DEVICE_IO_BYTES           16
 #define IO_MAX_IOS_PER_CHANNEL       64 /* 64 IOs per channel */
 #define IO_MAX_VALID_CHANNELS         2 /* GPIO and LVDS */
 
@@ -37,17 +35,25 @@
 #define IO_FIELD_CFG_SHIFT           8
 #define IO_FIELD_LOGIC_RES_SHIFT     0
 
+#define IO_SPECIAL_PURPOSE_MASK      0xfc
+#define IO_SPECIAL_OUT_MASK          0x02
+#define IO_SPECIAL_IN_MASK           0x01
+
+#define IO_SPECIAL_PURPOSE_SHIFT     2
+#define IO_SPECIAL_OUT_SHIFT         1
+#define IO_SPECIAL_IN_SHIFT          0
+
 #define IO_CFG_FIELD_DIR_MASK        0xc0
-#define IO_CFG_FIELD_OE_MASK         0x20
-#define IO_CFG_FIELD_TERM_MASK       0x10
-#define IO_CFG_FIELD_SPEC_MASK       0x08
-#define IO_CFG_FIELD_INFO_CHAN_MASK  0x07
+#define IO_CFG_FIELD_INFO_CHAN_MASK  0x38
+#define IO_CFG_FIELD_OE_MASK         0x04
+#define IO_CFG_FIELD_TERM_MASK       0x02
+#define IO_CFG_FIELD_RES_BIT_MASK    0x01
 
 #define IO_CFG_FIELD_DIR_SHIFT       6
-#define IO_CFG_FIELD_OE_SHIFT        5
-#define IO_CFG_FIELD_TERM_SHIFT      4
-#define IO_CFG_FIELD_SPEC_SHIFT      3
-#define IO_CFG_FIELD_INFO_CHAN_SHIFT 0
+#define IO_CFG_FIELD_INFO_CHAN_SHIFT 3
+#define IO_CFG_FIELD_OE_SHIFT        2
+#define IO_CFG_FIELD_TERM_SHIFT      1
+#define IO_CFG_FIELD_RES_BIT_SHIFT   0
 
 #define IO_LOGIC_RES_FIELD_LL_MASK   0xf0
 #define IO_LOGIC_RES_FIELD_RES_MASK  0x0f
@@ -70,7 +76,7 @@
 
 #define IO_CFG_CHANNEL_GPIO          0
 #define IO_CFG_CHANNEL_LVDS          1
-#define IO_CFG_CHANNEL_FIXED         7
+#define IO_CFG_CHANNEL_FIXED         2
 
 #define IO_LOGIC_LEVEL_TTL           0
 #define IO_LOGIC_LEVEL_LVTTL         1
@@ -162,26 +168,13 @@ typedef enum
   eIO_Map_Table_Begin        = 0xe000
 } e_IOCONTROL_RegisterArea;
 
-typedef enum
-{
-  eDelay        = 0,
-  eInternalId   = 1,
-  eDirection    = 2,
-  eOutputEnable = 3,
-  eTermination  = 4,
-  eSpecial      = 5,
-  eChannel      = 6,
-  eLogicLevel   = 7,
-  eReserved     = 8
-} e_IOCONTROL_IoTableParameter;
-
 /* Structures */
 /* ==================================================================================================== */
 typedef struct
 {
   char          uName[12];
-  unsigned char uDelay;
-  unsigned char uInternalID;
+  unsigned char uSpecial;
+  unsigned char uIndex;
   unsigned char uIOCfgSpace;
   unsigned char uLogicLevelRes;
 } s_IOCONTROL_SetupField;

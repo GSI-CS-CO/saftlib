@@ -13,8 +13,9 @@ namespace saftlib {
 
 InoutImpl::InoutImpl(ConstructorType args)
  : ActionSink(args.dev, args.io_channel),
-   io_channel(args.io_channel), io_index(args.io_index), io_delay(args.io_delay), io_logic_level(args.io_logic_level),
-   io_oe_available(args.io_oe_available), io_term_available(args.io_term_available), io_spec_available(args.io_spec_available),
+   io_channel(args.io_channel), io_index(args.io_index), io_special_purpose(args.io_special_purpose), io_logic_level(args.io_logic_level),
+   io_oe_available(args.io_oe_available), io_term_available(args.io_term_available),
+   io_spec_out_available(args.io_spec_out_available), io_spec_in_available(args.io_spec_in_available),
    io_control_addr(args.io_control_addr)
 {
 }
@@ -49,6 +50,7 @@ void InoutImpl::WriteOutput(bool value)
   { 
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!");
   }
+  
   cycle.close();
 }
 
@@ -58,7 +60,7 @@ bool InoutImpl::ReadOutput()
   eb_data_t readOutput;
   
   cycle.open(dev->getDevice());
-  if (io_channel == IO_CFG_CHANNEL_GPIO)      { cycle.read(io_control_addr+eSet_GPIO_Out_Begin+(io_index*4), EB_DATA32, &readOutput); }
+  if      (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eSet_GPIO_Out_Begin+(io_index*4), EB_DATA32, &readOutput); }
   else if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eSet_LVDS_Out_Begin+(io_index*4), EB_DATA32, &readOutput); }
   else                                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
@@ -292,7 +294,7 @@ bool InoutImpl::getOutputEnableAvailable() const
 
 bool InoutImpl::getSpecialPurposeOutAvailable() const
 {
-  return io_spec_available;
+  return io_spec_out_available;
 }
 
 bool InoutImpl::getInputTerminationAvailable() const
@@ -302,7 +304,7 @@ bool InoutImpl::getInputTerminationAvailable() const
 
 bool InoutImpl::getSpecialPurposeInAvailable() const
 {
-  return io_spec_available;
+  return io_spec_in_available;
 }
 
 bool InoutImpl::getSpecialPurposeOut() const
@@ -502,7 +504,7 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
   for (io_table_iterator = 0; io_table_iterator < (io_GPIOTotal*4 + io_LVDSTotal*4 + io_FixedTotal*4); io_table_iterator++)
   {
     /* Read memory region */
-    io_table_addr = eIO_Map_Table_Begin + IO_DEVICE_NAME_BYTES + io_table_iterator*4;
+    io_table_addr = eIO_Map_Table_Begin + io_table_iterator*4;
     
     /* Open a new cycle and get the parameter */
     cycle.open(tr->getDevice());
@@ -522,8 +524,8 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
     else /* Get all other IO information */
     { 
       /* Convert uint32 to 4x unit8 */
-      s_aIOCONTROL_SetupField[io_table_entries_id].uDelay         = (unsigned char) ((io_table_data_raw&0xff000000)>>24);
-      s_aIOCONTROL_SetupField[io_table_entries_id].uInternalID    = (unsigned char) ((io_table_data_raw&0x00ff0000)>>16);
+      s_aIOCONTROL_SetupField[io_table_entries_id].uSpecial       = (unsigned char) ((io_table_data_raw&0xff000000)>>24);
+      s_aIOCONTROL_SetupField[io_table_entries_id].uIndex         = (unsigned char) ((io_table_data_raw&0x00ff0000)>>16);
       s_aIOCONTROL_SetupField[io_table_entries_id].uIOCfgSpace    = (unsigned char) ((io_table_data_raw&0x0000ff00)>>8);
       s_aIOCONTROL_SetupField[io_table_entries_id].uLogicLevelRes = (unsigned char) ((io_table_data_raw&0x000000ff));
       io_table_entry_iterator = 0; 
@@ -536,20 +538,21 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
   {
     /* Helpers */
     char * cIOName;
-    unsigned direction     = 0;
-    unsigned internal_id   = 0;
-    unsigned channel       = 0;
-    unsigned delay         = 0;
-    unsigned logic_level   = 0;
-    bool oe_available   = false;
-    bool term_available = false;
-    bool spec_available = false;
+    unsigned direction      = 0;
+    unsigned internal_id    = 0;
+    unsigned channel        = 0;
+    unsigned special        = 0;
+    unsigned logic_level    = 0;
+    bool oe_available       = false;
+    bool term_available     = false;
+    bool spec_out_available = false;
+    bool spec_in_available  = false;
     
     /* Get properties */
     direction   = (s_aIOCONTROL_SetupField[io_table_iterator].uIOCfgSpace&IO_CFG_FIELD_DIR_MASK) >> IO_CFG_FIELD_DIR_SHIFT;
-    internal_id = (s_aIOCONTROL_SetupField[io_table_iterator].uInternalID);
+    internal_id = (s_aIOCONTROL_SetupField[io_table_iterator].uIndex);
     channel     = (s_aIOCONTROL_SetupField[io_table_iterator].uIOCfgSpace&IO_CFG_FIELD_INFO_CHAN_MASK) >> IO_CFG_FIELD_INFO_CHAN_SHIFT;
-    delay       = (s_aIOCONTROL_SetupField[io_table_iterator].uDelay);
+    special     = (s_aIOCONTROL_SetupField[io_table_iterator].uSpecial&IO_SPECIAL_PURPOSE_MASK) >> IO_SPECIAL_PURPOSE_MASK;
     logic_level = (s_aIOCONTROL_SetupField[io_table_iterator].uLogicLevelRes&IO_LOGIC_RES_FIELD_LL_MASK) >> IO_LOGIC_RES_FIELD_LL_SHIFT;
     
     /* Get available options */
@@ -557,8 +560,10 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
     else                                                                                                            { oe_available = false; }
     if ((s_aIOCONTROL_SetupField[io_table_iterator].uIOCfgSpace&IO_CFG_FIELD_TERM_MASK) >> IO_CFG_FIELD_TERM_SHIFT) { term_available = true; }
     else                                                                                                            { term_available = false; }
-    if ((s_aIOCONTROL_SetupField[io_table_iterator].uIOCfgSpace&IO_CFG_FIELD_SPEC_MASK) >> IO_CFG_FIELD_SPEC_SHIFT) { spec_available = true; }
-    else                                                                                                            { spec_available = false; }
+    if ((s_aIOCONTROL_SetupField[io_table_iterator].uSpecial&IO_SPECIAL_OUT_MASK) >> IO_SPECIAL_OUT_SHIFT)          { spec_out_available = true; }
+    else                                                                                                            { spec_out_available = false; }
+    if ((s_aIOCONTROL_SetupField[io_table_iterator].uSpecial&IO_SPECIAL_IN_MASK) >> IO_SPECIAL_IN_SHIFT)            { spec_in_available = true; }
+    else                                                                                                            { spec_in_available = false; }
     
     /* Get IO name */
     cIOName = s_aIOCONTROL_SetupField[io_table_iterator].uName;
@@ -569,19 +574,19 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
     {
       case IO_CFG_FIELD_DIR_OUTPUT:
       {
-        Output::ConstructorType args = { tr, channel, internal_id, delay, logic_level, oe_available, term_available, spec_available, ioctl_address };
+        Output::ConstructorType args = { tr, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
         actionSinks[IOName] = Output::create(tr->getObjectPath() + "/outputs/" + IOName, args);
         break;
       }
       case IO_CFG_FIELD_DIR_INPUT:
       {
-        Input::ConstructorType args = { tr, channel, internal_id, delay, logic_level, oe_available, term_available, spec_available, ioctl_address };
+        Input::ConstructorType args = { tr, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
         actionSinks[IOName] = Input::create(tr->getObjectPath() + "/inputs/" + IOName, args);
         break;
       }
       case IO_CFG_FIELD_DIR_INOUT:
       {
-        Inoutput::ConstructorType args = { tr, channel, internal_id, delay, logic_level, oe_available, term_available, spec_available, ioctl_address };
+        Inoutput::ConstructorType args = { tr, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
         actionSinks[IOName] = Inoutput::create(tr->getObjectPath() + "/inoutputs/" + IOName, args);
         break;
       }

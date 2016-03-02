@@ -4,7 +4,6 @@
 #include "OpenDevice.h"
 #include "ActionSink.h"
 #include "FunctionGenerator.h"
-#include "IOControl.h"
 #include "interfaces/TimingReceiver.h"
 
 namespace saftlib {

@@ -16,11 +16,12 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
       TimingReceiver* dev;
       unsigned io_channel;
       unsigned io_index;
-      unsigned io_delay;
+      unsigned io_special_purpose;
       unsigned io_logic_level;
       bool io_oe_available;
       bool io_term_available;
-      bool io_spec_available;
+      bool io_spec_out_available;
+      bool io_spec_in_available;
       eb_address_t io_control_addr;
     };
     
@@ -64,11 +65,12 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
   protected:
     unsigned io_channel;
     unsigned io_index;
-    unsigned io_delay;
+    unsigned io_special_purpose;
     unsigned io_logic_level;
     bool io_oe_available;
     bool io_term_available;
-    bool io_spec_available;
+    bool io_spec_out_available;
+    bool io_spec_in_available;
     eb_address_t io_control_addr; 
     Glib::ustring getLogicLevel() const;
 };
