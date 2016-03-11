@@ -67,7 +67,7 @@ static const char* formatDate(guint64 time)
 void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool late, bool delayed, bool conflict)
 {
   std::cout << "Time: " << formatDate(time); 
-  fprintf(stdout, " ID: 0x%016"PRIx64" Param: 0x%016"PRIx64" ", (uint64_t)id, (uint64_t)param); /* argh!!! Why is there no simple way to do this with C++? */
+  fprintf(stdout, " ID: 0x%016" PRIx64 " Param: 0x%016" PRIx64 " ", (uint64_t)id, (uint64_t)param); /* argh!!! Why is there no simple way to do this with C++? */
 
   std::cout << ((conflict||late||delayed)?"!":"") << ((conflict)?" conflict":"") << ((late)?" late":"") << ((delayed)?" delayed":"") << std::endl;
 } 
@@ -148,7 +148,7 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
 	  std::cout << "  -- conditions: " << allConditions.size() << std::endl;
 	  for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
 		Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
-		fprintf(stdout,	"  ---- ID: 0x%016"PRIx64", mask: 0x%016"PRIx64", offset: %09"PRIi64" ns, guards 0x%016"PRIx64", active %d\n", 
+		fprintf(stdout,	"  ---- ID: 0x%016" PRIx64 ", mask: 0x%016" PRIx64 ", offset: %09" PRIi64 " ns, guards 0x%016" PRIx64 ", active %d\n", 
 				(uint64_t)condition->getID(), 
 				(uint64_t)condition->getMask(),
 				(int64_t)condition->getOffset(), 
