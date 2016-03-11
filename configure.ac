@@ -15,6 +15,7 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG(C++)
+AX_CXX_COMPILE_STDCXX(11,,optional)
 
 AC_MSG_CHECKING(whether compiler understands -Wall)
 old_CXXFLAGS="$CXXFLAGS"
