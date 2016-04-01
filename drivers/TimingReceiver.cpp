@@ -15,6 +15,10 @@
 #include "eca_regs.h"
 #include "fg_regs.h"
 #include "clog.h"
+#include "InoutImpl.h"
+#include "Output.h"
+#include "Inoutput.h"
+#include "Input.h"
 
 namespace saftlib {
 
@@ -101,7 +105,7 @@ TimingReceiver::~TimingReceiver()
     
     // destroy children before unhooking irqs/etc
     actionSinks.clear();
-    generators.clear();
+    otherStuff.clear();
     
     device.release_irq(overflow_irq);
     device.release_irq(arrival_irq);
@@ -275,20 +279,41 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks(
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
 {
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!! not for cryring
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    Glib::RefPtr<Output> output =
+      Glib::RefPtr<Output>::cast_dynamic(i->second);
+    if (!output) continue;
+    out[i->first] = output->getObjectPath();
+  }
+  return out;
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
 {
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!! not for cryring
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    Glib::RefPtr<Input> input =
+      Glib::RefPtr<Input>::cast_dynamic(i->second);
+    if (!input) continue;
+    out[i->first] = input->getObjectPath();
+  }
+  return out;
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInoutputs() const
 {
+  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  return out; // !!! not for cryring
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    Glib::RefPtr<Inoutput> inoutput =
+      Glib::RefPtr<Inoutput>::cast_dynamic(i->second);
+    if (!inoutput) continue;
+    out[i->first] = inoutput->getObjectPath();
+  }
+  return out;
 }
 
 std::vector< Glib::ustring > TimingReceiver::getGuards() const
@@ -306,10 +331,11 @@ std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiv
     out[i->second->getInterfaceName()][i->first] = i->second->getObjectPath();
   }
   
-  typedef std::map< Glib::ustring, Glib::RefPtr<FunctionGenerator> >::const_iterator gen;
-  for (gen i = generators.begin(); i != generators.end(); ++i) {
-    out["FunctionGenerator"][i->first] = i->second->getObjectPath();
-  }
+  typedef OtherStuff::const_iterator other;
+  typedef Owneds::const_iterator owned;
+  for (other i = otherStuff.begin(); i != otherStuff.end(); ++i)
+    for (owned j = i->second.begin(); j != i->second.end(); ++j)
+      out[i->first][j->first] = j->second->getObjectPath();
   
   return out;
 }
@@ -644,6 +670,8 @@ void TimingReceiver::probe(OpenDevice& od)
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
+    
+  InoutImpl::probe(tr.operator->(), tr->actionSinks);
   
   // Add special SCU hardware
   if (scubus.size() == 1) {
@@ -726,9 +754,9 @@ void TimingReceiver::probe(OpenDevice& od)
         Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
 
         std::ostringstream name;
+        name.imbue(std::locale("C"));
         name << "fg-" << (int)fg->getSCUbusSlot() << "-" << (int)fg->getDeviceNumber();
-        
-        tr->generators[name.str()] = fg;
+        tr->otherStuff["FunctionGenerator"][name.str()] = fg;
       }
     }
   }
