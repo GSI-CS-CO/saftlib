@@ -16,30 +16,27 @@
     <!-- Action:    Emitted whenever the condition matches a timing event.
          @event:    The event identifier that matched this rule.
          @param:    The parameter field, whose meaning depends on the event ID.
-         @time:     The action execution timestamp (event time + offset).
-         @overtime: How many nanoseconds late/delayed is the action.
-         @late:     The action was scheduled for execution in the past.
-         @delayed:  The action was delayed by the receiving hardware.
-         @conflict: Two actions should have been delivered simultaneously.
+         @deadline: The scheduled execution timestamp of the action (event time + offset).
+         @executed: The actual execution timestamp of the action.
+         @flags:    Whether the action was (ok=0,late=1,early=2,conflict=4,delayed=8)
          
-         While the underlying hardware will deliver the action at precisely
-         time-o-clock, the software stack adds non-deterministic delay, so
-         the time field may be milliseconds in the past.  The late field
+         While the underlying hardware strives to deliver the action precisely
+         on the deadline, the software stack adds non-deterministic delay, so
+         the deadline may be milliseconds in the past.  The late flag
          only indicates that the hardware failed to meet the required
-         deadline.  The saftlib guarantees that a single timing message can
-         never lead to conflicting actions.  It does this by combining
-         overlapping conditions at the software level and dispatching the
-         single resulting action to all interested clients.  However, two
-         different timing messages may still lead to conflicting actions.
+         deadline. Similarly, the executed timestamp is the time when the
+         hardware delivered the action, not when software has received it.
+         
+         Actions with error flags (late, early, conflict, delayed) are only
+         delivered to this signal if the Condition which generated them
+         specified that the respective error should be accepted.
       -->
     <signal name="Action">
       <arg name="event"    type="t"/>
       <arg name="param"    type="t"/>
-      <arg name="time"     type="t"/>
-      <arg name="overtime" type="t"/>
-      <arg name="late"     type="b"/>
-      <arg name="delayed"  type="b"/>
-      <arg name="conflict" type="b"/>
+      <arg name="deadline" type="t"/>
+      <arg name="executed" type="t"/>
+      <arg name="flags"    type="q"/>
     </signal>
   </interface>
 </node>

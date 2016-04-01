@@ -92,16 +92,6 @@
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
     
-    <!-- Guards: An array of all the guards on the receiver.
-         Each path refers to an object of type Output.
-         Guards may be used in Conditions to dynamically block the emission
-         of actions. Guards are number by their index in this array and each
-         index corresponds to a bit in the 'guards' field of NewCondition.
-      -->
-    <property name="Guards" type="as" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
-    
     <!-- Interfaces: List of all object instances of various hardware.
          The key in the dictionary is the name of the interface.
          The value is all object paths to hardware implementing that interface.
@@ -123,14 +113,8 @@
       <arg direction="in" type="t" name="time"/>
     </method>
     
-    <!-- Free: The number of additional conditions that may be created.
-         The ECA has limited hardware resources in its match table. The
-         software interface does its best to pack as many conditions as
-         possible into the table via compression.  This property reports the
-         worst-case remaining space in the hardware.  If this property
-         returns 5, then you are guaranteed to be able to create at least 5
-         more conditions. Note that (de)activating a condition will also
-         affect resource consumption and thus this property.
+    <!-- Free: The number of additional conditions that may be activated.
+         The ECA has limited hardware resources in its match table.
       -->
     <property name="Free" type="u" access="read"/>
   </interface>  

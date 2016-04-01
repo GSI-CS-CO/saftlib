@@ -10,34 +10,34 @@
        An incoming event matches if its ID and this ID agree on all the bits
        set in this condition's Mask.
     -->
-  <property name="ID"  type="t" access="read">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-  </property>
+  <property name="ID" type="t" access="readwrite"/>
   
   <!-- Mask: The mask used when comparing event IDs.
        An incoming event matches if its ID and the ID property of this
        Condition agree on all the bits set in this Mask.
     -->
-  <property name="Mask"   type="t" access="read">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-  </property>
+  <property name="Mask" type="t" access="readwrite"/>
   
   <!-- Offset: Added to an event's time to calculate the action's time.
     -->
-  <property name="Offset" type="x" access="read">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-  </property>
+  <property name="Offset" type="x" access="readwrite"/>
   
-  <!-- Guards: The guards in this bitmask must be true 4us before the action.
-    -->
-  <property name="Guards" type="t" access="read">
-    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-  </property>
+  <!-- AcceptLate: Should late actions be executed? Defaults to false -->
+  <property name="AcceptLate" type="b" access="readwrite"/>
+  
+  <!-- AcceptEarly: Should early actions be executed? Defaults to false -->
+  <property name="AcceptEarly" type="b" access="readwrite"/>
+  
+  <!-- AcceptConflict: Should conflicting actions be executed? Defaults to false -->
+  <property name="AcceptConflict" type="b" access="readwrite"/>
+  
+  <!-- AcceptDelayed: Should delayed actions be executed? Defaults to true -->
+  <property name="AcceptDelayed" type="b" access="readwrite"/>
   
   <!-- Active: The condition should be actively matched against events.
        An inactive condition is not used to match against events.
        You can toggle the active state of this condition via this property,
-       or if multiple Conditions should be automically adjusted, use the
+       or if multiple Conditions should be atomically adjusted, use the
        ToggleActive method on the ActionSink.
     -->
   <property name="Active" type="b" access="readwrite"/>

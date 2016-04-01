@@ -15,8 +15,6 @@
   <interface name="de.gsi.saftlib.OutputCondition">
     <!-- On: Should the Output be turned on or off
       -->
-    <property name="On" type="b" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
+    <property name="On" type="b" access="readwrite"/>
   </interface>
 </node>

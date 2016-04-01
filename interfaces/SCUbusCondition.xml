@@ -15,8 +15,6 @@
   <interface name="de.gsi.saftlib.SCUbusCondition">
     <!-- Tag: The tag which is sent to the SCUbus by this condition
       -->
-    <property name="Tag" type="u" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
+    <property name="Tag" type="u" access="readwrite"/>
   </interface>
 </node>

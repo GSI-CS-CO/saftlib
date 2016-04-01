@@ -15,8 +15,6 @@
   <interface name="de.gsi.saftlib.MILbusCondition">
     <!-- Tag: The tag which is sent to the MILbus by this condition
       -->
-    <property name="Tag" type="q" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
+    <property name="Tag" type="q" access="readwrite"/>
   </interface>
 </node>

@@ -21,7 +21,6 @@
          @id:     Event ID to match incoming event IDs against
          @mask:   Set of bits for which the event ID and id must agree
          @offset: Delay in nanoseconds between event and action
-         @guards: The specified guard must be true 4us before action
          @tag:    The  16-bit value to send on the MILbus
          @result: Object path to the created MILbusCondition
 
@@ -36,7 +35,6 @@
       <arg direction="in" type="t" name="id"/>
       <arg direction="in" type="t" name="mask"/>
       <arg direction="in" type="x" name="offset"/>
-      <arg direction="in" type="u" name="guards"/>
       <arg direction="in" type="q" name="tag"/>
       <arg direction="out" type="s" name="result"/>
     </method>

@@ -10,65 +10,66 @@
      example, SoftwareActionSinks create conditions that emit signals to
      software.  This interface captures the functionality common to all
      ActionSinks, such as atomic toggle, offset constraints, and
-     introspection.  In particular, ActionSinks have common failure modes.
+     introspection. In particular, ActionSinks have common failure modes.
      
      Actions are queued for delivery at the appropriate time, in hardware. 
      Hardware has limited storage, reflected by the Fill, Capacity, and
      MostFull properties.  These should be monitored to ensure that the
-     queue never overflows.  The first failure mode of an ActionSink is that
-     the queue overflows.  In this case, the hardware drops an action. 
-     Obviously, this is a critical error which may result in an undefined
-     state.  To prevent these failures, MostFull should be kept below some
-     safety margin with respect to Capacity.  Note: several distinct
-     ActionSinks may share underlying hardware, and the Fill property is
-     shared amongst all instances.  Each occurrence is recorded in the
-     OverflowCount register.  Due the rate at which this counter might
-     increase, the API only guarantees that within 100ms after OverflowCount
-     is increased, the Overflow signal is generated, covering all increases
-     within the last 100ms.
+     queue never overflows. 
      
-     The next common failure mode for an ActionSink is the possibilty of a
-     Conflict.  If two actions are scheduled to be executed at the same
-     nanosecond, their relative order is undefined.  These conflicts are a
-     critical error as they may leave the system in an undefined state.  In
-     particular, if one action turns a magnet on and the other action turns
-     the magnet off, the order in which the two actions are executed
-     determines the final state of the system.  Conflicts should be
-     prevented by never creating two Conditions on the same ActionSink which
-     could occur at the same time.  Note that it is NOT a Conflict for two
-     actions to be executed at the same time by two different ActionSinks. 
-     For software, this means that two programs, each with their own
-     SoftwareActionSink do not need to be concerned about conflicts between
-     their schedules.  As another example, two different LEMO output cables
-     (corresponding to two OutputActionSinks) can be toggled high at the
-     same time. Every conflict increases the ConflictCount register, but the
-     Conflict signal is only guaranteed to be generated within 100ms of a
-     conflict.
+     The first failure mode of an ActionSink is that the queue overflows. 
+     In this case, the hardware drops an action.  Obviously, this is a
+     critical error which may result in an undefined state.  To prevent
+     these failures, MostFull should be kept below some safety margin with
+     respect to Capacity.  Note: several distinct ActionSinks may share
+     underlying hardware, and the Fill property is shared amongst all
+     instances.  Each overflow is recorded in the OverflowCount register. 
+     Due the rate at which this counter might increase, the API throttles
+     updates using the SignalRate property.
      
-     The third common failure mode for an ActionSink is the possibility of a
+     Another critical error for an ActionSink is the possibility of a
      late action.  This indicates that hardware was instructed to execute an
      action at a time in the past.  This is typically caused by either a
      malfunctioning data master, desynchronized clocks, or conditions with
      large negative offsets.  This is a critical failure as it might leave
-     the system in an undefined state.  ActionSinks may be configured to
+     the system in an undefined state.  Conditions may be configured to
      either drop or execute late actions.  If late actions are dropped, a
      magnet might never be turned off.  If late actions are executed, a
      magnet might be turned on again after it was supposed to be turned off
-     (ie: the actions get misordered).  In any case, LateCount is increased,
-     and within 100ms a Late signal will be generated.
+     (ie: the actions get misordered).  In any case, LateCount is increased.
      
-     The final failure mode is the possibility of a delayed action. This
-     happens when the delivery rate of actions (potentially 1GHz) exceeds
-     the capability of the receiver to process the actions.  For example, an
-     output might require 100ns to deliver an action.  If two actions are
-     scheduled for delivery back-to-back with 1ns between, the second action
-     is delayed.  This differs from late actions in that the order of
-     execution is maintained, and the system does not enter an undefined
-     state. The severity of this failure mode depends on the scenario. For
-     SoftwareActionSinks, this can probably always be ignored because the
-     handler is much much slower than the hardware anyway. For a kicker, on
-     the other hand, a delay is probably a critical error. DelayedActions
-     are counted, and, as usual, reported after at most 100ms.
+     Similar to late actions, one can also have early actions. If an action
+     is scheduled for execution too far into the future, the timing receiver
+     will choose to mark it as early. This prevents these actions from
+     permanently consuming space in the finite hardware buffers. Early
+     actions are also critical failures as it can leave the system in an
+     undefined state, just as a late action. Conditions may be configured to
+     either drop or execute early actions.
+     
+     The final misordering failure for an ActionSink is the possibilty of a
+     Conflict.  If two actions are scheduled to be executed at the same
+     nanosecond, their relative order is undefined.  These conflicts are a
+     critical error as they may leave the system in an undefined state, just
+     as with early and late actions.  Conflicts should be prevented by never
+     creating two Conditions on the same ActionSink which could occur at the
+     same time.  Note that it is NOT a Conflict for two actions to be
+     executed at the same time by two different ActionSinks.  For software,
+     this means that two programs, each with their own SoftwareActionSink do
+     not need to be concerned about conflicts between their schedules.  As
+     another example, two different LEMO output cables (corresponding to two
+     OutputActionSinks) can be toggled high at the same time.
+     
+     Finally, these is the possibility of a delayed action. Unlike late,
+     early, and conflicting actions, delayed actions are never misordered. 
+     Thus, delayed actions are typically not as severe a failure mode, and
+     Conditions default to allowing their execution.  Delays can happen when
+     the delivery rate of actions (potentially 1GHz) exceeds the capability
+     of the receiver to process the actions.  For example, an output might
+     require 100ns to deliver an action.  If two actions are scheduled for
+     delivery back-to-back with 1ns between, the second action is delayed. 
+     For SoftwareActionSinks, delays can probably always be ignored because
+     the handler is much much slower than the hardware.  For a kicker, on
+     the other hand, a delay is probably a critical error.
   -->
 <interface name="de.gsi.saftlib.ActionSink">
   <!-- AllConditions: All conditions created on this ActionSink.
@@ -122,6 +123,20 @@
     -->
   <property name="MaxOffset" type="x" access="readwrite"/>
 
+  <!-- Latency: Nanoseconds between event and earliest execution of an action.
+    -->
+  <property name="Latency" type="t" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+    
+  <!-- EarlyThreshold: Actions further into the future than this are early.
+       If an action is scheduled for execution too far into the future, it
+       gets truncated to at most EarlyThreshold nanoseconds into the future.
+    -->
+  <property name="EarlyThreshold" type="t" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
   <!-- Capacity: The maximum number of actions queueable without Overflow.
        The timing receiver hardware can only queue a limited number of
        actions.  This property reports the maximum number of actions that
@@ -130,7 +145,7 @@
        SoftwareActionSinks share a common underlying queue in hardware. 
        This Capacity represents the total size, which must be shared.
     -->
-  <property name="Capacity" type="u" access="read">
+  <property name="Capacity" type="q" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   
@@ -145,7 +160,7 @@
        better approach to monitoring.
     -->
   <method name="ReadFill">
-    <arg direction="out" type="u" name="result"/>
+    <arg direction="out" type="q" name="result"/>
   </method>
   
   <!-- MostFull: Report the largest number of pending actions seen.
@@ -155,27 +170,19 @@
        may be shared, including actions from all users of the underlying
        hardware.  So two programs each using a SoftwareActionSink will
        potentially see an increase in this value when both programs are
-       active.  Because this value can only increase Capacity times after
-       being reset to 0, changes *are* signalled.
+       active.
     -->
-  <property name="MostFull" type="u" access="readwrite"/>
+  <property name="MostFull" type="q" access="readwrite"/>
   
-  <!-- ReadOverflowCount: The number of actions lost due to Overflow.
-       Overflow, as explained in the interface overview, is a critical error
-       that must be prevented.  This counter increases each time an overflow
-       occurs.  It is not signalled, as multiple overflows can occur very
-       rapidly. If an overflow occurs, the Overflow signal is guaranteed to
-       be executed within 100ms.
+  <!-- SignalRate: Minimum interval between updates (nanoseconds, default 100ms).
+       The properties OverflowCount, ActionCount, LateCount, EarlyCount,
+       ConflictCount, and DelayedCount can increase rapidly. To prevent
+       excessive CPU load, SignalRate imposes a minimum cooldown between
+       updates to these values.
     -->
-  <method name="ReadOverflowCount">
-    <arg direction="out" type="u" name="result"/>
-  </method>
+  <property name="SignalRate" type="t" access="readwrite"/>
   
-  <!-- ResetOverflowCount: Clear the OverflowCount to zero. -->
-  <method name="ResetOverflowCount"/>
-
-  <!-- Overflow: OverflowCount has increased since last the Overflow signal.
-       @count:   The value of OverflowCount when this signal was raised.
+  <!-- OverflowCount: The number of actions lost due to Overflow.
        
        The underlying hardware queue may overflow once Fill=Capacity. This
        is a critical error condition that must be handlded.  The causes may
@@ -188,153 +195,137 @@
        it overflows ALL SoftwareActionSinks are notified of overflow since
        it impossible to determine which sink the action belonged to.
        
-       Because overlows may occur rapidly, this signal only guarantees to
-       report at least one new overflow since the last Overflow emission.
+       As overflows can occur very rapidly, OverflowCount may increase by
+       more than 1 between emissions. There is a minimum delay of SignalRate
+       nanoseconds between updates to this property.
     -->
-  <signal name="Overflow">
-    <arg name="count" type="u"/>
-  </signal>
+  <property name="OverflowCount" type="t" access="readwrite"/>
   
-  <!-- ReadConflictCount: The number of actions which conflicted. 
-       If two actions should have been executed simultaneously by the same
-       ActionSink, they are executed in an undefined order. Each time this
-       happens, the ConflictCount is increased. It is not signalled, as
-       multiple conflicts can occur rapidly. If a conflict occurs, the
-       Conflict signal is guaranteed to be executed with 100ms.
-    -->
-  <method name="ReadConflictCount">
-    <arg direction="out" type="u" name="result"/>
-  </method>
-  
-  <!-- ResetConflictCount: Clear the ConflictCounter to zero. -->
-  <method name="ResetConflictCount"/>
-  
-  <!-- Conflict: ConflictCount increased since the last Conflict signal.
-       @count:   The value of ConflictCount when this signal was raised.
-       @event1:  The event identifier of a conflicting action.
-       @param1:  The parameter field, whose meaning depends on the event ID.
-       @time1:   The action execution timestamp (event time + offset).
-       @event2:  The event identifier of a conflicting action.
-       @param2:  The parameter field, whose meaning depends on the event ID.
-       @time2:   The action execution timestamp (event time + offset).
+  <!-- ActionCount: The number of actions processed by the Sink.
        
-       In the case that two actions must be executed simultaneously on the
-       same ActionSink, this signal will be emitted. Two independent
-       ActionSinks can never conflict with each other.
-       
-       Because conflicts may occur rapidly, this signal only guarantees to
-       report at least one new conflict since the last Conflict emission.
-       The fields of the conflicting action are presented for diagnostics.
+       As actions can be emitted very rapidly, ActionCount may increase by
+       more than 1 between emissions. There is a minimum delay of SignalRate
+       nanoseconds between updates to this property.
     -->
-  <signal name="Conflict">
-    <arg name="count"  type="u"/>
-    <arg name="event1" type="t"/>
-    <arg name="param1" type="t"/>
-    <arg name="time1"  type="t"/>
-    <arg name="event2" type="t"/>
-    <arg name="param2" type="t"/>
-    <arg name="time2"  type="t"/>
-  </signal>
+  <property name="ActionCount" type="t" access="readwrite"/>
   
-  <!-- ExecuteLateActions: Should the channel execute late actions.
-       If an action is scheduled that should be executed in the past, a
-       critical error has occured. However, it might be possible to recover
-       by executing the action regardless or dropping the action. This
-       property sets the desired behaviour. Defaults to false.
-    -->
-  <property name="ExecuteLateActions" type="b" access="readwrite"/>
+  <!-- LateCount: The number of actions delivered late.
   
-  <!-- ReadLateCount: The number of actions delivered late.
        As described in the interface overview, an action can be late due to
        a buggy data master, loss of clock synchronization, or very negative
-       condition offset.  This is a critical failure as it can result in
-       misordering of action execution.  Each such failure increases this
-       counter.  It might increase very rapidly, so is not signalled. 
-       Instead, it is guaranteed that within 100ms a Late signal will be
-       generated.
+       condition offsets.  This is a critical failure as it can result in
+       misordering of executed actions.  Each such failure increases this
+       counter.  
        
-       Because late actions may occur rapidly, this signal only guarantees to
-       report at least one new late action since the last Late emission.
+       As late acitons can occur very rapidly, LateCount may increase by
+       more than 1 between emissions. There is a minimum delay of SignalRate
+       nanoseconds between updates to this property.
     -->
-  <method name="ReadLateCount">
-    <arg direction="out" type="u" name="result"/>
-  </method>
+  <property name="LateCount" type="t" access="readwrite"/>
   
-  <!-- ResetLateCount: Clear the LateCounter to zero. -->
-  <method name="ResetLateCount"/>
-  
-  <!-- Late:      LateCount increased since the last Late signal.
-       @count:    The value of LateCount when this signal was raised.
+  <!-- Late:      An example of a late action since last LateCount change.
+       @count:    The new value of LateCount when this signal was raised.
        @event:    The event identifier of the late action.
        @param:    The parameter field, whose meaning depends on the event ID.
-       @time:     The desired execution timestamp (event time + offset).
-       @overtime: How many nanoseconds late is the action.
+       @deadline: The desired execution timestamp (event time + offset).
+       @executed: The actual execution timestamp.
 
-       In the case late actions occure, this signal will be emitted with an
-       example of a late action. This signal is emitted regardless of
-       whether or not ExecuteLateActions is true/false. Keep in mind that an
-       action is only counted as late if it is scheduled for the past. An
-       action which leaves the timing receiver after its deadline, due to a
-       slow consumer, is a delayed (not late) action.
+       Keep in mind that an action is only counted as late if it is
+       scheduled for the past.  An action which leaves the timing receiver
+       after its deadline, due to a slow consumer, is a delayed (not late)
+       action.
     -->
   <signal name="Late">
     <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
-    <arg name="time"     type="t"/>
-    <arg name="overtime" type="t"/>
+    <arg name="deadline" type="t"/>
+    <arg name="executed" type="t"/>
   </signal>
   
-  <!-- GenerateDelayed: Should a delayed action cause the Delayed signal.
-       If an action does not exit the timing receiver immediately, because
-       the receiving hardware is slow, the DelayedCount is increased.  Since
-       the timing receiver operates at 1GHz and most receivers cannot match
-       this throughput, delayed actions are not normally considered errors.
-       GeneratedDelayed defaults to false, to inhibit unnecessary signalling.
-    -->
-  <property name="GenerateDelayed" type="b" access="readwrite"/>
+  <!-- EarlyCount: The number of actions delivered early.
   
-  <!-- ReadDelayedCount: The number of actions which have been delayed.
+       As described in the interface overview, an action can be early due to
+       a buggy data master, loss of clock synchronization, or very positive
+       condition offsets.  This is a critical failure as it can result in
+       misordering of executed actions.  Each such failure increases this
+       counter.  
+       
+       As early acitons can occur very rapidly, EarlyCount may increase by
+       more than 1 between emissions. There is a minimum delay of SignalRate
+       nanoseconds between updates to this property.
+    -->
+  <property name="EarlyCount" type="t" access="readwrite"/>
+  
+  <!-- Early:     An example of an early action since last EarlyCount change.
+       @count:    The new value of LateCount when this signal was raised.
+       @event:    The event identifier of the early action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @deadline: The desired execution timestamp (event time + offset).
+       @executed: The actual execution timestamp.
+    -->
+  <signal name="Early">
+    <arg name="count"    type="u"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="deadline" type="t"/>
+    <arg name="executed" type="t"/>
+  </signal>
+  
+  <!-- ConflictCount: The number of actions which conflicted. 
+  
+       If two actions should have been executed simultaneously by the same
+       ActionSink, they are executed in an undefined order. Each time this
+       happens, the ConflictCount is increased. 
+       
+       As conflicts can occur very rapidly, ConflictCount may increase by
+       more than 1 between emissions. There is a minimum delay of SignalRate
+       nanoseconds between updates to this property.
+    -->
+  <property name="ConflictCount" type="t" access="readwrite"/>
+  
+  <!-- Conflict:  An example of a conflict since last ConflictCount change.
+       @count:    The new value of ConflictCount when this signal was raised.
+       @event:    The event identifier of a conflicting action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @deadline: The scheduled action execution timestamp (event time + offset).
+       @executed: The timestamp when the action was actually executed.
+    -->
+  <signal name="Conflict">
+    <arg name="count"    type="t"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="deadline" type="t"/>
+    <arg name="executed" type="t"/>
+  </signal>
+  
+  <!-- DelayedCount: The number of actions which have been delayed.
+  
        The timing receiver emits actions potentially every nanosecond. In
        the case that the receiver cannot immediately process an action, the
        timing receiver delays the action until the receiver is ready. This
        can happen either because the receiver was still busy with a previous
        action or the output was used externally (bus arbitration).
+       
+       As actions can be emitted very rapidly, DelayedCount may increase by
+       more than 1 between emissions. There is a minimum delay of SignalRate
+       nanoseconds between updates to this property.
     -->
-  <method name="ReadDelayedCount">
-    <arg direction="out" type="u" name="result"/>
-  </method>
+  <property name="DelayedCount" type="t" access="readwrite"/>
   
-  <!-- ResetDelayedCount: Clear the DelayedCounter to zero. -->
-  <method name="ResetDelayedCount"/>
-  
-  <!-- Delayed:   DelayedCount increased since the last Delayed signal.
+  <!-- Delayed:   An example of a delayed action the last DelayedCount change.
        @count:    The value of DelayedCount when this signal was raised.
        @event:    The event identifier of the delayed action.
        @param:    The parameter field, whose meaning depends on the event ID.
-       @time:     The desired execution timestamp (event time + offset).
-       @overtime: How many nanoseconds delayed is the action.
-
-       If GenerateDelayed is true, this signal provides an example of an
-       action which was delayed. For SoftwareActionSinks this should never
-       be considered an error, as software is inherently slow.
+       @deadline: The desired execution timestamp (event time + offset).
+       @executed: The timestamp when the action was actually executed.
     -->
   <signal name="Delayed">
-    <arg name="count"    type="u"/>
+    <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
-    <arg name="time"     type="t"/>
-    <arg name="overtime" type="t"/>
+    <arg name="deadline" type="t"/>
+    <arg name="executed" type="t"/>
   </signal>
   
-  <!-- ReadActionCount: Total number of actions output by this ActionSink.
-       For debugging purposes, it is sometimes helpful to know the total
-       number of actions that have been emitted by an ActionSink.
-    -->
-  <method name="ReadActionCount">
-    <arg direction="out" type="u" name="result"/>
-  </method>
-  
-  <!-- ResetActionCount: Clear the ActionCounter to zero. -->
-  <method name="ResetActionCount"/>
 </interface>
