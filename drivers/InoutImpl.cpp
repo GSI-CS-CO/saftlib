@@ -5,7 +5,6 @@
 #include "Output.h"
 #include "Inoutput.h"
 #include "Input.h"
-#include "eca_regs.h"
 #include "io_control_regs.h"
 #include "src/clog.h"
 
@@ -487,7 +486,7 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
   std::vector<sdb_device> ioctl;
   
   /* Find IO control module */
-  tr->getDevice().sdb_find_by_identity(GSI_VENDOR_ID, IO_CONTROL_PRODUCT_ID, ioctl);
+  tr->getDevice().sdb_find_by_identity(IO_CONTROL_VENDOR_ID, IO_CONTROL_PRODUCT_ID, ioctl);
   eb_address_t ioctl_address = ioctl[0].sdb_component.addr_first;
   
   /* Get number of IOs */
