@@ -17,6 +17,7 @@ m4
 .dirstamp
 version.h
 # Automake junk files
+saftlib.pc
 Makefile
 Makefile.in
 aclocal.m4
