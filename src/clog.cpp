@@ -1,3 +1,5 @@
+#define ETHERBONE_THROWS 1
+
 #include "clog.h"
 
 namespace saftlib {
