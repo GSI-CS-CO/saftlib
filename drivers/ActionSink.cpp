@@ -495,7 +495,7 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
   // Pick a random number
   std::pair<Conditions::iterator, bool> attempt;
   do attempt = conditions.insert(Conditions::value_type(random(), Glib::RefPtr<Condition>()));
-  while (attempt.second);
+  while (!attempt.second);
   
   // Setup a destruction callback
   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &ActionSink::removeCondition), attempt.first);
