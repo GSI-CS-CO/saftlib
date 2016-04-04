@@ -19,13 +19,13 @@ void on_locked(bool locked)
   }
 }
 
-void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool late, bool delayed, bool conflict)
+void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
   std::cout << "Saw a timing event!" << std::endl;
-  std::cout << "  " << id << " " << time << " " << conflict << std::endl;
+  std::cout << "  " << id << " " << deadline << " " << flags << std::endl;
 }
 
-void on_late(guint64 count, guint64 event, guint64 param, guint64 time, guint64 overtime)
+void on_late(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
 {
   // Report this to the operator
   std::cerr << "FATAL ERROR: late action!" << std::endl;
@@ -36,9 +36,7 @@ void on_overflow(guint64 count)
   std::cerr << "FATAL ERROR: lost action!" << std::endl;
 }
 
-void on_conflict(guint64 count, 
-                 guint64 event1, guint64 param1, guint64 time1, 
-                 guint64 event2, guint64 param2, guint64 time2)
+void on_conflict(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 execute)
 {
   std::cerr << "FATAL ERROR: actions potentially misordered!" << std::endl;
 }
@@ -81,18 +79,11 @@ int main(int, char**)
     //   iOwned, iActionSink, and iSoftwareActionSink
     Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
-    // No one should care if software actions are delayed (false is default)
-    sink->setGenerateDelayed(false);
-    
     // Attach handlers watching for all failure conditions
     sink->Late.connect(sigc::ptr_fun(&on_late));
-    sink->Overflow.connect(sigc::ptr_fun(&on_overflow));
+    sink->OverflowCount.connect(sigc::ptr_fun(&on_overflow));
     sink->Conflict.connect(sigc::ptr_fun(&on_conflict));
     
-    // Demonstrate setting some properties
-    sink->setExecuteLateActions(false);
-    sink->setGenerateDelayed(false);
-  
     // Read the Capacity property of the ActionSink
     guint32 capacity = sink->getCapacity();
     
@@ -108,7 +99,7 @@ int main(int, char**)
     // Create an active(true) condition, watching events 64-127 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
     // SoftwareConditions implement iOwned, iCondition, iSoftwareCondition.
-    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 100, 0));
+    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 100));
     
     // Call on_action whenever the condition above matches incoming events.
     condition->Action.connect(sigc::ptr_fun(&on_action));

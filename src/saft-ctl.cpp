@@ -26,6 +26,7 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <iostream>
+#include <iomanip>
 #include <giomm.h>
 
 #include <time.h>
@@ -64,12 +65,20 @@ static const char* formatDate(guint64 time)
 
 
 // this will be called, in case we are snooping for events
-void on_action(guint64 id, guint64 param, guint64 time, guint64 overtime, bool late, bool delayed, bool conflict)
+void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
-  std::cout << "Time: " << formatDate(time); 
-  fprintf(stdout, " ID: 0x%016" PRIx64 " Param: 0x%016" PRIx64 " ", (uint64_t)id, (uint64_t)param); /* argh!!! Why is there no simple way to do this with C++? */
+  std::cout << "Time: " << formatDate(deadline);
+  std::cout << " ID: 0x"    << std::hex << std::setw(16) << std::setfill('0') << id;
+  std::cout << " Param: 0x" << std::hex << std::setw(16) << std::setfill('0') << param;
 
-  std::cout << ((conflict||late||delayed)?"!":"") << ((conflict)?" conflict":"") << ((late)?" late":"") << ((delayed)?" delayed":"") << std::endl;
+  if (flags) {
+    std::cout << "!";
+    if (flags & 1) std::cout << "late";
+    if (flags & 2) std::cout << "early";
+    if (flags & 4) std::cout << "conflict";
+    if (flags & 8) std::cout << "delayed";
+  }
+  std::cout << std::endl;
 } 
 
 using namespace saftlib;
@@ -137,22 +146,22 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
 	for (i = allSinks.begin(); i != allSinks.end(); i++) {
 	   aSink= SoftwareActionSink_Proxy::create(i->second);
 	  std::cout << "  " << i->second  << std::endl;
-	  std::cout << "  -- actions: " << aSink->ReadActionCount() 
-				<< ", delayed: "   << aSink->ReadDelayedCount()
-				<< ", conflict: "  << aSink->ReadConflictCount()
-				<< ", late: "      << aSink->ReadLateCount()
-				<< ", overflow: "  << aSink->ReadOverflowCount()
+	  std::cout << "  -- actions: " << aSink->getActionCount() 
+				<< ", delayed: "   << aSink->getDelayedCount()
+				<< ", conflict: "  << aSink->getConflictCount()
+				<< ", late: "      << aSink->getLateCount()
+				<< ", early: "     << aSink->getEarlyCount()
+				<< ", overflow: "  << aSink->getOverflowCount()
 				<< std::endl;
 	  // get all conditions for this sink
 	  vector< Glib::ustring > allConditions = aSink->getAllConditions();
 	  std::cout << "  -- conditions: " << allConditions.size() << std::endl;
 	  for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
 		Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
-		fprintf(stdout,	"  ---- ID: 0x%016" PRIx64 ", mask: 0x%016" PRIx64 ", offset: %09" PRIi64 " ns, guards 0x%016" PRIx64 ", active %d\n", 
+		fprintf(stdout,	"  ---- ID: 0x%016" PRIx64 ", mask: 0x%016" PRIx64 ", offset: %09" PRIi64 " ns, active %d\n", 
 				(uint64_t)condition->getID(), 
 				(uint64_t)condition->getMask(),
 				(int64_t)condition->getOffset(), 
-				(uint64_t)condition->getGuards(),
 				(int)condition->getActive()); /* how! */
 	  } // for all conditions
 	} // for all sinks 
@@ -389,9 +398,13 @@ int main(int argc, char** argv)
 	// snoop
 	if (eventSnoop) {
 	  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-	  sink->setExecuteLateActions(true);
-	  Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, snoopID, snoopMask, 0, 0));
+	  Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+	  // Accept all errors
+	  condition->setAcceptLate(true);
+	  condition->setAcceptEarly(true);
+	  condition->setAcceptConflict(true);
 	  condition->Action.connect(sigc::ptr_fun(&on_action));
+	  condition->setActive(true);
 	  loop->run();
 	} // eventSnoop
 	

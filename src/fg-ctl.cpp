@@ -314,7 +314,7 @@ int main(int argc, char** argv)
     std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
     
     // Watch for a timing event? => generate tag on event
-    if (eventSet) scu->NewCondition(true, event, ~0, 0, 0, tag);
+    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
 
     // Trigger the function generator ourselves?
     if (generate) gen->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
