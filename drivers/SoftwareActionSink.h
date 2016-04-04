@@ -12,7 +12,10 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     typedef SoftwareActionSink_Service ServiceType;
     struct ConstructorType {
       TimingReceiver* dev;
-      int channel;
+      Glib::ustring name;
+      unsigned channel;
+      unsigned num;
+      eb_address_t queue;
       sigc::slot<void> destroy;
     };
     
@@ -20,34 +23,15 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     
     const char *getInterfaceName() const;
     
-    // iActionSink overrides
-    guint32 ReadConflictCount();
-    guint32 ReadLateCount();
-    guint32 ReadDelayedCount();
-    guint32 ReadActionCount();
-    void ResetConflictCount();
-    void ResetLateCount();
-    void ResetDelayedCount();
-    void ResetActionCount();
-    bool getExecuteLateActions() const;
-    bool getGenerateDelayed() const;
-    void setExecuteLateActions(bool val);
-    void setGenerateDelayed(bool val);
+    // override receiveMSI to also pop the software queue
+    void receiveMSI(guint8 code);
     
     // iSoftwareAcitonSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards);
-    
-    void emit(guint64 id, guint64 param, guint64 time, guint64 overtime, gint64 offset, bool late, bool delayed);
+    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
     
   protected:
     SoftwareActionSink(ConstructorType args);
-    
-    guint32 conflictCount, lateCount, delayedCount, actionCount;
-    bool executeLate, generateDelayed;
-    
-    guint64 lastID;
-    guint64 lastParam;
-    guint64 lastTime;
+    eb_address_t queue;
 };
 
 }

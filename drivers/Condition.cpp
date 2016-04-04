@@ -7,8 +7,10 @@
 namespace saftlib {
 
 Condition::Condition(Condition_ConstructorType args)
- : Owned(args.destroy), sink(args.sink), channel(args.channel), 
-   active(args.active), id(args.id), mask(args.mask), offset(args.offset), guards(args.guards), tag(args.tag)
+ : Owned(args.destroy), sink(args.sink), 
+   id(args.id), mask(args.mask), offset(args.offset), tag(args.tag),
+   acceptLate(false), acceptEarly(false), acceptConflict(false), acceptDelayed(true),
+   active(args.active)
 {
 }
 
@@ -27,14 +29,138 @@ gint64 Condition::getOffset() const
   return offset;
 }
 
-guint64 Condition::getGuards() const
+bool Condition::getAcceptLate() const
 {
-  return guards;
+  return acceptLate;
+}
+
+bool Condition::getAcceptEarly() const
+{
+  return acceptEarly;
+}
+
+bool Condition::getAcceptConflict() const
+{
+  return acceptConflict;
+}
+
+bool Condition::getAcceptDelayed() const
+{
+  return acceptDelayed;
 }
 
 bool Condition::getActive() const
 {
   return active;
+}
+
+void Condition::setID(guint64 val)
+{
+  ownerOnly();
+  if (val == id) return;
+  guint64 old = id;
+  
+  id = val;
+  try {
+    if (active) sink->compile();
+    ID(id);
+  } catch (...) {
+    id = old;
+    throw;
+  }
+}
+
+void Condition::setMask(guint64 val)
+{
+  ownerOnly();
+  if (val == mask) return;
+  guint64 old = mask;
+  
+  mask = val;
+  try {
+    if (active) sink->compile();
+    Mask(mask);
+  } catch (...) {
+    mask = old;
+    throw;
+  }
+}
+
+void Condition::setOffset(gint64 val)
+{
+  ownerOnly();
+  if (val == offset) return;
+  gint64 old = offset;
+  
+  offset = val;
+  try {
+    if (active) sink->compile();
+    Offset(offset);
+  } catch (...) {
+    offset = old;
+    throw;
+  }
+}
+
+void Condition::setAcceptLate(bool val)
+{
+  ownerOnly();
+  if (val == acceptLate) return;
+  
+  acceptLate = val;
+  try {
+    if (active) sink->compile();
+    AcceptLate(val);
+  } catch (...) {
+    acceptLate = !val;
+    throw;
+  }
+}
+
+
+void Condition::setAcceptEarly(bool val)
+{
+  ownerOnly();
+  if (val == acceptEarly) return;
+
+  acceptEarly = val;
+  try {
+    if (active) sink->compile();
+    AcceptEarly(val);
+  } catch (...) {
+    acceptEarly = !val;
+    throw;
+  }
+}
+
+void Condition::setAcceptConflict(bool val)
+{
+  ownerOnly();
+  if (val == acceptConflict) return;
+
+  acceptConflict = val;
+  try {
+    if (active) sink->compile();
+    AcceptConflict(val);
+  } catch (...) {
+    acceptConflict = !val;
+    throw;
+  }
+}
+
+void Condition::setAcceptDelayed(bool val)
+{
+  ownerOnly();
+  if (val == acceptDelayed) return;
+  
+  acceptDelayed = val;
+  try {
+    if (active) sink->compile();
+    AcceptDelayed(val);
+  } catch (...) {
+    acceptDelayed = !val;
+    throw;
+  }
 }
 
 void Condition::setActive(bool val)
@@ -49,6 +175,7 @@ void Condition::setActive(bool val)
     sink->notify(true, true);
   } catch (...) {
     active = !val;
+    throw;
   }
 }
 

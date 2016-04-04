@@ -8,7 +8,7 @@
 namespace saftlib {
 
 SCUbusActionSink::SCUbusActionSink(ConstructorType args)
- : ActionSink(args.dev, args.channel), scubus(args.scubus)
+ : ActionSink(args.dev, args.name, args.channel, 0), scubus(args.scubus)
 {
 }
 
@@ -17,9 +17,9 @@ const char *SCUbusActionSink::getInterfaceName() const
   return "SCUbusActionSink";
 }
 
-Glib::ustring SCUbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, guint32 tag)
+Glib::ustring SCUbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag)
 {
-  return NewConditionHelper(active, id, mask, offset, guards, tag,
+  return NewConditionHelper(active, id, mask, offset, tag, false,
     sigc::ptr_fun(&SCUbusCondition::create));
 }
 

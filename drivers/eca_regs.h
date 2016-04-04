@@ -1,116 +1,75 @@
-/** @file hw-eca.h
- *  @brief Register layout of the ECA unit.
- *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
- *
- *  Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
- *
- *  All offsets for regsiters in the ECA unit.
- *
- *******************************************************************************
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *  
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *******************************************************************************
- */
+/** @file        eca_regs.h
+  * DesignUnit   eca
+  * @author      Wesley W. Terpstra <w.terpstra@gsi.de>
+  * @date        01/04/2016
+  * @version     2.0
+  * @copyright   2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
+  *
+  * @brief       Register map for Wishbone interface of VHDL entity <eca_auto>
+  */
 
-#ifndef ECA_HW_H
-#define ECA_HW_H
+#ifndef _ECA_H_
+#define _ECA_H_
 
-#define GSI_VENDOR_ID	0x651
-#define ECA_DEVICE_ID	0x8752bf44U
-#define ECAE_DEVICE_ID	0x8752bf45U
-#define ECAQ_DEVICE_ID	0x9bfa4560U
+   #define ECA_SDB_VENDOR_ID 0x00000651
+   #define ECA_SDB_DEVICE_ID 0xb2afc251
 
-#define ECA_FEATURE_INSPECT_TABLE 0x1
-#define ECA_FEATURE_INSPECT_QUEUE 0x2
-
-#define ECA_CTL_DISABLE		0x01
-#define ECA_CTL_INT_ENABLE	0x02
-#define ECA_CTL_FLIP		0x04
-
-#define ECA_INFO	0x00
-#define ECA_TABLE_SIZE	0x00
-#define ECA_QUEUE_SIZE	0x01
-#define ECA_NUM_CHANNELS 0x02
-#define ECA_INDEX	0x03
-#define ECA_CTL		0x04
-#define ECA_FEATURE	0x04
-#define ECA_NAME	0x05
-#define ECA_CTL_CLEAR	0x06
-#define ECA_CTL_SET	0x07
-#define ECA_TIME1	0x08
-#define ECA_TIME0	0x0C
-#define ECA_SEARCH	0x10
-#define ECA_FIRST	0x14
-#define ECA_EVENT1	0x18
-#define ECA_EVENT0	0x1C
-#define ECA_WALK	0x20
-#define ECA_NEXT	0x24
-#define ECA_DELAY1	0x28
-#define ECA_DELAY0	0x2C
-#define ECA_TAG		0x30
-#define ECA_CHANNEL	0x34
-#define ECA_FREQ_MUL	0x38
-#define ECA_FREQ_5S	0x3C
-#define ECA_FREQ_2S	0x3D
-#define ECA_FREQ_DIV	0x3E
-
-#define ECAC_STATUS_VALID	0x01
-#define ECAC_STATUS_LATE	0x02
-
-#define ECAC_CTL_DRAIN		0x01
-#define ECAC_CTL_FREEZE		0x02
-#define ECAC_CTL_INT_MASK	0x04
-
-#define ECAC_SELECT	0x40
-#define ECAC_CHANNEL	0x40
-#define ECAC_INDEX	0x42
-#define ECAC_CTL	0x44
-#define ECAC_STATUS	0x44
-#define ECAC_NAME	0x45
-#define ECAC_CTL_CLEAR	0x46
-#define ECAC_CTL_SET	0x47
-#define ECAC_INT_DEST	0x48
-#define ECAC_FILL	0x50
-#define ECAC_MAX_FILL	0x52
-#define ECAC_VALID	0x54
-#define ECAC_CONFLICT	0x58
-#define ECAC_LATE	0x5C
-
-#define ECAC_EVENT1	0x60
-#define ECAC_EVENT0	0x64
-#define ECAC_PARAM1	0x68
-#define ECAC_PARAM0	0x6C
-#define ECAC_TAG	0x70
-#define ECAC_TEF	0x74
-#define ECAC_TIME1	0x78
-#define ECAC_TIME0	0x7C
-
-#define ECAQ_CTL	0x0
-#define ECAQ_INT_MASK	0x4
-#define ECAQ_ARRIVAL	0x8
-#define ECAQ_OVERFLOW	0xC
-#define ECAQ_QUEUED	0x10
-#define ECAQ_DROPPED	0x14
-#define ECAQ_META	0x18
-#define ECAQ_FLAGS	0x1C
-
-#define ECAQ_EVENT1	0x20
-#define ECAQ_EVENT0	0x24
-#define ECAQ_PARAM1	0x28
-#define ECAQ_PARAM0	0x2C
-#define ECAQ_TAG	0x30
-#define ECAQ_TEF	0x34
-#define ECAQ_TIME1	0x38
-#define ECAQ_TIME0	0x3C
+   #define ECA_CHANNELS_GET                0x00  //ro,  8 b, 
+   #define ECA_SEARCH_CAPACITY_GET         0x04  //ro, 16 b, 
+   #define ECA_WALKER_CAPACITY_GET         0x08  //ro, 16 b, 
+   #define ECA_LATENCY_GET                 0x0c  //ro, 32 b, 
+   #define ECA_OFFSET_BITS_GET             0x10  //ro,  8 b, 
+   #define ECA_FLIP_ACTIVE_OWR             0x14  //wo,  1 b, 
+   #define ECA_TIME_HI_GET                 0x18  //ro, 32 b, 
+   #define ECA_TIME_LO_GET                 0x1c  //ro, 32 b, 
+   #define ECA_SEARCH_SELECT_RW            0x20  //rw, 16 b, 
+   #define ECA_SEARCH_RO_FIRST_GET         0x24  //ro, 16 b, 
+   #define ECA_SEARCH_RO_EVENT_HI_GET      0x28  //ro, 32 b, 
+   #define ECA_SEARCH_RO_EVENT_LO_GET      0x2c  //ro, 32 b, 
+   #define ECA_SEARCH_WRITE_OWR            0x30  //wo,  1 b, 
+   #define ECA_SEARCH_RW_FIRST_RW          0x34  //rw, 16 b, 
+   #define ECA_SEARCH_RW_EVENT_HI_RW       0x38  //rw, 32 b, 
+   #define ECA_SEARCH_RW_EVENT_LO_RW       0x3c  //rw, 32 b, 
+   #define ECA_WALKER_SELECT_RW            0x40  //rw, 16 b, 
+   #define ECA_WALKER_RO_NEXT_GET          0x44  //ro, 16 b, 
+   #define ECA_WALKER_RO_OFFSET_HI_GET     0x48  //ro, 32 b, 
+   #define ECA_WALKER_RO_OFFSET_LO_GET     0x4c  //ro, 32 b, 
+   #define ECA_WALKER_RO_TAG_GET           0x50  //ro, 32 b, 
+   #define ECA_WALKER_RO_FLAGS_GET         0x54  //ro,  4 b, 
+   #define ECA_WALKER_RO_CHANNEL_GET       0x58  //ro,  8 b, 
+   #define ECA_WALKER_RO_NUM_GET           0x5c  //ro,  8 b, 
+   #define ECA_WALKER_WRITE_OWR            0x60  //wo,  1 b, 
+   #define ECA_WALKER_RW_NEXT_RW           0x64  //rw, 16 b, 
+   #define ECA_WALKER_RW_OFFSET_HI_RW      0x68  //rw, 32 b, 
+   #define ECA_WALKER_RW_OFFSET_LO_RW      0x6c  //rw, 32 b, 
+   #define ECA_WALKER_RW_TAG_RW            0x70  //rw, 32 b, 
+   #define ECA_WALKER_RW_FLAGS_RW          0x74  //rw,  4 b, 
+   #define ECA_WALKER_RW_CHANNEL_RW        0x78  //rw,  8 b, 
+   #define ECA_WALKER_RW_NUM_RW            0x7c  //rw,  8 b, 
+   #define ECA_CHANNEL_SELECT_RW           0x80  //rw,  8 b, 
+   #define ECA_CHANNEL_NUM_SELECT_RW       0x84  //rw,  8 b, 
+   #define ECA_CHANNEL_CODE_SELECT_RW      0x88  //rw,  2 b, 
+   #define ECA_CHANNEL_TYPE_GET            0x8c  //ro, 32 b, 
+   #define ECA_CHANNEL_MAX_NUM_GET         0x90  //ro,  8 b, 
+   #define ECA_CHANNEL_CAPACITY_GET        0x94  //ro, 16 b, 
+   #define ECA_CHANNEL_MSI_SET_ENABLE_OWR  0x98  //wo,  1 b, 
+   #define ECA_CHANNEL_MSI_GET_ENABLE_GET  0x9c  //ro,  1 b, 
+   #define ECA_CHANNEL_MSI_SET_TARGET_OWR  0xa0  //wo, 32 b, 
+   #define ECA_CHANNEL_MSI_GET_TARGET_GET  0xa4  //ro, 32 b, 
+   #define ECA_CHANNEL_OVERFLOW_COUNT_GET  0xa8  //ro, 32 b, 
+   #define ECA_CHANNEL_MOSTFULL_ACK_GET    0xac  //ro, 32 b, 
+   #define ECA_CHANNEL_MOSTFULL_CLEAR_GET  0xb0  //ro, 32 b, 
+   #define ECA_CHANNEL_VALID_COUNT_GET     0xb4  //ro, 32 b, 
+   #define ECA_CHANNEL_FAILED_COUNT_GET    0xb8  //ro, 32 b, 
+   #define ECA_CHANNEL_EVENT_ID_HI_GET     0xbc  //ro, 32 b, 
+   #define ECA_CHANNEL_EVENT_ID_LO_GET     0xc0  //ro, 32 b, 
+   #define ECA_CHANNEL_PARAM_HI_GET        0xc4  //ro, 32 b, 
+   #define ECA_CHANNEL_PARAM_LO_GET        0xc8  //ro, 32 b, 
+   #define ECA_CHANNEL_TAG_GET             0xcc  //ro, 32 b, 
+   #define ECA_CHANNEL_TEF_GET             0xd0  //ro, 32 b, 
+   #define ECA_CHANNEL_DEADLINE_HI_GET     0xd4  //ro, 32 b, 
+   #define ECA_CHANNEL_DEADLINE_LO_GET     0xd8  //ro, 32 b, 
+   #define ECA_CHANNEL_EXECUTED_HI_GET     0xdc  //ro, 32 b, 
+   #define ECA_CHANNEL_EXECUTED_LO_GET     0xe0  //ro, 32 b, 
 
 #endif

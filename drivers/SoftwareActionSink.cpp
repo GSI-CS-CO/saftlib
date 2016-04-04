@@ -4,27 +4,19 @@
 #include "RegisteredObject.h"
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
+#include "TimingReceiver.h"
+#include "eca_queue_regs.h"
+#include "eca_flags.h"
 #include "src/clog.h"
 
 namespace saftlib {
 
 SoftwareActionSink::SoftwareActionSink(ConstructorType args)
- : ActionSink(args.dev, args.channel, args.destroy),
-   conflictCount(0), lateCount(0), delayedCount(0), actionCount(0),
-   executeLate(false), generateDelayed(false),
-   lastID(0), lastParam(0), lastTime(0)
+ : ActionSink(args.dev, args.name, args.channel, args.num, args.destroy), queue(args.queue)
 {
-}
-
-const char *SoftwareActionSink::getInterfaceName() const
-{
-  return "SoftwareActionSink";
-}
-
-Glib::ustring SoftwareActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards)
-{
-  return NewConditionHelper(active, id, mask, offset, guards, 0,
-    sigc::ptr_fun(&SoftwareCondition::create));
+  // flush any cruft in the FIFO
+  for (guint16 i = 0; i < capacity; ++i)
+    dev->getDevice().write(queue + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
 }
 
 Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const Glib::ustring& objectPath, ConstructorType args)
@@ -32,113 +24,80 @@ Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const Glib::ustring&
   return RegisteredObject<SoftwareActionSink>::create(objectPath, args);
 }
 
-guint32 SoftwareActionSink::ReadConflictCount()
+const char *SoftwareActionSink::getInterfaceName() const
 {
-  return conflictCount;
+  return "SoftwareActionSink";
 }
 
-guint32 SoftwareActionSink::ReadLateCount()
+void SoftwareActionSink::receiveMSI(guint8 code)
 {
-  return lateCount;
-}
-
-guint32 SoftwareActionSink::ReadDelayedCount()
-{
-  return delayedCount;
-}
-
-guint32 SoftwareActionSink::ReadActionCount()
-{
-  return actionCount;
-}
-
-bool SoftwareActionSink::getExecuteLateActions() const
-{
-  return executeLate;
-}
-
-bool SoftwareActionSink::getGenerateDelayed() const
-{
-  return generateDelayed;
-}
-
-void SoftwareActionSink::ResetConflictCount()
-{
-  ownerOnly();
-  conflictCount = 0;
-}
-
-void SoftwareActionSink::ResetLateCount()
-{
-  ownerOnly();
-  lateCount = 0;
-}
-
-void SoftwareActionSink::ResetDelayedCount()
-{
-  ownerOnly();
-  delayedCount = 0;
-}
-
-void SoftwareActionSink::ResetActionCount()
-{
-  ownerOnly();
-  actionCount = 0;
-}
-
-void SoftwareActionSink::setExecuteLateActions(bool val)
-{
-  ownerOnly();
-  executeLate = val;
-}
-
-void SoftwareActionSink::setGenerateDelayed(bool val)
-{
-  ownerOnly();
-  generateDelayed = val;
-}
-
-void SoftwareActionSink::emit(guint64 id, guint64 param, guint64 time, guint64 overtime, gint64 offset, bool late, bool delayed)
-{
-  bool matched = false;
-  for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = conditions.begin(); condition != conditions.end(); ++condition) {
-    Glib::RefPtr<SoftwareCondition> softwareCondition =
-      Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition);
-    assert(softwareCondition);
+  // Intercept valid action counter increase
+  if (code == ECA_VALID) {
+    eb_data_t flags, rawNum, event_hi, event_lo, param_hi, param_lo, 
+              tag, tef, deadline_hi, deadline_lo, executed_hi, executed_lo;
     
-    // matches?
-    if (((softwareCondition->getID() ^ id) & softwareCondition->getMask()) == 0 &&
-        softwareCondition->getOffset() == offset) {
-      // must happen only one time
-      if (matched) clog << kLogErr << "SoftwareActionSiink: single event triggered simultaneous actions on one SoftwareActionSink. Should be impossible!" << std::endl;
-      matched = true;
-      
-      bool conflict = time == lastTime;
-      
-      if (conflict) {
-        ++conflictCount;
-        Conflict(conflictCount, lastID, lastParam, lastTime, id, param, time);
-      }
-      if (delayed) {
-        ++delayedCount;
-        if (generateDelayed)
-          Delayed(delayedCount, id, param, time, overtime);
-      }
-      if (late) {
-        ++lateCount;
-        Late(lateCount, id, param, time, overtime);
-      }
-      ++actionCount;
-        
-      lastID = id;
-      lastParam = param;
-      lastTime = time;
-      
-      if (executeLate || !late) {
-        softwareCondition->Action(id, param, time, overtime, late, delayed, conflict);
-      }
+    etherbone::Cycle cycle;
+    cycle.open(dev->getDevice());
+    cycle.read(queue + ECA_QUEUE_FLAGS_GET,       EB_DATA32, &flags);
+    cycle.read(queue + ECA_QUEUE_NUM_GET,         EB_DATA32, &rawNum);
+    cycle.read(queue + ECA_QUEUE_EVENT_ID_HI_GET, EB_DATA32, &event_hi);
+    cycle.read(queue + ECA_QUEUE_EVENT_ID_LO_GET, EB_DATA32, &event_lo);
+    cycle.read(queue + ECA_QUEUE_PARAM_HI_GET,    EB_DATA32, &param_hi);
+    cycle.read(queue + ECA_QUEUE_PARAM_LO_GET,    EB_DATA32, &param_lo);
+    cycle.read(queue + ECA_QUEUE_TAG_GET,         EB_DATA32, &tag);
+    cycle.read(queue + ECA_QUEUE_TEF_GET,         EB_DATA32, &tef);
+    cycle.read(queue + ECA_QUEUE_DEADLINE_HI_GET, EB_DATA32, &deadline_hi);
+    cycle.read(queue + ECA_QUEUE_DEADLINE_LO_GET, EB_DATA32, &deadline_lo);
+    cycle.read(queue + ECA_QUEUE_EXECUTED_HI_GET, EB_DATA32, &executed_hi);
+    cycle.read(queue + ECA_QUEUE_EXECUTED_LO_GET, EB_DATA32, &executed_lo);
+    cycle.write(queue + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
+    cycle.close();
+    
+    guint64 id       = guint64(event_hi)    << 32 | event_lo;
+    guint64 param    = guint64(param_hi)    << 32 | param_lo;
+    guint64 deadline = guint64(deadline_hi) << 32 | deadline_lo;
+    guint64 executed = guint64(executed_hi) << 32 | executed_lo;
+    
+    updateAction(0); // increase the counter, rearming the MSI
+    
+    if ((flags & ECA_VALID) == 0) {
+      clog << kLogErr << "SoftwareActionSink: MSI for increase in VALID_COUNT did not correspond to a valid action in the queue" << std::endl;
+      return;
     }
+    
+    if (rawNum != num) {
+      clog << kLogErr << "SoftwareActionSink: MSI dispatched to wrong queue" << std::endl;
+      return;
+    }
+    
+    // Emit the Action
+    Conditions::iterator it = conditions.find(tag);
+    if (it == conditions.end()) {
+      // This can happen if the user deletes a condition at the same time a match arrives
+      // => Just silently discard the action on this race condition
+      return;
+    } 
+    
+    Glib::RefPtr<SoftwareCondition> softwareCondition =
+      Glib::RefPtr<SoftwareCondition>::cast_dynamic(it->second);
+    if (!softwareCondition) {
+      clog << kLogErr << "SoftwareActionSink: a Condition was not a SoftwareCondition" << std::endl;
+      return;
+    }
+    
+    // Inform clients
+    softwareCondition->Action(id, param, deadline, executed, flags & 0xF);
+    
+  } else {
+    // deal with the MSI the normal way
+    ActionSink::receiveMSI(code);
   }
+}
+
+Glib::ustring SoftwareActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset)
+{
+  return NewConditionHelper(active, id, mask, offset, 0, true,
+    sigc::ptr_fun(&SoftwareCondition::create));
 }
 
 }

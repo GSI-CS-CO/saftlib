@@ -13,6 +13,8 @@
 #include "SoftwareCondition.h"
 #include "FunctionGenerator.h"
 #include "eca_regs.h"
+#include "eca_queue_regs.h"
+#include "eca_flags.h"
 #include "fg_regs.h"
 #include "clog.h"
 #include "InoutImpl.h"
@@ -28,74 +30,90 @@ TimingReceiver::TimingReceiver(ConstructorType args)
    etherbonePath(args.etherbonePath),
    base(args.base),
    stream(args.stream),
-   queue(args.queue),
    pps(args.pps),
    sas_count(0),
-   overflow_irq(device.request_irq(sigc::mem_fun(*this, &TimingReceiver::overflow_handler))),
-   arrival_irq (device.request_irq(sigc::mem_fun(*this, &TimingReceiver::arrival_handler))),
    locked(false)
 {
-  eb_data_t name[64];
-  eb_data_t sizes, queued, id;
-  etherbone::Cycle cycle;
-  
-  cycle.open(device);
-  // probe
-  for (unsigned i = 0; i < 64; ++i)
-    cycle.read(base + ECA_CTL, EB_DATA32, &name[i]);
-  cycle.read(base + ECA_INFO, EB_DATA32, &sizes);
-  // disable ECA actions and interrupts
-  cycle.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
-  cycle.close();
-  
-  channels = (sizes >> 8) & 0xFF;
-  table_size = 1 << ((sizes >> 24) & 0xFF);
-  queue_size = 1 << ((sizes >> 16) & 0xFF);
-  
-  // remove all old rules
-  compile();
-  
-  cycle.open(device);
-  // Clear old counters
-  cycle.write(queue + ECAQ_DROPPED, EB_DATA32, 0);
-  // How much old Q junk to flush?
-  cycle.read(queue + ECAQ_QUEUED, EB_DATA32, &queued);
-  // Which channel does this sit on?
-  cycle.read(queue + ECAQ_META, EB_DATA32, &id);
-  cycle.close();
-  
-  aq_channel = (id >> 16) & 0xFF;
-  
-  // drain the Q
-  unsigned pop = 0;
-  while (pop < queued) {
-    unsigned batch = ((queued-pop)>64)?64:(queued-pop); // pop 64 at once
-    cycle.open(device);
-    for (unsigned i = 0; i < batch; ++i)
-      cycle.write(queue + ECAQ_CTL, EB_DATA32, 1);
-    cycle.close();
-    pop += batch;
-  }
-  
-  // Hook interrupts
-  setHandlers(true, arrival_irq, overflow_irq);
-  
-  // Enable all channels
-  cycle.open(device);
-  for (unsigned int channel = 0; channel < channels; ++channel) {
-    cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
-    cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE)<<8);
-  }
-  cycle.close();
-  
-  // enable interrupts and actions
-  device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_DISABLE<<8 | ECA_CTL_INT_ENABLE);
-  
   // update locked status
   getLocked();
 
   // poll every 1s some registers
   pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
+  
+  // Probe the configuration of the ECA
+  eb_data_t raw_channels, raw_search, raw_walker, raw_type, raw_max_num;
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.read(base + ECA_CHANNELS_GET,        EB_DATA32, &raw_channels);
+  cycle.read(base + ECA_SEARCH_CAPACITY_GET, EB_DATA32, &raw_search);
+  cycle.read(base + ECA_WALKER_CAPACITY_GET, EB_DATA32, &raw_walker);
+  cycle.close();
+  
+  // Initilize members
+  channels = raw_channels;
+  search_size = raw_search;
+  walker_size = raw_walker;
+  
+  // Worst-case assumption
+  max_conditions = std::min(search_size/2, walker_size);
+  
+  // remove all old rules
+  compile();
+  
+  // hook all MSIs
+  for (unsigned i = 0; i < channels; ++i) {
+    channel_msis.push_back(device.request_irq(
+      sigc::bind(sigc::mem_fun(*this, &TimingReceiver::msiHandler), i)));
+    setHandler(i, true, channel_msis.back());
+  }
+  
+  // Create the IOs (channel 0)
+  InoutImpl::probe(this, actionSinks);
+  
+  // Locate all queue interfaces
+  std::vector<sdb_device> queues;
+  device.sdb_find_by_identity(ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, queues);
+  
+  // Figure out which queues correspond to which channels
+  queue_addresses.resize(channels, 0);
+  for (unsigned i = 0; i < queues.size(); ++i) {
+    eb_data_t id;
+    eb_address_t address = queues[i].sdb_component.addr_first;
+    device.read(address + ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &id);
+    ++id; // id=0 is the reserved GPIO channel
+    if (id >= channels) continue;
+    queue_addresses[id] = address;
+  }
+  
+  // Configure the non-IO action sinks, creating objects
+  for (unsigned i = 1; i < channels; ++i) {
+    cycle.open(device);
+    cycle.write(base + ECA_CHANNEL_SELECT_RW, EB_DATA32, i);
+    cycle.read(base + ECA_CHANNEL_TYPE_GET,    EB_DATA32, &raw_type);
+    cycle.read(base + ECA_CHANNEL_MAX_NUM_GET, EB_DATA32, &raw_max_num);
+    cycle.close();
+    
+    for (unsigned num = 0; num < raw_max_num; ++num) {
+      switch (raw_type) {
+      case ECA_LINUX: {
+          // defer construction till demanded by NewSoftwareActionSink, but setup the keys
+          actionSinks[SinkKey(i, num)].reset();
+          break;
+        }
+      case ECA_WBM: {
+          // !!! unsupported
+          break;
+        }
+      case ECA_SCUBUS: { // !!! link the object ?
+          break;
+        }
+      default: {
+          clog << kLogWarning << "ECA: unsupported channel type detected" << std::endl;
+          break;
+        }
+      }
+    }
+  }
 }
 
 TimingReceiver::~TimingReceiver()
@@ -103,38 +121,36 @@ TimingReceiver::~TimingReceiver()
   try { // destructors may not throw
     pollConnection.disconnect();
     
-    // destroy children before unhooking irqs/etc
+    // Disable all MSIs
+    for (unsigned i = 0; i < channels; ++i) {
+      setHandler(i, false, 0);
+      device.release_irq(channel_msis[i]);
+    }
+    
+    // destroy children
     actionSinks.clear();
     otherStuff.clear();
     
-    device.release_irq(overflow_irq);
-    device.release_irq(arrival_irq);
-    setHandlers(false);
+    // wipe out the condition table
+    compile();
     
-    // disable aq channel
-    etherbone::Cycle cycle;
-    cycle.open(device);
-    for (unsigned int channel = 0; channel < channels; ++channel) {
-      cycle.write(base + ECAC_SELECT, EB_DATA32, channel << 16);
-      cycle.write(base + ECAC_CTL, EB_DATA32, (ECAC_CTL_DRAIN|ECAC_CTL_FREEZE));
-    }
-    cycle.close();
-    
-    // Disable interrupts and the ECA
-    device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_INT_ENABLE<<8 | ECA_CTL_DISABLE);
   } catch (const etherbone::exception_t& e) {
-    clog << kLogErr << "ECA::~ECA: " << e << std::endl;
+    clog << kLogErr << "TimingReceiver::~TimingReceiver: " << e << std::endl;
+  } catch (const Glib::Error& e) {
+    clog << kLogErr << "TimingReceiver::~TimingReceiver: " << e.what() << std::endl;
+  } catch (...) {
+    clog << kLogErr << "TimingReceiver::~TimingReceiver: unknown exception" << std::endl;
   }
 }
 
-void TimingReceiver::setHandlers(bool enable, eb_address_t arrival, eb_address_t overflow)
+void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t address)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
-  cycle.write(queue + ECAQ_INT_MASK, EB_DATA32, 0);
-  cycle.write(queue + ECAQ_ARRIVAL,  EB_DATA32, arrival);
-  cycle.write(queue + ECAQ_OVERFLOW, EB_DATA32, overflow);
-  if (enable) cycle.write(queue + ECAQ_INT_MASK, EB_DATA32, 3);
+  cycle.write(base + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+  cycle.write(base + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, 0);
+  cycle.write(base + ECA_CHANNEL_MSI_SET_TARGET_OWR, EB_DATA32, address);
+  cycle.write(base + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, enable?1:0);
   cycle.close();
 }
 
@@ -177,11 +193,12 @@ bool TimingReceiver::getLocked() const
   return newLocked;
 }
 
-void TimingReceiver::do_remove(Glib::ustring name)
+void TimingReceiver::do_remove(SinkKey key)
 {
-  actionSinks.erase(name);
+  actionSinks[key].reset();
   SoftwareActionSinks(getSoftwareActionSinks());
   Interfaces(getInterfaces());
+  compile();
 }
 
 static inline bool not_isalnum_(char c)
@@ -191,31 +208,48 @@ static inline bool not_isalnum_(char c)
 
 Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
 {
-  Glib::ustring name(name_);
-  if (name == "") {
-    std::ostringstream str;
-    str.imbue(std::locale("C"));
-    str << "_" << ++sas_count;
-    name = str.str();
+  // Is there an available software channel?
+  ActionSinks::iterator alloc;
+  for (alloc = actionSinks.begin(); alloc != actionSinks.end(); ++alloc)
+    if (!alloc->second) break;
+  
+  if (alloc == actionSinks.end())
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
+  
+  Glib::ustring seq, name;
+  std::ostringstream str;
+  str.imbue(std::locale("C"));
+  str << "_" << ++sas_count;
+  seq = str.str();
+  
+  if (name_ == "") {
+    name = seq;
   } else {
-    if (actionSinks.find(name) != actionSinks.end())
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Name already in use");
+    name = name_;
     if (name[0] == '_')
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
     if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+    
+    std::map< Glib::ustring, Glib::ustring > sinks = getSoftwareActionSinks();
+    if (sinks.find(name) != sinks.end())
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Name already in use");
   }
   
   // nest the object under our own name
-  Glib::ustring path = getObjectPath() + "/" + name;
+  Glib::ustring path = getObjectPath() + "/software/" + seq;
   
-  sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), name);
+  unsigned channel = alloc->first.first;
+  unsigned num     = alloc->first.second;
+  eb_address_t address = queue_addresses[channel];
+  sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), alloc->first);
   
-  SoftwareActionSink::ConstructorType args = { this, aq_channel, destroy };
+  SoftwareActionSink::ConstructorType args = { this, name, channel, num, address, destroy };
   Glib::RefPtr<ActionSink> softwareActionSink = SoftwareActionSink::create(path, args);
   softwareActionSink->initOwner(getConnection(), getSender());
   
-  actionSinks[name] = softwareActionSink;
+  // Own it and inform changes to properties
+  alloc->second = softwareActionSink;
   SoftwareActionSinks(getSoftwareActionSinks());
   Interfaces(getInterfaces());
   
@@ -225,8 +259,6 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
 void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
 {
   etherbone::Cycle cycle;
-  
-  time /= 8; // !!! remove with new hardware
   
   cycle.open(device);
   cycle.write(stream, EB_DATA32, event >> 32);
@@ -243,17 +275,17 @@ void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
 guint64 TimingReceiver::ReadRawCurrentTime()
 {
   etherbone::Cycle cycle;
-  eb_data_t time1, time0;
-  cycle.open(device);
-  cycle.read(base + ECA_TIME1, EB_DATA32, &time1);
-  cycle.read(base + ECA_TIME0, EB_DATA32, &time0);
-  cycle.close();
+  eb_data_t time1, time0, time2;
   
-  guint64 result;
-  result = time1;
-  result <<= 32;
-  result |= time0;
-  return result*8; // !!! remove *8 with new hardware
+  do {
+    cycle.open(device);
+    cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time1);
+    cycle.read(base + ECA_TIME_LO_GET, EB_DATA32, &time0);
+    cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time2);
+    cycle.close();
+  } while (time1 != time2);
+  
+  return guint64(time1) << 32 | time0;
 }
 
 guint64 TimingReceiver::ReadCurrentTime()
@@ -266,69 +298,63 @@ guint64 TimingReceiver::ReadCurrentTime()
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks() const
 {
-  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
+  typedef ActionSinks::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     Glib::RefPtr<SoftwareActionSink> softwareActionSink =
       Glib::RefPtr<SoftwareActionSink>::cast_dynamic(i->second);
     if (!softwareActionSink) continue;
-    out[i->first] = softwareActionSink->getObjectPath();
+    out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
   }
   return out;
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
 {
-  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
+  typedef ActionSinks::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     Glib::RefPtr<Output> output =
       Glib::RefPtr<Output>::cast_dynamic(i->second);
     if (!output) continue;
-    out[i->first] = output->getObjectPath();
+    out[output->getObjectName()] = output->getObjectPath();
   }
   return out;
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
 {
-  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
+  typedef ActionSinks::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     Glib::RefPtr<Input> input =
       Glib::RefPtr<Input>::cast_dynamic(i->second);
     if (!input) continue;
-    out[i->first] = input->getObjectPath();
+    out[input->getObjectName()] = input->getObjectPath();
   }
   return out;
 }
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInoutputs() const
 {
-  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator iterator;
+  typedef ActionSinks::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     Glib::RefPtr<Inoutput> inoutput =
       Glib::RefPtr<Inoutput>::cast_dynamic(i->second);
     if (!inoutput) continue;
-    out[i->first] = inoutput->getObjectPath();
+    out[inoutput->getObjectName()] = inoutput->getObjectPath();
   }
   return out;
-}
-
-std::vector< Glib::ustring > TimingReceiver::getGuards() const
-{
-  std::vector< Glib::ustring > out;
-  return out; // !!! not for cryring
 }
 
 std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiver::getInterfaces() const
 {
   std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > out;
   
-  typedef std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink;
+  typedef ActionSinks::const_iterator sink;
   for (sink i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    out[i->second->getInterfaceName()][i->first] = i->second->getObjectPath();
+    out[i->second->getInterfaceName()][i->second->getObjectName()] = i->second->getObjectPath();
   }
   
   typedef OtherStuff::const_iterator other;
@@ -342,85 +368,33 @@ std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiv
 
 guint32 TimingReceiver::getFree() const
 {
-  return table_size; // !!!
+  return max_conditions - used_conditions;
 }
 
-void TimingReceiver::overflow_handler(eb_data_t)
+void TimingReceiver::msiHandler(unsigned channel, eb_data_t msi)
 {
-  for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
-    // !!! sink->Overflow();
+  unsigned code = msi >> 16;
+  unsigned num  = msi & 0xFFFF;
+  
+  SinkKey k(channel, num);
+  ActionSinks::iterator i = actionSinks.find(k);
+  if (i == actionSinks.end() || !i->second) {
+    // It could be that the user deleted the SoftwareActionSink
+    // while it still had pending actions. Just discard them.
+  } else {
+    i->second->receiveMSI(code);
   }
-}
-
-void TimingReceiver::arrival_handler(eb_data_t)
-{
-  etherbone::Cycle cycle;
-  eb_data_t flags;
-  eb_data_t event1, event0;
-  eb_data_t param1, param0;
-  eb_data_t tag,    tef;
-  eb_data_t time1,  time0;
-  
-  cycle.open(device);
-  cycle.read (queue + ECAQ_FLAGS,  EB_DATA32, &flags);
-  cycle.read (queue + ECAQ_EVENT1, EB_DATA32, &event1);
-  cycle.read (queue + ECAQ_EVENT0, EB_DATA32, &event0);
-  cycle.read (queue + ECAQ_PARAM1, EB_DATA32, &param1);
-  cycle.read (queue + ECAQ_PARAM0, EB_DATA32, &param0);
-  cycle.read (queue + ECAQ_TAG,    EB_DATA32, &tag);
-  cycle.read (queue + ECAQ_TEF,    EB_DATA32, &tef);
-  cycle.read (queue + ECAQ_TIME1,  EB_DATA32, &time1);
-  cycle.read (queue + ECAQ_TIME0,  EB_DATA32, &time0);
-  cycle.write(queue + ECAQ_CTL,    EB_DATA32, 1); // pop
-  cycle.close();
-  
-  guint64 event, param, time;
-  event = event1; event <<= 32; event |= event0;
-  param = param1; param <<= 32; param |= param0;
-  time  = time1;  time  <<= 32; time  |= time0;
-  
-  // bool conflict = (flags & 2) != 0;
-  bool late     = (flags & 1) != 0;
-  // !!! delayed ?
-  
-  for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
-    Glib::RefPtr<SoftwareActionSink> softwareActionSink =
-      Glib::RefPtr<SoftwareActionSink>::cast_dynamic(sink->second);
-    if (softwareActionSink)
-      softwareActionSink->emit(event, param, time*8, -1, tag2delay[tag], late, false); // !!! remove *8 with new hardware
-  }
-}
-
-struct ECA_Merge {
-  gint32  channel;
-  gint64  offset;
-  guint64 first;
-  guint64 last;
-  guint32 tag;
-  ECA_Merge(gint32 c, gint64 o, guint64 f, guint64 l, guint32 t)
-   : channel(c), offset(o), first(f), last(l), tag(t) { }
-};
-
-bool operator < (const ECA_Merge& a, const ECA_Merge& b)
-{
-  if (a.channel < b.channel) return true;
-  if (a.channel > b.channel) return false;
-  if (a.offset < b.offset) return true;
-  if (a.offset > b.offset) return false;
-  if (a.first < b.first) return true;
-  if (a.first > b.first) return false;
-  return false;
 }
 
 struct ECA_OpenClose {
-  guint64 key;
-  bool    open;
-  guint64 subkey;
-  gint64  offset;
-  gint32  channel;
-  guint32 tag;
-  ECA_OpenClose(guint64 k, bool x, guint64 s, guint64 o, gint32 c, guint32 t)
-   : key(k), open(x), subkey(s), offset(o), channel(c), tag(t) { }
+  guint64  key;    // open?first:last
+  bool     open;
+  guint64  subkey; // open?last:first
+  gint64   offset;
+  guint32  tag;
+  guint8   flags;
+  unsigned channel;
+  unsigned num;
 };
 
 // Using this heuristic, perfect containment never duplicates walk records
@@ -430,14 +404,9 @@ bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
   if (a.key > b.key) return false;
   if (!a.open && b.open) return true; // close first
   if (a.open && !b.open) return false;
-  if (a.subkey > b.subkey) return true; // open largest first, close smallest last
+  if (a.subkey > b.subkey) return true; // open largest first, close smallest first
   if (a.subkey < b.subkey) return false;
-  if (a.offset < b.offset) return a.open; // open smallest first, close largest last
-  if (a.offset > b.offset) return !a.open;
-  if (a.channel < b.channel) return a.open;
-  if (a.channel > b.channel) return !a.open;
-  if (a.tag < b.tag) return a.open;
-  if (a.tag > b.tag) return !a.open;
+  // order does not matter (popping does not depend on content)
   return false;
 }
 
@@ -448,96 +417,57 @@ struct SearchEntry {
 };
 
 struct WalkEntry {
-  gint64  offset;
-  guint32 tag;
-  gint16  next;
-  guint8  channel;
-  WalkEntry(gint64 o, guint32 t, gint16 n, guint8 c) : offset(o), tag(t), next(n), channel(c) { }
+  gint16   next;
+  gint64   offset;
+  guint32  tag;
+  guint8   flags;
+  unsigned channel;
+  unsigned num;
+  WalkEntry(gint16 n, const ECA_OpenClose& oc) : next(n), 
+    offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
 };
 
 void TimingReceiver::compile()
 {
-  typedef std::map<gint64, int> Offsets;
-  typedef std::vector<ECA_Merge> Merges;
-  Offsets offsets;
-  Merges merges;
-  guint32 next_tag = 0;
-  
-  // Step one is to merge overlapping, but compatible, ranges
-  for (std::map< Glib::ustring, Glib::RefPtr<ActionSink> >::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
-    for (std::list< Glib::RefPtr<Condition> >::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
-      guint64 first  = (*condition)->getID() & (*condition)->getMask();
-      guint64 last   = (*condition)->getID() | ~(*condition)->getMask();
-      gint64  offset = (*condition)->getOffset();
-      gint32  channel= sink->second->getChannel();
-      guint32 tag    = (*condition)->getRawTag();
-      
-      // reject idiocy
-      if (first > last)
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "first must be <= last");
-      
-      // software tag is based on offset
-      if (Glib::RefPtr<SoftwareCondition>::cast_dynamic(*condition)) {
-        std::pair<Offsets::iterator,bool> result = 
-          offsets.insert(std::pair<gint64, guint32>(offset, next_tag));
-        guint32 aq_tag = result.first->second;
-        if (result.second) ++next_tag; // tag now used
-        
-        merges.push_back(ECA_Merge(aq_channel, offset, first, last, aq_tag));
-      } else {
-        merges.push_back(ECA_Merge(channel, offset, first, last, tag));
-      }
-    }
-  }
-  
-  // Sort it by the merge criteria
-  std::sort(merges.begin(), merges.end());
-  
-  // Compress the conditions: merging overlaps and convert to id-space
+  // Store all active conditions into a vector for processing
   typedef std::vector<ECA_OpenClose> ID_Space;
   ID_Space id_space;
 
-#if DEBUG_COMPRESS || DEBUG_COMPILE
-  clog << std::dec;
-#endif
-
-  unsigned i = 0, j;
-  while (i < merges.size()) {
-    // Merge overlapping/touching records
-    while ((j=i+1) < merges.size() && 
-           merges[i].channel == merges[j].channel &&
-           merges[i].offset  == merges[j].offset  &&
-           (merges[j].first   == 0                ||
-            merges[i].last    >= merges[j].first-1)) {
-#if DEBUG_COMPRESS
-      clog << kLogDebug << "I: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
-      clog << kLogDebug << "I: " << merges[j].first << " " << merges[j].last << " " << merges[j].offset << " " << merges[j].channel << " " << merges[j].tag << std::endl;
-#endif
-      // they overlap, so tags must match!
-      if (merges[i].tag != merges[j].tag) {
-        if (merges[i].last == merges[j].first-1) { 
-          break;
-        } else {
-          throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Conflicting tags for overlapping conditions (same channel, same offset, same event)");
-        }
+  // Step one is to find all active conditions on all action sinks
+  for (ActionSinks::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
+    for (ActionSink::Conditions::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
+      if (!condition->second->getActive()) continue;
+      
+      // Memorize the condition
+      ECA_OpenClose oc;
+      oc.key     = condition->second->getID() &  condition->second->getMask();
+      oc.open    = true;
+      oc.subkey  = condition->second->getID() | ~condition->second->getMask();
+      oc.offset  = condition->second->getOffset();
+      oc.tag     = condition->second->getRawTag();
+      oc.flags   =(condition->second->getAcceptLate()    ?(1<<ECA_LATE)    :0) |
+                  (condition->second->getAcceptEarly()   ?(1<<ECA_EARLY)   :0) |
+                  (condition->second->getAcceptConflict()?(1<<ECA_CONFLICT):0) |
+                  (condition->second->getAcceptDelayed() ?(1<<ECA_DELAYED) :0);
+      oc.channel = sink->second->getChannel();
+      oc.num     = sink->second->getNum();
+      
+      // Push the open record
+      id_space.push_back(oc);
+      
+      // Push the close record (if any)
+      if (oc.subkey != G_MAXUINT64) {
+        oc.open = false;
+        std::swap(oc.key, oc.subkey);
+        ++oc.key;
+        id_space.push_back(oc);
       }
-      // merge!
-      merges[j].first = merges[i].first;
-      merges[j].last  = std::max(merges[j].last, merges[i].last);
-      i = j;
     }
-    // push combined record to open/close pass
-#if DEBUG_COMPRESS
-    clog << kLogDebug << "O: " << merges[i].first << " " << merges[i].last << " " << merges[i].offset << " " << merges[i].channel << " " << merges[i].tag << std::endl;
-#endif
-    id_space.push_back(ECA_OpenClose(merges[i].first,  true,  merges[i].last,  merges[i].offset, merges[i].channel, merges[i].tag));
-    if (merges[i].last != G_MAXUINT64)
-      id_space.push_back(ECA_OpenClose(merges[i].last+1, false, merges[i].first, merges[i].offset, merges[i].channel, merges[i].tag));
-    i = j;
   }
   
-  // Don't need this any more
-  merges.clear();
+  // Don't proceed if too many actions for the ECA
+  if (id_space.size()/2 >= max_conditions)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Too many active conditions for hardware");
   
   // Sort it by the open/close criteria
   std::sort(id_space.begin(), id_space.end());
@@ -547,46 +477,29 @@ void TimingReceiver::compile()
   typedef std::vector<WalkEntry> Walk;
   Search search;
   Walk walk;
-  Walk reflow;
   gint16 next = -1;
   guint64 cursor = 0;
-  int reflows = 0;
   
-  // Special-case at zero: skip closes and push leading record
+  // Special-case at zero: always push a leading record
   if (id_space.empty() || id_space[0].key != 0)
     search.push_back(SearchEntry(0, next));
   
   // Walk the remaining records and transform them to hardware!
-  i = 0;
+  unsigned i = 0;
   while (i < id_space.size()) {
     cursor = id_space[i].key;
     
+    // pop the walker stack for all closes
     while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
-      while (walk[next].offset  != id_space[i].offset ||
-             walk[next].tag     != id_space[i].tag    ||
-             walk[next].channel != id_space[i].channel) {
-        reflow.push_back(walk[next]);
-        next = walk[next].next;
-        if (next == -1)
-          throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Wes promised this was impossible");
-      }
+      if (next == -1)
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
       next = walk[next].next;
       ++i;
     }
     
-    // restore reflow records
-    for (j = reflow.size(); j > 0; --j) {
-      walk.push_back(reflow[j-1]);
-      walk.back().next = next;
-      next = walk.size()-1;
-      ++reflows;
-    }
-    reflow.clear();
-    
     // push the opens
     while (i < id_space.size() && cursor == id_space[i].key && id_space[i].open) {
-      // ... could try to find an existing tail to re-use here
-      walk.push_back(WalkEntry(id_space[i].offset, id_space[i].tag, next, id_space[i].channel));
+      walk.push_back(WalkEntry(next, id_space[i]));
       next = walk.size()-1;
       ++i;
     }
@@ -595,7 +508,7 @@ void TimingReceiver::compile()
   }
   
 #if DEBUG_COMPILE
-  clog << kLogDebug << "Table compilation complete! Reflows necessary: " << reflows << "\n";
+  clog << kLogDebug << "Table compilation complete!\n";
   for (i = 0; i < search.size(); ++i)
     clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << "\n";
   for (i = 0; i < walk.size(); ++i)
@@ -603,60 +516,48 @@ void TimingReceiver::compile()
   clog << kLogDebug << std::flush; 
 #endif
 
-  if (walk.size() > table_size || search.size() > table_size*2)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Too many conditions to fit in hardware");
-  
   etherbone::Cycle cycle;
-  for (unsigned i = 0; i < 2*table_size; ++i) {
+  for (unsigned i = 0; i < search_size; ++i) {
     /* Duplicate last entry to fill out the table */
     const SearchEntry& se = (i<search.size())?search[i]:search.back();
-    eb_data_t first = (se.index==-1)?0:(0x80000000UL|se.index);
     
     cycle.open(device);
-    cycle.write(base + ECA_SEARCH, EB_DATA32, i);
-    cycle.write(base + ECA_FIRST,  EB_DATA32, first);
-    cycle.write(base + ECA_EVENT1, EB_DATA32, se.event >> 32);
-    cycle.write(base + ECA_EVENT0, EB_DATA32, se.event & 0xFFFFFFFFUL);
+    cycle.write(base + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
+    cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (guint16)se.index);
+    cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
+    cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (guint32)se.event);
     cycle.close();
   }
   
   for (unsigned i = 0; i < walk.size(); ++i) {
     const WalkEntry& we = walk[i];
-    eb_data_t next = (we.next==-1)?0:(0x80000000UL|we.next);
     
     cycle.open(device);
-    cycle.write(base + ECA_WALK,    EB_DATA32, i);
-    cycle.write(base + ECA_NEXT,    EB_DATA32, next);
-    cycle.write(base + ECA_DELAY1,  EB_DATA32, ((we.offset/8) >> 32) & 0xFFFFFFFFUL); // !!! new hardware removes /8
-    cycle.write(base + ECA_DELAY0,  EB_DATA32, ((we.offset/8) >>  0) & 0xFFFFFFFFUL); // !!! new hardware removes /8
-    cycle.write(base + ECA_TAG,     EB_DATA32, we.tag);
-    cycle.write(base + ECA_CHANNEL, EB_DATA32, we.channel);
+    cycle.write(base + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
+    cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (guint16)we.next);
+    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, we.offset >> 32);
+    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (guint32)we.offset);
+    cycle.write(base + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
+    cycle.write(base + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
+    cycle.write(base + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
+    cycle.write(base + ECA_WALKER_RW_NUM_RW,       EB_DATA32, we.num);
     cycle.close();
   }
   
   // Flip the tables
-  device.write(base + ECA_CTL, EB_DATA32, ECA_CTL_FLIP);
-  
-  // !!! fuck - not atomic WRT table flip
-  tag2delay.resize(next_tag);
-  for (Offsets::iterator o = offsets.begin(); o != offsets.end(); ++o)
-    tag2delay[o->second] = o->first;
+  device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
 }
 
 void TimingReceiver::probe(OpenDevice& od)
 {
-  // !!! check board ID
-  etherbone::Cycle cycle;
-  
-  std::vector<sdb_device> ecas, queues, streams, scubus, pps;
-  od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECA_DEVICE_ID,  ecas);
-  od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAQ_DEVICE_ID, queues);
-  od.device.sdb_find_by_identity(GSI_VENDOR_ID, ECAE_DEVICE_ID, streams);
-  od.device.sdb_find_by_identity(GSI_VENDOR_ID, 0x9602eb6f, scubus);
+  std::vector<sdb_device> ecas, streams, scubus, pps;
+  od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
+  od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams);
+  od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
   
   // only support super basic hardware for now
-  if (ecas.size() != 1 || queues.size() != 1 || streams.size() != 1 || pps.size() != 1)
+  if (ecas.size() != 1 || streams.size() != 1 || pps.size() != 1)
     return;
   
   TimingReceiver::ConstructorType args = { 
@@ -665,21 +566,19 @@ void TimingReceiver::probe(OpenDevice& od)
     od.etherbonePath, 
     (eb_address_t)ecas[0].sdb_component.addr_first,
     (eb_address_t)streams[0].sdb_component.addr_first,
-    (eb_address_t)queues[0].sdb_component.addr_first,
     (eb_address_t)pps[0].sdb_component.addr_first,
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
     
-  InoutImpl::probe(tr.operator->(), tr->actionSinks);
-  
   // Add special SCU hardware
   if (scubus.size() == 1) {
-    // !!! hard-coded to #3
-    SCUbusActionSink::ConstructorType args = { tr.operator->(), 3, (eb_address_t)scubus[0].sdb_component.addr_first };
-    Glib::ustring path = od.objectPath + "/scubus";
-    Glib::RefPtr<ActionSink> actionSink = SCUbusActionSink::create(path, args);
-    tr->actionSinks["scubus"] = actionSink;
+    //SCUbusActionSink::ConstructorType args = { this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
+    //Glib::ustring path = etherbonePath + "/scubus";
+    //actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(path, args);
+    // !!!
+    
+    etherbone::Cycle cycle;
     
     // Probe for LM32 block memories
     eb_address_t fgb = 0;

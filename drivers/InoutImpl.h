@@ -6,6 +6,7 @@
 #include "interfaces/iEventSource.h"
 #include "interfaces/iInputEventSource.h"
 #include "ActionSink.h"
+#include "TimingReceiver.h"
 
 namespace saftlib {
 
@@ -14,6 +15,7 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
   public:
     struct ConstructorType {
       TimingReceiver* dev;
+      Glib::ustring name;
       unsigned io_channel;
       unsigned io_index;
       unsigned io_special_purpose;
@@ -26,10 +28,10 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     };
     
     InoutImpl(ConstructorType args);
-    static int probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<ActionSink> >& actionSinks);
+    static int probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks);
     
     // iOutputActionSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, bool on);
+    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on);
     void WriteOutput(bool value);
     bool ReadOutput();
     bool getOutputEnable() const;

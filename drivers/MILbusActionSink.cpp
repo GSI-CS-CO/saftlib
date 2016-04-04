@@ -7,7 +7,7 @@
 namespace saftlib {
 
 MILbusActionSink::MILbusActionSink(ConstructorType args)
- : ActionSink(args.dev, args.channel)
+ : ActionSink(args.dev, args.name, args.channel, 0)
 {
 }
 
@@ -16,9 +16,9 @@ const char *MILbusActionSink::getInterfaceName() const
   return "MILbusActionSink";
 }
 
-Glib::ustring MILbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, guint16 tag)
+Glib::ustring MILbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint16 tag)
 {
-  return NewConditionHelper(active, id, mask, offset, guards, tag,
+  return NewConditionHelper(active, id, mask, offset, tag, false,
     sigc::ptr_fun(&MILbusCondition::create));
 }
 

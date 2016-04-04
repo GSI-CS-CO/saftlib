@@ -16,6 +16,7 @@ class SCUbusCondition : public Condition, public iSCUbusCondition
     
     // iSCUbusCondition
     guint32 getTag() const;
+    void setTag(guint32 val);
     
   protected:
     SCUbusCondition(ConstructorType args);

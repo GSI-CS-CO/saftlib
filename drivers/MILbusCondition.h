@@ -16,6 +16,7 @@ class MILbusCondition : public Condition, public iMILbusCondition
     
     // iMILbusCondition
     guint16 getTag() const;
+    void setTag(guint16 val);
     
   protected:
     MILbusCondition(ConstructorType args);

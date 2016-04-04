@@ -12,7 +12,8 @@ class MILbusActionSink : public ActionSink, public iMILbusActionSink
     typedef MILbusActionSink_Service ServiceType;
     struct ConstructorType {
       TimingReceiver* dev;
-      int channel;
+      Glib::ustring name;
+      unsigned channel;
     };
     
     static Glib::RefPtr<MILbusActionSink> create(const Glib::ustring& objectPath, ConstructorType args);
@@ -20,7 +21,7 @@ class MILbusActionSink : public ActionSink, public iMILbusActionSink
     const char *getInterfaceName() const;
     
     // iMILbusAcitonSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, guint16 tag);
+    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint16 tag);
     void InjectTag(guint16 tag);
     
   protected:

@@ -31,6 +31,7 @@ saftd_SOURCES = version.h \
 	drivers/Owned.cpp		drivers/Owned.h			\
 	drivers/Condition.cpp		drivers/Condition.h		\
 	drivers/SoftwareCondition.cpp	drivers/SoftwareCondition.h	\
+	drivers/OutputCondition.cpp	drivers/OutputCondition.h	\
 	drivers/SCUbusCondition.cpp	drivers/SCUbusCondition.h	\
 	drivers/MILbusCondition.cpp	drivers/MILbusCondition.h	\
 	drivers/ActionSink.cpp		drivers/ActionSink.h		\

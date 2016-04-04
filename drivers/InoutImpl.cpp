@@ -3,6 +3,7 @@
 #include "TimingReceiver.h"
 #include "InoutImpl.h"
 #include "Output.h"
+#include "OutputCondition.h"
 #include "Inoutput.h"
 #include "Input.h"
 #include "io_control_regs.h"
@@ -11,7 +12,7 @@
 namespace saftlib {
 
 InoutImpl::InoutImpl(ConstructorType args)
- : ActionSink(args.dev, args.io_channel),
+ : ActionSink(args.dev, args.name, args.io_channel, args.io_index),
    io_channel(args.io_channel), io_index(args.io_index), io_special_purpose(args.io_special_purpose), io_logic_level(args.io_logic_level),
    io_oe_available(args.io_oe_available), io_term_available(args.io_term_available),
    io_spec_out_available(args.io_spec_out_available), io_spec_in_available(args.io_spec_in_available),
@@ -19,10 +20,10 @@ InoutImpl::InoutImpl(ConstructorType args)
 {
 }
 
-Glib::ustring InoutImpl::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 guards, bool on)
+Glib::ustring InoutImpl::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on)
 {
-  ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented");
+  return NewConditionHelper(active, id, mask, offset, on?1:2, false,
+    sigc::ptr_fun(&OutputCondition::create));
 }
 
 void InoutImpl::WriteOutput(bool value)
@@ -466,7 +467,7 @@ void InoutImpl::setSpecialPurposeIn(bool val)
   cycle.close();
 }
 
-int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<ActionSink> >& actionSinks)
+int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks)
 {
   /* Helpers */
   unsigned io_table_entries_id     = 0;
@@ -567,26 +568,28 @@ int InoutImpl::probe(TimingReceiver* tr, std::map< Glib::ustring, Glib::RefPtr<A
     /* Get IO name */
     cIOName = s_aIOCONTROL_SetupField[io_table_iterator].uName;
     Glib::ustring IOName = cIOName;
+    TimingReceiver::SinkKey key(channel, internal_id);
     
     /* Add sinks depending on their direction */
     switch(direction)
     {
       case IO_CFG_FIELD_DIR_OUTPUT:
       {
-        Output::ConstructorType args = { tr, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[IOName] = Output::create(tr->getObjectPath() + "/outputs/" + IOName, args);
+        Output::ConstructorType args = { tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
+        actionSinks[key] = Output::create(tr->getObjectPath() + "/outputs/" + IOName, args);
         break;
       }
       case IO_CFG_FIELD_DIR_INPUT:
       {
-        Input::ConstructorType args = { tr, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[IOName] = Input::create(tr->getObjectPath() + "/inputs/" + IOName, args);
+        // !!! need this to NOT overlap OUT/INOUT
+        Input::ConstructorType args = { tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
+        actionSinks[key] = Input::create(tr->getObjectPath() + "/inputs/" + IOName, args);
         break;
       }
       case IO_CFG_FIELD_DIR_INOUT:
       {
-        Inoutput::ConstructorType args = { tr, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[IOName] = Inoutput::create(tr->getObjectPath() + "/inoutputs/" + IOName, args);
+        Inoutput::ConstructorType args = { tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
+        actionSinks[key] = Inoutput::create(tr->getObjectPath() + "/inoutputs/" + IOName, args);
         break;
       }
       default:

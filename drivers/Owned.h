@@ -29,10 +29,10 @@ class Owned : public iOwned, public Glib::Object
   
   protected:
     virtual void ownerQuit();
-    void owner_quit_handler(
+    static void owner_quit_handler(
       const Glib::RefPtr<Gio::DBus::Connection>&,
       const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
-      const Glib::ustring&, const Glib::VariantContainerBase&);
+      const Glib::ustring&, const Glib::VariantContainerBase&, Owned* self);
   
   private:
     sigc::slot<void> destroy;
