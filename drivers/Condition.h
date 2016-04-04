@@ -13,6 +13,7 @@ class Condition : public Owned, public iCondition
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
     struct Condition_ConstructorType {
+      Glib::ustring objectPath;
       ActionSink* sink;
       bool active;
       guint64 id;
@@ -21,7 +22,7 @@ class Condition : public Owned, public iCondition
       guint32 tag;
       sigc::slot<void> destroy;
     };
-    Condition(Condition_ConstructorType args);
+    Condition(const Condition_ConstructorType& args);
     // ~Condition(); // unnecessary; ActionSink::removeCondition executes compile()
     
     // iCondition

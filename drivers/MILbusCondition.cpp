@@ -6,7 +6,7 @@
 
 namespace saftlib {
 
-MILbusCondition::MILbusCondition(ConstructorType args)
+MILbusCondition::MILbusCondition(const ConstructorType& args)
  : Condition(args)
 {
 }
@@ -32,9 +32,9 @@ void MILbusCondition::setTag(guint16 val)
   }
 }
 
-Glib::RefPtr<MILbusCondition> MILbusCondition::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<MILbusCondition> MILbusCondition::create(const ConstructorType& args)
 {
-  return RegisteredObject<MILbusCondition>::create(objectPath, args);
+  return RegisteredObject<MILbusCondition>::create(args.objectPath, args);
 }
 
 }

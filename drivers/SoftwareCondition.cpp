@@ -5,14 +5,14 @@
 
 namespace saftlib {
 
-SoftwareCondition::SoftwareCondition(ConstructorType args)
+SoftwareCondition::SoftwareCondition(const ConstructorType& args)
  : Condition(args)
 {
 }
 
-Glib::RefPtr<SoftwareCondition> SoftwareCondition::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SoftwareCondition> SoftwareCondition::create(const ConstructorType& args)
 {
-  return RegisteredObject<SoftwareCondition>::create(objectPath, args);
+  return RegisteredObject<SoftwareCondition>::create(args.objectPath, args);
 }
 
 }

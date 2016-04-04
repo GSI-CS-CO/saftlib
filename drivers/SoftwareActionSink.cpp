@@ -11,17 +11,17 @@
 
 namespace saftlib {
 
-SoftwareActionSink::SoftwareActionSink(ConstructorType args)
- : ActionSink(args.dev, args.name, args.channel, args.num, args.destroy), queue(args.queue)
+SoftwareActionSink::SoftwareActionSink(const ConstructorType& args)
+ : ActionSink(args.objectPath, args.dev, args.name, args.channel, args.num, args.destroy), queue(args.queue)
 {
   // flush any cruft in the FIFO
   for (guint16 i = 0; i < capacity; ++i)
     dev->getDevice().write(queue + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
 }
 
-Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const ConstructorType& args)
 {
-  return RegisteredObject<SoftwareActionSink>::create(objectPath, args);
+  return RegisteredObject<SoftwareActionSink>::create(args.objectPath, args);
 }
 
 const char *SoftwareActionSink::getInterfaceName() const

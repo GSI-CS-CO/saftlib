@@ -12,14 +12,14 @@ class OutputCondition : public Condition, public iOutputCondition
     typedef OutputCondition_Service ServiceType;
     typedef Condition_ConstructorType ConstructorType;
     
-    static Glib::RefPtr<OutputCondition> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<OutputCondition> create(const ConstructorType& args);
     
     // iOutputCondition
     bool getOn() const;
     void setOn(bool val);
     
   protected:
-    OutputCondition(ConstructorType args);
+    OutputCondition(const ConstructorType& args);
 };
 
 }

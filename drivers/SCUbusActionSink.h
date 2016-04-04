@@ -11,13 +11,14 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
   public:
     typedef SCUbusActionSink_Service ServiceType;
     struct ConstructorType {
+      Glib::ustring objectPath;
       TimingReceiver* dev;
       Glib::ustring name;
       unsigned channel;
       eb_address_t scubus;
     };
     
-    static Glib::RefPtr<SCUbusActionSink> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<SCUbusActionSink> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
@@ -26,7 +27,7 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
     void InjectTag(guint32 tag);
     
   protected:
-    SCUbusActionSink(ConstructorType args);
+    SCUbusActionSink(const ConstructorType& args);
     eb_address_t scubus;
 };
 

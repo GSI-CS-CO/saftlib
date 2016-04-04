@@ -12,7 +12,7 @@ class TimingReceiver;
 class ActionSink : public Owned, public iActionSink
 {
   public:
-    ActionSink(TimingReceiver* dev, Glib::ustring name, unsigned channel, unsigned num, sigc::slot<void> destroy = sigc::slot<void>());
+    ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev, const Glib::ustring& name, unsigned channel, unsigned num, sigc::slot<void> destroy = sigc::slot<void>());
     ~ActionSink();
     
     void ToggleActive();
@@ -67,7 +67,7 @@ class ActionSink : public Owned, public iActionSink
     //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 , guint64 > Delayed;
 
     // Do the grunt work to create a condition
-    typedef sigc::slot<Glib::RefPtr<Condition>, const Glib::ustring&, Condition::Condition_ConstructorType> ConditionConstructor;
+    typedef sigc::slot<Glib::RefPtr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
     Glib::ustring NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor);
 
     // Emit AllConditions, ActiveConditions, InactiveConditions

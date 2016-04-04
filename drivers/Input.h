@@ -11,12 +11,12 @@ class Input : public InoutImpl
   public:
     typedef Input_Service ServiceType;
 
-    static Glib::RefPtr<Input> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<Input> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
   protected:
-    Input(ConstructorType args);
+    Input(const ConstructorType& args);
 };
 
 }

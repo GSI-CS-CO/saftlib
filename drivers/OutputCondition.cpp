@@ -6,7 +6,7 @@
 
 namespace saftlib {
 
-OutputCondition::OutputCondition(ConstructorType args)
+OutputCondition::OutputCondition(const ConstructorType& args)
  : Condition(args)
 {
 }
@@ -32,9 +32,9 @@ void OutputCondition::setOn(bool val)
   }
 }
 
-Glib::RefPtr<OutputCondition> OutputCondition::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<OutputCondition> OutputCondition::create(const ConstructorType& args)
 {
-  return RegisteredObject<OutputCondition>::create(objectPath, args);
+  return RegisteredObject<OutputCondition>::create(args.objectPath, args);
 }
 
 }

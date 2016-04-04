@@ -16,11 +16,12 @@ class FunctionGeneratorChannelAllocation : public Glib::Object
     std::vector<int> indexes;
 };
 
-class FunctionGenerator : public iFunctionGenerator, public Owned
+class FunctionGenerator : public Owned, public iFunctionGenerator
 {
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
+      Glib::ustring objectPath;
       TimingReceiver* dev;
       Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
       eb_address_t fgb;
@@ -31,7 +32,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
       guint32 macro;
     };
     
-    static Glib::RefPtr<FunctionGenerator> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
     
     // iFunctionGenerator overrides
     void Arm();
@@ -51,7 +52,7 @@ class FunctionGenerator : public iFunctionGenerator, public Owned
     void setStartTag(guint32 val);
     
   protected:
-    FunctionGenerator(ConstructorType args);
+    FunctionGenerator(const ConstructorType& args);
     ~FunctionGenerator();
     bool lowFill() const;
     void irq_handler(eb_data_t status);

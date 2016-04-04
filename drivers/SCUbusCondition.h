@@ -12,14 +12,14 @@ class SCUbusCondition : public Condition, public iSCUbusCondition
     typedef SCUbusCondition_Service ServiceType;
     typedef Condition_ConstructorType ConstructorType;
     
-    static Glib::RefPtr<SCUbusCondition> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<SCUbusCondition> create(const ConstructorType& args);
     
     // iSCUbusCondition
     guint32 getTag() const;
     void setTag(guint32 val);
     
   protected:
-    SCUbusCondition(ConstructorType args);
+    SCUbusCondition(const ConstructorType& args);
 };
 
 }

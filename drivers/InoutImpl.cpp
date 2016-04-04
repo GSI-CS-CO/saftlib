@@ -11,8 +11,8 @@
 
 namespace saftlib {
 
-InoutImpl::InoutImpl(ConstructorType args)
- : ActionSink(args.dev, args.name, args.io_channel, args.io_index),
+InoutImpl::InoutImpl(const ConstructorType& args)
+ : ActionSink(args.objectPath, args.dev, args.name, args.io_channel, args.io_index),
    io_channel(args.io_channel), io_index(args.io_index), io_special_purpose(args.io_special_purpose), io_logic_level(args.io_logic_level),
    io_oe_available(args.io_oe_available), io_term_available(args.io_term_available),
    io_spec_out_available(args.io_spec_out_available), io_spec_in_available(args.io_spec_in_available),
@@ -575,21 +575,24 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
     {
       case IO_CFG_FIELD_DIR_OUTPUT:
       {
-        Output::ConstructorType args = { tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[key] = Output::create(tr->getObjectPath() + "/outputs/" + IOName, args);
+        Glib::ustring path = tr->getObjectPath() + "/outputs/" + IOName;
+        Output::ConstructorType args = { path, tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
+        actionSinks[key] = Output::create(args);
         break;
       }
       case IO_CFG_FIELD_DIR_INPUT:
       {
         // !!! need this to NOT overlap OUT/INOUT
-        Input::ConstructorType args = { tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[key] = Input::create(tr->getObjectPath() + "/inputs/" + IOName, args);
+        Glib::ustring path = tr->getObjectPath() + "/inputs/" + IOName;
+        Input::ConstructorType args = { path, tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
+        actionSinks[key] = Input::create(args);
         break;
       }
       case IO_CFG_FIELD_DIR_INOUT:
       {
-        Inoutput::ConstructorType args = { tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[key] = Inoutput::create(tr->getObjectPath() + "/inoutputs/" + IOName, args);
+        Glib::ustring path = tr->getObjectPath() + "/inoutputs/" + IOName;
+        Inoutput::ConstructorType args = { path, tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
+        actionSinks[key] = Inoutput::create(args);
         break;
       }
       default:

@@ -6,8 +6,8 @@
 
 namespace saftlib {
 
-MILbusActionSink::MILbusActionSink(ConstructorType args)
- : ActionSink(args.dev, args.name, args.channel, 0)
+MILbusActionSink::MILbusActionSink(const ConstructorType& args)
+ : ActionSink(args.objectPath, args.dev, args.name, args.channel, 0)
 {
 }
 
@@ -28,9 +28,9 @@ void MILbusActionSink::InjectTag(guint16 tag)
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-Glib::RefPtr<MILbusActionSink> MILbusActionSink::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<MILbusActionSink> MILbusActionSink::create(const ConstructorType& args)
 {
-  return RegisteredObject<MILbusActionSink>::create(objectPath, args);
+  return RegisteredObject<MILbusActionSink>::create(args.objectPath, args);
 }
 
 }

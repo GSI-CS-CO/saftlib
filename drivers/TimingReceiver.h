@@ -8,12 +8,13 @@
 
 namespace saftlib {
 
-class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Object {
+class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice {
   public:
     struct ConstructorType {
       Device device;
       Glib::ustring name;
       Glib::ustring etherbonePath;
+      Glib::ustring objectPath;
       eb_address_t base;
       eb_address_t stream;
       eb_address_t pps;
@@ -21,7 +22,7 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     typedef TimingReceiver_Service ServiceType;
     
     static void probe(OpenDevice& od);
-    TimingReceiver(ConstructorType args);
+    TimingReceiver(const ConstructorType& args);
     ~TimingReceiver();
     
     // iDevice
@@ -44,11 +45,6 @@ class TimingReceiver : public iTimingReceiver, public iDevice, public Glib::Obje
     // Compile the condition table
     void compile();
 
-    // provided by RegisteredObject
-    virtual const Glib::ustring& getSender() const = 0;
-    virtual const Glib::ustring& getObjectPath() const = 0;
-    virtual const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const = 0;
-    
     // Allow hardware access to the underlying device
     Device& getDevice() { return device; }
     eb_address_t getBase() { return base; }

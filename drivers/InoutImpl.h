@@ -14,6 +14,7 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
 {
   public:
     struct ConstructorType {
+      Glib::ustring objectPath;
       TimingReceiver* dev;
       Glib::ustring name;
       unsigned io_channel;
@@ -27,7 +28,7 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
       eb_address_t io_control_addr;
     };
     
-    InoutImpl(ConstructorType args);
+    InoutImpl(const ConstructorType& args);
     static int probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks);
     
     // iOutputActionSink

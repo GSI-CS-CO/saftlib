@@ -10,8 +10,8 @@
 
 namespace saftlib {
 
-FunctionGenerator::FunctionGenerator(ConstructorType args)
- : dev(args.dev), allocation(args.allocation), shm(args.fgb + SHM_BASE), swi(args.swi), 
+FunctionGenerator::FunctionGenerator(const ConstructorType& args)
+ : Owned(args.objectPath), dev(args.dev), allocation(args.allocation), shm(args.fgb + SHM_BASE), swi(args.swi), 
    num_channels(args.num_channels), buffer_size(args.buffer_size), index(args.index),
    scubusSlot      ((args.macro >> 24) & 0xFF),
    deviceNumber    ((args.macro >> 16) & 0xFF),
@@ -197,9 +197,9 @@ void FunctionGenerator::irq_handler(eb_data_t status)
   }
 }
 
-Glib::RefPtr<FunctionGenerator> FunctionGenerator::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<FunctionGenerator> FunctionGenerator::create(const ConstructorType& args)
 {
-  return RegisteredObject<FunctionGenerator>::create(objectPath, args);
+  return RegisteredObject<FunctionGenerator>::create(args.objectPath, args);
 }
 
 guint64 FunctionGenerator::ParameterTuple::duration() const

@@ -11,6 +11,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
   public:
     typedef SoftwareActionSink_Service ServiceType;
     struct ConstructorType {
+      Glib::ustring objectPath;
       TimingReceiver* dev;
       Glib::ustring name;
       unsigned channel;
@@ -19,7 +20,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
       sigc::slot<void> destroy;
     };
     
-    static Glib::RefPtr<SoftwareActionSink> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<SoftwareActionSink> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
@@ -30,7 +31,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
     
   protected:
-    SoftwareActionSink(ConstructorType args);
+    SoftwareActionSink(const ConstructorType& args);
     eb_address_t queue;
 };
 

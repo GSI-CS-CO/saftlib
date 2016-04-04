@@ -11,8 +11,8 @@ static void do_unsubscribe(Glib::RefPtr<Gio::DBus::Connection> connection, guint
   connection->signal_unsubscribe(id);
 }
 
-Owned::Owned(sigc::slot<void> destroy_)
- : destroy(destroy_)
+Owned::Owned(const Glib::ustring& objectPath, sigc::slot<void> destroy_)
+ : BaseObject(objectPath), destroy(destroy_)
 {
 }
 
@@ -31,6 +31,7 @@ void Owned::Disown()
   if (owner.empty()) {
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Do not have an Owner");
   } else {
+    ownerOnly();
     unsubscribe();
     owner.clear();
     Owner(owner);

@@ -12,14 +12,14 @@ class MILbusCondition : public Condition, public iMILbusCondition
     typedef MILbusCondition_Service ServiceType;
     typedef Condition_ConstructorType ConstructorType;
     
-    static Glib::RefPtr<MILbusCondition> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<MILbusCondition> create(const ConstructorType& args);
     
     // iMILbusCondition
     guint16 getTag() const;
     void setTag(guint16 val);
     
   protected:
-    MILbusCondition(ConstructorType args);
+    MILbusCondition(const ConstructorType& args);
 };
 
 }

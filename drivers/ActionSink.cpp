@@ -8,8 +8,8 @@
 
 namespace saftlib {
 
-ActionSink::ActionSink(TimingReceiver* dev_, Glib::ustring name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
- : Owned(destroy), dev(dev_), name(name_), channel(channel_), num(num_),
+ActionSink::ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev_, const Glib::ustring& name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
+ : Owned(objectPath, destroy), dev(dev_), name(name_), channel(channel_), num(num_),
    minOffset(-100000),  maxOffset(1000000000L), signalRate(100000000L),
    mostFull(0), overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
    overflowUpdate(0), actionUpdate(0), lateUpdate(0), earlyUpdate(0), conflictUpdate(0), delayedUpdate(0)
@@ -508,9 +508,9 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
   Glib::RefPtr<Condition> condition;
   try {
     Condition::Condition_ConstructorType args = { 
-      this, active, id, mask, offset, tagIsKey?attempt.first->first:tag, destroy 
+      path, this, active, id, mask, offset, tagIsKey?attempt.first->first:tag, destroy 
     };
-    condition = constructor(path, args);
+    condition = constructor(args);
     condition->initOwner(getConnection(), getSender());
     attempt.first->second = condition;
     if (active) compile();

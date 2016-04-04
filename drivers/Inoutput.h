@@ -11,12 +11,12 @@ class Inoutput : public InoutImpl
   public:
     typedef Inoutput_Service ServiceType;
 
-    static Glib::RefPtr<Inoutput> create(const Glib::ustring& objectPath, ConstructorType args);
+    static Glib::RefPtr<Inoutput> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
   protected:
-    Inoutput(ConstructorType args);
+    Inoutput(const ConstructorType& args);
 };
 
 }

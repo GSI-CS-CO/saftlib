@@ -6,7 +6,7 @@
 
 namespace saftlib {
 
-SCUbusCondition::SCUbusCondition(ConstructorType args)
+SCUbusCondition::SCUbusCondition(const ConstructorType& args)
  : Condition(args)
 {
 }
@@ -32,9 +32,9 @@ void SCUbusCondition::setTag(guint32 val)
   }
 }
 
-Glib::RefPtr<SCUbusCondition> SCUbusCondition::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SCUbusCondition> SCUbusCondition::create(const ConstructorType& args)
 {
-  return RegisteredObject<SCUbusCondition>::create(objectPath, args);
+  return RegisteredObject<SCUbusCondition>::create(args.objectPath, args);
 }
 
 }

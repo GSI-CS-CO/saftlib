@@ -22,6 +22,7 @@ saftd_SOURCES = version.h \
 	src/Device.cpp			src/Device.h			\
 	src/OpenDevice.cpp		src/OpenDevice.h		\
 	src/Driver.cpp			src/Driver.h			\
+	src/BaseObject.cpp		src/BaseObject.h		\
 	src/SAFTd.cpp			src/SAFTd.h			\
 	src/RegisteredObject.cpp	src/RegisteredObject.h		\
 	src/eb-source.cpp		src/eb-source.h			\

@@ -7,8 +7,8 @@
 
 namespace saftlib {
 
-SCUbusActionSink::SCUbusActionSink(ConstructorType args)
- : ActionSink(args.dev, args.name, args.channel, 0), scubus(args.scubus)
+SCUbusActionSink::SCUbusActionSink(const ConstructorType& args)
+ : ActionSink(args.objectPath, args.dev, args.name, args.channel, 0), scubus(args.scubus)
 {
 }
 
@@ -35,9 +35,9 @@ void SCUbusActionSink::InjectTag(guint32 tag)
   cycle.close();
 }
 
-Glib::RefPtr<SCUbusActionSink> SCUbusActionSink::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<SCUbusActionSink> SCUbusActionSink::create(const ConstructorType& args)
 {
-  return RegisteredObject<SCUbusActionSink>::create(objectPath, args);
+  return RegisteredObject<SCUbusActionSink>::create(args.objectPath, args);
 }
 
 }

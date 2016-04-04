@@ -6,8 +6,8 @@
 
 namespace saftlib {
 
-Condition::Condition(Condition_ConstructorType args)
- : Owned(args.destroy), sink(args.sink), 
+Condition::Condition(const Condition_ConstructorType& args)
+ : Owned(args.objectPath, args.destroy), sink(args.sink), 
    id(args.id), mask(args.mask), offset(args.offset), tag(args.tag),
    acceptLate(false), acceptEarly(false), acceptConflict(false), acceptDelayed(true),
    active(args.active)

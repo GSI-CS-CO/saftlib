@@ -14,29 +14,27 @@ template <typename T>
 class RegisteredObject : public T
 {
   public:
-    static Glib::RefPtr< RegisteredObject<T> > create(const Glib::ustring& object_path, typename T::ConstructorType args);
+    static Glib::RefPtr< RegisteredObject<T> > create(const Glib::ustring& object_path, const typename T::ConstructorType& args);
     
     const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const;
-    const Glib::ustring& getObjectPath() const;
     const Glib::ustring& getSender() const;
     
   protected:
-    RegisteredObject(const Glib::ustring& object_path, typename T::ConstructorType args);
+    RegisteredObject(const Glib::ustring& object_path, const typename T::ConstructorType& args);
     virtual void rethrow(const char *method) const;
     
     typename T::ServiceType service;
-    Glib::ustring path;
 };
 
 template <typename T>
-Glib::RefPtr< RegisteredObject<T> > RegisteredObject<T>::create(const Glib::ustring& object_path, typename T::ConstructorType args)
+Glib::RefPtr< RegisteredObject<T> > RegisteredObject<T>::create(const Glib::ustring& object_path, const typename T::ConstructorType& args)
 {
   return Glib::RefPtr< RegisteredObject<T> >(new RegisteredObject<T>(object_path, args));
 }
 
 template <typename T>
-RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path, typename T::ConstructorType args)
- : T(args), service(this, sigc::mem_fun(this, &RegisteredObject<T>::rethrow)), path(object_path)
+RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path, const typename T::ConstructorType& args)
+ : T(args), service(this, sigc::mem_fun(this, &RegisteredObject<T>::rethrow))
 {
   service.register_self(SAFTd::get().connection(), object_path);
 }
@@ -45,12 +43,6 @@ template <typename T>
 const Glib::RefPtr<Gio::DBus::Connection>& RegisteredObject<T>::getConnection() const
 {
   return service.getConnection();
-}
-
-template <typename T>
-const Glib::ustring& RegisteredObject<T>::getObjectPath() const
-{ 
-  return path;
 }
 
 template <typename T>

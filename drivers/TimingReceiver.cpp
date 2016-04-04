@@ -24,8 +24,9 @@
 
 namespace saftlib {
 
-TimingReceiver::TimingReceiver(ConstructorType args)
- : device(args.device),
+TimingReceiver::TimingReceiver(const ConstructorType& args)
+ : BaseObject(args.objectPath),
+   device(args.device),
    name(args.name),
    etherbonePath(args.etherbonePath),
    base(args.base),
@@ -104,7 +105,14 @@ TimingReceiver::TimingReceiver(ConstructorType args)
           // !!! unsupported
           break;
         }
-      case ECA_SCUBUS: { // !!! link the object ?
+      case ECA_SCUBUS: {
+          std::vector<sdb_device> scubus;
+          device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
+          if (scubus.size() == 1 && num == 0) {
+            Glib::ustring path = getObjectPath() + "/scubus";
+            SCUbusActionSink::ConstructorType args = { path, this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
+            actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(args);
+          }
           break;
         }
       default: {
@@ -244,8 +252,8 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   eb_address_t address = queue_addresses[channel];
   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), alloc->first);
   
-  SoftwareActionSink::ConstructorType args = { this, name, channel, num, address, destroy };
-  Glib::RefPtr<ActionSink> softwareActionSink = SoftwareActionSink::create(path, args);
+  SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
+  Glib::RefPtr<ActionSink> softwareActionSink = SoftwareActionSink::create(args);
   softwareActionSink->initOwner(getConnection(), getSender());
   
   // Own it and inform changes to properties
@@ -354,6 +362,7 @@ std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiv
   
   typedef ActionSinks::const_iterator sink;
   for (sink i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    if (!i->second) continue; // skip inactive software action sinks
     out[i->second->getInterfaceName()][i->second->getObjectName()] = i->second->getObjectPath();
   }
   
@@ -435,6 +444,7 @@ void TimingReceiver::compile()
 
   // Step one is to find all active conditions on all action sinks
   for (ActionSinks::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
+    if (!sink->second) continue; // skip unassigned software action sinks
     for (ActionSink::Conditions::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
       if (!condition->second->getActive()) continue;
       
@@ -546,6 +556,8 @@ void TimingReceiver::compile()
   
   // Flip the tables
   device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
+  
+  used_conditions = id_space.size()/2;
 }
 
 void TimingReceiver::probe(OpenDevice& od)
@@ -564,6 +576,7 @@ void TimingReceiver::probe(OpenDevice& od)
     od.device, 
     od.name, 
     od.etherbonePath, 
+    od.objectPath,
     (eb_address_t)ecas[0].sdb_component.addr_first,
     (eb_address_t)streams[0].sdb_component.addr_first,
     (eb_address_t)pps[0].sdb_component.addr_first,
@@ -573,11 +586,6 @@ void TimingReceiver::probe(OpenDevice& od)
     
   // Add special SCU hardware
   if (scubus.size() == 1) {
-    //SCUbusActionSink::ConstructorType args = { this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
-    //Glib::ustring path = etherbonePath + "/scubus";
-    //actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(path, args);
-    // !!!
-    
     etherbone::Cycle cycle;
     
     // Probe for LM32 block memories
@@ -645,12 +653,13 @@ void TimingReceiver::probe(OpenDevice& od)
       for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
         if (!macros[j]) continue; // no hardware
         
-        std::ostringstream path;
-        path.imbue(std::locale("C"));
-        path << od.objectPath << "/fg_" << j;
+        std::ostringstream spath;
+        spath.imbue(std::locale("C"));
+        spath << od.objectPath << "/fg_" << j;
+        Glib::ustring path = spath.str();
         
-        FunctionGenerator::ConstructorType args = { tr.operator->(), allocation, fgb, swi, (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
-        Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(Glib::ustring(path.str()), args);
+        FunctionGenerator::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
+        Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(args);
 
         std::ostringstream name;
         name.imbue(std::locale("C"));

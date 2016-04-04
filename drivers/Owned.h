@@ -2,13 +2,14 @@
 #define OWNED_H
 
 #include "interfaces/iOwned.h"
+#include "BaseObject.h"
 
 namespace saftlib {
 
-class Owned : public iOwned, public Glib::Object
+class Owned : public BaseObject, public iOwned
 {
   public:
-    Owned(sigc::slot<void> destroy_ = sigc::slot<void>());
+    Owned(const Glib::ustring& objectPath, sigc::slot<void> destroy_ = sigc::slot<void>());
     ~Owned();
     
     void Disown();
@@ -22,11 +23,6 @@ class Owned : public iOwned, public Glib::Object
     // only use this immediately after object creation
     void initOwner(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& owner);
     
-    // provided by RegisteredObject
-    virtual const Glib::ustring& getSender() const = 0;
-    virtual const Glib::ustring& getObjectPath() const = 0;
-    virtual const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const = 0;
-  
   protected:
     virtual void ownerQuit();
     static void owner_quit_handler(

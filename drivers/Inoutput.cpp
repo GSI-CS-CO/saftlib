@@ -5,12 +5,12 @@
 
 namespace saftlib {
 
-Glib::RefPtr<Inoutput> Inoutput::create(const Glib::ustring& objectPath, ConstructorType args)
+Glib::RefPtr<Inoutput> Inoutput::create(const ConstructorType& args)
 {
-  return RegisteredObject<Inoutput>::create(objectPath, args);
+  return RegisteredObject<Inoutput>::create(args.objectPath, args);
 }
 
-Inoutput::Inoutput(ConstructorType args) : InoutImpl(args)
+Inoutput::Inoutput(const ConstructorType& args) : InoutImpl(args)
 {
 }
 
