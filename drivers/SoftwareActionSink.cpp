@@ -60,7 +60,7 @@ void SoftwareActionSink::receiveMSI(guint8 code)
     
     updateAction(0); // increase the counter, rearming the MSI
     
-    if ((flags & ECA_VALID) == 0) {
+    if ((flags & (1<<ECA_VALID)) == 0) {
       clog << kLogErr << "SoftwareActionSink: MSI for increase in VALID_COUNT did not correspond to a valid action in the queue" << std::endl;
       return;
     }
