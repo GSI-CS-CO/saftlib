@@ -370,10 +370,12 @@ guint32 TimingReceiver::getFree() const
   return max_conditions - used_conditions;
 }
 
-void TimingReceiver::msiHandler(unsigned channel, eb_data_t msi)
+void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
 {
   unsigned code = msi >> 16;
   unsigned num  = msi & 0xFFFF;
+  
+  // clog << kLogDebug << "MSI: " << channel << " " << num << " " << code << std::endl;
   
   SinkKey k(channel, num);
   ActionSinks::iterator i = actionSinks.find(k);
@@ -508,7 +510,7 @@ void TimingReceiver::compile()
   }
   
 #if DEBUG_COMPILE
-  clog << kLogDebug << "Table compilation complete!\n";
+  clog << kLogDebug << "Table compilation complete!" << std::endl;
   for (i = 0; i < search.size(); ++i)
     clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
   for (i = 0; i < walk.size(); ++i)

@@ -86,7 +86,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
     void do_remove(SinkKey key);
     void setHandler(unsigned channel, bool enable, eb_address_t address);
-    void msiHandler(unsigned channel, eb_data_t);
+    void msiHandler(eb_data_t msi, unsigned channel);
   
   friend class ActionSink;
 };
