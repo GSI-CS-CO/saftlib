@@ -137,6 +137,7 @@ class ActionSink : public Owned, public iActionSink
     Record fetchError(guint8 code);
     
     bool updateMaxFull();
+    bool updateOverflow(guint64 time);
     bool updateAction(guint64 time);
     bool updateLate(guint64 time);
     bool updateEarly(guint64 time);

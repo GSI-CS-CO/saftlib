@@ -25,6 +25,7 @@ ActionSink::ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev_, co
   cycle.read (dev->getBase() + ECA_OFFSET_BITS_GET,       EB_DATA32, &raw_offset_bits);
   cycle.read (dev->getBase() + ECA_CHANNEL_CAPACITY_GET,  EB_DATA32, &raw_capacity);
   // Wipe out any old state:
+  cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
   cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET,    EB_DATA32, &null);
   cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_LATE);
   cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
@@ -285,7 +286,15 @@ void ActionSink::receiveMSI(guint8 code)
     updateMaxFull();
     break;
   case ECA_OVERFLOW:
-    // !!! overflow
+    if (overflowUpdate > time || time - overflowUpdate >= signalRate) {
+      updateOverflow(time);
+    } else {
+      overflowPending.disconnect(); // just to be safe
+      guint64 exec = overflowUpdate + signalRate;
+      overflowPending = Glib::signal_timeout().connect(
+        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateOverflow), exec),
+        (exec - time) / 1000000);
+    }
     break;
   case ECA_VALID:
     if (actionUpdate > time || time - actionUpdate >= signalRate) {
@@ -354,7 +363,25 @@ bool ActionSink::updateMaxFull()
   return false;
 }
 
-// !!! updateOverflow?
+bool ActionSink::updateOverflow(guint64 time)
+{
+  eb_data_t overflow;
+  
+  etherbone::Cycle cycle;
+  cycle.open(dev->getDevice());
+  cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+  cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,      EB_DATA32, num);
+  // reading OVERFLOW_COUNT clears the count and rearms the MSI
+  cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
+  cycle.close();
+  
+  if (!overflow) clog << kLogErr << "Received OVERFLOW MSI, but OVERFLOW_COUNT was 0" << std::endl;
+  
+  overflowCount += overflow;
+  overflowUpdate = time;
+  OverflowCount(overflowCount);
+  return false;
+}
 
 bool ActionSink::updateAction(guint64 time)
 {
