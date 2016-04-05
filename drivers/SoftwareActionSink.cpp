@@ -14,9 +14,6 @@ namespace saftlib {
 SoftwareActionSink::SoftwareActionSink(const ConstructorType& args)
  : ActionSink(args.objectPath, args.dev, args.name, args.channel, args.num, args.destroy), queue(args.queue)
 {
-  // flush any cruft in the FIFO
-  for (guint16 i = 0; i < capacity; ++i)
-    dev->getDevice().write(queue + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
 }
 
 Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const ConstructorType& args)
@@ -33,6 +30,8 @@ void SoftwareActionSink::receiveMSI(guint8 code)
 {
   // Intercept valid action counter increase
   if (code == ECA_VALID) {
+    updateAction(0); // increase the counter, rearming the MSI
+    
     eb_data_t flags, rawNum, event_hi, event_lo, param_hi, param_lo, 
               tag, tef, deadline_hi, deadline_lo, executed_hi, executed_lo;
     
@@ -57,8 +56,6 @@ void SoftwareActionSink::receiveMSI(guint8 code)
     guint64 param    = guint64(param_hi)    << 32 | param_lo;
     guint64 deadline = guint64(deadline_hi) << 32 | deadline_lo;
     guint64 executed = guint64(executed_hi) << 32 | executed_lo;
-    
-    updateAction(0); // increase the counter, rearming the MSI
     
     if ((flags & (1<<ECA_VALID)) == 0) {
       clog << kLogErr << "SoftwareActionSink: MSI for increase in VALID_COUNT did not correspond to a valid action in the queue" << std::endl;
