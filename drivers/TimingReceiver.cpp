@@ -377,13 +377,31 @@ void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
   
   // clog << kLogDebug << "MSI: " << channel << " " << num << " " << code << std::endl;
   
-  SinkKey k(channel, num);
-  ActionSinks::iterator i = actionSinks.find(k);
-  if (i == actionSinks.end() || !i->second) {
-    // It could be that the user deleted the SoftwareActionSink
-    // while it still had pending actions. Just discard them.
-  } else {
-    i->second->receiveMSI(code);
+  switch (code) {
+    case ECA_OVERFLOW: {
+      // !!! fixme
+      break;
+    }
+    case ECA_MAX_FULL: {
+      SinkKey low(channel, 0);
+      SinkKey high(channel+1, 0);
+      ActionSinks::iterator first = actionSinks.lower_bound(low);
+      ActionSinks::iterator last  = actionSinks.lower_bound(high);
+      for (; first != last; ++first)
+        first->second->receiveMSI(code);
+      break;
+    }
+    default: {
+      SinkKey k(channel, num);
+      ActionSinks::iterator i = actionSinks.find(k);
+      if (i == actionSinks.end() || !i->second) {
+        // It could be that the user deleted the SoftwareActionSink
+        // while it still had pending actions. Just discard them.
+      } else {
+        i->second->receiveMSI(code);
+      }
+      break;
+    }
   }
 }
 
