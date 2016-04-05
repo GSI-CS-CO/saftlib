@@ -25,8 +25,6 @@ ActionSink::ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev_, co
   cycle.read (dev->getBase() + ECA_OFFSET_BITS_GET,       EB_DATA32, &raw_offset_bits);
   cycle.read (dev->getBase() + ECA_CHANNEL_CAPACITY_GET,  EB_DATA32, &raw_capacity);
   // Wipe out any old state:
-  cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
-  cycle.read (dev->getBase() + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
   cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET,    EB_DATA32, &null);
   cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_LATE);
   cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);

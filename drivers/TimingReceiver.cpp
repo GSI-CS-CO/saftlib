@@ -60,9 +60,18 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   compile();
   
   // hook all MSIs
+  eb_data_t null;
   for (unsigned i = 0; i < channels; ++i) {
+    // Wipe out old global state for the channel
+    cycle.open(device);
+    cycle.write(getBase() + ECA_CHANNEL_SELECT_RW,          EB_DATA32, i);
+    cycle.read (getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
+    cycle.read (getBase() + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
+    cycle.close();
+    // Reserve an MSI
     channel_msis.push_back(device.request_irq(
       sigc::bind(sigc::mem_fun(*this, &TimingReceiver::msiHandler), i)));
+    // Hook MSI to hardware
     setHandler(i, true, channel_msis.back());
   }
   
@@ -387,8 +396,10 @@ void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
       SinkKey high(channel+1, 0);
       ActionSinks::iterator first = actionSinks.lower_bound(low);
       ActionSinks::iterator last  = actionSinks.lower_bound(high);
-      for (; first != last; ++first)
+      for (; first != last; ++first) {
+        if (!first->second) continue; // skip unused SoftwareActionSinks
         first->second->receiveMSI(code);
+      }
       break;
     }
     default: {
