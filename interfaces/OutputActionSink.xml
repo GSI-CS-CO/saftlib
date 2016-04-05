@@ -35,7 +35,7 @@
   <!-- OutputEnable: Is the output driver enabled.
        When OutputEnable is false, the output is not driven.
        This defaults to off.
-       See also Termination if this is an Inoutput.
+       See also Termination if this is an inoutput.
     -->
   <property name="OutputEnable" type="b" access="readwrite"/>
 
@@ -59,7 +59,7 @@
   
   <!-- ReadOutput: Read the output state.
        This property reflects the current value which would be output when
-       OutputEnable is true. This may differ from ReadInput on an Inout.
+       OutputEnable is true. This may differ from ReadInput on an inout.
     -->
   <method name="ReadOutput">
     <arg direction="out" type="b" name="value"/>
@@ -80,6 +80,11 @@
   <!-- LogicLevelOut: Logic level of the output (LVDS, LVTTL, ...)
     -->
   <property name="LogicLevelOut" type="s" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
+  <!-- Input: If non-empty, path of the Input object for the same physical IO -->
+  <property name="Input" type="s" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   

@@ -85,13 +85,6 @@
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
     
-    <!-- Inoutputs: A list of all the high/low inoutputs on the receiver.
-         Each path refers to an object of type Inoutput.
-      -->
-    <property name="Inoutputs" type="a{ss}" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
-    </property>
-    
     <!-- Interfaces: List of all object instances of various hardware.
          The key in the dictionary is the name of the interface.
          The value is all object paths to hardware implementing that interface.

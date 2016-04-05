@@ -1,7 +1,6 @@
 NODES =				\
 	SAFTd.xml		\
 	FunctionGenerator.xml	\
-	Inoutput.xml		\
 	Input.xml		\
 	MILbusActionSink.xml	\
 	MILbusCondition.xml	\
@@ -40,7 +39,6 @@ nodist_saftlib_HEADERS = 	\
 	iInputEventSource.h	\
 	iMILbusActionSink.h	\
 	iMILbusCondition.h	\
-	Inoutput.h		\
 	Input.h			\
 	iFunctionGenerator.h	\
 	iOutputActionSink.h	\
@@ -96,7 +94,6 @@ nodist_libsaftlib_la_SOURCES =	\
 	iInputEventSource.cpp	\
 	iMILbusActionSink.cpp	\
 	iMILbusCondition.cpp	\
-	Inoutput.cpp		\
 	Input.cpp		\
 	iOutputActionSink.cpp	\
 	iOutputCondition.cpp	\
