@@ -1,6 +1,5 @@
 #define ETHERBONE_THROWS 1
-//#define DEBUG_COMPRESS 1
-//#define DEBUG_COMPILE 1
+// #define DEBUG_COMPILE 1
 
 #include <sstream>
 #include <algorithm>
@@ -511,10 +510,9 @@ void TimingReceiver::compile()
 #if DEBUG_COMPILE
   clog << kLogDebug << "Table compilation complete!\n";
   for (i = 0; i < search.size(); ++i)
-    clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << "\n";
+    clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
   for (i = 0; i < walk.size(); ++i)
-    clog << kLogDebug << "W: " << walk[i].offset << " " << walk[i].tag << " " << walk[i].next << " " << (int)walk[i].channel << "\n";
-  clog << kLogDebug << std::flush; 
+    clog << kLogDebug << "W: " << walk[i].next << " " << walk[i].offset << " " << walk[i].tag << " " << walk[i].flags << " " << (int)walk[i].channel << " " << (int)walk[i].num << std::endl;
 #endif
 
   etherbone::Cycle cycle;
