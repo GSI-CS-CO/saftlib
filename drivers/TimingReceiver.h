@@ -73,6 +73,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     unsigned used_conditions;
     std::vector<eb_address_t> channel_msis;
     std::vector<eb_address_t> queue_addresses;
+    std::vector<guint16> most_full;
     
     typedef std::map< Glib::ustring, Glib::RefPtr<Owned> > Owneds;
     typedef std::map< Glib::ustring, Owneds >              OtherStuff;
@@ -87,6 +88,9 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     void do_remove(SinkKey key);
     void setHandler(unsigned channel, bool enable, eb_address_t address);
     void msiHandler(eb_data_t msi, unsigned channel);
+    guint16 updateMostFull(unsigned channel); // returns current fill
+    void resetMostFull(unsigned channel);
+    void popMissingQueue(unsigned channel, unsigned num);
   
   friend class ActionSink;
 };

@@ -40,7 +40,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
   
   // Probe the configuration of the ECA
-  eb_data_t raw_channels, raw_search, raw_walker, raw_type, raw_max_num;
+  eb_data_t raw_channels, raw_search, raw_walker, raw_type, raw_max_num, raw_capacity;
   etherbone::Cycle cycle;
   cycle.open(device);
   cycle.read(base + ECA_CHANNELS_GET,        EB_DATA32, &raw_channels);
@@ -56,34 +56,18 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   // Worst-case assumption
   max_conditions = std::min(search_size/2, walker_size);
   
+  // Prepare local channel state
+  queue_addresses.resize(channels, 0);
+  most_full.resize(channels, 0);
+  
   // remove all old rules
   compile();
-  
-  // hook all MSIs
-  eb_data_t null;
-  for (unsigned i = 0; i < channels; ++i) {
-    // Wipe out old global state for the channel
-    cycle.open(device);
-    cycle.write(getBase() + ECA_CHANNEL_SELECT_RW,          EB_DATA32, i);
-    cycle.read (getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
-    cycle.read (getBase() + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
-    cycle.close();
-    // Reserve an MSI
-    channel_msis.push_back(device.request_irq(
-      sigc::bind(sigc::mem_fun(*this, &TimingReceiver::msiHandler), i)));
-    // Hook MSI to hardware
-    setHandler(i, true, channel_msis.back());
-  }
-  
-  // Create the IOs (channel 0)
-  InoutImpl::probe(this, actionSinks, eventSources);
   
   // Locate all queue interfaces
   std::vector<sdb_device> queues;
   device.sdb_find_by_identity(ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, queues);
   
   // Figure out which queues correspond to which channels
-  queue_addresses.resize(channels, 0);
   for (unsigned i = 0; i < queues.size(); ++i) {
     eb_data_t id;
     eb_address_t address = queues[i].sdb_component.addr_first;
@@ -93,26 +77,38 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
     queue_addresses[id] = address;
   }
   
-  // Configure the non-IO action sinks, creating objects
+  // Create the IOs (channel 0)
+  InoutImpl::probe(this, actionSinks, eventSources);
+  
+  // Configure the non-IO action sinks, creating objects and clearing status
   for (unsigned i = 1; i < channels; ++i) {
     cycle.open(device);
-    cycle.write(base + ECA_CHANNEL_SELECT_RW, EB_DATA32, i);
-    cycle.read(base + ECA_CHANNEL_TYPE_GET,    EB_DATA32, &raw_type);
-    cycle.read(base + ECA_CHANNEL_MAX_NUM_GET, EB_DATA32, &raw_max_num);
+    cycle.write(base + ECA_CHANNEL_SELECT_RW,    EB_DATA32, i);
+    cycle.read (base + ECA_CHANNEL_TYPE_GET,     EB_DATA32, &raw_type);
+    cycle.read (base + ECA_CHANNEL_MAX_NUM_GET,  EB_DATA32, &raw_max_num);
+    cycle.read (base + ECA_CHANNEL_CAPACITY_GET, EB_DATA32, &raw_capacity);
     cycle.close();
+    
+    // Flush any queue we manage
+    if (raw_type == ECA_LINUX) {
+      for (; raw_capacity; --raw_capacity)
+        device.write(queue_addresses[i] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
+    }
     
     for (unsigned num = 0; num < raw_max_num; ++num) {
       switch (raw_type) {
-      case ECA_LINUX: {
+        case ECA_LINUX: {
           // defer construction till demanded by NewSoftwareActionSink, but setup the keys
           actionSinks[SinkKey(i, num)].reset();
+          // clear any stale valid count
+          popMissingQueue(i, num);
           break;
         }
-      case ECA_WBM: {
+        case ECA_WBM: {
           // !!! unsupported
           break;
         }
-      case ECA_SCUBUS: {
+        case ECA_SCUBUS: {
           std::vector<sdb_device> scubus;
           device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
           if (scubus.size() == 1 && num == 0) {
@@ -122,12 +118,23 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
           }
           break;
         }
-      default: {
+        default: {
           clog << kLogWarning << "ECA: unsupported channel type detected" << std::endl;
           break;
         }
       }
     }
+  }
+  
+  // hook all MSIs
+  for (unsigned i = 0; i < channels; ++i) {
+    // Reserve an MSI
+    channel_msis.push_back(device.request_irq(
+      sigc::bind(sigc::mem_fun(*this, &TimingReceiver::msiHandler), i)));
+    // Hook MSI to hardware
+    setHandler(i, true, channel_msis.back());
+    // Wipe out old global state for the channel => will generate an MSI => updateMostFull
+    resetMostFull(i);
   }
 }
 
@@ -144,6 +151,7 @@ TimingReceiver::~TimingReceiver()
     
     // destroy children
     actionSinks.clear();
+    eventSources.clear();
     otherStuff.clear();
     
     // wipe out the condition table
@@ -386,34 +394,83 @@ void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
   
   // clog << kLogDebug << "MSI: " << channel << " " << num << " " << code << std::endl;
   
-  switch (code) {
-    case ECA_OVERFLOW: {
-      // !!! fixme
-      break;
-    }
-    case ECA_MAX_FULL: {
-      SinkKey low(channel, 0);
-      SinkKey high(channel+1, 0);
-      ActionSinks::iterator first = actionSinks.lower_bound(low);
-      ActionSinks::iterator last  = actionSinks.lower_bound(high);
-      for (; first != last; ++first) {
-        if (!first->second) continue; // skip unused SoftwareActionSinks
-        first->second->receiveMSI(code);
-      }
-      break;
-    }
-    default: {
-      SinkKey k(channel, num);
-      ActionSinks::iterator i = actionSinks.find(k);
-      if (i == actionSinks.end() || !i->second) {
-        // It could be that the user deleted the SoftwareActionSink
-        // while it still had pending actions. Just discard them.
-      } else {
-        i->second->receiveMSI(code);
-      }
-      break;
+  // MAX_FULL is tracked by this object, not the subchannel
+  if (code == ECA_MAX_FULL) {
+    updateMostFull(channel);
+  } else {
+    SinkKey k(channel, num);
+    ActionSinks::iterator i = actionSinks.find(k);
+    if (i == actionSinks.end()) {
+      clog << kLogErr << "MSI for non-existant channel " << channel << " num " << num << std::endl;
+    } else if (!i->second) {
+      // It could be that the user deleted the SoftwareActionSink
+      // while it still had pending actions. Pop any stale records.
+      if (code == ECA_VALID) popMissingQueue(channel, num);
+    } else {
+      i->second->receiveMSI(code);
     }
   }
+}
+
+guint16 TimingReceiver::updateMostFull(unsigned channel)
+{
+  if (channel >= most_full.size()) return 0;
+  
+  etherbone::Cycle cycle;
+  eb_data_t raw;
+  
+  cycle.open(device);
+  cycle.write(base + ECA_CHANNEL_SELECT_RW,        EB_DATA32, channel);
+  cycle.read (base + ECA_CHANNEL_MOSTFULL_ACK_GET, EB_DATA32, &raw);
+  cycle.close();
+  
+  guint16 mostFull = raw & 0xFFFF;
+  guint16 used     = raw >> 16;
+  
+  if (most_full[channel] != mostFull) {
+    most_full[channel] = mostFull;
+    
+    // Broadcast new value to all subchannels
+    SinkKey low(channel, 0);
+    SinkKey high(channel+1, 0);
+    ActionSinks::iterator first = actionSinks.lower_bound(low);
+    ActionSinks::iterator last  = actionSinks.lower_bound(high);
+    
+    for (; first != last; ++first) {
+      if (!first->second) continue; // skip unused SoftwareActionSinks
+      first->second->MostFull(mostFull);
+    }
+  }
+  
+  return used;
+}
+
+void TimingReceiver::resetMostFull(unsigned channel)
+{
+  if (channel >= most_full.size()) return;
+  
+  etherbone::Cycle cycle;
+  eb_data_t null;
+  
+  cycle.open(device);
+  cycle.write(base + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+  cycle.read (base + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
+  cycle.close();
+}
+
+void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
+{
+  etherbone::Cycle cycle;
+  eb_data_t nill;
+  
+  // First, rearm the MSI
+  cycle.open(device);
+  device.write(base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+  device.write(base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+  device.read (base + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
+  cycle.close();
+  // Then pop the ignored record
+  device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
 }
 
 struct ECA_OpenClose {
