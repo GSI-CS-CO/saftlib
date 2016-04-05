@@ -1,18 +1,15 @@
 #define ETHERBONE_THROWS 1
 
-#include "TimingReceiver.h"
 #include "InoutImpl.h"
-#include "Output.h"
-#include "OutputCondition.h"
-#include "Inoutput.h"
-#include "Input.h"
 #include "io_control_regs.h"
 #include "src/clog.h"
+#include "Output.h"
+#include "Input.h"
 
 namespace saftlib {
 
 InoutImpl::InoutImpl(const ConstructorType& args)
- : ActionSink(args.objectPath, args.dev, args.name, args.io_channel, args.io_index),
+ : tr(args.tr),
    io_channel(args.io_channel), io_index(args.io_index), io_special_purpose(args.io_special_purpose), io_logic_level(args.io_logic_level),
    io_oe_available(args.io_oe_available), io_term_available(args.io_term_available),
    io_spec_out_available(args.io_spec_out_available), io_spec_in_available(args.io_spec_in_available),
@@ -20,20 +17,12 @@ InoutImpl::InoutImpl(const ConstructorType& args)
 {
 }
 
-Glib::ustring InoutImpl::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on)
-{
-  return NewConditionHelper(active, id, mask, offset, on?1:2, false,
-    sigc::ptr_fun(&OutputCondition::create));
-}
-
 void InoutImpl::WriteOutput(bool value)
 {
   etherbone::Cycle cycle;
   eb_data_t writeOutput;
   
-  ownerOnly();
-  
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO) 
   { 
     if (value == true) { writeOutput = 0x01; }
@@ -59,7 +48,7 @@ bool InoutImpl::ReadOutput()
   etherbone::Cycle cycle;
   eb_data_t readOutput;
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if      (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eSet_GPIO_Out_Begin+(io_index*4), EB_DATA32, &readOutput); }
   else if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eSet_LVDS_Out_Begin+(io_index*4), EB_DATA32, &readOutput); }
   else                                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
@@ -83,7 +72,7 @@ bool InoutImpl::getOutputEnable() const
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Oe_Set_low,  EB_DATA32, &readOutputEnable); }
@@ -106,79 +95,23 @@ bool InoutImpl::getOutputEnable() const
 
 void InoutImpl::setOutputEnable(bool val)
 {
-  unsigned access_position = 0;
-  unsigned internal_id = io_index;
   etherbone::Cycle cycle;
-    
-  ownerOnly();
   
-  /* Calculate access position (32bit access to 64bit register)*/
-  if (io_index>31)
-  { 
-    internal_id = io_index-31; 
-    access_position = 1;
+  unsigned id_low  = io_index % 32;
+  unsigned id_high = io_index / 32;
+  eb_data_t id_mask = eb_data_t(1) << id_low;
+  
+  eb_address_t reg;
+  if (io_channel == IO_CFG_CHANNEL_GPIO) {
+    reg = val?eGPIO_Oe_Set_low:eGPIO_Oe_Reset_low;
+  } else if (io_channel == IO_CFG_CHANNEL_LVDS) {
+    reg = val?eLVDS_Oe_Set_low:eLVDS_Oe_Reset_low;
+  } else {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!");
   }
   
-  cycle.open(dev->getDevice());
-  if (io_channel == IO_CFG_CHANNEL_GPIO)
-  {
-    if (val)
-    {
-      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Oe_Set_low,  EB_DATA32, (1<<internal_id)); }
-      else                      { cycle.write(io_control_addr+eGPIO_Oe_Set_high, EB_DATA32, (1<<internal_id)); }
-    }
-    else
-    {
-      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_Oe_Reset_low,  EB_DATA32, (1<<internal_id)); }
-      else                      { cycle.write(io_control_addr+eGPIO_Oe_Reset_high, EB_DATA32, (1<<internal_id)); }
-    }
-  }
-  else if (io_channel == IO_CFG_CHANNEL_LVDS)
-  {
-    if (val)
-    {
-      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Oe_Set_low,  EB_DATA32, (1<<internal_id)); }
-      else                      { cycle.write(io_control_addr+eLVDS_Oe_Set_high, EB_DATA32, (1<<internal_id)); }
-    }
-    else
-    {
-      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_Oe_Reset_low,  EB_DATA32, (1<<internal_id)); }
-      else                      { cycle.write(io_control_addr+eLVDS_Oe_Reset_high, EB_DATA32, (1<<internal_id)); }
-    }
-  }
-  cycle.close();
-}
-
-guint64 InoutImpl::getResolution() const
-{
-  return 0;
-}
-
-guint32 InoutImpl::getEventBits() const
-{
-  return 0;
-}
-
-bool InoutImpl::getEventEnable() const
-{
-  return false;
-}
-
-guint64 InoutImpl::getEventPrefix() const
-{
-  return 0;
-}
-
-void InoutImpl::setEventEnable(bool val)
-{
-  ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented");
-}
-
-void InoutImpl::setEventPrefix(guint64 val)
-{
-  ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented");
+  tr->getDevice().write(io_control_addr + reg + 4*id_high, EB_DATA32, id_mask);
+  OutputEnable(val);
 }
 
 bool InoutImpl::ReadInput()
@@ -186,7 +119,7 @@ bool InoutImpl::ReadInput()
   etherbone::Cycle cycle;
   eb_data_t readInput;
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if      (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eGet_GPIO_In_Begin+(io_index*4), EB_DATA32, &readInput); }
   else if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eGet_LVDS_In_Begin+(io_index*4), EB_DATA32, &readInput); }
   else                                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
@@ -215,7 +148,7 @@ bool InoutImpl::getInputTermination() const
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Term_Set_low,  EB_DATA32, &readInputTermination); }
@@ -238,7 +171,6 @@ bool InoutImpl::getInputTermination() const
 
 void InoutImpl::setStableTime(guint32 val)
 {
-  ownerOnly();
   throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented");
 }
 
@@ -248,8 +180,6 @@ void InoutImpl::setInputTermination(bool val)
   unsigned internal_id = io_index;
   etherbone::Cycle cycle;
     
-  ownerOnly();
-  
   /* Calculate access position (32bit access to 64bit register)*/
   if (io_index>31)
   { 
@@ -257,7 +187,7 @@ void InoutImpl::setInputTermination(bool val)
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (val)
@@ -285,6 +215,7 @@ void InoutImpl::setInputTermination(bool val)
     }
   }
   cycle.close();
+  InputTermination(val);
 }
 
 bool InoutImpl::getOutputEnableAvailable() const
@@ -321,7 +252,7 @@ bool InoutImpl::getSpecialPurposeOut() const
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Spec_Out_Set_low,  EB_DATA32, &readSpecialPurposeOut); }
@@ -348,8 +279,6 @@ void InoutImpl::setSpecialPurposeOut(bool val)
   unsigned internal_id = io_index;
   etherbone::Cycle cycle;
     
-  ownerOnly();
-  
   /* Calculate access position (32bit access to 64bit register)*/
   if (io_index>31)
   { 
@@ -357,7 +286,7 @@ void InoutImpl::setSpecialPurposeOut(bool val)
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (val)
@@ -385,6 +314,7 @@ void InoutImpl::setSpecialPurposeOut(bool val)
     }
   }
   cycle.close();
+  SpecialPurposeOut(val);
 }
 
 bool InoutImpl::getSpecialPurposeIn() const
@@ -401,7 +331,7 @@ bool InoutImpl::getSpecialPurposeIn() const
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Spec_In_Set_low,  EB_DATA32, &readSpecialPurposeIn); }
@@ -428,8 +358,6 @@ void InoutImpl::setSpecialPurposeIn(bool val)
   unsigned internal_id = io_index;
   etherbone::Cycle cycle;
     
-  ownerOnly();
-  
   /* Calculate access position (32bit access to 64bit register)*/
   if (io_index>31)
   { 
@@ -437,7 +365,7 @@ void InoutImpl::setSpecialPurposeIn(bool val)
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (val)
@@ -465,9 +393,10 @@ void InoutImpl::setSpecialPurposeIn(bool val)
     }
   }
   cycle.close();
+  SpecialPurposeIn(val);
 }
 
-int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks)
+int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks, TimingReceiver::EventSources& eventSources)
 {
   /* Helpers */
   unsigned io_table_entries_id     = 0;
@@ -534,6 +463,8 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
   }
   
   /* Create an action sink for each IO */
+  unsigned eca_in = 0, eca_out = 0;
+  
   for (io_table_iterator = 0; io_table_iterator < (io_GPIOTotal + io_LVDSTotal); io_table_iterator++)
   {
     /* Helpers */
@@ -568,31 +499,46 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
     /* Get IO name */
     cIOName = s_aIOCONTROL_SetupField[io_table_iterator].uName;
     Glib::ustring IOName = cIOName;
-    TimingReceiver::SinkKey key(channel, internal_id);
+    
+    /* Create the IO controller object */
+    InoutImpl::ConstructorType impl_args = { 
+      tr, channel, internal_id, special, logic_level, oe_available, 
+      term_available, spec_out_available, spec_in_available, ioctl_address };
+    Glib::RefPtr<InoutImpl> impl(new InoutImpl(impl_args));
+    
+    unsigned eca_channel = 0; // ECA channel 0 is always for IO
+    TimingReceiver::SinkKey key_in (eca_channel, eca_in);  // order: gpio_inout, gpio_in,  lvds_inout, lvds_in
+    TimingReceiver::SinkKey key_out(eca_channel, eca_out); // order: gpio_inout, gpio_out, lvds_inout, lvds_out
+    
+    Glib::ustring input_path  = tr->getObjectPath() + "/inputs/"  + IOName;
+    Glib::ustring output_path = tr->getObjectPath() + "/outputs/" + IOName;
+    sigc::slot<void> nill;
     
     /* Add sinks depending on their direction */
     switch(direction)
     {
       case IO_CFG_FIELD_DIR_OUTPUT:
       {
-        Glib::ustring path = tr->getObjectPath() + "/outputs/" + IOName;
-        Output::ConstructorType args = { path, tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[key] = Output::create(args);
+        Output::ConstructorType out_args = { IOName, output_path, "", tr, eca_channel, eca_out, impl, nill };
+        actionSinks[key_out] = Output::create(out_args);
+        ++eca_out;
         break;
       }
       case IO_CFG_FIELD_DIR_INPUT:
       {
-        // !!! need this to NOT overlap OUT/INOUT
-        Glib::ustring path = tr->getObjectPath() + "/inputs/" + IOName;
-        Input::ConstructorType args = { path, tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[key] = Input::create(args);
+        Input::ConstructorType in_args = { IOName, input_path, "", tr, impl, nill };
+        eventSources[key_in] = Input::create(in_args);
+        ++eca_in;
         break;
       }
       case IO_CFG_FIELD_DIR_INOUT:
       {
-        Glib::ustring path = tr->getObjectPath() + "/inoutputs/" + IOName;
-        Inoutput::ConstructorType args = { path, tr, IOName, channel, internal_id, special, logic_level, oe_available, term_available, spec_out_available, spec_in_available, ioctl_address };
-        actionSinks[key] = Inoutput::create(args);
+        Output::ConstructorType out_args = { IOName, output_path, input_path, tr, eca_channel, eca_out, impl, nill };
+        Input::ConstructorType in_args = { IOName, input_path, output_path, tr, impl, nill };
+        actionSinks[key_out] = Output::create(out_args);
+        eventSources[key_in] = Input::create(in_args);
+        ++eca_out;
+        ++eca_in;
         break;
       }
       default:
@@ -622,7 +568,7 @@ bool InoutImpl::getBuTiSMultiplexer() const
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (access_position == 0) { cycle.read(io_control_addr+eGPIO_Mux_Set_low,  EB_DATA32, &readBuTiSMultiplexer); }
@@ -649,8 +595,6 @@ void InoutImpl::setBuTiSMultiplexer(bool val)
   unsigned internal_id = io_index;
   etherbone::Cycle cycle;
     
-  ownerOnly();
-  
   /* Calculate access position (32bit access to 64bit register)*/
   if (io_index>31)
   { 
@@ -658,7 +602,7 @@ void InoutImpl::setBuTiSMultiplexer(bool val)
     access_position = 1;
   }
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO)
   {
     if (val)
@@ -686,6 +630,7 @@ void InoutImpl::setBuTiSMultiplexer(bool val)
     }
   }
   cycle.close();
+  BuTiSMultiplexer(val);
 }
 
 Glib::ustring InoutImpl::getLogicLevelOut() const { return getLogicLevel(); }

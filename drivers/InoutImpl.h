@@ -2,21 +2,15 @@
 #define INOUTPUT_IMPL_H
 
 #include <etherbone.h>
-#include "interfaces/iOutputActionSink.h"
-#include "interfaces/iEventSource.h"
-#include "interfaces/iInputEventSource.h"
-#include "ActionSink.h"
 #include "TimingReceiver.h"
 
 namespace saftlib {
 
-class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSource, public iInputEventSource
+class InoutImpl : public Glib::Object
 {
   public:
     struct ConstructorType {
-      Glib::ustring objectPath;
-      TimingReceiver* dev;
-      Glib::ustring name;
+      TimingReceiver* tr;
       unsigned io_channel;
       unsigned io_index;
       unsigned io_special_purpose;
@@ -29,10 +23,9 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     };
     
     InoutImpl(const ConstructorType& args);
-    static int probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks);
+    static int probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks, TimingReceiver::EventSources& eventSources);
     
     // iOutputActionSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on);
     void WriteOutput(bool value);
     bool ReadOutput();
     bool getOutputEnable() const;
@@ -44,14 +37,6 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     bool getBuTiSMultiplexer() const;
     void setBuTiSMultiplexer(bool val);
     Glib::ustring getLogicLevelOut() const;
-    
-    // iEventSource
-    guint64 getResolution() const;
-    guint32 getEventBits() const;
-    bool getEventEnable() const;
-    guint64 getEventPrefix() const;
-    void setEventEnable(bool val);
-    void setEventPrefix(guint64 val);
     
     // iInputEventSource
     bool ReadInput(); // done
@@ -65,7 +50,15 @@ class InoutImpl : public ActionSink, public iOutputActionSink, public iEventSour
     bool getSpecialPurposeInAvailable() const;
     Glib::ustring getLogicLevelIn() const;
     
+    sigc::signal< void, bool > OutputEnable;
+    sigc::signal< void, bool > SpecialPurposeOut;
+    sigc::signal< void, bool > BuTiSMultiplexer;
+    sigc::signal< void, guint32 > StableTime;
+    sigc::signal< void, bool > InputTermination;
+    sigc::signal< void, bool > SpecialPurposeIn;
+    
   protected:
+    TimingReceiver* tr;
     unsigned io_channel;
     unsigned io_index;
     unsigned io_special_purpose;

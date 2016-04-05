@@ -107,11 +107,9 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
     /* Search for IO name */
-    std::map< Glib::ustring, Glib::ustring > inouts;
     std::map< Glib::ustring, Glib::ustring > outs;
     std::map< Glib::ustring, Glib::ustring > ins;
     Glib::ustring io_path;
-    inouts = receiver->getInoutputs();
     outs = receiver->getOutputs();
     ins = receiver->getInputs();
     Glib::RefPtr<Output_Proxy> output_proxy;
@@ -125,17 +123,6 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
         io_found = true; 
         io_type = IO_CFG_FIELD_DIR_OUTPUT; 
         output_proxy = Output_Proxy::create(it->second);
-        io_path = it->second;
-      }
-    }
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=inouts.begin(); it!=inouts.end(); ++it)
-    {
-      if (it->first == ioName)
-      { 
-        io_found = true; 
-        io_type = IO_CFG_FIELD_DIR_INOUT;
-        output_proxy = Output_Proxy::create(it->second);
-        input_proxy = Input_Proxy::create(it->second);
         io_path = it->second;
       }
     }
@@ -340,21 +327,14 @@ static int io_print_table(bool verbose_mode)
   {
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > inouts;
     std::map< Glib::ustring, Glib::ustring > outs;
     std::map< Glib::ustring, Glib::ustring > ins;
-    inouts = receiver->getInoutputs();
     outs = receiver->getOutputs();
     ins = receiver->getInputs();
     
     /* Show verbose output */
     if (verbose_mode)
     {
-      std::cout << "Discovered Inoutput(s): " << std::endl;
-      for (std::map<Glib::ustring,Glib::ustring>::iterator it=inouts.begin(); it!=inouts.end(); ++it)
-      {
-        std::cout << it->first << " => " << it->second << '\n';
-      }
       std::cout << "Discovered Output(s): " << std::endl;
       for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
       {
@@ -403,32 +383,6 @@ static int io_print_table(bool verbose_mode)
       else                                              { std::cout << "No"; }
       std::cout << std::setw(3+8);
       std::cout << "No"; /* SpecialOut */
-      std::cout << output_proxy->getLogicLevelOut();
-      std::cout << std::endl;
-    }
-    
-    /* Print Inoutputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=inouts.begin(); it!=inouts.end(); ++it)
-    {
-      Glib::RefPtr<Output_Proxy> output_proxy;
-      output_proxy = Output_Proxy::create(it->second);
-      Glib::RefPtr<Input_Proxy> input_proxy;
-      input_proxy = Input_Proxy::create(it->second);
-      std::cout << std::left;
-      std::cout << std::setw(12+2) << it->first << " ";
-      std::cout << std::setw(5+6)  << "Inout ";
-      std::cout << std::setw(3+11);
-      if(output_proxy->getOutputEnableAvailable()) { std::cout << "Yes"; }
-      else                                         { std::cout << "No"; }
-      std::cout << std::setw(3+15);
-      if(input_proxy->getInputTerminationAvailable()) { std::cout << "Yes"; }
-      else                                            { std::cout << "No"; }
-      std::cout << std::setw(5+7);
-      if(output_proxy->getSpecialPurposeOutAvailable()) { std::cout << "Yes"; }
-      else                                              { std::cout << "No"; }
-      std::cout << std::setw(3+8);
-      if(input_proxy->getSpecialPurposeInAvailable()) { std::cout << "Yes"; }
-      else                                            { std::cout << "No"; }
       std::cout << output_proxy->getLogicLevelOut();
       std::cout << std::endl;
     }

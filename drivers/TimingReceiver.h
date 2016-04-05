@@ -3,7 +3,7 @@
 
 #include "OpenDevice.h"
 #include "ActionSink.h"
-#include "FunctionGenerator.h"
+#include "EventSource.h"
 #include "interfaces/TimingReceiver.h"
 
 namespace saftlib {
@@ -38,7 +38,6 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
     std::map< Glib::ustring, Glib::ustring > getOutputs() const;
     std::map< Glib::ustring, Glib::ustring > getInputs() const;
-    std::map< Glib::ustring, Glib::ustring > getInoutputs() const;
     std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > getInterfaces() const;
     guint32 getFree() const;
     
@@ -53,6 +52,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     // public type, even though the member is private
     typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
     typedef std::map< SinkKey, Glib::RefPtr<ActionSink> >  ActionSinks;
+    typedef std::map< SinkKey, Glib::RefPtr<EventSource> > EventSources;
     
   protected:
     mutable saftlib::Device device;
@@ -77,8 +77,9 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     typedef std::map< Glib::ustring, Glib::RefPtr<Owned> > Owneds;
     typedef std::map< Glib::ustring, Owneds >              OtherStuff;
     
-    ActionSinks actionSinks;
-    OtherStuff otherStuff;
+    ActionSinks  actionSinks;
+    EventSources eventSources;
+    OtherStuff   otherStuff;
     
     // Polling method
     bool poll();

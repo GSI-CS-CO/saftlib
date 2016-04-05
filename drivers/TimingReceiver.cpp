@@ -19,7 +19,6 @@
 #include "clog.h"
 #include "InoutImpl.h"
 #include "Output.h"
-#include "Inoutput.h"
 #include "Input.h"
 
 namespace saftlib {
@@ -69,7 +68,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   }
   
   // Create the IOs (channel 0)
-  InoutImpl::probe(this, actionSinks);
+  InoutImpl::probe(this, actionSinks, eventSources);
   
   // Locate all queue interfaces
   std::vector<sdb_device> queues;
@@ -332,26 +331,13 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
 
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
 {
-  typedef ActionSinks::const_iterator iterator;
+  typedef EventSources::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
-  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+  for (iterator i = eventSources.begin(); i != eventSources.end(); ++i) {
     Glib::RefPtr<Input> input =
       Glib::RefPtr<Input>::cast_dynamic(i->second);
     if (!input) continue;
     out[input->getObjectName()] = input->getObjectPath();
-  }
-  return out;
-}
-
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInoutputs() const
-{
-  typedef ActionSinks::const_iterator iterator;
-  std::map< Glib::ustring, Glib::ustring > out;
-  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    Glib::RefPtr<Inoutput> inoutput =
-      Glib::RefPtr<Inoutput>::cast_dynamic(i->second);
-    if (!inoutput) continue;
-    out[inoutput->getObjectName()] = inoutput->getObjectPath();
   }
   return out;
 }
@@ -363,6 +349,11 @@ std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiv
   typedef ActionSinks::const_iterator sink;
   for (sink i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     if (!i->second) continue; // skip inactive software action sinks
+    out[i->second->getInterfaceName()][i->second->getObjectName()] = i->second->getObjectPath();
+  }
+  
+  typedef EventSources::const_iterator source;
+  for (source i = eventSources.begin(); i != eventSources.end(); ++i) {
     out[i->second->getInterfaceName()][i->second->getObjectName()] = i->second->getObjectPath();
   }
   
