@@ -556,6 +556,7 @@ void TimingReceiver::compile()
     cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (guint16)se.index);
     cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
     cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (guint32)se.event);
+    cycle.write(base + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
     cycle.close();
   }
   
@@ -571,6 +572,7 @@ void TimingReceiver::compile()
     cycle.write(base + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
     cycle.write(base + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
     cycle.write(base + ECA_WALKER_RW_NUM_RW,       EB_DATA32, we.num);
+    cycle.write(base + ECA_WALKER_WRITE_OWR,       EB_DATA32, 1);
     cycle.close();
   }
   
