@@ -11,7 +11,7 @@ namespace saftlib {
 ActionSink::ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev_, const Glib::ustring& name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
  : Owned(objectPath, destroy), dev(dev_), name(name_), channel(channel_), num(num_),
    minOffset(-100000),  maxOffset(1000000000L), signalRate(100000000L),
-   mostFull(0), overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
+   overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
    overflowUpdate(0), actionUpdate(0), lateUpdate(0), earlyUpdate(0), conflictUpdate(0), delayedUpdate(0)
 {
   eb_data_t raw_latency, raw_offset_bits, raw_capacity, null;
@@ -82,26 +82,7 @@ void ActionSink::ToggleActive()
 
 guint16 ActionSink::ReadFill()
 {
-  eb_data_t raw_fill;
-  
-  etherbone::Cycle cycle;
-  cycle.open(dev->getDevice());
-  cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-  cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
-  // reading MOSTFULL_ACK rearms the MSI
-  cycle.read (dev->getBase() + ECA_CHANNEL_MOSTFULL_ACK_GET, EB_DATA32, &raw_fill);
-  cycle.close();
-  
-  guint16 mostUsed = raw_fill & 0xFFFF;
-  guint16 used     = raw_fill >> 16;
-  
-  // Update mostFull if changed
-  if (mostFull != mostUsed) {
-    mostFull = mostUsed;
-    MostFull(mostFull);
-  }
-  
-  return used;
+  return dev->updateMostFull(channel);
 }
 
 std::vector< Glib::ustring > ActionSink::getAllConditions() const
@@ -158,7 +139,7 @@ guint16 ActionSink::getCapacity() const
 
 guint16 ActionSink::getMostFull() const
 {
-  return mostFull;
+  return dev->most_full[channel];
 }
 
 guint64 ActionSink::getSignalRate() const
@@ -214,11 +195,7 @@ void ActionSink::setMostFull(guint16 val)
 {
   ownerOnly();
   if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set MostFull to 0");
-  
-  // Reading the mostfull_clear register will reset the counter and trigger an MSI
-  // We leave updating the state to the MSI handler
-  eb_data_t null;
-  dev->getDevice().read(dev->getBase() + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
+  dev->resetMostFull(channel);
 }
 
 void ActionSink::setSignalRate(guint64 val)
@@ -281,10 +258,6 @@ void ActionSink::receiveMSI(guint8 code)
   guint64 time = dev->ReadRawCurrentTime();
   
   switch (code) {
-  case ECA_MAX_FULL:
-    // this is not throttled (limited number of updates are possible)
-    updateMaxFull();
-    break;
   case ECA_OVERFLOW:
     if (overflowUpdate > time || time - overflowUpdate >= signalRate) {
       updateOverflow(time);
@@ -355,12 +328,6 @@ void ActionSink::receiveMSI(guint8 code)
     clog << kLogErr << "Asked to handle an invalid MSI condition code in ActionSink.cpp" << std::endl;
     break;
   }
-}
-
-bool ActionSink::updateMaxFull()
-{
-  ReadFill();
-  return false;
 }
 
 bool ActionSink::updateOverflow(guint64 time)

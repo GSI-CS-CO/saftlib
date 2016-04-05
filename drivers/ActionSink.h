@@ -98,7 +98,6 @@ class ActionSink : public Owned, public iActionSink
     guint64 signalRate;
     
     // cached counters
-    guint16 mostFull;
     guint64 overflowCount;
     guint64 actionCount;
     guint64 lateCount;
@@ -136,7 +135,6 @@ class ActionSink : public Owned, public iActionSink
     };
     Record fetchError(guint8 code);
     
-    bool updateMaxFull();
     bool updateOverflow(guint64 time);
     bool updateAction(guint64 time);
     bool updateLate(guint64 time);
