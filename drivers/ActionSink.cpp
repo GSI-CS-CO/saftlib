@@ -304,7 +304,7 @@ void ActionSink::receiveMSI(guint8 code)
     break;
   case ECA_CONFLICT:
     if (conflictUpdate > time || time - conflictUpdate >= signalRate) { 
-      updateEarly(time);
+      updateConflict(time);
     } else {
       conflictPending.disconnect(); // just to be safe
       guint64 exec = conflictUpdate + signalRate;
@@ -315,7 +315,7 @@ void ActionSink::receiveMSI(guint8 code)
     break;
   case ECA_DELAYED:
     if (delayedUpdate > time || time - delayedUpdate >= signalRate) { 
-      updateEarly(time);
+      updateDelayed(time);
     } else {
       delayedPending.disconnect(); // just to be safe
       guint64 exec = delayedUpdate + signalRate;
