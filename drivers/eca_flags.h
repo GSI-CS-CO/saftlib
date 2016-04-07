@@ -6,8 +6,8 @@
 #define ECA_CONFLICT	2
 #define ECA_DELAYED	3
 #define ECA_VALID	4
+#define ECA_OVERFLOW	5
 #define ECA_MAX_FULL	6
-#define ECA_OVERFLOW	7
 
 #define ECA_LINUX	1
 #define ECA_WBM		2

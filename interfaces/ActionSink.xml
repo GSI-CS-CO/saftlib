@@ -115,11 +115,10 @@
   
   <!-- MaxOffset: Maximum allowed offset (nanoseconds) usable in NewCondition.
        Large offsets are almost always an error. A large positive offset
-       could result in actions filling the hardware queues indefinitely,
-       leading to Overflow.  By default, no condition may have an offset
-       larger than 1s.  Attempts to create conditions with offsets greater
-       than MaxOffset result in an error.  Change this property to override
-       this safety feature.
+       could result in early actions being created.  By default, no
+       condition may have an offset larger than 1s.  Attempts to create
+       conditions with offsets greater than MaxOffset result in an error. 
+       Change this property to override this safety feature.
     -->
   <property name="MaxOffset" type="x" access="readwrite"/>
 
@@ -191,9 +190,8 @@
        or 2- the receiving component is unable to execute actions as quickly
        as the timing system delivers them.  The second case is particularly
        likely for SoftwareActionSinks that attempt to listen to high
-       frequency events.  SoftwareActionSinks share a common queue, and when
-       it overflows ALL SoftwareActionSinks are notified of overflow since
-       it impossible to determine which sink the action belonged to.
+       frequency events.  Even though SoftwareActionSinks share a common queue, 
+       Overflow is reported only to the ActionSink whose action was dropped.
        
        As overflows can occur very rapidly, OverflowCount may increase by
        more than 1 between emissions. There is a minimum delay of SignalRate
