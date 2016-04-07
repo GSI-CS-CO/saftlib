@@ -10,7 +10,22 @@ static guint64 mask(int i) {
   return i ? (((guint64)-1) << (64-i)) : 0;
 }
 
-void on_locked(bool locked)
+// format date string 
+static std::string formatDate(guint64 time)
+{
+  guint64 ns    = time % 1000000000;
+  time_t  s     = time / 1000000000;
+  struct tm *tm = gmtime(&s);
+  char date[40];
+  static char full[80];
+  
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
+  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
+
+  return full;
+} // format date
+
+void onLocked(bool locked)
 {
   if (locked) {
     std::cout << "WR Locked!" << std::endl;
@@ -19,34 +34,74 @@ void on_locked(bool locked)
   }
 }
 
-void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+void onMostFull(guint16 full, guint16 capacity)
 {
-  std::cout << "Saw a timing event!" << std::endl;
-  std::cout << "  " << id << " " << deadline << " " << flags << std::endl;
+  std::cout << "MostFull: " << full << "/" << capacity << std::endl;
 }
 
-void on_late(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+void onOverflowCount(guint64 count)
 {
-  // Report this to the operator
-  std::cerr << "FATAL ERROR: late action!" << std::endl;
+  std::cout << "OverflowCount: " << count << std::endl;
 }
 
-void on_overflow(guint64 count)
+void onActionCount(guint64 count)
 {
-  std::cerr << "FATAL ERROR: lost action!" << std::endl;
+  std::cout << "ActionCount: " << count << std::endl;
 }
 
-void on_conflict(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 execute)
+void onLateCount(guint64 count)
 {
-  std::cerr << "FATAL ERROR: actions potentially misordered!" << std::endl;
+  std::cout << "LateCount: " << count << std::endl;
 }
 
-void detect_danger(guint32 capacity, guint32 mostFull)
+void onLate(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
 {
-  // Is the hardware more than 50% full? getting dangerous
-  if (mostFull > capacity/2) {
-    std::cerr << "WARNING: hardware is more than 50%% full. An Overflow may be imminent." << std::endl;
-  }
+  std::cout
+   << "Late #" << count << ": 0x" << std::hex << event << " " << param << " at " 
+   << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
+}
+
+void onEarlyCount(guint64 count)
+{
+  std::cout << "EarlyCount: " << count << std::endl;
+}
+
+void onEarly(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+{
+  std::cout
+   << "Early #" << count << ": 0x" << std::hex << event << " " << param << " at " 
+   << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
+}
+
+void onConflictCount(guint64 count)
+{
+  std::cout << "ConflictCount: " << count << std::endl;
+}
+
+void onConflict(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+{
+  std::cout
+   << "Conflict #" << count << ": 0x" << std::hex << event << " " << param << " at " 
+   << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
+}
+
+void onDelayedCount(guint64 count)
+{
+  std::cout << "DelayedCount: " << count << std::endl;
+}
+
+void onDelayed(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+{
+  std::cout
+   << "Delayed #" << count << ": 0x" << std::hex << event << " " << param << " at " 
+   << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
+}
+
+void onAction(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags, int rule)
+{
+  std::cout
+    << "Condition #" << rule << ": 0x" << std::hex << event << " " << param << " at " 
+    << formatDate(executed) << " (should be " << formatDate(deadline) << ") " << flags << std::endl;
 }
 
 using namespace saftlib;
@@ -71,7 +126,7 @@ int main(int, char**)
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices["baseboard"]);
     
     // Monitor the WR lock status
-    receiver->Locked.connect(sigc::ptr_fun(&on_locked));
+    receiver->Locked.connect(sigc::ptr_fun(&onLocked));
 
     // Direct saftd to create a new SoftwareActionSink for this program.
     // The name is "", so one is chosen automatically that does not conflict.
@@ -79,30 +134,40 @@ int main(int, char**)
     //   iOwned, iActionSink, and iSoftwareActionSink
     Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
-    // Attach handlers watching for all failure conditions
-    sink->Late.connect(sigc::ptr_fun(&on_late));
-    sink->OverflowCount.connect(sigc::ptr_fun(&on_overflow));
-    sink->Conflict.connect(sigc::ptr_fun(&on_conflict));
-    
     // Read the Capacity property of the ActionSink
-    guint32 capacity = sink->getCapacity();
-    
-    // Clear the MostFull property to zero
-    // Unlike {Late,Overflow,Conflict}Count, the MostFull count may be non-zero
-    // since it is shared between all users of SoftwareActionSinks.
-    sink->setMostFull(0);
+    guint16 capacity = sink->getCapacity();
     
     // Watch changes to the MostFull property
     // Here, we provide the first function parameter via 'bind'.
-    sink->MostFull.connect(sigc::bind(sigc::ptr_fun(&detect_danger), capacity));
+    sink->MostFull.connect(sigc::bind(sigc::ptr_fun(&onMostFull), capacity));
+    
+    // Clear the MostFull property to zero
+    // Unlike {Late,Early,Overflow,Conflict}Count, the MostFull count may be
+    // non-zero since it is shared between all users of SoftwareActionSinks.
+    sink->setMostFull(0);
+    
+    // Attach handlers watching for all failure conditions
+    sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
+    sink->ActionCount.connect(sigc::ptr_fun(&onActionCount));
+    sink->LateCount.connect(sigc::ptr_fun(&onLateCount));
+    sink->Late.connect(sigc::ptr_fun(&onLate));
+    sink->EarlyCount.connect(sigc::ptr_fun(&onEarlyCount));
+    sink->Early.connect(sigc::ptr_fun(&onEarly));
+    sink->ConflictCount.connect(sigc::ptr_fun(&onConflictCount));
+    sink->Conflict.connect(sigc::ptr_fun(&onConflict));
+    sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
+    sink->Delayed.connect(sigc::ptr_fun(&onDelayed));
     
     // Create an active(true) condition, watching events 64-127 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
     // SoftwareConditions implement iOwned, iCondition, iSoftwareCondition.
-    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 100));
+    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 0));
     
     // Call on_action whenever the condition above matches incoming events.
-    condition->Action.connect(sigc::ptr_fun(&on_action));
+    condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
+    
+    // Generate an event that matches
+    receiver->InjectEvent(88, 0xdeadbeef, receiver->ReadCurrentTime() + 1000000000L);
     
     // Run the Glib event loop
     // Inside callbacks you can still run all the methods like we did above
