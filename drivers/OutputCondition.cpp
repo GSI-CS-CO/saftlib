@@ -13,12 +13,12 @@ OutputCondition::OutputCondition(const ConstructorType& args)
 
 bool OutputCondition::getOn() const
 {
-  return tag == 1;
+  return tag == 2;
 }
 
 void OutputCondition::setOn(bool v)
 {
-  guint32 val = v?1:2; // 1 = turn-on, 2 = turn-off
+  guint32 val = v?2:1; // 2 = turn-on, 1 = turn-off
   
   ownerOnly();
   if (val == tag) return;

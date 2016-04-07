@@ -27,7 +27,7 @@ const char *Output::getInterfaceName() const
 
 Glib::ustring Output::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on)
 {
-  return NewConditionHelper(active, id, mask, offset, on?1:2, false,
+  return NewConditionHelper(active, id, mask, offset, on?2:1, false, // 2 is on, 1 is off
     sigc::ptr_fun(&OutputCondition::create));
 }
 
