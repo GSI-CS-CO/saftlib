@@ -624,7 +624,7 @@ void TimingReceiver::compile()
     cycle.write(base + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
     cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (guint16)we.next);
     cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, we.offset >> 32);
-    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (guint32)we.offset);
+    cycle.write(base + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (guint32)we.offset);
     cycle.write(base + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
     cycle.write(base + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
     cycle.write(base + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
