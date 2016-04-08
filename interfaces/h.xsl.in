@@ -5,6 +5,7 @@
 
 <xsl:template match="/node">
   <xsl:variable name="name" select="@name"/>
+  <xsl:variable name="proxy_abc" select="true()"/> <!-- Abstract base classes for proxy? -->
 
   <xsl:document href="{$name}.h" method="text" encoding="utf-8" indent="no">
     <xsl:text>// This is a generated file. Do not modify.&#10;</xsl:text>
@@ -29,12 +30,16 @@
     <!-- Proxy class implements all interfaces -->
     <xsl:text>class </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Proxy : public Glib::Object</xsl:text>
+    <xsl:text>_Proxy : </xsl:text>
     <xsl:for-each select="interface">
-      <xsl:text>, public i</xsl:text>
+      <xsl:if test="not($proxy_abc)">/*</xsl:if>
+      <xsl:text>public i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>,</xsl:text>
+      <xsl:if test="not($proxy_abc)">*/</xsl:if>
+      <xsl:text> </xsl:text>
     </xsl:for-each>
-    <xsl:text> {&#10;</xsl:text>
+    <xsl:text>public Glib::Object {&#10;</xsl:text>
     <xsl:text>  public:&#10;</xsl:text>
 
     <!-- Constructor -->
@@ -97,26 +102,32 @@
     </xsl:for-each>
 
     <!-- Property Signal pointers -->
-    <xsl:text>    // These property signals are available from base classes&#10;</xsl:text>
+    <xsl:text>    /* These property signals are available from base classes:</xsl:text>
+    <xsl:if test="not($proxy_abc)"> */</xsl:if>
+    <xsl:text>&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
         <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>    //   </xsl:text>
+          <xsl:text>    </xsl:text>
           <xsl:call-template name="prop-sigtype"/>
           <xsl:text>;&#10;</xsl:text>
         </xsl:if>
       </xsl:for-each>
     </xsl:for-each>
+    <xsl:if test="$proxy_abc">    */&#10;</xsl:if>
 
     <!-- Signal pointers -->
-    <xsl:text>    // These signals are available from base classes&#10;</xsl:text>
+    <xsl:text>    /* These signals are available from base classes:</xsl:text>
+    <xsl:if test="not($proxy_abc)"> */</xsl:if>
+    <xsl:text>&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:for-each select="signal">
-        <xsl:text>    //   </xsl:text>
+        <xsl:text>    </xsl:text>
         <xsl:call-template name="signal-type"/>
         <xsl:text>;&#10;</xsl:text>
       </xsl:for-each>
     </xsl:for-each>
+    <xsl:if test="$proxy_abc">    */&#10;</xsl:if>
 
     <!-- Constructor -->
     <xsl:text>  protected:&#10;</xsl:text>
@@ -314,9 +325,13 @@
       <!-- The proxy interface class -->
       <xsl:text>class i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Proxy : public Gio::DBus::Proxy, public i</xsl:text>
+      <xsl:text>_Proxy : </xsl:text>
+      <xsl:if test="not($proxy_abc)">/*</xsl:if>
+      <xsl:text>public i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text> {&#10;</xsl:text>
+      <xsl:text>,</xsl:text>
+      <xsl:if test="not($proxy_abc)">*/</xsl:if>
+      <xsl:text> public Gio::DBus::Proxy {&#10;</xsl:text>
       <xsl:text>  public:</xsl:text>
     static Glib::RefPtr&lt;i<xsl:value-of select="$iface"/>_Proxy&gt; create(
       const Glib::ustring&amp; object_path,
@@ -341,6 +356,28 @@
         <xsl:call-template name="prop-settype"/>
         <xsl:text>;&#10;</xsl:text>
       </xsl:for-each>
+
+      <xsl:text>    /* Signals from base class:</xsl:text>
+      <xsl:if test="not($proxy_abc)"> */</xsl:if>
+      <xsl:text>&#10;</xsl:text>
+
+      <!-- Property Signal pointers -->
+      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
+          <xsl:text>    </xsl:text>
+          <xsl:call-template name="prop-sigtype"/>
+          <xsl:text>;&#10;</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+
+      <!-- Signal pointers -->
+      <xsl:for-each select="signal">
+        <xsl:text>    </xsl:text>
+        <xsl:call-template name="signal-type"/>
+        <xsl:text>;&#10;</xsl:text>
+      </xsl:for-each>
+
+      <xsl:if test="$proxy_abc">    */&#10;</xsl:if>
 
       <!-- Forbid copy -->
       <xsl:text>&#10;  private:&#10;</xsl:text>
