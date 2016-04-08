@@ -24,8 +24,6 @@
 #include "interfaces/SoftwareCondition.h"
 #include "interfaces/iDevice.h"
 #include "interfaces/Output.h"
-#include "interfaces/iOutputActionSink.h"
-#include "interfaces/iActionSink.h"
 #include "interfaces/Input.h"
 
 #include "drivers/io_control_regs.h"
@@ -110,12 +108,25 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
     std::map< Glib::ustring, Glib::ustring > outs;
     std::map< Glib::ustring, Glib::ustring > ins;
     Glib::ustring io_path;
+    Glib::ustring io_partner;
     outs = receiver->getOutputs();
     ins = receiver->getInputs();
     Glib::RefPtr<Output_Proxy> output_proxy;
     Glib::RefPtr<Input_Proxy> input_proxy;
     
-    /* Check if IO exists */
+    /* Check if IO exists as input */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it)
+    {
+      if (it->first == ioName) 
+      { 
+        io_found = true; 
+        io_type = IO_CFG_FIELD_DIR_INPUT;
+        input_proxy = Input_Proxy::create(it->second);
+        io_path = it->second;
+      }
+    }
+    
+    /* Check if IO exists output */
     for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if (it->first == ioName) 
@@ -126,15 +137,22 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
         io_path = it->second;
       }
     }
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it)
+    
+    /* Check if IO is bidirectional */
+    if (io_type == IO_CFG_FIELD_DIR_INPUT)
     {
-      if (it->first == ioName) 
-      { 
-        io_found = true; 
-        io_type = IO_CFG_FIELD_DIR_INPUT;
-        input_proxy = Input_Proxy::create(it->second);
-        io_path = it->second;
-      }
+      io_partner = input_proxy->getOutput();
+      if (io_partner != "") { io_type = IO_CFG_FIELD_DIR_INOUT; }
+    }
+    else if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
+    {
+      io_partner = output_proxy->getInput();
+      if (io_partner != "") { io_type = IO_CFG_FIELD_DIR_INOUT; }
+    }
+    else
+    {
+      std::cout << "IO direction is unknown!" << std::endl;
+      return (__IO_RETURN_FAILURE);
     }
     
     /* Found IO? */
@@ -160,6 +178,7 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
           std::cout << "Error: This option is not available for inputs!" << std::endl; 
           return (__IO_RETURN_FAILURE);
         }
+        
         /* Check if OE option is available */
         if (!(output_proxy->getOutputEnableAvailable()))
         {
@@ -251,7 +270,8 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
     {
       /* Generic information */
       std::cout << "IO:" << std::endl;
-      std::cout << "  Path: " << io_path << std::endl;
+      std::cout << "  Path:    " << io_path << std::endl;
+      if (io_partner != "") { std::cout << "  Partner: " << io_partner << std::endl; }
       std::cout << std::endl;
     
       /* Display configuration */
@@ -357,7 +377,7 @@ static int io_print_table(bool verbose_mode)
     std::cout << "  No:  This property is fixed" << std::endl;
     std::cout << std::endl;
     std::cout << "Channel:" << std::endl;
-    std::cout << "  GPIO/LVDS: Tells you the ECA/Clock generator channel" << std::endl;
+    std::cout << "  GPIO/LVDS: Tells you the ECA/Clock generator channel (for legacy tools)" << std::endl;
     std::cout << "  FIXED:     IO behavior is fixed and can't be configured or driven manually" << std::endl;
     
     /* Print table header */

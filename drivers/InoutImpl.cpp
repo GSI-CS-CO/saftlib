@@ -533,8 +533,8 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
       }
       case IO_CFG_FIELD_DIR_INOUT:
       {
-        Output::ConstructorType out_args = { IOName, output_path, input_path, tr, eca_channel, eca_out, impl, nill };
-        Input::ConstructorType in_args = { IOName, input_path, output_path, tr, impl, nill };
+        Output::ConstructorType out_args = { IOName, output_path, input_path,  tr, eca_channel, eca_out, impl, nill };
+        Input::ConstructorType  in_args  = { IOName, input_path,  output_path, tr, impl,        nill };
         actionSinks[key_out] = Output::create(out_args);
         eventSources[key_in] = Input::create(in_args);
         ++eca_out;
