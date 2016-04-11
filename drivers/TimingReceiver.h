@@ -17,6 +17,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
       Glib::ustring objectPath;
       eb_address_t base;
       eb_address_t stream;
+      eb_address_t info;
       eb_address_t pps;
     };
     typedef TimingReceiver_Service ServiceType;
@@ -34,6 +35,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     Glib::ustring NewSoftwareActionSink(const Glib::ustring& name);
     void InjectEvent(guint64 event, guint64 param, guint64 time);
     guint64 ReadCurrentTime();
+    std::map< Glib::ustring, Glib::ustring > getGatewareInfo() const;
     bool getLocked() const;
     std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
     std::map< Glib::ustring, Glib::ustring > getOutputs() const;
@@ -64,6 +66,8 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     guint64 sas_count;
     eb_address_t arrival_irq;
     eb_address_t generator_irq;
+    
+    std::map<Glib::ustring, Glib::ustring> info;
     mutable bool locked;
     sigc::connection pollConnection;
     unsigned channels;
@@ -74,7 +78,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     std::vector<eb_address_t> channel_msis;
     std::vector<eb_address_t> queue_addresses;
     std::vector<guint16> most_full;
-    
+        
     typedef std::map< Glib::ustring, Glib::RefPtr<Owned> > Owneds;
     typedef std::map< Glib::ustring, Owneds >              OtherStuff;
     
@@ -85,6 +89,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     // Polling method
     bool poll();
     
+    void setupGatewareInfo(guint32 address);
     void do_remove(SinkKey key);
     void setHandler(unsigned channel, bool enable, eb_address_t address);
     void msiHandler(eb_data_t msi, unsigned channel);

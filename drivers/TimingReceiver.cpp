@@ -33,6 +33,9 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    sas_count(0),
    locked(false)
 {
+  // parse eb-info data
+  setupGatewareInfo(args.info);
+  
   // update locked status
   getLocked();
 
@@ -200,6 +203,49 @@ Glib::ustring TimingReceiver::getName() const
 
 #define WR_PPS_GEN_ESCR         0x1c        //External Sync Control Register
 #define WR_PPS_GEN_ESCR_MASK    0x6         //bit 1: PPS valid, bit 2: TS valid
+
+void TimingReceiver::setupGatewareInfo(guint32 address)
+{
+  eb_data_t buffer[256];
+  
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  for (unsigned i = 0; i < sizeof(buffer)/sizeof(buffer[0]); ++i)
+    cycle.read(address + i*4, EB_DATA32, &buffer[i]);
+  cycle.close();
+  
+  std::string str;
+  for (unsigned i = 0; i < sizeof(buffer)/sizeof(buffer[0]); ++i) {
+    str.push_back((buffer[i] >> 24) & 0xff);
+    str.push_back((buffer[i] >> 16) & 0xff);
+    str.push_back((buffer[i] >>  8) & 0xff);
+    str.push_back((buffer[i] >>  0) & 0xff);
+  }
+  
+  std::stringstream ss(str);
+  std::string line;
+  while (std::getline(ss, line))
+  {
+    if (line.empty() || line[0] == ' ') continue; // skip empty/history lines
+    
+    std::string::size_type offset = line.find(':');
+    if (offset == std::string::npos) continue; // not a field
+    if (offset+2 >= line.size()) continue;
+    std::string value(line, offset+2);
+    
+    std::string::size_type tail = line.find_last_not_of(' ', offset-1);
+    if (tail == std::string::npos) continue;
+    std::string key(line, 0, tail+1);
+    
+    // store the field
+    info[key] = value;
+  }
+}
+
+std::map< Glib::ustring, Glib::ustring > TimingReceiver::getGatewareInfo() const
+{
+  return info;
+}
 
 bool TimingReceiver::getLocked() const
 {
@@ -641,14 +687,15 @@ void TimingReceiver::compile()
 
 void TimingReceiver::probe(OpenDevice& od)
 {
-  std::vector<sdb_device> ecas, streams, scubus, pps;
+  std::vector<sdb_device> ecas, streams, infos, scubus, pps;
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams);
+  od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
   
   // only support super basic hardware for now
-  if (ecas.size() != 1 || streams.size() != 1 || pps.size() != 1)
+  if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || pps.size() != 1)
     return;
   
   TimingReceiver::ConstructorType args = { 
@@ -658,6 +705,7 @@ void TimingReceiver::probe(OpenDevice& od)
     od.objectPath,
     (eb_address_t)ecas[0].sdb_component.addr_first,
     (eb_address_t)streams[0].sdb_component.addr_first,
+    (eb_address_t)infos[0].sdb_component.addr_first,
     (eb_address_t)pps[0].sdb_component.addr_first,
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
