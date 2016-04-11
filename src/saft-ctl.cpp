@@ -287,12 +287,13 @@ int main(int argc, char** argv)
 		std::cerr << program << ": invalid param -- " << argv[optind+3] << std::endl;
 		return 1;
 	  } // param
-      eventTime     = strtoull(argv[optind+4], &value_end, 0);
+	  double delay = strtod(argv[optind+4], &value_end);
 	  //std::cout << std::hex << eventTime << std::endl; 
 	  if (*value_end != 0) {
 		std::cerr << program << ": invalid time -- " << argv[optind+4] << std::endl;
 		return 1;
 	  } // time
+	  eventTime = delay * 1000000000L;
 	} // "inject"
 
 	else if (strcasecmp(command, "snoop") == 0) {
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
     Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(sinkName));
 
     // inject event
-	if (eventInject) receiver->InjectEvent(eventID, eventParam, eventTime);
+	if (eventInject) receiver->InjectEvent(eventID, eventParam, receiver->ReadCurrentTime() + eventTime);
 
 	// do things requested by options
 	if (infoDisp) displayInfo(saftd);
