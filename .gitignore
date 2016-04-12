@@ -4,6 +4,7 @@ client
 saft-ctl
 fg-ctl
 saft-io-ctl
+saft-pps-gen
 # Automake junk dirs
 tools
 m4

@@ -1,8 +1,8 @@
 SUBDIRS = interfaces
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl
-noinst_PROGRAMS = client
+bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl saft-pps-gen
+noinst_PROGRAMS = client test
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
 dist_dbussystem_DATA = saftlib.conf
@@ -52,6 +52,9 @@ saftd_LDFLAGS = -rdynamic # needed for stack trace
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
+test_SOURCES = src/test.cpp
+test_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+
 saft_ctl_SOURCES = src/saft-ctl.cpp
 saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
@@ -60,6 +63,9 @@ fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp
 saft_io_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+
+saft_pps_gen_SOURCES = src/saft-pps-gen.cpp
+saft_pps_gen_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 if GIT_TREE
 version.h:
