@@ -2,7 +2,7 @@ SUBDIRS = interfaces
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl saft-pps-gen
-noinst_PROGRAMS = client test
+noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
 dist_dbussystem_DATA = saftlib.conf
@@ -51,9 +51,6 @@ saftd_LDFLAGS = -rdynamic # needed for stack trace
 
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
-
-test_SOURCES = src/test.cpp
-test_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 saft_ctl_SOURCES = src/saft-ctl.cpp
 saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
