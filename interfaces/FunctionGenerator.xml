@@ -150,7 +150,8 @@
       -->
     <method name="Abort"/>
     
-    <!-- ReadFillLevel: Remaining waveform data in nanoseconds 
+    <!-- ReadFillLevel: Remaining waveform data in nanoseconds.
+         @result:       Remaining waveform data in nanoseconds.
          The SAFTd has sufficient parameters buffered to supply the function generator with 
          data for the specified time in nanoseconds. Note, due to the slow nature of software,
          if the function generator is currently running, the read value will already be 
@@ -210,6 +211,7 @@
     <method name="Flush"/>
 
     <!-- ReadExecutedParameterCount: Number of parameter tuples executed by hardware.
+         @result:                    Number tuples executed by hardware.
          This counts the total number of parameter tuples executed since the last
          Started signal. Obviously, if the function generator is running, the returned
          value will be old.

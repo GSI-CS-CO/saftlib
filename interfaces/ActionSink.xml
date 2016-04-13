@@ -149,6 +149,7 @@
   </property>
   
   <!-- ReadFill: Report the number of currently pending actions.
+       @result:  Number of pending actions.
        The timing receiver hardware can only queue a limited number of
        actions.  This method reports the current number of queued actions,
        which includes actions from all users of the underlying hardware.  So

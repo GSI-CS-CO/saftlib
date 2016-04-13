@@ -11,7 +11,7 @@
   <interface name="de.gsi.saftlib.SAFTd">
     <!-- SourceVersion: SAFTd source version.
          The version of the SAFTd source code this daemon was compiled from.
-         Format is "#.# (git-id): MMM DD YYYY HH:MM:SS".
+         Format is "saftlib #.#.# (git-id): MMM DD YYYY HH:MM:SS".
       -->
     <property name="SourceVersion" type="s" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
@@ -58,6 +58,7 @@
     </method>
     
     <!-- RemoveDevice: Remove the device from saftlib management.
+         @name:        The logical name for the device
       -->
     <method name="RemoveDevice">
       <arg direction="in" type="s" name="name"/>

@@ -30,6 +30,7 @@
   <property name="SpecialPurposeIn" type="b" access="readwrite"/>
   
   <!-- ReadInput: Read the current input value.
+       @result:   The current logic level on the input.
        For inoutputs, this may differ from the Output value, if OutputEnable
        is false.  To receive a signal on Input changes, use the EventSource
        interface to create timing events and monitor these via a

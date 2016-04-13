@@ -44,6 +44,7 @@
     <property name="Locked" type="b" access="read"/>
   
     <!-- ReadCurrentTime: The current time in nanoseconds since 1970.
+         @result:         Nanoseconds since 1970.
          Due to delays in software, the returned value is probably several
          milliseconds behind the true time.
       -->
@@ -52,7 +53,8 @@
     </method>
     
     <!-- NewSoftwareActionSink: Create a new SoftwareActionSink.
-         @name: A name for the SoftwareActionSink. Can be left blank.
+         @name:   A name for the SoftwareActionSink. Can be left blank.
+         @result: Object path to the created SoftwareActionSink.
          
          SoftwareActionSinks allow a program to create conditions that match
          incoming timing events.  These conditions may have callback methods
