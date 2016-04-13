@@ -2,7 +2,7 @@ dnl Set these variables before each release:
 m4_define(MAJOR,1)    dnl Increment if removed/changed properties/signals/methods since previous release
 m4_define(MINOR,0)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
 m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
-m4_define(API,3)      dnl Whenever MAJOR is incremented, add MINOR to this variable
+m4_define(SONAME,3)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 AC_PREREQ(2.63)
 
@@ -62,8 +62,8 @@ AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -d .git])
 AC_SUBST([SAFTLIB_MAJOR], MAJOR)
 AC_SUBST([SAFTLIB_MINOR], MINOR)
 AC_SUBST([SAFTLIB_REVISION], REVISION)
-AC_SUBST([SAFTLIB_API], API)
-AC_SUBST([SAFTLIB_SONAME], [$((API-MINOR))]) dnl soname equals oldest API with nothing removed
+AC_SUBST([SAFTLIB_API], [$((SONAME+MINOR))]) dnl API incremented on every change
+AC_SUBST([SAFTLIB_SONAME], SONAME)
 
 AC_CONFIG_FILES([Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
 AC_OUTPUT
