@@ -89,7 +89,6 @@ void my_terminate()
 {
   print_backtrace(am_daemon ? (clog << kLogErr) : std::cerr, "Unhandled exception ");
 }
-static const bool SET_TERMINATE = std::set_terminate(my_terminate);
 
 void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
@@ -164,11 +163,19 @@ int main(int argc, char** argv)
     return 1;
   }
   
+  // Hook a stack tracer up to exceptions
+  std::set_terminate(my_terminate);
+  
   // Catch signals for clean shutdown
   signal(SIGINT,  &on_sigint);
   signal(SIGTERM, &on_sigint);
   signal(SIGQUIT, &on_sigint);
   signal(SIGHUP,  SIG_IGN);
+  
+  if (chdir("/") == -1) {
+    std::cerr << "failed to leave current directory" << std::endl;
+    return 1;
+  }
   
   // turn into a daemon
   switch (fork()) {
@@ -176,14 +183,16 @@ int main(int argc, char** argv)
   case 0:  break;
   default: exit(0);
   }
+  
+  // leave current session once we fork again
   setsid();
+  
   // second fork ensures we are an orphan
   switch (fork()) {
   case -1: std::cerr << "failed to fork" << std::endl; exit(1);
   case 0:  break;
   default: exit(0);
   }
-  chdir("/");
 
   // initialize gio
   std::locale::global(std::locale(""));
