@@ -14,7 +14,11 @@ Architecture: any
 Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${misc:Depends}
 Recommends: saftd (= ${binary:Version})
 Description: simplified API for timing - development files
- Hello world
+ GSI timing receivers include a large collection of slave devices. Saftlib
+ provides a user-friendly software interface for controlling these slaves.
+ The process saftd shares access to these hardware resources on behalf of
+ multiple client programs. Clients connect to saftd via dbus using the
+ saftlib library.
  .
  Development files for building an application dependent on this library.
 
@@ -22,7 +26,11 @@ Package: libsaftlib@SAFTLIB_SONAME@
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: simplified API for timing - libraries
- Hello world
+ GSI timing receivers include a large collection of slave devices. Saftlib
+ provides a user-friendly software interface for controlling these slaves.
+ The process saftd shares access to these hardware resources on behalf of
+ multiple client programs. Clients connect to saftd via dbus using the
+ saftlib library.
  .
  Library files for running an application dependent on this library.
 
@@ -30,7 +38,11 @@ Package: saftd
 Architecture: any
 Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}, dbus
 Description: simplified API for timing - dbus service
- Hello world
+ GSI timing receivers include a large collection of slave devices. Saftlib
+ provides a user-friendly software interface for controlling these slaves.
+ The process saftd shares access to these hardware resources on behalf of
+ multiple client programs. Clients connect to saftd via dbus using the
+ saftlib library.
  .
  dbus service which manages access to the hardware.
 
@@ -38,6 +50,10 @@ Package: saftlib-tools
 Architecture: any
 Depends: saftd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: simplified API for timing - command-line tools
- Hello world
+ GSI timing receivers include a large collection of slave devices. Saftlib
+ provides a user-friendly software interface for controlling these slaves.
+ The process saftd shares access to these hardware resources on behalf of
+ multiple client programs. Clients connect to saftd via dbus using the
+ saftlib library.
  .
  Command-line tools to manually interact with the SAFTd service.
