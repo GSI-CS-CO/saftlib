@@ -1,3 +1,9 @@
+saftlib (1.0.1-1) unstable; urgency=low
+
+  * Fix libtool versioning.
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Wed, 13 Apr 2016 19:03:06 +0200
+
 saftlib (1.0.0-1) unstable; urgency=low
 
   * Initial release
