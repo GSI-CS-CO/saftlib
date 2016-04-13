@@ -32,3 +32,7 @@ configure
 stamp-h1
 libtool
 saftlib-*.tar.gz
+# Debian package files
+debian/control
+debian/libsaftlib[0-9]*.install
+build

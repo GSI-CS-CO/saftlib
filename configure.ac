@@ -1,6 +1,12 @@
+dnl Set these variables before each release:
+m4_define(MAJOR,1)    dnl Increment if removed/changed properties/signals/methods since previous release
+m4_define(MINOR,0)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
+m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
+m4_define(API,3)      dnl Whenever MAJOR is incremented, add MINOR to this variable
+
 AC_PREREQ(2.63)
 
-AC_INIT([saftlib], [1.0])
+AC_INIT([saftlib], MAJOR.MINOR.REVISION)
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([tools])
@@ -52,6 +58,12 @@ AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
 AC_PATH_PROGS([GIT], [git])
 AM_CONDITIONAL([INTERFACE_DOCS], [test x$DOCBOOK2PDF != x -a x$GDBUS_CODEGEN != x])
 AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -d .git])
+
+AC_SUBST([SAFTLIB_MAJOR], MAJOR)
+AC_SUBST([SAFTLIB_MINOR], MINOR)
+AC_SUBST([SAFTLIB_REVISION], REVISION)
+AC_SUBST([SAFTLIB_API], API)
+AC_SUBST([SAFTLIB_SONAME], [$((API-MINOR))]) dnl soname equals oldest API with nothing removed
 
 AC_CONFIG_FILES([Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
 AC_OUTPUT

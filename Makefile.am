@@ -16,7 +16,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)
 
 BUILT_SOURCES = version.h
-.PHONY: version.h # causes build.cpp to be rebuilt every run
+.PHONY: version.h debian # causes build.cpp to be rebuilt every run
 
 saftd_SOURCES = version.h \
 	src/Device.cpp			src/Device.h			\
@@ -71,4 +71,7 @@ version.h:
 	echo '#define GIT_ID "'$$(git describe --dirty --always --tags)'"' > version.h.tmp
 	echo '#define SOURCE_DATE "'$$(date +'%b %d %Y %H:%M:%S' --date=@$$(git log -n1 --pretty='format:%ct'))'"' >> version.h.tmp
 	mv -f version.h.tmp version.h
+debian:
+	cp debian/libsaftlib.install.in debian/libsaftlib@SAFTLIB_SONAME@.install
+	./config.status --file=debian/control
 endif
