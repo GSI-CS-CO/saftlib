@@ -18,6 +18,7 @@ m4
 .dirstamp
 version.h
 # Automake junk files
+ChangeLog
 saftlib.pc
 Makefile
 Makefile.in
@@ -30,3 +31,4 @@ config.status
 configure
 stamp-h1
 libtool
+saftlib-*.tar.gz

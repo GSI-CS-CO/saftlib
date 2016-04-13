@@ -1,6 +1,6 @@
 AC_PREREQ(2.63)
 
-AC_INIT([saftlib], [0.1])
+AC_INIT([saftlib], [1.0])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([tools])
