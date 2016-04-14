@@ -142,17 +142,6 @@ int main (int argc, char** argv)
   /* Get the application name */
   program = argv[0]; 
   
-  /* Get basic arguments, we need at least the device name */
-  if (argc >= 2)
-  { 
-    deviceName = argv[1]; /* Get the device name */
-  }
-  else 
-  { 
-    show_help = true;
-    std::cout << "Missing arguments (at least a device name)..." << std::endl;
-  }
-  
   /* Parse for options */
   while ((opt = getopt(argc, argv, ":evh")) != -1)
   {
@@ -165,6 +154,17 @@ int main (int argc, char** argv)
     }
     /* Break loop if help is needed */
     if (show_help) { break; }
+  }
+  
+  /* Get basic arguments, we need at least the device name */
+  if (optind + 1 == argc)
+  { 
+    deviceName = argv[optind]; /* Get the device name */
+  }
+  else 
+  { 
+    show_help = true;
+    std::cout << "Incorrect non-optional arguments (expecting exactly the device name)..." << std::endl;
   }
   
   /* Check if help is needed, otherwise evaluate given arguments */
