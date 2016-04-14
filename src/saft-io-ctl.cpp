@@ -113,6 +113,13 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
     else        { std::cout << "Checking current configuration..." << std::endl; }
   }
   
+  /* Plausibility check for io name */
+  if (ioName == NULL)
+  {
+    std::cout << "Error: No IO name provided!" << std::endl; 
+    return (__IO_RETURN_FAILURE);
+  }
+  
   /* Initialize saftlib components */
   Gio::init();
   Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
@@ -486,31 +493,6 @@ int main (int argc, char** argv)
   /* Get the application name */
   program = argv[0]; 
   
-  /* Get basic arguments, we need at least the device name */
-  if (argc >= 2)
-  {
-    deviceName = argv[1]; /* Get the device name */
-    if (argc >= 3)
-    { 
-      /* Get the io name */
-      ioName = argv[2];
-      /* Prevent wrong argument usage */
-      if (!strcmp("-v",ioName)) { show_help  = true; }
-      if (!strcmp("-h",ioName)) { show_help  = true; }
-      if (!strcmp("-i",ioName)) { show_table = true; }
-    }
-    else
-    {
-      show_help = true; 
-      std::cout << "Missing arguments (at least one option or IO name)..." << std::endl;
-    }
-  }
-  else
-  {
-    show_help = true;
-    std::cout << "Missing arguments (at least a device name)..." << std::endl;
-  }
-  
   /* Parse for options */
   while ((opt = getopt(argc, argv, "o:t:p:e:m:d:vhi")) != -1)
   {
@@ -529,6 +511,27 @@ int main (int argc, char** argv)
     }
     /* Break loop if help is needed */
     if (show_help) { break; }
+  }
+  
+  /* Get basic arguments, we need at least the device name */
+  if (optind + 1 == argc)
+  { 
+    deviceName = argv[optind]; /* Get the device name */
+    if ((io_oe || io_term || io_spec_out || io_spec_in || io_mux || io_drive || show_help || show_table) == false)
+    {
+      show_help = true;
+      std::cout << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)..." << std::endl;
+    }
+  }
+  else if (optind + 2 == argc)
+  {
+    deviceName = argv[optind]; /* Get the device name */
+    ioName = argv[optind+1]; /* Get the io name */
+  }
+  else 
+  { 
+    show_help = true;
+    std::cout << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)..." << std::endl;
   }
   
   /* Check if help is needed, otherwise evaluate given arguments */
