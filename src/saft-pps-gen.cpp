@@ -178,10 +178,15 @@ int main (int argc, char** argv)
     Gio::init();
     Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     
-    /* Try to get the table */
+    /* Try to setup all outputs */
     try
     {
       map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+      if (devices.find(deviceName) == devices.end())
+      {
+        std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
+        return (-1);
+      }
       Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
       
       /* Check if timing receiver is locked */
