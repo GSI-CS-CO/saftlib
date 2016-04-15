@@ -161,8 +161,11 @@ bool MSI_Source::check()
 
 bool MSI_Source::dispatch(sigc::slot_base* slot)
 {
+  // Don't process more than 10 MSIs in one go (must give dbus some service too)
+  int limit = 10;
+  
   // Process any pending MSIs
-  while (!Device::msis.empty()) {
+  while (!Device::msis.empty() && --limit) {
     Device::MSI msi = Device::msis.front();
     Device::msis.pop_front();
     
