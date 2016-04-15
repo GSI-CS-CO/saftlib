@@ -110,6 +110,7 @@ static void pps_help (void)
   std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
+  std::cout << "  -s: Turn output enable on and input termination off" << std::endl;
   std::cout << "  -e: External event mode (ECA configuration only)" << std::endl;
   std::cout << "  -h: Print help (this message)" << std::endl;
   std::cout << "  -v: Switch to verbose mode" << std::endl;
@@ -132,6 +133,7 @@ int main (int argc, char** argv)
   /* Helpers */
   int  opt              = 0;     /* Number of given options */
   int  total_ios        = 0;     /* Number of configured IOs */
+  bool setup_io         = false; /* Setup OE and TERM? */
   bool external_trigger = false; /* Self-triggered or trigged by an external event */
   bool show_help        = false; /* Print help => -h */
   bool first_pps        = true;  /* Is this the first PPS output? */
@@ -143,10 +145,11 @@ int main (int argc, char** argv)
   program = argv[0]; 
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, ":evh")) != -1)
+  while ((opt = getopt(argc, argv, ":sevh")) != -1)
   {
     switch (opt)
     {
+      case 's': { setup_io         = true; break; }
       case 'e': { external_trigger = true; break; }
       case 'v': { verbose_mode     = true; break; }
       case 'h': { show_help        = true; break; }
@@ -224,15 +227,29 @@ int main (int argc, char** argv)
         total_ios++;
         
         /* Set output enable if available */
-        if (output_proxy->getOutputEnableAvailable()) { output_proxy->setOutputEnable(true); }
+        if (setup_io)
+        {
+          if (output_proxy->getOutputEnableAvailable())
+          { 
+            if (verbose_mode) { std::cout << "Turning output enable on... " << std::endl; }
+            output_proxy->setOutputEnable(true);
+          }
+        }
         
         /* Turn off input termination if available */
         io_partner = output_proxy->getInput();
         if (io_partner != "") 
         {
           if (verbose_mode) { std::cout << "Found Partner Path: " << io_partner << std::endl; }
-          input_proxy = Input_Proxy::create(io_partner);
-          if (input_proxy->getInputTerminationAvailable()) { input_proxy->setInputTermination(false); }
+          if (setup_io)
+          {
+            input_proxy = Input_Proxy::create(io_partner);
+            if (input_proxy->getInputTerminationAvailable())
+            { 
+              if (verbose_mode) { std::cout << "Turning input termination off... " << std::endl; }
+              input_proxy->setInputTermination(false);
+            }
+          }
         }
         
         /* Setup conditions */
