@@ -84,6 +84,7 @@ static void io_help (void)
   std::cout << "  -h: Print help (this message)" << std::endl;
   std::cout << "  -v: Switch to verbose mode" << std::endl;
   std::cout << "  -i: List every IO and it's capability" << std::endl;
+  std::cout << "  -s: Snoop on input" << std::endl;
   std::cout << std::endl;
   std::cout << "Example: " << program << " exploder5a_123t " << "IO1 " << "-o 1 -t 0 -d 1" << std::endl;
   std::cout << "  This will enable the output and disable the input termination and drive the output high" << std::endl;
@@ -91,6 +92,64 @@ static void io_help (void)
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
   std::cout << "Licensed under the GPLv3" << std::endl;
   std::cout << std::endl;
+}
+
+static void catch_input(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+{
+  guint64 time = deadline - 5000;
+  guint64 ns    = time % 1000000000;
+  time_t  s     = time / 1000000000;
+  struct tm *tm = gmtime(&s);
+  char date[40];
+  static char full[80];
+  
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
+  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
+  
+  std::cout << ioName << " went " << ((event&1)?"high":"low ") << " at " << date << full << std::endl;
+}
+
+/* Funciton io_snoop() */
+static int io_snoop()
+{
+  try {
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    
+    std::map< Glib::ustring, Glib::ustring > inputs = receiver->getInputs();
+    if (inputs.find(ioName) == inputs.end()) {
+      std::cerr << "IO '" << ioName << "' is not an input" << std::endl;
+      return __IO_RETURN_FAILURE;
+    }
+    
+    guint64 prefix = UINT64_C(0xfffe000000000000) + (random() << 1);
+    // Create a SoftwareCondition to catch the event
+    Glib::RefPtr<SoftwareActionSink_Proxy> sas = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    Glib::RefPtr<SoftwareCondition_Proxy> cond = SoftwareCondition_Proxy::create(sas->NewCondition(true, prefix, -2, 5000));
+    cond->Action.connect(sigc::ptr_fun(&catch_input));
+    
+    // Setup the event
+    Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+    input->setInputTermination(true);
+    input->setEventEnable(false);
+    input->setEventPrefix(prefix);
+    input->setEventEnable(true);
+    
+    Glib::ustring output_path = input->getOutput();
+    if (output_path != "") {
+      Glib::RefPtr<Output_Proxy> output = Output_Proxy::create(output_path);
+      output->setOutputEnable(false);
+    }
+    
+    // run the loop printing IO events
+    loop->run();
+  } catch (const Glib::Error& error) {
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+  
+  return (__IO_RETURN_SUCCESS);
 }
 
 /* Function io_setup() */
@@ -121,7 +180,6 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
   }
   
   /* Initialize saftlib components */
-  Gio::init();
   Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   /* Perform selected action(s) */
@@ -365,7 +423,6 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
 static int io_print_table(bool verbose_mode)
 {
   /* Initialize saftlib components */
-  Gio::init();
   Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   /* Try to get the table */
@@ -486,6 +543,7 @@ int main (int argc, char** argv)
   bool set_spec_out = false; /* Set? */
   bool set_mux      = false; /* Set? */
   bool set_drive    = false; /* Set? */
+  bool snoop        = false; /* Snoop on an input */
   bool verbose_mode = false; /* Print verbose output to output stream => -v */
   bool show_help    = false; /* Print help => -h */
   bool show_table   = false; /* Print io mapping table => -i */
@@ -494,7 +552,7 @@ int main (int argc, char** argv)
   program = argv[0]; 
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "o:t:p:e:m:d:vhi")) != -1)
+  while ((opt = getopt(argc, argv, "o:t:p:e:m:d:svhi")) != -1)
   {
     switch (opt)
     {
@@ -504,6 +562,7 @@ int main (int argc, char** argv)
       case 'e': { io_spec_in   = atoi(optarg); set_spec_in  = true; break; }
       case 'm': { io_mux       = atoi(optarg); set_mux      = true; break; }
       case 'd': { io_drive     = atoi(optarg); set_drive    = true; break; }
+      case 's': { snoop        = true; break; }
       case 'v': { verbose_mode = true; break; }
       case 'h': { show_help    = true; break; }
       case 'i': { show_table   = true; break; }
@@ -517,7 +576,7 @@ int main (int argc, char** argv)
   if (optind + 1 == argc)
   { 
     deviceName = argv[optind]; /* Get the device name */
-    if ((io_oe || io_term || io_spec_out || io_spec_in || io_mux || io_drive || show_help || show_table) == false)
+    if ((io_oe || io_term || io_spec_out || io_spec_in || io_mux || io_drive || show_help || show_table || snoop) == false)
     {
       show_help = true;
       std::cout << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)..." << std::endl;
@@ -534,10 +593,18 @@ int main (int argc, char** argv)
     std::cout << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)..." << std::endl;
   }
   
+  Gio::init();
   /* Check if help is needed, otherwise evaluate given arguments */
   if (show_help) { io_help(); }
   else
   {
+    /* Confirm device exists */
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    if (devices.find(deviceName) == devices.end()) {
+      std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
+      return -1;
+    }
+    
     /* Plausibility check */
     if (io_oe > 1       || io_oe < 0)       { std::cout << "Error: Output enable setting is invalid!"             << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
     if (io_term > 1     || io_term < 0)     { std::cout << "Error: Input termination setting is invalid"          << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
@@ -551,6 +618,7 @@ int main (int argc, char** argv)
     else
     { 
       if(show_table) { return_code = io_print_table(verbose_mode); }
+      else if (snoop){ return_code = io_snoop(); }
       else           { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_drive, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_drive, verbose_mode); }
     }
   }
