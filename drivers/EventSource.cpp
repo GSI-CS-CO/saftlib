@@ -29,34 +29,4 @@ EventSource::EventSource(const Glib::ustring& objectPath, TimingReceiver* dev_, 
 {
 }
 
-guint64 EventSource::getResolution() const
-{
-  return 0; // !!!
-}
-
-guint32 EventSource::getEventBits() const
-{
-  return 0; // !!!
-}
-
-bool EventSource::getEventEnable() const
-{
-  return false; // !!!
-}
-
-guint64 EventSource::getEventPrefix() const
-{
-  return 0; // !!!
-}
-    
-void EventSource::setEventEnable(bool val)
-{
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
-}
-
-void EventSource::setEventPrefix(guint64 val)
-{
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
-}
-
 }

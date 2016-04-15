@@ -21,6 +21,7 @@
 
 #include "InoutImpl.h"
 #include "io_control_regs.h"
+#include "eca_tlu_regs.h"
 #include "src/clog.h"
 #include "Output.h"
 #include "Input.h"
@@ -148,11 +149,6 @@ bool InoutImpl::ReadInput()
   else           { return false; }
 }
 
-guint32 InoutImpl::getStableTime() const
-{
-  return 0;
-}
-
 bool InoutImpl::getInputTermination() const
 {
   unsigned access_position = 0;
@@ -186,11 +182,6 @@ bool InoutImpl::getInputTermination() const
   
   if (readInputTermination) { return true; }
   else                      { return false; }
-}
-
-void InoutImpl::setStableTime(guint32 val)
-{
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented");
 }
 
 void InoutImpl::setInputTermination(bool val)
@@ -432,11 +423,15 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
   eb_data_t fixed_count_reg;
   eb_data_t get_param;
   etherbone::Cycle cycle;
-  std::vector<sdb_device> ioctl;
+  std::vector<sdb_device> ioctl, tlus;
   
   /* Find IO control module */
-  tr->getDevice().sdb_find_by_identity(IO_CONTROL_VENDOR_ID, IO_CONTROL_PRODUCT_ID, ioctl);
+  tr->getDevice().sdb_find_by_identity(IO_CONTROL_VENDOR_ID,  IO_CONTROL_PRODUCT_ID, ioctl);
+  tr->getDevice().sdb_find_by_identity(ECA_TLU_SDB_VENDOR_ID, ECA_TLU_SDB_DEVICE_ID, tlus);
+  
+  if (ioctl.size() != 1 || tlus.size() != 1) return -1;
   eb_address_t ioctl_address = ioctl[0].sdb_component.addr_first;
+  eb_address_t tlu = tlus[0].sdb_component.addr_first;
   
   /* Get number of IOs */
   cycle.open(tr->getDevice());
@@ -545,7 +540,7 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
       }
       case IO_CFG_FIELD_DIR_INPUT:
       {
-        Input::ConstructorType in_args = { IOName, input_path, "", tr, impl, nill };
+        Input::ConstructorType  in_args  = { IOName, input_path,  "", tr, tlu,         eca_in,  impl, nill };
         eventSources[key_in] = Input::create(in_args);
         ++eca_in;
         break;
@@ -553,7 +548,7 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
       case IO_CFG_FIELD_DIR_INOUT:
       {
         Output::ConstructorType out_args = { IOName, output_path, input_path,  tr, eca_channel, eca_out, impl, nill };
-        Input::ConstructorType  in_args  = { IOName, input_path,  output_path, tr, impl,        nill };
+        Input::ConstructorType  in_args  = { IOName, input_path,  output_path, tr, tlu,         eca_in,  impl, nill };
         actionSinks[key_out] = Output::create(out_args);
         eventSources[key_in] = Input::create(in_args);
         ++eca_out;
@@ -668,6 +663,15 @@ Glib::ustring InoutImpl::getLogicLevel() const
   }
   
   return IOLogicLevel;
+}
+
+guint64 InoutImpl::getResolution() const
+{
+  switch (io_channel) {
+  case IO_CFG_CHANNEL_GPIO: return 8;
+  case IO_CFG_CHANNEL_LVDS: return 1;
+  default: throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!");
+  }
 }
 
 } /* namespace saftlib */

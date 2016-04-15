@@ -29,7 +29,7 @@ saftd_SOURCES = version.h \
 	src/clog.cpp			src/clog.h			\
 	src/build.cpp			src/build.h			\
 	drivers/eca_regs.h		drivers/eca_flags.h		\
-	drivers/eca_queue_regs.h					\
+	drivers/eca_queue_regs.h	drivers/eca_tlu_regs.h		\
 	drivers/io_control_regs.h	drivers/fg_regs.h		\
 	drivers/Owned.cpp		drivers/Owned.h			\
 	drivers/Condition.cpp		drivers/Condition.h		\

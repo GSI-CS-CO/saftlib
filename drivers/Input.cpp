@@ -21,6 +21,7 @@
 
 #include "Input.h"
 #include "RegisteredObject.h"
+#include "eca_tlu_regs.h"
 
 namespace saftlib {
 
@@ -31,11 +32,13 @@ Glib::RefPtr<Input> Input::create(const ConstructorType& args)
 
 Input::Input(const ConstructorType& args)
  : EventSource(args.objectPath, args.dev, args.name, args.destroy),
-   impl(args.impl), partnerPath(args.partnerPath)
+   impl(args.impl), partnerPath(args.partnerPath), 
+   tlu(args.tlu), channel(args.channel), enable(false), event(0), stable(80)
 {
-  impl->StableTime.connect(StableTime.make_slot());
   impl->InputTermination.connect(InputTermination.make_slot());
   impl->SpecialPurposeIn.connect(SpecialPurposeIn.make_slot());
+  // initialize TLU to disabled state
+  configInput();
 }
 
 const char *Input::getInterfaceName() const
@@ -43,14 +46,11 @@ const char *Input::getInterfaceName() const
   return "Input";
 }
 
+// Proxy methods to the InoutImpl --------------------------------------------------
+
 bool Input::ReadInput()
 {
   return impl->ReadInput();
-}
-
-guint32 Input::getStableTime() const 
-{
-  return impl->getStableTime();
 }
 
 bool Input::getInputTermination() const
@@ -83,12 +83,6 @@ Glib::ustring Input::getOutput() const
   return partnerPath;
 }
 
-void Input::setStableTime(guint32 val)
-{
-  ownerOnly();
-  return impl->setStableTime(val);
-}
-
 void Input::setInputTermination(bool val)
 {
   ownerOnly();
@@ -99,6 +93,87 @@ void Input::setSpecialPurposeIn(bool val)
 {
   ownerOnly();
   return impl->setSpecialPurposeIn(val);
+}
+
+guint64 Input::getResolution() const
+{
+  return impl->getResolution();
+}
+
+// TLU control methods  -------------------------------------------------------------
+
+guint32 Input::getEventBits() const
+{
+  return 1; // rising|falling comes from TLU
+}
+
+guint32 Input::getStableTime() const 
+{
+  return stable;
+}
+
+bool Input::getEventEnable() const
+{
+  return enable;
+}
+
+guint64 Input::getEventPrefix() const
+{
+  return event;
+}
+
+void Input::setEventEnable(bool val)
+{
+  ownerOnly();
+  
+  if (enable == val) return;
+  enable = val;
+  
+  configInput();
+  EventEnable(val);
+}
+
+void Input::setEventPrefix(guint64 val)
+{
+  ownerOnly();
+  
+  if (val % 2 != 0)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "EventPrefix cannot have lowest bit set (EventBits=1)");
+  
+  if (event == val) return;
+  event = val;
+  
+  configInput();
+  EventPrefix(val);
+}
+
+void Input::setStableTime(guint32 val)
+{
+  ownerOnly();
+  
+  if (val % 8 != 0)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "StableTime must be a multiple of 8ns");
+  if (val < 16)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "StableTime must be at least 16ns");
+  
+  if (stable == val) return;
+  stable = val;
+  
+  configInput();
+  StableTime(val);
+}
+
+void Input::configInput()
+{
+  etherbone::Cycle cycle;
+  cycle.open(dev->getDevice());
+  cycle.write(tlu + ECA_TLU_INPUT_SELECT_RW, EB_DATA32, channel);
+  cycle.write(tlu + ECA_TLU_ENABLE_RW,       EB_DATA32, enable?1:0);
+  cycle.write(tlu + ECA_TLU_STABLE_RW,       EB_DATA32, stable/8 - 1);
+  cycle.write(tlu + ECA_TLU_EVENT_HI_RW,     EB_DATA32, event >> 32);
+  cycle.write(tlu + ECA_TLU_EVENT_LO_RW,     EB_DATA32, (guint32)event);
+  cycle.write(tlu + ECA_TLU_WRITE_OWR,       EB_DATA32, 1);
+  cycle.close();
 }
 
 }

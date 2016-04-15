@@ -36,6 +36,8 @@ class Input : public EventSource, public iInputEventSource
       Glib::ustring objectPath;
       Glib::ustring partnerPath;
       TimingReceiver* dev;
+      eb_address_t tlu;
+      unsigned channel;
       Glib::RefPtr<InoutImpl> impl;
       sigc::slot<void> destroy;
     };
@@ -64,10 +66,28 @@ class Input : public EventSource, public iInputEventSource
     //  sigc::signal< void, bool > InputTermination;
     //  sigc::signal< void, bool > SpecialPurposeIn;
     
+    // From iEventSource
+    guint64 getResolution() const;
+    guint32 getEventBits() const;
+    bool getEventEnable() const;
+    guint64 getEventPrefix() const;
+    
+    void setEventEnable(bool val);
+    void setEventPrefix(guint64 val);
+    //  sigc::signal< void, bool > EventEnable;
+    //  sigc::signal< void, guint64 > EventPrefix;
+    
   protected:
     Input(const ConstructorType& args);
     Glib::RefPtr<InoutImpl> impl;
     Glib::ustring partnerPath;
+    eb_address_t tlu;
+    unsigned channel;
+    bool enable;
+    guint64 event;
+    guint32 stable;
+    
+    void configInput();
 };
 
 }

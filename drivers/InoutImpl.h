@@ -59,9 +59,7 @@ class InoutImpl : public Glib::Object
     
     // iInputEventSource
     bool ReadInput(); // done
-    guint32 getStableTime() const;
     bool getInputTermination() const;
-    void setStableTime(guint32 val);
     void setInputTermination(bool val);
     bool getInputTerminationAvailable() const;
     bool getSpecialPurposeIn() const;
@@ -69,10 +67,12 @@ class InoutImpl : public Glib::Object
     bool getSpecialPurposeInAvailable() const;
     Glib::ustring getLogicLevelIn() const;
     
+    // iInputEventSource
+    guint64 getResolution() const;
+    
     sigc::signal< void, bool > OutputEnable;
     sigc::signal< void, bool > SpecialPurposeOut;
     sigc::signal< void, bool > BuTiSMultiplexer;
-    sigc::signal< void, guint32 > StableTime;
     sigc::signal< void, bool > InputTermination;
     sigc::signal< void, bool > SpecialPurposeIn;
     
