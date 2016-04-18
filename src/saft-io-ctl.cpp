@@ -222,6 +222,17 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
       }
     }
     
+    /* Found IO? */
+    if (io_found == false)
+    { 
+      std::cout << "Error: There is no IO with the name " << ioName << "!" << std::endl; 
+      return (__IO_RETURN_FAILURE);
+    }
+    else
+    {
+      if (verbose_mode) { std::cout << "Info: Found " << ioName << " (" << io_type << ")" << "!" << std::endl; }
+    }
+    
     /* Check if IO is bidirectional */
     if (io_type == IO_CFG_FIELD_DIR_INPUT)
     {
@@ -237,17 +248,6 @@ static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, i
     {
       std::cout << "IO direction is unknown!" << std::endl;
       return (__IO_RETURN_FAILURE);
-    }
-    
-    /* Found IO? */
-    if (io_found == false)
-    { 
-      std::cout << "Error: There is no IO with the name " << ioName << "!" << std::endl; 
-      return (__IO_RETURN_FAILURE);
-    }
-    else
-    {
-      if (verbose_mode) { std::cout << "Info: Found " << ioName << " (" << io_type << ")" << "!" << std::endl; }
     }
     
     /* Switch: Set something or get the current status) ?*/
