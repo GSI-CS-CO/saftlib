@@ -38,7 +38,7 @@ using namespace saftlib;
 
 static bool am_daemon = false;
 
-void print_backtrace(std::ostream& stream, const char *where)
+static void print_backtrace(std::ostream& stream, const char *where)
 {
   stream << where << ": ";
   
@@ -85,12 +85,12 @@ void print_backtrace(std::ostream& stream, const char *where)
 }
 
 // Handle uncaught exceptions
-void my_terminate()
+static void my_terminate()
 {
   print_backtrace(am_daemon ? (clog << kLogErr) : std::cerr, "Unhandled exception ");
 }
 
-void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
+static void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   try {
     SAFTd::get().setConnection(connection);
@@ -99,7 +99,7 @@ void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection, cons
   }
 }
 
-void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, const Glib::ustring& /* name */, int argc, char** argv)
+static void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */, const Glib::ustring& /* name */, int argc, char** argv)
 {
   for (int i = 1; i < argc; ++i) {
     // parse the string
@@ -144,14 +144,14 @@ void on_name_acquired(const Glib::RefPtr<Gio::DBus::Connection>& /* connection *
   clog << kLogInfo << buildInfo << std::endl;
 }
 
-void on_name_lost(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
+static void on_name_lost(const Glib::RefPtr<Gio::DBus::Connection>& connection, const Glib::ustring& /* name */)
 {
   // Something else claimed the saftlib name
   (am_daemon ? (clog << kLogErr) : std::cerr) << "Unable to acquire name---dbus saftlib.conf installed?" << std::endl;
   SAFTd::get().loop()->quit();
 }
 
-void on_sigint(int)
+static void on_sigint(int)
 {
   SAFTd::get().loop()->quit();
 }

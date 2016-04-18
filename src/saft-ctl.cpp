@@ -65,7 +65,7 @@ static const char* formatDate(guint64 time)
 
 
 // this will be called, in case we are snooping for events
-void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
   std::cout << "Time: " << formatDate(deadline);
   std::cout << " ID: 0x"    << std::hex << std::setw(16) << std::setfill('0') << id;
@@ -83,7 +83,6 @@ void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, gu
 
 using namespace saftlib;
 using namespace std;
-
 
 // display help
 static void help(void) {

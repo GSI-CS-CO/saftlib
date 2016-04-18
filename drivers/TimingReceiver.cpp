@@ -550,7 +550,7 @@ struct ECA_OpenClose {
 };
 
 // Using this heuristic, perfect containment never duplicates walk records
-bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
+static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
 {
   if (a.key < b.key) return true;
   if (a.key > b.key) return false;

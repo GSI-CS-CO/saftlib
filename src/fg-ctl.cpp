@@ -43,7 +43,7 @@ struct ParamSet {
 };
 
 // Hand off the entire datafile to SAFTd
-bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+static bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   return gen->AppendParameterSet(
     params.coeff_a,
@@ -56,13 +56,13 @@ bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 }
 
 // Refill the function generator if the buffer fill gets low
-void on_refill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+static void on_refill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   while (fill(gen, params)) { }
 }
 
 // Pretty print timestamp
-const char *format_time(guint64 time)
+static const char *format_time(guint64 time)
 {
   static char full[80];
   guint64 ns    = time % 1000000000;
@@ -75,7 +75,7 @@ const char *format_time(guint64 time)
   return full;
 }
 
-void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
+static void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
 {
   if (armed) {
     std::cout << "Generating StartTag" << std::endl;
@@ -84,13 +84,13 @@ void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
 }
 
 // Report when the function generator starts
-void on_start(guint64 time)
+static void on_start(guint64 time)
 {
   std::cout << "Function generator started at " << format_time(time) << std::endl;
 }
 
 // Report when the function generator stops
-void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
+static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
   // was there an error?
@@ -103,14 +103,14 @@ void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microCo
 }
 
 // When the function generator becomes disabled, stop the loop
-void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
+static void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
 {
   if (value) return;
   // terminate the main event loop
   loop->quit();
 }
 
-void help(Glib::RefPtr<SAFTd_Proxy> saftd)
+static void help(Glib::RefPtr<SAFTd_Proxy> saftd)
 {
   std::cerr << "Usage: fg-ctl [OPTION] < wavedata.txt\n";
   std::cerr << "\n";
@@ -127,7 +127,7 @@ void help(Glib::RefPtr<SAFTd_Proxy> saftd)
   std::cerr << saftd->getBuildInfo() << std::endl;
 }
 
-void slow_warning(int sig)
+static void slow_warning(int sig)
 {
   std::cerr << "warning: no input data received via stdin within 2s, run with '-h' for help. continuing to wait ..." << std::endl;
 }
