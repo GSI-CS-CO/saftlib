@@ -8,16 +8,16 @@ set -ex
 make -j $JOBS distcheck
 make debian
 
-tarball=$(echo saftlib-*.tar.gz)
+tarball=$(echo saftlib-*.tar.xz)
 ver=${tarball##*-}
-ver=${ver%%.tar.gz}
-orig=saftlib_$ver.orig.tar.gz
+ver=${ver%%.tar.xz}
+orig=saftlib_$ver.orig.tar.xz
 
 rm -rf build
 mkdir build
 mv $tarball build/$orig
 cd build
-tar xvzf $orig
+tar xvJf $orig
 cp -a ../debian saftlib-${ver}/
 cd saftlib-${ver}
 debuild -eDEB_BUILD_OPTIONS="parallel=$JOBS"
