@@ -55,9 +55,14 @@ fi
 dnl Generate documentation, only if we can
 AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
+AC_PATH_PROGS([DOCBOOK2MAN], [docbook2man])
 AC_PATH_PROGS([GIT], [git])
 AM_CONDITIONAL([INTERFACE_DOCS], [test x$DOCBOOK2PDF != x -a x$GDBUS_CODEGEN != x])
-AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -d .git])
+AM_CONDITIONAL([REBUILD_MAN_PAGES], [test x$DOCBOOK2MAN != x])
+AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e .git])
+if test -e .git -a "x$DOCBOOK2MAN" = "x"; then
+  AC_MSG_ERROR([Building from a git checkout requires docbook2man])
+fi
 
 AC_SUBST([SAFTLIB_MAJOR], MAJOR)
 AC_SUBST([SAFTLIB_MINOR], MINOR)
