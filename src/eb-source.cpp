@@ -21,6 +21,7 @@
 
 #include <giomm.h>
 #include <etherbone.h>
+#include "eb-source.h"
 
 class EB_Source : public Glib::Source
 {

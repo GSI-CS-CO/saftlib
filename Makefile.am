@@ -75,3 +75,9 @@ debian:
 	cp debian/libsaftlib.install.in debian/libsaftlib@SAFTLIB_SONAME@.install
 	./config.status --file=debian/control
 endif
+
+# Use manpages in distribution tarball if docbook2man not found
+if REBUILD_MAN_PAGES
+.sgml.1:
+	$(DOCBOOK2MAN) -o $(@D) $<
+endif

@@ -45,7 +45,7 @@ static std::string formatDate(guint64 time)
   return full;
 } // format date
 
-void onLocked(bool locked)
+static void onLocked(bool locked)
 {
   if (locked) {
     std::cout << "WR Locked!" << std::endl;
@@ -54,70 +54,70 @@ void onLocked(bool locked)
   }
 }
 
-void onMostFull(guint16 full, guint16 capacity)
+static void onMostFull(guint16 full, guint16 capacity)
 {
   std::cout << "MostFull: " << full << "/" << capacity << std::endl;
 }
 
-void onOverflowCount(guint64 count)
+static void onOverflowCount(guint64 count)
 {
   std::cout << "OverflowCount: " << count << std::endl;
 }
 
-void onActionCount(guint64 count)
+static void onActionCount(guint64 count)
 {
   std::cout << "ActionCount: " << count << std::endl;
 }
 
-void onLateCount(guint64 count)
+static void onLateCount(guint64 count)
 {
   std::cout << "LateCount: " << count << std::endl;
 }
 
-void onLate(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onLate(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
 {
   std::cout
    << "Late #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-void onEarlyCount(guint64 count)
+static void onEarlyCount(guint64 count)
 {
   std::cout << "EarlyCount: " << count << std::endl;
 }
 
-void onEarly(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onEarly(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
 {
   std::cout
    << "Early #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-void onConflictCount(guint64 count)
+static void onConflictCount(guint64 count)
 {
   std::cout << "ConflictCount: " << count << std::endl;
 }
 
-void onConflict(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onConflict(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
 {
   std::cout
    << "Conflict #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-void onDelayedCount(guint64 count)
+static void onDelayedCount(guint64 count)
 {
   std::cout << "DelayedCount: " << count << std::endl;
 }
 
-void onDelayed(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onDelayed(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
 {
   std::cout
    << "Delayed #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-void onAction(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags, int rule)
+static void onAction(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags, int rule)
 {
   std::cout
     << "Condition #" << rule << ": 0x" << std::hex << event << " " << param << " at " 
