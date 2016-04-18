@@ -25,7 +25,7 @@ AX_CXX_COMPILE_STDCXX(11,,optional)
 
 AC_MSG_CHECKING(whether compiler understands -Wall)
 old_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -Wall"
+CXXFLAGS="$CXXFLAGS -Wall -Wmissing-declarations"
 AC_TRY_COMPILE([],[],
   AC_MSG_RESULT(yes),
   AC_MSG_RESULT(no)
