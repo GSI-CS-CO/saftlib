@@ -1,3 +1,9 @@
+saftlib (1.0.2-1) unstable; urgency=medium
+
+  * Input timestamp support.
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Mon, 18 Apr 2016 17:17:43 +0200
+
 saftlib (1.0.1-1) unstable; urgency=low
 
   * Fix libtool versioning.
