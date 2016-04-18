@@ -1,7 +1,7 @@
 Source: saftlib
 Priority: optional
 Maintainer: Wesley W. Terpstra <terpstra@debian.org>
-Build-Depends: debhelper (>= 9), autotools-dev, lsb-release, libetherbone-dev (>= 1.2), libglib2.0-dev (>= 2.42.0), libglibmm-2.4-dev (>= 2.42.0), docbook-utils (>= 0.6.14), docbook-xml (>= 4.1), xsltproc (>= 1.1.28)
+Build-Depends: debhelper (>= 9), dh-autoreconf, lsb-release, libetherbone-dev (>= 1.2.0), libglib2.0-dev (>= 2.42.0), libglibmm-2.4-dev (>= 2.42.0), docbook-utils (>= 0.6.14), docbook-xml (>= 4.1), xsltproc (>= 1.1.28)
 Standards-Version: 3.9.6
 Section: libs
 Homepage: https://github.com/GSI-CS-CO/saftlib/wiki
@@ -11,8 +11,8 @@ Vcs-Browser: https://github.com/GSI-CS-CO/saftlib/tree/master
 Package: libsaftlib-dev
 Section: libdevel
 Architecture: any
+Multi-Arch: same
 Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${misc:Depends}
-Recommends: saftd (= ${binary:Version})
 Description: simplified API for timing - development files
  GSI timing receivers include a large collection of slave devices. Saftlib
  provides a user-friendly software interface for controlling these slaves.
@@ -24,7 +24,9 @@ Description: simplified API for timing - development files
 
 Package: libsaftlib@SAFTLIB_SONAME@
 Architecture: any
+Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: saftd (= ${binary:Version})
 Description: simplified API for timing - libraries
  GSI timing receivers include a large collection of slave devices. Saftlib
  provides a user-friendly software interface for controlling these slaves.
@@ -36,7 +38,8 @@ Description: simplified API for timing - libraries
 
 Package: saftd
 Architecture: any
-Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}, dbus
+Multi-Arch: foreign
+Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}, dbus (>= 1.8.20)
 Description: simplified API for timing - dbus service
  GSI timing receivers include a large collection of slave devices. Saftlib
  provides a user-friendly software interface for controlling these slaves.
@@ -48,7 +51,7 @@ Description: simplified API for timing - dbus service
 
 Package: saftlib-tools
 Architecture: any
-Depends: saftd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: saftd (= ${binary:Version}), libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: simplified API for timing - command-line tools
  GSI timing receivers include a large collection of slave devices. Saftlib
  provides a user-friendly software interface for controlling these slaves.
