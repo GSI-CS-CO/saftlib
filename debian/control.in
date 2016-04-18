@@ -13,6 +13,7 @@ Section: libdevel
 Architecture: any
 Multi-Arch: same
 Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${misc:Depends}
+Recommends: libsaftlib-docs (= ${source:Version})
 Description: simplified API for timing - development files
  GSI timing receivers include a large collection of slave devices. Saftlib
  provides a user-friendly software interface for controlling these slaves.
@@ -21,6 +22,20 @@ Description: simplified API for timing - development files
  saftlib library.
  .
  Development files for building an application dependent on this library.
+
+Package: libsaftlib-docs
+Section: libdevel
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: simplified API for timing - API documentation
+ GSI timing receivers include a large collection of slave devices. Saftlib
+ provides a user-friendly software interface for controlling these slaves.
+ The process saftd shares access to these hardware resources on behalf of
+ multiple client programs. Clients connect to saftd via dbus using the
+ saftlib library.
+ .
+ Documentation for the public API of saftlib.
 
 Package: libsaftlib@SAFTLIB_SONAME@
 Architecture: any
