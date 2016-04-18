@@ -24,7 +24,7 @@ Description: simplified API for timing - development files
  Development files for building an application dependent on this library.
 
 Package: libsaftlib-docs
-Section: libdevel
+Section: doc
 Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}
@@ -52,6 +52,7 @@ Description: simplified API for timing - libraries
  Library files for running an application dependent on this library.
 
 Package: saftd
+Section: admin
 Architecture: any
 Multi-Arch: foreign
 Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}, dbus (>= 1.8.20)
@@ -65,6 +66,7 @@ Description: simplified API for timing - dbus service
  dbus service which manages access to the hardware.
 
 Package: saftlib-tools
+Section: utils
 Architecture: any
 Depends: saftd (= ${binary:Version}), libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: simplified API for timing - command-line tools
