@@ -1,3 +1,9 @@
+saftlib (1.0.3-1) unstable; urgency=medium
+
+  * Added workaround for old/buggy gdbus-codegen.
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Tue, 19 Apr 2016 23:31:06 +0200
+
 saftlib (1.0.2-1) unstable; urgency=medium
 
   * Input timestamp support.
