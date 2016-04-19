@@ -19,7 +19,7 @@ INTERFACES =			\
 	InputEventSource.xml	\
 	OutputActionSink.xml	\
 	Owned.xml
-XSL = h.xsl cpp.xsl doc.xsl common.xsl
+XSL = h.xsl cpp.xsl doc.xsl common.xsl fix-docbook.xsl
 
 EXTRA_DIST = $(XSL) $(NODES) $(INTERFACES)
 CLEANFILES = *.cpp *.h *.pdf *.doc-xml
@@ -121,6 +121,7 @@ $(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES) $(nodist_saftlib_HEADE
 
 .doc-xml.pdf:
 	$(GDBUS_CODEGEN) --generate-docbook=docfoo --interface-prefix=de.gsi.saftlib $<
-	$(DOCBOOK2PDF) docfoo-*.$*.xml
+	$(XSLTPROC) --path $(srcdir) fix-docbook.xsl docfoo-*.$*.xml > docfoo-fix.$*.xml
+	$(DOCBOOK2PDF) docfoo-fix.$*.xml
 	mv docfoo-*.$*.pdf $@
 	rm -f docfoo-*.$*.*
