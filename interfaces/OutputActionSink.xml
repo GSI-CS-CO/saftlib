@@ -18,7 +18,7 @@
        @result: Object path to the created OutputCondition
 
        This method creates a new condition that matches events whose
-       identifier lies in the range [id & mask, id | ~mask].  The offset
+       identifier lies in the range [id &amp; mask, id | ~mask].  The offset
        acts as a delay which is added to the event's execution timestamp to
        determine the timestamp when the matching condition fires its action. 
        The returned object path is a OutputCondition object.
