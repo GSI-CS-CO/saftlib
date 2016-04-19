@@ -19,6 +19,9 @@
  */
 #define ETHERBONE_THROWS 1
 
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
+
 #include <stdlib.h>
 #include <string.h>
 #include "Device.h"
@@ -105,7 +108,7 @@ void Device::hook_it_all(etherbone::Socket socket)
   everything.abi_ver_minor = 0;
   everything.bus_specific  = SDB_WISHBONE_WIDTH;
   everything.sdb_component.addr_first = 0;
-  everything.sdb_component.addr_last  = 0xffffffffULL;
+  everything.sdb_component.addr_last  = UINT32_C(0xffffffff);
   everything.sdb_component.product.vendor_id = 0x651;
   everything.sdb_component.product.device_id = 0xefaa70;
   everything.sdb_component.product.version   = 1;

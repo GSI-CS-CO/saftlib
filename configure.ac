@@ -23,9 +23,10 @@ AC_PROG_CXX
 AC_LANG(C++)
 AX_CXX_COMPILE_STDCXX(11,noext,optional)
 
+dnl We need long long even before c++11 for UINT64_C, PRIx64, and friends
 AC_MSG_CHECKING(whether compiler understands -Wall)
 old_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -Wall -Wmissing-declarations"
+CXXFLAGS="$CXXFLAGS -Wall -Wmissing-declarations -Wno-long-long"
 AC_TRY_COMPILE([],[],
   AC_MSG_RESULT(yes),
   AC_MSG_RESULT(no)

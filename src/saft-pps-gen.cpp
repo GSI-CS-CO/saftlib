@@ -6,7 +6,8 @@
 /* ==================================================================================================== */
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
-#define ECA_EVENT_ID 0xffff000000000000 /* FID=MAX & GRPID=MAX */
+#define ECA_EVENT_ID	UINT64_C(0xffff000000000000) /* FID=MAX & GRPID=MAX */
+#define ECA_EVENT_MASK	UINT64_C(0xffff000000000000)
 
 /* Includes */
 /* ==================================================================================================== */
@@ -253,8 +254,8 @@ int main (int argc, char** argv)
         }
         
         /* Setup conditions */
-        output_proxy->NewCondition(true, ECA_EVENT_ID, 0xffff000000000000, 0,         true); 
-        output_proxy->NewCondition(true, ECA_EVENT_ID, 0xffff000000000000, 100000000, false);
+        output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true); 
+        output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false);
       }
       
       /* Output some information */
@@ -291,7 +292,7 @@ int main (int argc, char** argv)
         /* Setup SoftwareActionSink */
         std::cout << "Waiting for timing events..." << std::endl;
         Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-        Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_ID, 0));
+        Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
         condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Attach to counter signals */
