@@ -1,4 +1,4 @@
-<!-- Copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+<!-- Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
   **
   ** @author Wesley W. Terpstra <w.terpstra@gsi.de>
   **
