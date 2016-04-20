@@ -56,7 +56,7 @@ Package: saftd
 Section: admin
 Architecture: any
 Multi-Arch: foreign
-Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}, dbus (>= 1.8.20)
+Depends: libsaftlib@SAFTLIB_SONAME@ (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}, dbus (>= 1.6.8)
 Description: simplified API for timing - dbus service
  GSI timing receivers include a large collection of slave devices. Saftlib
  provides a user-friendly software interface for controlling these slaves.
