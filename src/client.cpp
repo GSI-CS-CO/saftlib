@@ -17,6 +17,10 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
+
 #include <stdio.h>
 #include <iostream>
 #include <giomm.h>

@@ -19,6 +19,9 @@
  */
 #define ETHERBONE_THROWS 1
 
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
+
 #include "Condition.h"
 #include "ActionSink.h"
 #include "TimingReceiver.h"

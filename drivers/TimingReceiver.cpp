@@ -18,6 +18,9 @@
  *******************************************************************************
  */
 #define ETHERBONE_THROWS 1
+
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
 // #define DEBUG_COMPILE 1
 
 #include <sstream>

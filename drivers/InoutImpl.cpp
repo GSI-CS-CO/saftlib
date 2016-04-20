@@ -19,6 +19,9 @@
  */
 #define ETHERBONE_THROWS 1
 
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
+
 #include "InoutImpl.h"
 #include "io_control_regs.h"
 #include "eca_tlu_regs.h"

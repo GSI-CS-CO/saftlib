@@ -19,6 +19,9 @@
  */
 #define ETHERBONE_THROWS 1
 
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
+
 #include "Output.h"
 #include "OutputCondition.h"
 #include "RegisteredObject.h"
