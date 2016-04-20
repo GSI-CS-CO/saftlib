@@ -1,3 +1,9 @@
+saftlib (1.0.4-1) unstable; urgency=medium
+
+  * Fix build warnings on wheezy.
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Wed, 20 Apr 2016 14:53:45 +0200
+
 saftlib (1.0.3-1) unstable; urgency=medium
 
   * Added workaround for old/buggy gdbus-codegen.
