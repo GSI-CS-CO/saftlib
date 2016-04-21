@@ -30,6 +30,7 @@
 #include "Driver.h"
 #include "TimingReceiver.h"
 #include "SCUbusActionSink.h"
+#include "EmbeddedCPUActionSink.h"
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
 #include "FunctionGenerator.h"
@@ -141,6 +142,30 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
             SCUbusActionSink::ConstructorType args = { path, this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
             actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(args);
           }
+          break;
+        }
+        case ECA_EMBEDDED_CPU: {
+#if DEBUG_COMPILE
+            clog << kLogDebug << "ECA: Found queue..." << std::endl;
+#endif
+            for (unsigned queue_id = 1; queue_id < channels; ++queue_id) {
+              eb_data_t get_id;
+              cycle.open(device);
+              cycle.read(queue_addresses[queue_id]+ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &get_id);
+              cycle.close();
+#if DEBUG_COMPILE
+              clog << kLogDebug << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
+              clog << kLogDebug << "ECA: Found queue with ID: " << get_id << std::endl;
+#endif
+              if (get_id == ECA_EMBEDDED_CPU) {
+#if DEBUG_COMPILE
+                clog << kLogDebug << "ECA: Found embedded CPU channel!" << std::endl;
+#endif
+                Glib::ustring path = getObjectPath() + "/embedded_cpu";
+                EmbeddedCPUActionSink::ConstructorType args = { path, this, "embedded_cpu", i, queue_addresses[queue_id] };
+                actionSinks[SinkKey(i, num)] = EmbeddedCPUActionSink::create(args);
+              }
+            }
           break;
         }
         default: {

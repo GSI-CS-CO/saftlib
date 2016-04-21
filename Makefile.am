@@ -36,12 +36,14 @@ saftd_SOURCES = version.h \
 	drivers/SoftwareCondition.cpp	drivers/SoftwareCondition.h	\
 	drivers/OutputCondition.cpp	drivers/OutputCondition.h	\
 	drivers/SCUbusCondition.cpp	drivers/SCUbusCondition.h	\
+	drivers/EmbeddedCPUCondition.cpp	drivers/EmbeddedCPUCondition.h	\
 	drivers/MILbusCondition.cpp	drivers/MILbusCondition.h	\
 	drivers/ActionSink.cpp		drivers/ActionSink.h		\
 	drivers/EventSource.cpp		drivers/EventSource.h		\
 	drivers/InoutImpl.cpp           drivers/InoutImpl.h		\
 	drivers/SoftwareActionSink.cpp	drivers/SoftwareActionSink.h	\
 	drivers/SCUbusActionSink.cpp	drivers/SCUbusActionSink.h	\
+	drivers/EmbeddedCPUActionSink.cpp	drivers/EmbeddedCPUActionSink.h	\
 	drivers/MILbusActionSink.cpp	drivers/MILbusActionSink.h	\
 	drivers/FunctionGenerator.cpp	drivers/FunctionGenerator.h	\
 	drivers/Output.cpp		drivers/Output.h		\

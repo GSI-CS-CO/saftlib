@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -17,20 +17,30 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef ECA_FLAGS_H
-#define ECA_FLAGS_H
+#ifndef EMBEDDED_CPU_CONDITION_H
+#define EMBEDDED_CPU_CONDITION_H
 
-#define ECA_LATE	0
-#define ECA_EARLY	1
-#define ECA_CONFLICT	2
-#define ECA_DELAYED	3
-#define ECA_VALID	4
-#define ECA_OVERFLOW	5
-#define ECA_MAX_FULL	6
+#include "interfaces/EmbeddedCPUCondition.h"
+#include "Condition.h"
 
-#define ECA_LINUX	1
-#define ECA_WBM		2
-#define ECA_EMBEDDED_CPU	3
-#define ECA_SCUBUS	128
+namespace saftlib {
+
+class EmbeddedCPUCondition : public Condition, public iEmbeddedCPUCondition
+{
+  public:
+    typedef EmbeddedCPUCondition_Service ServiceType;
+    typedef Condition_ConstructorType ConstructorType;
+    
+    static Glib::RefPtr<EmbeddedCPUCondition> create(const ConstructorType& args);
+    
+    // iEmbeddedCPUCondition
+    guint32 getTag() const;
+    void setTag(guint32 val);
+    
+  protected:
+    EmbeddedCPUCondition(const ConstructorType& args);
+};
+
+}
 
 #endif

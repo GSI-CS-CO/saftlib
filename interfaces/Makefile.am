@@ -8,6 +8,8 @@ NODES =				\
 	Output.xml		\
 	SCUbusActionSink.xml	\
 	SCUbusCondition.xml	\
+	EmbeddedCPUActionSink.xml	\
+	EmbeddedCPUCondition.xml	\
 	SoftwareActionSink.xml	\
 	SoftwareCondition.xml	\
 	TimingReceiver.xml
@@ -46,6 +48,8 @@ nodist_saftlib_HEADERS = 	\
 	iOwned.h		\
 	iSCUbusActionSink.h	\
 	iSCUbusCondition.h	\
+	iEmbeddedCPUActionSink.h	\
+	iEmbeddedCPUCondition.h	\
 	iSoftwareActionSink.h	\
 	iSoftwareCondition.h	\
 	iTimingReceiver.h	\
@@ -55,6 +59,8 @@ nodist_saftlib_HEADERS = 	\
 	Output.h		\
 	SCUbusActionSink.h	\
 	SCUbusCondition.h	\
+	EmbeddedCPUActionSink.h	\
+	EmbeddedCPUCondition.h	\
 	SoftwareActionSink.h	\
 	SoftwareCondition.h	\
 	TimingReceiver.h
@@ -75,6 +81,8 @@ doc_DATA = 			\
 	Owned.pdf		\
 	SCUbusActionSink.pdf	\
 	SCUbusCondition.pdf	\
+	EmbeddedCPUActionSink.pdf	\
+	EmbeddedCPUCondition.pdf	\
 	SoftwareActionSink.pdf	\
 	SoftwareCondition.pdf	\
 	TimingReceiver.pdf
@@ -101,6 +109,8 @@ nodist_libsaftlib_la_SOURCES =	\
 	iOwned.cpp		\
 	iSCUbusActionSink.cpp	\
 	iSCUbusCondition.cpp	\
+	iEmbeddedCPUActionSink.cpp	\
+	iEmbeddedCPUCondition.cpp	\
 	iSoftwareActionSink.cpp	\
 	iSoftwareCondition.cpp	\
 	iTimingReceiver.cpp	\
@@ -110,6 +120,8 @@ nodist_libsaftlib_la_SOURCES =	\
 	Output.cpp		\
 	SCUbusActionSink.cpp	\
 	SCUbusCondition.cpp	\
+	EmbeddedCPUActionSink.cpp	\
+	EmbeddedCPUCondition.cpp	\
 	SoftwareActionSink.cpp	\
 	SoftwareCondition.cpp	\
 	TimingReceiver.cpp
