@@ -169,6 +169,12 @@ int main (int argc, char** argv)
     {
       /* Setup Condition */
       Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, tr_mask(eventMask), offset, tag));
+
+      /* Accept every kind of event */
+      condition->setAcceptConflict(true);
+      condition->setAcceptDelayed(true);
+      condition->setAcceptEarly(true);
+      condition->setAcceptLate(true);
       
       /* Run the Glib event loop in case the sink should not be disowned */
       if (disown_sink)
