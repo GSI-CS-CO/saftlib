@@ -5,6 +5,7 @@ saft-ctl
 fg-ctl
 saft-io-ctl
 saft-pps-gen
+saft-ecpu-ctl
 # Automake junk dirs
 tools
 m4

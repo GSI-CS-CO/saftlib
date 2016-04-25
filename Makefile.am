@@ -2,7 +2,7 @@ SUBDIRS = interfaces
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl saft-pps-gen
-noinst_PROGRAMS = client
+noinst_PROGRAMS = client saft-ecpu-ctl
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
 dist_dbussystem_DATA = saftlib.conf
@@ -28,6 +28,7 @@ saftd_SOURCES = version.h \
 	src/eb-source.cpp		src/eb-source.h			\
 	src/clog.cpp			src/clog.h			\
 	src/build.cpp			src/build.h			\
+	src/CommonFunctions.cpp	src/CommonFunctions.h		\
 	drivers/eca_regs.h		drivers/eca_flags.h		\
 	drivers/eca_queue_regs.h	drivers/eca_tlu_regs.h		\
 	drivers/io_control_regs.h	drivers/fg_regs.h		\
@@ -58,6 +59,9 @@ client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 saft_ctl_SOURCES = src/saft-ctl.cpp
 saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+
+saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
+saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 fg_ctl_SOURCES = src/fg-ctl.cpp
 fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
