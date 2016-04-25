@@ -1,8 +1,8 @@
 SUBDIRS = interfaces
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl saft-pps-gen
-noinst_PROGRAMS = client saft-ecpu-ctl
+bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl
+noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
 dist_dbussystem_DATA = saftlib.conf
