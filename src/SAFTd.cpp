@@ -120,7 +120,7 @@ struct probe_root {
   eb_status_t status;
 };
 
-void probe_root_cb(eb_user_data_t user, eb_device_t, const struct sdb_table*, eb_address_t msi_first, eb_address_t msi_last, eb_status_t status)
+static void probe_root_cb(eb_user_data_t user, eb_device_t, const struct sdb_table*, eb_address_t msi_first, eb_address_t msi_last, eb_status_t status)
 {
   probe_root* out = reinterpret_cast<probe_root*>(user);
   out->first = msi_first;
@@ -155,7 +155,7 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
     probe.last -= probe.first;
     probe.first = 0;
     
-    // Confirm the size is a power of 2 (so we can mask easily)
+    // Confirm the size is a power of 2 minus 1 (so we can mask easily)
     if (((probe.last + 1) & probe.last) != 0)
       throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device has strange sized MSI range");
     

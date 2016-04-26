@@ -34,7 +34,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
       Glib::ustring name;
       Glib::ustring etherbonePath;
       Glib::ustring objectPath;
-      eb_address_t base;
+      etherbone::sdb_msi_device base;
       eb_address_t stream;
       eb_address_t info;
       eb_address_t watchdog;

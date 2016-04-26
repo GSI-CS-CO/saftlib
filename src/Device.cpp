@@ -34,14 +34,21 @@ Device::Device(etherbone::Device d, eb_address_t m)
 {
 }
 
-eb_address_t Device::request_irq(const sigc::slot<void,eb_data_t>& slot)
+eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sigc::slot<void,eb_data_t>& slot)
 {
   eb_address_t irq;
   
-  if (mask == 0) {
-    throw etherbone::exception_t("request_irq/no_irq", EB_FAIL);
+  // Confirm that our MSI range matches what was probed
+  if (sdb.msi_last - sdb.msi_first != mask) {
+    throw etherbone::exception_t("request_irq/wrong_irq", EB_FAIL);
   }
   
+  // Confirm that first is a power of two
+  if (((sdb.msi_first - 1) & sdb.msi_first) != 0) {
+    throw etherbone::exception_t("request_irq/misaligned", EB_FAIL);
+  }
+  
+  // Select an IRQ
   int retry;
   for (retry = 1000; retry > 0; --retry) {
     irq = (rand() & mask);
@@ -53,13 +60,15 @@ eb_address_t Device::request_irq(const sigc::slot<void,eb_data_t>& slot)
     throw etherbone::exception_t("request_irq/no_free", EB_FAIL);
   }
   
+  // Bind the IRQ
   irqs[irq] = slot;
-  return irq;
+  // Report the MSI as seen from the point-of-view of the slave
+  return irq + sdb.msi_first;
 }
 
 void Device::release_irq(eb_address_t irq)
 {
-  irqs.erase(irq);
+  irqs.erase(irq & mask);
 }
 
 struct IRQ_Handler : public etherbone::Handler

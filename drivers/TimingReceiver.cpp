@@ -50,7 +50,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    device(args.device),
    name(args.name),
    etherbonePath(args.etherbonePath),
-   base(args.base),
+   base(args.base.sdb_component.addr_first),
    stream(args.stream),
    watchdog(args.watchdog),
    pps(args.pps),
@@ -191,6 +191,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   for (unsigned i = 0; i < channels; ++i) {
     // Reserve an MSI
     channel_msis.push_back(device.request_irq(
+      args.base,
       sigc::bind(sigc::mem_fun(*this, &TimingReceiver::msiHandler), i)));
     // Hook MSI to hardware
     setHandler(i, true, channel_msis.back());
@@ -746,8 +747,10 @@ void TimingReceiver::compile()
 
 void TimingReceiver::probe(OpenDevice& od)
 {
-  std::vector<sdb_device> ecas, streams, infos, watchdogs, scubus, pps;
-  od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
+  std::vector<etherbone::sdb_msi_device> ecas;
+  od.device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
+  
+  std::vector<sdb_device> streams, infos, watchdogs, scubus, pps;
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs);
@@ -763,7 +766,7 @@ void TimingReceiver::probe(OpenDevice& od)
     od.name, 
     od.etherbonePath, 
     od.objectPath,
-    (eb_address_t)ecas[0].sdb_component.addr_first,
+    ecas[0],
     (eb_address_t)streams[0].sdb_component.addr_first,
     (eb_address_t)infos[0].sdb_component.addr_first,
     (eb_address_t)watchdogs[0].sdb_component.addr_first,

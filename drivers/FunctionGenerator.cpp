@@ -39,7 +39,7 @@ FunctionGenerator::FunctionGenerator(const ConstructorType& args)
    deviceNumber    ((args.macro >> 16) & 0xFF),
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
-   irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
+   // irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), executedParameterCount(0), fillLevel(0), filled(0)
 {
@@ -48,7 +48,7 @@ FunctionGenerator::FunctionGenerator(const ConstructorType& args)
 FunctionGenerator::~FunctionGenerator()
 {
   resetTimeout.disconnect(); // do not run ResetFailed
-  dev->getDevice().release_irq(irq);
+//  dev->getDevice().release_irq(irq);
 }
 
 static unsigned wrapping_sub(unsigned a, unsigned b, unsigned buffer_size)
