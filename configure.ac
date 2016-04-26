@@ -46,7 +46,7 @@ AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the bu
 AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
 
 PKG_PROG_PKG_CONFIG([0.23])
-PKG_CHECK_MODULES([EB], [etherbone >= 0.1])
+PKG_CHECK_MODULES([EB], [etherbone >= 2.0.0])
 PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
 if test "x$XSLTPROC" = "x"; then
