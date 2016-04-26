@@ -37,6 +37,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
       eb_address_t base;
       eb_address_t stream;
       eb_address_t info;
+      eb_address_t watchdog;
       eb_address_t pps;
     };
     typedef TimingReceiver_Service ServiceType;
@@ -81,6 +82,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     Glib::ustring etherbonePath;
     eb_address_t base;
     eb_address_t stream;
+    eb_address_t watchdog;
     eb_address_t pps;
     guint64 sas_count;
     eb_address_t arrival_irq;
@@ -88,6 +90,8 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
     std::map<Glib::ustring, Glib::ustring> info;
     mutable bool locked;
+    eb_data_t watchdog_value;
+    
     sigc::connection pollConnection;
     unsigned channels;
     unsigned search_size;

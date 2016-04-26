@@ -52,10 +52,21 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    etherbonePath(args.etherbonePath),
    base(args.base),
    stream(args.stream),
+   watchdog(args.watchdog),
    pps(args.pps),
    sas_count(0),
    locked(false)
 {
+  // try to acquire watchdog
+  eb_data_t retry;
+  device.read(watchdog, EB_DATA32, &watchdog_value);
+  if ((watchdog_value >> 16) != 0)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Timing Receiver already locked");
+  device.write(watchdog, EB_DATA32, watchdog_value);
+  device.read(watchdog, EB_DATA32, &retry);
+  if (((retry ^ watchdog_value) >> 16) != 0)
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Timing Receiver already locked");
+  
   // parse eb-info data
   setupGatewareInfo(args.info);
   
@@ -230,6 +241,7 @@ void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t addr
 bool TimingReceiver::poll()
 {
   getLocked();
+  device.write(watchdog, EB_DATA32, watchdog_value);
   return true;
 }
 
@@ -734,15 +746,16 @@ void TimingReceiver::compile()
 
 void TimingReceiver::probe(OpenDevice& od)
 {
-  std::vector<sdb_device> ecas, streams, infos, scubus, pps;
+  std::vector<sdb_device> ecas, streams, infos, watchdogs, scubus, pps;
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos);
+  od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
   
   // only support super basic hardware for now
-  if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || pps.size() != 1)
+  if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || watchdogs.size() != 1 || pps.size() != 1)
     return;
   
   TimingReceiver::ConstructorType args = { 
@@ -753,6 +766,7 @@ void TimingReceiver::probe(OpenDevice& od)
     (eb_address_t)ecas[0].sdb_component.addr_first,
     (eb_address_t)streams[0].sdb_component.addr_first,
     (eb_address_t)infos[0].sdb_component.addr_first,
+    (eb_address_t)watchdogs[0].sdb_component.addr_first,
     (eb_address_t)pps[0].sdb_component.addr_first,
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
