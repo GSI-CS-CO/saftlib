@@ -121,46 +121,35 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
   if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
   
-  // !!! remove this once MSI over EB supported
-  if (path != "dev/wbm0")
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "pre-alpha saftd does not support anything but dev/wbm0");
-  // !!! grab hardware mutual exclusion lock instead of this hack
-  if (devs.size() >= 1)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "etherbone device already opened by another saftd");
-  
-  etherbone::Device edev;
   try {
+    etherbone::Device edev;
     edev.open(socket, path.c_str());
+    
+    struct OpenDevice od(edev);
+    od.name = name;
+    od.objectPath = "/de/gsi/saftlib/" + name;
+    od.etherbonePath = path;
+    
+    try {
+      Drivers::probe(od);
+    } catch (...) {
+      edev.close();
+      throw;
+    }
+    
+    if (od.ref) {
+      devs.insert(std::make_pair(name, od));
+      // inform clients of updated property
+      Devices(getDevices());
+      return od.objectPath;
+    } else {
+      edev.close();
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no driver available for this device");
+    }
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;
     str << "AttachDevice: failed to open: " << e;
     throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
-  }
-  
-  struct OpenDevice od(edev);
-  od.name = name;
-  od.objectPath = "/de/gsi/saftlib/" + name;
-  od.etherbonePath = path;
-  
-  try {
-    Drivers::probe(od);
-  } catch (const etherbone::exception_t& ex) {
-    std::ostringstream str;
-    str << "AttachDevice: failed to probe: " << ex;
-    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
-  } catch (...) {
-    edev.close();
-    throw;
-  }
-  
-  if (od.ref) {
-    devs.insert(std::make_pair(name, od));
-    // inform clients of updated property
-    Devices(getDevices());
-    return od.objectPath;
-  } else {
-    edev.close();
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no driver available for this device");
   }
 }
 
