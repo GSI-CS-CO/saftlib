@@ -60,7 +60,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   // try to acquire watchdog
   eb_data_t retry;
   device.read(watchdog, EB_DATA32, &watchdog_value);
-  if ((watchdog_value >> 16) != 0)
+  if ((watchdog_value & 0xFFFF) != 0)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Timing Receiver already locked");
   device.write(watchdog, EB_DATA32, watchdog_value);
   device.read(watchdog, EB_DATA32, &retry);
