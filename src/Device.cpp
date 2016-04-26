@@ -29,37 +29,22 @@
 
 namespace saftlib {
 
-Device::Device(etherbone::Device d)
- : etherbone::Device(d), low(0), high(0)
+Device::Device(etherbone::Device d, eb_address_t m)
+ : etherbone::Device(d), mask(m)
 {
-  std::vector<sdb_device> pcie;
-  std::vector<sdb_device> vme;
-  
-  // !!! replace with general purpose interrupt claim
-  
-  d.sdb_find_by_identity(0x651, 0x8a670e73, pcie);
-  d.sdb_find_by_identity(0x651, 0x9326AA75, vme);
-  
-  if (pcie.size() == 1) {
-    low  = pcie[0].sdb_component.addr_first;
-    high = pcie[0].sdb_component.addr_last;
-  } else if (vme.size() == 1) {
-    low  = vme[0].sdb_component.addr_first;
-    high = vme[0].sdb_component.addr_last;
-  }
 }
 
 eb_address_t Device::request_irq(const sigc::slot<void,eb_data_t>& slot)
 {
   eb_address_t irq;
   
-  if (low == high) {
+  if (mask == 0) {
     throw etherbone::exception_t("request_irq/no_irq", EB_FAIL);
   }
   
   int retry;
   for (retry = 1000; retry > 0; --retry) {
-    irq = low + (rand() % (high-low));
+    irq = (rand() & mask);
     irq &= ~7;
     if (irqs.find(irq) == irqs.end()) break;
   }

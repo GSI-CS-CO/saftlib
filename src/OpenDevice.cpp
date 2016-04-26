@@ -26,7 +26,9 @@
 
 namespace saftlib {
 
-OpenDevice::OpenDevice(etherbone::Device d) : device(d) { 
+OpenDevice::OpenDevice(etherbone::Device d, eb_address_t mask)
+ : device(d, mask)
+{ 
 }
 
 }

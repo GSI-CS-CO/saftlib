@@ -114,6 +114,20 @@ static inline bool not_isalnum_(char c)
   return !(isalnum(c) || c == '_');
 }
 
+struct probe_root {
+  eb_address_t first;
+  eb_address_t last;
+  eb_status_t status;
+};
+
+void probe_root_cb(eb_user_data_t user, eb_device_t, const struct sdb_table*, eb_address_t msi_first, eb_address_t msi_last, eb_status_t status)
+{
+  probe_root* out = reinterpret_cast<probe_root*>(user);
+  out->first = msi_first;
+  out->last = msi_last;
+  out->status = status;
+}
+
 Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
   if (devs.find(name) != devs.end())
@@ -125,7 +139,27 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
     etherbone::Device edev;
     edev.open(socket, path.c_str());
     
-    struct OpenDevice od(edev);
+    // Determine the size of the MSI range
+    probe_root probe;
+    probe.status = 1;
+    edev.sdb_scan_root_msi(&probe, &probe_root_cb);
+    do socket.run(); while (probe.status == 1);
+    
+    if (probe.status != EB_OK)
+      throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, Glib::ustring("Could not scan bus root: ") + eb_status(probe.status));
+    
+    if (probe.last < probe.first)
+      throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device does not support MSI");
+    
+    // In case we are one master among many, mark us at 0
+    probe.last -= probe.first;
+    probe.first = 0;
+    
+    // Confirm the size is a power of 2 (so we can mask easily)
+    if (((probe.last + 1) & probe.last) != 0)
+      throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device has strange sized MSI range");
+    
+    struct OpenDevice od(edev, probe.last);
     od.name = name;
     od.objectPath = "/de/gsi/saftlib/" + name;
     od.etherbonePath = path;

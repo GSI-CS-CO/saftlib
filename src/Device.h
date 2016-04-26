@@ -28,7 +28,7 @@ namespace saftlib {
 // Saftlib devices just add IRQs
 class Device : public etherbone::Device {
   public:
-    Device(etherbone::Device d);
+    Device(etherbone::Device d, eb_address_t mask);
     
     eb_address_t request_irq(const sigc::slot<void,eb_data_t>& slot);
     void release_irq(eb_address_t);
@@ -37,7 +37,7 @@ class Device : public etherbone::Device {
     static sigc::connection attach(const Glib::RefPtr<Glib::MainLoop>& loop);
     
   private:
-    eb_address_t low, high;
+    eb_address_t mask;
     
     typedef std::map<eb_address_t, sigc::slot<void, eb_data_t> > irqMap;
     static irqMap irqs;
