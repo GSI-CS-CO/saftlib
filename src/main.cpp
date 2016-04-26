@@ -161,11 +161,6 @@ static void on_sigint(int)
 
 int main(int argc, char** argv)
 {
-  if (argc < 2) {
-    std::cerr << "expecting at least one argument <logical-name>:<etherbone-path> ..." << std::endl;
-    return 1;
-  }
-  
   // Hook a stack tracer up to exceptions
   std::set_terminate(my_terminate);
   
