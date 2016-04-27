@@ -1,7 +1,7 @@
 Source: saftlib
 Priority: optional
 Maintainer: Wesley W. Terpstra <terpstra@debian.org>
-Build-Depends: debhelper (>= 9), dh-autoreconf, lsb-release, libetherbone-dev (>= 2.0.0), libglib2.0-dev (>= 2.28.8), libglibmm-2.4-dev (>= 2.28.2), docbook-utils (>= 0.6.14), docbook-xml (>= 4.1), xsltproc (>= 1.1.26)
+Build-Depends: debhelper (>= 9), dh-autoreconf, lsb-release, libetherbone-dev (>= 2.1.0), libglib2.0-dev (>= 2.28.8), libglibmm-2.4-dev (>= 2.28.2), docbook-utils (>= 0.6.14), docbook-xml (>= 4.1), xsltproc (>= 1.1.26)
 Standards-Version: 3.9.6
 Section: libs
 Homepage: https://github.com/GSI-CS-CO/saftlib/wiki

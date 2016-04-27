@@ -1,7 +1,7 @@
 dnl Set these variables before each release:
 m4_define(MAJOR,1)    dnl Increment if removed/changed properties/signals/methods since previous release
 m4_define(MINOR,0)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
-m4_define(REVISION,6) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
+m4_define(REVISION,7) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
 m4_define(SONAME,3)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 AC_PREREQ(2.63)
@@ -46,7 +46,7 @@ AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the bu
 AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
 
 PKG_PROG_PKG_CONFIG([0.23])
-PKG_CHECK_MODULES([EB], [etherbone >= 2.0.0])
+PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])
 PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
 if test "x$XSLTPROC" = "x"; then
