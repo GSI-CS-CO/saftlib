@@ -1,3 +1,9 @@
+saftlib (1.0.7-1) unstable; urgency=medium
+
+  * Switch to using SDB-based MSIs
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Tue, 26 Apr 2016 14:31:49 +0200
+
 saftlib (1.0.6-1) unstable; urgency=medium
 
   * Added support for lm32/embedded cpu channel
