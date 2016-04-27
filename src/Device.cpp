@@ -29,8 +29,8 @@
 
 namespace saftlib {
 
-Device::Device(etherbone::Device d, eb_address_t m)
- : etherbone::Device(d), mask(m)
+Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last)
+ : etherbone::Device(d), base(first), mask(last-first)
 {
 }
 
@@ -38,20 +38,26 @@ eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sig
 {
   eb_address_t irq;
   
-  // Confirm that our MSI range matches what was probed
-  if (sdb.msi_last - sdb.msi_first != mask) {
-    throw etherbone::exception_t("request_irq/wrong_irq", EB_FAIL);
+  // Confirm we had SDB records for MSI all the way down
+  if (sdb.msi_last < sdb.msi_first) {
+    throw etherbone::exception_t("request_irq/non_msi_crossbar_inbetween", EB_FAIL);
   }
   
-  // Confirm that first is a power of two
-  if (((sdb.msi_first - 1) & sdb.msi_first) != 0) {
+  // Confirm that first is aligned to size
+  eb_address_t size = sdb.msi_last - sdb.msi_first;
+  if ((sdb.msi_first & size) != 0) {
     throw etherbone::exception_t("request_irq/misaligned", EB_FAIL);
+  }
+  
+  // Confirm that the MSI range could contain our master (not mismapped)
+  if (size < mask) {
+    throw etherbone::exception_t("request_irq/badly_mapped", EB_FAIL);
   }
   
   // Select an IRQ
   int retry;
   for (retry = 1000; retry > 0; --retry) {
-    irq = (rand() & mask);
+    irq = (rand() & mask) + base;
     irq &= ~7;
     if (irqs.find(irq) == irqs.end()) break;
   }
@@ -68,7 +74,7 @@ eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sig
 
 void Device::release_irq(eb_address_t irq)
 {
-  irqs.erase(irq & mask);
+  irqs.erase((irq & mask) + base);
 }
 
 struct IRQ_Handler : public etherbone::Handler

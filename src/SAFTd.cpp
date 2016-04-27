@@ -46,7 +46,6 @@ SAFTd::SAFTd()
   try {
     socket.open();
     saftlib::Device::hook_it_all(socket);
-    socket.passive("dev/wbs0"); // !!! remove this once dev/wbm0 and dev/wbs0 are unified
   } catch (const etherbone::exception_t& e) {
     // still attached to cerr at this point
     std::cerr << "Failed to initialize etherbone: " << e << std::endl;
@@ -114,20 +113,6 @@ static inline bool not_isalnum_(char c)
   return !(isalnum(c) || c == '_');
 }
 
-struct probe_root {
-  eb_address_t first;
-  eb_address_t last;
-  eb_status_t status;
-};
-
-static void probe_root_cb(eb_user_data_t user, eb_device_t, const struct sdb_table*, eb_address_t msi_first, eb_address_t msi_last, eb_status_t status)
-{
-  probe_root* out = reinterpret_cast<probe_root*>(user);
-  out->first = msi_first;
-  out->last = msi_last;
-  out->status = status;
-}
-
 Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
   if (devs.find(name) != devs.end())
@@ -139,46 +124,37 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
     etherbone::Device edev;
     edev.open(socket, path.c_str());
     
-    // Determine the size of the MSI range
-    probe_root probe;
-    probe.status = 1;
-    edev.sdb_scan_root_msi(&probe, &probe_root_cb);
-    do socket.run(); while (probe.status == 1);
-    
-    if (probe.status != EB_OK)
-      throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, Glib::ustring("Could not scan bus root: ") + eb_status(probe.status));
-    
-    if (probe.last < probe.first)
-      throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device does not support MSI");
-    
-    // In case we are one master among many, mark us at 0
-    probe.last -= probe.first;
-    probe.first = 0;
-    
-    // Confirm the size is a power of 2 minus 1 (so we can mask easily)
-    if (((probe.last + 1) & probe.last) != 0)
-      throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device has strange sized MSI range");
-    
-    struct OpenDevice od(edev, probe.last);
-    od.name = name;
-    od.objectPath = "/de/gsi/saftlib/" + name;
-    od.etherbonePath = path;
-    
     try {
+      // Determine the size of the MSI range
+      eb_address_t first, last;
+      edev.enable_msi(&first, &last);
+    
+      // Confirm the device is an aligned power of 2
+      eb_address_t size = last - first;
+    
+      if (((size + 1) & size) != 0)
+        throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device has strange sized MSI range");
+    
+      if ((first & size) != 0)
+        throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device has unaligned MSI first address");
+    
+      struct OpenDevice od(edev, first, last);
+      od.name = name;
+      od.objectPath = "/de/gsi/saftlib/" + name;
+      od.etherbonePath = path;
+    
       Drivers::probe(od);
+      if (od.ref) {
+        devs.insert(std::make_pair(name, od));
+        // inform clients of updated property
+        Devices(getDevices());
+        return od.objectPath;
+      } else {
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no driver available for this device");
+      }
     } catch (...) {
       edev.close();
       throw;
-    }
-    
-    if (od.ref) {
-      devs.insert(std::make_pair(name, od));
-      // inform clients of updated property
-      Devices(getDevices());
-      return od.objectPath;
-    } else {
-      edev.close();
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no driver available for this device");
     }
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;

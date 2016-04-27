@@ -31,7 +31,7 @@ struct OpenDevice {
   Glib::ustring etherbonePath;
   Glib::RefPtr<Glib::Object> ref;
   
-  OpenDevice(etherbone::Device d, eb_address_t mask);
+  OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last);
 };
 
 }
