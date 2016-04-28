@@ -172,7 +172,6 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
     Device::MSI msi = Device::msis.front();
     Device::msis.pop_front();
     
-    msi.address &= 0x7fffffffUL; // !!! work-around for ftm crossbar bug
     Device::irqMap::iterator i = Device::irqs.find(msi.address);
     if (i != Device::irqs.end()) {
       try {
