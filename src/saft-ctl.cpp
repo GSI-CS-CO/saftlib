@@ -190,11 +190,11 @@ static void displayInfo(Glib::RefPtr<SAFTd_Proxy> saftd) {
   //std::cout << "device name                     : " << devName << std::endl;
   std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
   for (i = allDevices.begin(); i != allDevices.end(); i++ ) {
-  aDevice =  TimingReceiver_Proxy::create(allDevices.begin()->second);
-  std::cout << "  device: " << i->second;
-  std::cout << ", name: " << aDevice->getName();
-  std::cout << ", path: " << aDevice->getEtherbonePath();
-  std::cout << std::endl;
+    aDevice =  TimingReceiver_Proxy::create(i->second);
+    std::cout << "  device: " << i->second;
+    std::cout << ", name: " << aDevice->getName();
+    std::cout << ", path: " << aDevice->getEtherbonePath();
+    std::cout << std::endl;
   } //for i
   
 
