@@ -20,17 +20,17 @@
 #ifndef ECA_FLAGS_H
 #define ECA_FLAGS_H
 
-#define ECA_LATE	0
-#define ECA_EARLY	1
-#define ECA_CONFLICT	2
-#define ECA_DELAYED	3
-#define ECA_VALID	4
-#define ECA_OVERFLOW	5
-#define ECA_MAX_FULL	6
+#define ECA_LATE      0
+#define ECA_EARLY     1
+#define ECA_CONFLICT  2
+#define ECA_DELAYED   3
+#define ECA_VALID     4
+#define ECA_OVERFLOW  5
+#define ECA_MAX_FULL  6
 
-#define ECA_LINUX	1
-#define ECA_WBM		2
-#define ECA_EMBEDDED_CPU	3
-#define ECA_SCUBUS	128
+#define ECA_LINUX         0
+#define ECA_WBM           1
+#define ECA_EMBEDDED_CPU  2
+#define ECA_SCUBUS        3
 
 #endif
