@@ -45,6 +45,8 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
       Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
       eb_address_t fgb;
       eb_address_t swi;
+      etherbone::sdb_msi_device base;
+      sdb_device mbx;
       unsigned num_channels;
       unsigned buffer_size;
       unsigned int index;
@@ -74,7 +76,7 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     FunctionGenerator(const ConstructorType& args);
     ~FunctionGenerator();
     bool lowFill() const;
-    void irq_handler(eb_data_t status);
+    void irq_handler(eb_data_t msi);
     void refill();
     void releaseChannel();
     void acquireChannel();
@@ -86,6 +88,8 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
     eb_address_t shm;
     eb_address_t swi;
+    etherbone::sdb_msi_device base;
+    sdb_device mbx;
     unsigned num_channels;
     unsigned buffer_size;
     unsigned int index;
@@ -115,6 +119,8 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
       
       guint64 duration() const;
     };
+
+    unsigned mbx_slot;
     
     // These 3 variables must be kept in sync:
     guint64 fillLevel;

@@ -21,7 +21,7 @@
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
-//#define DEBUG_COMPILE 1
+#define DEBUG_COMPILE 1
 
 #include <sstream>
 #include <algorithm>
@@ -237,6 +237,7 @@ void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t addr
   cycle.write(base + ECA_CHANNEL_MSI_SET_TARGET_OWR, EB_DATA32, address);
   cycle.write(base + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, enable?1:0);
   cycle.close();
+  clog << kLogDebug << "TimingReceiver: registered irq 0x" << std::hex << address << std::endl;
 }
 
 bool TimingReceiver::poll()
@@ -747,23 +748,27 @@ void TimingReceiver::compile()
 
 void TimingReceiver::probe(OpenDevice& od)
 {
-  std::vector<etherbone::sdb_msi_device> ecas;
+  std::vector<etherbone::sdb_msi_device> ecas, mbx_msi;
   od.device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
+  od.device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi);
   
-  std::vector<sdb_device> streams, infos, watchdogs, scubus, pps;
+  std::vector<sdb_device> streams, infos, watchdogs, scubus, pps, mbx;
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
+  od.device.sdb_find_by_identity(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx);
   
   // only support super basic hardware for now
-  if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || watchdogs.size() != 1 || pps.size() != 1)
+  if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || watchdogs.size() != 1 
+	|| pps.size() != 1 || mbx.size() != 1 || mbx_msi.size() != 1)
     return;
-  
+ 
+ 
   TimingReceiver::ConstructorType args = { 
     od.device, 
-    od.name, 
+    od.name,
     od.etherbonePath, 
     od.objectPath,
     ecas[0],
@@ -781,10 +786,10 @@ void TimingReceiver::probe(OpenDevice& od)
     
     // Probe for LM32 block memories
     eb_address_t fgb = 0;
-    std::vector<sdb_device> fgs, eps, rom;
+    std::vector<sdb_device> fgs, rom;
     od.device.sdb_find_by_identity(LM32_RAM_USER_VENDOR,    LM32_RAM_USER_PRODUCT,    fgs);
-    od.device.sdb_find_by_identity(LM32_IRQ_EP_VENDOR,      LM32_IRQ_EP_PRODUCT,      eps);
     od.device.sdb_find_by_identity(LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT, rom);
+    
     
     if (rom.size() != 1)
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
@@ -798,9 +803,6 @@ void TimingReceiver::probe(OpenDevice& od)
     
     if (cpus != fgs.size())
       throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
-//  currently EPs appear twice on crossbar. consult Mathias.
-//    if (eps_per * cpus != eps.size())
-//      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 EPs does not equal ROM cpu_count*ep_count");
     
     // Check them all for the function generator microcontroller
     unsigned i;
@@ -812,13 +814,24 @@ void TimingReceiver::probe(OpenDevice& od)
       cycle.read(fgb + SHM_BASE + FG_MAGIC_NUMBER, EB_DATA32, &magic);
       cycle.read(fgb + SHM_BASE + FG_VERSION,      EB_DATA32, &version);
       cycle.close();
-      if (magic == 0xdeadbeef && version == 2) break;
+      if (magic == 0xdeadbeef && version == 3) break;
     }
     
     // Did we find a function generator?
     if (i != fgs.size()) {
-      // SWI is always the second (+1th) IRQ endpoint on the microcontroller
-      eb_address_t swi = eps[i*eps_per + 1].sdb_component.addr_first;
+	
+      // get mailbox slot number for swi host=>lm32
+      eb_data_t mb_slot;
+      cycle.open(od.device);
+      cycle.read(fgb + SHM_BASE + FG_MB_SLOT, EB_DATA32, &mb_slot);
+      cycle.close();	
+
+      if (mb_slot < 0 && mb_slot > 127)
+        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
+
+      // swi address of fg is to be found in mailbox slot mb_slot
+      eb_address_t swi = mbx[0].sdb_component.addr_first + mb_slot * 4 * 2;
+      clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
       eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
       
       // Probe the configuration and hardware macros
@@ -837,7 +850,7 @@ void TimingReceiver::probe(OpenDevice& od)
       // Disable all channels
       cycle.open(od.device);
       for (unsigned j = 0; j < num_channels; ++j)
-        cycle.write(swi + SWI_DISABLE, EB_DATA32, j);
+        cycle.write(swi, EB_DATA32, SWI_DISABLE | j);
       cycle.close();
       
       // Create the objects to control the channels
@@ -849,7 +862,7 @@ void TimingReceiver::probe(OpenDevice& od)
         spath << od.objectPath << "/fg_" << j;
         Glib::ustring path = spath.str();
         
-        FunctionGenerator::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
+        FunctionGenerator::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, mbx_msi[0], mbx[0], (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
         Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(args);
 
         std::ostringstream name;
