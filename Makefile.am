@@ -57,7 +57,7 @@ saftd_LDFLAGS = -rdynamic # needed for stack trace
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
-saft_ctl_SOURCES = src/saft-ctl.cpp
+saft_ctl_SOURCES = src/saft-ctl.cpp src/CommonFunctions.cpp
 saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
