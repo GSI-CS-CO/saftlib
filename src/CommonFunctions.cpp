@@ -19,8 +19,8 @@ std::string tr_formatDate(guint64 time, guint32 pmode)
   string temp;
 
   if (pmode & PMODE_VERBOSE) {
-	strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-	snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
+    strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
+    snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
   }
   else if (pmode & PMODE_DEC) snprintf(full, sizeof(full), "0d%lu.%09ld",s,(long)ns);
   else snprintf(full, sizeof(full), "0x%016" PRIx64, time);
@@ -40,12 +40,12 @@ std::string tr_formatActionEvent(guint64 id, guint32 pmode)
   if (pmode & PMODE_HEX) {full << std::hex << std::setfill('0'); width = 16; fmt = "0x";}
   if (pmode & PMODE_DEC) {full << std::dec << std::setfill('0'); width = 20; fmt = "0d";}
   if (pmode & PMODE_VERBOSE) {
-	full << " FID: "   << fmt << std::setw(1) << ((id >> 60) & 0xf);
+    full << " FID: "   << fmt << std::setw(1) << ((id >> 60) & 0xf);
     full << " GID: "   << fmt << std::setw(4) << ((id >> 48) & 0xfff);
-	full << " EVTNO: " << fmt << std::setw(4) << ((id >> 36) & 0xfff);
-	full << " SID: "   << fmt << std::setw(4) << ((id >> 24) & 0xfff);
-	full << " BPID: "  << fmt << std::setw(5) << ((id >> 14) & 0x3fff);
-	full << " RES: "   << fmt << std::setw(4) << (id & 0x3ff);
+    full << " EVTNO: " << fmt << std::setw(4) << ((id >> 36) & 0xfff);
+    full << " SID: "   << fmt << std::setw(4) << ((id >> 24) & 0xfff);
+    full << " BPID: "  << fmt << std::setw(5) << ((id >> 14) & 0x3fff);
+    full << " RES: "   << fmt << std::setw(4) << (id & 0x3ff);
   }
   else full << " EvtID: " << fmt << std::setw(width) << std::setfill('0') << id;
 
@@ -63,13 +63,13 @@ std::string tr_formatActionParam(guint64 param, guint32 evtNo, guint32 pmode)
   
   switch (evtNo) {
   case 0x0 :
-	// add some code
-	break;
+    // add some code
+    break;
   case 0x1 :
-	// add some code
-	break;
+    // add some code
+    break;
   default :
-	full << " Param: " << fmt << std::setw(width) << param;
+    full << " Param: " << fmt << std::setw(width) << param;
   } // switch evtNo
 
   return full.str();
