@@ -26,6 +26,7 @@
 #include "interfaces/SoftwareCondition.h"
 #include "interfaces/iDevice.h"
 #include "interfaces/Output.h"
+#include "interfaces/OutputCondition.h"
 #include "interfaces/Input.h"
 
 /* Namespace */
@@ -254,8 +255,19 @@ int main (int argc, char** argv)
         }
         
         /* Setup conditions */
-        output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true); 
-        output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false);
+        Glib::RefPtr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
+        Glib::RefPtr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
+        
+        /* Accept all kinds of events */
+        condition_high->setAcceptConflict(true);
+        condition_high->setAcceptDelayed(true);
+        condition_high->setAcceptEarly(true);
+        condition_high->setAcceptLate(true);
+        condition_low->setAcceptConflict(true);
+        condition_low->setAcceptDelayed(true);
+        condition_low->setAcceptEarly(true);
+        condition_low->setAcceptLate(true);
+        
       }
       
       /* Output some information */
@@ -294,6 +306,12 @@ int main (int argc, char** argv)
         Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
         Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
         condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
+        
+        /* Accept all kinds of events */
+        condition->setAcceptConflict(true);
+        condition->setAcceptDelayed(true);
+        condition->setAcceptEarly(true);
+        condition->setAcceptLate(true);
         
         /* Attach to counter signals */
         sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
