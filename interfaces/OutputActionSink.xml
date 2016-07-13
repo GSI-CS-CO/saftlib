@@ -83,6 +83,12 @@
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
   
+  <!-- TypeOut: IO type (GPIO, LVDS, ...)
+    -->
+  <property name="TypeOut" type="s" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+  
   <!-- Input: If non-empty, path of the Input object for the same physical IO -->
   <property name="Input" type="s" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>

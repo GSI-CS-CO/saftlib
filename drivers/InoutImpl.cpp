@@ -668,12 +668,28 @@ Glib::ustring InoutImpl::getLogicLevel() const
   return IOLogicLevel;
 }
 
+Glib::ustring InoutImpl::getTypeOut() const { return getType(); }
+Glib::ustring InoutImpl::getTypeIn() const { return getType(); }
+Glib::ustring InoutImpl::getType() const
+{
+  Glib::ustring IOType;
+  
+  switch(io_channel)
+  {
+    case IO_CFG_CHANNEL_GPIO: { IOType = "8ns (GPIO)"; break; }
+    case IO_CFG_CHANNEL_LVDS: { IOType = "1ns (LVDS)"; break; }
+    default: throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel type unknown!");
+  }
+  
+  return IOType;
+}
+
 guint64 InoutImpl::getResolution() const
 {
   switch (io_channel) {
   case IO_CFG_CHANNEL_GPIO: return 8;
   case IO_CFG_CHANNEL_LVDS: return 1;
-  default: throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!");
+  default: throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel resolution unknown!");
   }
 }
 

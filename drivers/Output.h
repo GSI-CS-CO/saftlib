@@ -58,6 +58,7 @@ class Output : public ActionSink, public iOutputActionSink
     bool getOutputEnableAvailable() const;
     bool getSpecialPurposeOutAvailable() const;
     Glib::ustring getLogicLevelOut() const;
+    Glib::ustring getTypeOut() const;
     Glib::ustring getInput() const;
     
     // Property setters

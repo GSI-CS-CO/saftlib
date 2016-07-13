@@ -55,6 +55,7 @@ class Input : public EventSource, public iInputEventSource
     bool getInputTerminationAvailable() const;
     bool getSpecialPurposeInAvailable() const;
     Glib::ustring getLogicLevelIn() const;
+    Glib::ustring getTypeIn() const;
     Glib::ustring getOutput() const;
     // Property setters
     void setStableTime(guint32 val);

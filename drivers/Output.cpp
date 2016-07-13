@@ -94,6 +94,11 @@ Glib::ustring Output::getLogicLevelOut() const
   return impl->getLogicLevelOut();
 }
 
+Glib::ustring Output::getTypeOut() const
+{
+  return impl->getTypeOut();
+}
+
 Glib::ustring Output::getInput() const
 {
   return partnerPath;

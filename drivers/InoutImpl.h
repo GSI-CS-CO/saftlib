@@ -56,6 +56,7 @@ class InoutImpl : public Glib::Object
     bool getBuTiSMultiplexer() const;
     void setBuTiSMultiplexer(bool val);
     Glib::ustring getLogicLevelOut() const;
+    Glib::ustring getTypeOut() const;
     
     // iInputEventSource
     bool ReadInput(); // done
@@ -66,6 +67,7 @@ class InoutImpl : public Glib::Object
     void setSpecialPurposeIn(bool val);
     bool getSpecialPurposeInAvailable() const;
     Glib::ustring getLogicLevelIn() const;
+    Glib::ustring getTypeIn() const;
     
     // iInputEventSource
     guint64 getResolution() const;
@@ -88,6 +90,7 @@ class InoutImpl : public Glib::Object
     bool io_spec_in_available;
     eb_address_t io_control_addr; 
     Glib::ustring getLogicLevel() const;
+    Glib::ustring getType() const;
 };
 
 }

@@ -81,6 +81,11 @@ Glib::ustring Input::getLogicLevelIn() const
   return impl->getLogicLevelIn();
 }
 
+Glib::ustring Input::getTypeIn() const
+{
+  return impl->getTypeIn();
+}
+
 Glib::ustring Input::getOutput() const
 {
   return partnerPath;
