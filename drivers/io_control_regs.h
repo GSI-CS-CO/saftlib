@@ -101,6 +101,7 @@
 #define IO_LOGIC_LEVEL_LVTTL         1
 #define IO_LOGIC_LEVEL_LVDS          2
 #define IO_LOGIC_LEVEL_NIM           3
+#define IO_LOGIC_LEVEL_CMOS          4
 
 #define IO_OPERATION_SET             0
 #define IO_OPERATION_RESET           1

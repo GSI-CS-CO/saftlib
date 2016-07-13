@@ -658,11 +658,12 @@ Glib::ustring InoutImpl::getLogicLevel() const
   
   switch(io_logic_level)
   {
-    case IO_LOGIC_LEVEL_TTL:   { IOLogicLevel = "TTL"; break; }
+    case IO_LOGIC_LEVEL_TTL:   { IOLogicLevel = "TTL";   break; }
     case IO_LOGIC_LEVEL_LVTTL: { IOLogicLevel = "LVTTL"; break; }
-    case IO_LOGIC_LEVEL_LVDS:  { IOLogicLevel = "LVDS"; break; }
-    case IO_LOGIC_LEVEL_NIM:   { IOLogicLevel = "NIM"; break; }
-    default:                   { IOLogicLevel = "?"; break; }
+    case IO_LOGIC_LEVEL_LVDS:  { IOLogicLevel = "LVDS";  break; }
+    case IO_LOGIC_LEVEL_NIM:   { IOLogicLevel = "NIM";   break; }
+    case IO_LOGIC_LEVEL_CMOS:  { IOLogicLevel = "CMOS";  break; }
+    default:                   { IOLogicLevel = "?";     break; }
   }
   
   return IOLogicLevel;
