@@ -66,7 +66,7 @@ saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 fg_ctl_SOURCES = src/fg-ctl.cpp
 fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
-saft_io_ctl_SOURCES = src/saft-io-ctl.cpp
+saft_io_ctl_SOURCES = src/saft-io-ctl.cpp src/CommonFunctions.cpp
 saft_io_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 saft_pps_gen_SOURCES = src/saft-pps-gen.cpp

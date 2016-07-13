@@ -117,7 +117,6 @@
 #define __IO_RETURN_SUCCESS          0
 #define __IO_RETURN_IO_NAME_UNKNOWN  0xffffffff
 #define __IO_RETURN_IO_OPTION_INVAL  0xfffffffe
-#define __IO_CTL_VERSION             "v1.0"
 
 /* Enumerations */
 /* ==================================================================================================== */

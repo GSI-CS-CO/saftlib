@@ -25,6 +25,10 @@
 /* ==================================================================================================== */
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
+#define IO_TOOL_VERSION        "v1.1"
+#define ECA_EVENT_ID_LATCH     UINT64_C(0xfffe000000000000) /* FID=MAX & GRPID=MAX-1 */
+#define ECA_EVENT_MASK_LATCH   UINT64_C(0xfffe000000000000)
+#define IO_CONDITION_OFFSET    5000
 
 /* Includes */
 /* ==================================================================================================== */
@@ -36,6 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <string>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -44,7 +49,11 @@
 #include "interfaces/iDevice.h"
 #include "interfaces/Output.h"
 #include "interfaces/Input.h"
+#include "interfaces/OutputCondition.h"
 
+#include "src/CommonFunctions.h"
+
+#include "drivers/eca_flags.h"
 #include "drivers/io_control_regs.h"
 
 /* Namespace */
@@ -54,9 +63,12 @@ using namespace std;
 
 /* Global */
 /* ==================================================================================================== */
-static const char *program    = NULL; /* Name of the application */
-static const char *deviceName = NULL; /* Name of the device */
-static const char *ioName     = NULL; /* Name of the io */
+static const char   *program      = NULL;  /* Name of the application */
+static const char   *deviceName   = NULL;  /* Name of the device */
+static const char   *ioName       = NULL;  /* Name of the IO */
+static bool          ioNameGiven  = false; /* IO name given? */
+static bool          ioNameExists = false; /* IO name does exist? */
+std::map<Glib::ustring,guint64>     map_PrefixName; /* Translation table IO name <> prefix */
 
 /* Prototypes */
 /* ==================================================================================================== */
@@ -64,29 +76,375 @@ static void io_help        (void);
 static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_drive, 
                             bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_drive,
                             bool verbose_mode);
+static int  io_create      (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative);
+static int  io_destroy     (bool verbose_mode);
+static int  io_flip        (bool verbose_mode);
+static int  io_list        (void);
 static int  io_print_table (bool verbose_mode);
+static void io_catch_input (guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags);
+static int  io_snoop       (void);
+
+/* Function io_create() */
+/* ==================================================================================================== */
+static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative)
+{
+  /* Helpers */
+  bool   io_found          = false;
+  bool   io_edge           = false;
+  bool   io_AcceptConflict = false;
+  bool   io_AcceptDelayed  = false;
+  bool   io_AcceptEarly    = false;
+  bool   io_AcceptLate     = false;
+  gint64 io_offset         = offset;
+  
+  /* Get level/edge */
+  if (level > 0) { io_edge = true; }
+  else           { io_edge = false; }
+  
+  /* Perform selected action(s) */
+  try
+  {
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    
+    /* Search for IO name */
+    std::map< Glib::ustring, Glib::ustring > outs;
+    Glib::ustring io_path;
+    outs = receiver->getOutputs();
+    Glib::RefPtr<Output_Proxy> output_proxy;
+    
+    /* Check flags */
+    if (flags & (1 << ECA_LATE))     { io_AcceptLate = true; }
+    if (flags & (1 << ECA_EARLY))    { io_AcceptEarly = true; }
+    if (flags & (1 << ECA_CONFLICT)) { io_AcceptConflict = true; }
+    if (flags & (1 << ECA_DELAYED))  { io_AcceptDelayed = true; }
+    
+    /* Check if a negative offset is wanted */
+    if (offset_negative) { io_offset = io_offset*-1; }
+    
+    /* Check if IO exists output */
+    if (ioNameGiven)
+    {
+      for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+      {
+        if (it->first == ioName) 
+        { 
+          io_found = true; 
+          output_proxy = Output_Proxy::create(it->second);
+          io_path = it->second;
+        }
+      }
+    }
+    
+    /* Found IO? */
+    if (ioNameGiven == false)
+    {
+      std::cerr << "Error: No IO given!" << std::endl; 
+      return (__IO_RETURN_FAILURE);
+    }
+    else if (io_found == false)
+    { 
+      std::cerr << "Error: There is no IO (output) with the name " << ioName << "!" << std::endl; 
+      return (__IO_RETURN_FAILURE);
+    }
+    
+    /* Setup condition */
+    Glib::RefPtr<OutputCondition_Proxy> condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, tr_mask(eventMask), io_offset, io_edge));
+    condition->setAcceptConflict(io_AcceptConflict);
+    condition->setAcceptDelayed(io_AcceptDelayed);
+    condition->setAcceptEarly(io_AcceptEarly);
+    condition->setAcceptLate(io_AcceptLate);
+    
+    /* Disown and quit or keep waiting */
+    if (disown) { condition->Disown(); }
+    else        { loop->run(); }
+  }
+  catch (const Glib::Error& error) 
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+  
+  /* Done */
+  return (__IO_RETURN_SUCCESS);
+}
+
+/* Function io_destroy() */
+/* ==================================================================================================== */
+static int io_destroy (bool verbose_mode)
+{
+  /* Helper */
+  Glib::ustring c_name = "Unknown";
+  std::vector <Glib::RefPtr<OutputCondition_Proxy> > prox;
+   
+  /* Perform selected action(s) */
+  try
+  {
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    
+    /* Search for IO name */
+    std::map< Glib::ustring, Glib::ustring > outs;
+    Glib::ustring io_path;
+    outs = receiver->getOutputs();
+    Glib::RefPtr<Output_Proxy> output_proxy;
+      
+    /* Check if IO exists output */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    {
+      output_proxy = Output_Proxy::create(it->second);
+      std::vector< Glib::ustring > all_conditions = output_proxy->getAllConditions();
+      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      {
+        if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
+        {
+          Glib::RefPtr<OutputCondition_Proxy> destroy_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
+          c_name = all_conditions[condition_it];
+          if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
+          { 
+            prox.push_back ( OutputCondition_Proxy::create(all_conditions[condition_it]));
+            prox.back()->Destroy();
+            if (verbose_mode) { std::cout << "Destroyed " << c_name << "!" << std::endl; }
+          }
+          else
+          {
+            if (verbose_mode) { std::cout << "Found " << c_name << " but is not destructible!" << std::endl; }
+          }
+        }
+      }
+    }
+    
+  }
+  catch (const Glib::Error& error) 
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+  
+  /* Done */
+  return (__IO_RETURN_SUCCESS);
+}
+
+/* Function io_flip() */
+/* ==================================================================================================== */
+static int io_flip (bool verbose_mode)
+{
+  /* Helper */
+  Glib::ustring c_name = "Unknown";
+   
+  /* Perform selected action(s) */
+  try
+  {
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    
+    /* Search for IO name */
+    std::map< Glib::ustring, Glib::ustring > outs;
+    Glib::ustring io_path;
+    outs = receiver->getOutputs();
+    Glib::RefPtr<Output_Proxy> output_proxy;
+    std::vector< Glib::ustring > conditions_to_destroy;
+      
+    /* Check if IO exists output */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    {
+      output_proxy = Output_Proxy::create(it->second);
+      std::vector< Glib::ustring > all_conditions = output_proxy->getAllConditions();
+      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      {
+        if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
+        {
+          Glib::RefPtr<OutputCondition_Proxy> flip_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
+          c_name = all_conditions[condition_it];
+          
+          /* Flip unowned conditions */
+          if ((flip_condition->getOwner() == ""))
+          { 
+            if (verbose_mode) { std::cout << "Flipped " << c_name; }
+            if (flip_condition->getActive())
+            { 
+              flip_condition->setActive(false); 
+              if (verbose_mode) { std::cout << " to inactive!" << std::endl; }
+            }
+            else 
+            { 
+              flip_condition->setActive(true); 
+              if (verbose_mode) { std::cout << " to active!" << std::endl; }
+            }
+          }
+          else
+          {
+            if (verbose_mode) { std::cout << "Found " << c_name << " but is already owned!" << std::endl; }
+          }
+        }
+      }
+    }
+  }
+  catch (const Glib::Error& error) 
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+  
+  /* Done */
+  return (__IO_RETURN_SUCCESS);
+}
+
+/* Function io_list() */
+/* ==================================================================================================== */
+static int io_list (void)
+{
+  /* Helpers */
+  bool     io_found     = false;
+  bool     header_shown = false;
+  Glib::ustring c_name  = "Unknown";
+   
+  /* Perform selected action(s) */
+  try
+  {
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    
+    /* Search for IO name */
+    std::map< Glib::ustring, Glib::ustring > outs;
+    Glib::ustring io_path;
+    outs = receiver->getOutputs();
+    Glib::RefPtr<Output_Proxy> output_proxy;
+    
+    /* Check if IO exists output */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    {
+      output_proxy = Output_Proxy::create(it->second);
+      
+      if(!header_shown)
+      {
+        /* Print table header */
+        std::cout << "IO             Number      ID                  Mask                Offset      Flags       Edge     Status    Owner   " << std::endl;
+        std::cout << "----------------------------------------------------------------------------------------------------------------------" << std::endl;
+        header_shown = true;
+      }
+      
+      if (ioNameGiven && (it->first == ioName)) { io_found = true; }
+      std::vector< Glib::ustring > all_conditions = output_proxy->getAllConditions();
+      
+      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      {
+        if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
+        {
+          /* Helper for flag information field */
+          guint32  flags = 0x0;
+          
+          /* Get output conditions */
+          Glib::RefPtr<OutputCondition_Proxy> info_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
+          c_name = all_conditions[condition_it];
+          std::string str_path_and_id = it->first;
+          std::string str_path        = it->second;
+          std::string cid             = c_name;
+          std::string cid_prefix      = "/_";
+          
+          /* Extract IO name */
+          cid.replace(str_path.find(str_path),str_path.length(),"");
+          cid.replace(cid_prefix.find(cid_prefix),cid_prefix.length(),"");
+          
+          /* Output ECA condition table */
+          std::cout << std::left;
+          std::cout << std::setw(12+2) << it->first << " ";
+          std::cout << std::setw(10+1) << cid << " ";
+          std::cout << "0x";
+          std::cout << std::setw(16+1) << std::hex << info_condition->getID() << " ";
+          std::cout << "0x";
+          std::cout << std::setw(16+1) << std::hex << info_condition->getMask() << " ";
+          std::cout << std::dec;
+          std::cout << std::setw(10+1) << info_condition->getOffset() << " ";
+          if (info_condition->getAcceptDelayed())  { std::cout << "d"; flags = flags | (1<<ECA_DELAYED); }
+          else                                     { std::cout << "."; }
+          if (info_condition->getAcceptConflict()) { std::cout << "c"; flags = flags | (1<<ECA_CONFLICT); }
+          else                                     { std::cout << "."; }
+          if (info_condition->getAcceptEarly())    { std::cout << "e"; flags = flags | (1<<ECA_EARLY); }
+          else                                     { std::cout << "."; }
+          if (info_condition->getAcceptLate())     { std::cout << "l"; flags = flags | (1<<ECA_LATE); }
+          else                                     { std::cout << "."; }
+          std::cout << " (0x";
+          std::cout << std::setw(1) << std::hex << flags << ")  ";
+          if (info_condition->getOn())             { std::cout << "Rising   "; }
+          else                                     { std::cout << "Falling  "; }
+          if (info_condition->getActive())         { std::cout << "Active    "; }
+          else                                     { std::cout << "Inactive  "; }
+          std::cout << std::dec;
+          std::cout << info_condition->getOwner() << " ";
+          std::cout << std::endl;
+        }
+      }
+    }
+    
+    /* Found IO? */
+    if ((io_found == false) &&(ioNameGiven))
+    { 
+      std::cout << "Error: There is no IO with the name " << ioName << "!" << std::endl; 
+      return (__IO_RETURN_FAILURE);
+    }
+    
+  }
+  catch (const Glib::Error& error) 
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+  
+  /* Done */
+  return (__IO_RETURN_SUCCESS);
+}
 
 /* Function io_help() */
 /* ==================================================================================================== */
 static void io_help (void)
 {
   /* Print arguments and options */
-  std::cout << "IO-CTL for SAFTlib " << __IO_CTL_VERSION << std::endl;
-  std::cout << "Usage: " << program << " <unique device name> <io name> [OPTIONS]" << std::endl;
+  std::cout << "IO-CTL for SAFTlib " << IO_TOOL_VERSION << std::endl;
+  std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
-  std::cout << "  -o 0/1: Toggle output enable" << std::endl;
-  std::cout << "  -t 0/1: Toggle termination/resistor" << std::endl;
-  std::cout << "  -p 0/1: Toggle special (output) functionality" << std::endl;
-  std::cout << "  -e 0/1: Toggle special (input) functionality" << std::endl;
-  std::cout << "  -m 0/1: Toggle output multiplexer (ECA/IOC/ClkGen or BuTiS t0 + TS)" << std::endl;
-  std::cout << "  -d 0/1: Toggle output value" << std::endl;
-  std::cout << "  -h: Print help (this message)" << std::endl;
-  std::cout << "  -v: Switch to verbose mode" << std::endl;
-  std::cout << "  -i: List every IO and it's capability" << std::endl;
-  std::cout << "  -s: Snoop on input" << std::endl;
+  std::cout << "  -n <name>:                                     Specify IO name or leave blank (to see all IOs/conditions)" << std::endl;
   std::cout << std::endl;
-  std::cout << "Example: " << program << " exploder5a_123t " << "IO1 " << "-o 1 -t 0 -d 1" << std::endl;
+  std::cout << "  -o 0/1:                                        Toggle output enable" << std::endl;
+  std::cout << "  -t 0/1:                                        Toggle termination/resistor" << std::endl;
+  std::cout << "  -p 0/1:                                        Toggle special (output) functionality" << std::endl;
+  std::cout << "  -e 0/1:                                        Toggle special (input) functionality" << std::endl;
+  std::cout << "  -m 0/1:                                        Toggle output multiplexer (ECA/IOC/ClkGen or BuTiS t0 + TS)" << std::endl;
+  std::cout << "  -d 0/1:                                        Drive output value" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  -i:                                            List every IO and it's capability" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  -s:                                            Snoop on input(s)" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  -c <event id> <mask> <offset> <flags> <level>: Create a new condition (active)" << std::endl;
+  std::cout << "  -g                                             Negative offset (new condition)" << std::endl;
+  std::cout << "  -u:                                            Disown the created condition" << std::endl;
+  std::cout << "  -x:                                            Destroy all unowned conditions" << std::endl;
+  std::cout << "  -f:                                            Flip active/inactive conditions" << std::endl;
+  std::cout << "  -l:                                            List all conditions" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  -v:                                            Switch to verbose mode" << std::endl;
+  std::cout << "  -h:                                            Print help (this message)" << std::endl;
+  std::cout << std::endl;
+  std::cout << "Condition <flags> parameter:" << std::endl;
+  std::cout << "  Accept Late:                                   0x1 (l)" << std::endl;
+  std::cout << "  Accept Early:                                  0x2 (e)" << std::endl;
+  std::cout << "  Accept Conflict:                               0x4 (c)" << std::endl;
+  std::cout << "  Accept Delayed:                                0x8 (d)" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  These flags can be used in combination (e.g. flag 0x3 will accept late and early events)" << std::endl;
+  std::cout << std::endl;
+  std::cout << "Example:" << std::endl;
+  std::cout << "  " << program << " exploder5a_123t " << "-n IO1 " << "-o 1 -t 0 -d 1" << std::endl;
   std::cout << "  This will enable the output and disable the input termination and drive the output high" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
@@ -94,69 +452,109 @@ static void io_help (void)
   std::cout << std::endl;
 }
 
-static void catch_input(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+/* Function io_catch_input() */
+/* ==================================================================================================== */
+static void io_catch_input(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
-  guint64 time = deadline - 5000;
-  guint64 ns    = time % 1000000000;
-  time_t  s     = time / 1000000000;
-  struct tm *tm = gmtime(&s);
-  char date[40];
-  static char full[80];
+  /* Helpers */
+  guint64 time = deadline - IO_CONDITION_OFFSET;
+  Glib::ustring catched_io = "Unknown";
   
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
+  /* !!! evaluate prefix<>name map */
+  for (std::map<Glib::ustring,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event == it->second) { catched_io = it->first; } } /* Rising */
+  for (std::map<Glib::ustring,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event-1 == it->second) { catched_io = it->first; } } /* Falling */
   
-  std::cout << ioName << " went " << ((event&1)?"high":"low ") << " at " << date << full << std::endl;
+  /* Format output */
+  std::cout << std::left;
+  std::cout << std::setw(12+2) << catched_io << " ";
+  if ((event&1)) { std::cout << "Rising   "; }
+  else           { std::cout << "Falling  "; }
+  if (flags & (1 << ECA_DELAYED))  { std::cout << "d"; }
+  else                             { std::cout << "."; }
+  if (flags & (1 << ECA_CONFLICT)) { std::cout << "c"; }
+  else                             { std::cout << "."; }
+  if (flags & (1 << ECA_EARLY))    { std::cout << "e"; }
+  else                             { std::cout << "."; }
+  if (flags & (1 << ECA_LATE))     { std::cout << "l"; }
+  else                             { std::cout << "."; }
+  std::cout << " (0x";
+  std::cout << std::setw(1) << std::hex << flags << ")  ";
+  std::cout << "0x" << std::hex << setw(16+1) << event << std::dec << " ";
+  std::cout << "0x" << std::hex << setw(16+1) << time << std::dec << " " << tr_formatDate(time,PMODE_VERBOSE);
+  std::cout << std::endl;
 }
 
-/* Funciton io_snoop() */
+/* Function io_snoop() */
+/* ==================================================================================================== */
 static int io_snoop()
 {
-  try {
+  /* Helpers (connect proxies in a vector) */
+  std::vector <Glib::RefPtr<SoftwareCondition_Proxy> > proxies;
+  std::vector <Glib::RefPtr<SoftwareActionSink_Proxy> > sinks;
+  
+  /* Get inputs and snoop */
+  try 
+  {
     Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    
     std::map< Glib::ustring, Glib::ustring > inputs = receiver->getInputs();
-    if (inputs.find(ioName) == inputs.end()) {
-      std::cerr << "IO '" << ioName << "' is not an input" << std::endl;
-      return __IO_RETURN_FAILURE;
+    
+    /* Check inputs */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+    {
+      if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
+      {
+        /* Set name */
+        ioName =  it->first.c_str();
+        guint64 prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
+        map_PrefixName[ioName] = prefix;
+        
+        /* Create sink and condition */
+        sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
+        proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
+        proxies.back()->Action.connect(sigc::ptr_fun(&io_catch_input));
+        proxies.back()->setAcceptConflict(true);
+        proxies.back()->setAcceptDelayed(true);
+        proxies.back()->setAcceptEarly(true);
+        proxies.back()->setAcceptLate(true);
+        
+        /* Setup the event */
+        Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+        input->setEventEnable(false);
+        input->setEventPrefix(prefix);
+        input->setEventEnable(true);
+      }
     }
     
-    guint64 prefix = UINT64_C(0xfffe000000000000) + (random() << 1);
-    // Create a SoftwareCondition to catch the event
-    Glib::RefPtr<SoftwareActionSink_Proxy> sas = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-    Glib::RefPtr<SoftwareCondition_Proxy> cond = SoftwareCondition_Proxy::create(sas->NewCondition(true, prefix, -2, 5000));
-    cond->Action.connect(sigc::ptr_fun(&catch_input));
-    
-    // Setup the event
-    Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
-    input->setInputTermination(true);
-    input->setEventEnable(false);
-    input->setEventPrefix(prefix);
-    input->setEventEnable(true);
-    
-    Glib::ustring output_path = input->getOutput();
-    if (output_path != "") {
-      Glib::RefPtr<Output_Proxy> output = Output_Proxy::create(output_path);
-      output->setOutputEnable(false);
+    /* Run the loop printing IO events (in case we found inputs */
+    if (map_PrefixName.size())
+    {
+      std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
+      std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
+      loop->run();
     }
-    
-    // run the loop printing IO events
-    loop->run();
-  } catch (const Glib::Error& error) {
+    else
+    {
+      std::cout << "This Timing Receiver has no inputs!" << std::endl;
+    }
+  
+  } 
+  catch (const Glib::Error& error)
+  {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
     return (__IO_RETURN_FAILURE);
   }
   
+  /* Done */
   return (__IO_RETURN_SUCCESS);
 }
 
 /* Function io_setup() */
 /* ==================================================================================================== */
-static int  io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_drive, 
-                      bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_drive,
-                      bool verbose_mode)
+static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_drive, 
+                    bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_drive,
+                    bool verbose_mode)
 {
   unsigned io_type  = 0;     /* Out, Inout or In? */
   bool     io_found = false; /* IO exists? */
@@ -450,66 +848,62 @@ static int io_print_table(bool verbose_mode)
       }
     }
     
-    /* Print help */
-    if (verbose_mode) { std::cout << "Listing IOs and capabilities..." << std::endl << std::endl; }
-    std::cout << "Device:" << std::endl;
-    std::cout << "  Path: " << receiver->getEtherbonePath() << std::endl;
-    std::cout << std::endl;
-    std::cout << "OutputEnable/InputTermination/SpecialOut/In:" << std::endl;
-    std::cout << "  Yes: This value can be modified" << std::endl;
-    std::cout << "  No:  This property is fixed" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Channel:" << std::endl;
-    std::cout << "  GPIO/LVDS: Tells you the ECA/Clock generator channel (for legacy tools)" << std::endl;
-    std::cout << "  FIXED:     IO behavior is fixed and can't be configured or driven manually" << std::endl;
-    
     /* Print table header */
-    std::cout << std::endl;
-    std::cout << "Name           Direction  OutputEnable  InputTermination  SpecialOut  SpecialIn  Logic Level" << std::endl;
-    std::cout << "--------------------------------------------------------------------------------------------" << std::endl;
+    std::cout << "Name           Direction  OutputEnable  InputTermination  SpecialOut  SpecialIn  Resolution  Logic Level" << std::endl;
+    std::cout << "--------------------------------------------------------------------------------------------------------" << std::endl;
     
     /* Print Outputs */
     for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
-      Glib::RefPtr<Output_Proxy> output_proxy;
-      output_proxy = Output_Proxy::create(it->second);
-      std::cout << std::left;
-      std::cout << std::setw(12+2) << it->first << " ";
-      std::cout << std::setw(5+6)  << "Out ";
-      std::cout << std::setw(3+11);
-      if(output_proxy->getOutputEnableAvailable()) { std::cout << "Yes"; }
-      else                                         { std::cout << "No"; }
-      std::cout << std::setw(3+15);
-      std::cout << "No"; /* InputTermination */
-      std::cout << std::setw(5+7);
-      if(output_proxy->getSpecialPurposeOutAvailable()) { std::cout << "Yes"; }
-      else                                              { std::cout << "No"; }
-      std::cout << std::setw(3+8);
-      std::cout << "No"; /* SpecialOut */
-      std::cout << output_proxy->getLogicLevelOut();
-      std::cout << std::endl;
+      if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
+      {
+        Glib::RefPtr<Output_Proxy> output_proxy;
+        output_proxy = Output_Proxy::create(it->second);
+        std::cout << std::left;
+        std::cout << std::setw(12+2) << it->first << " ";
+        std::cout << std::setw(5+6)  << "Out ";
+        std::cout << std::setw(3+11);
+        if(output_proxy->getOutputEnableAvailable()) { std::cout << "Yes"; }
+        else                                         { std::cout << "No"; }
+        std::cout << std::setw(3+15);
+        std::cout << "No"; /* InputTermination */
+        std::cout << std::setw(5+7);
+        if(output_proxy->getSpecialPurposeOutAvailable()) { std::cout << "Yes"; }
+        else                                              { std::cout << "No"; }
+        std::cout << std::setw(3+8);
+        std::cout << "No"; /* SpecialOut */
+        std::cout << output_proxy->getTypeOut();
+        std::cout << "  ";
+        std::cout << output_proxy->getLogicLevelOut();
+        std::cout << std::endl;
+      }
     }
     
     /* Print Inputs */
     for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it)
     {
-      Glib::RefPtr<Input_Proxy> input_proxy;
-      input_proxy = Input_Proxy::create(it->second);
-      std::cout << std::left;
-      std::cout << std::setw(12+2) << it->first << " ";
-      std::cout << std::setw(5+6)  << "In ";
-      std::cout << std::setw(3+11);
-      std::cout << "No";
-      std::cout << std::setw(3+15);
-      if(input_proxy->getInputTerminationAvailable()) { std::cout << "Yes"; }
-      else                                            { std::cout << "No"; }
-      std::cout << std::setw(5+7);
-      std::cout << "No";
-      std::cout << std::setw(3+8);
-      if(input_proxy->getSpecialPurposeInAvailable()) { std::cout << "Yes"; }
-      else                                            { std::cout << "No"; }
-      std::cout << input_proxy->getLogicLevelIn();
-      std::cout << std::endl;
+      if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
+      {
+        Glib::RefPtr<Input_Proxy> input_proxy;
+        input_proxy = Input_Proxy::create(it->second);
+        std::cout << std::left;
+        std::cout << std::setw(12+2) << it->first << " ";
+        std::cout << std::setw(5+6)  << "In ";
+        std::cout << std::setw(3+11);
+        std::cout << "No";
+        std::cout << std::setw(3+15);
+        if(input_proxy->getInputTerminationAvailable()) { std::cout << "Yes"; }
+        else                                            { std::cout << "No"; }
+        std::cout << std::setw(5+7);
+        std::cout << "No";
+        std::cout << std::setw(3+8);
+        if(input_proxy->getSpecialPurposeInAvailable()) { std::cout << "Yes"; }
+        else                                            { std::cout << "No"; }
+        std::cout << input_proxy->getTypeIn();
+        std::cout << "  ";
+        std::cout << input_proxy->getLogicLevelIn();
+        std::cout << std::endl;
+      }
     }
     
   }
@@ -528,99 +922,169 @@ static int io_print_table(bool verbose_mode)
 /* ==================================================================================================== */
 int main (int argc, char** argv)
 {
-  /* Helpers */
-  int  opt          = 0;     /* Number of given options */
-  int  io_oe        = 0;     /* Output enable */
-  int  io_term      = 0;     /* Input Termination */
-  int  io_spec_out  = 0;     /* Special (output) function */
-  int  io_spec_in   = 0;     /* Special (input) function */
-  int  io_mux       = 0;     /* Multiplexer (BuTiS) */
-  int  io_drive     = 0;     /* Drive IO value */
-  int  return_code  = 0;     /* Return code */
-  bool set_oe       = false; /* Set? */
-  bool set_term     = false; /* Set? */
-  bool set_spec_in  = false; /* Set? */
-  bool set_spec_out = false; /* Set? */
-  bool set_mux      = false; /* Set? */
-  bool set_drive    = false; /* Set? */
-  bool snoop        = false; /* Snoop on an input */
-  bool verbose_mode = false; /* Print verbose output to output stream => -v */
-  bool show_help    = false; /* Print help => -h */
-  bool show_table   = false; /* Print io mapping table => -i */
+  /* Helpers to deal with endless arguments */
+  char * pEnd        = NULL;  /* Arguments parsing */
+  int  opt           = 0;     /* Number of given options */
+  int  io_oe         = 0;     /* Output enable */
+  int  io_term       = 0;     /* Input Termination */
+  int  io_spec_out   = 0;     /* Special (output) function */
+  int  io_spec_in    = 0;     /* Special (input) function */
+  int  io_mux        = 0;     /* Multiplexer (BuTiS) */
+  int  io_drive      = 0;     /* Drive IO value */
+  int  ioc_flip      = 0;     /* Flip active bit for all conditions */
+  int  return_code   = 0;     /* Return code */
+  guint64 eventID    = 0x0;   /* Event ID (new condition) */
+  guint64 eventMask  = 0x0;   /* Event mask (new condition) */
+  gint64  offset     = 0x0;   /* Event offset (new condition) */
+  guint64 flags      = 0x0;   /* Accept flags (new condition) */
+  gint64  level      = 0x0;   /* Rising or falling edge (new condition) */
+  bool    negative   = false; /* Offset negative? */
+  bool ioc_valid     = false; /* Create arguments valid? */
+  bool set_oe        = false; /* Set? */
+  bool set_term      = false; /* Set? */
+  bool set_spec_in   = false; /* Set? */
+  bool set_spec_out  = false; /* Set? */
+  bool set_mux       = false; /* Set? */
+  bool set_drive     = false; /* Set? */
+  bool ios_snoop     = false; /* Snoop on an input */
+  bool ioc_create    = false; /* Create condition */
+  bool ioc_disown    = false; /* Disown created condition */
+  bool ioc_destroy   = false; /* Destroy condition */
+  bool ioc_list      = false; /* List conditions */
+  bool verbose_mode  = false; /* Print verbose output to output stream => -v */
+  bool show_help     = false; /* Print help => -h */
+  bool show_table    = false; /* Print io mapping table => -i */
   
   /* Get the application name */
-  program = argv[0]; 
+  program = argv[0];
+  deviceName = "NoDeviceNameGiven";
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "o:t:p:e:m:d:svhi")) != -1)
+  while ((opt = getopt(argc, argv, "n:o:t:p:e:m:d:sc:guxflivh")) != -1)
   {
     switch (opt)
     {
-      case 'o': { io_oe        = atoi(optarg); set_oe       = true; break; }
-      case 't': { io_term      = atoi(optarg); set_term     = true; break; }
-      case 'p': { io_spec_out  = atoi(optarg); set_spec_out = true; break; }
-      case 'e': { io_spec_in   = atoi(optarg); set_spec_in  = true; break; }
-      case 'm': { io_mux       = atoi(optarg); set_mux      = true; break; }
-      case 'd': { io_drive     = atoi(optarg); set_drive    = true; break; }
-      case 's': { snoop        = true; break; }
+      case 'n': { ioName       = argv[optind-1]; ioNameGiven  = true; break; }
+      case 'o': { io_oe        = atoi(optarg);   set_oe       = true; break; }
+      case 't': { io_term      = atoi(optarg);   set_term     = true; break; }
+      case 'p': { io_spec_out  = atoi(optarg);   set_spec_out = true; break; }
+      case 'e': { io_spec_in   = atoi(optarg);   set_spec_in  = true; break; }
+      case 'm': { io_mux       = atoi(optarg);   set_mux      = true; break; }
+      case 'd': { io_drive     = atoi(optarg);   set_drive    = true; break; }
+      case 's': { ios_snoop    = true; break; }
+      case 'c': { ioc_create   = true; 
+                  eventID      = strtoull(argv[optind-1], &pEnd, 0);
+                  eventMask    = strtoull(argv[optind+0], &pEnd, 0);
+                  offset       = strtoull(argv[optind+1], &pEnd, 0);
+                  flags        = strtoull(argv[optind+2], &pEnd, 0);
+                  level        = strtoull(argv[optind+3], &pEnd, 0);
+                  break; }
+      case 'g': { negative     = true; break; }
+      case 'u': { ioc_disown   = true; break; }
+      case 'x': { ioc_destroy  = true; break; }
+      case 'f': { ioc_flip     = true; break; }
+      case 'l': { ioc_list     = true; break; }
+      case 'i': { show_table   = true; break; }
       case 'v': { verbose_mode = true; break; }
       case 'h': { show_help    = true; break; }
-      case 'i': { show_table   = true; break; }
       default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
     }
     /* Break loop if help is needed */
     if (show_help) { break; }
   }
   
+  /* Help wanted? */
+  if (show_help) { io_help(); return (__IO_RETURN_SUCCESS); }
+  
+  /* Plausibility check for arguments */
+  if ((ioc_create || ioc_disown) && ioc_destroy) { std::cerr << "Incorrect arguments!" << std::endl; return (__IO_RETURN_FAILURE); }
+  else                                           { ioc_valid = true; }
+  
   /* Get basic arguments, we need at least the device name */
   if (optind + 1 == argc)
   { 
     deviceName = argv[optind]; /* Get the device name */
-    if ((io_oe || io_term || io_spec_out || io_spec_in || io_mux || io_drive || show_help || show_table || snoop) == false)
+    if ((io_oe || io_term || io_spec_out || io_spec_in || io_mux || io_drive || show_help || show_table || 
+         ios_snoop || ioc_create || ioc_disown || ioc_destroy || ioc_flip || ioc_list || ioNameGiven || ioc_valid) == false)
     {
-      show_help = true;
-      std::cout << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)..." << std::endl;
+      std::cerr << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)(arg)!" << std::endl;
+      return (__IO_RETURN_FAILURE);
     }
   }
-  else if (optind + 2 == argc)
-  {
+  else if (ioc_valid)
+  { 
     deviceName = argv[optind]; /* Get the device name */
-    ioName = argv[optind+1]; /* Get the io name */
   }
   else 
   { 
-    show_help = true;
-    std::cout << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)..." << std::endl;
+    std::cerr << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)(dev)!" << std::endl;
+    return (__IO_RETURN_FAILURE);
   }
   
+  /* Confirm device exists */
+  if (deviceName == NULL)
+  { 
+    std::cerr << "Missing device name!" << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
   Gio::init();
+  map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+  if (devices.find(deviceName) == devices.end())
+  {
+    std::cerr << "Device " << deviceName << " does not exist!" << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+  if (verbose_mode) { std::cout << "Device " << deviceName << " found!" << std::endl; }
+  
+  /* Plausibility check */
+  if (io_oe > 1       || io_oe < 0)       { std::cout << "Error: Output enable setting is invalid!"             << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_term > 1     || io_term < 0)     { std::cout << "Error: Input termination setting is invalid"          << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_spec_out > 1 || io_spec_out < 0) { std::cout << "Error: Special (output) function setting is invalid!" << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_spec_in > 1  || io_spec_in < 0)  { std::cout << "Error: Special (input) function setting is invalid!"  << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 multiplexer setting is invalid!"      << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; return (__IO_RETURN_FAILURE); }
+  
+  /* Check if given IO name exists */
+  if (ioNameGiven)
+  {
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::map< Glib::ustring, Glib::ustring > outs;
+    std::map< Glib::ustring, Glib::ustring > ins;
+    outs = receiver->getOutputs();
+    ins = receiver->getInputs();
+    
+    /* Check all inputs and outputs */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    { 
+      if (it->first == ioName)          { ioNameExists = true; }
+      if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (output)!" << std::endl; break; }
+    }
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it) 
+    { 
+      if (it->first == ioName)          { ioNameExists = true; } 
+      if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (input)!" << std::endl; break; }
+    }
+    
+    /* Inform the user if the given IO does not exist */
+    if (!ioNameExists)
+    {
+      std::cerr << "IO " << ioName << " does not exist!" << std::endl;
+      return (__IO_RETURN_FAILURE);
+    }
+  }
+  
   /* Check if help is needed, otherwise evaluate given arguments */
   if (show_help) { io_help(); }
   else
   {
-    /* Confirm device exists */
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-    if (devices.find(deviceName) == devices.end()) {
-      std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
-      return -1;
-    }
-    
-    /* Plausibility check */
-    if (io_oe > 1       || io_oe < 0)       { std::cout << "Error: Output enable setting is invalid!"             << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
-    if (io_term > 1     || io_term < 0)     { std::cout << "Error: Input termination setting is invalid"          << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
-    if (io_spec_out > 1 || io_spec_out < 0) { std::cout << "Error: Special (output) function setting is invalid!" << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
-    if (io_spec_in > 1  || io_spec_in < 0)  { std::cout << "Error: Special (input) function setting is invalid!"  << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
-    if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 multiplexer setting is invalid!"      << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
-    if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; show_help = true; return_code = __IO_RETURN_FAILURE; }
-    
     /* Proceed with program */
-    if (show_help) { io_help(); }
-    else
-    { 
-      if(show_table) { return_code = io_print_table(verbose_mode); }
-      else if (snoop){ return_code = io_snoop(); }
-      else           { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_drive, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_drive, verbose_mode); }
-    }
+    if      (show_table)  { return_code = io_print_table(verbose_mode); }
+    else if (ios_snoop)   { return_code = io_snoop(); }
+    else if (ioc_create)  { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative); }
+    else if (ioc_destroy) { return_code = io_destroy(verbose_mode); }
+    else if (ioc_flip)    { return_code = io_flip(verbose_mode); }
+    else if (ioc_list)    { return_code = io_list(); }
+    else                  { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_drive, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_drive, verbose_mode); }
   }
   
   /* Done */
