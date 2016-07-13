@@ -150,7 +150,7 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
     }
     
     /* Setup condition */
-    Glib::RefPtr<OutputCondition_Proxy> condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, tr_mask(eventMask), io_offset, io_edge));
+    Glib::RefPtr<OutputCondition_Proxy> condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, eventMask, io_offset, io_edge));
     condition->setAcceptConflict(io_AcceptConflict);
     condition->setAcceptDelayed(io_AcceptDelayed);
     condition->setAcceptEarly(io_AcceptEarly);
