@@ -65,6 +65,22 @@
     <arg direction="out" type="b" name="value"/>
   </method>
   
+  <!-- StartClock: Starts the clock generator with given parameters.
+       All parameters expect the value in nanoseconds.
+    -->
+  <method name="StartClock">
+    <arg direction="in" type="d" name="high_phase"/>
+    <arg direction="in" type="d" name="low_phase"/>
+    <arg direction="in" type="t" name="phase_offset"/>
+    <arg direction="out" type="b" name="running"/>
+  </method>
+  
+  <!-- StopClock: Stops the clock generator.
+    -->
+  <method name="StopClock">
+    <arg direction="out" type="b" name="running"/>
+  </method>
+  
   <!-- OutputEnableAvailable: Can output enable be configured.
     -->
   <property name="OutputEnableAvailable" type="b" access="read">
@@ -88,6 +104,7 @@
   <property name="TypeOut" type="s" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
+  
   
   <!-- Input: If non-empty, path of the Input object for the same physical IO -->
   <property name="Input" type="s" access="read">

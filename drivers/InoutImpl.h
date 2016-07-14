@@ -39,6 +39,7 @@ class InoutImpl : public Glib::Object
       bool io_spec_out_available;
       bool io_spec_in_available;
       eb_address_t io_control_addr;
+      eb_address_t io_ser_clk_gen_addr;
     };
     
     InoutImpl(const ConstructorType& args);
@@ -55,6 +56,8 @@ class InoutImpl : public Glib::Object
     bool getSpecialPurposeOutAvailable() const;
     bool getBuTiSMultiplexer() const;
     void setBuTiSMultiplexer(bool val);
+    bool StartClock(double high_phase, double low_phase, guint64 phase_offset);
+    bool StopClock();
     Glib::ustring getLogicLevelOut() const;
     Glib::ustring getTypeOut() const;
     
@@ -88,7 +91,9 @@ class InoutImpl : public Glib::Object
     bool io_term_available;
     bool io_spec_out_available;
     bool io_spec_in_available;
-    eb_address_t io_control_addr; 
+    eb_address_t io_control_addr;
+    eb_address_t io_ser_clk_gen_addr;
+    bool ConfigureClock(double high_phase, double low_phase, guint64 phase_offset);
     Glib::ustring getLogicLevel() const;
     Glib::ustring getType() const;
 };

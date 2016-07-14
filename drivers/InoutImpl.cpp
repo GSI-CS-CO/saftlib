@@ -28,6 +28,7 @@
 #include "src/clog.h"
 #include "Output.h"
 #include "Input.h"
+#include "SerdesClockGen.h"
 
 namespace saftlib {
 
@@ -36,7 +37,7 @@ InoutImpl::InoutImpl(const ConstructorType& args)
    io_channel(args.io_channel), io_index(args.io_index), io_special_purpose(args.io_special_purpose), io_logic_level(args.io_logic_level),
    io_oe_available(args.io_oe_available), io_term_available(args.io_term_available),
    io_spec_out_available(args.io_spec_out_available), io_spec_in_available(args.io_spec_in_available),
-   io_control_addr(args.io_control_addr)
+   io_control_addr(args.io_control_addr), io_ser_clk_gen_addr(args.io_ser_clk_gen_addr)
 {
 }
 
@@ -426,15 +427,17 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
   eb_data_t fixed_count_reg;
   eb_data_t get_param;
   etherbone::Cycle cycle;
-  std::vector<sdb_device> ioctl, tlus;
+  std::vector<sdb_device> ioctl, tlus, clkgen;
   
   /* Find IO control module */
-  tr->getDevice().sdb_find_by_identity(IO_CONTROL_VENDOR_ID,  IO_CONTROL_PRODUCT_ID, ioctl);
-  tr->getDevice().sdb_find_by_identity(ECA_TLU_SDB_VENDOR_ID, ECA_TLU_SDB_DEVICE_ID, tlus);
+  tr->getDevice().sdb_find_by_identity(IO_CONTROL_VENDOR_ID,     IO_CONTROL_PRODUCT_ID,     ioctl);
+  tr->getDevice().sdb_find_by_identity(ECA_TLU_SDB_VENDOR_ID,    ECA_TLU_SDB_DEVICE_ID,     tlus);
+  tr->getDevice().sdb_find_by_identity(IO_SER_CLK_GEN_VENDOR_ID, IO_SER_CLK_GEN_PRODUCT_ID, clkgen);
   
-  if (ioctl.size() != 1 || tlus.size() != 1) return -1;
+  if (ioctl.size() != 1 || tlus.size() != 1 || clkgen.size() != 1) return -1;
   eb_address_t ioctl_address = ioctl[0].sdb_component.addr_first;
   eb_address_t tlu = tlus[0].sdb_component.addr_first;
+  eb_address_t clkgen_address = clkgen[0].sdb_component.addr_first;
   
   /* Get number of IOs */
   cycle.open(tr->getDevice());
@@ -520,9 +523,9 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
     /* Create the IO controller object */
     InoutImpl::ConstructorType impl_args = { 
       tr, channel, internal_id, special, logic_level, oe_available, 
-      term_available, spec_out_available, spec_in_available, ioctl_address };
+      term_available, spec_out_available, spec_in_available, ioctl_address, clkgen_address };
     Glib::RefPtr<InoutImpl> impl(new InoutImpl(impl_args));
-    
+
     unsigned eca_channel = 0; // ECA channel 0 is always for IO
     TimingReceiver::SinkKey key_in (eca_channel, eca_in);  // order: gpio_inout, gpio_in,  lvds_inout, lvds_in
     TimingReceiver::SinkKey key_out(eca_channel, eca_out); // order: gpio_inout, gpio_out, lvds_inout, lvds_out
@@ -648,6 +651,46 @@ void InoutImpl::setBuTiSMultiplexer(bool val)
   }
   cycle.close();
   BuTiSMultiplexer(val);
+}
+
+bool InoutImpl::StartClock(double high_phase, double low_phase, guint64 phase_offset) { return ConfigureClock(high_phase, low_phase, phase_offset); }
+bool InoutImpl::StopClock() { return ConfigureClock(0.0, 0.0, 0); }
+bool InoutImpl::ConfigureClock(double high_phase, double low_phase, guint64 phase_offset)
+{
+  s_SerClkGenControl control;
+  etherbone::Cycle cycle;
+  
+  /* Check if available */
+  switch (io_channel) 
+  {
+    case IO_CFG_CHANNEL_LVDS:
+    {
+      break;
+    }
+    default: 
+    { 
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Clock generator is only available for LVDS outputs!");
+      return false;
+    }
+  }
+  
+  /* Calculate values */
+  CalcClockParameters(high_phase, low_phase, phase_offset, &control);
+  
+  /* Write values to clock generator */
+  cycle.open(tr->getDevice());
+  cycle.write(io_ser_clk_gen_addr+eSCK_selr,      EB_DATA32, io_index);
+  cycle.write(io_ser_clk_gen_addr+eSCK_perr,      EB_DATA32, control.period_integer);
+  cycle.write(io_ser_clk_gen_addr+eSCK_perhir,    EB_DATA32, control.period_high);
+  cycle.write(io_ser_clk_gen_addr+eSCK_fracr,     EB_DATA32, control.period_fraction);
+  cycle.write(io_ser_clk_gen_addr+eSCK_normmaskr, EB_DATA32, control.bit_pattern_normal);
+  cycle.write(io_ser_clk_gen_addr+eSCK_skipmaskr, EB_DATA32, control.bit_pattern_skip);
+  cycle.write(io_ser_clk_gen_addr+eSCK_phofslr,   EB_DATA32, (uint32_t)(control.phase_offset));
+  cycle.write(io_ser_clk_gen_addr+eSCK_phofshr,   EB_DATA32, (uint32_t)(control.phase_offset >> 32));
+  cycle.close();
+  
+  if ((low_phase == 0.0) && (high_phase == 0.0) && (phase_offset == 0)) { return false; }
+  else                                                                  { return true; }
 }
 
 Glib::ustring InoutImpl::getLogicLevelOut() const { return getLogicLevel(); }

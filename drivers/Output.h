@@ -50,6 +50,8 @@ class Output : public ActionSink, public iOutputActionSink
     Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on);
     void WriteOutput(bool value);
     bool ReadOutput();
+    bool StartClock(double high_phase, double low_phase, guint64 phase_offset);
+    bool StopClock();
     
     // Property getters
     bool getOutputEnable() const;

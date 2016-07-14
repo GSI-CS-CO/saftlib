@@ -89,6 +89,18 @@ bool Output::getSpecialPurposeOutAvailable() const
   return impl->getSpecialPurposeOutAvailable();
 }
 
+bool Output::StartClock(double high_phase, double low_phase, guint64 phase_offset)
+{
+  ownerOnly();
+  return impl->StartClock(high_phase, low_phase, phase_offset);
+}
+
+bool Output::StopClock()
+{
+  ownerOnly();
+  return impl->StopClock();
+}
+
 Glib::ustring Output::getLogicLevelOut() const
 {
   return impl->getLogicLevelOut();

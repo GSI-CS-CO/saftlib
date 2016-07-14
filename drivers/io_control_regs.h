@@ -26,7 +26,7 @@
 #define IO_CONTROL_VENDOR_ID         0x00000651
 
 #define IO_MAX_IOS_PER_CHANNEL       64 /* 64 IOs per channel */
-#define IO_MAX_VALID_CHANNELS         2 /* GPIO and LVDS */
+#define IO_MAX_VALID_CHANNELS        2  /* GPIO and LVDS */
 
 #define IO_LVDS_MAX                  64
 #define IO_GPIO_MAX                  64
