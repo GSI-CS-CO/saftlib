@@ -33,22 +33,48 @@
 namespace saftlib {
 
 FunctionGenerator::FunctionGenerator(const ConstructorType& args)
- : Owned(args.objectPath), dev(args.dev), allocation(args.allocation), shm(args.fgb + SHM_BASE), swi(args.swi), 
-   num_channels(args.num_channels), buffer_size(args.buffer_size), index(args.index),
+ : Owned(args.objectPath),
+   dev(args.dev),
+   allocation(args.allocation),
+   shm(args.fgb + SHM_BASE),
+   swi(args.swi),
+   base(args.base),
+   mbx(args.mbx),
+   num_channels(args.num_channels),
+   buffer_size(args.buffer_size),
+   index(args.index),
    scubusSlot      ((args.macro >> 24) & 0xFF),
    deviceNumber    ((args.macro >> 16) & 0xFF),
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
-   // irq(args.dev->getDevice().request_irq(sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
+   irq(args.dev->getDevice().request_irq(args.base, sigc::mem_fun(*this, &FunctionGenerator::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), executedParameterCount(0), fillLevel(0), filled(0)
 {
+  eb_address_t mb_base = args.mbx.sdb_component.addr_first;
+  eb_data_t mb_value;
+  unsigned slot = 0;
+
+  dev->getDevice().read(mb_base, EB_DATA32, &mb_value);
+  while((mb_value != 0xffffffff) && slot < 128) {
+    dev->getDevice().read(mb_base + slot * 4 * 2, EB_DATA32, &mb_value);
+    slot++;
+  }
+
+  if (slot < 128)
+    mbx_slot = --slot;
+  else
+    clog << kLogErr << "FunctionGenerator: no free slot in mailbox left"  << std::endl;
+
+  //save the irq address in the odd mailbox slot
+  dev->getDevice().write(mb_base + slot * 4 * 2 + 4, EB_DATA32, (eb_data_t)irq);
+  clog << kLogDebug << "FunctionGenerator: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << std::endl;
 }
 
 FunctionGenerator::~FunctionGenerator()
 {
   resetTimeout.disconnect(); // do not run ResetFailed
-//  dev->getDevice().release_irq(irq);
+  dev->getDevice().release_irq(irq);
 }
 
 static unsigned wrapping_sub(unsigned a, unsigned b, unsigned buffer_size)
@@ -146,7 +172,7 @@ void FunctionGenerator::refill()
   filled += refill;
 }
 
-void FunctionGenerator::irq_handler(eb_data_t status)
+void FunctionGenerator::irq_handler(eb_data_t msi)
 {
   // ignore spurious interrupt
   if (channel == -1) {
@@ -161,13 +187,13 @@ void FunctionGenerator::irq_handler(eb_data_t status)
   guint64 time = dev->ReadRawCurrentTime();
   
   // make sure the evil microcontroller does not violate message sequencing
-  if (status == IRQ_DAT_REFILL) {
+  if (msi == IRQ_DAT_REFILL) {
     if (!running) {
       clog << kLogErr << "FunctionGenerator: received refill while not running on index " << std::dec << index << std::endl;
     } else {
       refill();
     }
-  } else if (status == IRQ_DAT_ARMED) {
+  } else if (msi == IRQ_DAT_ARMED) {
     if (running) {
       clog << kLogErr << "FunctionGenerator: received armed while running on index " << std::dec << index << std::endl;
     } else if (armed) {
@@ -176,7 +202,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
       armed = true;
       Armed(armed);
     }
-  } else if (status == IRQ_DAT_DISARMED) {
+  } else if (msi == IRQ_DAT_DISARMED) {
     if (running) {
       clog << kLogErr << "FunctionGenerator: received disarmed while running on index " << std::dec << index << std::endl;
     } else if (!armed) {
@@ -186,7 +212,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
       Armed(armed);
       releaseChannel();
     }
-  } else if (status == IRQ_DAT_START) {
+  } else if (msi == IRQ_DAT_START) {
     if (running) {
       clog << kLogErr << "FunctionGenerator: received start while running on index " << std::dec << index << std::endl;
     } else if (!armed) {
@@ -204,7 +230,7 @@ void FunctionGenerator::irq_handler(eb_data_t status)
     } else if (!running) {
       clog << kLogErr << "FunctionGenerator: received stop while not running on index " << std::dec << index << std::endl;
     } else {
-      bool hardwareMacroUnderflow = (status != IRQ_DAT_STOP_EMPTY) && !abort;
+      bool hardwareMacroUnderflow = (msi != IRQ_DAT_STOP_EMPTY) && !abort;
       bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow && !abort;
       if (!abort && !hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
         fillLevel = 0;
@@ -372,19 +398,19 @@ void FunctionGenerator::acquireChannel()
     str << "All " << allocation->indexes.size() << " microcontroller channels are in use";
     throw Gio::DBus::Error(Gio::DBus::Error::FAILED, str.str());
   }
-  
+ 
   // if this throws, it is not a problem
   eb_address_t regs = shm + FG_REGS_BASE(i, num_channels);
   etherbone::Cycle cycle;
   cycle.open(dev->getDevice());
   cycle.write(regs + FG_WPTR,       EB_DATA32, 0);
   cycle.write(regs + FG_RPTR,       EB_DATA32, 0);
-  cycle.write(regs + FG_IRQ,        EB_DATA32, irq);
+  cycle.write(regs + FG_MBX_SLOT,   EB_DATA32, mbx_slot);
   cycle.write(regs + FG_MACRO_NUM,  EB_DATA32, index);
   cycle.write(regs + FG_RAMP_COUNT, EB_DATA32, 0);
   cycle.write(regs + FG_TAG,        EB_DATA32, startTag);
   cycle.close();
-  
+ 
   allocation->indexes[i] = index;
   channel = i;
   enabled = true;
@@ -420,10 +446,10 @@ void FunctionGenerator::Arm()
   acquireChannel();
   try {
     refill();
-    dev->getDevice().write(swi + SWI_ENABLE, EB_DATA32, channel);
+    dev->getDevice().write(swi, EB_DATA32, SWI_ENABLE | channel);
   } catch (...) {
     clog << kLogErr << "FunctionGenerator: failed to fill buffers and send enabled SWI on channel " << std::dec << channel << " for index " << index << std::endl;
-    dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
+    dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
     throw;
   }
 }
@@ -453,7 +479,7 @@ bool FunctionGenerator::ResetFailed()
 void FunctionGenerator::Reset()
 {
   if (channel == -1) return; // nothing to abort
-  dev->getDevice().write(swi + SWI_DISABLE, EB_DATA32, channel);
+  dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
   // expect disarm or started+stopped, but if not ... timeout:
   resetTimeout = Glib::signal_timeout().connect(
     sigc::mem_fun(*this, &FunctionGenerator::ResetFailed), 250); // 250ms
