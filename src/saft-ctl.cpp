@@ -109,8 +109,8 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
   // display White Rabbit status
   wrLocked        = receiver->getLocked();
   if (wrLocked) {
-	wrTime        = receiver->ReadCurrentTime();
-	std::cout << "WR locked, time: " << tr_formatDate(wrTime, pmode) <<std::endl; 
+    wrTime        = receiver->ReadCurrentTime();
+    std::cout << "WR locked, time: " << tr_formatDate(wrTime, pmode) <<std::endl; 
   } 
   else std::cout << "no WR lock!!!" << std::endl; 
 
@@ -119,46 +119,46 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
   std::cout << "receiver free conditions: " << nFreeConditions; 
   
   std::cout << ", max (capacity of HW): " << sink->getMostFull()
-	        << "(" << sink->getCapacity() << ")"
-			<< ", early threshold: " << sink->getEarlyThreshold() << " ns"
+            << "(" << sink->getCapacity() << ")"
+            << ", early threshold: " << sink->getEarlyThreshold() << " ns"
             << ", latency: " << sink->getLatency() << " ns"
-			<< std::endl;
+            << std::endl;
 
   // find software sinks and display their status
   allSinks = receiver->getSoftwareActionSinks(); 
   if (allSinks.size() > 0) {
-	std::cout << "sinks instantiated on this host: " << allSinks.size() << std::endl;
-	// get status of each sink
-	for (i = allSinks.begin(); i != allSinks.end(); i++) {
-	  aSink = SoftwareActionSink_Proxy::create(i->second);
-	  std::cout << "  " << i->second
-				<< " (minOffset: " << aSink->getMinOffset() << " ns"
-				<< ", maxOffset: " << aSink->getMaxOffset() << " ns)"
-				<< std::endl;
-	  std::cout << "  -- actions: " << aSink->getActionCount() 
-				<< ", delayed: "    << aSink->getDelayedCount()
-				<< ", conflict: "   << aSink->getConflictCount()
-				<< ", late: "       << aSink->getLateCount()
-				<< ", early: "      << aSink->getEarlyCount()
-				<< ", overflow: "   << aSink->getOverflowCount()
-				<< " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate() / 1000000000.0) << "Hz)"
-				<< std::endl;
-	  // get all conditions for this sink
-	  vector< Glib::ustring > allConditions = aSink->getAllConditions();
-	  std::cout << "  -- conditions: " << allConditions.size() << std::endl;
-	  for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
-		Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
-		if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
+    std::cout << "sinks instantiated on this host: " << allSinks.size() << std::endl;
+    // get status of each sink
+    for (i = allSinks.begin(); i != allSinks.end(); i++) {
+      aSink = SoftwareActionSink_Proxy::create(i->second);
+      std::cout << "  " << i->second
+                << " (minOffset: " << aSink->getMinOffset() << " ns"
+                << ", maxOffset: " << aSink->getMaxOffset() << " ns)"
+                << std::endl;
+      std::cout << "  -- actions: " << aSink->getActionCount() 
+                << ", delayed: "    << aSink->getDelayedCount()
+                << ", conflict: "   << aSink->getConflictCount()
+                << ", late: "       << aSink->getLateCount()
+                << ", early: "      << aSink->getEarlyCount()
+                << ", overflow: "   << aSink->getOverflowCount()
+                << " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate() / 1000000000.0) << "Hz)"
+                << std::endl;
+      // get all conditions for this sink
+      vector< Glib::ustring > allConditions = aSink->getAllConditions();
+      std::cout << "  -- conditions: " << allConditions.size() << std::endl;
+      for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
+        Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
+        if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
         else           {std::cout << std::hex; width = 16; fmt = "0x";}
-		std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "  	<< fmt << std::setw(width) << std::setfill('0') << condition->getID()
-				  << ", mask: "     	<< fmt << std::setw(width) << std::setfill('0') << condition->getMask()
-				  << ", offset: "   	<< fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
-				  << ", active: "   	<< std::dec << condition->getActive()
-				  << ", destructible: " << condition->getDestructible()
-				  << ", owner: "        << condition->getOwner()
-				  << std::endl;
-	  } // for all conditions
-	} // for all sinks 
+        std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "  	<< fmt << std::setw(width) << std::setfill('0') << condition->getID()
+                  << ", mask: "     	<< fmt << std::setw(width) << std::setfill('0') << condition->getMask()
+                  << ", offset: "   	<< fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
+                  << ", active: "   	<< std::dec << condition->getActive()
+                  << ", destructible: " << condition->getDestructible()
+                  << ", owner: "        << condition->getOwner()
+                  << std::endl;
+      } // for all conditions
+    } // for all sinks 
   } // display all sinks
 } // displayStatus 
 
@@ -167,10 +167,10 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
 static void displayInfoSW(Glib::RefPtr<SAFTd_Proxy> saftd) {
   Glib::ustring sourceVersion;
   Glib::ustring buildInfo;
-
+  
   sourceVersion   = saftd->getSourceVersion();
   buildInfo       = saftd->getBuildInfo();
-
+  
   std::cout << "saftlib source version                  : " << sourceVersion << std::endl;
   std::cout << "saftlib build info                      : " << buildInfo << std::endl;
 } // displayInfoSW
@@ -185,12 +185,12 @@ static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
   map< Glib::ustring, Glib::ustring > allDevices;
   map<Glib::ustring, Glib::ustring>::iterator i;
   Glib::RefPtr<TimingReceiver_Proxy> aDevice;
-
+  
   map< Glib::ustring, Glib::ustring > gatewareInfo;
   map<Glib::ustring, Glib::ustring>::iterator j;
-                                                                     
+  
   allDevices      = saftd->getDevices();
-
+  
   std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
   for (i = allDevices.begin(); i != allDevices.end(); i++ ) {
     aDevice =  TimingReceiver_Proxy::create(i->second);
@@ -198,12 +198,12 @@ static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
     std::cout << ", name: " << aDevice->getName();
     std::cout << ", path: " << aDevice->getEtherbonePath();
     std::cout << std::endl;
-	gatewareInfo = aDevice->getGatewareInfo();
-	std::cout << "  --gateware version info:" << std::endl;
-	for (j = gatewareInfo.begin(); j != gatewareInfo.end(); j++) {
-	  std::cout << "  ---- " << j->second << std::endl;
-	} // for j
-	std::cout <<std::endl;
+    gatewareInfo = aDevice->getGatewareInfo();
+    std::cout << "  --gateware version info:" << std::endl;
+    for (j = gatewareInfo.begin(); j != gatewareInfo.end(); j++) {
+      std::cout << "  ---- " << j->second << std::endl;
+    } // for j
+    std::cout <<std::endl;
   } //for i
 } // displayInfoHW
 
@@ -249,225 +249,225 @@ int main(int argc, char** argv)
   // parse for options
   program = argv[0];
   while ((opt = getopt(argc, argv, "dxsvpijhf")) != -1) {
-	switch (opt) {
-	case 'f' :
-	  useFirstDev = true;
-	  break;
-	case 's':
-	  statusDisp = true;
-	  break;
-	case 'i':
-	  infoDispSW = true;
-	  break;
-	case 'j':
-	  infoDispHW = true;
-	  break;
-	case 'p':
-	  ppsAlign = true;
-	  break;
-	case 'd':
-	  pmode = pmode + PMODE_DEC;
-	  break;
-	case 'x':
-	  pmode = pmode + PMODE_HEX;
-	  break;
-	case 'v':
-	  pmode = pmode + PMODE_VERBOSE;
-	  break;
-	case 'h':
-	  help();
-	  return 0;
+    switch (opt) {
+    case 'f' :
+      useFirstDev = true;
+      break;
+    case 's':
+      statusDisp = true;
+      break;
+    case 'i':
+      infoDispSW = true;
+      break;
+    case 'j':
+      infoDispHW = true;
+      break;
+    case 'p':
+      ppsAlign = true;
+      break;
+    case 'd':
+      pmode = pmode + PMODE_DEC;
+      break;
+    case 'x':
+      pmode = pmode + PMODE_HEX;
+      break;
+    case 'v':
+      pmode = pmode + PMODE_VERBOSE;
+      break;
+    case 'h':
+      help();
+      return 0;
     default:
-	  std::cerr << program << ": bad getopt result" << std::endl;
-	  return 1;
-	} // switch opt
+      std::cerr << program << ": bad getopt result" << std::endl;
+      return 1;
+    } // switch opt
   }   // while opt
-
+  
   if (optind >= argc) {
-  std::cerr << program << " expecting one non-optional argument: <device name>" << std::endl;
+    std::cerr << program << " expecting one non-optional argument: <device name>" << std::endl;
     help();
     return 1;
   }
-
+  
   deviceName = argv[optind];
-
+  
   // parse for commands
   if (optind + 1< argc) {
-  command = argv[optind+1];
+    command = argv[optind+1];
+    
+    // "inject" 
+    if (strcasecmp(command, "inject") == 0) {
+      if (optind+5  != argc) {
+        std::cerr << program << ": expecting exactly three arguments: send <eventID> <param> <time>" << std::endl;
+        return 1;
+      } 
+      eventInject = true;
+      eventID     = strtoull(argv[optind+2], &value_end, 0);
+      //std::cout << std::hex << eventID << std::endl; 
+      if (*value_end != 0) {
+        std::cerr << program << ": invalid eventID -- " << argv[optind+2] << std::endl;
+        return 1;
+      } // eventID
+      eventParam     = strtoull(argv[optind+3], &value_end, 0);
+      //std::cout << std::hex << eventParam << std::endl; 
+      if (*value_end != 0) {
+        std::cerr << program << ": invalid param -- " << argv[optind+3] << std::endl;
+        return 1;
+      } // param
+      eventTNext = strtoll(argv[optind+4], &value_end, 10);
+      //std::cout << std::hex << eventTime << std::endl; 
+      if (*value_end != 0) {
+        std::cerr << program << ": invalid time -- " << argv[optind+4] << std::endl;
+        return 1;
+      } // time
+    } // "inject"
+    
+    else if (strcasecmp(command, "snoop") == 0) {
+      if (optind+5  != argc) {
+        std::cerr << program << ": expecting exactly three arguments: snoop <eventID> <mask> <offset>" << std::endl;
+        return 1;
+      }  
+      eventSnoop = true;
+      snoopID     = strtoull(argv[optind+2], &value_end, 0);
+      //std::cout << std::hex << snoopID << std::endl; 
+      if (*value_end != 0) {
+        std::cerr << program << ": invalid eventID -- " << argv[optind+2] << std::endl;
+        return 1;
+      } // snoopID
+      snoopMask     = strtoull(argv[optind+3], &value_end, 0);
+      //std::cout << std::hex << snoopMask<< std::endl; 
+      if (*value_end != 0) {
+        std::cerr << program << ": invalid mask -- " << argv[optind+3] << std::endl;
+        return 1;
+      } // mask
+      snoopOffset   = strtoll(argv[optind+4], &value_end, 0);
+      //std::cout << std::hex << snoopOffset<< std::endl; 
+      if (*value_end != 0) {
+        std::cerr << program << ": invalid offset -- " << argv[optind+4] << std::endl;
+        return 1;
+      } // mask
+    } // "snoop"
 
-  // "inject" 
-  if (strcasecmp(command, "inject") == 0) {
-    if (optind+5  != argc) {
-    std::cerr << program << ": expecting exactly three arguments: send <eventID> <param> <time>" << std::endl;
-    return 1;
-    } 
-    eventInject = true;
-	eventID     = strtoull(argv[optind+2], &value_end, 0);
-    //std::cout << std::hex << eventID << std::endl; 
-    if (*value_end != 0) {
-    std::cerr << program << ": invalid eventID -- " << argv[optind+2] << std::endl;
-    return 1;
-    } // eventID
-	eventParam     = strtoull(argv[optind+3], &value_end, 0);
-    //std::cout << std::hex << eventParam << std::endl; 
-    if (*value_end != 0) {
-    std::cerr << program << ": invalid param -- " << argv[optind+3] << std::endl;
-    return 1;
-    } // param
-    eventTNext = strtoll(argv[optind+4], &value_end, 10);
-    //std::cout << std::hex << eventTime << std::endl; 
-    if (*value_end != 0) {
-    std::cerr << program << ": invalid time -- " << argv[optind+4] << std::endl;
-    return 1;
-    } // time
-  } // "inject"
-
-  else if (strcasecmp(command, "snoop") == 0) {
-    if (optind+5  != argc) {
-    std::cerr << program << ": expecting exactly three arguments: snoop <eventID> <mask> <offset>" << std::endl;
-    return 1;
-    }  
-    eventSnoop = true;
-	snoopID     = strtoull(argv[optind+2], &value_end, 0);
-    //std::cout << std::hex << snoopID << std::endl; 
-    if (*value_end != 0) {
-    std::cerr << program << ": invalid eventID -- " << argv[optind+2] << std::endl;
-    return 1;
-    } // snoopID
-	snoopMask     = strtoull(argv[optind+3], &value_end, 0);
-    //std::cout << std::hex << snoopMask<< std::endl; 
-    if (*value_end != 0) {
-    std::cerr << program << ": invalid mask -- " << argv[optind+3] << std::endl;
-    return 1;
-    } // mask
-	snoopOffset   = strtoll(argv[optind+4], &value_end, 0);
-    //std::cout << std::hex << snoopOffset<< std::endl; 
-    if (*value_end != 0) {
-    std::cerr << program << ": invalid offset -- " << argv[optind+4] << std::endl;
-    return 1;
-    } // mask
-  } // "snoop"
-
-  else if (strcasecmp(command, "attach") == 0) {
-    if (optind+3  != argc) {
-    std::cerr << program << ": expecting exactly one argument: attach <path>" << std::endl;
-    return 1;
-    } 
-    deviceAttach = true;
-    if (strlen(deviceName) == 0) {
-	  std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
-	  return 1;
-    } // name
-    devicePath = argv[optind+2];
-    std::cout << devicePath << std::endl; 
-    if (strlen(devicePath) == 0) {
-	  std::cerr << program << ": invalid path -- " << argv[optind+2] << std::endl;
-    return 1;
-    } // path
-  } // "attach"
-
-  else if (strcasecmp(command, "remove") == 0) {
-    deviceRemove = true;
-    std::cout << deviceName << std::endl; 
-    if (strlen(deviceName) == 0) {
-	  std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
-	  return 1;
-    } // name
-  } // "remove"
-  
-  else if (strcasecmp(command, "quit") == 0) {
-    if (optind+2  != argc) {
-    std::cerr << program << ": expecting no argument: quit" << std::endl;
-    return 1;
-    } 
-    saftdQuit = true;
-  } // "quit"
-
-  else std::cerr << program << ": unknown command: " << command << std::endl;
+    else if (strcasecmp(command, "attach") == 0) {
+      if (optind+3  != argc) {
+        std::cerr << program << ": expecting exactly one argument: attach <path>" << std::endl;
+        return 1;
+      } 
+      deviceAttach = true;
+      if (strlen(deviceName) == 0) {
+        std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
+        return 1;
+      } // name
+      devicePath = argv[optind+2];
+      std::cout << devicePath << std::endl; 
+      if (strlen(devicePath) == 0) {
+        std::cerr << program << ": invalid path -- " << argv[optind+2] << std::endl;
+        return 1;
+      } // path
+    } // "attach"
+    
+    else if (strcasecmp(command, "remove") == 0) {
+      deviceRemove = true;
+      std::cout << deviceName << std::endl; 
+      if (strlen(deviceName) == 0) {
+        std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
+        return 1;
+      } // name
+    } // "remove"
+    
+    else if (strcasecmp(command, "quit") == 0) {
+      if (optind+2  != argc) {
+        std::cerr << program << ": expecting no argument: quit" << std::endl;
+        return 1;
+      } 
+      saftdQuit = true;
+    } // "quit"
+    
+    else std::cerr << program << ": unknown command: " << command << std::endl;
   } // commands
-
+  
   // no parameters, no command: just display help and exit
   if ((optind == 1) && (argc == 1)) {
-  help();
-  return 0;
+    help();
+    return 0;
   }
-
-  try {
-	// initialize required stuff
-	Gio::init();
-	Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
-	
-	// do display information that is INDEPENDANT of a specific device
-	if (infoDispSW) displayInfoSW(saftd);
-	if (infoDispHW) displayInfoHW(saftd);
-
-	// do things that DEPEND on a specific device
-
-	// do commands for saftd management first
-	// attach device
-	if (deviceAttach) {
-	  saftd->AttachDevice(deviceName, devicePath);
-	} // attach device
-
-	// remove device
-	if (deviceRemove) saftd->RemoveDevice(deviceName);
-
-	// quit !!!
-	if (saftdQuit) saftd->Quit();
-
-	// get a specific device
-	map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-	Glib::RefPtr<TimingReceiver_Proxy> receiver;
-	switch (useFirstDev) {
-	case true  :
-	  receiver = TimingReceiver_Proxy::create(devices.begin()->second);
-	  break;
- 	case false :
-	  if (devices.find(deviceName) == devices.end()) {
-		std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
-		return -1;
-	  } // find device
-	  receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-	  break;
-	default :
-	  return 1;
-	} //switch useFirstDevice;
-	  
-	  
-	Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-	sink->setSignalRate(1000000); //hm..., experimental
-	
-
-	// display status of software actions
-	if (statusDisp) displayStatus(receiver, sink);
-
-	// inject event
-	if (eventInject) {
-	  wrTime    = receiver->ReadCurrentTime();
-	  if (ppsAlign) {
-		ppsNext   = (wrTime - (wrTime % 1000000000)) + 1000000000;
-		eventTime = (ppsNext + eventTNext);
-	  } // ppsAlign
-	  else eventTime = wrTime + eventTNext;
-
-	  receiver->InjectEvent(eventID, eventParam, eventTime);
-
-	} //inject event
-
-	// snoop
-	if (eventSnoop) {
-	  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-	  Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
-	  // Accept all errors
-	  condition->setAcceptLate(true);
-	  condition->setAcceptEarly(true);
-	  condition->setAcceptConflict(true);
-	  condition->setAcceptDelayed(true);
-	  condition->Action.connect(sigc::ptr_fun(&on_action));
-	  condition->setActive(true);
-	  loop->run();
-	} // eventSnoop
   
+  try {
+    // initialize required stuff
+    Gio::init();
+    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    
+    // do display information that is INDEPENDANT of a specific device
+    if (infoDispSW) displayInfoSW(saftd);
+    if (infoDispHW) displayInfoHW(saftd);
+    
+    // do things that DEPEND on a specific device
+    
+    // do commands for saftd management first
+    // attach device
+    if (deviceAttach) {
+      saftd->AttachDevice(deviceName, devicePath);
+    } // attach device
+    
+    // remove device
+    if (deviceRemove) saftd->RemoveDevice(deviceName);
+    
+    // quit !!!
+    if (saftdQuit) saftd->Quit();
+    
+    // get a specific device
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver;
+    switch (useFirstDev) {
+    case true  :
+      receiver = TimingReceiver_Proxy::create(devices.begin()->second);
+      break;
+    case false :
+      if (devices.find(deviceName) == devices.end()) {
+        std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
+        return -1;
+      } // find device
+      receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+      break;
+    default :
+      return 1;
+    } //switch useFirstDevice;
+    
+    
+    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    sink->setSignalRate(1000000); //hm..., experimental
+    
+    
+    // display status of software actions
+    if (statusDisp) displayStatus(receiver, sink);
+    
+    // inject event
+    if (eventInject) {
+      wrTime    = receiver->ReadCurrentTime();
+      if (ppsAlign) {
+        ppsNext   = (wrTime - (wrTime % 1000000000)) + 1000000000;
+        eventTime = (ppsNext + eventTNext);
+      } // ppsAlign
+      else eventTime = wrTime + eventTNext;
+      
+      receiver->InjectEvent(eventID, eventParam, eventTime);
+      
+    } //inject event
+    
+    // snoop
+    if (eventSnoop) {
+      Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+      Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
+      // Accept all errors
+      condition->setAcceptLate(true);
+      condition->setAcceptEarly(true);
+      condition->setAcceptConflict(true);
+      condition->setAcceptDelayed(true);
+      condition->Action.connect(sigc::ptr_fun(&on_action));
+      condition->setActive(true);
+      loop->run();
+    } // eventSnoop
+    
   } catch (const Glib::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
