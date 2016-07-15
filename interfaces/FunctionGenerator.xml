@@ -217,7 +217,7 @@
          value will be old.
       -->
     <method name="ReadExecutedParameterCount">
-      <arg direction="out" type="q" name="result"/>
+      <arg direction="out" type="u" name="result"/>
     </method>
   </interface>
 </node>

@@ -372,7 +372,7 @@ guint64 FunctionGenerator::ReadFillLevel()
   return fillLevel;
 }
 
-guint16 FunctionGenerator::ReadExecutedParameterCount()
+guint32 FunctionGenerator::ReadExecutedParameterCount()
 {
   if (running) {
     eb_data_t count;
