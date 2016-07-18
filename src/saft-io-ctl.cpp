@@ -157,7 +157,7 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
     
     /* Disown and quit or keep waiting */
     if (disown) { condition->Disown(); }
-    else        { loop->run(); }
+    else        { std::cout << "Condition created..." << std::endl; loop->run(); }
   }
   catch (const Glib::Error& error) 
   {
@@ -972,11 +972,16 @@ int main (int argc, char** argv)
       case 'd': { io_drive     = atoi(optarg);   set_drive    = true; break; }
       case 's': { ios_snoop    = true; break; }
       case 'c': { ioc_create   = true; 
-                  eventID      = strtoull(argv[optind-1], &pEnd, 0);
-                  eventMask    = strtoull(argv[optind+0], &pEnd, 0);
-                  offset       = strtoull(argv[optind+1], &pEnd, 0);
-                  flags        = strtoull(argv[optind+2], &pEnd, 0);
-                  level        = strtoull(argv[optind+3], &pEnd, 0);
+                  if (argv[optind-1] != NULL) { eventID = strtoull(argv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing event id!" << std::endl; return (__IO_RETURN_FAILURE); }
+                  if (argv[optind+0] != NULL) { eventMask = strtoull(argv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing event mask!" << std::endl; return (__IO_RETURN_FAILURE); }
+                  if (argv[optind+1] != NULL) { offset = strtoull(argv[optind+1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing offset!" << std::endl; return (__IO_RETURN_FAILURE); }
+                  if (argv[optind+2] != NULL) { flags = strtoull(argv[optind+2], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing flags!" << std::endl; return (__IO_RETURN_FAILURE); }
+                  if (argv[optind+3] != NULL) { level = strtoull(argv[optind+3], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing level!" << std::endl; return (__IO_RETURN_FAILURE); }
                   break; }
       case 'g': { negative     = true; break; }
       case 'u': { ioc_disown   = true; break; }
