@@ -1,7 +1,7 @@
 SUBDIRS = interfaces
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-clk-gen
+bin_PROGRAMS = saft-ctl fg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-clk-gen saft-dm
 noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
@@ -29,7 +29,6 @@ saftd_SOURCES = version.h \
 	src/clog.cpp			src/clog.h			\
 	src/build.cpp			src/build.h			\
 	src/CommonFunctions.cpp	src/CommonFunctions.h		\
-	drivers/SerdesClockGen.cpp	drivers/SerdesClockGen.h		\
 	drivers/eca_regs.h		drivers/eca_flags.h		\
 	drivers/eca_queue_regs.h	drivers/eca_tlu_regs.h		\
 	drivers/io_control_regs.h	drivers/fg_regs.h		\
@@ -75,6 +74,9 @@ saft_pps_gen_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 saft_clk_gen_SOURCES = src/saft-clk-gen.cpp src/CommonFunctions.cpp
 saft_clk_gen_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+
+saft_dm_SOURCES = src/saft-dm.cpp src/CommonFunctions.cpp
+saft_dm_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 if GIT_TREE
 version.h:
