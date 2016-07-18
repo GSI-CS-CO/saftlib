@@ -28,7 +28,8 @@ saftd_SOURCES = version.h \
 	src/eb-source.cpp		src/eb-source.h			\
 	src/clog.cpp			src/clog.h			\
 	src/build.cpp			src/build.h			\
-	src/CommonFunctions.cpp	src/CommonFunctions.h		\
+	drivers/SerdesClockGen.cpp	drivers/SerdesClockGen.h	\
+	drivers/eca_regs.h		drivers/eca_flags.h		\
 	drivers/eca_regs.h		drivers/eca_flags.h		\
 	drivers/eca_queue_regs.h	drivers/eca_tlu_regs.h		\
 	drivers/io_control_regs.h	drivers/fg_regs.h		\
@@ -51,6 +52,7 @@ saftd_SOURCES = version.h \
 	drivers/Input.cpp		drivers/Input.h			\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
 	src/globals.cpp			src/main.cpp
+
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
 saftd_LDFLAGS = -rdynamic # needed for stack trace
 
