@@ -48,6 +48,8 @@ static void ecpu_help (void)
   std::cout << "  -c <id> <mask> <offset> <tag>: Create a new condition" << std::endl;
   std::cout << "  -d:                            Disown the created condition" << std::endl;
   std::cout << "  -x:                            Destroy all unowned conditions" << std::endl;
+  std::cout << "  -z                             Translate mask" << std::endl;
+  std::cout << "  -l                             List conditions" << std::endl;
   std::cout << "  -h:                            Print help (this message)" << std::endl;
   std::cout << "  -v:                            Switch to verbose mode" << std::endl;
   std::cout << std::endl;
@@ -65,24 +67,26 @@ int main (int argc, char** argv)
 {
   /* Helpers */
   int  opt             = 0;
+  char *pEnd           = NULL;
   bool create_sink     = false;
   bool disown_sink     = false;
   bool destroy_sink    = false;
   bool verbose_mode    = false;
   bool show_help       = false;
-  Glib::ustring e_cpu  = "None";
-  Glib::ustring e_sink = "Unknown";
+  bool translate_mask  = false;
+  bool list_conditions = false;
   guint64 eventID      = 0x0;
   guint64 eventMask    = 0x0;
   gint64  offset       = 0x0;
-  gint32 tag           = 0x0;
-  char * pEnd          = NULL;
+  gint32  tag          = 0x0;
+  Glib::ustring e_cpu  = "None";
+  Glib::ustring e_sink = "Unknown";
   
   /* Get the application name */
   program = argv[0]; 
   
   /* Parse arguments */
-  while ((opt = getopt(argc, argv, "c:dxvh")) != -1)
+  while ((opt = getopt(argc, argv, "c:dxzlvh")) != -1)
   {
     switch (opt)
     {
@@ -99,10 +103,12 @@ int main (int argc, char** argv)
         else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
         break;
       }
-      case 'd': { disown_sink  = true; break; }
-      case 'x': { destroy_sink = true; break; }
-      case 'v': { verbose_mode = true; break; }
-      case 'h': { show_help    = true; break; }
+      case 'd': { disown_sink     = true; break; }
+      case 'x': { destroy_sink    = true; break; }
+      case 'z': { translate_mask  = true; break; }
+      case 'l': { list_conditions = true; break; }
+      case 'v': { verbose_mode    = true; break; }
+      case 'h': { show_help       = true; break; }
       default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
     }
     /* Break loop if help is needed */
@@ -172,8 +178,10 @@ int main (int argc, char** argv)
     if (create_sink)
     {
       /* Setup Condition */
-      Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, tr_mask(eventMask), offset, tag));
-
+      Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition;
+      if (translate_mask) { condition = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
+      else                { condition = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag)); }
+      
       /* Accept every kind of event */
       condition->setAcceptConflict(true);
       condition->setAcceptDelayed(true);
@@ -212,6 +220,25 @@ int main (int argc, char** argv)
         {
           if (verbose_mode) { std::cout << "Found " << e_sink << " but is not destructible!" << std::endl; }
         }
+      }
+    }
+    else if (list_conditions)
+    {
+      /* Get the conditions */
+      std::vector< Glib::ustring > all_conditions = e_cpu->getAllConditions();
+      
+      /* List conditions */
+      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      {
+        Glib::RefPtr<EmbeddedCPUCondition_Proxy> info_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
+        e_sink = all_conditions[condition_it];
+        std::cout << e_sink << ":" << std::endl;
+        std::cout << "  Event ID: 0x" << std::hex << info_condition->getID() << std::endl;
+        std::cout << "  Mask:     0x" << std::hex << info_condition->getMask() << std::endl;
+        std::cout << "  Tag:      0x" << std::hex << info_condition->getTag() << std::endl;
+        std::cout << "  Offset:   " << std::dec << info_condition->getOffset() << std::endl;
+        std::cout << "  Owner:    " << info_condition->getOwner() << std::endl;
+        std::cout << std::endl;
       }
     }
     else
