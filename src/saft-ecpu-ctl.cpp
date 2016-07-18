@@ -89,10 +89,14 @@ int main (int argc, char** argv)
       case 'c': 
       { 
         create_sink = true;
-        eventID     = strtoull(argv[optind-1], &pEnd, 0); // !!! highly suspicious -1 
-        eventMask   = strtoull(argv[optind+0], &pEnd, 0);
-        offset      = strtoull(argv[optind+1], &pEnd, 0);
-        tag         = strtoul(argv[optind+2], &pEnd, 0);
+        if (argv[optind-1] != NULL) { eventID = strtoull(argv[optind-1], &pEnd, 0); }
+        else                        { std::cerr << "Error: Missing event id!" << std::endl; return (-1); }
+        if (argv[optind+0] != NULL) { eventMask = strtoull(argv[optind+0], &pEnd, 0); }
+        else                        { std::cerr << "Error: Missing event mask!" << std::endl; return (-1); }
+        if (argv[optind+1] != NULL) { offset = strtoull(argv[optind+1], &pEnd, 0);}
+        else                        { std::cerr << "Error: Missing offset!" << std::endl; return (-1); }
+        if (argv[optind+2] != NULL) { tag = strtoul(argv[optind+2], &pEnd, 0); }
+        else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
         break;
       }
       case 'd': { disown_sink  = true; break; }
@@ -116,7 +120,7 @@ int main (int argc, char** argv)
   if (show_help)
   {
     ecpu_help();
-    return 1;
+    return (-1);
   }
   
   /* List parameters */
@@ -131,11 +135,6 @@ int main (int argc, char** argv)
   
   /* Get the device name */
   deviceName = argv[optind];
-  if (deviceName == NULL)
-  {
-    std::cout << "device name missing" << std::endl; /* !!! */
-    return 1;
-  }
   
   /* Initialize Glib stuff */
   Gio::init();
@@ -145,6 +144,11 @@ int main (int argc, char** argv)
   try 
   {
     /* Search for device name */
+    if (deviceName == NULL)
+    { 
+      std::cerr << "Missing device name!" << std::endl;
+      return (-1);
+    }
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     if (devices.find(deviceName) == devices.end())
     {
@@ -158,7 +162,7 @@ int main (int argc, char** argv)
     if (e_cpus.size() != 1)
     {
       std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
-      return 1;
+      return (-1);
     }
     
     /* Get connection */
@@ -181,7 +185,7 @@ int main (int argc, char** argv)
       {
         std::cout << "Action sink configured and disowned..." << std::endl;
         condition->Disown();
-        return 0;
+        return (0);
       }
       else
       {
@@ -213,7 +217,7 @@ int main (int argc, char** argv)
     else
     {
       std::cerr << "Missing at least one parameter!" << std::endl;
-      return 1;
+      return (-1);
     }
     
   } 
@@ -223,5 +227,5 @@ int main (int argc, char** argv)
   }
   
   /* Done */
-  return 0;
+  return (0);
 }
