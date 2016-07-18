@@ -169,7 +169,7 @@ int main (int argc, char** argv)
   else 
   { 
     show_help = true;
-    std::cout << "Incorrect non-optional arguments (expecting exactly the device name)..." << std::endl;
+    std::cout << "Incorrect non-optional arguments..." << std::endl;
   }
   
   /* Check if help is needed, otherwise evaluate given arguments */

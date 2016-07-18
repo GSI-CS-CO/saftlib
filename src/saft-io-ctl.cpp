@@ -25,7 +25,6 @@
 /* ==================================================================================================== */
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
-#define IO_TOOL_VERSION        "v1.1"
 #define ECA_EVENT_ID_LATCH     UINT64_C(0xfffe000000000000) /* FID=MAX & GRPID=MAX-1 */
 #define ECA_EVENT_MASK_LATCH   UINT64_C(0xfffe000000000000)
 #define IO_CONDITION_OFFSET    5000
@@ -408,7 +407,7 @@ static int io_list (void)
 static void io_help (void)
 {
   /* Print arguments and options */
-  std::cout << "IO-CTL for SAFTlib " << IO_TOOL_VERSION << std::endl;
+  std::cout << "IO-CTL for SAFTlib " << std::endl;
   std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
@@ -426,7 +425,7 @@ static void io_help (void)
   std::cout << "  -s:                                            Snoop on input(s)" << std::endl;
   std::cout << std::endl;
   std::cout << "  -c <event id> <mask> <offset> <flags> <level>: Create a new condition (active)" << std::endl;
-  std::cout << "  -g                                             Negative offset (new condition)" << std::endl;
+  std::cout << "  -g:                                            Negative offset (new condition)" << std::endl;
   std::cout << "  -u:                                            Disown the created condition" << std::endl;
   std::cout << "  -x:                                            Destroy all unowned conditions" << std::endl;
   std::cout << "  -f:                                            Flip active/inactive conditions" << std::endl;
