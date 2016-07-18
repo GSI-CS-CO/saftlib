@@ -31,15 +31,16 @@
 /* ==================================================================================================== */
 using namespace saftlib;
 using namespace std;
-static const char   *ioName       = NULL;  /* Name of the IO */
-static bool          ioNameGiven  = false; /* IO name given? */
 
 /* Global */
 /* ==================================================================================================== */
-static const char *program    = NULL;  /* Name of the application */
-static const char *deviceName = NULL;  /* Name of the device */
+static const char *ioName      = NULL;  /* Name of the IO */
+static bool        ioNameGiven = false; /* IO name given? */
+static const char *program     = NULL;  /* Name of the application */
+static const char *deviceName  = NULL;  /* Name of the device */
 
-
+/* Function clk_show_table() */
+/* ==================================================================================================== */
 static int clk_show_table (void)
 {
   /* Initialize saftlib components */
@@ -86,24 +87,60 @@ static int clk_show_table (void)
   return (0);
 }
 
+/* Function clk_configure() */
+/* ==================================================================================================== */
 static int clk_configure(double high_phase, double low_phase, uint64_t phase_offset)
 {
-
-
-
-
-
-
-
-
-
-  // !!! check if running, return state or error?
+  /* Helper */
+  bool ioFound = false;
+  bool ioClkStatus = false;
   
-  return 0;
+  /* Check if IO name was given */
+  if (!ioNameGiven) 
+  {
+    std::cerr << "Missing IO name!" << std::endl;
+    return (-1);
+  }
+
+  /* Initialize saftlib components */
+  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+  
+  /* Try to get the table */
+  try
+  {
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::map< Glib::ustring, Glib::ustring > outs;
+    outs = receiver->getOutputs();
+    
+    /* Configure clock */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    {
+      if ((ioNameGiven && (it->first == ioName)))
+      {
+        ioFound = true;
+        Glib::RefPtr<Output_Proxy> output_proxy;
+        output_proxy = Output_Proxy::create(it->second);
+        if   ((high_phase == 0.0) && (low_phase == 0.0) && (phase_offset == 0)) { ioClkStatus = output_proxy->StopClock(); }
+        else                                                                    { ioClkStatus = output_proxy->StartClock(high_phase, low_phase, phase_offset); }
+        if   (ioClkStatus) { std::cout << "Clock started..." << std::endl; }
+        else               { std::cout << "Clock stopped..." << std::endl; }
+      } 
+    }
+  }
+  catch (const Glib::Error& error) 
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (-1);
+  }
+
+  /* Done */
+  if (!ioFound) { std::cerr << "IO " << ioName << " does not exist!" << std::endl; return (-1); }
+  else          { return (0); }
 }
 
-
-/* Function pps_help() */
+/* Function clk_gen_help() */
 /* ==================================================================================================== */
 static void clk_gen_help (void)
 {
@@ -117,10 +154,11 @@ static void clk_gen_help (void)
   std::cout << "  -f <frequency[Hz]> <phase offset[ns]>                   Start/Configure clock with the given frequency" << std::endl;
   std::cout << "  -s:                                                     Stop clock for the given IO" << std::endl;
   std::cout << "  -i:                                                     List all clock generator outputs" << std::endl;
+  std::cout << "  -v:                                                     Switch to verbose mode" << std::endl;
   std::cout << "  -h:                                                     Print help (this message)" << std::endl;
   std::cout << std::endl;
-  std::cout << "Example: " << program << " exploder5a_123t " << std::endl;
-  std::cout << "  !!!!!!!!!!!!!" << std::endl;
+  std::cout << "  " << program << " exploder5a_123t " << "-n IO1 " << "-p 4 4 2" << std::endl;
+  std::cout << "  This will generate a 125MHz clock (with a 2ns phase offset)" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
   std::cout << "Licensed under the GPLv3" << std::endl;
@@ -140,6 +178,7 @@ int main (int argc, char** argv)
   bool     phase_config     = false;
   bool     frequency_config = false;
   bool     show_table       = false;
+  bool     verbose_mode     = false;
   double   high_phase       = 0.0;
   double   low_phase        = 0.0;
   uint64_t phase_offset     = 0;
@@ -152,7 +191,7 @@ int main (int argc, char** argv)
   ioName = "NoIONameGiven";
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "n:p:f:sih")) != -1)
+  while ((opt = getopt(argc, argv, "n:p:f:sivh")) != -1)
   {
     switch (opt)
     {
@@ -170,12 +209,14 @@ int main (int argc, char** argv)
                   break; }
       case 's': { stop_clock       = true; break; }
       case 'i': { show_table       = true; break; }
+      case 'v': { verbose_mode     = true; break; }
       case 'h': { show_help        = true; break; }
       default:  { std::cout << "Unknown argument..." << std::endl; break; }
     }
-    /* Break loop if help is needed */
-    if (show_help) { break; }
   }
+  
+  /* Help wanted? */
+  if (show_help) { clk_gen_help(); return (0); }
   
   /* Get basic arguments, we need at least the device name */
   deviceName = argv[optind];
@@ -192,6 +233,11 @@ int main (int argc, char** argv)
   }
   
   /* Check if device name exists */
+  if (deviceName == NULL)
+  { 
+    std::cerr << "Missing device name!" << std::endl;
+    return (-1);
+  }
   Gio::init();
   map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
   if (devices.find(deviceName) == devices.end())
@@ -200,20 +246,21 @@ int main (int argc, char** argv)
     return (-1);
   }
   
-#if 1
-  std::cout << "deviceName       = " << deviceName << std::endl;
-  std::cout << "ioName           = " << ioName << std::endl;
-  std::cout << "start_clock      = " << start_clock << std::endl;
-  std::cout << "stop_clock       = " << stop_clock << std::endl;
-  std::cout << "phase_config     = " << phase_config << std::endl;
-  std::cout << "frequency_config = " << frequency_config << std::endl;
-  std::cout << "frequency        = " << frequency << std::endl;
-  std::cout << "high_phase       = " << high_phase << std::endl;
-  std::cout << "low_phase        = " << low_phase << std::endl;
-  std::cout << "phase_offset     = " << phase_offset << std::endl;
-  std::cout << "show_table       = " << show_table << std::endl;
-  std::cout << "show_help        = " << show_help << std::endl;
-#endif
+  /* Print additional information */
+  if (verbose_mode)
+  {
+    std::cout << "Settings:" << std::endl;
+    std::cout << "  deviceName       = " << deviceName << std::endl;
+    std::cout << "  ioName           = " << ioName << std::endl;
+    std::cout << "  start_clock      = " << start_clock << std::endl;
+    std::cout << "  stop_clock       = " << stop_clock << std::endl;
+    std::cout << "  phase_config     = " << phase_config << std::endl;
+    std::cout << "  frequency_config = " << frequency_config << std::endl;
+    std::cout << "  frequency        = " << frequency << std::endl;
+    std::cout << "  high_phase       = " << high_phase << std::endl;
+    std::cout << "  low_phase        = " << low_phase << std::endl;
+    std::cout << "  phase_offset     = " << phase_offset << std::endl;
+  }
   
   /* Proceed with program */
   if      (show_help)     { clk_gen_help(); }
