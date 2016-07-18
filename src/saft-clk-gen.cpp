@@ -198,14 +198,19 @@ int main (int argc, char** argv)
       case 'n': { ioName           = argv[optind-1]; ioNameGiven  = true; break; }
       case 'p': { start_clock      = true;
                   phase_config     = true;
-                  high_phase       = strtod(argv[optind-1], &pEnd);
-                  low_phase        = strtod(argv[optind-0], &pEnd);
-                  phase_offset     = strtoull(argv[optind+1], &pEnd, 0);
+                  if (argv[optind-1] != NULL) { high_phase = strtod(argv[optind-1], &pEnd); }
+                  else                        { std::cerr << "Error: Missing value for high phase[ns]!" << std::endl; return (-1); }
+                  if (argv[optind-0] != NULL) { low_phase = strtod(argv[optind-0], &pEnd); }
+                  else                        { std::cerr << "Error: Missing value for low phase[ns]!" << std::endl; return (-1); }
+                  if (argv[optind+1] != NULL) { phase_offset = strtoull(argv[optind+1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing value for phase offset[ns]!" << std::endl; return (-1); }
                   break; }
       case 'f': { start_clock      = true;
                   frequency_config = true;
-                  frequency        = strtoull(argv[optind-1], &pEnd, 0);
-                  phase_offset     = strtoull(argv[optind+0], &pEnd, 0);
+                  if (argv[optind-1] != NULL) { frequency = strtoull(argv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing value for frequency[Hz]!" << std::endl; return (-1); }
+                  if (argv[optind-0] != NULL) { phase_offset = strtoull(argv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing value for phase offset[ns]!" << std::endl; return (-1); }
                   break; }
       case 's': { stop_clock       = true; break; }
       case 'i': { show_table       = true; break; }
@@ -250,8 +255,6 @@ int main (int argc, char** argv)
   if (verbose_mode)
   {
     std::cout << "Settings:" << std::endl;
-    std::cout << "  deviceName       = " << deviceName << std::endl;
-    std::cout << "  ioName           = " << ioName << std::endl;
     std::cout << "  start_clock      = " << start_clock << std::endl;
     std::cout << "  stop_clock       = " << stop_clock << std::endl;
     std::cout << "  phase_config     = " << phase_config << std::endl;
@@ -260,6 +263,7 @@ int main (int argc, char** argv)
     std::cout << "  high_phase       = " << high_phase << std::endl;
     std::cout << "  low_phase        = " << low_phase << std::endl;
     std::cout << "  phase_offset     = " << phase_offset << std::endl;
+    std::cout << std::endl;
   }
   
   /* Proceed with program */
