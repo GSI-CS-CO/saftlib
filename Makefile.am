@@ -30,7 +30,6 @@ saftd_SOURCES = version.h \
 	src/build.cpp			src/build.h			\
 	drivers/SerdesClockGen.cpp	drivers/SerdesClockGen.h	\
 	drivers/eca_regs.h		drivers/eca_flags.h		\
-	drivers/eca_regs.h		drivers/eca_flags.h		\
 	drivers/eca_queue_regs.h	drivers/eca_tlu_regs.h		\
 	drivers/io_control_regs.h	drivers/fg_regs.h		\
 	drivers/Owned.cpp		drivers/Owned.h			\
