@@ -182,7 +182,7 @@ int main (int argc, char** argv)
   double   high_phase       = 0.0;
   double   low_phase        = 0.0;
   uint64_t phase_offset     = 0;
-  uint64_t frequency        = 0;
+  double   frequency        = 0;
   int      return_code      = 0;
 
   /* Get the application name */
@@ -207,7 +207,7 @@ int main (int argc, char** argv)
                   break; }
       case 'f': { start_clock      = true;
                   frequency_config = true;
-                  if (argv[optind-1] != NULL) { frequency = strtoull(argv[optind-1], &pEnd, 0); }
+                  if (argv[optind-1] != NULL) { frequency = strtod(argv[optind-1], &pEnd); }
                   else                        { std::cerr << "Error: Missing value for frequency[Hz]!" << std::endl; return (-1); }
                   if (argv[optind-0] != NULL) { phase_offset = strtoull(argv[optind+0], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing value for phase offset[ns]!" << std::endl; return (-1); }
