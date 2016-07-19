@@ -75,7 +75,7 @@ static void io_help        (void);
 static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_drive, 
                             bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_drive,
                             bool verbose_mode);
-static int  io_create      (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative);
+static int  io_create      (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative, bool translate_mask);
 static int  io_destroy     (bool verbose_mode);
 static int  io_flip        (bool verbose_mode);
 static int  io_list        (void);
@@ -85,7 +85,7 @@ static int  io_snoop       (void);
 
 /* Function io_create() */
 /* ==================================================================================================== */
-static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative)
+static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative, bool translate_mask)
 {
   /* Helpers */
   bool   io_found          = false;
@@ -149,7 +149,9 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
     }
     
     /* Setup condition */
-    Glib::RefPtr<OutputCondition_Proxy> condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, eventMask, io_offset, io_edge));
+    Glib::RefPtr<OutputCondition_Proxy> condition;
+    if (translate_mask) { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, tr_mask(eventMask), io_offset, io_edge)); }
+    else                { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, eventMask, io_offset, io_edge)); }
     condition->setAcceptConflict(io_AcceptConflict);
     condition->setAcceptDelayed(io_AcceptDelayed);
     condition->setAcceptEarly(io_AcceptEarly);
@@ -429,6 +431,7 @@ static void io_help (void)
   std::cout << "  -u:                                            Disown the created condition" << std::endl;
   std::cout << "  -x:                                            Destroy all unowned conditions" << std::endl;
   std::cout << "  -f:                                            Flip active/inactive conditions" << std::endl;
+  std::cout << "  -z                                             Translate mask" << std::endl;
   std::cout << "  -l:                                            List all conditions" << std::endl;
   std::cout << std::endl;
   std::cout << "  -v:                                            Switch to verbose mode" << std::endl;
@@ -922,44 +925,45 @@ static int io_print_table(bool verbose_mode)
 int main (int argc, char** argv)
 {
   /* Helpers to deal with endless arguments */
-  char * pEnd        = NULL;  /* Arguments parsing */
-  int  opt           = 0;     /* Number of given options */
-  int  io_oe         = 0;     /* Output enable */
-  int  io_term       = 0;     /* Input Termination */
-  int  io_spec_out   = 0;     /* Special (output) function */
-  int  io_spec_in    = 0;     /* Special (input) function */
-  int  io_mux        = 0;     /* Multiplexer (BuTiS) */
-  int  io_drive      = 0;     /* Drive IO value */
-  int  ioc_flip      = 0;     /* Flip active bit for all conditions */
-  int  return_code   = 0;     /* Return code */
-  guint64 eventID    = 0x0;   /* Event ID (new condition) */
-  guint64 eventMask  = 0x0;   /* Event mask (new condition) */
-  gint64  offset     = 0x0;   /* Event offset (new condition) */
-  guint64 flags      = 0x0;   /* Accept flags (new condition) */
-  gint64  level      = 0x0;   /* Rising or falling edge (new condition) */
-  bool    negative   = false; /* Offset negative? */
-  bool ioc_valid     = false; /* Create arguments valid? */
-  bool set_oe        = false; /* Set? */
-  bool set_term      = false; /* Set? */
-  bool set_spec_in   = false; /* Set? */
-  bool set_spec_out  = false; /* Set? */
-  bool set_mux       = false; /* Set? */
-  bool set_drive     = false; /* Set? */
-  bool ios_snoop     = false; /* Snoop on an input */
-  bool ioc_create    = false; /* Create condition */
-  bool ioc_disown    = false; /* Disown created condition */
-  bool ioc_destroy   = false; /* Destroy condition */
-  bool ioc_list      = false; /* List conditions */
-  bool verbose_mode  = false; /* Print verbose output to output stream => -v */
-  bool show_help     = false; /* Print help => -h */
-  bool show_table    = false; /* Print io mapping table => -i */
+  char * pEnd         = NULL;  /* Arguments parsing */
+  int  opt            = 0;     /* Number of given options */
+  int  io_oe          = 0;     /* Output enable */
+  int  io_term        = 0;     /* Input Termination */
+  int  io_spec_out    = 0;     /* Special (output) function */
+  int  io_spec_in     = 0;     /* Special (input) function */
+  int  io_mux         = 0;     /* Multiplexer (BuTiS) */
+  int  io_drive       = 0;     /* Drive IO value */
+  int  ioc_flip       = 0;     /* Flip active bit for all conditions */
+  int  return_code    = 0;     /* Return code */
+  guint64 eventID     = 0x0;   /* Event ID (new condition) */
+  guint64 eventMask   = 0x0;   /* Event mask (new condition) */
+  gint64  offset      = 0x0;   /* Event offset (new condition) */
+  guint64 flags       = 0x0;   /* Accept flags (new condition) */
+  gint64  level       = 0x0;   /* Rising or falling edge (new condition) */
+  bool translate_mask = false; /* Translate mask? */
+  bool negative       = false; /* Offset negative? */
+  bool ioc_valid      = false; /* Create arguments valid? */
+  bool set_oe         = false; /* Set? */
+  bool set_term       = false; /* Set? */
+  bool set_spec_in    = false; /* Set? */
+  bool set_spec_out   = false; /* Set? */
+  bool set_mux        = false; /* Set? */
+  bool set_drive      = false; /* Set? */
+  bool ios_snoop      = false; /* Snoop on an input */
+  bool ioc_create     = false; /* Create condition */
+  bool ioc_disown     = false; /* Disown created condition */
+  bool ioc_destroy    = false; /* Destroy condition */
+  bool ioc_list       = false; /* List conditions */
+  bool verbose_mode   = false; /* Print verbose output to output stream => -v */
+  bool show_help      = false; /* Print help => -h */
+  bool show_table     = false; /* Print io mapping table => -i */
   
   /* Get the application name */
   program = argv[0];
   deviceName = "NoDeviceNameGiven";
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "n:o:t:p:e:m:d:sc:guxflivh")) != -1)
+  while ((opt = getopt(argc, argv, "n:o:t:p:e:m:d:sc:guxfzlivh")) != -1)
   {
     switch (opt)
     {
@@ -983,14 +987,15 @@ int main (int argc, char** argv)
                   if (argv[optind+3] != NULL) { level = strtoull(argv[optind+3], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing level!" << std::endl; return (__IO_RETURN_FAILURE); }
                   break; }
-      case 'g': { negative     = true; break; }
-      case 'u': { ioc_disown   = true; break; }
-      case 'x': { ioc_destroy  = true; break; }
-      case 'f': { ioc_flip     = true; break; }
-      case 'l': { ioc_list     = true; break; }
-      case 'i': { show_table   = true; break; }
-      case 'v': { verbose_mode = true; break; }
-      case 'h': { show_help    = true; break; }
+      case 'g': { negative       = true; break; }
+      case 'u': { ioc_disown     = true; break; }
+      case 'x': { ioc_destroy    = true; break; }
+      case 'f': { ioc_flip       = true; break; }
+      case 'z': { translate_mask = true; break; }
+      case 'l': { ioc_list       = true; break; }
+      case 'i': { show_table     = true; break; }
+      case 'v': { verbose_mode   = true; break; }
+      case 'h': { show_help      = true; break; }
       default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
     }
     /* Break loop if help is needed */
@@ -1084,7 +1089,7 @@ int main (int argc, char** argv)
     /* Proceed with program */
     if      (show_table)  { return_code = io_print_table(verbose_mode); }
     else if (ios_snoop)   { return_code = io_snoop(); }
-    else if (ioc_create)  { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative); }
+    else if (ioc_create)  { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative, translate_mask); }
     else if (ioc_destroy) { return_code = io_destroy(verbose_mode); }
     else if (ioc_flip)    { return_code = io_flip(verbose_mode); }
     else if (ioc_list)    { return_code = io_list(); }
