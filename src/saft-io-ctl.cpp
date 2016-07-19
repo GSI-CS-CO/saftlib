@@ -446,7 +446,7 @@ static void io_help (void)
   std::cout << "  These flags can be used in combination (e.g. flag 0x3 will accept late and early events)" << std::endl;
   std::cout << std::endl;
   std::cout << "Example:" << std::endl;
-  std::cout << "  " << program << " exploder5a_123t " << "-n IO1 " << "-o 1 -t 0 -d 1" << std::endl;
+  std::cout << program << " exploder5a_123t " << "-n IO1 " << "-o 1 -t 0 -d 1" << std::endl;
   std::cout << "  This will enable the output and disable the input termination and drive the output high" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;

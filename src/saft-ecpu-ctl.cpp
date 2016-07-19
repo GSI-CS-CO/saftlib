@@ -53,8 +53,9 @@ static void ecpu_help (void)
   std::cout << "  -h:                            Print help (this message)" << std::endl;
   std::cout << "  -v:                            Switch to verbose mode" << std::endl;
   std::cout << std::endl;
-  std::cout << "Example: " << program << " exploder5a_123t " << "-c 64 58 0x2 0x4 -d"<< std::endl;
-  std::cout << "  This will create a new condition and disown it." << std::endl;
+  std::cout << "Example:" << std::endl;
+  std::cout << program << " exploder5a_123t " << "-c 64 58 0x2 0x4 -d"<< std::endl;
+  std::cout << "  This will create a new condition and disown it" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
   std::cout << "Licensed under the GPLv3" << std::endl;
