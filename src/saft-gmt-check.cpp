@@ -49,11 +49,17 @@ using namespace saftlib;
 
 // global variables
 static const char* program;
-static guint32 pmode = PMODE_NONE;      // how data are printed (hex, dec, verbosity)
-static guint64 messageCounterAll = 0;   // counts all messages received from DM
-static guint64 messageCounterDiff = 0;  // counts all messages since last "counter info message" from DM
-static guint64 messageCounterStart = 0; // counter value of first "counter info message" from DM
-static guint64 messageCounterLast = 0;  // counter value of last "counter info message" 
+static guint32 pmode = PMODE_NONE;       // how data are printed (hex, dec, verbosity)
+static guint64 messageCounterAll = 0;    // counts all messages received from DM
+static guint64 messageCounterDiff = 0;   // counts all messages since last "counter info message" from DM
+static guint64 messageCounterStart = 0;  // counter value of first "counter info message" from DM
+static guint64 messageCounterLast = 0;   // counter value of last "counter info message" 
+static guint64 overflowCounterAll = 0;   // counter for all overflows
+static guint64 overflowCounterDiff = 0;  // counter for overflows since last "counter info message" 
+static guint64 overflowCounterStart = 0; // counter of overflows at first "counter info message"
+static guint64 overflowCounterLast = 0;  // counter of overflows at last "counter info message"
+
+
 static guint64 lostMessagesAll = 0;     // number of all lost messages since first "counter info message"
 static guint64 lostMessagesDiff = 0;    // number of last messages since last "counter info message"
 static guint64 messageCounterID = 0x0FA62F9000000000; //EvtID for "message counter info message"
@@ -64,7 +70,6 @@ static guint64 overflow_cnt = 0;
 static void on_overflow(guint64 count)
 {
   overflow_cnt = count;
-  std::cerr << "Overflow callback!" << std::endl;
 }
 
 // this will be called, in case we are snooping for events
@@ -77,23 +82,30 @@ static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 execu
     tmp = (param << 32) | ((param  >> 32) & 0xffffffff); param = tmp;
     // <<<<<<< fix me (requires new GW for DM)
 
-    // check for lost messages
-    lostMessagesAll  = param - messageCounterStart - messageCounterAll; 
-    lostMessagesDiff = param - messageCounterLast - messageCounterDiff;
+    // check for lost messages and overflows
+    lostMessagesAll     = param - messageCounterStart - messageCounterAll; 
+    lostMessagesDiff    = param - messageCounterLast - messageCounterDiff;
+    overflowCounterAll  = overflow_cnt - overflowCounterStart;
+    overflowCounterDiff = overflow_cnt - overflowCounterLast;
 
     // remember counter values 
-    if (firstRun) messageCounterStart = param;
+    if (firstRun) {
+      messageCounterStart  = param;
+      overflowCounterStart = overflow_cnt;
+    }
     messageCounterLast  = param;
+    overflowCounterLast = overflow_cnt;
 
     //
     if (!firstRun) {
       if ((!onlyPrintLoss) || lostMessagesDiff) {
-        int i = overflow_cnt;
         std::cout << std::dec 
-                  << "msg total (lost): " << messageCounterAll << "(" << lostMessagesAll 
-                  << "), msg diff (lost): " << messageCounterDiff << "(" << lostMessagesDiff << ")";
-        if (lostMessagesAll)   std::cout << ": LOSS!!!";
-        if (lostMessagesDiff) std::cout << ": DIFFLOSS!!!";
+                  << "msg total (lost: sum / network / overflow): " << messageCounterAll 
+                  << " (" << lostMessagesAll << " / " << lostMessagesAll - overflowCounterAll << " / " << overflowCounterAll
+                  << "), msg diff (...): " << messageCounterDiff 
+                  << " (" << lostMessagesDiff << " / " << lostMessagesDiff - overflowCounterDiff << " / " << overflowCounterDiff << ")";
+        if (lostMessagesAll)   std::cout << ": LOSS!";
+        if (lostMessagesDiff) std::cout << ": DIFFLOSS!";
         std::cout << std::endl;
       } //if !onlyPrintLoss
       
@@ -125,12 +137,19 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
-  std::cout << "  -l                   only print output in case of loss" << std::endl;
+  std::cout << "  -l                   only print output in case of lost messages" << std::endl;
   //std::cout << "  -d                   display values in dec format" << std::endl;
   //std::cout << "  -x                   display values in hex format" << std::endl;
   std::cout << "  -v                   more verbosity" << std::endl;
   std::cout << std::endl;
   std::cout << "  count                counts messages received from DM and compares with number of messages sent by DM" << std::endl;
+  std::cout << std::endl;
+  std::cout << "Example:" << std::endl;
+  std::cout <<  "'saft-gmt-check asfd -fl count'" << std::endl;
+  std::cout << "   This will starting counting and compare the number of received messages ('get value')" << std::endl;
+  std::cout << "   with the number of messages actually sent ('set value') by the DM. This example will use the " << std::endl;
+  std::cout << "   first timing receiver available in the host system and print only to screen in case of lost" << std::endl;
+  std::cout << "   messages. Remark: The 'set value' is transmitted from the DM via a dedicated message." << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cout << "Licensed under the GPL v3." << std::endl;
