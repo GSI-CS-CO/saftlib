@@ -48,31 +48,62 @@ using namespace std;
 
 // global variables
 static const char* program;
-static guint32 pmode = PMODE_NONE;     // how data are printed (hex, dec, verbosity)
-static guint32 messageCounterAll = 0;  // counts all messages received from DM
-static guint32 messageCounterDiff = 0; // counts all messages since last "message counter info message" from DM
+static guint32 pmode = PMODE_NONE;      // how data are printed (hex, dec, verbosity)
+static guint64 messageCounterAll = 0;   // counts all messages received from DM
+static guint64 messageCounterDiff = 0;  // counts all messages since last "counter info message" from DM
+static guint64 messageCounterStart = 0; // counter value of first "counter info message" from DM
+static guint64 messageCounterLast = 0;  // counter value of last "counter info message" 
+static guint64 lostMessagesAll = 0;     // number of all lost messages since first "counter info message"
+static guint64 lostMessagesDiff = 0;    // number of last messages since last "counter info message"
 static guint64 messageCounterID = 0x0FA62F9000000000; //EvtID for "message counter info message"
 static bool    firstRun = true; 
+static bool    onlyPrintLoss = false;
 
 // this will be called, in case we are snooping for events
 static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
-
+  guint64 tmp;
 
   if (id == messageCounterID) {
-	std::cout << "received MCM, counter: " << std::dec << param << ", diff: " << messageCounterDiff << std::endl;
-	messageCounterDiff = 0;
-	firstRun = false;
-  }
+    // >>>>>>> fix me (requires new GW for DM)
+    tmp = (param << 32) | ((param  >> 32) & 0xffffffff); param = tmp;
+    // <<<<<<< fix me (requires new GW for DM)
+
+    // check for lost messages
+    lostMessagesAll  = param - messageCounterStart - messageCounterAll; 
+    lostMessagesDiff = param - messageCounterLast - messageCounterDiff;
+
+    // remember counter values 
+    if (firstRun) messageCounterStart = param;
+    messageCounterLast  = param;
+
+    //
+    if (!firstRun) {
+      if ((!onlyPrintLoss) || lostMessagesDiff) {
+        int i = OverflowCount;
+        std::cout << std::dec 
+                  << "msg total (lost): " << messageCounterAll << "(" << lostMessagesAll 
+                  << "), msg diff (lost): " << messageCounterDiff << "(" << lostMessagesDiff << ")";
+        if (lostMessagesAll)   std::cout << ": LOSS!!!";
+        if (lostMessagesDiff) std::cout << ": DIFFLOSS!!!";
+        std::cout << std::endl;
+      } //if !onlyPrintLoss
+      
+      messageCounterDiff = 0;
+    } // if !firstRun
+    firstRun = false;
+  } // if id
   
+  //increment counter values
   if (!firstRun) {
-	messageCounterDiff++;
-	messageCounterAll++;
+    messageCounterDiff++;
+    messageCounterAll++;
   }
 
-  std::cout << "MSG received: " <<  messageCounterAll << ", valid: " << (int)(!firstRun);
+  if (pmode & PMODE_VERBOSE) std::cout << "MSG received: " <<  messageCounterAll 
+                                       << ", valid: " << (int)(!firstRun) << std::hex 
+                                       << ", ID: 0x" << id << std::dec << std::endl;
 
-  std::cout << std::endl;
 } // on_action
 
 using namespace saftlib;
@@ -84,9 +115,10 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
-  std::cout << "  -d                   display values in dec format" << std::endl;
-  std::cout << "  -x                   display values in hex format" << std::endl;
-  std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
+  std::cout << "  -l                   only print output in case of loss" << std::endl;
+  //std::cout << "  -d                   display values in dec format" << std::endl;
+  //std::cout << "  -x                   display values in hex format" << std::endl;
+  std::cout << "  -v                   more verbosity" << std::endl;
   std::cout << std::endl;
   std::cout << "  count                counts messages received from DM and compares with number of messages sent by DM" << std::endl;
   std::cout << std::endl;
@@ -100,8 +132,8 @@ int main(int argc, char** argv)
 {
   // variables and flags for command line parsing
   int  opt;
-  bool count          = false;
-  bool useFirstDev    = false;
+  bool count           = false;
+  bool useFirstDev     = false;
 
   // variables snoop event
   guint64 snoopID     = 0x0;
@@ -117,10 +149,13 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxvhf")) != -1) {
+  while ((opt = getopt(argc, argv, "dlxvhf")) != -1) {
     switch (opt) {
     case 'f' :
       useFirstDev = true;
+      break;
+    case 'l' :
+      onlyPrintLoss = true;
       break;
     case 'd':
       pmode = pmode + PMODE_DEC;
