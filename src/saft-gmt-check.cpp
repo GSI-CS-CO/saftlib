@@ -51,14 +51,26 @@ static const char* program;
 static guint32 pmode = PMODE_NONE;     // how data are printed (hex, dec, verbosity)
 static guint32 messageCounterAll = 0;  // counts all messages received from DM
 static guint32 messageCounterDiff = 0; // counts all messages since last "message counter info message" from DM
-static bool    firstRun = false; 
+static guint64 messageCounterID = 0x0FA62F9000000000; //EvtID for "message counter info message"
+static bool    firstRun = true; 
 
 // this will be called, in case we are snooping for events
 static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
-  messageCounterAll++;
 
-  std::cout << messageCounterAll;
+
+  if (id == messageCounterID) {
+	std::cout << "received MCM, counter: " << std::dec << param << ", diff: " << messageCounterDiff << std::endl;
+	messageCounterDiff = 0;
+	firstRun = false;
+  }
+  
+  if (!firstRun) {
+	messageCounterDiff++;
+	messageCounterAll++;
+  }
+
+  std::cout << "MSG received: " <<  messageCounterAll << ", valid: " << (int)(!firstRun);
 
   std::cout << std::endl;
 } // on_action
@@ -88,35 +100,16 @@ int main(int argc, char** argv)
 {
   // variables and flags for command line parsing
   int  opt;
-  bool eventSnoop     = false;
-  bool statusDisp     = false;
-  bool infoDispSW     = false;
-  bool infoDispHW     = false;
-  bool ppsAlign       = false;
   bool count          = false;
-  bool deviceAttach   = false;
-  bool deviceRemove   = false;
   bool useFirstDev    = false;
-  bool saftdQuit      = false;
-  char *value_end;
 
   // variables snoop event
   guint64 snoopID     = 0x0;
   guint64 snoopMask   = 0x0;
   gint64  snoopOffset = 0x0;
   
-
-  // variables inject event 
-  guint64 eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  guint64 eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
-  guint64 eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
-  guint64 eventTime   = 0x0;     // time for next event in PTP time
-  guint64 ppsNext     = 0x0;     // time for next PPS 
-  guint64 wrTime      = 0x0;     // current WR time
-
   // variables attach, remove
   char    *deviceName = NULL;
-  char    *devicePath = NULL;
   
   const char *command;
 
@@ -199,9 +192,11 @@ int main(int argc, char** argv)
     default :
       return 1;
     } //switch useFirstDevice;
+
+	Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
     // count
-    if (eventSnoop) {
+    if (count) {
       Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
       Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
