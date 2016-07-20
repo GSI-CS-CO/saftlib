@@ -45,6 +45,7 @@
 #include "src/CommonFunctions.h"
 
 using namespace std;
+using namespace saftlib;
 
 // global variables
 static const char* program;
@@ -58,6 +59,13 @@ static guint64 lostMessagesDiff = 0;    // number of last messages since last "c
 static guint64 messageCounterID = 0x0FA62F9000000000; //EvtID for "message counter info message"
 static bool    firstRun = true; 
 static bool    onlyPrintLoss = false;
+static guint64 overflow_cnt = 0;
+
+static void on_overflow(guint64 count)
+{
+  overflow_cnt = count;
+  std::cerr << "Overflow callback!" << std::endl;
+}
 
 // this will be called, in case we are snooping for events
 static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
@@ -80,7 +88,7 @@ static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 execu
     //
     if (!firstRun) {
       if ((!onlyPrintLoss) || lostMessagesDiff) {
-        int i = OverflowCount;
+        int i = overflow_cnt;
         std::cout << std::dec 
                   << "msg total (lost): " << messageCounterAll << "(" << lostMessagesAll 
                   << "), msg diff (lost): " << messageCounterDiff << "(" << lostMessagesDiff << ")";
@@ -103,6 +111,8 @@ static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 execu
   if (pmode & PMODE_VERBOSE) std::cout << "MSG received: " <<  messageCounterAll 
                                        << ", valid: " << (int)(!firstRun) << std::hex 
                                        << ", ID: 0x" << id << std::dec << std::endl;
+
+  // !!! Print overflow_cnt here
 
 } // on_action
 
@@ -227,9 +237,10 @@ int main(int argc, char** argv)
     default :
       return 1;
     } //switch useFirstDevice;
-
-	Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
+    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    sink->OverflowCount.connect(sigc::ptr_fun(&on_overflow));
+      
     // count
     if (count) {
       Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
@@ -240,6 +251,7 @@ int main(int argc, char** argv)
       condition->setAcceptConflict(true);
       condition->setAcceptDelayed(true);
       condition->Action.connect(sigc::ptr_fun(&on_action));
+
       condition->setActive(true);
       loop->run();
     } // count messages
