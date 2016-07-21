@@ -84,3 +84,11 @@ By default the saftlib.conf is copied to "/usr/local/etc/dbus-1/system.d/", but 
 2. $_ `make install`
 
 You should now find the file in "/etc/dbus-1/system.d/".
+
+### Compilation: "./configure: line 16708: syntax error near unexpected token `0.23' and ./configure: line 16708: `PKG_PROG_PKG_CONFIG(0.23)'"
+
+You need the pkgconfig/pkg-config package to proceed.
+
+Solution:
+
+1. $_ `sudo apt-get install pkgconfig`
