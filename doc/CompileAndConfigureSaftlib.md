@@ -92,3 +92,23 @@ You need the pkgconfig/pkg-config package to proceed.
 Solution:
 
 1. $_ `sudo apt-get install pkgconfig`
+
+### Compilation: "configure: error: Package requirements (giomm-2.4 >= 2.28.2) were not met: and No package 'giomm-2.4' found"
+
+You need to install the missing package.
+
+Solution:
+
+1. $_ `sudo apt-get install libglibmm-2.4-dev`
+
+### Compilation: "configure: error: could not find xsltproc -- needed to processs interfaces"
+
+Install the xsltproc package.
+
+Solution:
+
+1. $_ `sudo apt-get install xsltproc`
+
+
+
+
