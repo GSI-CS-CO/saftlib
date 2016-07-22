@@ -449,6 +449,10 @@ int main(int argc, char** argv)
       else eventTime = wrTime + eventTNext;
       
       receiver->InjectEvent(eventID, eventParam, eventTime);
+      if (pmode == PMODE_VERBOSE)
+      {
+        std::cout << "Injected event (eventID/parameter/time): 0x" << std::hex << eventID << " 0x" << eventParam << " 0x" << eventTime << std::dec << std::endl;
+      }
       
     } //inject event
     
