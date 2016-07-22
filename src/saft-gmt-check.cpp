@@ -124,8 +124,6 @@ static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 execu
                                        << ", valid: " << (int)(!firstRun) << std::hex 
                                        << ", ID: 0x" << id << std::dec << std::endl;
 
-  // !!! Print overflow_cnt here
-
 } // on_action
 
 using namespace saftlib;
