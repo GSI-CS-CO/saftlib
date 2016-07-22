@@ -36,6 +36,7 @@
 
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
@@ -63,6 +64,8 @@ static void help(void) {
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cout << "  -p                   schedule will be added to next full second (option -p) or current time (option unused)" << std::endl; 
   std::cout << std::endl;
+  std::cout << "  -n N                 N (1..) is number of iterations of the schedule. If unspecified, N is set to 1" << std::endl;
+  std::cout << std::endl;
 
   std::cout << "  The file must contain exactly one message per line. Each line must have the following format:" << std::endl;
   std::cout << "  '<eventID> <param> <time>', example: '0x1111000000000000 0x0 123000000', time [ns] and decimal." << std::endl;
@@ -80,25 +83,33 @@ int main(int argc, char** argv)
   int  opt;
   bool ppsAlign       = false;
   bool useFirstDev    = false;
+  unsigned int nIter  = 1;
 
   // variables inject event
-
   guint64 eventID     = 0x0;     // full 64 bit EventID contained in the timing message
   guint64 eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
   guint64 eventTime   = 0x0;     // time for event (this value is added to the current time or the next PPS, see option -p
   guint64 startTime   = 0x0;     // time for start of schedule in PTP time
+  guint64 nextTimeWR  = 0x0;     // time for event (in units of WR time)
+  gint64  sleepTime   = 0x0;     // time interval for sleeping
   guint64 wrTime      = 0x0;     // current WR time
 
   // variables attach, remove
   char    *deviceName = NULL;
+
+  //helper variables
   string  line;
+  unsigned int i;
   
   const char *filename;
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "phf")) != -1) {
+  while ((opt = getopt(argc, argv, "n:phf")) != -1) {
     switch (opt) {
+	case 'n' :
+	  nIter = atoi(optarg);
+	  break;
     case 'f' :
       useFirstDev = true;
       break;
@@ -157,25 +168,36 @@ int main(int argc, char** argv)
       return 1;
     } //switch useFirstDevice;
 
-	wrTime    = receiver->ReadCurrentTime();
-	if (ppsAlign) startTime = (wrTime - (wrTime % 1000000000)) + 1000000000;  //align schedule to next PPS
-	else          startTime = wrTime;                                         //align schedule to current WR time
+	for (i=0; i<nIter; i++) {
+	  wrTime    = receiver->ReadCurrentTime();
+	  if (ppsAlign) startTime = (wrTime - (wrTime % 1000000000)) + 1000000000;  //align schedule to next PPS
+	  else          startTime = wrTime;                                         //align schedule to current WR time
 	
-	ifstream myfile (filename);
-	if (myfile.is_open()) {
-	  while (getline (myfile,line)) {
-		std::stringstream stream(line);
-		stream >> std::hex >> eventID;
-		stream >> std::hex >> eventParam;
-		stream >> std::dec >> eventTime;
-		std::cout << std::dec << eventTime << std::hex << " 0x" << eventID << " 0x" << eventParam << std::endl;
+	  ifstream myfile (filename);
+	  if (myfile.is_open()) {
+		while (getline (myfile,line)) {
+		  // get data from file
+		  std::stringstream stream(line);
+		  stream >> std::hex >> eventID;
+		  stream >> std::hex >> eventParam;
+		  stream >> std::dec >> eventTime;
+		  std::cout << std::dec << eventTime << std::hex << " 0x" << eventID << " 0x" << eventParam << std::endl;
 
-    	receiver->InjectEvent(eventID, eventParam, startTime + eventTime);
+		  // inject event
+		  nextTimeWR = startTime + eventTime;
+		  receiver->InjectEvent(eventID, eventParam, nextTimeWR);
+
+		  // lets sleep until event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
+		  wrTime    = receiver->ReadCurrentTime();
+		  if (nextTimeWR > (wrTime + 100000000)) {                       //only sleep if injected event "was" more than 100ms in the future
+			sleepTime = (gint64)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event			
+			usleep(sleepTime);
+		  } // if next time
+		} // while getline
+		myfile.close();
 	  }
-	  myfile.close();
-	}
-	else std::cerr << "Unable to open file" << std::endl; 
-		
+	  else std::cerr << "Unable to open file" << std::endl; 
+	} //for i
       
   } catch (const Glib::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;

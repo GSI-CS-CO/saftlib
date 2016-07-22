@@ -8,6 +8,7 @@ saft-pps-gen
 saft-ecpu-ctl
 saft-clk-gen
 saft-dm
+saft-gmt-check
 # Automake junk dirs
 tools
 m4
