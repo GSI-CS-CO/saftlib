@@ -75,9 +75,9 @@ static void help(void) {
   std::cout << "  -j                   list all attached devices (hardware)" << std::endl;
   std::cout << "  -s                   display actual status of software actions" << std::endl;
   std::cout << std::endl;
-
   std::cout << "  inject <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
-  std::cout << "  snoop  <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl << std::endl;
+  std::cout << "  snoop  <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
+  std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
   std::cout << "  quit                             instructs the saftlib daemon to quit (admin only)" << std::endl << std::endl;
@@ -435,8 +435,6 @@ int main(int argc, char** argv)
     
     
     Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-    sink->setSignalRate(1000000); //hm..., experimental
-    
     
     // display status of software actions
     if (statusDisp) displayStatus(receiver, sink);
