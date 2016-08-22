@@ -79,9 +79,10 @@ static int  io_create      (bool disown, guint64 eventID, guint64 eventMask, gin
 static int  io_destroy     (bool verbose_mode);
 static int  io_flip        (bool verbose_mode);
 static int  io_list        (void);
+static int  io_list_i_to_e (void);
 static int  io_print_table (bool verbose_mode);
 static void io_catch_input (guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags);
-static int  io_snoop       (void);
+static int  io_snoop       (bool mode, bool setup_only);
 
 /* Function io_create() */
 /* ==================================================================================================== */
@@ -425,6 +426,9 @@ static void io_help (void)
   std::cout << "  -i:                                            List every IO and it's capability" << std::endl;
   std::cout << std::endl;
   std::cout << "  -s:                                            Snoop on input(s)" << std::endl;
+  std::cout << "  -w:                                            Disable all events from input(s)" << std::endl;
+  std::cout << "  -y:                                            Display IO input to event table" << std::endl;
+  std::cout << "  -b:                                            Only enable event source (no snooping)" << std::endl;
   std::cout << std::endl;
   std::cout << "  -c <event id> <mask> <offset> <flags> <level>: Create a new condition (active)" << std::endl;
   std::cout << "  -g:                                            Negative offset (new condition)" << std::endl;
@@ -452,6 +456,63 @@ static void io_help (void)
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
   std::cout << "Licensed under the GPLv3" << std::endl;
   std::cout << std::endl;
+}
+
+/* Function io_list_i_to_e() */
+/* ==================================================================================================== */
+static int io_list_i_to_e()
+{
+  /* Helper  */
+  bool printed_header = false;
+  
+  /* Get inputs and snoop */
+  try 
+  {
+    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::map< Glib::ustring, Glib::ustring > inputs = receiver->getInputs();
+    
+    /* Check inputs */
+    for (std::map<Glib::ustring,Glib::ustring>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+    {
+    
+      if (!printed_header)
+      {
+        std::cout << "IO             Prefix              Enabled  Event Bit(s)" << std::endl;
+        std::cout << "--------------------------------------------------------" << std::endl;
+        printed_header = true;
+      }
+      if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
+      {
+        /* Set name */
+        ioName =  it->first.c_str();
+        guint64 prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
+        map_PrefixName[ioName] = prefix;
+        Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+        
+        std::cout << std::left;
+        std::cout << std::setw(12+2) << it->first << " ";
+        std::cout << "0x";
+        std::cout << std::setw(16+1) << std::hex <<  input->getEventPrefix() << " " << std::dec;
+        std::cout << std::setw(3+2);
+        if (input->getEventEnable()) { std::cout << "Yes"; }
+        else                         { std::cout << "No "; }
+        std::cout << "    "; 
+        std::cout << "0x";
+        std::cout << std::setw(10+1) << std::hex <<  input->getEventBits() << " " << std::dec;
+        std::cout << std::endl;
+      }
+    }
+  } 
+  catch (const Glib::Error& error)
+  {
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+  
+  /* Done */
+  return (__IO_RETURN_SUCCESS);
 }
 
 /* Function io_catch_input() */
@@ -488,7 +549,7 @@ static void io_catch_input(guint64 event, guint64 param, guint64 deadline, guint
 
 /* Function io_snoop() */
 /* ==================================================================================================== */
-static int io_snoop()
+static int io_snoop(bool mode, bool setup_only)
 {
   /* Helpers (connect proxies in a vector) */
   std::vector <Glib::RefPtr<SoftwareCondition_Proxy> > proxies;
@@ -512,29 +573,47 @@ static int io_snoop()
         guint64 prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
         map_PrefixName[ioName] = prefix;
         
-        /* Create sink and condition */
-        sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
-        proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
-        proxies.back()->Action.connect(sigc::ptr_fun(&io_catch_input));
-        proxies.back()->setAcceptConflict(true);
-        proxies.back()->setAcceptDelayed(true);
-        proxies.back()->setAcceptEarly(true);
-        proxies.back()->setAcceptLate(true);
+        /* Create sink and condition or turn off event source */
+        if (!mode)
+        {
+          if (!setup_only)
+          {
+            sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
+            proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
+            proxies.back()->Action.connect(sigc::ptr_fun(&io_catch_input));
+            proxies.back()->setAcceptConflict(true);
+            proxies.back()->setAcceptDelayed(true);
+            proxies.back()->setAcceptEarly(true);
+            proxies.back()->setAcceptLate(true);
+          }
         
-        /* Setup the event */
-        Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
-        input->setEventEnable(false);
-        input->setEventPrefix(prefix);
-        input->setEventEnable(true);
+          /* Setup the event */
+          Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+          input->setEventEnable(false);
+          input->setEventPrefix(prefix);
+          input->setEventEnable(true);
+        }
+        else
+        {
+          /* Disable the event */
+          Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+          input->setEventEnable(false);
+        }
       }
     }
+    
+    /* Disabled? */
+    if (mode) { return (__IO_RETURN_SUCCESS); }
     
     /* Run the loop printing IO events (in case we found inputs */
     if (map_PrefixName.size())
     {
-      std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
-      std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
-      loop->run();
+      if (!setup_only)
+      {
+        std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
+        std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
+        loop->run();
+      }
     }
     else
     {
@@ -949,7 +1028,11 @@ int main (int argc, char** argv)
   bool set_spec_out   = false; /* Set? */
   bool set_mux        = false; /* Set? */
   bool set_drive      = false; /* Set? */
-  bool ios_snoop      = false; /* Snoop on an input */
+  bool ios_snoop      = false; /* Snoop on an input(s) */
+  bool ios_wipe       = false; /* Wipe/disable all events from input(s) */
+  bool ios_wipe_snoop = false; /* Wipe and snoop */
+  bool ios_i_to_e     = false; /* List input to event table */
+  bool ios_setup_only = false; /* Only setup input to event */
   bool ioc_create     = false; /* Create condition */
   bool ioc_disown     = false; /* Disown created condition */
   bool ioc_destroy    = false; /* Destroy condition */
@@ -963,19 +1046,22 @@ int main (int argc, char** argv)
   deviceName = "NoDeviceNameGiven";
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "n:o:t:p:e:m:d:sc:guxfzlivh")) != -1)
+  while ((opt = getopt(argc, argv, "n:o:t:p:e:m:d:swybc:guxfzlivh")) != -1)
   {
     switch (opt)
     {
-      case 'n': { ioName       = argv[optind-1]; ioNameGiven  = true; break; }
-      case 'o': { io_oe        = atoi(optarg);   set_oe       = true; break; }
-      case 't': { io_term      = atoi(optarg);   set_term     = true; break; }
-      case 'p': { io_spec_out  = atoi(optarg);   set_spec_out = true; break; }
-      case 'e': { io_spec_in   = atoi(optarg);   set_spec_in  = true; break; }
-      case 'm': { io_mux       = atoi(optarg);   set_mux      = true; break; }
-      case 'd': { io_drive     = atoi(optarg);   set_drive    = true; break; }
-      case 's': { ios_snoop    = true; break; }
-      case 'c': { ioc_create   = true; 
+      case 'n': { ioName         = argv[optind-1]; ioNameGiven  = true; break; }
+      case 'o': { io_oe          = atoi(optarg);   set_oe       = true; break; }
+      case 't': { io_term        = atoi(optarg);   set_term     = true; break; }
+      case 'p': { io_spec_out    = atoi(optarg);   set_spec_out = true; break; }
+      case 'e': { io_spec_in     = atoi(optarg);   set_spec_in  = true; break; }
+      case 'm': { io_mux         = atoi(optarg);   set_mux      = true; break; }
+      case 'd': { io_drive       = atoi(optarg);   set_drive    = true; break; }
+      case 's': { ios_snoop      = true; break; }
+      case 'w': { ios_wipe       = true; break; }
+      case 'y': { ios_i_to_e     = true; break; }
+      case 'b': { ios_setup_only = true; break; }
+      case 'c': { ioc_create     = true; 
                   if (argv[optind-1] != NULL) { eventID = strtoull(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing event id!" << std::endl; return (__IO_RETURN_FAILURE); }
                   if (argv[optind+0] != NULL) { eventMask = strtoull(argv[optind+0], &pEnd, 0); }
@@ -1008,6 +1094,9 @@ int main (int argc, char** argv)
   /* Plausibility check for arguments */
   if ((ioc_create || ioc_disown) && ioc_destroy) { std::cerr << "Incorrect arguments!" << std::endl; return (__IO_RETURN_FAILURE); }
   else                                           { ioc_valid = true; }
+  
+  /* Plausibility check for event input options */
+  if (ios_snoop && ios_wipe) { ios_wipe_snoop = true; }
   
   /* Get basic arguments, we need at least the device name */
   if (optind + 1 == argc)
@@ -1087,13 +1176,16 @@ int main (int argc, char** argv)
   else
   {
     /* Proceed with program */
-    if      (show_table)  { return_code = io_print_table(verbose_mode); }
-    else if (ios_snoop)   { return_code = io_snoop(); }
-    else if (ioc_create)  { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative, translate_mask); }
-    else if (ioc_destroy) { return_code = io_destroy(verbose_mode); }
-    else if (ioc_flip)    { return_code = io_flip(verbose_mode); }
-    else if (ioc_list)    { return_code = io_list(); }
-    else                  { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_drive, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_drive, verbose_mode); }
+    if      (show_table)     { return_code = io_print_table(verbose_mode); }
+    else if (ios_wipe_snoop) { return_code = io_snoop(false, ios_setup_only); return_code += io_snoop(true, ios_setup_only); }
+    else if (ios_wipe)       { return_code = io_snoop(ios_wipe, ios_setup_only); }
+    else if (ios_snoop)      { return_code = io_snoop(ios_wipe, ios_setup_only); }
+    else if (ios_i_to_e)     { return_code = io_list_i_to_e(); }
+    else if (ioc_create)     { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative, translate_mask); }
+    else if (ioc_destroy)    { return_code = io_destroy(verbose_mode); }
+    else if (ioc_flip)       { return_code = io_flip(verbose_mode); }
+    else if (ioc_list)       { return_code = io_list(); }
+    else                     { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_drive, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_drive, verbose_mode); }
   }
   
   /* Done */
