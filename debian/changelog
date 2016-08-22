@@ -1,3 +1,9 @@
+saftlib (1.0.8-1) unstable; urgency=medium
+
+  * Added Clock generator support and various tools
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Tue, 22 Aug 2016 14:32:31 +0200
+
 saftlib (1.0.7-1) unstable; urgency=medium
 
   * Switch to using SDB-based MSIs

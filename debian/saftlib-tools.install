@@ -1,3 +1,8 @@
+usr/bin/saft-clk-gen
 usr/bin/saft-ctl
+usr/bin/saft-dm
+usr/bin/saft-ecpu-ctl
+usr/bin/saft-gmt-check
 usr/bin/saft-io-ctl
+usr/bin/saft-pps-gen
 usr/bin/fg-ctl
