@@ -1030,7 +1030,6 @@ int main (int argc, char** argv)
   bool set_drive      = false; /* Set? */
   bool ios_snoop      = false; /* Snoop on an input(s) */
   bool ios_wipe       = false; /* Wipe/disable all events from input(s) */
-  bool ios_wipe_snoop = false; /* Wipe and snoop */
   bool ios_i_to_e     = false; /* List input to event table */
   bool ios_setup_only = false; /* Only setup input to event */
   bool ioc_create     = false; /* Create condition */
@@ -1096,7 +1095,9 @@ int main (int argc, char** argv)
   else                                           { ioc_valid = true; }
   
   /* Plausibility check for event input options */
-  if (ios_snoop && ios_wipe) { ios_wipe_snoop = true; }
+  if      (ios_snoop && ios_wipe)       { std::cerr << "Incorrect arguments (disable input events or snoop)!"  << std::endl; return (__IO_RETURN_FAILURE);}
+  else if (ios_snoop && ios_setup_only) { std::cerr << "Incorrect arguments (enable input events or snoop)!"   << std::endl; return (__IO_RETURN_FAILURE);}
+  else if (ios_wipe  && ios_setup_only) { std::cerr << "Incorrect arguments (disable or enable input events)!" << std::endl; return (__IO_RETURN_FAILURE); }
   
   /* Get basic arguments, we need at least the device name */
   if (optind + 1 == argc)
@@ -1177,9 +1178,9 @@ int main (int argc, char** argv)
   {
     /* Proceed with program */
     if      (show_table)     { return_code = io_print_table(verbose_mode); }
-    else if (ios_wipe_snoop) { return_code = io_snoop(false, ios_setup_only); return_code += io_snoop(true, ios_setup_only); }
     else if (ios_wipe)       { return_code = io_snoop(ios_wipe, ios_setup_only); }
     else if (ios_snoop)      { return_code = io_snoop(ios_wipe, ios_setup_only); }
+    else if (ios_setup_only) { return_code = io_snoop(ios_wipe, ios_setup_only); }
     else if (ios_i_to_e)     { return_code = io_list_i_to_e(); }
     else if (ioc_create)     { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative, translate_mask); }
     else if (ioc_destroy)    { return_code = io_destroy(verbose_mode); }
