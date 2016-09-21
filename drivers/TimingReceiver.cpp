@@ -21,7 +21,7 @@
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
-#define DEBUG_COMPILE 1
+#define DEBUG_COMPILE 0
 
 #include <sstream>
 #include <algorithm>
