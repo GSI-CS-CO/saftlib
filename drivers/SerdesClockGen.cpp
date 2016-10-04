@@ -27,7 +27,7 @@
 void CalcClockParameters(double hi, double lo, uint64_t phase, struct SerClkGenControl *control)
 {
   double period, wide_period, cut_period;
-  int i, j, fill_factor, cut_wide_period;
+  int i, fill_factor, cut_wide_period;
 
 #if IO_SER_CLK_GEN_DEBUG_MODE
   if (hi != floor(hi)) { fprintf(stderr, "warning: fractional part of hi time ignored; period remains unaffected\n"); }
