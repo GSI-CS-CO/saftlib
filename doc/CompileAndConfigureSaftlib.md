@@ -10,6 +10,7 @@ You need to have installed the following packages (debian) before you configure 
 * libglib2.0-dev
 * autotools-dev
 * autoconf
+* libtool (glibtoolize)
 
 ## Compilation
 
