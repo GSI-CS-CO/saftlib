@@ -8,6 +8,8 @@ You need to have installed the following packages (debian) before you configure 
 
 * docbook-utils
 * libglib2.0-dev
+* autotools-dev
+* autoconf
 
 ## Compilation
 
