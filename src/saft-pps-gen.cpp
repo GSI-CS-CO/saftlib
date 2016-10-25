@@ -28,6 +28,8 @@
 #include "interfaces/Output.h"
 #include "interfaces/OutputCondition.h"
 #include "interfaces/Input.h"
+#include "interfaces/SCUbusActionSink.h"
+#include "interfaces/SCUbusCondition.h"
 
 /* Namespace */
 /* ==================================================================================================== */
@@ -112,10 +114,11 @@ static void pps_help (void)
   std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
-  std::cout << "  -s: Turn output enable on and input termination off" << std::endl;
-  std::cout << "  -e: External event mode (ECA configuration only)" << std::endl;
-  std::cout << "  -h: Print help (this message)" << std::endl;
-  std::cout << "  -v: Switch to verbose mode" << std::endl;
+  std::cout << "  -s        : Turn output enable on and input termination off" << std::endl;
+  std::cout << "  -e        : External event mode (ECA configuration only)" << std::endl;
+  std::cout << "  -t <tag>  : Set up a new condition on the SCU bus (uint32 tag injection)" << std::endl;
+  std::cout << "  -h        : Print help (this message)" << std::endl;
+  std::cout << "  -v        : Switch to verbose mode" << std::endl;
   std::cout << std::endl;
   std::cout << "Example: " << program << " exploder5a_123t " << std::endl;
   std::cout << "  This will output one pulse per second on every IO." << std::endl;
@@ -140,6 +143,8 @@ int main (int argc, char** argv)
   bool show_help        = false; /* Print help => -h */
   bool first_pps        = true;  /* Is this the first PPS output? */
   bool wrLocked         = false; /* Is the timing receiver locked? */
+  bool setup_scu_bus    = false; /* Set up a new condition for the SCU bus? */
+  guint32 scu_bus_tag   = 0;     /* SCU Bus tag */
   guint64 wrTime        = 0;     /* Current time */
   guint64 wrNext        = 0;     /* Execution time for the next PPS */
 
@@ -147,7 +152,7 @@ int main (int argc, char** argv)
   program = argv[0]; 
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, ":sevh")) != -1)
+  while ((opt = getopt(argc, argv, ":sevht:")) != -1)
   {
     switch (opt)
     {
@@ -155,6 +160,7 @@ int main (int argc, char** argv)
       case 'e': { external_trigger = true; break; }
       case 'v': { verbose_mode     = true; break; }
       case 'h': { show_help        = true; break; }
+      case 't': { setup_scu_bus    = true; scu_bus_tag = strtoul(optarg, NULL, 0); break; }
       default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
     }
     /* Break loop if help is needed */
@@ -267,11 +273,34 @@ int main (int argc, char** argv)
         condition_low->setAcceptDelayed(true);
         condition_low->setAcceptEarly(true);
         condition_low->setAcceptLate(true);
-        
       }
       
       /* Output some information */
       std::cout << "ECA configuration done for " << total_ios << " IO(s)!" << std::endl;
+      
+      /* Create condition for the SCU bus (if wanted) */
+      if (setup_scu_bus)
+      {
+        /* Search for SCU bus channel */
+        map<Glib::ustring, Glib::ustring> e_scubusses = receiver->getInterfaces()["SCUbusActionSink"];
+        if (e_scubusses.size() != 1)
+        {
+          std::cerr << "Device '" << receiver->getName() << "' has no SCU bus!" << std::endl;
+          return (-1);
+       }
+       
+       /* Get connection */
+       Glib::RefPtr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
+       Glib::RefPtr<SCUbusCondition_Proxy> scubus_condition;
+       scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
+        
+       /* Accept every kind of event */
+       scubus_condition->setAcceptConflict(true);
+       scubus_condition->setAcceptDelayed(true);
+       scubus_condition->setAcceptEarly(true);
+       scubus_condition->setAcceptLate(true);
+       std::cout << "ECA configuration done SCU bus!" << std::endl;
+      }
       
       /* Trigger ECA continuously? */ 
       if (!external_trigger)
