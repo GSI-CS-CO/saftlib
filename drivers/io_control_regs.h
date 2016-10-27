@@ -184,6 +184,14 @@ typedef enum
   eSet_LVDS_Out_Begin        = 0xb000,
   eGet_GPIO_In_Begin         = 0xc000,
   eGet_LVDS_In_Begin         = 0xd000,
+  eGPIO_PPS_Mux_Set_low      = 0x0e00,
+  eGPIO_PPS_Mux_Set_high     = 0x0e04,
+  eGPIO_PPS_Mux_Reset_low    = 0x0e08,
+  eGPIO_PPS_Mux_Reset_high   = 0x0e0c,
+  eLVDS_PPS_Mux_Set_low      = 0x0f00,
+  eLVDS_PPS_Mux_Set_high     = 0x0f04,
+  eLVDS_PPS_Mux_Reset_low    = 0x0f08,
+  eLVDS_PPS_Mux_Reset_high   = 0x0f0c,
   eIO_Map_Table_Begin        = 0xe000
 } e_IOCONTROL_RegisterArea;
 
