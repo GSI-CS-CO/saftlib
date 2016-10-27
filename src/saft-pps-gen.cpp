@@ -299,7 +299,7 @@ int main (int argc, char** argv)
        scubus_condition->setAcceptDelayed(true);
        scubus_condition->setAcceptEarly(true);
        scubus_condition->setAcceptLate(true);
-       std::cout << "ECA configuration done SCU bus!" << std::endl;
+       std::cout << "ECA configuration done for SCU bus!" << std::endl;
       }
       
       /* Trigger ECA continuously? */ 
