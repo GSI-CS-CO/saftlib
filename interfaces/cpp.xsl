@@ -214,6 +214,7 @@
       <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
       <xsl:text>#include &lt;giomm.h&gt;&#10;</xsl:text>
       <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text>
+      <xsl:text>#include &lt;gio/gunixfdlist.h&gt;&#10;</xsl:text>
       <xsl:text>#include "i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>.h"&#10;&#10;</xsl:text>
@@ -222,9 +223,67 @@
       <!-- XML interface file -->
       <xsl:text>const Glib::ustring i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Service::xml =&#10; "&lt;node&gt;</xsl:text>
-      <xsl:apply-templates select="." mode="escape"/>
-      <xsl:text>&lt;/node&gt;";&#10;&#10;</xsl:text>
+      <xsl:text>_Service::xml =&#10;"&lt;node&gt;</xsl:text>
+      <!-- unfortunately, the following line needs to be replaced by a bunch of code to copy all but the 'Ax' args; is there a simpler way of achieving the same ? -->
+<!--       <xsl:apply-templates select="." mode="escape"/> -->
+      <xsl:text>"&#10;</xsl:text>
+      <xsl:text>"  &lt;interface name='</xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>'&gt;"&#10;</xsl:text>
+      <!-- properties -->
+      <xsl:for-each select="property">
+        <xsl:text>"    &lt;property name='</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>' type='</xsl:text>
+        <xsl:value-of select="@type"/>
+        <xsl:text>' access='</xsl:text>
+        <xsl:value-of select="@access"/>
+        <xsl:text>'&gt;"&#10;</xsl:text>
+          <xsl:for-each select="annotation">
+            <xsl:text>"      &lt;annotation name='</xsl:text>
+            <xsl:value-of select="@name"/>
+            <xsl:text>' value='</xsl:text>
+            <xsl:value-of select="@value"/>
+            <xsl:text>'/&gt;"&#10;</xsl:text>
+          </xsl:for-each>
+        <xsl:text>"    &lt;/property&gt;"&#10;</xsl:text>
+      </xsl:for-each>
+      <!-- methods -->
+      <xsl:for-each select="method">
+        <xsl:text>"    &lt;method name='</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>'&gt;"&#10;</xsl:text>
+          <xsl:for-each select="arg">
+            <xsl:if test="not(substring(@type,1,1)='A')"> <!-- remove the array-through-pipe arguments from the d-bus interface -->
+              <xsl:text>"      &lt;arg direction='</xsl:text>
+              <xsl:value-of select="@direction"/>
+              <xsl:text>' type='</xsl:text>
+              <xsl:value-of select="@type"/>
+              <xsl:text>' name='</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>'/&gt;"&#10;</xsl:text>
+            </xsl:if>
+          </xsl:for-each>
+        <xsl:text>"    &lt;/method&gt;"&#10;</xsl:text>
+      </xsl:for-each>
+      <!-- signals -->
+      <xsl:for-each select="signal">
+        <xsl:text>"    &lt;signal name='</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>'&gt;"&#10;</xsl:text>
+          <xsl:for-each select="arg">
+            <xsl:if test="not(substring(@type,1,1)='A')"> <!-- remove the array-through-pipe arguments from the d-bus interface -->
+              <xsl:text>"      &lt;arg name='</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>' type='</xsl:text>
+              <xsl:value-of select="@type"/>
+              <xsl:text>'/&gt;"&#10;</xsl:text>
+            </xsl:if>
+          </xsl:for-each>
+        <xsl:text>"    &lt;/signal&gt;"&#10;</xsl:text>
+      </xsl:for-each>
+      <xsl:text>"  &lt;/interface&gt;"&#10;</xsl:text>
+      <xsl:text>"&lt;/node&gt;";&#10;&#10;</xsl:text>
 
       <!-- Interface vtable -->
       <xsl:text>i</xsl:text>
@@ -238,51 +297,210 @@
         <xsl:call-template name="method-type">
           <xsl:with-param name="namespace">i<xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
         </xsl:call-template>
-        <xsl:text>&#10;{&#10;</xsl:text>
-        <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
-        <xsl:for-each select="arg[@direction='in']">
-          <xsl:text>  query_vector.push_back(</xsl:text>
-          <xsl:call-template name="variant-type"/>
-          <xsl:text>::create(</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>));&#10;</xsl:text>
-        </xsl:for-each>
-        <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;</xsl:text>
-        <xsl:text>  </xsl:text>
-        <xsl:if test="arg[@direction='out']">const Glib::VariantContainerBase&amp; response = </xsl:if>
-        <xsl:text>call_sync("</xsl:text>
-        <xsl:value-of select="@name"/>
-        <xsl:text>", query);&#10;</xsl:text>
-        <xsl:for-each select="arg[@direction='out']">
-          <xsl:text>  </xsl:text>
-          <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
-          <xsl:text>;&#10;</xsl:text>
-        </xsl:for-each>
-        <xsl:for-each select="arg[@direction='out']">
-          <xsl:text>  response.get_child(ov_</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>, </xsl:text>
-          <xsl:value-of select="position()-1"/>
-          <xsl:text>);&#10;</xsl:text>
-        </xsl:for-each>
         <xsl:choose>
-          <xsl:when test="count(arg[@direction='out']) = 1">
-            <xsl:text>  return ov_</xsl:text>
-            <xsl:value-of select="arg[@direction='out']/@name"/>
-            <xsl:text>.get();&#10;</xsl:text>
-          </xsl:when>
-          <xsl:otherwise>
+          <xsl:when test="count(arg[substring(@type,1,1)='A'])=0"> <!-- only if there are no vector-through-pipe requests ('A') -->
+            <xsl:text>&#10;{&#10;</xsl:text>
+            <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
+            <xsl:for-each select="arg[@direction='in']">
+              <xsl:text>  query_vector.push_back(</xsl:text>
+              <xsl:call-template name="variant-type"/>
+              <xsl:text>::create(</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>));&#10;</xsl:text>
+            </xsl:for-each>
+            <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;</xsl:text>
+            <xsl:text>  </xsl:text>
+            <xsl:if test="arg[@direction='out']">const Glib::VariantContainerBase&amp; response = </xsl:if>
+            <xsl:text>call_sync("</xsl:text>
+            <xsl:value-of select="@name"/>
+            <xsl:text>", query);&#10;</xsl:text>
             <xsl:for-each select="arg[@direction='out']">
               <xsl:text>  </xsl:text>
-              <xsl:value-of select="@name"/>
-              <xsl:text> = ov_</xsl:text>
-              <xsl:value-of select="@name"/>
-              <xsl:text>.get();&#10;</xsl:text>
+              <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
+              <xsl:text>;&#10;</xsl:text>
             </xsl:for-each>
+            <xsl:for-each select="arg[@direction='out']">
+              <xsl:text>  response.get_child(ov_</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>, </xsl:text>
+              <xsl:value-of select="position()-1"/>
+              <xsl:text>);&#10;</xsl:text>
+            </xsl:for-each>
+            <xsl:choose>
+              <xsl:when test="count(arg[@direction='out']) = 1">
+                <xsl:text>  return ov_</xsl:text>
+                <xsl:value-of select="arg[@direction='out']/@name"/>
+                <xsl:text>.get();&#10;</xsl:text>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:for-each select="arg[@direction='out']">
+                  <xsl:text>  </xsl:text>
+                  <xsl:value-of select="@name"/>
+                  <xsl:text> = ov_</xsl:text>
+                  <xsl:value-of select="@name"/>
+                  <xsl:text>.get();&#10;</xsl:text>
+                </xsl:for-each>
+              </xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>}&#10;&#10;</xsl:text>
+          </xsl:when>
+          <xsl:otherwise> <!-- there are vector-though-pipe requests -->
+            <!-- some boiler-plate to create a unix pipe -->
+            <xsl:text>&#10;{&#10;</xsl:text>
+            <xsl:text>  int fd[2];&#10;</xsl:text>
+            <xsl:text>  /*int r =*/ pipe(fd);&#10;</xsl:text>
+            <xsl:text>  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection = get_connection();&#10;</xsl:text>
+            <xsl:text>  connection-&gt;reference();&#10;</xsl:text>
+            <xsl:text>  Glib::RefPtr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
+            <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
+            <xsl:text>  fd_list-&gt;append(fd[0]);&#10;</xsl:text>
+            <xsl:text>  fd_list-&gt;append(fd[1]);&#10;</xsl:text>
+            <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt; out_fd_list;&#10;</xsl:text>
+            <xsl:text>  int timeout_msec = -1;&#10;</xsl:text> 
+            <xsl:text>  Gio::DBus::CallFlags flags = Gio::DBus::CALL_FLAGS_NONE;&#10;</xsl:text>
+            <xsl:text>  Glib::VariantType  reply_type;&#10;</xsl:text>
+            <xsl:text>  async_call_ready = false;&#10;</xsl:text>
+            <xsl:text>  Glib::RefPtr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>
+            <xsl:text>  Glib::RefPtr&lt;Glib::MainContext&gt; context  = mainloop-&gt;get_context();&#10;&#10;</xsl:text>
+
+            <!--  same as without vector-through-pipe request -->
+
+            <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
+            <xsl:for-each select="arg[@direction='in']">
+              <xsl:if test="not(substring(@type,1,1)='A')">
+                <xsl:text>  query_vector.push_back(</xsl:text>
+                <xsl:call-template name="variant-type"/>
+                <xsl:text>::create(</xsl:text>
+                <xsl:value-of select="@name"/>
+                <xsl:text>));&#10;</xsl:text>
+              </xsl:if>
+            </xsl:for-each>
+            <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;&#10;</xsl:text>
+
+            <xsl:text>  Glib::VariantContainerBase response;&#10;</xsl:text>
+
+            <!-- make asynchronous call -->
+            <xsl:text>  connection-&gt;call(&#10;</xsl:text>
+            <xsl:text>      get_object_path(), &#10;</xsl:text>
+            <xsl:text>      "de.gsi.saftlib.</xsl:text>
+            <xsl:value-of select="$iface"/>
+            <xsl:text>",&#10;</xsl:text> 
+            <xsl:text>      "</xsl:text>
+            <xsl:value-of select="@name"/>
+            <xsl:text>",&#10;</xsl:text>
+            <xsl:text>      query,&#10;</xsl:text>
+            <xsl:text>      sigc::bind(sigc::mem_fun(this, &amp;i</xsl:text> 
+            <xsl:value-of select="$iface"/>
+            <xsl:text>_Proxy::AsyncCallReady), &amp;response),&#10;</xsl:text>
+            <xsl:text>      cancellable,&#10;</xsl:text>
+            <xsl:text>      fd_list,&#10;</xsl:text>
+            <xsl:text>      "de.gsi.saftlib",&#10;</xsl:text>
+            <xsl:text>      timeout_msec,&#10;</xsl:text>
+            <xsl:text>      flags,&#10;</xsl:text>
+            <xsl:text>      reply_type</xsl:text>
+            <xsl:text>  );&#10;&#10;</xsl:text>  
+
+            <!-- send vector data over pipe -->
+            <xsl:for-each select="arg[@direction='in']">
+              <xsl:if test="substring(@type,1,1)='A'">
+                <xsl:text>  {&#10;</xsl:text>
+                <xsl:text>    guint32 _size_of_array_ = </xsl:text><xsl:value-of select="@name"/><xsl:text>.size(); &#10;</xsl:text>
+                <xsl:text>    write(fd[1],&amp;_size_of_array_, sizeof(guint32)); &#10;</xsl:text>
+                <xsl:text>    write(fd[1],&amp;</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text><xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
+                <xsl:text>  }&#10;</xsl:text>
+<!--                <xsl:text>  query_vector.push_back(</xsl:text>
+                <xsl:call-template name="variant-type"/>
+                <xsl:text>::create(</xsl:text>
+                <xsl:value-of select="@name"/>
+                <xsl:text>));&#10;</xsl:text> 
+-->
+              </xsl:if>
+            </xsl:for-each>
+
+            <xsl:text>&#10;</xsl:text>  
+
+            <xsl:text>  while(!context-&gt;iteration(true) || !async_call_ready){} // wait unitl the d-bus call was answered ("AsyncCallReady" was called)&#10;&#10;</xsl:text>
+
+            <xsl:for-each select="arg[@direction='out']">
+              <xsl:choose>
+                <xsl:when test="substring(@type,1,1)='A'"> <!-- handle a vector-through-pipe request -->
+                  <xsl:text>  </xsl:text>
+                  <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
+                  <xsl:text>;&#10;</xsl:text>
+                </xsl:when>
+                <xsl:when test="not(substring(@type,1,1)='A')"> <!-- handle a normal value -->
+                  <xsl:text>  </xsl:text>
+                  <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
+                  <xsl:text>;&#10;</xsl:text>
+                </xsl:when>
+              </xsl:choose>
+            </xsl:for-each>
+            <xsl:for-each select="arg[@direction='out']">
+              <xsl:choose>
+                <xsl:when test="substring(@type,1,1)='A'">  <!-- handle a vector-through-pipe request -->
+                  <xsl:text>  {&#10;</xsl:text>
+                  <xsl:text>    guint32 _size_of_array_; &#10;</xsl:text>
+                  <xsl:text>    read(fd[0],&amp;_size_of_array_, sizeof(guint32)); &#10;    </xsl:text>
+                  <xsl:text>ov_</xsl:text><xsl:value-of select="@name"/><xsl:text>.resize(_size_of_array_); &#10;</xsl:text>
+                  <xsl:text>    read(fd[0],&amp;ov_</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text>ov_<xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
+                  <xsl:text>  }&#10;</xsl:text>
+                </xsl:when>
+                <xsl:when test="not(substring(@type,1,1)='A')">  <!-- handle a normal value -->
+                  <xsl:text>  response.get_child(ov_</xsl:text>
+                  <xsl:value-of select="@name"/>
+                  <xsl:text>, </xsl:text>
+                  <xsl:value-of select="position()-1"/>
+                  <xsl:text>);&#10;</xsl:text>
+                </xsl:when>
+              </xsl:choose>
+            </xsl:for-each>
+
+            <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+              <xsl:text>  close(fd[0]);&#10;</xsl:text>
+              <xsl:text>  close(fd[1]);&#10;</xsl:text>
+            </xsl:if>
+
+            <xsl:choose>
+              <xsl:when test="count(arg[@direction='out']) = 1">
+                <xsl:text>  return ov_</xsl:text>
+                <xsl:value-of select="arg[@direction='out']/@name"/>
+                <xsl:if test="not(substring(arg[@direction='out']/@type,1,1)='A')">
+                  <xsl:text>.get()</xsl:text>
+                </xsl:if>
+                <xsl:text>;&#10;</xsl:text>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:for-each select="arg[@direction='out']">
+                  <xsl:if test="not(substring(@type,1,1)='A')">
+                    <xsl:text>  </xsl:text>
+                    <xsl:value-of select="@name"/>
+                    <xsl:text> = ov_</xsl:text>
+                    <xsl:value-of select="@name"/>
+                    <xsl:text>.get();&#10;</xsl:text>
+                  </xsl:if>
+                </xsl:for-each>
+              </xsl:otherwise>
+            </xsl:choose>
+
+
+
+            <xsl:text>}&#10;&#10;</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
-        <xsl:text>}&#10;&#10;</xsl:text>
       </xsl:for-each>
+
+      <!-- AsyncCallReady callback method implementation -->
+      <!-- <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/> -->
+      <xsl:text>void i</xsl:text><xsl:value-of select="$iface"/><xsl:text>_Proxy::</xsl:text>
+      <!-- <xsl:value-of select="@name"/> -->
+      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, Glib::VariantContainerBase *result)</xsl:text>
+      <xsl:text>&#10;</xsl:text>
+      <xsl:text>{&#10;</xsl:text>
+      <xsl:text>    auto connection = get_connection();&#10;</xsl:text>
+      <xsl:text>    connection-&gt;reference();&#10;</xsl:text>
+      <xsl:text>    *result = connection-&gt;call_finish(async_result);&#10;</xsl:text>
+      <xsl:text>    async_call_ready = true;&#10;</xsl:text>
+      <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- Boiler-plate to retrieve a property -->
       <xsl:text>void i</xsl:text>
@@ -526,9 +744,24 @@
         <xsl:value-of select="@name"/>
         <xsl:text>") {&#10;</xsl:text>
         <xsl:text>    try {&#10;</xsl:text>
+        <!-- look for a fildescriptor pair in case of vector-through-pipe request -->
+        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+          <xsl:text>      Glib::RefPtr&lt;Gio::DBus::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
+          <xsl:text>      GUnixFDList *fd_list  = g_dbus_message_get_unix_fd_list(message-&gt;gobj());&#10;</xsl:text>
+          <xsl:text>      gint fd0 = -1, fd1 = -1;&#10;</xsl:text>
+          <xsl:text>      fd0 = g_unix_fd_list_get(fd_list,0,0);&#10;</xsl:text>
+          <xsl:text>      fd1 = g_unix_fd_list_get(fd_list,1,0);&#10;</xsl:text>
+        </xsl:if>
         <xsl:for-each select="arg[@direction='in']">
           <xsl:text>      </xsl:text>
-          <xsl:call-template name="variant-type"/> 
+          <xsl:choose>
+            <xsl:when test="substring(@type,1,1)='A'">
+              <xsl:call-template name="raw-type"/>  
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:call-template name="variant-type"/> 
+            </xsl:otherwise>
+          </xsl:choose>
           <xsl:text> </xsl:text>
           <xsl:value-of select="@name"/>
           <xsl:text>;&#10;</xsl:text>
@@ -540,12 +773,27 @@
           <xsl:value-of select="@name"/>
           <xsl:text>;&#10;</xsl:text>
         </xsl:for-each>
+        <!-- get parameter values -->
+        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+        </xsl:if>
         <xsl:for-each select="arg[@direction='in']">
-          <xsl:text>      parameters.get_child(</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>, </xsl:text>
-          <xsl:value-of select="position()-1"/>
-          <xsl:text>);&#10;</xsl:text>
+          <xsl:choose>
+            <xsl:when test="substring(@type,1,1)='A'">
+              <xsl:text>      {&#10;</xsl:text>
+              <xsl:text>        guint32 _size_of_array_ = </xsl:text><xsl:value-of select="@name"/><xsl:text>.size(); &#10;</xsl:text>
+              <xsl:text>        read(fd0, &amp;_size_of_array_, sizeof(guint32)); &#10;</xsl:text>
+              <xsl:text>        </xsl:text><xsl:value-of select="@name"/><xsl:text>.resize(_size_of_array_);&#10;</xsl:text>
+              <xsl:text>        read(fd0, &amp;</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text><xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
+              <xsl:text>      }&#10;</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:text>      parameters.get_child(</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>, </xsl:text>
+              <xsl:value-of select="position()-1"/>
+              <xsl:text>);&#10;</xsl:text>
+            </xsl:otherwise>
+          </xsl:choose>
         </xsl:for-each>
         <xsl:text>      try {&#10;</xsl:text>
         <xsl:text>        </xsl:text>
@@ -561,8 +809,10 @@
           <xsl:if test="position()>1">, </xsl:if>
             <xsl:value-of select="@name"/>
             <xsl:if test="@direction='in'">
-            <xsl:text>.get()</xsl:text>
-          </xsl:if>
+              <xsl:if test="not(substring(@type,1,1)='A')">
+                <xsl:text>.get()</xsl:text>
+              </xsl:if>
+            </xsl:if>
         </xsl:for-each>
         <xsl:text>);&#10;</xsl:text>
         <xsl:text>        connection.reset();&#10;</xsl:text>
@@ -575,13 +825,30 @@
         <xsl:text>      }&#10;</xsl:text>
         <xsl:text>      std::vector&lt;Glib::VariantBase&gt; response_vector;&#10;</xsl:text>
         <xsl:for-each select="arg[@direction='out']">
-          <xsl:text>      response_vector.push_back(</xsl:text>
-          <xsl:call-template name="variant-type"/>
-          <xsl:text>::create(</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>));&#10;</xsl:text>
+          <xsl:if test="not(substring(@type,1,1)='A')">
+            <xsl:text>      response_vector.push_back(</xsl:text>
+            <xsl:call-template name="variant-type"/>
+            <xsl:text>::create(</xsl:text>
+            <xsl:value-of select="@name"/>
+            <xsl:text>));&#10;</xsl:text>
+          </xsl:if>
         </xsl:for-each>
         <xsl:text>      invocation->return_value(Glib::VariantContainerBase::create_tuple(response_vector));&#10;</xsl:text>
+
+        <xsl:for-each select="arg[@direction='out']">
+          <xsl:if test="substring(@type,1,1)='A'">
+            <xsl:text>      {&#10;</xsl:text>
+            <xsl:text>        guint32 _size_of_array_ = </xsl:text><xsl:value-of select="@name"/><xsl:text>.size(); &#10;</xsl:text>
+            <xsl:text>        write(fd1,&amp;_size_of_array_, sizeof(guint32)); &#10;</xsl:text>
+            <xsl:text>        write(fd1,&amp;</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text><xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
+            <xsl:text>      }&#10;</xsl:text>
+          </xsl:if>
+        </xsl:for-each>
+
+        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+          <xsl:text>      close(fd0);&#10;</xsl:text>
+          <xsl:text>      close(fd1);&#10;</xsl:text>
+        </xsl:if>
         <xsl:text>    } catch (const Gio::DBus::Error&amp; error) {&#10;</xsl:text>
         <xsl:text>      invocation->return_error(error);&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>

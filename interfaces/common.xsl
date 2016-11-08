@@ -85,6 +85,13 @@
       </xsl:call-template>
       <xsl:text> &gt;</xsl:text>
     </xsl:when>
+    <xsl:when test="substring($input,1,1)='A'">
+      <xsl:text>std::vector&lt; </xsl:text>
+      <xsl:call-template name="iface-type">
+        <xsl:with-param name="input" select="substring($input,2)"/>
+      </xsl:call-template>
+      <xsl:text> &gt;</xsl:text>
+    </xsl:when>
     <xsl:otherwise>
       <xsl:message terminate="yes">
         Error: Unknown type string '<xsl:value-of select="$input"/>'
@@ -110,6 +117,7 @@
     <xsl:when test="$input='v'">false</xsl:when>
     <xsl:when test="substring($input,1,1)='('">false</xsl:when>
     <xsl:when test="substring($input,1,1)='a'">false</xsl:when>
+    <xsl:when test="substring($input,1,1)='A'">false</xsl:when>
     <xsl:otherwise>
       <xsl:message terminate="yes">
         Error: Unknown type string '<xsl:value-of select="$input"/>'
