@@ -47,6 +47,7 @@ saftd_SOURCES = version.h \
 	drivers/EmbeddedCPUActionSink.cpp	drivers/EmbeddedCPUActionSink.h	\
 	drivers/MILbusActionSink.cpp	drivers/MILbusActionSink.h	\
 	drivers/FunctionGenerator.cpp	drivers/FunctionGenerator.h	\
+	drivers/MasterFunctionGenerator.cpp	drivers/MasterFunctionGenerator.h	\
 	drivers/Output.cpp		drivers/Output.h		\
 	drivers/Input.cpp		drivers/Input.h			\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\

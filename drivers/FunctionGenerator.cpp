@@ -24,7 +24,9 @@
 
 #include <assert.h>
 
-#include "RegisteredObject.h"
+//#include "RegisteredObject.h"
+#include <etherbone.h>
+#include <giomm.h>
 #include "FunctionGenerator.h"
 #include "TimingReceiver.h"
 #include "fg_regs.h"
@@ -33,7 +35,7 @@
 namespace saftlib {
 
 FunctionGenerator::FunctionGenerator(const ConstructorType& args)
- : Owned(args.objectPath),
+ : 
    dev(args.dev),
    allocation(args.allocation),
    shm(args.fgb + SHM_BASE),
@@ -130,7 +132,7 @@ void FunctionGenerator::refill()
   bool amLow = lowFill();
   
   // should we get more data from the user?
-  if (amLow && !wasLow) Refill();
+  // if (amLow && !wasLow && generateDbusSignals()) Refill();
   
   // our buffers should now agree
   assert (filled == remaining);
@@ -200,7 +202,7 @@ void FunctionGenerator::irq_handler(eb_data_t msi)
       clog << kLogErr << "FunctionGenerator: received armed while armed on index " << std::dec << index << std::endl;
     } else {
       armed = true;
-      Armed(armed);
+//      Armed(armed);
     }
   } else if (msi == IRQ_DAT_DISARMED) {
     if (running) {
@@ -209,7 +211,7 @@ void FunctionGenerator::irq_handler(eb_data_t msi)
       clog << kLogErr << "FunctionGenerator: received disarmed while not armed on index " << std::dec << index << std::endl;
     } else {
       armed = false;
-      Armed(armed);
+//      Armed(armed);
       releaseChannel();
     }
   } else if (msi == IRQ_DAT_START) {
@@ -219,10 +221,10 @@ void FunctionGenerator::irq_handler(eb_data_t msi)
       clog << kLogErr << "FunctionGenerator: received start while not armed on index " << std::dec << index << std::endl;
     } else {
       armed = false;
-      Armed(armed);
-      Started(time);
+//      Armed(armed);
+//      Started(time);
       running = true;
-      Running(true);
+//      Running(true);
     }
   } else { // stopped?
     if (armed) {
@@ -238,18 +240,18 @@ void FunctionGenerator::irq_handler(eb_data_t msi)
       }
       executedParameterCount = ReadExecutedParameterCount();
       running = false;
-      Running(running);
-      Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
+//      Running(running);
+//      Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
       releaseChannel();
     }
   }
 }
-
+/*
 Glib::RefPtr<FunctionGenerator> FunctionGenerator::create(const ConstructorType& args)
 {
   return RegisteredObject<FunctionGenerator>::create(args.objectPath, args);
 }
-
+*/
 guint64 FunctionGenerator::ParameterTuple::duration() const
 {
   static const guint64 samples[8] = { // fixed in HDL
@@ -268,7 +270,9 @@ guint64 FunctionGenerator::ParameterTuple::duration() const
   return samples[step] * sample_len[freq];
 }
 
-bool FunctionGenerator::AppendParameterSet(
+
+
+bool FunctionGenerator::appendParameterSet(
   const std::vector< gint16 >& coeff_a,
   const std::vector< gint16 >& coeff_b,
   const std::vector< gint32 >& coeff_c,
@@ -276,9 +280,8 @@ bool FunctionGenerator::AppendParameterSet(
   const std::vector< unsigned char >& freq,
   const std::vector< unsigned char >& shift_a,
   const std::vector< unsigned char >& shift_b)
+
 {
-  ownerOnly();
-  
   // confirm lengths match
   unsigned len = coeff_a.size();
   if (coeff_b.size() != len) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "coeff_b length mismatch");
@@ -312,12 +315,24 @@ bool FunctionGenerator::AppendParameterSet(
   
   if (channel != -1) refill();
   return lowFill();
+
 }
 
-void FunctionGenerator::Flush()
+bool FunctionGenerator::AppendParameterSet(
+  const std::vector< gint16 >& coeff_a,
+  const std::vector< gint16 >& coeff_b,
+  const std::vector< gint32 >& coeff_c,
+  const std::vector< unsigned char >& step,
+  const std::vector< unsigned char >& freq,
+  const std::vector< unsigned char >& shift_a,
+  const std::vector< unsigned char >& shift_b)
 {
-  ownerOnly();
-  
+  //ownerOnly();
+  return appendParameterSet(coeff_a, coeff_b, coeff_c, step, freq, shift_a, shift_b);  
+}
+
+void FunctionGenerator::flush()
+{
   if (enabled)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot Flush");
     
@@ -325,6 +340,12 @@ void FunctionGenerator::Flush()
   
   fillLevel = 0;
   fifo.clear();
+}
+
+void FunctionGenerator::Flush()
+{
+  //ownerOnly();
+ 	flush();  	  
 }
 
 guint32 FunctionGenerator::getVersion() const
@@ -414,7 +435,8 @@ void FunctionGenerator::acquireChannel()
   allocation->indexes[i] = index;
   channel = i;
   enabled = true;
-  Enabled(enabled);
+//  if (generateDbusSignals())
+//  	Enabled(enabled);
 }
 
 void FunctionGenerator::releaseChannel()
@@ -426,12 +448,11 @@ void FunctionGenerator::releaseChannel()
   channel = -1;
   filled = 0;
   enabled = false;
-  Enabled(enabled);
+//  Enabled(enabled);
 }
 
-void FunctionGenerator::Arm()
+void FunctionGenerator::arm()
 {
-  ownerOnly();
   if (enabled)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
   if (fillLevel == 0)
@@ -454,6 +475,12 @@ void FunctionGenerator::Arm()
   }
 }
 
+void FunctionGenerator::Arm()
+{
+  //ownerOnly();
+  arm();
+}
+
 bool FunctionGenerator::ResetFailed()
 {
   assert(enabled);
@@ -461,16 +488,16 @@ bool FunctionGenerator::ResetFailed()
   
   if (running) { // synthesize missing Stopped
     running = false;
-    Running(running);
-    Stopped(dev->ReadRawCurrentTime(), true, false, false);
+//    Running(running);
+//    Stopped(dev->ReadRawCurrentTime(), true, false, false);
   } else {
     // synthesize any missing Armed transitions
     if (!armed) {
       armed = true;
-      Armed(armed);
+//      Armed(armed);
     }
     armed = false;
-    Armed(armed);
+//    Armed(armed);
   }
   releaseChannel();
   return false;
@@ -487,7 +514,7 @@ void FunctionGenerator::Reset()
 
 void FunctionGenerator::Abort()
 {
-  ownerOnly();
+  //ownerOnly();
   Reset();
 }
 
@@ -499,14 +526,20 @@ void FunctionGenerator::ownerQuit()
 
 void FunctionGenerator::setStartTag(guint32 val)
 {
-  ownerOnly();
+  //ownerOnly();
   if (enabled)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot set StartTag");
   
   if (val != startTag) {
     startTag = val;
-    StartTag(startTag);
+//    StartTag(startTag);
   }
 }
+
+bool FunctionGenerator::generateDbusSignals()
+{
+	return false;
+}
+
 
 }

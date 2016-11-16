@@ -1,0 +1,85 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="MasterFunctionGenerator">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  
+  <!-- Include base interfaces -->
+  <xi:include href="Owned.xml"/>
+  
+  <!-- de.gsi.saftlib.MasterFunctionGenerator:
+      @short_description: Interface to multiple Function Generators
+	
+   -->
+  <interface name="de.gsi.saftlib.MasterFunctionGenerator">
+    
+   
+    <!-- StartTag: The SCUbus tag which causes function generation to begin.
+         If the function generator is Armed and this tag is sent to the SCUbus, 
+         then the function generator will begin generating the output waveform.
+         StartTag may only be set when the FunctionGenerator is not Enabled.
+      -->
+    <property name="StartTag" type="u" access="readwrite"/>
+
+    <!-- Arm: Enable the function generator and arm it.
+         A function generator can only be Armed if FillLevel is non-zero. 
+         An Enabled function generator can not be Armed again until it
+         either completes waveform generation or the user calls Abort.
+         Arming a function generator takes time.
+         Wait for Armed to transition to true before sending StartTag.
+      -->
+    <method name="Arm"/>
+    
+    <!-- Abort: Abort waveform generation.
+         This directs the hardware to stop waveform generation. If the
+         function generator was Armed, it is disarmed and disabled, without
+         outputting any waveform data. If the function generator is running, 
+         output is Stopped at the current value and disabled. Aborting a
+         function generator takes time, so even after a call to Abort,
+         the function generator might still be Started. However, it will
+         reach the disabled state as quickly as it can, transitioning
+         through Stopped as usual. If the Owner of a FunctionGenerator 
+         quits without running Disown, the Abort is run automatically.
+      -->
+    <method name="Abort"/>
+   
+
+    <!-- AppendParameterSet: Append parameter tuples describing waveform to generate.
+         @coeff_a:  Quadratic coefficient (a), 16-bit signed
+         @coeff_b:  Linear coefficient (b),    16-bit signed
+         @coeff_c:  Constant coefficient (c),  32-bit signed
+         @step:     Number of interpolated samples (0=250, 1=500, 2=1000, 3=2000, 4=4000, 5=8000, 6=16000, or 7=32000)
+         @freq:     Output sample frequency (0=16kHz, 1=32kHz, 2=64kHz, 3=125kHz, 4=250kHz, 5=500kHz, 6=1MHz, or 7=2MHz)
+         @shift_a:  Exponent of coeff_a, 6-bit unsigned; a = coeff_a*2^shift_a
+         @shift_b:  Exponent of coeff_b, 6-bit unsigned; b = coeff_b*2^shift_b
+         @low_fill: Fill level remains too low
+
+         This function appends the parameter vectors (which must be equal in length)
+         to the FIFO of remaining waveform to generate. Each parameter set (coefficients)
+         describes a number of output samples in the generated wave form. Parameter
+         sets are executed in order until no more remain.
+         
+         If the fill level is not high enough, this method returns true. 
+         Only once this function has returned false can you await the Refill signal.
+
+         At each step, the function generator outputs high_bits(c*2^32 + b*t + c*t*t),
+         where t ranges from 0 to numSteps-1. high_bits are the high OutputWindowSize
+         bits of the resulting 64-bit signed value.
+      -->
+    <method name="AppendParameterSet">
+      <arg direction="in" type="An" name="coeff_a"/>
+      <arg direction="in" type="An" name="coeff_b"/>
+      <arg direction="in" type="Ai" name="coeff_c"/>
+      <arg direction="in" type="Ay" name="step"/>
+      <arg direction="in" type="Ay" name="freq"/>
+      <arg direction="in" type="Ay" name="shift_a"/>
+      <arg direction="in" type="Ay" name="shift_b"/>
+      <arg direction="in" type="b" name="arm"/>
+      <arg direction="out" type="b" name="low_fill"/>
+    </method>
+    
+    <!-- Flush: Empty the parameter tuple set.
+         Flush may only be called when not Enabled.
+         Flush does not clear the ExecutedParameterCount.
+      -->
+    <method name="Flush"/>
+
+  </interface>
+</node>

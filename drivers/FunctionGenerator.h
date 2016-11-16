@@ -23,7 +23,7 @@
 #include <deque>
 
 #include "interfaces/FunctionGenerator.h"
-#include "Owned.h"
+//#include "Owned.h"
 
 namespace saftlib {
 
@@ -35,8 +35,10 @@ class FunctionGeneratorChannelAllocation : public Glib::Object
     std::vector<int> indexes;
 };
 
-class FunctionGenerator : public Owned, public iFunctionGenerator
+class FunctionGenerator : public Glib::Object //: public Owned, public iFunctionGenerator
 {
+	friend class MasterFunctionGenerator;
+	
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
@@ -52,8 +54,10 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
       unsigned int index;
       guint32 macro;
     };
+    FunctionGenerator(const ConstructorType& args);
+    ~FunctionGenerator();
     
-    static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
+    //static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
     
     // iFunctionGenerator overrides
     void Arm();
@@ -73,8 +77,6 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     void setStartTag(guint32 val);
     
   protected:
-    FunctionGenerator(const ConstructorType& args);
-    ~FunctionGenerator();
     bool lowFill() const;
     void irq_handler(eb_data_t msi);
     void refill();
@@ -83,7 +85,11 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     void Reset();
     bool ResetFailed();
     void ownerQuit();
-    
+    void flush();
+    bool appendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
+    void arm();
+		bool generateDbusSignals();
+            
     TimingReceiver* dev;
     Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
     eb_address_t shm;
