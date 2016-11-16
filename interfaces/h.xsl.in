@@ -504,6 +504,42 @@ class i<xsl:value-of select="$iface"/>_Service {
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
       const Glib::VariantBase&amp; value);
 };
+<!-- Create functions that read/write vectors from/to pipe. 
+Use Template specialization to make that work for vectors of simple types, as well as nested vectors -->
+#ifndef VECTOR_FROM_TO_PIPE_
+#define VECTOR_FROM_TO_PIPE_
+// Read/write vectors from/to pipes. Works with nested vectors due to template specialization.
+template&lt;typename T&gt;
+void write_vector_to_pipe(int fd, const T &amp; std_vector) {
+  guint32 size = std_vector.size();
+  write(fd, &amp;size, sizeof(guint32));
+  write(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back())));
+}
+template&lt;typename T&gt;
+void write_vector_to_pipe(int fd, const std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
+  guint32 size = std_vector_vector.size();
+  write(fd, &amp;size, sizeof(guint32));
+  for (guint32 i = 0; i &lt; size; ++i) {
+    write_vector_to_pipe(fd, std_vector_vector[i]);
+  }
+}
+template&lt;typename T&gt;
+void read_vector_from_pipe(int fd, T &amp; std_vector) {
+  guint32 size = std_vector.size();
+  read(fd, &amp;size, sizeof(guint32));
+  std_vector.resize(size);
+  read(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back())));      
+}
+template&lt;typename T&gt;
+void read_vector_from_pipe(int fd, std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
+  guint32 size = std_vector_vector.size();
+  read(fd, &amp;size, sizeof(guint32));
+  std_vector_vector.resize(size);
+  for (guint32 i = 0; i &lt; size; ++i) {
+    read_vector_from_pipe(fd, std_vector_vector[i]);
+  }
+}
+#endif 
 
 }
 

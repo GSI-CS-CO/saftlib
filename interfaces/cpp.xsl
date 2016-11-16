@@ -366,14 +366,12 @@
             <!--  same as without vector-through-pipe request -->
 
             <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
-            <xsl:for-each select="arg[@direction='in']">
-              <xsl:if test="not(substring(@type,1,1)='A')">
-                <xsl:text>  query_vector.push_back(</xsl:text>
-                <xsl:call-template name="variant-type"/>
-                <xsl:text>::create(</xsl:text>
-                <xsl:value-of select="@name"/>
-                <xsl:text>));&#10;</xsl:text>
-              </xsl:if>
+            <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A')]">
+              <xsl:text>  query_vector.push_back(</xsl:text>
+              <xsl:call-template name="variant-type"/>
+              <xsl:text>::create(</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>));&#10;</xsl:text>
             </xsl:for-each>
             <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;&#10;</xsl:text>
 
@@ -401,58 +399,38 @@
             <xsl:text>  );&#10;&#10;</xsl:text>  
 
             <!-- send vector data over pipe -->
-            <xsl:for-each select="arg[@direction='in']">
-              <xsl:if test="substring(@type,1,1)='A'">
-                <xsl:text>  {&#10;</xsl:text>
-                <xsl:text>    guint32 _size_of_array_ = </xsl:text><xsl:value-of select="@name"/><xsl:text>.size(); &#10;</xsl:text>
-                <xsl:text>    write(fd[1],&amp;_size_of_array_, sizeof(guint32)); &#10;</xsl:text>
-                <xsl:text>    write(fd[1],&amp;</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text><xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
-                <xsl:text>  }&#10;</xsl:text>
-<!--                <xsl:text>  query_vector.push_back(</xsl:text>
-                <xsl:call-template name="variant-type"/>
-                <xsl:text>::create(</xsl:text>
-                <xsl:value-of select="@name"/>
-                <xsl:text>));&#10;</xsl:text> 
--->
-              </xsl:if>
+            <xsl:for-each select="arg[@direction='in' and substring(@type,1,1)='A']">
+              <xsl:text>  write_vector_to_pipe(fd[1], </xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>);&#10;</xsl:text>
             </xsl:for-each>
 
             <xsl:text>&#10;</xsl:text>  
 
             <xsl:text>  while(!context-&gt;iteration(true) || !async_call_ready){} // wait unitl the d-bus call was answered ("AsyncCallReady" was called)&#10;&#10;</xsl:text>
 
-            <xsl:for-each select="arg[@direction='out']">
-              <xsl:choose>
-                <xsl:when test="substring(@type,1,1)='A'"> <!-- handle a vector-through-pipe request -->
-                  <xsl:text>  </xsl:text>
-                  <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
-                  <xsl:text>;&#10;</xsl:text>
-                </xsl:when>
-                <xsl:when test="not(substring(@type,1,1)='A')"> <!-- handle a normal value -->
-                  <xsl:text>  </xsl:text>
-                  <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
-                  <xsl:text>;&#10;</xsl:text>
-                </xsl:when>
-              </xsl:choose>
+            <xsl:for-each select="arg[@direction='out' and substring(@type,1,1)='A']">
+              <xsl:if test="count(../arg[@direction='out']) = 1">
+                <xsl:text>  </xsl:text>
+                <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
+                <xsl:text>;&#10;</xsl:text>
+              </xsl:if>
+              <xsl:text>  read_vector_from_pipe(fd[0], </xsl:text>
+              <xsl:if test="count(../arg[@direction='out']) = 1">
+                <xsl:text>ov_</xsl:text>
+              </xsl:if>
+              <xsl:value-of select="@name"/>
+              <xsl:text>);&#10;</xsl:text>                  
             </xsl:for-each>
-            <xsl:for-each select="arg[@direction='out']">
-              <xsl:choose>
-                <xsl:when test="substring(@type,1,1)='A'">  <!-- handle a vector-through-pipe request -->
-                  <xsl:text>  {&#10;</xsl:text>
-                  <xsl:text>    guint32 _size_of_array_; &#10;</xsl:text>
-                  <xsl:text>    read(fd[0],&amp;_size_of_array_, sizeof(guint32)); &#10;    </xsl:text>
-                  <xsl:text>ov_</xsl:text><xsl:value-of select="@name"/><xsl:text>.resize(_size_of_array_); &#10;</xsl:text>
-                  <xsl:text>    read(fd[0],&amp;ov_</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text>ov_<xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
-                  <xsl:text>  }&#10;</xsl:text>
-                </xsl:when>
-                <xsl:when test="not(substring(@type,1,1)='A')">  <!-- handle a normal value -->
-                  <xsl:text>  response.get_child(ov_</xsl:text>
-                  <xsl:value-of select="@name"/>
-                  <xsl:text>, </xsl:text>
-                  <xsl:value-of select="position()-1"/>
-                  <xsl:text>);&#10;</xsl:text>
-                </xsl:when>
-              </xsl:choose>
+            <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A')]">
+              <xsl:text>  </xsl:text>
+              <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
+              <xsl:text>;&#10;</xsl:text>
+              <xsl:text>  response.get_child(ov_</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>, </xsl:text>
+              <xsl:value-of select="position()-1"/>
+              <xsl:text>);&#10;</xsl:text>
             </xsl:for-each>
 
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
@@ -470,19 +448,15 @@
                 <xsl:text>;&#10;</xsl:text>
               </xsl:when>
               <xsl:otherwise>
-                <xsl:for-each select="arg[@direction='out']">
-                  <xsl:if test="not(substring(@type,1,1)='A')">
-                    <xsl:text>  </xsl:text>
-                    <xsl:value-of select="@name"/>
-                    <xsl:text> = ov_</xsl:text>
-                    <xsl:value-of select="@name"/>
-                    <xsl:text>.get();&#10;</xsl:text>
-                  </xsl:if>
+                <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A')]">
+                  <xsl:text>  </xsl:text>
+                  <xsl:value-of select="@name"/>
+                  <xsl:text> = ov_</xsl:text>
+                  <xsl:value-of select="@name"/>
+                  <xsl:text>.get();&#10;</xsl:text>
                 </xsl:for-each>
               </xsl:otherwise>
             </xsl:choose>
-
-
 
             <xsl:text>}&#10;&#10;</xsl:text>
           </xsl:otherwise>
@@ -776,24 +750,17 @@
         <!-- get parameter values -->
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
         </xsl:if>
-        <xsl:for-each select="arg[@direction='in']">
-          <xsl:choose>
-            <xsl:when test="substring(@type,1,1)='A'">
-              <xsl:text>      {&#10;</xsl:text>
-              <xsl:text>        guint32 _size_of_array_ = </xsl:text><xsl:value-of select="@name"/><xsl:text>.size(); &#10;</xsl:text>
-              <xsl:text>        read(fd0, &amp;_size_of_array_, sizeof(guint32)); &#10;</xsl:text>
-              <xsl:text>        </xsl:text><xsl:value-of select="@name"/><xsl:text>.resize(_size_of_array_);&#10;</xsl:text>
-              <xsl:text>        read(fd0, &amp;</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text><xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
-              <xsl:text>      }&#10;</xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:text>      parameters.get_child(</xsl:text>
-              <xsl:value-of select="@name"/>
-              <xsl:text>, </xsl:text>
-              <xsl:value-of select="position()-1"/>
-              <xsl:text>);&#10;</xsl:text>
-            </xsl:otherwise>
-          </xsl:choose>
+        <xsl:for-each select="arg[@direction='in' and substring(@type,1,1)='A']">
+          <xsl:text>      read_vector_from_pipe(fd0, </xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>);&#10;</xsl:text>
+        </xsl:for-each>
+        <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A')]">
+          <xsl:text>      parameters.get_child(</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>, </xsl:text>
+          <xsl:value-of select="position()-1"/>
+          <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>      try {&#10;</xsl:text>
         <xsl:text>        </xsl:text>
@@ -837,11 +804,9 @@
 
         <xsl:for-each select="arg[@direction='out']">
           <xsl:if test="substring(@type,1,1)='A'">
-            <xsl:text>      {&#10;</xsl:text>
-            <xsl:text>        guint32 _size_of_array_ = </xsl:text><xsl:value-of select="@name"/><xsl:text>.size(); &#10;</xsl:text>
-            <xsl:text>        write(fd1,&amp;_size_of_array_, sizeof(guint32)); &#10;</xsl:text>
-            <xsl:text>        write(fd1,&amp;</xsl:text><xsl:value-of select="@name"/><xsl:text>[0], _size_of_array_*sizeof(decltype(</xsl:text><xsl:value-of select="@name"/><xsl:text>.back()))); &#10;</xsl:text>
-            <xsl:text>      }&#10;</xsl:text>
+            <xsl:text>      write_vector_to_pipe(fd1, </xsl:text>
+            <xsl:value-of select="@name"/>
+            <xsl:text>);&#10;</xsl:text>
           </xsl:if>
         </xsl:for-each>
 
