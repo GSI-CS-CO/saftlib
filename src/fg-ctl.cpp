@@ -31,53 +31,7 @@
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SCUbusActionSink.h"
 #include "interfaces/SCUbusCondition.h"
-#include "interfaces/FunctionGenerator.h"
-#include "interfaces/MasterFunctionGenerator.h"  
-
-
-/////////////////
-#include <iostream>
-#include <iomanip>
-#include <sys/times.h>
-#include <time.h>
-#include <stdio.h>
-#include <vector>
-
-
-timespec diff(timespec start, timespec end)
-{
-	timespec temp;
-	if ((end.tv_nsec-start.tv_nsec)<0) {
-		temp.tv_sec = end.tv_sec-start.tv_sec-1;
-		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
-	} else {
-		temp.tv_sec = end.tv_sec-start.tv_sec;
-		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
-	}
-	return temp;
-}
-
-timespec time_start, time_end;
-
-// Clock options:
-#define CLOCK_ID CLOCK_MONOTONIC
-//#define CLOCK_ID CLOCK_PROCESS_CPUTIME_ID
-//#define CLOCK_ID CLOCK_REALTIME
-	
-void timer_start()
-{
-	clock_gettime(CLOCK_ID, &time_start);
-}
-void timer_stop()
-{
-	clock_gettime(CLOCK_ID, &time_end);
-	//std::cout<<"Took: " <<diff(time_start,time_end).tv_sec<<"." << std::setfill('0') << std::setw(9) << diff(time_start,time_end).tv_nsec<<std::endl;
-	std::cout<<diff(time_start,time_end).tv_sec<<"." << std::setfill('0') << std::setw(9) << diff(time_start,time_end).tv_nsec<<std::endl;
-}
-
-/////////////////
-
-
+#include "interfaces/FunctionGenerator.h" 
 
 using namespace saftlib;
 using namespace std;
@@ -91,8 +45,6 @@ struct ParamSet {
   std::vector< unsigned char > freq;
   std::vector< unsigned char > shift_a;
   std::vector< unsigned char > shift_b;
-  int fred;
-
 };
 
 // Hand off the entire datafile to SAFTd
@@ -130,10 +82,12 @@ static const char *format_time(guint64 time)
 
 static void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
 {
-  std::cout << "Armed: " << armed << std::endl;
   if (armed) {
-    std::cout << "Generating StartTag" << std::endl;
+  
+    std::cout << "Generating StartTag in 2 seconds" << std::endl;
+    sleep(2);
     scu->InjectTag(tag);
+    std::cout << "Generating StartTag" << std::endl;
   }
 }
 
@@ -265,8 +219,6 @@ int main(int argc, char** argv)
       lb += ACCU_OFFSET;
       s = 5; // 500kHz
       
-
-
       params.coeff_a.push_back(a);
       params.coeff_b.push_back(b);
       params.coeff_c.push_back(c);
@@ -274,7 +226,6 @@ int main(int argc, char** argv)
       params.freq.push_back(s);
       params.shift_a.push_back(la);
       params.shift_b.push_back(lb);
-
     }
     
     if (num != EOF || !feof(stdin)) {
@@ -329,9 +280,10 @@ int main(int argc, char** argv)
     // Get a list of function generators on the receiver
     map<Glib::ustring, Glib::ustring> fgs = receiver->getInterfaces()["FunctionGenerator"];
     
-/*    
     // Find the target FunctionGenerator
-    Glib::RefPtr<FunctionGenerator_Proxy> gen;
+//    Glib::RefPtr<FunctionGenerator_Proxy> gen;
+    
+/*    
     if (fg.empty()) {
       if (fgs.empty()) {
         std::cerr << "No function generators found" << std::endl;
@@ -350,6 +302,21 @@ int main(int argc, char** argv)
         gen = FunctionGenerator_Proxy::create(fgs[fg]);
       }
     }
+*/
+
+// test multiple fgs using the same start tag
+// use the last fg's signals
+
+
+std::vector<std::string> names = {"fg-2-0","fg-2-1"};
+//    std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0","fg-6-1","fg-8-0","fg-8-1","fg-9-0","fg-9-1"};
+//		std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0","fg-6-1"};
+//		std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0"};
+		std::vector< Glib::RefPtr<FunctionGenerator_Proxy> > gens;
+		for (auto name : names)
+		{	
+			gens.push_back(FunctionGenerator_Proxy::create(fgs[name]));
+		}
     
     // List available function generators
     if (error) {
@@ -358,113 +325,82 @@ int main(int argc, char** argv)
         std::cerr << "  " << i->first << std::endl;
       return 1;
     }
- */   
-    map<Glib::ustring, Glib::ustring> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
-    std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
-    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
     
     // Ok! Find all the devices is now out of the way. Let's get some work done.
     
     // Claim the function generator for ourselves
-    //gen->Own();
-    master_gen->Own();
+  for (auto gen : gens)
+    gen->Own();
     
     // Stop whatever the function generator was doing
-    //gen->Abort();
- 		std::cout << "Abort via Master" << std::endl;
-    master_gen->Abort();
+  for (auto gen : gens)    
+    gen->Abort();
     
     // Wait until not Enabled
-    //gen->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
-    //if (gen->getEnabled()) loop->run();
+    gens.back()->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
+    if (gens.back()->getEnabled()) loop->run();
     
     // Clear any old waveform data
- 		//std::cout << "Flush via FG" << std::endl;
-    //gen->Flush();
-		std::cout << "Flush via Master" << std::endl;
-		master_gen->Flush();
- 		std::cout << "Flushed" << std::endl;
+  for (auto gen : gens)    
+    gen->Flush();
+    
     // Watch for events on the function generator
-    //gen->Started.connect(sigc::ptr_fun(&on_start));
-    //gen->Stopped.connect(sigc::ptr_fun(&on_stop));
+    gens.back()->Started.connect(sigc::ptr_fun(&on_start));
+    gens.back()->Stopped.connect(sigc::ptr_fun(&on_stop));
     
     // Load up the parameters, possibly repeating until full
-    //while (fill(gen, params) && repeat) { }
-
- 		std::cout << "Loading via Master " << params.coeff_a.size() << std::endl;
-    timer_start();
-    master_gen->AppendParameterSet(
-    params.coeff_a,
-    params.coeff_b,
-    params.coeff_c,
-    params.step,
-    params.freq,
-    params.shift_a,
-    params.shift_b,
-    false);
-		timer_stop();
-
-// 20 repeats - 660MB saftd
-
-for (int repeats=0;repeats<20;repeats++)		
-{    
-// 		std::cout << "Double and Load" << params.coeff_a.size() << std::endl;
- 		std::cout << params.coeff_a.size() << "\t";
- 		int size=params.coeff_a.size();
- 		for (int i=0;i<size;++i)
- 		{
- 			params.coeff_a.push_back(params.coeff_a[0]);
- 			params.coeff_b.push_back(params.coeff_b[0]);
- 			params.coeff_c.push_back(params.coeff_c[0]);
- 			params.step.push_back(params.step[0]);
- 			params.freq.push_back(params.freq[0]);
- 			params.shift_a.push_back(params.shift_a[0]);
- 			params.shift_b.push_back(params.shift_b[0]); 			 			 			 			
- 		}
-    timer_start();
-    master_gen->AppendParameterSet(
-    params.coeff_a,
-    params.coeff_b,
-    params.coeff_c,
-    params.step,
-    params.freq,
-    params.shift_a,
-    params.shift_b,
-    false);
-		timer_stop();
-}    
-    master_gen->Flush();    
-    
+  for (auto gen : gens)
+  {    
+    while (fill(gen, params) && repeat) { }
+  }  
     // Repeat the waveform forever?
-    /*
-    if (repeat) {
+//    if (repeat) {
       // listen to refill indicator
-      gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
-    }
-    */
+//      gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
+//    }
+    
     // FYI, how much data is this?
-    //std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
+ for (auto gen : gens)
+    std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
     
     // Watch for a timing event? => generate tag on event
-    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
+//    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
 
     // Trigger the function generator ourselves?
-//    if (generate) gen->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
+    if (generate)
+    { 
+    	gens.back()->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
+    }
+    
     
     // Ready to execute!
-    //gen->setStartTag(tag);
-    master_gen->setStartTag(tag);
- 		std::cout << "Tag set" << std::endl;
-    master_gen->Arm();
-		std::cout << "Armed" << std::endl;
-    // Wait until not enabled / function generator is done
-    // ... if we don't care to keep repeating the waveform, we could quit immediately;
-    //     SAFTd has been properly configured to run autonomously at this point.
-    // ... of course, then the user doesn't get the final error status message either
-    loop->run();
-    
-    // Print summary
-//    std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
+			for (auto gen : gens)
+			{    
+				gen->setStartTag(tag);
+				gen->Arm();
+	  		std::cout << "Arming " << std::endl; 
+			}
+			
+  		std::cout << "All Armed" << std::endl; 
+  		
+			if (generate)
+			{
+				// Wait until not enabled / function generator is done
+				// ... if we don't care to keep repeating the waveform, we could quit immediately;
+				//     SAFTd has been properly configured to run autonomously at this point.
+				// ... of course, then the user doesn't get the final error status message either
+				loop->run();
+				
+				// Print summary
+				for (auto gen : gens)
+					std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
+			}
+			else
+			{
+		  		std::cout << "Not generating Starttag, waiting forever" << std::endl; 
+					loop->run();
+			}
+
 
   } catch (const Glib::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -472,3 +408,4 @@ for (int repeats=0;repeats<20;repeats++)
   
   return 0;
 }
+

@@ -17,47 +17,40 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+ 
+ 
+ 
+/*
+	d-bus interface for FunctionGenerator
+	uses FunctionGeneratorImpl
+*/
+
+ 
 #ifndef FUNCTION_GENERATOR_H
 #define FUNCTION_GENERATOR_H
 
 #include <deque>
 
 #include "interfaces/FunctionGenerator.h"
-//#include "Owned.h"
+#include "FunctionGeneratorImpl.h"
+#include "Owned.h"
 
 namespace saftlib {
 
 class TimingReceiver;
 
-class FunctionGeneratorChannelAllocation : public Glib::Object
+class FunctionGenerator : public Owned, public iFunctionGenerator
 {
-  public:
-    std::vector<int> indexes;
-};
-
-class FunctionGenerator : public Glib::Object //: public Owned, public iFunctionGenerator
-{
-	friend class MasterFunctionGenerator;
 	
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
       Glib::ustring objectPath;
       TimingReceiver* dev;
-      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
-      eb_address_t fgb;
-      eb_address_t swi;
-      etherbone::sdb_msi_device base;
-      sdb_device mbx;
-      unsigned num_channels;
-      unsigned buffer_size;
-      unsigned int index;
-      guint32 macro;
+ 			std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
     };
-    FunctionGenerator(const ConstructorType& args);
-    ~FunctionGenerator();
     
-    //static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
+    static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
     
     // iFunctionGenerator overrides
     void Arm();
@@ -77,20 +70,21 @@ class FunctionGenerator : public Glib::Object //: public Owned, public iFunction
     void setStartTag(guint32 val);
     
   protected:
-    bool lowFill() const;
-    void irq_handler(eb_data_t msi);
-    void refill();
-    void releaseChannel();
-    void acquireChannel();
+    FunctionGenerator(const ConstructorType& args);
+    ~FunctionGenerator();
     void Reset();
-    bool ResetFailed();
     void ownerQuit();
-    void flush();
-    bool appendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
-    void arm();
-		bool generateDbusSignals();
             
     TimingReceiver* dev;
+    
+    void on_fg_running(bool);
+    void on_fg_armed(bool);
+    void on_fg_enabled(bool);
+    void on_fg_refill();
+    void on_fg_started(guint64);
+    void on_fg_stopped(guint64, bool, bool, bool);
+
+    /*
     Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
     eb_address_t shm;
     eb_address_t swi;
@@ -113,7 +107,8 @@ class FunctionGenerator : public Glib::Object //: public Owned, public iFunction
     sigc::connection resetTimeout;
     guint32 startTag;
     unsigned executedParameterCount;
-    
+    */
+   /* 
     struct ParameterTuple {
       gint16 coeff_a;
       gint16 coeff_b;
@@ -130,8 +125,11 @@ class FunctionGenerator : public Glib::Object //: public Owned, public iFunction
     
     // These 3 variables must be kept in sync:
     guint64 fillLevel;
-    unsigned filled; // # of fifo entries currently on LM32
+    unsigned filled; // # of fifo entries currently on LM32    
     std::deque<ParameterTuple> fifo;
+    */
+   	std::shared_ptr<FunctionGeneratorImpl> fgImpl;      
+    
 };
 
 }
