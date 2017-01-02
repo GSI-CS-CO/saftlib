@@ -673,7 +673,8 @@
       <xsl:text>bool i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::isActive() const&#10;{&#10;</xsl:text>
-      <xsl:text>  return connection;&#10;</xsl:text>
+      <xsl:text>  // implicit conversion from Glib::RefPtr to bool is not possible in later versions (&gt;=2.49.1) of Glibmm&#10;</xsl:text>
+      <xsl:text>  return static_cast&lt;bool&gt;(connection);&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- getSender method -->
