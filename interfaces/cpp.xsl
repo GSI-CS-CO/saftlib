@@ -351,10 +351,10 @@
             <xsl:text>  Glib::RefPtr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
             <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)"> <!-- in this case we only have 'h' and don't need to open a pipe -->
-              <xsl:text>  int fd[2];&#10;</xsl:text>
-              <xsl:text>  /*int r =*/ pipe(fd);&#10;</xsl:text>
-              <xsl:text>  fd_list-&gt;append(fd[0]);&#10;</xsl:text>
-              <xsl:text>  fd_list-&gt;append(fd[1]);&#10;</xsl:text>
+              <xsl:text>  gint _vector_pipe_fd[2];&#10;</xsl:text>
+              <xsl:text>  /*int r =*/ pipe(_vector_pipe_fd);&#10;</xsl:text>
+              <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[0]);&#10;</xsl:text>
+              <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[1]);&#10;</xsl:text>
             </xsl:if>
             <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt; out_fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:text>  int timeout_msec = -1;&#10;</xsl:text> 
@@ -410,7 +410,7 @@
 
             <!-- send vector data over pipe -->
             <xsl:for-each select="arg[@direction='in' and substring(@type,1,1)='A']">
-              <xsl:text>  write_vector_to_pipe(fd[1], </xsl:text>
+              <xsl:text>  write_vector_to_pipe(_vector_pipe_fd[1], </xsl:text>
               <xsl:value-of select="@name"/>
               <xsl:text>);&#10;</xsl:text>
             </xsl:for-each>
@@ -425,7 +425,7 @@
                 <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
                 <xsl:text>;&#10;</xsl:text>
               </xsl:if>
-              <xsl:text>  read_vector_from_pipe(fd[0], </xsl:text>
+              <xsl:text>  read_vector_from_pipe(_vector_pipe_fd[0], </xsl:text>
               <xsl:if test="count(../arg[@direction='out']) = 1">
                 <xsl:text>ov_</xsl:text>
               </xsl:if>
@@ -450,8 +450,8 @@
             </xsl:if>
 
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-              <xsl:text>  close(fd[0]);&#10;</xsl:text>
-              <xsl:text>  close(fd[1]);&#10;</xsl:text>
+              <xsl:text>  close(_vector_pipe_fd[0]);&#10;</xsl:text>
+              <xsl:text>  close(_vector_pipe_fd[1]);&#10;</xsl:text>
             </xsl:if>
 
             <xsl:choose>
