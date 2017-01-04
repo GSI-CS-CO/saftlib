@@ -254,7 +254,7 @@
         <xsl:value-of select="@name"/>
         <xsl:text>'&gt;"&#10;</xsl:text>
           <xsl:for-each select="arg">
-            <xsl:if test="not(substring(@type,1,1)='A')"> <!-- remove the array-through-pipe arguments from the d-bus interface -->
+            <xsl:if test="not(substring(@type,1,1)='A' or @type='h')"> <!-- remove the array-through-pipe arguments from the d-bus interface -->
               <xsl:text>"      &lt;arg direction='</xsl:text>
               <xsl:value-of select="@direction"/>
               <xsl:text>' type='</xsl:text>
@@ -298,7 +298,7 @@
           <xsl:with-param name="namespace">i<xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
         </xsl:call-template>
         <xsl:choose>
-          <xsl:when test="count(arg[substring(@type,1,1)='A'])=0"> <!-- only if there are no vector-through-pipe requests ('A') -->
+          <xsl:when test="count(arg[substring(@type,1,1)='A' or @type='h'])=0"> <!-- only if there are no vector-through-pipe requests ('A') -->
             <xsl:text>&#10;{&#10;</xsl:text>
             <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
             <xsl:for-each select="arg[@direction='in']">
@@ -344,18 +344,19 @@
             </xsl:choose>
             <xsl:text>}&#10;&#10;</xsl:text>
           </xsl:when>
-          <xsl:otherwise> <!-- there are vector-though-pipe requests -->
-            <!-- some boiler-plate to create a unix pipe -->
+          <xsl:otherwise> <!-- there are 'A' or 'h' types -->
             <xsl:text>&#10;{&#10;</xsl:text>
-            <xsl:text>  int fd[2];&#10;</xsl:text>
-            <xsl:text>  /*int r =*/ pipe(fd);&#10;</xsl:text>
             <xsl:text>  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection = get_connection();&#10;</xsl:text>
             <xsl:text>  connection-&gt;reference();&#10;</xsl:text>
             <xsl:text>  Glib::RefPtr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
             <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
-            <xsl:text>  fd_list-&gt;append(fd[0]);&#10;</xsl:text>
-            <xsl:text>  fd_list-&gt;append(fd[1]);&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt; out_fd_list;&#10;</xsl:text>
+            <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)"> <!-- in this case we only have 'h' and don't need to open a pipe -->
+              <xsl:text>  int fd[2];&#10;</xsl:text>
+              <xsl:text>  /*int r =*/ pipe(fd);&#10;</xsl:text>
+              <xsl:text>  fd_list-&gt;append(fd[0]);&#10;</xsl:text>
+              <xsl:text>  fd_list-&gt;append(fd[1]);&#10;</xsl:text>
+            </xsl:if>
+            <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt; out_fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:text>  int timeout_msec = -1;&#10;</xsl:text> 
             <xsl:text>  Gio::DBus::CallFlags flags = Gio::DBus::CALL_FLAGS_NONE;&#10;</xsl:text>
             <xsl:text>  Glib::VariantType  reply_type;&#10;</xsl:text>
@@ -366,12 +367,21 @@
             <!--  same as without vector-through-pipe request -->
 
             <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
-            <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A')]">
-              <xsl:text>  query_vector.push_back(</xsl:text>
-              <xsl:call-template name="variant-type"/>
-              <xsl:text>::create(</xsl:text>
-              <xsl:value-of select="@name"/>
-              <xsl:text>));&#10;</xsl:text>
+            <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A')]"> <!-- for all non 'A' types -->
+              <xsl:choose>
+                <xsl:when test="@type='h'"> <!-- case of a file descriptor -->
+                  <xsl:text>  fd_list-&gt;append(</xsl:text>
+                  <xsl:value-of select="@name"/>
+                  <xsl:text>);&#10;</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>             <!-- all other argument types -->
+                  <xsl:text>  query_vector.push_back(</xsl:text>
+                  <xsl:call-template name="variant-type"/>
+                  <xsl:text>::create(</xsl:text>
+                  <xsl:value-of select="@name"/>
+                  <xsl:text>));&#10;</xsl:text>
+                </xsl:otherwise>
+              </xsl:choose>
             </xsl:for-each>
             <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;&#10;</xsl:text>
 
@@ -422,7 +432,7 @@
               <xsl:value-of select="@name"/>
               <xsl:text>);&#10;</xsl:text>                  
             </xsl:for-each>
-            <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A')]">
+            <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A' or @type='h')]">
               <xsl:text>  </xsl:text>
               <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
               <xsl:text>;&#10;</xsl:text>
@@ -432,6 +442,12 @@
               <xsl:value-of select="position()-1"/>
               <xsl:text>);&#10;</xsl:text>
             </xsl:for-each>
+            <xsl:if test="not(count(arg[@type='h' and @direction='out'])=0)">
+              <!-- do not support output file descriptors for now -->
+              <xsl:message terminate="yes">
+                Error: File descriptors are only supported as direction="in" arguments
+              </xsl:message>
+            </xsl:if>
 
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
               <xsl:text>  close(fd[0]);&#10;</xsl:text>
@@ -448,7 +464,7 @@
                 <xsl:text>;&#10;</xsl:text>
               </xsl:when>
               <xsl:otherwise>
-                <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A')]">
+                <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A' or @type='h')]">
                   <xsl:text>  </xsl:text>
                   <xsl:value-of select="@name"/>
                   <xsl:text> = ov_</xsl:text>
@@ -719,18 +735,20 @@
         <xsl:value-of select="@name"/>
         <xsl:text>") {&#10;</xsl:text>
         <xsl:text>    try {&#10;</xsl:text>
-        <!-- look for a fildescriptor pair in case of vector-through-pipe request -->
-        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+        <!-- take a fildescriptor pair from fd_list in case there is any type 'A' present -->
+        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0) or not(count(arg[@type='h'])=0)">
           <xsl:text>      Glib::RefPtr&lt;Gio::DBus::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
           <xsl:text>      GUnixFDList *fd_list  = g_dbus_message_get_unix_fd_list(message-&gt;gobj());&#10;</xsl:text>
-          <xsl:text>      gint fd0 = -1, fd1 = -1;&#10;</xsl:text>
-          <xsl:text>      fd0 = g_unix_fd_list_get(fd_list,0,0);&#10;</xsl:text>
-          <xsl:text>      fd1 = g_unix_fd_list_get(fd_list,1,0);&#10;</xsl:text>
+          <xsl:text>      int fd_index = 0;&#10;</xsl:text>
+          <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+            <xsl:text>      gint _vector_pipe_fd0 = g_unix_fd_list_get(fd_list, fd_index++, 0);&#10;</xsl:text>
+            <xsl:text>      gint _vector_pipe_fd1 = g_unix_fd_list_get(fd_list, fd_index++, 0);&#10;</xsl:text>
+          </xsl:if>
         </xsl:if>
         <xsl:for-each select="arg[@direction='in']">
           <xsl:text>      </xsl:text>
           <xsl:choose>
-            <xsl:when test="substring(@type,1,1)='A'">
+            <xsl:when test="substring(@type,1,1)='A' or @type='h'">
               <xsl:call-template name="raw-type"/>  
             </xsl:when>
             <xsl:otherwise>
@@ -739,6 +757,9 @@
           </xsl:choose>
           <xsl:text> </xsl:text>
           <xsl:value-of select="@name"/>
+          <xsl:if test="@type='h'">
+            <xsl:text> = g_unix_fd_list_get(fd_list, fd_index++, 0)</xsl:text>
+          </xsl:if>          
           <xsl:text>;&#10;</xsl:text>
         </xsl:for-each>
         <xsl:for-each select="arg[@direction='out']">
@@ -752,11 +773,11 @@
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
         </xsl:if>
         <xsl:for-each select="arg[@direction='in' and substring(@type,1,1)='A']">
-          <xsl:text>      read_vector_from_pipe(fd0, </xsl:text>
+          <xsl:text>      read_vector_from_pipe(_vector_pipe_fd0, </xsl:text>
           <xsl:value-of select="@name"/>
           <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
-        <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A')]">
+        <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A' or @type='h')]">
           <xsl:text>      parameters.get_child(</xsl:text>
           <xsl:value-of select="@name"/>
           <xsl:text>, </xsl:text>
@@ -777,7 +798,7 @@
           <xsl:if test="position()>1">, </xsl:if>
             <xsl:value-of select="@name"/>
             <xsl:if test="@direction='in'">
-              <xsl:if test="not(substring(@type,1,1)='A')">
+              <xsl:if test="not(substring(@type,1,1)='A' or @type='h')">
                 <xsl:text>.get()</xsl:text>
               </xsl:if>
             </xsl:if>
@@ -793,7 +814,7 @@
         <xsl:text>      }&#10;</xsl:text>
         <xsl:text>      std::vector&lt;Glib::VariantBase&gt; response_vector;&#10;</xsl:text>
         <xsl:for-each select="arg[@direction='out']">
-          <xsl:if test="not(substring(@type,1,1)='A')">
+          <xsl:if test="not(substring(@type,1,1)='A' or @type='h')">
             <xsl:text>      response_vector.push_back(</xsl:text>
             <xsl:call-template name="variant-type"/>
             <xsl:text>::create(</xsl:text>
@@ -805,15 +826,15 @@
 
         <xsl:for-each select="arg[@direction='out']">
           <xsl:if test="substring(@type,1,1)='A'">
-            <xsl:text>      write_vector_to_pipe(fd1, </xsl:text>
+            <xsl:text>      write_vector_to_pipe(_vector_pipe_fd1, </xsl:text>
             <xsl:value-of select="@name"/>
             <xsl:text>);&#10;</xsl:text>
           </xsl:if>
         </xsl:for-each>
 
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-          <xsl:text>      close(fd0);&#10;</xsl:text>
-          <xsl:text>      close(fd1);&#10;</xsl:text>
+          <xsl:text>      close(_vector_pipe_fd0);&#10;</xsl:text>
+          <xsl:text>      close(_vector_pipe_fd1);&#10;</xsl:text>
         </xsl:if>
         <xsl:text>    } catch (const Gio::DBus::Error&amp; error) {&#10;</xsl:text>
         <xsl:text>      invocation->return_error(error);&#10;</xsl:text>
