@@ -302,6 +302,11 @@
 
       <xsl:text>    // Methods&#10;</xsl:text>
       <xsl:for-each select="method">
+        <xsl:if test="not(count(arg[@type='h'])=0)">
+          <xsl:text>    // ATTENTION! The following method has one (or more) file descriptors as paramter.&#10;</xsl:text>
+          <xsl:text>    // These file descriptors are not managed by Saftlib. The driver class has to&#10;</xsl:text>
+          <xsl:text>    // do that (e.g. make sure to close it at the end of the object lifetime).&#10;</xsl:text>
+        </xsl:if>
         <xsl:text>    virtual </xsl:text>
         <xsl:call-template name="method-type"/>
         <xsl:text> = 0;&#10;</xsl:text>
