@@ -56,6 +56,8 @@ class InoutImpl : public Glib::Object
     bool getSpecialPurposeOutAvailable() const;
     bool getBuTiSMultiplexer() const;
     void setBuTiSMultiplexer(bool val);
+    bool getPPSMultiplexer() const;
+    void setPPSMultiplexer(bool val);
     bool StartClock(double high_phase, double low_phase, guint64 phase_offset);
     bool StopClock();
     Glib::ustring getLogicLevelOut() const;
@@ -78,6 +80,7 @@ class InoutImpl : public Glib::Object
     sigc::signal< void, bool > OutputEnable;
     sigc::signal< void, bool > SpecialPurposeOut;
     sigc::signal< void, bool > BuTiSMultiplexer;
+    sigc::signal< void, bool > PPSMultiplexer;    
     sigc::signal< void, bool > InputTermination;
     sigc::signal< void, bool > SpecialPurposeIn;
     
