@@ -329,6 +329,10 @@ int main (int argc, char** argv)
           /* Wait for the next pulse */
           while(wrNext>receiver->ReadCurrentTime())
           { 
+            /* Sleep 100ms to prevent too much Etherbone traffic */
+            usleep(100000);
+            
+            /* Print time */
             if (verbose_mode) { std::cout << "Time (wait):   0x" << std::hex << receiver->ReadCurrentTime() << 
                                 std::dec << " -> " << formatDate(receiver->ReadCurrentTime()) << std::endl; }
           }
