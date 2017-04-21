@@ -302,6 +302,11 @@
 
       <xsl:text>    // Methods&#10;</xsl:text>
       <xsl:for-each select="method">
+        <xsl:if test="not(count(arg[@type='h'])=0)">
+          <xsl:text>    // ATTENTION! The following method has one (or more) file descriptors as paramter.&#10;</xsl:text>
+          <xsl:text>    // These file descriptors are not managed by Saftlib. The driver class has to&#10;</xsl:text>
+          <xsl:text>    // do that (e.g. make sure to close it at the end of the object lifetime).&#10;</xsl:text>
+        </xsl:if>
         <xsl:text>    virtual </xsl:text>
         <xsl:call-template name="method-type"/>
         <xsl:text> = 0;&#10;</xsl:text>
@@ -406,6 +411,15 @@
       <xsl:text>    i</xsl:text>
       <xsl:value-of select="$iface"/>_Proxy&amp; operator=(const i<xsl:value-of select="$iface"/>_Proxy&amp;);&#10;<xsl:text/>
 
+
+      <!-- Create AsyncCallReady function declaration -->
+      <xsl:text>void </xsl:text>
+      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, Glib::VariantContainerBase *result);&#10;&#10;</xsl:text>
+
+      <xsl:text>    // notification if async DBus call is completed&#10;</xsl:text>
+      <xsl:text>    bool async_call_ready;&#10;</xsl:text>
+
+
       <!-- Implementation -->
   protected:
     void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties);
@@ -495,6 +509,42 @@ class i<xsl:value-of select="$iface"/>_Service {
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
       const Glib::VariantBase&amp; value);
 };
+<!-- Create functions that read/write vectors from/to pipe. 
+Use Template specialization to make that work for vectors of simple types, as well as nested vectors -->
+#ifndef VECTOR_FROM_TO_PIPE_
+#define VECTOR_FROM_TO_PIPE_
+// Read/write vectors from/to pipes. Works with nested vectors due to template specialization.
+template&lt;typename T&gt;
+void write_vector_to_pipe(int fd, const T &amp; std_vector) {
+  guint32 size = std_vector.size();
+  write(fd, &amp;size, sizeof(guint32));
+  write(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back())));
+}
+template&lt;typename T&gt;
+void write_vector_to_pipe(int fd, const std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
+  guint32 size = std_vector_vector.size();
+  write(fd, &amp;size, sizeof(guint32));
+  for (guint32 i = 0; i &lt; size; ++i) {
+    write_vector_to_pipe(fd, std_vector_vector[i]);
+  }
+}
+template&lt;typename T&gt;
+void read_vector_from_pipe(int fd, T &amp; std_vector) {
+  guint32 size = std_vector.size();
+  read(fd, &amp;size, sizeof(guint32));
+  std_vector.resize(size);
+  read(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back())));      
+}
+template&lt;typename T&gt;
+void read_vector_from_pipe(int fd, std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
+  guint32 size = std_vector_vector.size();
+  read(fd, &amp;size, sizeof(guint32));
+  std_vector_vector.resize(size);
+  for (guint32 i = 0; i &lt; size; ++i) {
+    read_vector_from_pipe(fd, std_vector_vector[i]);
+  }
+}
+#endif 
 
 }
 

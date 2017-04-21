@@ -58,7 +58,7 @@
     <xsl:when test="$input='x'">gint64</xsl:when>
     <xsl:when test="$input='t'">guint64</xsl:when>
     <xsl:when test="$input='d'">double</xsl:when>
-    <xsl:when test="$input='h'">int</xsl:when>
+    <xsl:when test="$input='h'">gint</xsl:when>
     <xsl:when test="$input='s'">Glib::ustring</xsl:when>
     <xsl:when test="$input='v'">Glib::VariantBase</xsl:when>
     <xsl:when test="substring($input,1,1)='(' and substring($input,string-length($input),1)=')'">
@@ -79,6 +79,13 @@
       <xsl:text> &gt;</xsl:text>
     </xsl:when>
     <xsl:when test="substring($input,1,1)='a'">
+      <xsl:text>std::vector&lt; </xsl:text>
+      <xsl:call-template name="iface-type">
+        <xsl:with-param name="input" select="substring($input,2)"/>
+      </xsl:call-template>
+      <xsl:text> &gt;</xsl:text>
+    </xsl:when>
+    <xsl:when test="substring($input,1,1)='A'">
       <xsl:text>std::vector&lt; </xsl:text>
       <xsl:call-template name="iface-type">
         <xsl:with-param name="input" select="substring($input,2)"/>
@@ -110,6 +117,7 @@
     <xsl:when test="$input='v'">false</xsl:when>
     <xsl:when test="substring($input,1,1)='('">false</xsl:when>
     <xsl:when test="substring($input,1,1)='a'">false</xsl:when>
+    <xsl:when test="substring($input,1,1)='A'">false</xsl:when>
     <xsl:otherwise>
       <xsl:message terminate="yes">
         Error: Unknown type string '<xsl:value-of select="$input"/>'
