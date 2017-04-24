@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
