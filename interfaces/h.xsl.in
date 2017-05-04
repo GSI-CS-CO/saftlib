@@ -278,6 +278,7 @@
 
       <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;</xsl:text>
       <xsl:text>#include &lt;giomm/dbuserror.h&gt;&#10;&#10;</xsl:text>
+      <xsl:text>#include &lt;giomm.h&gt;&#10;&#10;</xsl:text>
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
       <!-- Forward definitions -->
@@ -414,7 +415,7 @@
 
       <!-- Create AsyncCallReady function declaration -->
       <xsl:text>    void </xsl:text>
-      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, bool *async_call_ready, Glib::VariantContainerBase *result);&#10;&#10;</xsl:text>
+      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, Glib::RefPtr&lt;Glib::MainLoop&gt; mainloop, Glib::VariantContainerBase *result);&#10;&#10;</xsl:text>
 
       <xsl:text>    // notification if async DBus call is completed&#10;</xsl:text>
 

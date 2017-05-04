@@ -360,9 +360,7 @@
             <xsl:text>  int timeout_msec = -1;&#10;</xsl:text> 
             <xsl:text>  Gio::DBus::CallFlags flags = Gio::DBus::CALL_FLAGS_NONE;&#10;</xsl:text>
             <xsl:text>  Glib::VariantType  reply_type;&#10;</xsl:text>
-            <xsl:text>  bool async_call_ready = false;&#10;</xsl:text>
             <xsl:text>  Glib::RefPtr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;Glib::MainContext&gt; context  = mainloop-&gt;get_context();&#10;&#10;</xsl:text>
 
             <!--  same as without vector-through-pipe request -->
 
@@ -399,7 +397,7 @@
             <xsl:text>      query,&#10;</xsl:text>
             <xsl:text>      sigc::bind(sigc::bind(sigc::mem_fun(this, &amp;i</xsl:text> 
             <xsl:value-of select="$iface"/>
-            <xsl:text>_Proxy::AsyncCallReady), &amp;response), &amp;async_call_ready),&#10;</xsl:text>
+            <xsl:text>_Proxy::AsyncCallReady), &amp;response), mainloop),&#10;</xsl:text>
             <xsl:text>      cancellable,&#10;</xsl:text>
             <xsl:text>      fd_list,&#10;</xsl:text>
             <xsl:text>      "de.gsi.saftlib",&#10;</xsl:text>
@@ -417,7 +415,7 @@
 
             <xsl:text>&#10;</xsl:text>  
 
-            <xsl:text>  while(!context-&gt;iteration(true) || !async_call_ready){} // wait unitl the d-bus call was answered ("AsyncCallReady" was called)&#10;&#10;</xsl:text>
+            <xsl:text>  mainloop-&gt;run(); // wait unitl the d-bus call was answered ("AsyncCallReady" was called)&#10;&#10;</xsl:text>
 
             <xsl:for-each select="arg[@direction='out' and substring(@type,1,1)='A']">
               <xsl:if test="count(../arg[@direction='out']) = 1">
@@ -483,13 +481,13 @@
       <!-- <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/> -->
       <xsl:text>void i</xsl:text><xsl:value-of select="$iface"/><xsl:text>_Proxy::</xsl:text>
       <!-- <xsl:value-of select="@name"/> -->
-      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, bool *async_call_ready, Glib::VariantContainerBase *result)</xsl:text>
+      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, Glib::RefPtr&lt;Glib::MainLoop&gt; mainloop, Glib::VariantContainerBase *result)</xsl:text>
       <xsl:text>&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
       <xsl:text>    auto connection = get_connection();&#10;</xsl:text>
       <xsl:text>    connection-&gt;reference();&#10;</xsl:text>
       <xsl:text>    *result = connection-&gt;call_finish(async_result);&#10;</xsl:text>
-      <xsl:text>    *async_call_ready = true;&#10;</xsl:text>
+      <xsl:text>    mainloop-&gt;quit();&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- Boiler-plate to retrieve a property -->
