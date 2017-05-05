@@ -207,14 +207,9 @@ int main(int argc, char** argv)
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
     ParamSet params;
     gint32 a, la, b, lb, c, n, s, num;
-    while((num = fscanf(stdin, "%d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n)) == 6) {
+    while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
       // turn off warning
       if (params.coeff_a.empty()) alarm(0);
-      
-      #define ACCU_OFFSET 40 /* don't ask */
-      la += ACCU_OFFSET;
-      lb += ACCU_OFFSET;
-      s = 5; // 500kHz
       
       params.coeff_a.push_back(a);
       params.coeff_b.push_back(b);
