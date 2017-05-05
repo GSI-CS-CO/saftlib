@@ -117,7 +117,7 @@ static void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
 
 static void help(Glib::RefPtr<SAFTd_Proxy> saftd)
 {
-  std::cerr << "Usage: fg-ctl [OPTION] < wavedata.txt\n";
+  std::cerr << "Usage: saft-fg-ctl [OPTION] < wavedata.txt\n";
   std::cerr << "\n";
   std::cerr << "  -d <device>   saftlib timing receiver device name\n";
   std::cerr << "  -f <fg-name>  name of function generator on device\n";

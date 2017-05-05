@@ -2,7 +2,7 @@
 saftd
 client
 saft-ctl
-fg-ctl
+saft-fg-ctl
 saft-io-ctl
 saft-pps-gen
 saft-ecpu-ctl
