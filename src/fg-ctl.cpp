@@ -83,11 +83,8 @@ static const char *format_time(guint64 time)
 static void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
 {
   if (armed) {
-  
-    std::cout << "Generating StartTag in 2 seconds" << std::endl;
-    sleep(2);
-    scu->InjectTag(tag);
     std::cout << "Generating StartTag" << std::endl;
+    scu->InjectTag(tag);
   }
 }
 
@@ -281,9 +278,7 @@ int main(int argc, char** argv)
     map<Glib::ustring, Glib::ustring> fgs = receiver->getInterfaces()["FunctionGenerator"];
     
     // Find the target FunctionGenerator
-//    Glib::RefPtr<FunctionGenerator_Proxy> gen;
-    
-/*    
+    Glib::RefPtr<FunctionGenerator_Proxy> gen;
     if (fg.empty()) {
       if (fgs.empty()) {
         std::cerr << "No function generators found" << std::endl;
@@ -302,21 +297,6 @@ int main(int argc, char** argv)
         gen = FunctionGenerator_Proxy::create(fgs[fg]);
       }
     }
-*/
-
-// test multiple fgs using the same start tag
-// use the last fg's signals
-
-
-std::vector<std::string> names = {"fg-2-0","fg-2-1"};
-//    std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0","fg-6-1","fg-8-0","fg-8-1","fg-9-0","fg-9-1"};
-//		std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0","fg-6-1"};
-//		std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0"};
-		std::vector< Glib::RefPtr<FunctionGenerator_Proxy> > gens;
-		for (auto name : names)
-		{	
-			gens.push_back(FunctionGenerator_Proxy::create(fgs[name]));
-		}
     
     // List available function generators
     if (error) {
@@ -329,78 +309,52 @@ std::vector<std::string> names = {"fg-2-0","fg-2-1"};
     // Ok! Find all the devices is now out of the way. Let's get some work done.
     
     // Claim the function generator for ourselves
-  for (auto gen : gens)
     gen->Own();
     
     // Stop whatever the function generator was doing
-  for (auto gen : gens)    
     gen->Abort();
     
     // Wait until not Enabled
-    gens.back()->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
-    if (gens.back()->getEnabled()) loop->run();
+    gen->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
+    if (gen->getEnabled()) loop->run();
     
     // Clear any old waveform data
-  for (auto gen : gens)    
     gen->Flush();
     
     // Watch for events on the function generator
-    gens.back()->Started.connect(sigc::ptr_fun(&on_start));
-    gens.back()->Stopped.connect(sigc::ptr_fun(&on_stop));
+    gen->Started.connect(sigc::ptr_fun(&on_start));
+    gen->Stopped.connect(sigc::ptr_fun(&on_stop));
     
     // Load up the parameters, possibly repeating until full
-  for (auto gen : gens)
-  {    
     while (fill(gen, params) && repeat) { }
-  }  
+    
     // Repeat the waveform forever?
-//    if (repeat) {
+    if (repeat) {
       // listen to refill indicator
-//      gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
-//    }
+      gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
+    }
     
     // FYI, how much data is this?
- for (auto gen : gens)
     std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
     
     // Watch for a timing event? => generate tag on event
-//    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
+    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
 
     // Trigger the function generator ourselves?
-    if (generate)
-    { 
-    	gens.back()->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
-    }
-    
+    if (generate) gen->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
     
     // Ready to execute!
-			for (auto gen : gens)
-			{    
-				gen->setStartTag(tag);
-				gen->Arm();
-	  		std::cout << "Arming " << std::endl; 
-			}
-			
-  		std::cout << "All Armed" << std::endl; 
-  		
-			if (generate)
-			{
-				// Wait until not enabled / function generator is done
-				// ... if we don't care to keep repeating the waveform, we could quit immediately;
-				//     SAFTd has been properly configured to run autonomously at this point.
-				// ... of course, then the user doesn't get the final error status message either
-				loop->run();
-				
-				// Print summary
-				for (auto gen : gens)
-					std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
-			}
-			else
-			{
-		  		std::cout << "Not generating Starttag, waiting forever" << std::endl; 
-					loop->run();
-			}
-
+    gen->setStartTag(tag);
+    gen->Arm();
+    
+    // Wait until not enabled / function generator is done
+    // ... if we don't care to keep repeating the waveform, we could quit immediately;
+    //     SAFTd has been properly configured to run autonomously at this point.
+    // ... of course, then the user doesn't get the final error status message either
+    loop->run();
+    
+    // Print summary
+    std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
 
   } catch (const Glib::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -408,4 +362,3 @@ std::vector<std::string> names = {"fg-2-0","fg-2-1"};
   
   return 0;
 }
-
