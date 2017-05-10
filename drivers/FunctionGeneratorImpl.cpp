@@ -36,7 +36,7 @@
 
 // edits for use with master function generator:
 // no longer a dbus object
-// dbus-signals to proxy changed to sigc-signals to master
+// dbus-signals to proxy changed to sigc-signals to fg/masterfg
 
 
 namespace saftlib {
@@ -188,7 +188,17 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
     clog << kLogErr << "FunctionGenerator: received unsolicited IRQ on index " << std::dec << index << std::endl;
     return;
   }
-  
+  /*
+ switch(msi)
+ {
+   case IRQ_DAT_REFILL : clog << "FG MSI REFILL ch " << channel << " index " << index << std::endl; break;
+   case IRQ_DAT_START : clog << "FG MSI START ch " << channel << " index " << index << std::endl; break;
+   case IRQ_DAT_STOP_EMPTY : clog << "FG MSI STOP_EMPTY ch " << channel << " index " << index << std::endl; break;
+   case IRQ_DAT_STOP_NOT_EMPTY : clog << "FG MSI STOP_NOT_EMPTY ch " << channel << " index " << index << std::endl; break;
+   case IRQ_DAT_ARMED : clog << "FG MSI ARMED ch " << channel << " index " << index << std::endl; break;
+   case IRQ_DAT_DISARMED : clog << "FG MSI DISARMED ch " << channel << " index " << index << std::endl; break;
+   default : clog << "FG Unexpected MSI " << msi << " ch " << channel << " index " << index << std::endl;
+ } */
   // microcontroller cannot break this invariant; we always set channel and enabled together
   assert (enabled);
   
@@ -538,5 +548,12 @@ void FunctionGeneratorImpl::setStartTag(guint32 val)
   }
 }
 
+Glib::ustring FunctionGeneratorImpl::GetName()
+{
+    std::ostringstream ss;
+    ss << "fg-" << (int)getSCUbusSlot() << "-" << (int)getDeviceNumber();
+    ss << "(" << index << ")";
+    return ss.str();	
+}	
 
 }

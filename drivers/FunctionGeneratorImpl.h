@@ -74,6 +74,8 @@ class FunctionGeneratorImpl : public Glib::Object
     guint32 ReadExecutedParameterCount();
     void setStartTag(guint32 val);
 
+    Glib::ustring GetName();
+
     sigc::signal<void, bool> signal_enabled;
     sigc::signal<void, bool> signal_running;
     sigc::signal<void, bool> signal_armed;

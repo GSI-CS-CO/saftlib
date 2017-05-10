@@ -6,19 +6,21 @@
   
   <!-- de.gsi.saftlib.MasterFunctionGenerator:
       @short_description: Interface to multiple Function Generators
-	
+      Operation of function generators is aggregated to reduce
+      the number of d-bus operations required.
    -->
   <interface name="de.gsi.saftlib.MasterFunctionGenerator">
     
    
     <!-- StartTag: The SCUbus tag which causes function generation to begin.
+         All function generators under control of the Master use the same tag.
          If the function generator is Armed and this tag is sent to the SCUbus, 
          then the function generator will begin generating the output waveform.
          StartTag may only be set when the FunctionGenerator is not Enabled.
       -->
     <property name="StartTag" type="u" access="readwrite"/>
 
-    <!-- Arm: Enable the function generator and arm it.
+    <!-- Arm: Enable all function generators that have data and arm them.
          A function generator can only be Armed if FillLevel is non-zero. 
          An Enabled function generator can not be Armed again until it
          either completes waveform generation or the user calls Abort.
@@ -27,7 +29,7 @@
       -->
     <method name="Arm"/>
     
-    <!-- Abort: Abort waveform generation.
+    <!-- Abort: Abort waveform generation in all function generators.
          This directs the hardware to stop waveform generation. If the
          function generator was Armed, it is disarmed and disabled, without
          outputting any waveform data. If the function generator is running, 
@@ -81,22 +83,14 @@
     </method>
         
     
-    <!-- Flush: Empty the parameter tuple set.
+    <!-- Flush: Empty the parameter tuple set of all function generators.
          Flush may only be called when not Enabled.
          Flush does not clear the ExecutedParameterCount.
       -->
     <method name="Flush"/>
 
-    <!-- Master: Enabled if any slave FG is enabled
-    	Enabled: Hardware is allowed to generate an output waveform.
-         If a function generator is disabled, its output is constant.
-         Enabled is set to true using Arm and transitions to false
-         either upon completion or after a call to Abort.
-      -->
-    <property name="Enabled" type="b" access="read"/>
 
-
-    <!-- Stopped:                   Function generation has ended.
+    <!-- Stopped:                   Function generation has ended as expected.
          @time:                     Time when function generation ended in nanoseconds since 1970
          @abort:                    stopped due to a call to Abort
          @hardwareMacroUnderflow:   A fatal error, indicating the SCUbus is congested
@@ -121,12 +115,19 @@
          was successful or not, the parameter FIFO is cleared, Enabled is false, and this signal emitted.
       -->
     <signal name="Stopped">
+      <arg name="name"                     type="s"/>
       <arg name="time"                     type="t"/>
       <arg name="aborted"                  type="b"/>
       <arg name="hardwareMacroUnderflow"   type="b"/>
       <arg name="microControllerUnderflow" type="b"/>
     </signal>
 
+    <!-- Interface TBD
+    -->
+
+    <method name="SetActiveFunctionGenerators">
+      <arg direction="in" type="as" name="names"/>
+    </method>
 
     <!-- ReadExecutedParameterCounts: Number of parameter tuples executed by each function generator
          @result:                     Number tuples executed by hardware.
@@ -151,12 +152,27 @@
     </method>
 
     <!-- ReadNames: Read the name for each FG.
-         @names:       Nane of each FG.
+         @names:       Name of each FG.
       -->
     <method name="ReadNames">
       <arg direction="out" type="as" name="names"/>
     </method>
 
+
+    <!-- ReadArmed: Read the armed state of each FG.
+         @armed_states:       State of each FG.
+      -->
+    
+    <method name="ReadArmed">
+      <arg direction="out" type="ab" name="armed_states"/>
+    </method>
+
+    <!-- ReadEnabled: Read the enabled state of each FG.
+         @enabled_states:       State of each FG.
+      -->
+    <method name="ReadEnabled">
+      <arg direction="out" type="ab" name="enabled_states"/>
+    </method>
 
 
   </interface>

@@ -46,21 +46,20 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
    dev(args.dev),
    functionGenerators(args.functionGenerators)      
 {
-		for (auto fg : functionGenerators)
-		{
-			fg->signal_running.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_running));
-			fg->signal_armed.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_armed));
-			fg->signal_enabled.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_enabled));
-			fg->signal_started.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_started));
-			fg->signal_stopped.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_stopped));
-
-		}
-		enabled=getEnabled();
+  for (auto fg : functionGenerators)
+  {
+    fg->signal_running.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_running));
+    fg->signal_armed.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_armed));
+    fg->signal_enabled.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_enabled));
+    fg->signal_started.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_started));
+    fg->signal_stopped.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_stopped),fg)); 
+  }
+  enabled=getEnabled();
 }
 
 MasterFunctionGenerator::~MasterFunctionGenerator()
 {
-
+      
 }
 
 // aggregate sigc signals from impl and forward via dbus where necessary
@@ -77,8 +76,9 @@ void MasterFunctionGenerator::on_fg_armed(bool b)
 
 void MasterFunctionGenerator::on_fg_enabled(bool b)
 {
-	// enabled true if any fg is running
-	bool new_enabled = getEnabled();
+	// optional: signal when all/some/no fgs are enabled
+/*
+  bool new_enabled = getEnabled();
 	
 	// signal only on change
 	if (new_enabled != enabled)
@@ -86,16 +86,21 @@ void MasterFunctionGenerator::on_fg_enabled(bool b)
 		enabled = new_enabled;
 		Enabled(enabled);
 	}
+*/
 }
 
 void MasterFunctionGenerator::on_fg_started(guint64 time)
 {
 
 }
-
-void MasterFunctionGenerator::on_fg_stopped(guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
+// Forward Stopped signal 
+void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
-
+  // do not generate d-bus signal for successful stop
+//  if (abort || hardwareUnderflow || microcontrollerUnderflow)
+  {
+    Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
+  }
 }
 
 Glib::RefPtr<MasterFunctionGenerator> MasterFunctionGenerator::create(const ConstructorType& args)
@@ -177,7 +182,6 @@ bool MasterFunctionGenerator::AppendParameterSets(
 // todo: check if data has been sent
 
 
-
 	
 	if (arm)
 	{
@@ -190,9 +194,6 @@ bool MasterFunctionGenerator::AppendParameterSets(
 		if (arm && coeff_a[i].size() > 0)
 		{
 			functionGenerators[i]->arm();
-			sleep(1); // ?? crashing with > 7 fgs simultaneously? seems to fix. No it crashed again.
-			// allow interrupts through? Still crashes.
-			context->iteration(true);
 		}		
 	}
 
@@ -216,6 +217,7 @@ bool MasterFunctionGenerator::AppendParameterSets(
 		}
 		
 		// allow arm interrupts through
+    // TODO: check this in light of file descriptor multithreading problem
 		context->iteration(false);
 	} while (all_armed == false) ;
 //		Stopped(1000,false,false,false);	
@@ -346,6 +348,18 @@ void MasterFunctionGenerator::setStartTag(guint32 val)
     StartTag(startTag);
   }
 }
+// at least 1 FG is enabled
+bool MasterFunctionGenerator::getArmed() const
+{
+bool all_armed=true;
+	for (auto fg : functionGenerators)
+	{
+		all_armed &= fg->armed;	
+	}
+
+	return all_armed;
+}
+
 
 // at least 1 FG is enabled
 bool MasterFunctionGenerator::getEnabled() const
@@ -384,13 +398,37 @@ std::vector<Glib::ustring> MasterFunctionGenerator::ReadNames()
 	std::vector<Glib::ustring> names;
 	for (auto fg : functionGenerators)
 	{
-    std::ostringstream ss;
-    ss << "fg-" << (int)fg->getSCUbusSlot() << "-" << (int)fg->getDeviceNumber();
-    ss << "(" << fg->index << ")";
-    Glib::ustring name = ss.str();	
-		names.push_back(name);
+		names.push_back(fg->GetName());
 	}
 	return names;
 }
+
+
+std::vector<bool> MasterFunctionGenerator::ReadArmed()
+{
+	std::vector<bool> armed_states;
+	for (auto fg : functionGenerators)
+	{
+	  armed_states.push_back(fg->getArmed());
+	}
+	return armed_states;
+}
+
+std::vector<bool> MasterFunctionGenerator::ReadEnabled()
+{
+	std::vector<bool> enabled_states;
+	for (auto fg : functionGenerators)
+	{
+	  enabled_states.push_back(fg->getEnabled());
+	}
+	return enabled_states;
+}
+
+
+void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<Glib::ustring>& names)
+{
+
+}
+
 
 }

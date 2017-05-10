@@ -53,10 +53,14 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void Flush();
     void setStartTag(guint32 val);
     guint32 getStartTag() const;
+    bool getArmed() const;
     bool getEnabled() const;
     
     std::vector<Glib::ustring> ReadNames();
-    
+    std::vector<bool> ReadArmed();
+    std::vector<bool> ReadEnabled();
+    void SetActiveFunctionGenerators(const std::vector<Glib::ustring>&);
+
   protected:
     MasterFunctionGenerator(const ConstructorType& args);
     ~MasterFunctionGenerator();
@@ -68,11 +72,15 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void on_fg_armed(bool);
     void on_fg_enabled(bool);
     void on_fg_started(guint64);
-    void on_fg_stopped(guint64, bool, bool, bool);
+//    void on_fg_stopped(guint64, bool, bool, bool);
     
+    void on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow);
+
+
     TimingReceiver* dev;
 //  	std::vector<Glib::RefPtr<FunctionGeneratorImpl>> functionGenerators;      
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;      
+  	std::vector<bool> functionGeneratorSelected;      
     guint32 startTag;
     bool enabled;
     bool armed;
