@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -117,6 +118,7 @@ static void pps_help (void)
   std::cout << "  -s        : Turn output enable on and input termination off" << std::endl;
   std::cout << "  -e        : External event mode (ECA configuration only)" << std::endl;
   std::cout << "  -t <tag>  : Set up a new condition on the SCU bus (uint32 tag injection)" << std::endl;
+  std::cout << "  -i        : Inject PPS event(s) without creating conditions" << std::endl;
   std::cout << "  -h        : Print help (this message)" << std::endl;
   std::cout << "  -v        : Switch to verbose mode" << std::endl;
   std::cout << std::endl;
@@ -140,6 +142,7 @@ int main (int argc, char** argv)
   int  total_ios        = 0;     /* Number of configured IOs */
   bool setup_io         = false; /* Setup OE and TERM? */
   bool external_trigger = false; /* Self-triggered or trigged by an external event */
+  bool just_inject      = false; /* Just inject or also create condition(s) */
   bool show_help        = false; /* Print help => -h */
   bool first_pps        = true;  /* Is this the first PPS output? */
   bool wrLocked         = false; /* Is the timing receiver locked? */
@@ -152,12 +155,13 @@ int main (int argc, char** argv)
   program = argv[0]; 
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, ":sevht:")) != -1)
+  while ((opt = getopt(argc, argv, ":seivht:")) != -1)
   {
     switch (opt)
     {
       case 's': { setup_io         = true; break; }
       case 'e': { external_trigger = true; break; }
+      case 'i': { just_inject      = true; break; }
       case 'v': { verbose_mode     = true; break; }
       case 'h': { show_help        = true; break; }
       case 't': { setup_scu_bus    = true; scu_bus_tag = strtoul(optarg, NULL, 0); break; }
@@ -228,51 +232,54 @@ int main (int argc, char** argv)
       Glib::RefPtr<Input_Proxy> input_proxy;
       
       /* Check if IO exists output */
-      for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+      if (!just_inject)
       {
-        output_proxy = Output_Proxy::create(it->second);
-        if (verbose_mode) { std::cout << "Info: Found " << it->first << std::endl; }
-        total_ios++;
-        
-        /* Set output enable if available */
-        if (setup_io)
+        for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
         {
-          if (output_proxy->getOutputEnableAvailable())
-          { 
-            if (verbose_mode) { std::cout << "Turning output enable on... " << std::endl; }
-            output_proxy->setOutputEnable(true);
-          }
-        }
-        
-        /* Turn off input termination if available */
-        io_partner = output_proxy->getInput();
-        if (io_partner != "") 
-        {
-          if (verbose_mode) { std::cout << "Found Partner Path: " << io_partner << std::endl; }
+          output_proxy = Output_Proxy::create(it->second);
+          if (verbose_mode) { std::cout << "Info: Found " << it->first << std::endl; }
+          total_ios++;
+          
+          /* Set output enable if available */
           if (setup_io)
           {
-            input_proxy = Input_Proxy::create(io_partner);
-            if (input_proxy->getInputTerminationAvailable())
+            if (output_proxy->getOutputEnableAvailable())
             { 
-              if (verbose_mode) { std::cout << "Turning input termination off... " << std::endl; }
-              input_proxy->setInputTermination(false);
+              if (verbose_mode) { std::cout << "Turning output enable on... " << std::endl; }
+              output_proxy->setOutputEnable(true);
             }
           }
+          
+          /* Turn off input termination if available */
+          io_partner = output_proxy->getInput();
+          if (io_partner != "") 
+          {
+            if (verbose_mode) { std::cout << "Found Partner Path: " << io_partner << std::endl; }
+            if (setup_io)
+            {
+              input_proxy = Input_Proxy::create(io_partner);
+              if (input_proxy->getInputTerminationAvailable())
+              { 
+                if (verbose_mode) { std::cout << "Turning input termination off... " << std::endl; }
+                input_proxy->setInputTermination(false);
+              }
+            }
+          }
+          
+          /* Setup conditions */
+          Glib::RefPtr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
+          Glib::RefPtr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
+          
+          /* Accept all kinds of events */
+          condition_high->setAcceptConflict(true);
+          condition_high->setAcceptDelayed(true);
+          condition_high->setAcceptEarly(true);
+          condition_high->setAcceptLate(true);
+          condition_low->setAcceptConflict(true);
+          condition_low->setAcceptDelayed(true);
+          condition_low->setAcceptEarly(true);
+          condition_low->setAcceptLate(true);
         }
-        
-        /* Setup conditions */
-        Glib::RefPtr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
-        Glib::RefPtr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
-        
-        /* Accept all kinds of events */
-        condition_high->setAcceptConflict(true);
-        condition_high->setAcceptDelayed(true);
-        condition_high->setAcceptEarly(true);
-        condition_high->setAcceptLate(true);
-        condition_low->setAcceptConflict(true);
-        condition_low->setAcceptDelayed(true);
-        condition_low->setAcceptEarly(true);
-        condition_low->setAcceptLate(true);
       }
       
       /* Output some information */
@@ -323,6 +330,10 @@ int main (int argc, char** argv)
           /* Wait for the next pulse */
           while(wrNext>receiver->ReadCurrentTime())
           { 
+            /* Sleep 100ms to prevent too much Etherbone traffic */
+            usleep(100000);
+            
+            /* Print time */
             if (verbose_mode) { std::cout << "Time (wait):   0x" << std::hex << receiver->ReadCurrentTime() << 
                                 std::dec << " -> " << formatDate(receiver->ReadCurrentTime()) << std::endl; }
           }

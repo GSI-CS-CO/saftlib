@@ -70,6 +70,9 @@ static void help(void) {
   std::cout << "  The file must contain exactly one message per line. Each line must have the following format:" << std::endl;
   std::cout << "  '<eventID> <param> <time>', example: '0x1111000000000000 0x0 123000000', time [ns] and decimal." << std::endl;
   std::cout << std::endl;
+  std::cout << "This tool provides a primitve Data Master for local operations in the FEC. Timing messages are injected" << std::endl;
+  std::cout << "at the input of the ECA. This allows for scheduling actions in hard real-time down to ns. This tool might" << std::endl;
+  std::cout << "be useful when a central Data Master is not available, for rapid prototyping or tests." << std::endl << std::endl;
 
   std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cout << "Licensed under the GPL v3." << std::endl;

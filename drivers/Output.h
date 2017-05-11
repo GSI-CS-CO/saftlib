@@ -57,6 +57,7 @@ class Output : public ActionSink, public iOutputActionSink
     bool getOutputEnable() const;
     bool getSpecialPurposeOut() const;
     bool getBuTiSMultiplexer() const;
+    bool getPPSMultiplexer() const;
     bool getOutputEnableAvailable() const;
     bool getSpecialPurposeOutAvailable() const;
     Glib::ustring getLogicLevelOut() const;
@@ -67,6 +68,7 @@ class Output : public ActionSink, public iOutputActionSink
     void setOutputEnable(bool val);
     void setSpecialPurposeOut(bool val);
     void setBuTiSMultiplexer(bool val);
+    void setPPSMultiplexer(bool val);
     
     // Property signals
     //   sigc::signal< void, bool > OutputEnable;

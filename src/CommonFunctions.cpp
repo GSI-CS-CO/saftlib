@@ -46,7 +46,7 @@ std::string tr_formatActionEvent(guint64 id, guint32 pmode)
     full << " GID: "   << fmt << std::setw(4) << ((id >> 48) & 0xfff);
     full << " EVTNO: " << fmt << std::setw(4) << ((id >> 36) & 0xfff);
     full << " SID: "   << fmt << std::setw(4) << ((id >> 24) & 0xfff);
-    full << " BPID: "  << fmt << std::setw(5) << ((id >> 14) & 0x3fff);
+    full << " BPID: "  << fmt << std::setw(5) << ((id >> 10) & 0x3fff);
     full << " RES: "   << fmt << std::setw(4) << (id & 0x3ff);
   }
   else full << " EvtID: " << fmt << std::setw(width) << std::setfill('0') << id;

@@ -79,6 +79,11 @@ bool Output::getBuTiSMultiplexer() const
   return impl->getBuTiSMultiplexer();
 }
 
+bool Output::getPPSMultiplexer() const
+{
+  return impl->getPPSMultiplexer();
+}
+
 bool Output::getOutputEnableAvailable() const
 {
   return impl->getOutputEnableAvailable();
@@ -132,6 +137,12 @@ void Output::setBuTiSMultiplexer(bool val)
 {
   ownerOnly();
   return impl->setBuTiSMultiplexer(val);
+}
+
+void Output::setPPSMultiplexer(bool val)
+{
+  ownerOnly();
+  return impl->setPPSMultiplexer(val);
 }
 
 }

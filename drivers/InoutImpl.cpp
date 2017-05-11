@@ -653,6 +653,85 @@ void InoutImpl::setBuTiSMultiplexer(bool val)
   BuTiSMultiplexer(val);
 }
 
+bool InoutImpl::getPPSMultiplexer() const
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  eb_data_t readPPSMultiplexer;
+  etherbone::Cycle cycle;
+  
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(tr->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eGPIO_PPS_Mux_Set_low,  EB_DATA32, &readPPSMultiplexer); }
+    else                      { cycle.read(io_control_addr+eGPIO_PPS_Mux_Set_high, EB_DATA32, &readPPSMultiplexer); }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (access_position == 0) { cycle.read(io_control_addr+eLVDS_PPS_Mux_Set_low,  EB_DATA32, &readPPSMultiplexer); }
+    else                      { cycle.read(io_control_addr+eLVDS_PPS_Mux_Set_high, EB_DATA32, &readPPSMultiplexer); }
+  }
+  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  cycle.close();
+        
+  readPPSMultiplexer = readPPSMultiplexer&(1<<internal_id);
+  readPPSMultiplexer = readPPSMultiplexer>>internal_id;
+  
+  if (readPPSMultiplexer) { return true; }
+  else                      { return false; }
+}
+
+void InoutImpl::setPPSMultiplexer(bool val)
+{
+  unsigned access_position = 0;
+  unsigned internal_id = io_index;
+  etherbone::Cycle cycle;
+    
+  /* Calculate access position (32bit access to 64bit register)*/
+  if (io_index>31)
+  { 
+    internal_id = io_index-31; 
+    access_position = 1;
+  }
+  
+  cycle.open(tr->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_PPS_Mux_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_PPS_Mux_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eGPIO_PPS_Mux_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eGPIO_PPS_Mux_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS)
+  {
+    if (val)
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_PPS_Mux_Set_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_PPS_Mux_Set_high, EB_DATA32, (1<<internal_id)); }
+    }
+    else
+    {
+      if (access_position == 0) { cycle.write(io_control_addr+eLVDS_PPS_Mux_Reset_low,  EB_DATA32, (1<<internal_id)); }
+      else                      { cycle.write(io_control_addr+eLVDS_PPS_Mux_Reset_high, EB_DATA32, (1<<internal_id)); }
+    }
+  }
+  cycle.close();
+  PPSMultiplexer(val);
+}
+
 bool InoutImpl::StartClock(double high_phase, double low_phase, guint64 phase_offset) { return ConfigureClock(high_phase, low_phase, phase_offset); }
 bool InoutImpl::StopClock() { return ConfigureClock(0.0, 0.0, 0); }
 bool InoutImpl::ConfigureClock(double high_phase, double low_phase, guint64 phase_offset)

@@ -82,6 +82,9 @@ static void help(void) {
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
   std::cout << "  quit                             instructs the saftlib daemon to quit (admin only)" << std::endl << std::endl;
   std::cout << std::endl;
+  std::cout << "This tool displays Timing Receiver and related saftlib status. It can also be used to list the ECA status for" << std::endl;
+  std::cout << "software actions. Furthermore, one can do simple things with a Timing Receiver (snoop for events, inject messages)." <<std::endl;
+  std::cout << std::endl;
   std::cout << "Tip: For using negative values with commands such as 'snoop', consider" << std::endl;
   std::cout << "using the special argument '--' to terminate option scanning." << std::endl << std::endl;
 

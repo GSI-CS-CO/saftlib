@@ -264,8 +264,14 @@ Glib::ustring TimingReceiver::getName() const
   return name;
 }
 
-#define WR_PPS_GEN_ESCR         0x1c        //External Sync Control Register
-#define WR_PPS_GEN_ESCR_MASK    0x6         //bit 1: PPS valid, bit 2: TS valid
+#define WR_API_VERSION          4
+
+#if WR_API_VERSION <= 3
+#define WR_PPS_GEN_ESCR_MASK    0x6       //bit 1: PPS valid, bit 2: TS valid
+#else
+#define WR_PPS_GEN_ESCR_MASK    0xc       //bit 2: PPS valid, bit 3: TS valid
+#endif
+#define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
 
 void TimingReceiver::setupGatewareInfo(guint32 address)
 {
