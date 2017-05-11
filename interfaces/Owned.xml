@@ -42,8 +42,10 @@
        This method may only be invoked by the current owner of the
        object. However, if the condition has been disowned, it may
        be invoked by anyone.
+       reset_connection="false" prevents the DBus service from 
+       resetting the connection of a destroyed object.
     -->
-  <method name="Destroy"/>
+  <method name="Destroy" reset_connection="false"/>
   
   <!-- Destroyed: The object was destroyed.
     -->

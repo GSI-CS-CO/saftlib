@@ -808,7 +808,9 @@
             </xsl:if>
         </xsl:for-each>
         <xsl:text>);&#10;</xsl:text>
-        <xsl:text>        connection.reset();&#10;</xsl:text>
+        <xsl:if test="not(@reset_connection='false')">
+          <xsl:text>        connection.reset();&#10;</xsl:text>
+        </xsl:if>
         <xsl:text>      } catch (...) {&#10;</xsl:text>
         <xsl:text>        connection.reset();&#10;</xsl:text>
         <xsl:text>        rethrow("</xsl:text>
