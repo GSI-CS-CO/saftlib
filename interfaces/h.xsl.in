@@ -415,7 +415,7 @@
 
       <!-- Create AsyncCallReady function declaration -->
       <xsl:text>    void </xsl:text>
-      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, Glib::RefPtr&lt;Glib::MainLoop&gt; mainloop, Glib::VariantContainerBase *result);&#10;&#10;</xsl:text>
+      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, GMainLoop *loop, Glib::VariantContainerBase *result);&#10;&#10;</xsl:text>
 
       <xsl:text>    // notification if async DBus call is completed&#10;</xsl:text>
 
