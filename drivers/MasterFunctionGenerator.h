@@ -47,14 +47,18 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     // iMasterFunctionGenerator overrides
     void Arm();
     void Abort();
-		bool AppendParameterSets(const std::vector< std::vector< gint16 > >& coeff_a, const std::vector< std::vector< gint16 > >& coeff_b, const std::vector< std::vector< gint32 > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm);    
+		bool AppendParameterSets(const std::vector< std::vector< gint16 > >& coeff_a, const std::vector< std::vector< gint16 > >& coeff_b, const std::vector< std::vector< gint32 > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm, bool wait_for_arm_ack);    
     std::vector<guint32> ReadExecutedParameterCounts();
     std::vector<guint64> ReadFillLevels();
     void Flush();
     void setStartTag(guint32 val);
     guint32 getStartTag() const;
-    bool getArmed() const;
-    bool getEnabled() const;
+
+    void setGenerateIndividualStopSignals(bool);
+    bool getGenerateIndividualStopSignals() const;
+
+    //bool getArmed() const;
+    //bool getEnabled() const;
     
     std::vector<Glib::ustring> ReadNames();
     std::vector<bool> ReadArmed();
@@ -72,18 +76,16 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void on_fg_armed(bool);
     void on_fg_enabled(bool);
     void on_fg_started(guint64);
-//    void on_fg_stopped(guint64, bool, bool, bool);
-    
     void on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow);
 
 
     TimingReceiver* dev;
-//  	std::vector<Glib::RefPtr<FunctionGeneratorImpl>> functionGenerators;      
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;      
   	std::vector<bool> functionGeneratorSelected;      
     guint32 startTag;
-    bool enabled;
-    bool armed;
+    bool generateIndividualStopSignals;
+    //bool enabled;
+    //bool armed;
     
     struct ParameterTuple {
       gint16 coeff_a;

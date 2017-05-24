@@ -20,6 +20,9 @@
       -->
     <property name="StartTag" type="u" access="readwrite"/>
 
+
+    <property name="GenerateIndividualStopSignals" type="b" access="readwrite"/>
+
     <!-- Arm: Enable all function generators that have data and arm them.
          A function generator can only be Armed if FillLevel is non-zero. 
          An Enabled function generator can not be Armed again until it
@@ -55,6 +58,7 @@
          @shift_a:  Exponent of coeff_a, 6-bit unsigned; a = coeff_a*2^shift_a
          @shift_b:  Exponent of coeff_b, 6-bit unsigned; b = coeff_b*2^shift_b
          @arm:			If true, arm each function generator that received data and wait for acknowledgement
+         @iwait_for_arm_ack:  If true, and arm is true, wait for arm acknowledgements from all fgs before returning
          @low_fill: Fill level remains too low
 				
 
@@ -79,6 +83,7 @@
       <arg direction="in" type="AAy" name="shift_a"/>
       <arg direction="in" type="AAy" name="shift_b"/>
       <arg direction="in" type="b" name="arm"/>
+      <arg direction="in" type="b" name="wait_for_arm_ack"/>
       <arg direction="out" type="b" name="low_fill"/>
     </method>
         
@@ -122,8 +127,17 @@
       <arg name="microControllerUnderflow" type="b"/>
     </signal>
 
-    <!-- Interface TBD
+    <!-- AllStopped:                All Function generators have stopped.
+         @time:                     Time when last function generation ended in nanoseconds since 1970
+
+         This signal is generated when a function generator stops and all function generators
+         controlled by this master have then stopped. 
     -->
+
+    <signal name="AllStopped">
+      <arg name="time" type="t"/>
+    </signal>
+
 
     <method name="SetActiveFunctionGenerators">
       <arg direction="in" type="as" name="names"/>
@@ -137,7 +151,7 @@
       -->
 
     <method name="ReadExecutedParameterCounts">
-      <arg direction="out" type="Au" name="result"/>
+      <arg direction="out" type="au" name="result"/>
     </method>
 
     <!-- ReadFillLevels: Remaining waveform data in nanoseconds for each FG.

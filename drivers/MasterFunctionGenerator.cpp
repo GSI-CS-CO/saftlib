@@ -44,7 +44,8 @@ namespace saftlib {
 MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
  : Owned(args.objectPath),
    dev(args.dev),
-   functionGenerators(args.functionGenerators)      
+   functionGenerators(args.functionGenerators),
+   generateIndividualStopSignals(false)   
 {
   for (auto fg : functionGenerators)
   {
@@ -54,7 +55,7 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
     fg->signal_started.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_started));
     fg->signal_stopped.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_stopped),fg)); 
   }
-  enabled=getEnabled();
+  //enabled=getEnabled();
 }
 
 MasterFunctionGenerator::~MasterFunctionGenerator()
@@ -101,6 +102,16 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
   {
     Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
   }
+
+	bool all_stopped=true;
+  for (auto fg : functionGenerators)
+	{
+    all_stopped &= !fg->getEnabled();
+	}
+  if (all_stopped)
+  {
+    AllStopped(time);
+  }
 }
 
 Glib::RefPtr<MasterFunctionGenerator> MasterFunctionGenerator::create(const ConstructorType& args)
@@ -116,7 +127,8 @@ bool MasterFunctionGenerator::AppendParameterSets(
 	const std::vector< std::vector< unsigned char > >& freq, 
 	const std::vector< std::vector< unsigned char > >& shift_a, 
 	const std::vector< std::vector< unsigned char > >& shift_b, 
-	bool arm)
+	bool arm,
+  bool wait_for_arm_ack)
 {
 
   // confirm equal number of FGs
@@ -182,7 +194,7 @@ bool MasterFunctionGenerator::AppendParameterSets(
 // todo: check if data has been sent
 
 
-	
+	// if requested wait for all fgs to arm
 	if (arm)
 	{
 	
@@ -217,7 +229,7 @@ bool MasterFunctionGenerator::AppendParameterSets(
 		}
 		
 		// allow arm interrupts through
-    // TODO: check this in light of file descriptor multithreading problem
+    // TODO: check safety of this in light of file descriptor multithreading problem
 		context->iteration(false);
 	} while (all_armed == false) ;
 //		Stopped(1000,false,false,false);	
@@ -251,6 +263,17 @@ guint32 MasterFunctionGenerator::getStartTag() const
 {
   return startTag;
 }
+
+void MasterFunctionGenerator::setGenerateIndividualStopSignals(bool newvalue)
+{
+  generateIndividualStopSignals=newvalue;
+}
+
+bool MasterFunctionGenerator::getGenerateIndividualStopSignals() const
+{
+  return generateIndividualStopSignals;
+}
+
 
 
 void MasterFunctionGenerator::Arm()
@@ -348,7 +371,8 @@ void MasterFunctionGenerator::setStartTag(guint32 val)
     StartTag(startTag);
   }
 }
-// at least 1 FG is enabled
+/*
+// all FGs are armed
 bool MasterFunctionGenerator::getArmed() const
 {
 bool all_armed=true;
@@ -372,7 +396,7 @@ bool any_enabled=false;
 
 	return any_enabled;
 }
-
+*/
 std::vector<guint32> MasterFunctionGenerator::ReadExecutedParameterCounts()
 {
 	std::vector<guint32> counts;

@@ -70,7 +70,7 @@ fg_ctl_SOURCES = src/fg-ctl.cpp
 fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
 
 mfg_ctl_SOURCES = src/mfg-ctl.cpp
-mfg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+mfg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la -lpthread
 
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp src/CommonFunctions.cpp
 saft_io_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
