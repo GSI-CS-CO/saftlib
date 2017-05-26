@@ -30,13 +30,14 @@
 #include "fg_regs.h"
 #include "clog.h"
 
+
+
+// todo: testing only, remove
 #include <thread>
 #include <future>
-
+#include <sys/syscall.h>
+#include <sys/types.h>
 // todo: minimize property-change signals to reduce dbus traffic
-
-
-// currently testing: refprt -> shared_ptr - threads
 
 
 namespace saftlib {
@@ -55,7 +56,6 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
     fg->signal_started.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_started));
     fg->signal_stopped.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_stopped),fg)); 
   }
-  //enabled=getEnabled();
 }
 
 MasterFunctionGenerator::~MasterFunctionGenerator()
@@ -70,9 +70,25 @@ void MasterFunctionGenerator::on_fg_running(bool b)
 	
 }
 
-void MasterFunctionGenerator::on_fg_armed(bool b)
+// watches armed notifications of individual FGs
+// sends AllArmed signal when all fgs with data have signaled armed(true)
+void MasterFunctionGenerator::on_fg_armed(bool armed)
 {
 
+  //clog << "FG Armed  TID: " << syscall(SYS_gettid) << std::endl;
+  if (armed)
+  {
+    bool all_armed=true;
+    for (auto fg : functionGenerators)
+    {
+      bool fg_armed_or_inactive = fg->getArmed() || (fg->ReadFillLevel()==0);
+      all_armed &= fg_armed_or_inactive;
+    }
+    if (all_armed)
+    {
+      AllArmed();
+    }
+  }
 }
 
 void MasterFunctionGenerator::on_fg_enabled(bool b)
@@ -99,6 +115,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
 {
   // do not generate d-bus signal for successful stop
 //  if (abort || hardwareUnderflow || microcontrollerUnderflow)
+  if (generateIndividualStopSignals)
   {
     Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
   }
@@ -196,44 +213,52 @@ bool MasterFunctionGenerator::AppendParameterSets(
 
 	// if requested wait for all fgs to arm
 	if (arm)
-	{
-	
-  Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
-  Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
-
-	for (std::size_t i=0;i<fgcount;++i)
-	{
-		if (arm && coeff_a[i].size() > 0)
-		{
-			functionGenerators[i]->arm();
-		}		
-	}
-
-	// wait for arm response ...
-
-	bool all_armed=false;
-	do
-	{
-		all_armed=true;
-		/*
-		for (auto fg : functionGenerators)
-		{
-			all_armed &= fg->armed;
-		}
-		*/
-		
-		for (std::size_t i=0;i<fgcount;++i)
-		{
-			if (coeff_a[i].size()==0) continue;				
-			all_armed &= functionGenerators[i]->armed;
-		}
-		
-		// allow arm interrupts through
-    // TODO: check safety of this in light of file descriptor multithreading problem
-		context->iteration(false);
-	} while (all_armed == false) ;
-//		Stopped(1000,false,false,false);	
-	}
+  {
+/*
+    for (std::size_t i=0;i<fgcount;++i)
+    {
+      if (arm && coeff_a[i].size() > 0)
+      {
+        functionGenerators[i]->arm();
+      }		
+    }
+*/
+    for (auto fg : functionGenerators)
+    {
+      if (fg->fillLevel>0)
+        fg->arm();
+    }
+    // wait for arm response ...
+    // cannot block here, interrupts arrive in the same thread 
+    // Iteration/Polling Version
+    if (wait_for_arm_ack)
+    {
+      Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
+      Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
+      bool all_armed=false;
+      do
+      {
+        all_armed=true;
+        for (auto fg : functionGenerators)
+        {
+          if (fg->fillLevel>0)
+            all_armed &= fg->armed;
+        }
+        /*
+        for (std::size_t i=0;i<fgcount;++i)
+        {
+          if (coeff_a[i].size()==0) continue;				
+          all_armed &= functionGenerators[i]->armed;
+        }
+      */
+        // allow arm interrupts through
+        // TODO: check safety of this in light of file descriptor multithreading problem
+        // saftd has only 1 thread
+        // is this taking someone's events? generate a new context?
+        context->iteration(false);
+      } while (all_armed == false) ;
+    }
+  }
 	return false;
 }
 
@@ -288,29 +313,6 @@ void MasterFunctionGenerator::Arm()
 		{
 		}
 	}
-	
-	return;
-	
-	// wait for arm response ...
-/*	
-  Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
-  Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
-
-	
-	bool all_armed=false;
-	do
-	{
-		all_armed=true;
-		for (auto fg : functionGenerators)
-		{
-			all_armed &= fg->armed;
-		}
-		
-		// allow arm interrupts 
-		context->iteration(true);
-	} while (all_armed == false) ;
-	*/	
-	
 }
 
 

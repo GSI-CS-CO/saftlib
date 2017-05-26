@@ -138,6 +138,8 @@
       <arg name="time" type="t"/>
     </signal>
 
+    <signal name="AllArmed">
+    </signal>
 
     <method name="SetActiveFunctionGenerators">
       <arg direction="in" type="as" name="names"/>

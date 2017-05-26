@@ -220,7 +220,6 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
     } else {
       armed = true;
       signal_armed.emit(armed);
-//      Armed(armed);
     }
   } else if (msi == IRQ_DAT_DISARMED) {
     if (running) {
@@ -230,7 +229,6 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
     } else {
       armed = false;
       signal_armed.emit(armed);
-//      Armed(armed);
       releaseChannel();
     }
   } else if (msi == IRQ_DAT_START) {
@@ -240,13 +238,10 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
       clog << kLogErr << "FunctionGenerator: received start while not armed on index " << std::dec << index << std::endl;
     } else {
       armed = false;
-//      Armed(armed);
-//      Started(time);
       running = true;
       signal_armed.emit(armed);
       signal_running.emit(running);      
       signal_started.emit(time);
-//      Running(true);
     }
   } else { // stopped?
     if (armed) {
