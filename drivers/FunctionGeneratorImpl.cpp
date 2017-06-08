@@ -25,7 +25,6 @@
 
 #include <assert.h>
 
-//#include "RegisteredObject.h"
 #include <etherbone.h>
 #include <giomm.h>
 #include "FunctionGeneratorImpl.h"
@@ -76,7 +75,9 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
     clog << kLogErr << "FunctionGenerator: no free slot in mailbox left"  << std::endl;
 
   //save the irq address in the odd mailbox slot
-  dev->getDevice().write(mb_base + slot * 4 * 2 + 4, EB_DATA32, (eb_data_t)irq);
+  //keep postal address to free later
+  mailbox_slot_address = mb_base + slot * 4 * 2 + 4;
+  dev->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
   clog << kLogDebug << "FunctionGenerator: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << std::endl;
 }
 
@@ -84,6 +85,9 @@ FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
   resetTimeout.disconnect(); // do not run ResetFailed
   dev->getDevice().release_irq(irq);
+  
+  clog << "FunctionGenerator: freeing mailbox slot " << std::dec << mbx_slot << std::endl;
+  dev->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
 }
 
 static unsigned wrapping_sub(unsigned a, unsigned b, unsigned buffer_size)
@@ -257,8 +261,6 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
       }
       executedParameterCount = ReadExecutedParameterCount();
       running = false;
-//      Running(running);
-//      Stopped(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
 
       releaseChannel();
       signal_running.emit(running);
@@ -266,12 +268,6 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
     }
   }
 }
-/*
-Glib::RefPtr<FunctionGenerator> FunctionGeneratorImpl::create(const ConstructorType& args)
-{
-  return RegisteredObject<FunctionGenerator>::create(args.objectPath, args);
-}
-*/
 
 guint64 FunctionGeneratorImpl::ParameterTuple::duration() const
 {
@@ -353,7 +349,6 @@ void FunctionGeneratorImpl::flush()
 
 void FunctionGeneratorImpl::Flush()
 {
-  //ownerOnly();
  	flush();  	  
 }
 
@@ -486,7 +481,6 @@ void FunctionGeneratorImpl::arm()
 
 void FunctionGeneratorImpl::Arm()
 {
-  //ownerOnly();
   arm();
 }
 
@@ -497,16 +491,16 @@ bool FunctionGeneratorImpl::ResetFailed()
   
   if (running) { // synthesize missing Stopped
     running = false;
-//    Running(running);
-//    Stopped(dev->ReadRawCurrentTime(), true, false, false);
+    signal_running.emit(running);
+    signal_stopped.emit(dev->ReadRawCurrentTime(), true, false, false);
   } else {
     // synthesize any missing Armed transitions
     if (!armed) {
       armed = true;
-//      Armed(armed);
+      signal_armed.emit(armed);
     }
     armed = false;
-//    Armed(armed);
+    signal_armed.emit(armed);
   }
   releaseChannel();
   return false;
@@ -523,7 +517,6 @@ void FunctionGeneratorImpl::Reset()
 
 void FunctionGeneratorImpl::Abort()
 {
-  //ownerOnly();
   Reset();
 }
 
@@ -547,7 +540,7 @@ Glib::ustring FunctionGeneratorImpl::GetName()
 {
     std::ostringstream ss;
     ss << "fg-" << (int)getSCUbusSlot() << "-" << (int)getDeviceNumber();
-    ss << "(" << index << ")";
+//    ss << "-" << index ;
     return ss.str();	
 }	
 

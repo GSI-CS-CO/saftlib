@@ -80,11 +80,11 @@ static void timer_start()
 static void timer_stop()
 {
 	clock_gettime(CLOCK_ID, &time_end);
-//std::cout<<"Took: " <<diff(time_start,time_end).tv_sec<<"." << std::setfill('0') << std::setw(9) << diff(time_start,time_end).tv_nsec<<std::endl;
 	std::cout<<diff(time_start,time_end).tv_sec<<"." << std::setfill('0') << std::setw(9) << diff(time_start,time_end).tv_nsec<<std::endl;
 }
 
-static std::condition_variable cond_var;
+// thread signaling
+static std::condition_variable all_stopped_cond_var;
 static std::mutex fg_all_stopped_mutex;
 static bool fg_all_stopped=false;
 static std::condition_variable all_armed_cond_var;
@@ -178,7 +178,27 @@ static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool 
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
 }
 
-// Report when the function generator stops
+// Report on the individual function generators
+static void on_master_started(Glib::ustring fg_name, guint64 time)
+{
+  if (loglevel>0) std::cout << fg_name << " started at " << format_time(time) << std::endl;
+}
+static void on_master_armed(Glib::ustring fg_name, bool armed)
+{
+  if (loglevel>0) std::cout << fg_name << (armed ? " armed" : " disarmed")  << std::endl;
+}
+static void on_master_enabled(Glib::ustring fg_name, bool enabled)
+{
+  if (loglevel>0) std::cout << fg_name << (enabled ? " enabled" : " disabled")  << std::endl;
+}
+static void on_master_running(Glib::ustring fg_name, bool running)
+{
+  if (loglevel>0) std::cout << fg_name << (running ? " running" : " not running") << std::endl;
+}
+static void on_master_refill(Glib::ustring fg_name)
+{
+  if (loglevel>0) std::cout << fg_name << " refill request" << std::endl;
+}
 static void on_master_stop(Glib::ustring fg_name, guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   if (loglevel>0) std::cout << fg_name << " stopped at " << format_time(time) << std::endl;
@@ -191,28 +211,26 @@ static void on_master_stop(Glib::ustring fg_name, guint64 time, bool abort, bool
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
 }
 
+// report on the aggregated function generators
 static void on_all_armed()
 {    
   std::cout << "All armed." << std::endl;
   {
     std::lock_guard<std::mutex> lock(fg_all_armed_mutex);
     fg_all_armed=true;
+    all_armed_cond_var.notify_one();
   }
-  all_armed_cond_var.notify_one();
 
 }
-
-
 
 static void on_all_stop(guint64 time, Glib::RefPtr<Glib::MainLoop> loop)
 {
   std::cout << "All fgs stopped at " << format_time(time) << std::endl;
-  //loop->quit();  
   {
     std::lock_guard<std::mutex> lock(fg_all_stopped_mutex);
     fg_all_stopped=true;
+    all_stopped_cond_var.notify_one();
   }
-  cond_var.notify_one();
 }
 
 
@@ -225,7 +243,6 @@ static void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
 }
 
 // for thread safety tests
-
 static void* startFg(void *arg) {
       Glib::RefPtr<Glib::MainLoop> *tmp = (Glib::RefPtr<Glib::MainLoop> *)arg;
       Glib::RefPtr<Glib::MainLoop> loop = *tmp;
@@ -413,6 +430,241 @@ int main(int argc, char** argv)
 }
 
 
+
+
+
+
+
+void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
+{
+    map<Glib::ustring, Glib::ustring> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
+    std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
+    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
+   
+    // Claim the function generator for ourselves
+    master_gen->Own();
+    // select all FGs    
+    master_gen->ResetActiveFunctionGenerators(); 
+		auto names = master_gen->ReadNames();
+    
+    for (auto name : names)
+		{
+			std::cout << name << "  ";
+		} 		  
+    std::cout << endl;
+
+    // signals about the individual FGs for info
+    master_gen->setGenerateIndividualSignals(true);
+    master_gen->Started.connect(sigc::ptr_fun(&on_master_started));
+    master_gen->Stopped.connect(sigc::ptr_fun(&on_master_stop));
+    master_gen->Enabled.connect(sigc::ptr_fun(&on_master_enabled));
+    master_gen->Armed.connect(sigc::ptr_fun(&on_master_armed));
+    master_gen->Running.connect(sigc::ptr_fun(&on_master_running));
+    master_gen->Refill.connect(sigc::ptr_fun(&on_master_refill));
+
+    // master signals for control
+    master_gen->AllStopped.connect(sigc::bind(sigc::ptr_fun(&on_all_stop), loop));
+    master_gen->AllArmed.connect(sigc::ptr_fun(&on_all_armed));
+
+    // Stop whatever the function generator was doing
+ 		if (loglevel>0) std::cout << "Abort via Master" << std::endl;
+    master_gen->Abort(false);
+    
+    // Wait until not Enabled - test polling as alternative to Abort(true)
+    
+    Glib::RefPtr<Glib::MainContext> context  = loop->get_context();
+
+    vector<bool> enabled_gens = master_gen->ReadEnabled();
+    while (std::find(enabled_gens.begin(), enabled_gens.end(), true) != enabled_gens.end()) 
+    {      
+      context->iteration(false);
+      enabled_gens = master_gen->ReadEnabled();
+    }
+
+    // threading test: start a background thread in which to perform mainloop->run
+    // to test File Descriptor Async Methods
+    
+    pthread_t bg_thread;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    int ret=0;
+    if ((ret = pthread_create(&bg_thread, &attr, &startFg, &loop)) == 0) {
+      if (loglevel>1) std::cout << "Created thread for mainloop " << std::endl;      
+    } 
+
+  //for (int reps=0;reps<1;reps++)
+  for (; names.size()>1; names.pop_back())
+  {
+    master_gen->SetActiveFunctionGenerators(names);
+
+    // Clear any old waveform data
+		if (loglevel>1) std::cout << "Flush via Master" << std::endl;
+		master_gen->Flush();
+ 		if (loglevel>1) std::cout << "Flushed" << std::endl;
+ 		
+ 		master_gen->setStartTag(tag);
+ 		if (loglevel>0) std::cout << "Tag set" << std::endl;
+    
+    // Load up the parameters
+		std::vector<std::vector<gint16>> coeff_a;
+		std::vector<std::vector<gint16>> coeff_b;
+		std::vector<std::vector<gint32>> coeff_c;
+    std::vector<std::vector<unsigned char>>step;
+    std::vector<std::vector<unsigned char>>freq;
+    std::vector<std::vector<unsigned char>>shift_a;
+    std::vector<std::vector<unsigned char>>shift_b;
+    // duplicate for each fg
+		// empty vectors should not arm
+		for (size_t i=0;i<names.size() && i<6 ;++i)
+		{
+      
+      // some empty sets
+      /*
+			coeff_a.push_back(std::vector<gint16>());
+			coeff_b.push_back(std::vector<gint16>());
+			coeff_c.push_back(std::vector<gint32>());
+			step.push_back(std::vector<unsigned char>());
+			freq.push_back(std::vector<unsigned char>());
+			shift_a.push_back(std::vector<unsigned char>());
+  		shift_b.push_back(std::vector<unsigned char>());						
+      */
+
+			coeff_a.push_back(params.coeff_a);
+			coeff_b.push_back(params.coeff_b);
+			coeff_c.push_back(params.coeff_c);
+			step.push_back(params.step);
+			freq.push_back(params.freq);
+			shift_a.push_back(params.shift_a);
+  		shift_b.push_back(params.shift_b);						
+  		
+		}
+
+    // test arming methods
+    const bool sync_arm=false;
+    if(sync_arm)
+    {
+
+    std::cout << __FILE__ << __LINE__ << std::endl;
+      if (loglevel>0) std::cout << "Loading and arming (sync) FG sets via Master " << coeff_a.size() << " * " << coeff_a[0].size() << std::endl;
+      if (loglevel>1) timer_start();
+      master_gen->AppendParameterSets(
+      coeff_a,
+      coeff_b,
+      coeff_c,
+      step,
+      freq,
+      shift_a,
+      shift_b,
+      true,  // arm?
+      true); // arm ack?
+      if (loglevel>1) timer_stop();    
+      if (loglevel>0)
+      {
+        std::cout << "Loaded:      ";
+        for (auto level : master_gen->ReadFillLevels())
+        {
+          std::cout << (level / 1000000.0) << "ms ";
+        } 		   
+        std::cout << endl;
+      
+        std::cout << "Armed" << std::endl;		
+      }
+    }
+    else
+    {
+      if (loglevel>0) std::cout << "Loading and arming (async) FG sets via Master " << coeff_a.size() << " * " << coeff_a[0].size() << std::endl;
+      {
+        std::lock_guard<std::mutex> lock(fg_all_armed_mutex);
+        fg_all_armed=false;
+      }
+      if (loglevel>1) timer_start();
+      master_gen->AppendParameterSets(
+      coeff_a,
+      coeff_b,
+      coeff_c,
+      step,
+      freq,
+      shift_a,
+      shift_b,
+      false,  // arm?
+      false); // arm ack?
+      std::cout << "parameters sent" << std::endl;      
+      master_gen->Arm();
+      std::cout << "arm sent" << std::endl;      
+      if (loglevel>1) timer_stop();    
+      if (loglevel>0)
+      {
+        std::cout << "Loaded:      ";
+        for (auto level : master_gen->ReadFillLevels())
+        {
+          std::cout << (level / 1000000.0) << "ms ";
+        } 		   
+        std::cout << endl;
+      } 
+      {
+        std::unique_lock<std::mutex> lock(fg_all_armed_mutex);
+        if (!fg_all_armed)
+        {
+          all_armed_cond_var.wait(lock, [](){ return fg_all_armed==true; });
+        }
+      }
+    }
+    
+    if (loglevel>0)
+    {
+   		std::cout << "Fill Levels: ";
+	  	for (auto level : master_gen->ReadFillLevels())
+		  {
+			  std::cout << (level / 1000000.0) << "ms ";
+  		} 		   
+      std::cout << endl;
+    }
+    
+
+    {
+      std::lock_guard<std::mutex> lock(fg_all_stopped_mutex);
+      fg_all_stopped=false;
+    }
+
+
+		if (generate) {
+	    if (loglevel>0) std::cout << "Generating StartTag" << std::endl;
+	    scu->InjectTag(tag);
+		}
+    else if (eventSet) 
+    {
+      std::cout << "Waiting for event " << event << " to generate tag " << tag << std::endl;
+      scu->NewCondition(true, event, ~0, 0, tag);
+    }
+    else
+    {
+      std::cout << "Waiting for tag " << tag << std::endl;
+    }
+
+
+    // Wait until master function generator reports all done
+   
+    {
+      std::unique_lock<std::mutex> lock(fg_all_stopped_mutex);
+      if (!fg_all_stopped)
+      {
+        all_stopped_cond_var.wait(lock, [](){ return fg_all_stopped==true; });
+      }
+    }
+    if (loglevel>0)
+    {
+ 		  std::cout << "Executed: ";
+	  	for (auto count : master_gen->ReadExecutedParameterCounts())
+  		{
+		  	std::cout << count << " ";
+	  	} 		   
+   		std::cout << "Done" << std::endl;
+    }
+  } 
+
+
+}
+
 // test multiple fgs triggering on the same start tag
 // use the individual FunctionGenerator dbus interface
 // use the last fg's signals
@@ -473,7 +725,7 @@ void test_multiple_fgs(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActi
     std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
     
     // Watch for a timing event? => generate tag on event
-//    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
+    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
 
     // Trigger the function generator ourselves?
     if (generate)
@@ -514,270 +766,3 @@ void test_multiple_fgs(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActi
 			}
 }
 
-
-
-
-
-void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
-{
-    map<Glib::ustring, Glib::ustring> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
-    std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
-    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
-    
-		auto names = master_gen->ReadNames();
-    
-    for (auto name : names)
-		{
-			std::cout << name << "  ";
-		} 		   
-    std::cout << endl;
-    
-    // Ok! Find all the devices is now out of the way. Let's get some work done.
-    
-    // Claim the function generator for ourselves
-    master_gen->Own();
-    
-    //master_gen->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
-
-    // for info
-    master_gen->setGenerateIndividualStopSignals(true);
-    master_gen->Stopped.connect(sigc::ptr_fun(&on_master_stop));
-    // to exit the loop
-    master_gen->AllStopped.connect(sigc::bind(sigc::ptr_fun(&on_all_stop), loop));
-
-    master_gen->AllArmed.connect(sigc::ptr_fun(&on_all_armed));
-
-    // Stop whatever the function generator was doing
- 		if (loglevel>0) std::cout << "Abort via Master" << std::endl;
-    master_gen->Abort();
-    
-    // Wait until not Enabled
-    
-    Glib::RefPtr<Glib::MainContext> context  = loop->get_context();
-
-    vector<bool> enabled_gens = master_gen->ReadEnabled();
-    while (std::find(enabled_gens.begin(), enabled_gens.end(), true) != enabled_gens.end()) 
-    {      
-      context->iteration(false);
-      enabled_gens = master_gen->ReadEnabled();
-    }
-
-    // threading test: start a background thread in which to perform mainloop->run
-    // tests File Descriptor Async Methods
-        pthread_t bg_thread;
-        pthread_attr_t attr;
-        pthread_attr_init(&attr);
-        int ret=0;
-        if ((ret = pthread_create(&bg_thread, &attr, &startFg, &loop)) == 0) {
-          
-            if (loglevel>1) std::cout << __FILE__<< "::" << __FUNCTION__ << ":" << __LINE__ << " Function generator " 
-              << " thread for mainloop created " << std::endl;
-          
-        } 
-
-//for (int reps=0;reps<10000000;reps++)
-{
-
-    // Clear any old waveform data
-		if (loglevel>1) std::cout << "Flush via Master" << std::endl;
-		master_gen->Flush();
- 		if (loglevel>1) std::cout << "Flushed" << std::endl;
- 		
- 		master_gen->setStartTag(tag);
- 		if (loglevel>0) std::cout << "Tag set" << std::endl;
-    
-    // Load up the parameters
-		std::vector<std::vector<gint16>> coeff_a;
-		std::vector<std::vector<gint16>> coeff_b;
-		std::vector<std::vector<gint32>> coeff_c;
-    std::vector<std::vector<unsigned char>>step;
-    std::vector<std::vector<unsigned char>>freq;
-    std::vector<std::vector<unsigned char>>shift_a;
-    std::vector<std::vector<unsigned char>>shift_b;
-
-    // duplicate for each fg
-		// empty vectors should not arm
-		for (size_t i=0;i<names.size() && i<12 ;++i)
-		{
-      /*
-      // some empty sets
-			coeff_a.push_back(std::vector<gint16>());
-			coeff_b.push_back(std::vector<gint16>());
-			coeff_c.push_back(std::vector<gint32>());
-			step.push_back(std::vector<unsigned char>());
-			freq.push_back(std::vector<unsigned char>());
-			shift_a.push_back(std::vector<unsigned char>());
-  		shift_b.push_back(std::vector<unsigned char>());						
-      */
-
-			coeff_a.push_back(params.coeff_a);
-			coeff_b.push_back(params.coeff_b);
-			coeff_c.push_back(params.coeff_c);
-			step.push_back(params.step);
-			freq.push_back(params.freq);
-			shift_a.push_back(params.shift_a);
-  		shift_b.push_back(params.shift_b);						
-  		
-		}
-
-    // test arm-and-ack method
-    const bool sync_arm=true;
-    if(sync_arm)
-    {
-      if (loglevel>0) std::cout << "Loading and arming (sync) FG sets via Master " << coeff_a.size() << " * " << coeff_a[0].size() << std::endl;
-      if (loglevel>1) timer_start();
-      master_gen->AppendParameterSets(
-      coeff_a,
-      coeff_b,
-      coeff_c,
-      step,
-      freq,
-      shift_a,
-      shift_b,
-      true,  // arm?
-      true); // arm ack?
-      if (loglevel>1) timer_stop();    
-      if (loglevel>0)
-      {
-        std::cout << "Loaded:      ";
-        for (auto level : master_gen->ReadFillLevels())
-        {
-          std::cout << (level / 1000000.0) << "ms ";
-        } 		   
-        std::cout << endl;
-      
-        std::cout << "Armed" << std::endl;		
-      }
-    }
-    else
-    {
-        if (loglevel>0) std::cout << "Loading and arming (async) FG sets via Master " << coeff_a.size() << " * " << coeff_a[0].size() << std::endl;
-
-
-      {
-        std::lock_guard<std::mutex> lock(fg_all_armed_mutex);
-        fg_all_armed=false;
-      }
-      if (loglevel>1) timer_start();
-      master_gen->AppendParameterSets(
-      coeff_a,
-      coeff_b,
-      coeff_c,
-      step,
-      freq,
-      shift_a,
-      shift_b,
-      true,  // arm?
-      false); // arm ack?
-      if (loglevel>1) timer_stop();    
-      if (loglevel>0)
-      {
-        std::cout << "Loaded:      ";
-        for (auto level : master_gen->ReadFillLevels())
-        {
-          std::cout << (level / 1000000.0) << "ms ";
-        } 		   
-        std::cout << endl;
-      } 
-      {
-        std::unique_lock<std::mutex> lock(fg_all_armed_mutex);
-        cond_var.wait(lock, [](){ return fg_all_armed==true; });
-        std::cout << "All Armed Signal" << std::endl;		
-      }
-    }
-    
-    
-    // FYI, how much data is this?
-    //std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
-    if (loglevel>0)
-    {
-   		std::cout << "Fill Levels: ";
-	  	for (auto level : master_gen->ReadFillLevels())
-		  {
-			  std::cout << (level / 1000000.0) << "ms ";
-  		} 		   
-      std::cout << endl;
-    }
-    
-    // Watch for a timing event? => generate tag on event
-   // Trigger the function generator ourselves?
-//    if (generate) gen->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
-    
-
-   {
-    std::lock_guard<std::mutex> lock(fg_all_stopped_mutex);
-    fg_all_stopped=false;
-   }
-
-
-		if (generate) {
-	    if (loglevel>0) std::cout << "Generating StartTag" << std::endl;
-	    scu->InjectTag(tag);
-		}
-	  if (eventSet) 
-    {
-      std::cout << "Required tag " << tag << std::endl;
-      std::cout << "Generating tag-1 " << (tag-1) << " on event " << event << std::endl;
-      scu->NewCondition(true, event, ~0, -10, tag-1);
-      std::cout << "Generating tag " << tag << " on event " << event << std::endl;
-      scu->NewCondition(true, event, ~0, 0, tag);
-
-
-      std::cout << "Generating tag+1 " << (tag+1) << " on event " << event << std::endl;
-      scu->NewCondition(true, event, ~0, +10, tag+1);
-
-    }
- 	
-
-    // Wait until not enabled / function generator is done
-    // ... if we don't care to keep repeating the waveform, we could quit immediately;
-    //     SAFTd has been properly configured to run autonomously at this point.
-    // ... of course, then the user doesn't get the final error status message either
-
-
-   // wait for callback to call mainloop->quit and stop bg thread
-   //
-   {
-     std::unique_lock<std::mutex> lock(fg_all_stopped_mutex);
-//     cond_var.wait(lock);
-     cond_var.wait(lock, [](){ return fg_all_stopped==true; });
-   }
-      //  pthread_join(bg_thread, NULL);
-
-/*    
-  if (false)
-  {
-    // poll enabled vector
-    vector<bool> enabled_gens = master_gen->ReadEnabled();
-    while (std::find(enabled_gens.begin(), enabled_gens.end(), true) != enabled_gens.end()) 
-    {      
-      context->iteration(false);
-      enabled_gens = master_gen->ReadEnabled();
-    }
-    // stay alive a bit to get stopped signal
-    sleep(1);
-    context->iteration(false);
-  } 
-  else
-  // wait for AllStopped callback
-  {
-    loop->run();
-  }
-*/
-    if (loglevel>0)
-    {
- 		  std::cout << "Executed: ";
-	  	for (auto count : master_gen->ReadExecutedParameterCounts())
-  		{
-		  	std::cout << count << " ";
-	  	} 		   
-   		std::cout << "Done" << std::endl;
-    }
-} // forever
-
-
-//    std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
-
-
-
-}

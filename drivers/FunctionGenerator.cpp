@@ -50,36 +50,55 @@ FunctionGenerator::~FunctionGenerator()
 {
 }
 
-// pass sigc signal from impl to dbus
+// pass sigc signals from impl class to dbus
+// to reduce traffic only generate signals if we have an owner
 void FunctionGenerator::on_fg_running(bool b)
 {
-	Running(b);
+  if (!getOwner().empty())
+  {
+  	Running(b);
+  }
 }
 
 void FunctionGenerator::on_fg_armed(bool b)
 {
-	Armed(b);
+  if (!getOwner().empty())
+  {  
+	  Armed(b);
+  }
 }
 
 void FunctionGenerator::on_fg_enabled(bool b)
 {
-	Enabled(b);
+  if (!getOwner().empty())
+  {
+	  Enabled(b);
+  }
 }
 
 void FunctionGenerator::on_fg_refill()
 {
-	Refill();
+  if (!getOwner().empty())
+  {
+	  Refill();
+  }
 }
 
 
 void FunctionGenerator::on_fg_started(guint64 time)
 {
-	Started(time);
+  if (!getOwner().empty())
+  {
+	  Started(time);
+  }
 }
 
 void FunctionGenerator::on_fg_stopped(guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
-	Stopped(time, abort, hardwareUnderflow, microcontrollerUnderflow);
+  if (!getOwner().empty())
+  {
+    Stopped(time, abort, hardwareUnderflow, microcontrollerUnderflow);
+  }
 }
 
 

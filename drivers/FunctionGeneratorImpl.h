@@ -140,6 +140,7 @@ class FunctionGeneratorImpl : public Glib::Object
     };
 
     unsigned mbx_slot;
+    eb_address_t mailbox_slot_address;
     
     // These 3 variables must be kept in sync:
     guint64 fillLevel;
