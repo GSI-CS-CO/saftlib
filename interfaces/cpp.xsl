@@ -499,15 +499,15 @@
       <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, GMainLoop *loop, Glib::VariantContainerBase *result, Glib::ustring *exceptionMsg)</xsl:text>
       <xsl:text>&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
-      <xsl:text>   try {&#10;</xsl:text>
+      <xsl:text>  try {&#10;</xsl:text>
       <xsl:text>    auto connection = get_connection();&#10;</xsl:text>
       <xsl:text>    connection-&gt;reference();&#10;</xsl:text>
       <xsl:text>    *result = connection-&gt;call_finish(async_result);&#10;</xsl:text>
-      <xsl:text>   } catch( Glib::Error&amp; ex) {&#10;</xsl:text>
+      <xsl:text>  } catch( const Glib::Error&amp; ex) {&#10;</xsl:text>
       <!-- To avoid throwing an exception in a signal handler -->
       <xsl:text>    *exceptionMsg = ex.what();&#10;</xsl:text>
-      <xsl:text>   }&#10;</xsl:text>
-      <xsl:text>    g_main_loop_quit(loop);&#10;</xsl:text>
+      <xsl:text>  }&#10;</xsl:text>
+      <xsl:text>  g_main_loop_quit(loop);&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- Boiler-plate to retrieve a property -->

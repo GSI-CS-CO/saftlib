@@ -49,7 +49,7 @@ using namespace std;
 #include <condition_variable>
 #include <mutex>
 
-
+#define MAX_CHANNELS 12
 // 0 = silent, 1 = info, 2+ = debug
 static const int loglevel=2;
 
@@ -91,10 +91,6 @@ static std::condition_variable all_armed_cond_var;
 static std::mutex fg_all_armed_mutex;
 static bool fg_all_armed=false;
 
-
-/////////////////
-
-
 // The parsed contents of the datafile given to the demo program
 struct ParamSet {
   std::vector< gint16 > coeff_a;
@@ -105,7 +101,6 @@ struct ParamSet {
   std::vector< unsigned char > shift_a;
   std::vector< unsigned char > shift_b;
 };
-
 
   
 void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
@@ -124,14 +119,6 @@ static bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& para
     params.shift_a,
     params.shift_b);
 }
-
-// Refill the function generator if the buffer fill gets low
-/*
-static void on_refill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
-{
-  while (fill(gen, params)) { }
-}
-*/
 
 // Pretty print timestamp
 static const char *format_time(guint64 time)
@@ -243,20 +230,21 @@ static void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
 }
 
 // for thread safety tests
-static void* startFg(void *arg) {
-      Glib::RefPtr<Glib::MainLoop> *tmp = (Glib::RefPtr<Glib::MainLoop> *)arg;
-      Glib::RefPtr<Glib::MainLoop> loop = *tmp;
-        
-      //std::cout << "startFg Loop created" << std::endl;
-      if (!loop->is_running()) {
-        std::ostringstream msg;
-        msg << __FILE__<< "::" << __FUNCTION__ << ":"  << __LINE__ << " start loop";
-        if (loglevel>1) std::cout << msg.str() << std::endl; msg.str("");
-        loop->run();
-      }
-      if (loglevel>1) std::cout << "startFg Loop ended" << std::endl;
-      return NULL;
-    }
+static void* startFg(void *arg) 
+{
+  Glib::RefPtr<Glib::MainLoop> *tmp = (Glib::RefPtr<Glib::MainLoop> *)arg;
+  Glib::RefPtr<Glib::MainLoop> loop = *tmp;
+    
+  //std::cout << "startFg Loop created" << std::endl;
+  if (!loop->is_running()) {
+    std::ostringstream msg;
+    msg << __FILE__<< "::" << __FUNCTION__ << ":"  << __LINE__ << " start loop";
+    if (loglevel>1) std::cout << msg.str() << std::endl; msg.str("");
+    loop->run();
+  }
+  if (loglevel>1) std::cout << "startFg Loop ended" << std::endl;
+  return NULL;
+}
 
 
 
@@ -515,21 +503,9 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
     std::vector<std::vector<unsigned char>>shift_b;
     // duplicate for each fg
 		// empty vectors should not arm
-		for (size_t i=0;i<names.size() && i<6 ;++i)
+		for (size_t i=0;i<names.size() && i < MAX_CHANNELS ;++i)
 		{
-      
-      // some empty sets
-      /*
-			coeff_a.push_back(std::vector<gint16>());
-			coeff_b.push_back(std::vector<gint16>());
-			coeff_c.push_back(std::vector<gint32>());
-			step.push_back(std::vector<unsigned char>());
-			freq.push_back(std::vector<unsigned char>());
-			shift_a.push_back(std::vector<unsigned char>());
-  		shift_b.push_back(std::vector<unsigned char>());						
-      */
-
-			coeff_a.push_back(params.coeff_a);
+     	coeff_a.push_back(params.coeff_a);
 			coeff_b.push_back(params.coeff_b);
 			coeff_c.push_back(params.coeff_c);
 			step.push_back(params.step);
@@ -543,7 +519,6 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
     const bool sync_arm=false;
     if(sync_arm)
     {
-
     std::cout << __FILE__ << __LINE__ << std::endl;
       if (loglevel>0) std::cout << "Loading and arming (sync) FG sets via Master " << coeff_a.size() << " * " << coeff_a[0].size() << std::endl;
       if (loglevel>1) timer_start();
@@ -661,8 +636,6 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
    		std::cout << "Done" << std::endl;
     }
   } 
-
-
 }
 
 // test multiple fgs triggering on the same start tag

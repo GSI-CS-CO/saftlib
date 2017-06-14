@@ -50,11 +50,6 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
 {
   for (auto fg : allFunctionGenerators)
   {
-//    fg->signal_running.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_running));
-//    fg->signal_armed.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_armed));
-//    fg->signal_enabled.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_enabled));
-//    fg->signal_started.connect(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_started));
-
     fg->signal_running.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_running),fg)); 
     fg->signal_armed.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_armed),fg)); 
     fg->signal_enabled.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_enabled),fg)); 
@@ -199,10 +194,9 @@ bool MasterFunctionGenerator::AppendParameterSets(
 	}
 
 
-	// Testing - send all datasets to 2 fgs, arm, abort all but last 2
+	// Testing - multithreaded loading
 
 
-// arming touches hardware - do not thread
 /*
 	std::vector<std::thread> loadthreads(fgcount);
 	std::vector<std::future<bool>> futures(fgcount);
