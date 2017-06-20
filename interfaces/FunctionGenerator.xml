@@ -194,13 +194,13 @@
          bits of the resulting 64-bit signed value.
       -->
     <method name="AppendParameterSet">
-      <arg direction="in" type="an" name="coeff_a"/>
-      <arg direction="in" type="an" name="coeff_b"/>
-      <arg direction="in" type="ai" name="coeff_c"/>
-      <arg direction="in" type="ay" name="step"/>
-      <arg direction="in" type="ay" name="freq"/>
-      <arg direction="in" type="ay" name="shift_a"/>
-      <arg direction="in" type="ay" name="shift_b"/>
+      <arg direction="in" type="An" name="coeff_a"/>
+      <arg direction="in" type="An" name="coeff_b"/>
+      <arg direction="in" type="Ai" name="coeff_c"/>
+      <arg direction="in" type="Ay" name="step"/>
+      <arg direction="in" type="Ay" name="freq"/>
+      <arg direction="in" type="Ay" name="shift_a"/>
+      <arg direction="in" type="Ay" name="shift_b"/>
       <arg direction="out" type="b" name="low_fill"/>
     </method>
     
