@@ -360,9 +360,7 @@
             <xsl:text>  int timeout_msec = -1;&#10;</xsl:text> 
             <xsl:text>  Gio::DBus::CallFlags flags = Gio::DBus::CALL_FLAGS_NONE;&#10;</xsl:text>
             <xsl:text>  Glib::VariantType  reply_type;&#10;</xsl:text>
-            <xsl:text>  async_call_ready = false;&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;Glib::MainContext&gt; context  = mainloop-&gt;get_context();&#10;&#10;</xsl:text>
+            <!--<xsl:text>  Glib::RefPtr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>-->
 
             <!--  same as without vector-through-pipe request -->
 
@@ -386,7 +384,10 @@
             <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;&#10;</xsl:text>
 
             <xsl:text>  Glib::VariantContainerBase response;&#10;</xsl:text>
-
+            <xsl:text>  GMainContext *context = g_main_context_new ();&#10;</xsl:text>
+            <xsl:text>  GMainLoop    *loop    = g_main_loop_new (context, FALSE);&#10;</xsl:text>
+            <xsl:text>  g_main_context_push_thread_default (context);&#10;</xsl:text>
+            <xsl:text>  Glib::ustring exceptionMsg;&#10;</xsl:text>
             <!-- make asynchronous call -->
             <xsl:text>  connection-&gt;call(&#10;</xsl:text>
             <xsl:text>      get_object_path(), &#10;</xsl:text>
@@ -397,9 +398,9 @@
             <xsl:value-of select="@name"/>
             <xsl:text>",&#10;</xsl:text>
             <xsl:text>      query,&#10;</xsl:text>
-            <xsl:text>      sigc::bind(sigc::mem_fun(this, &amp;i</xsl:text> 
+            <xsl:text>      sigc::bind(sigc::bind(sigc::mem_fun(this, &amp;i</xsl:text> 
             <xsl:value-of select="$iface"/>
-            <xsl:text>_Proxy::AsyncCallReady), &amp;response),&#10;</xsl:text>
+            <xsl:text>_Proxy::AsyncCallReady), &amp;response, &amp;exceptionMsg), loop),&#10;</xsl:text>
             <xsl:text>      cancellable,&#10;</xsl:text>
             <xsl:text>      fd_list,&#10;</xsl:text>
             <xsl:text>      "de.gsi.saftlib",&#10;</xsl:text>
@@ -414,11 +415,23 @@
               <xsl:value-of select="@name"/>
               <xsl:text>);&#10;</xsl:text>
             </xsl:for-each>
-
             <xsl:text>&#10;</xsl:text>  
 
-            <xsl:text>  while(!context-&gt;iteration(true) || !async_call_ready){} // wait unitl the d-bus call was answered ("AsyncCallReady" was called)&#10;&#10;</xsl:text>
+            <!--<xsl:text>  mainloop-&gt;run(); // wait unitl the d-bus call was answered ("AsyncCallReady" was called)&#10;&#10;</xsl:text>-->
+            <xsl:text>  g_main_loop_run(loop);&#10;</xsl:text>
+            <xsl:text>  g_main_context_pop_thread_default (context);&#10;</xsl:text>
+            <xsl:text>  g_main_context_unref (context);&#10;</xsl:text>
+            <xsl:text>  g_main_loop_unref (loop);&#10;</xsl:text>
 
+
+            <xsl:text>  if (!exceptionMsg.empty()) {&#10;</xsl:text>
+            <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+              <xsl:text>    close(_vector_pipe_fd[0]);&#10;</xsl:text>
+              <xsl:text>    close(_vector_pipe_fd[1]);&#10;</xsl:text>
+            </xsl:if>
+            <xsl:text>    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, exceptionMsg);&#10;</xsl:text>
+            <xsl:text>  }&#10;</xsl:text>
+            
             <xsl:for-each select="arg[@direction='out' and substring(@type,1,1)='A']">
               <xsl:if test="count(../arg[@direction='out']) = 1">
                 <xsl:text>  </xsl:text>
@@ -483,13 +496,18 @@
       <!-- <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/> -->
       <xsl:text>void i</xsl:text><xsl:value-of select="$iface"/><xsl:text>_Proxy::</xsl:text>
       <!-- <xsl:value-of select="@name"/> -->
-      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, Glib::VariantContainerBase *result)</xsl:text>
+      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, GMainLoop *loop, Glib::VariantContainerBase *result, Glib::ustring *exceptionMsg)</xsl:text>
       <xsl:text>&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
+      <xsl:text>  try {&#10;</xsl:text>
       <xsl:text>    auto connection = get_connection();&#10;</xsl:text>
       <xsl:text>    connection-&gt;reference();&#10;</xsl:text>
       <xsl:text>    *result = connection-&gt;call_finish(async_result);&#10;</xsl:text>
-      <xsl:text>    async_call_ready = true;&#10;</xsl:text>
+      <xsl:text>  } catch( const Glib::Error&amp; ex) {&#10;</xsl:text>
+      <!-- To avoid throwing an exception in a signal handler -->
+      <xsl:text>    *exceptionMsg = ex.what();&#10;</xsl:text>
+      <xsl:text>  }&#10;</xsl:text>
+      <xsl:text>  g_main_loop_quit(loop);&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- Boiler-plate to retrieve a property -->
@@ -739,6 +757,12 @@
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0) or not(count(arg[@type='h'])=0)">
           <xsl:text>      Glib::RefPtr&lt;Gio::DBus::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
           <xsl:text>      GUnixFDList *fd_list  = g_dbus_message_get_unix_fd_list(message-&gt;gobj());&#10;</xsl:text>
+          <xsl:text>      if (!fd_list) { &#10;</xsl:text>
+          <xsl:text>        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
+          <xsl:text>      }&#10;</xsl:text>
+          <xsl:text>      if (g_unix_fd_list_get_length(fd_list) != 2) { &#10;</xsl:text>
+          <xsl:text>        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Wrong number of file descriptors received");&#10;</xsl:text>
+          <xsl:text>      }&#10;</xsl:text>
           <xsl:text>      int fd_index = 0;&#10;</xsl:text>
           <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
             <xsl:text>      gint _vector_pipe_fd0 = g_unix_fd_list_get(fd_list, fd_index++, 0);&#10;</xsl:text>
