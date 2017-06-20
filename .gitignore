@@ -3,6 +3,7 @@ saftd
 client
 saft-ctl
 fg-ctl
+mfg-ctl
 saft-io-ctl
 saft-pps-gen
 saft-ecpu-ctl

@@ -34,6 +34,8 @@
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
 #include "FunctionGenerator.h"
+#include "FunctionGeneratorImpl.h"
+#include "MasterFunctionGenerator.h"
 #include "eca_regs.h"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
@@ -858,24 +860,48 @@ void TimingReceiver::probe(OpenDevice& od)
       for (unsigned j = 0; j < num_channels; ++j)
         cycle.write(swi, EB_DATA32, SWI_DISABLE | j);
       cycle.close();
-      
+
+//			std::vector<Glib::RefPtr<FunctionGenerator>> functionGenerators;      
+			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGeneratorImplementations;      			
       // Create the objects to control the channels
       for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
-        if (!macros[j]) continue; // no hardware
+              if (!macros[j]) continue; // no hardware
+
+
         
         std::ostringstream spath;
         spath.imbue(std::locale("C"));
         spath << od.objectPath << "/fg_" << j;
         Glib::ustring path = spath.str();
         
-        FunctionGenerator::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, mbx_msi[0], mbx[0], (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
-        Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(args);
+        FunctionGeneratorImpl::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, mbx_msi[0], mbx[0], (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
 
+
+        std::shared_ptr<FunctionGeneratorImpl> fgImpl(new FunctionGeneratorImpl(args));
+				functionGeneratorImplementations.push_back(fgImpl);
+				
+				FunctionGenerator::ConstructorType fgargs = { path, tr.operator->(), fgImpl };
+        Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(fgargs);				
         std::ostringstream name;
         name.imbue(std::locale("C"));
-        name << "fg-" << (int)fg->getSCUbusSlot() << "-" << (int)fg->getDeviceNumber();
+        name << "fg-" << (int)fgImpl->getSCUbusSlot() << "-" << (int)fgImpl->getDeviceNumber();
         tr->otherStuff["FunctionGenerator"][name.str()] = fg;
+
       }
+      
+      // Create a master object to control all channels
+
+//      give references to existing fg objects
+//      provide single d-bus interface to all fg objects
+      std::ostringstream spath;
+      spath.imbue(std::locale("C"));
+      spath << od.objectPath << "/masterfg";
+      Glib::ustring path = spath.str();
+
+      MasterFunctionGenerator::ConstructorType args = { path, tr.operator->(), functionGeneratorImplementations };
+      Glib::RefPtr<MasterFunctionGenerator> fg = MasterFunctionGenerator::create(args);
+
+      tr->otherStuff["MasterFunctionGenerator"]["masterfg"] = fg;
     }
   }
 }
