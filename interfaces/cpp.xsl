@@ -352,7 +352,9 @@
             <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)"> <!-- in this case we only have 'h' and don't need to open a pipe -->
               <xsl:text>  gint _vector_pipe_fd[2];&#10;</xsl:text>
-              <xsl:text>  /*int r =*/ pipe(_vector_pipe_fd);&#10;</xsl:text>
+              <xsl:text>  if (pipe(_vector_pipe_fd) != 0) {&#10;</xsl:text>
+              <xsl:text>    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "cannot open pipe");&#10;</xsl:text>
+              <xsl:text>  }&#10;</xsl:text>
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[0]);&#10;</xsl:text>
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[1]);&#10;</xsl:text>
             </xsl:if>

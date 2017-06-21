@@ -516,13 +516,19 @@ Use Template specialization to make that work for vectors of simple types, as we
 template&lt;typename T&gt;
 void write_vector_to_pipe(int fd, const T &amp; std_vector) {
   guint32 size = std_vector.size();
-  write(fd, &amp;size, sizeof(guint32));
-  write(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back())));
+  if (write(fd, &amp;size, sizeof(guint32)) == -1) {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+  }
+  if (write(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back()))) == -1) {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+  }
 }
 template&lt;typename T&gt;
 void write_vector_to_pipe(int fd, const std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
   guint32 size = std_vector_vector.size();
-  write(fd, &amp;size, sizeof(guint32));
+  if (write(fd, &amp;size, sizeof(guint32)) == -1) {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+  }
   for (guint32 i = 0; i &lt; size; ++i) {
     write_vector_to_pipe(fd, std_vector_vector[i]);
   }
@@ -530,14 +536,20 @@ void write_vector_to_pipe(int fd, const std::vector&lt; std::vector&lt;T, std::a
 template&lt;typename T&gt;
 void read_vector_from_pipe(int fd, T &amp; std_vector) {
   guint32 size = std_vector.size();
-  read(fd, &amp;size, sizeof(guint32));
+  if (read(fd, &amp;size, sizeof(guint32)) == -1) {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+  }
   std_vector.resize(size);
-  read(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back())));      
+  if (read(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back()))) == -1) {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+  }
 }
 template&lt;typename T&gt;
 void read_vector_from_pipe(int fd, std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
   guint32 size = std_vector_vector.size();
-  read(fd, &amp;size, sizeof(guint32));
+  if (read(fd, &amp;size, sizeof(guint32)) == -1) {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+  }
   std_vector_vector.resize(size);
   for (guint32 i = 0; i &lt; size; ++i) {
     read_vector_from_pipe(fd, std_vector_vector[i]);
