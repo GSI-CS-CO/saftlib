@@ -17,46 +17,51 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
- 
- 
- 
-/*
-	d-bus interface for FunctionGenerator
-	uses FunctionGeneratorImpl
-*/
-
- 
-#ifndef FUNCTION_GENERATOR_H
-#define FUNCTION_GENERATOR_H
+#ifndef FUNCTION_GENERATOR_IMPL_H
+#define FUNCTION_GENERATOR_IMPL_H
 
 #include <deque>
-
-#include "interfaces/FunctionGenerator.h"
-#include "FunctionGeneratorImpl.h"
-#include "Owned.h"
 
 namespace saftlib {
 
 class TimingReceiver;
 
-class FunctionGenerator : public Owned, public iFunctionGenerator
+class FunctionGeneratorChannelAllocation : public Glib::Object
 {
+  public:
+    std::vector<int> indexes;
+};
+
+class FunctionGeneratorImpl : public Glib::Object
+{
+	friend class MasterFunctionGenerator;
 	
   public:
-    typedef FunctionGenerator_Service ServiceType;
+//    typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
       Glib::ustring objectPath;
       TimingReceiver* dev;
- 			std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
+      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
+      eb_address_t fgb;
+      eb_address_t swi;
+      etherbone::sdb_msi_device base;
+      sdb_device mbx;
+      unsigned num_channels;
+      unsigned buffer_size;
+      unsigned int index;
+      guint32 macro;
     };
+    FunctionGeneratorImpl(const ConstructorType& args);
+    ~FunctionGeneratorImpl();
     
-    static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
+    //static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
     
-    // iFunctionGenerator overrides
+
+
     void Arm();
     void Abort();
     guint64 ReadFillLevel();
-    bool AppendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
+    bool appendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
     void Flush();
     guint32 getVersion() const;
     unsigned char getSCUbusSlot() const;
@@ -68,23 +73,36 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     guint32 getStartTag() const;
     guint32 ReadExecutedParameterCount();
     void setStartTag(guint32 val);
+
+    Glib::ustring GetName();
+
+    sigc::signal<void, bool> signal_enabled;
+    sigc::signal<void, bool> signal_running;
+    sigc::signal<void, bool> signal_armed;
+    sigc::signal<void> signal_refill;
+    sigc::signal<void, guint64> signal_started;
+    sigc::signal<void, guint64, bool, bool, bool> signal_stopped;
+
+    void flush();
+    void arm();
+    void Reset();
+    
+    
     
   protected:
-    FunctionGenerator(const ConstructorType& args);
-    ~FunctionGenerator();
-    void Reset();
+    bool lowFill() const;
+    void irq_handler(eb_data_t msi);
+    void refill();
+    void releaseChannel();
+    void acquireChannel();
+
+    bool ResetFailed();
     void ownerQuit();
+
+            
+            
             
     TimingReceiver* dev;
-    
-    void on_fg_running(bool);
-    void on_fg_armed(bool);
-    void on_fg_enabled(bool);
-    void on_fg_refill();
-    void on_fg_started(guint64);
-    void on_fg_stopped(guint64, bool, bool, bool);
-
-    /*
     Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
     eb_address_t shm;
     eb_address_t swi;
@@ -104,11 +122,11 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     bool armed;
     bool running;
     bool abort;
+
     sigc::connection resetTimeout;
     guint32 startTag;
     unsigned executedParameterCount;
-    */
-   /* 
+    
     struct ParameterTuple {
       gint16 coeff_a;
       gint16 coeff_b;
@@ -122,14 +140,12 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     };
 
     unsigned mbx_slot;
+    eb_address_t mailbox_slot_address;
     
     // These 3 variables must be kept in sync:
     guint64 fillLevel;
-    unsigned filled; // # of fifo entries currently on LM32    
+    unsigned filled; // # of fifo entries currently on LM32
     std::deque<ParameterTuple> fifo;
-    */
-   	std::shared_ptr<FunctionGeneratorImpl> fgImpl;      
-    
 };
 
 }
