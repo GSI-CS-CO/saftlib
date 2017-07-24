@@ -261,10 +261,9 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
       }
       executedParameterCount = ReadExecutedParameterCount();
       running = false;
-
-      releaseChannel();
       signal_running.emit(running);
       signal_stopped.emit(time, abort, hardwareMacroUnderflow, microControllerUnderflow);
+      releaseChannel();
     }
   }
 }
