@@ -1,7 +1,7 @@
 dnl Set these variables before each release:
 m4_define(MAJOR,1)    dnl Increment if removed/changed properties/signals/methods since previous release
 m4_define(MINOR,1)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
-m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
+m4_define(REVISION,1) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
 m4_define(SONAME,3)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 AC_PREREQ(2.63)
@@ -36,8 +36,8 @@ AC_PATH_PROG([UNAME], [uname], [false])
 AC_PATH_PROG([LSB_RELEASE], [lsb_release], [false])
 AC_PATH_PROG([SW_VERS], [sw_vers], [false])
 
-AC_CACHE_CHECK([for operating system], [ac_cv_OS], [AS_CASE([`${UNAME} -s`], 
-  [Linux], [AS_IF(["${LSB_RELEASE}" -d -s 2>/dev/null >/dev/null], 
+AC_CACHE_CHECK([for operating system], [ac_cv_OS], [AS_CASE([`${UNAME} -s`],
+  [Linux], [AS_IF(["${LSB_RELEASE}" -d -s 2>/dev/null >/dev/null],
                   [os=`"${LSB_RELEASE}" -d -s`; os="${os%\"}"; ac_cv_OS="${os#\"}"],
                   [AC_MSG_ERROR([lsb_release is required])])],
   [Darwin], [AS_IF(["${SW_VERS}" 2>/dev/null >/dev/null],

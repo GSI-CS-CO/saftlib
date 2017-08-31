@@ -1,3 +1,9 @@
+saftlib (1.1.1-1) unstable; urgency=medium
+
+  * File descriptors will be closed after an exception from now on
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Tue, 31 Aug 2017 15:15:21 +0200
+
 saftlib (1.1.0-1) unstable; urgency=medium
 
   * Added master function generator and file descriptors
