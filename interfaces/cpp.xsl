@@ -835,6 +835,10 @@
         </xsl:if>
         <xsl:text>      } catch (...) {&#10;</xsl:text>
         <xsl:text>        connection.reset();&#10;</xsl:text>
+        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+          <xsl:text>        close(_vector_pipe_fd0);&#10;</xsl:text>
+          <xsl:text>        close(_vector_pipe_fd1);&#10;</xsl:text>
+        </xsl:if>
         <xsl:text>        rethrow("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>");&#10;</xsl:text>
