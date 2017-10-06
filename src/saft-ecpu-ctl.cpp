@@ -47,6 +47,7 @@ static void ecpu_help (void)
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
   std::cout << "  -c <id> <mask> <offset> <tag>: Create a new condition" << std::endl;
   std::cout << "  -d:                            Disown the created condition" << std::endl;
+  std::cout << "  -g                             Negative offset (new condition)" << std::endl;
   std::cout << "  -x:                            Destroy all unowned conditions" << std::endl;
   std::cout << "  -z                             Translate mask" << std::endl;
   std::cout << "  -l                             List conditions" << std::endl;
@@ -76,6 +77,7 @@ int main (int argc, char** argv)
   bool show_help       = false;
   bool translate_mask  = false;
   bool list_conditions = false;
+  bool negative_offset = false;
   guint64 eventID      = 0x0;
   guint64 eventMask    = 0x0;
   gint64  offset       = 0x0;
@@ -87,7 +89,7 @@ int main (int argc, char** argv)
   program = argv[0]; 
   
   /* Parse arguments */
-  while ((opt = getopt(argc, argv, "c:dxzlvh")) != -1)
+  while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
   {
     switch (opt)
     {
@@ -105,6 +107,7 @@ int main (int argc, char** argv)
         break;
       }
       case 'd': { disown_sink     = true; break; }
+      case 'g': { negative_offset = true; break; }
       case 'x': { destroy_sink    = true; break; }
       case 'z': { translate_mask  = true; break; }
       case 'l': { list_conditions = true; break; }
@@ -116,6 +119,8 @@ int main (int argc, char** argv)
     if (show_help) { break; }
   }
   
+  if (negative_offset)  { offset = -offset; }
+
   /* Plausibility check for arguments */
   if ((create_sink || disown_sink) && destroy_sink)
   {
