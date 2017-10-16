@@ -36,8 +36,12 @@ std::string tr_formatDate(guint64 time, guint32 pmode)
 std::string tr_formatActionEvent(guint64 id, guint32 pmode)
 {
   std::stringstream full;
-  string fmt = "";
-  int width = 0;
+  string            fmt = "";
+  int               width = 0;
+  int               fid=0;
+
+  fid = ((id >> 60) & 0xf);
+  
   
   if (pmode & PMODE_HEX) {full << std::hex << std::setfill('0'); width = 16; fmt = "0x";}
   if (pmode & PMODE_DEC) {full << std::dec << std::setfill('0'); width = 20; fmt = "0d";}
@@ -45,9 +49,18 @@ std::string tr_formatActionEvent(guint64 id, guint32 pmode)
     full << " FID: "   << fmt << std::setw(1) << ((id >> 60) & 0xf);
     full << " GID: "   << fmt << std::setw(4) << ((id >> 48) & 0xfff);
     full << " EVTNO: " << fmt << std::setw(4) << ((id >> 36) & 0xfff);
-    full << " SID: "   << fmt << std::setw(4) << ((id >> 24) & 0xfff);
-    full << " BPID: "  << fmt << std::setw(5) << ((id >> 10) & 0x3fff);
-    full << " RES: "   << fmt << std::setw(4) << (id & 0x3ff);
+    if (fid == 0) {
+      full << " FLAGS: N/A";
+      full << " SID: "   << fmt << std::setw(4) << ((id >> 24) & 0xfff);
+      full << " BPID: "  << fmt << std::setw(5) << ((id >> 10) & 0x3fff);
+      full << " RES: "   << fmt << std::setw(4) << (id & 0x3ff);
+    } // if fid==0
+    if (fid == 1) {
+      full << " FLAGS: " << fmt << std::setw(1) << ((id >> 32) & 0xf);
+      full << " SID: "   << fmt << std::setw(4) << ((id >> 20) & 0xfff);
+      full << " BPID: "  << fmt << std::setw(5) << ((id >> 6) & 0x3fff);
+      full << " RES: "   << fmt << std::setw(4) << (id & 0x3f);
+    } // if fid==0
   }
   else full << " EvtID: " << fmt << std::setw(width) << std::setfill('0') << id;
   
