@@ -434,23 +434,23 @@ std::vector<Glib::ustring> MasterFunctionGenerator::ReadNames()
 	return names;
 }
 
-
-std::vector<bool> MasterFunctionGenerator::ReadArmed()
+// vector<bool> as used in glib 2.50 requires c++14 
+std::vector<int> MasterFunctionGenerator::ReadArmed()
 {
-	std::vector<bool> armed_states;
+	std::vector<int> armed_states;
 	for (auto fg : activeFunctionGenerators)
 	{
-	  armed_states.push_back(fg->getArmed());
+	  armed_states.push_back(fg->getArmed() ? 1 : 0);
 	}
 	return armed_states;
 }
 
-std::vector<bool> MasterFunctionGenerator::ReadEnabled()
+std::vector<int> MasterFunctionGenerator::ReadEnabled()
 {
-	std::vector<bool> enabled_states;
+	std::vector<int> enabled_states;
 	for (auto fg : activeFunctionGenerators)
 	{
-	  enabled_states.push_back(fg->getEnabled());
+	  enabled_states.push_back(fg->getEnabled() ? 1 : 0);
 	}
 	return enabled_states;
 }
