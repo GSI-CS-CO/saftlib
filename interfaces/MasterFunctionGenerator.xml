@@ -263,14 +263,14 @@
       -->
     
     <method name="ReadArmed">
-      <arg direction="out" type="ab" name="armed_states"/>
+      <arg direction="out" type="ai" name="armed_states"/>
     </method>
 
     <!-- ReadEnabled: Read the enabled state of each active FG.
          @enabled_states:       State of each FG.
       -->
     <method name="ReadEnabled">
-      <arg direction="out" type="ab" name="enabled_states"/>
+      <arg direction="out" type="ai" name="enabled_states"/>
     </method>
 
   </interface>

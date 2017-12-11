@@ -462,8 +462,8 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
     
     Glib::RefPtr<Glib::MainContext> context  = loop->get_context();
 
-    vector<bool> enabled_gens = master_gen->ReadEnabled();
-    while (std::find(enabled_gens.begin(), enabled_gens.end(), true) != enabled_gens.end()) 
+    vector<int> enabled_gens = master_gen->ReadEnabled();
+    while (std::find(enabled_gens.begin(), enabled_gens.end(), 1) != enabled_gens.end()) 
     {      
       context->iteration(false);
       enabled_gens = master_gen->ReadEnabled();
