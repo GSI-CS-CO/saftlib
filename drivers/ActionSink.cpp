@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -32,12 +32,12 @@ namespace saftlib {
 
 ActionSink::ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev_, const Glib::ustring& name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
  : Owned(objectPath, destroy), dev(dev_), name(name_), channel(channel_), num(num_),
-   minOffset(-100000),  maxOffset(1000000000L), signalRate(100000000L),
+   minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(100000000L),
    overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
    overflowUpdate(0), actionUpdate(0), lateUpdate(0), earlyUpdate(0), conflictUpdate(0), delayedUpdate(0)
 {
   eb_data_t raw_latency, raw_offset_bits, raw_capacity, null;
-  
+
   etherbone::Cycle cycle;
   cycle.open(dev->getDevice());
   // Grab configuration
@@ -74,7 +74,7 @@ ActionSink::~ActionSink()
   earlyPending.disconnect();
   conflictPending.disconnect();
   delayedPending.disconnect();
-  
+
   // No need to recompile; done in TimingReceiver.cpp
 }
 
@@ -86,7 +86,7 @@ void ActionSink::ToggleActive()
   Conditions::iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     i->second->setRawActive(!i->second->getActive());
-  
+
   try {
     compile();
   } catch (...) {
@@ -95,7 +95,7 @@ void ActionSink::ToggleActive()
       i->second->setRawActive(!i->second->getActive());
     throw;
   }
-  
+
   // notify changes
   for (i = conditions.begin(); i != conditions.end(); ++i)
     i->second->Active(i->second->getActive());
@@ -198,7 +198,7 @@ guint64 ActionSink::getDelayedCount() const
 {
   return delayedCount;
 }
-    
+
 void ActionSink::setMinOffset(gint64 val)
 {
   ownerOnly();
@@ -278,7 +278,7 @@ void ActionSink::setDelayedCount(guint64 val)
 void ActionSink::receiveMSI(guint8 code)
 {
   guint64 time = dev->ReadRawCurrentTime();
-  
+
   switch (code) {
   case ECA_OVERFLOW:
     if (overflowUpdate > time || time - overflowUpdate >= signalRate) {
@@ -303,7 +303,7 @@ void ActionSink::receiveMSI(guint8 code)
     }
     break;
   case ECA_LATE:
-    if (lateUpdate > time || time - lateUpdate >= signalRate) { 
+    if (lateUpdate > time || time - lateUpdate >= signalRate) {
       updateLate(time);
     } else {
       latePending.disconnect(); // just to be safe
@@ -314,7 +314,7 @@ void ActionSink::receiveMSI(guint8 code)
     }
     break;
   case ECA_EARLY:
-    if (earlyUpdate > time || time - earlyUpdate >= signalRate) { 
+    if (earlyUpdate > time || time - earlyUpdate >= signalRate) {
       updateEarly(time);
     } else {
       earlyPending.disconnect(); // just to be safe
@@ -325,7 +325,7 @@ void ActionSink::receiveMSI(guint8 code)
     }
     break;
   case ECA_CONFLICT:
-    if (conflictUpdate > time || time - conflictUpdate >= signalRate) { 
+    if (conflictUpdate > time || time - conflictUpdate >= signalRate) {
       updateConflict(time);
     } else {
       conflictPending.disconnect(); // just to be safe
@@ -336,7 +336,7 @@ void ActionSink::receiveMSI(guint8 code)
     }
     break;
   case ECA_DELAYED:
-    if (delayedUpdate > time || time - delayedUpdate >= signalRate) { 
+    if (delayedUpdate > time || time - delayedUpdate >= signalRate) {
       updateDelayed(time);
     } else {
       delayedPending.disconnect(); // just to be safe
@@ -355,7 +355,7 @@ void ActionSink::receiveMSI(guint8 code)
 bool ActionSink::updateOverflow(guint64 time)
 {
   eb_data_t overflow;
-  
+
   etherbone::Cycle cycle;
   cycle.open(dev->getDevice());
   cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
@@ -363,9 +363,9 @@ bool ActionSink::updateOverflow(guint64 time)
   // reading OVERFLOW_COUNT clears the count and rearms the MSI
   cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
   cycle.close();
-  
+
   if (!overflow) clog << kLogErr << "Received OVERFLOW MSI, but OVERFLOW_COUNT was 0" << std::endl;
-  
+
   overflowCount += overflow;
   overflowUpdate = time;
   OverflowCount(overflowCount);
@@ -375,7 +375,7 @@ bool ActionSink::updateOverflow(guint64 time)
 bool ActionSink::updateAction(guint64 time)
 {
   eb_data_t valid;
-  
+
   etherbone::Cycle cycle;
   cycle.open(dev->getDevice());
   cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
@@ -383,9 +383,9 @@ bool ActionSink::updateAction(guint64 time)
   // reading VALID_COUNT clears the count and rearms the MSI
   cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &valid);
   cycle.close();
-  
+
   if (!valid) clog << kLogErr << "Received VALID MSI, but VALID_COUNT was 0" << std::endl;
-  
+
   actionCount += valid;
   actionUpdate = time;
   ActionCount(actionCount);
@@ -394,9 +394,9 @@ bool ActionSink::updateAction(guint64 time)
 
 ActionSink::Record ActionSink::fetchError(guint8 code)
 {
-  eb_data_t event_hi, event_lo, param_hi, param_lo, tag, tef, 
+  eb_data_t event_hi, event_lo, param_hi, param_lo, tag, tef,
             deadline_hi, deadline_lo, executed_hi, executed_lo, failed;
-  
+
   etherbone::Cycle cycle;
   cycle.open(dev->getDevice());
   cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
@@ -415,14 +415,14 @@ ActionSink::Record ActionSink::fetchError(guint8 code)
   // reading FAILED_COUNT clears the count, releases the record, and rearms the MSI
   cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET, EB_DATA32, &failed);
   cycle.close();
-  
+
   ActionSink::Record out;
   out.event    = guint64(event_hi)    << 32 | event_lo;
   out.param    = guint64(param_hi)    << 32 | param_lo;
   out.deadline = guint64(deadline_hi) << 32 | deadline_lo;
   out.executed = guint64(executed_hi) << 32 | executed_lo;
   out.count    = failed;
-  
+
   return out;
 }
 
@@ -497,7 +497,7 @@ void ActionSink::compile()
 Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor)
 {
   ownerOnly();
-  
+
   // sanity check arguments
   if (offset < minOffset || offset > maxOffset)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
@@ -505,24 +505,24 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "mask is not a prefix");
   if ((id & mask) != id)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
-  
+
   // Pick a random number
   std::pair<Conditions::iterator, bool> attempt;
   do attempt = conditions.insert(Conditions::value_type(random(), Glib::RefPtr<Condition>()));
   while (!attempt.second);
-  
+
   // Setup a destruction callback
   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &ActionSink::removeCondition), attempt.first);
-  
+
   std::ostringstream str;
   str.imbue(std::locale("C"));
   str << getObjectPath() << "/_" << attempt.first->first;
   Glib::ustring path = str.str();
-  
+
   Glib::RefPtr<Condition> condition;
   try {
-    Condition::Condition_ConstructorType args = { 
-      path, this, active, id, mask, offset, tagIsKey?attempt.first->first:tag, destroy 
+    Condition::Condition_ConstructorType args = {
+      path, this, active, id, mask, offset, tagIsKey?attempt.first->first:tag, destroy
     };
     condition = constructor(args);
     condition->initOwner(getConnection(), getSender());
@@ -532,7 +532,7 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
     destroy();
     throw;
   }
-  
+
   notify(active, !active);
   return condition->getObjectPath();
 }
