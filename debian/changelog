@@ -1,3 +1,9 @@
+saftlib (1.2.1-1) unstable; urgency=medium
+
+  * Every ActionSink will allow 1 second min. offset from now on
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Thu, 15 Feb 2017 09:17:13 +0200
+
 saftlib (1.2.0-1) unstable; urgency=medium
 
   * Changed MasterFunctionGenerator interface replacing vector<bool> with vector<int>
