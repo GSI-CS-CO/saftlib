@@ -508,6 +508,7 @@ bool FunctionGeneratorImpl::ResetFailed()
 void FunctionGeneratorImpl::Reset()
 {
   if (channel == -1) return; // nothing to abort
+  if (resetTimeout.connected()) return; // reset already in progress
   dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
   // expect disarm or started+stopped, but if not ... timeout:
   resetTimeout = Glib::signal_timeout().connect(
