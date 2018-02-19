@@ -1,3 +1,9 @@
+saftlib (1.2.2-1) unstable; urgency=medium
+
+  * Prevent an fg reset if a reset has already been started but not yet been acknowledged.
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Mon, 19 Feb 2017 15:36:20 +0200
+
 saftlib (1.2.1-1) unstable; urgency=medium
 
   * Every ActionSink will allow 1 second min. offset from now on
