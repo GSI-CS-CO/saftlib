@@ -323,17 +323,18 @@ Glib::ustring TimingReceiver::getGatewareVersion() const
   std::map< Glib::ustring, Glib::ustring >         gatewareInfo;
   std::map<Glib::ustring, Glib::ustring>::iterator j;
   Glib::ustring                                    rawVersion;
-  Glib::ustring::size_type                         pos;
+  Glib::ustring                                    findString = "-v";
+  int                                              pos = 0;
 
   gatewareInfo = getGatewareInfo();
-  j = gatewareInfo.begin();  // build date
-  j++;                       // gateware version
+  j = gatewareInfo.begin();        // build date
+  j++;                             // gateware version
   rawVersion = j->second;
-  pos = rawVersion.find("-v",0);
+  pos = rawVersion.find(findString, 0);
 
-  if ((pos <= 0) || (pos >= rawVersion.length())) return ("N/A");
+  if ((pos <= 0) || (((pos + findString.length()) >= rawVersion.length()))) return ("N/A");
 
-  pos = pos + 2;             // get rid of '-v'
+  pos = pos + findString.length(); // get rid of findString '-v'
   
   return(rawVersion.substr(pos, rawVersion.length() - pos));
 }
