@@ -73,6 +73,7 @@ static void help(void) {
   std::cout << "  -p                   used with command 'inject': <time> will be added to next full second (option -p) or current time (option unused)" << std::endl; 
   std::cout << "  -i                   display saftlib info" << std::endl;
   std::cout << "  -j                   list all attached devices (hardware)" << std::endl;
+  std::cout << "  -k                   display gateware version (hardware)" << std::endl;
   std::cout << "  -s                   display actual status of software actions" << std::endl;
   std::cout << std::endl;
   std::cout << "  inject <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
@@ -200,6 +201,7 @@ static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
     std::cout << "  device: " << i->second;
     std::cout << ", name: " << aDevice->getName();
     std::cout << ", path: " << aDevice->getEtherbonePath();
+    std::cout << ", gatewareVersion : " << aDevice->getGatewareVersion();
     std::cout << std::endl;
     gatewareInfo = aDevice->getGatewareInfo();
     std::cout << "  --gateware version info:" << std::endl;
@@ -211,6 +213,12 @@ static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
 } // displayInfoHW
 
 
+static void displayInfoGW(Glib::RefPtr<TimingReceiver_Proxy> receiver)
+{
+  std::cout << receiver->getGatewareVersion() << std::endl;
+} // displayInfoGW
+
+
 int main(int argc, char** argv)
 {
   // variables and flags for command line parsing
@@ -219,6 +227,7 @@ int main(int argc, char** argv)
   bool statusDisp     = false;
   bool infoDispSW     = false;
   bool infoDispHW     = false;
+  bool infoDispGW     = false;
   bool ppsAlign       = false;
   bool eventInject    = false;
   bool deviceAttach   = false;
@@ -251,7 +260,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxsvpijhf")) != -1) {
+  while ((opt = getopt(argc, argv, "dxsvpijkhf")) != -1) {
     switch (opt) {
     case 'f' :
       useFirstDev = true;
@@ -264,6 +273,9 @@ int main(int argc, char** argv)
       break;
     case 'j':
       infoDispHW = true;
+      break;
+    case 'k':
+      infoDispGW = true;
       break;
     case 'p':
       ppsAlign = true;
@@ -435,6 +447,8 @@ int main(int argc, char** argv)
     default :
       return 1;
     } //switch useFirstDevice;
+
+    if (infoDispGW) displayInfoGW(receiver);
     
     
     Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));

@@ -31,11 +31,19 @@
        SCUbusActionSink key, and as there is only one, it would be the 0th.
     -->
   <interface name="de.gsi.saftlib.TimingReceiver">
-  
+
+
     <!-- GatewareInfo: Key-value map of hardware build information -->
     <property name="GatewareInfo" type="a{ss}" access="read">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
+
+    <!-- GatewareVersion: Hardware build version
+
+         Returns "major.minor.tiny" if version is valid (or "N/A" if not available)
+    -->
+    <property name="GatewareVersion" type="s" access="read"/>
+
     
     <!-- Locked: The timing receiver is locked to the timing grandmaster.
          Upon power-up it takes approximately one minute until the timing

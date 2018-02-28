@@ -25,6 +25,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <map>
 
 #include "RegisteredObject.h"
 #include "Driver.h"
@@ -52,6 +53,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    device(args.device),
    name(args.name),
    etherbonePath(args.etherbonePath),
+   
    base(args.base.sdb_component.addr_first),
    stream(args.stream),
    watchdog(args.watchdog),
@@ -314,6 +316,27 @@ void TimingReceiver::setupGatewareInfo(guint32 address)
 std::map< Glib::ustring, Glib::ustring > TimingReceiver::getGatewareInfo() const
 {
   return info;
+}
+
+Glib::ustring TimingReceiver::getGatewareVersion() const
+{
+  std::map< Glib::ustring, Glib::ustring >         gatewareInfo;
+  std::map<Glib::ustring, Glib::ustring>::iterator j;
+  Glib::ustring                                    rawVersion;
+  Glib::ustring                                    findString = "-v";
+  int                                              pos = 0;
+
+  gatewareInfo = getGatewareInfo();
+  j = gatewareInfo.begin();        // build date
+  j++;                             // gateware version
+  rawVersion = j->second;
+  pos = rawVersion.find(findString, 0);
+
+  if ((pos <= 0) || (((pos + findString.length()) >= rawVersion.length()))) return ("N/A");
+
+  pos = pos + findString.length(); // get rid of findString '-v'
+  
+  return(rawVersion.substr(pos, rawVersion.length() - pos));
 }
 
 bool TimingReceiver::getLocked() const
