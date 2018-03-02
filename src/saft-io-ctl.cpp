@@ -437,7 +437,7 @@ static void io_help (void)
   std::cout << "  -u:                                            Disown the created condition" << std::endl;
   std::cout << "  -x:                                            Destroy all unowned conditions" << std::endl;
   std::cout << "  -f:                                            Flip active/inactive conditions" << std::endl;
-  std::cout << "  -z:                                             Translate mask" << std::endl;
+  std::cout << "  -z:                                            Translate mask" << std::endl;
   std::cout << "  -l:                                            List all conditions" << std::endl;
   std::cout << std::endl;
   std::cout << "  -v:                                            Switch to verbose mode" << std::endl;
