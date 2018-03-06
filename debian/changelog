@@ -1,3 +1,9 @@
+saftlib (1.2.5-1) unstable; urgency=medium
+
+  * Changed event ID to FID=1 for saft-pps-gen
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Tue, 06 Mar 2017 16:41:25 +0200
+
 saftlib (1.2.4-1) unstable; urgency=medium
 
   * Improved saft-io-ctl
