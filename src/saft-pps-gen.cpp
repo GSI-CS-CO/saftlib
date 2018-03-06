@@ -6,7 +6,7 @@
 /* ==================================================================================================== */
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
-#define ECA_EVENT_ID	UINT64_C(0xffff000000000000) /* FID=MAX & GRPID=MAX */
+#define ECA_EVENT_ID	UINT64_C(0x1fff000000000000) /* FID=1 & GRPID=MAX */
 #define ECA_EVENT_MASK	UINT64_C(0xffff000000000000)
 
 /* Includes */
