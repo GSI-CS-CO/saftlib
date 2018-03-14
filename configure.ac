@@ -1,7 +1,7 @@
 dnl Set these variables before each release:
 m4_define(MAJOR,1)    dnl Increment if removed/changed properties/signals/methods since previous release
-m4_define(MINOR,2)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
-m4_define(REVISION,5) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
+m4_define(MINOR,3)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
+m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
 m4_define(SONAME,3)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 AC_PREREQ(2.63)
