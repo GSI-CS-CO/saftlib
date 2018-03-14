@@ -1,0 +1,13 @@
+# Enable C++ support
+language: cpp
+
+# Compiler selection
+compiler:
+- gcc
+
+# Build steps
+script:
+./autogen
+./configure
+make
+
