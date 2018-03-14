@@ -7,6 +7,7 @@ saft-mfg-ctl
 saft-io-ctl
 saft-pps-gen
 saft-ecpu-ctl
+saft-scu-ctl
 saft-clk-gen
 saft-dm
 saft-gmt-check
