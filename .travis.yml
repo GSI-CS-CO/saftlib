@@ -1,0 +1,11 @@
+# Enable C++ support
+language: cpp
+
+# Compiler selection
+compiler:
+- gcc
+
+script: 
+- ./autogen.sh
+- ./configure
+- make

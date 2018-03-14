@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/GSI-CS-CO/saftlib.svg?branch=master)](https://travis-ci.org/GSI-CS-CO/saftlib)
+
 Saftlib - Simplified API for Timing
 
 GSI timing receivers include a large collection of slave devices. Saftlib
