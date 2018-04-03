@@ -273,5 +273,11 @@
       <arg direction="out" type="ai" name="enabled_states"/>
     </method>
 
+    <!-- ReadRunning: Read the running state of each active FG.
+         @running_states:       State of each FG.
+      -->
+    <method name="ReadRunning">
+      <arg direction="out" type="ai" name="running_states"/>
+    </method>
   </interface>
 </node>

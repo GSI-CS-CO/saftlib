@@ -455,6 +455,17 @@ std::vector<int> MasterFunctionGenerator::ReadEnabled()
 	return enabled_states;
 }
 
+std::vector<int> MasterFunctionGenerator::ReadRunning()
+{
+	std::vector<int> running_states;
+	for (auto fg : activeFunctionGenerators)
+	{
+	  running_states.push_back(fg->getRunning() ? 1 : 0);
+	}
+	return running_states;
+}
+
+
 
 void MasterFunctionGenerator::ResetActiveFunctionGenerators()
 {

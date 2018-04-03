@@ -61,6 +61,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     std::vector<Glib::ustring> ReadNames();
     std::vector<int> ReadArmed();
     std::vector<int> ReadEnabled();
+    std::vector<int> ReadRunning();
     void ResetActiveFunctionGenerators();
     void SetActiveFunctionGenerators(const std::vector<Glib::ustring>&);
 
