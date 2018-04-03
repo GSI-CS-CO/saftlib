@@ -32,13 +32,6 @@
 
 
 
-// todo: testing only, remove
-#include <thread>
-#include <future>
-#include <sys/syscall.h>
-#include <sys/types.h>
-
-
 namespace saftlib {
 
 MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
@@ -112,17 +105,6 @@ void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImp
   {
     Enabled(fg->GetName(), enabled);
   }
-	// optional: signal when all/some/no fgs are enabled
-/*
-  bool new_enabled = getEnabled();
-	
-	// signal only on change
-	if (new_enabled != enabled)
-	{
-		enabled = new_enabled;
-		Enabled(enabled);
-	}
-*/
 }
 
 void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time)
@@ -145,7 +127,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
 	bool all_stopped=true;
   for (auto fg : activeFunctionGenerators)
 	{
-    all_stopped &= !fg->getEnabled();
+    all_stopped &= !fg->getRunning();
 	}
   if (all_stopped)
   {
@@ -193,74 +175,17 @@ bool MasterFunctionGenerator::AppendParameterSets(
 		}
 	}
 
-
-	// Testing - multithreaded loading
-
-
-/*
-	std::vector<std::thread> loadthreads(fgcount);
-	std::vector<std::future<bool>> futures(fgcount);
-	for (std::size_t i=0;i<fgcount;i+=2)
-	{
-		futures[i] = std::async(std::launch::deferred, &FunctionGenerator::appendParameterSet,activeFunctionGenerators[i%200],coeff_a[i], coeff_b[i], coeff_c[i], step[i], freq[i], shift_a[i], shift_b[i], arm);
-		futures[i+1] = std::async(std::launch::deferred, &FunctionGenerator::appendParameterSet,activeFunctionGenerators[(i+1)%200],coeff_a[i+1], coeff_b[i+1], coeff_c[i+1], step[i+1], freq[i+1], shift_a[i+1], shift_b[i+1],arm);
-		
-
-		loadthreads[i] = std::thread(&FunctionGenerator::appendParameterSet,activeFunctionGenerators[i%2],coeff_a[i], coeff_b[i], coeff_c[i], step[i], freq[i], shift_a[i], shift_b[i], arm);
-		loadthreads[i+1] = std::thread(&FunctionGenerator::appendParameterSet,activeFunctionGenerators[(i+1)%2],coeff_a[i+1], coeff_b[i+1], coeff_c[i+1], step[i+1], freq[i+1], shift_a[i+1], shift_b[i+1], arm);
-		loadthreads[i].join();
-		loadthreads[i+1].join();
-		
-	}
-	
-		for (std::size_t i=0;i<fgcount;i+=2)
-		{
-			futures[i].get();
-		}
-	*/
-	/*
-	for (std::size_t i=0;i<fgcount;++i)
-	{
-		//bool lowfill = activeFunctionGenerators[i%2]->appendParameterSet(coeff_a[i], coeff_b[i], coeff_c[i], step[i], freq[i], shift_a[i], shift_b[i], arm);	
-
-		loadthreads[i] = std::thread(&FunctionGenerator::appendParameterSet,activeFunctionGenerators[i%2],coeff_a[i], coeff_b[i], coeff_c[i], step[i], freq[i], shift_a[i], shift_b[i], arm);
-	}
-	
-	for (auto& t : loadthreads)
-	{
-		t.join();
-	}
-*/
-
 	// if requested wait for all fgs to arm
 	if (arm)
   {
     arm_all();
     // wait for arm response ...
-    // cannot block here, interrupts arrive in the same thread 
-    // Iteration/Polling Version
     if (wait_for_arm_ack)
     {
-      Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
-      Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
-      bool all_armed=false;
-      do
-      {
-        all_armed=true;
-        for (auto fg : activeFunctionGenerators)
-        {
-          if (fg->fillLevel>0)
-            all_armed &= fg->armed;
-        }
-        // yield to allow saftd to pass arm interrupts through
-        // TODO: check safety of this in light of file descriptor multithreading problem
-        // saftd has only 1 thread
-        // is this taking someone's events? generate a new context?
-        context->iteration(false);
-      } while (all_armed == false) ;
+      waitForCondition(std::bind(&MasterFunctionGenerator::all_armed, this), 2000);
     }
   }
-	return lowFill;
+  return lowFill;
 }
 
 
@@ -340,28 +265,14 @@ void MasterFunctionGenerator::reset_all()
 		fg->Reset();
 	}
 }
-//TODO: timeout
+
 void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
 {
   ownerOnly();
   reset_all();
   if (wait_for_abort_ack)
   {
-    Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
-    Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
-
-    bool all_stopped=false;
-    do
-    {
-      all_stopped=true;
-      for (auto fg : activeFunctionGenerators)
-      {
-        all_stopped &= !fg->running;
-      }
-      
-      // allow interrupts to be processed
-      context->iteration(false);
-    } while (all_stopped == false) ;
+    waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
   }
 }
 
@@ -455,6 +366,15 @@ std::vector<int> MasterFunctionGenerator::ReadEnabled()
 	return enabled_states;
 }
 
+std::vector<int> MasterFunctionGenerator::ReadRunning()
+{
+	std::vector<int> running_states;
+	for (auto fg : activeFunctionGenerators)
+	{
+	  running_states.push_back(fg->getRunning() ? 1 : 0);
+	}
+	return running_states;
+}
 
 void MasterFunctionGenerator::ResetActiveFunctionGenerators()
 {
@@ -490,6 +410,57 @@ void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<Glib
     activeFunctionGenerators.push_back(*fg_it);
   }
 }
+
+
+bool MasterFunctionGenerator::WaitTimeout()
+{
+  clog << "MasterFG Timed out waiting" << std::endl;
+  waitTimeout.disconnect();
+  return false;
+}
+
+bool MasterFunctionGenerator::all_armed()
+{
+  bool all_armed=true;
+  for (auto fg : activeFunctionGenerators)
+  {
+    if (fg->fillLevel>0)
+      all_armed &= fg->armed;
+  }
+  return all_armed;
+}
+
+bool MasterFunctionGenerator::all_stopped()
+{
+  bool all_stopped=false;
+  all_stopped=true;
+  for (auto fg : activeFunctionGenerators)
+  {
+    all_stopped &= !fg->running;
+  }
+  return all_stopped; 
+}
+
+void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
+{
+  if (waitTimeout.connected()) {
+    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
+  }
+  waitTimeout = Glib::signal_timeout().connect(
+      sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
+
+  Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
+  Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
+  do
+  {
+    context->iteration(false);
+    if (!waitTimeout.connected()) {
+      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
+    }
+  } while (condition() == false) ;
+  waitTimeout.disconnect();
+}
+
 
 
 }

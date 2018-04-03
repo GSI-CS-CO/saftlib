@@ -61,6 +61,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     std::vector<Glib::ustring> ReadNames();
     std::vector<int> ReadArmed();
     std::vector<int> ReadEnabled();
+    std::vector<int> ReadRunning();
     void ResetActiveFunctionGenerators();
     void SetActiveFunctionGenerators(const std::vector<Glib::ustring>&);
 
@@ -81,12 +82,18 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg);
 
 
+    bool all_armed();
+    bool all_stopped();
+    bool WaitTimeout();
+    void waitForCondition(std::function<bool()> condition, int timeout_ms);
+
     TimingReceiver* dev;
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> allFunctionGenerators;      
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> activeFunctionGenerators;      
     guint32 startTag;
     bool generateIndividualSignals;
-    
+    sigc::connection waitTimeout; 
+
     struct ParameterTuple {
       gint16 coeff_a;
       gint16 coeff_b;
