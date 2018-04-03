@@ -1,3 +1,9 @@
+saftlib (1.3.1-1) unstable; urgency=medium
+
+  * Added a function ReadRunning to return the Running state of all FGs
+
+ -- Wesley W. Terpstra <terpstra@debian.org>  Tue, 03 Apr 2018 13:55:22 +0200
+
 saftlib (1.3.0-1) unstable; urgency=medium
 
   * Added SCUBus tool (saft-scu-ctl)
