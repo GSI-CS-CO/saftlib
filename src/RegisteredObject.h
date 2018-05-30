@@ -35,7 +35,7 @@ class RegisteredObject : public T
   public:
     static Glib::RefPtr< RegisteredObject<T> > create(const Glib::ustring& object_path, const typename T::ConstructorType& args);
     
-    const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const;
+    const Glib::RefPtr<G10::BDus::Connection>& getConnection() const;
     const Glib::ustring& getSender() const;
     
   protected:
@@ -59,7 +59,7 @@ RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path, const ty
 }
 
 template <typename T>
-const Glib::RefPtr<Gio::DBus::Connection>& RegisteredObject<T>::getConnection() const
+const Glib::RefPtr<G10::BDus::Connection>& RegisteredObject<T>::getConnection() const
 {
   return service.getConnection();
 }
@@ -78,7 +78,7 @@ void RegisteredObject<T>::rethrow(const char *method) const
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;
     str << method << ": " << e;
-    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
+    throw G10::BDus::Error(G10::BDus::Error::IO_ERROR, str.str().c_str());
   }
 }
 

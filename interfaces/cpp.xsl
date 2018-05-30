@@ -42,8 +42,8 @@
     <xsl:text>_Proxy::create(&#10;</xsl:text>
     <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
-    <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
-    <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;{&#10;</xsl:text>
+    <xsl:text>  G10::BDus::BusType bus_type,&#10;</xsl:text>
+    <xsl:text>  G10::BDus::ProxyFlags flags)&#10;{&#10;</xsl:text>
     <xsl:text>  return Glib::RefPtr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt;(new </xsl:text>
@@ -57,8 +57,8 @@
     <xsl:text>_Proxy(&#10;</xsl:text>
     <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
-    <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
-    <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;</xsl:text>
+    <xsl:text>  G10::BDus::BusType bus_type,&#10;</xsl:text>
+    <xsl:text>  G10::BDus::ProxyFlags flags)&#10;</xsl:text>
     <xsl:text>: </xsl:text>
     <xsl:for-each select="interface">
       <xsl:if test="position()>1">,&#10;  </xsl:if>
@@ -127,7 +127,7 @@
     <!-- Register all interfaces -->
     <xsl:text>void </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path)&#10;{&#10;</xsl:text>
+    <xsl:text>_Service::register_self(const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; con, const Glib::ustring&amp; path)&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -169,7 +169,7 @@
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>.getSender();&#10;</xsl:text>
     </xsl:for-each>
-    <xsl:text>  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>  throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <!-- getObjectPath method -->
@@ -183,11 +183,11 @@
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>.getObjectPath();&#10;</xsl:text>
     </xsl:for-each>
-    <xsl:text>  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>  throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <!-- getConnection method -->
-    <xsl:text>const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; </xsl:text>
+    <xsl:text>const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
@@ -197,7 +197,7 @@
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>.getConnection();&#10;</xsl:text>
     </xsl:for-each>
-    <xsl:text>  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>  throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <xsl:text>}&#10;</xsl:text>
@@ -346,21 +346,21 @@
           </xsl:when>
           <xsl:otherwise> <!-- there are 'A' or 'h' types -->
             <xsl:text>&#10;{&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection = get_connection();&#10;</xsl:text>
+            <xsl:text>  Glib::RefPtr&lt;G10::BDus::Connection&gt; connection = get_connection();&#10;</xsl:text>
             <xsl:text>  connection-&gt;reference();&#10;</xsl:text>
             <xsl:text>  Glib::RefPtr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
             <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)"> <!-- in this case we only have 'h' and don't need to open a pipe -->
               <xsl:text>  gint _vector_pipe_fd[2];&#10;</xsl:text>
               <xsl:text>  if (pipe(_vector_pipe_fd) != 0) {&#10;</xsl:text>
-              <xsl:text>    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "cannot open pipe");&#10;</xsl:text>
+              <xsl:text>    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "cannot open pipe");&#10;</xsl:text>
               <xsl:text>  }&#10;</xsl:text>
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[0]);&#10;</xsl:text>
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[1]);&#10;</xsl:text>
             </xsl:if>
             <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt; out_fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:text>  int timeout_msec = -1;&#10;</xsl:text> 
-            <xsl:text>  Gio::DBus::CallFlags flags = Gio::DBus::CALL_FLAGS_NONE;&#10;</xsl:text>
+            <xsl:text>  G10::BDus::CallFlags flags = G10::BDus::CALL_FLAGS_NONE;&#10;</xsl:text>
             <xsl:text>  Glib::VariantType  reply_type;&#10;</xsl:text>
             <!--<xsl:text>  Glib::RefPtr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>-->
 
@@ -431,7 +431,7 @@
               <xsl:text>    close(_vector_pipe_fd[0]);&#10;</xsl:text>
               <xsl:text>    close(_vector_pipe_fd[1]);&#10;</xsl:text>
             </xsl:if>
-            <xsl:text>    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, exceptionMsg);&#10;</xsl:text>
+            <xsl:text>    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, exceptionMsg);&#10;</xsl:text>
             <xsl:text>  }&#10;</xsl:text>
             
             <xsl:for-each select="arg[@direction='out' and substring(@type,1,1)='A']">
@@ -494,23 +494,6 @@
         </xsl:choose>
       </xsl:for-each>
 
-      <!-- AsyncCallReady callback method implementation -->
-      <!-- <xsl:variable name="void" select="count(arg[@direction='out']) != 1"/> -->
-      <xsl:text>void i</xsl:text><xsl:value-of select="$iface"/><xsl:text>_Proxy::</xsl:text>
-      <!-- <xsl:value-of select="@name"/> -->
-      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, GMainLoop *loop, Glib::VariantContainerBase *result, Glib::ustring *exceptionMsg)</xsl:text>
-      <xsl:text>&#10;</xsl:text>
-      <xsl:text>{&#10;</xsl:text>
-      <xsl:text>  try {&#10;</xsl:text>
-      <xsl:text>    auto connection = get_connection();&#10;</xsl:text>
-      <xsl:text>    connection-&gt;reference();&#10;</xsl:text>
-      <xsl:text>    *result = connection-&gt;call_finish(async_result);&#10;</xsl:text>
-      <xsl:text>  } catch( const Glib::Error&amp; ex) {&#10;</xsl:text>
-      <!-- To avoid throwing an exception in a signal handler -->
-      <xsl:text>    *exceptionMsg = ex.what();&#10;</xsl:text>
-      <xsl:text>  }&#10;</xsl:text>
-      <xsl:text>  g_main_loop_quit(loop);&#10;</xsl:text>
-      <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- Boiler-plate to retrieve a property -->
       <xsl:text>void i</xsl:text>
@@ -522,8 +505,8 @@
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name));&#10;</xsl:text>
-      <xsl:text>  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection =&#10;</xsl:text>
-      <xsl:text>    Glib::RefPtr&lt;Gio::DBus::Connection&gt;::cast_const(get_connection());&#10;</xsl:text>
+      <xsl:text>  Glib::RefPtr&lt;G10::BDus::Connection&gt; connection =&#10;</xsl:text>
+      <xsl:text>    Glib::RefPtr&lt;G10::BDus::Connection&gt;::cast_const(get_connection());&#10;</xsl:text>
       <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; result =&#10;</xsl:text>
       <xsl:text>    connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", &#10;</xsl:text>
@@ -563,7 +546,7 @@
       <xsl:text>"));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));&#10;</xsl:text>
-      <xsl:text>  Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection = get_connection();&#10;</xsl:text>
+      <xsl:text>  Glib::RefPtr&lt;G10::BDus::Connection&gt; connection = get_connection();&#10;</xsl:text>
       <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
       <xsl:text>  connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set",&#10;</xsl:text>
       <xsl:text>    Glib::VariantContainerBase::create_tuple(params), get_name());&#10;}&#10;&#10;</xsl:text>
@@ -588,7 +571,7 @@
       <xsl:text>  const MapChangedProperties&amp; changed_properties,&#10;</xsl:text>
       <xsl:text>  const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties)&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
-      <xsl:text>  Gio::DBus::Proxy::on_properties_changed(changed_properties, invalidated_properties);&#10;</xsl:text>
+      <xsl:text>  G10::BDus::Proxy::on_properties_changed(changed_properties, invalidated_properties);&#10;</xsl:text>
       <xsl:text>  for (MapChangedProperties::const_iterator i = changed_properties.begin(); i != changed_properties.end(); ++i) {&#10;</xsl:text>
       <xsl:text>    </xsl:text>
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
@@ -619,7 +602,7 @@
       <xsl:text>  const Glib::ustring&amp; signal_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; parameters)&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
-      <xsl:text>  Gio::DBus::Proxy::on_signal(sender_name, signal_name, parameters);&#10;</xsl:text>
+      <xsl:text>  G10::BDus::Proxy::on_signal(sender_name, signal_name, parameters);&#10;</xsl:text>
       <xsl:text>  </xsl:text>
       <xsl:for-each select="signal">
         <xsl:text>if (signal_name == "</xsl:text>
@@ -657,12 +640,12 @@
       <xsl:text>_Proxy::i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy(&#10;</xsl:text>
-      <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
+      <xsl:text>  G10::BDus::BusType bus_type,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; interface_name,&#10;</xsl:text>
-      <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;</xsl:text>
-      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, Glib::RefPtr&lt;Gio::DBus::InterfaceInfo&gt;(), flags)&#10;</xsl:text>
+      <xsl:text>  G10::BDus::ProxyFlags flags)&#10;</xsl:text>
+      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, Glib::RefPtr&lt;G10::BDus::InterfaceInfo&gt;(), flags)&#10;</xsl:text>
       <xsl:text>{&#10;}&#10;&#10;</xsl:text>
 
       <!-- Create -->
@@ -673,8 +656,8 @@
       <xsl:text>_Proxy::create(&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
-      <xsl:text>  Gio::DBus::BusType bus_type,&#10;</xsl:text>
-      <xsl:text>  Gio::DBus::ProxyFlags flags)&#10;{&#10;</xsl:text>
+      <xsl:text>  G10::BDus::BusType bus_type,&#10;</xsl:text>
+      <xsl:text>  G10::BDus::ProxyFlags flags)&#10;{&#10;</xsl:text>
       <xsl:text>  return Glib::RefPtr&lt;i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy&gt;(new i</xsl:text>
@@ -687,10 +670,10 @@
       <!-- Register method -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Service::register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path)&#10;{&#10;</xsl:text>
-      <xsl:text>  static Glib::RefPtr&lt;Gio::DBus::NodeInfo&gt; introspection;&#10;</xsl:text>
+      <xsl:text>_Service::register_self(const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path)&#10;{&#10;</xsl:text>
+      <xsl:text>  static Glib::RefPtr&lt;G10::BDus::NodeInfo&gt; introspection;&#10;</xsl:text>
       <xsl:text>  if (!introspection)&#10;</xsl:text>
-      <xsl:text>    introspection = Gio::DBus::NodeInfo::create_for_xml(xml);&#10;</xsl:text>
+      <xsl:text>    introspection = G10::BDus::NodeInfo::create_for_xml(xml);&#10;</xsl:text>
       <xsl:text>  guint id = connection->register_object(&#10;</xsl:text>
       <xsl:text>    object_path, introspection->lookup_interface(), interface_vtable);&#10;</xsl:text>
       <xsl:text>  exports.push_back(Export(connection, object_path, id));&#10;</xsl:text>
@@ -717,7 +700,7 @@
       <xsl:text>const Glib::ustring&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getSender() const&#10;{&#10;</xsl:text>
-      <xsl:text>  if (!isActive()) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
       <xsl:text>  return *sender;&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
@@ -725,15 +708,15 @@
       <xsl:text>const Glib::ustring&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getObjectPath() const&#10;{&#10;</xsl:text>
-      <xsl:text>  if (!isActive()) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
       <xsl:text>  return *objectPath;&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- getConnection method -->
-      <xsl:text>const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; i</xsl:text>
+      <xsl:text>const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
-      <xsl:text>  if (!isActive()) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
       <xsl:text>  return connection;&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
@@ -741,11 +724,11 @@
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_method_call(&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp;  sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; parameters,&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
+      <xsl:text>  const Glib::RefPtr&lt;G10::BDus::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
       <xsl:text>  connection = connection_;&#10;</xsl:text>
@@ -757,13 +740,13 @@
         <xsl:text>    try {&#10;</xsl:text>
         <!-- take a fildescriptor pair from fd_list in case there is any type 'A' present -->
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0) or not(count(arg[@type='h'])=0)">
-          <xsl:text>      Glib::RefPtr&lt;Gio::DBus::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
+          <xsl:text>      Glib::RefPtr&lt;G10::BDus::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
           <xsl:text>      GUnixFDList *fd_list  = g_dbus_message_get_unix_fd_list(message-&gt;gobj());&#10;</xsl:text>
           <xsl:text>      if (!fd_list) { &#10;</xsl:text>
-          <xsl:text>        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
+          <xsl:text>        throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
           <xsl:text>      }&#10;</xsl:text>
           <xsl:text>      if (g_unix_fd_list_get_length(fd_list) != 2) { &#10;</xsl:text>
-          <xsl:text>        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Wrong number of file descriptors received");&#10;</xsl:text>
+          <xsl:text>        throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Wrong number of file descriptors received");&#10;</xsl:text>
           <xsl:text>      }&#10;</xsl:text>
           <xsl:text>      int fd_index = 0;&#10;</xsl:text>
           <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
@@ -868,14 +851,14 @@
           <xsl:text>      close(_vector_pipe_fd0);&#10;</xsl:text>
           <xsl:text>      close(_vector_pipe_fd1);&#10;</xsl:text>
         </xsl:if>
-        <xsl:text>    } catch (const Gio::DBus::Error&amp; error) {&#10;</xsl:text>
+        <xsl:text>    } catch (const G10::BDus::Error&amp; error) {&#10;</xsl:text>
         <xsl:text>      invocation->return_error(error);&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
       <xsl:text>{&#10;</xsl:text>
       <xsl:text>    connection.reset();&#10;</xsl:text>
-      <xsl:text>    Gio::DBus::Error error(Gio::DBus::Error::UNKNOWN_METHOD, "No such method.");&#10;</xsl:text>
+      <xsl:text>    G10::BDus::Error error(G10::BDus::Error::UNKNOWN_METHOD, "No such method.");&#10;</xsl:text>
       <xsl:text>    invocation->return_error(error);&#10;</xsl:text>
       <xsl:text>  }&#10;}&#10;&#10;</xsl:text>
 
@@ -884,7 +867,7 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_get_property(&#10;</xsl:text>
       <xsl:text>  Glib::VariantBase&amp; property,&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
@@ -917,7 +900,7 @@
       <xsl:text>bool i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_set_property(&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantBase&amp; value)&#10;{&#10;</xsl:text>

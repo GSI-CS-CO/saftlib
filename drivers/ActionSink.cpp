@@ -216,7 +216,7 @@ void ActionSink::setMaxOffset(gint64 val)
 void ActionSink::setMostFull(guint16 val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set MostFull to 0");
+  if (val != 0) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "can only set MostFull to 0");
   dev->resetMostFull(channel);
 }
 
@@ -230,7 +230,7 @@ void ActionSink::setSignalRate(guint64 val)
 void ActionSink::setOverflowCount(guint64 val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
+  if (val != 0) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
   overflowCount = 0;
   OverflowCount(overflowCount);
 }
@@ -238,7 +238,7 @@ void ActionSink::setOverflowCount(guint64 val)
 void ActionSink::setActionCount(guint64 val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set ActionCount to 0");
+  if (val != 0) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "can only set ActionCount to 0");
   actionCount = 0;
   ActionCount(actionCount);
 }
@@ -246,7 +246,7 @@ void ActionSink::setActionCount(guint64 val)
 void ActionSink::setLateCount(guint64 val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set LateCount to 0");
+  if (val != 0) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "can only set LateCount to 0");
   lateCount = 0;
   LateCount(lateCount);
 }
@@ -254,7 +254,7 @@ void ActionSink::setLateCount(guint64 val)
 void ActionSink::setEarlyCount(guint64 val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
+  if (val != 0) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
   earlyCount = 0;
   EarlyCount(earlyCount);
 }
@@ -262,7 +262,7 @@ void ActionSink::setEarlyCount(guint64 val)
 void ActionSink::setConflictCount(guint64 val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
+  if (val != 0) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
   conflictCount = 0;
   ConflictCount(conflictCount);
 }
@@ -270,7 +270,7 @@ void ActionSink::setConflictCount(guint64 val)
 void ActionSink::setDelayedCount(guint64 val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
+  if (val != 0) throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
   delayedCount = 0;
   DelayedCount(delayedCount);
 }
@@ -500,11 +500,11 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
 
   // sanity check arguments
   if (offset < minOffset || offset > maxOffset)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
+    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
   if ((~mask & (~mask+1)) != 0)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "mask is not a prefix");
+    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "mask is not a prefix");
   if ((id & mask) != id)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
+    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
 
   // Pick a random number
   std::pair<Conditions::iterator, bool> attempt;
