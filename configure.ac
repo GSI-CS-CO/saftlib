@@ -75,5 +75,5 @@ AC_SUBST([SAFTLIB_REVISION], REVISION)
 AC_SUBST([SAFTLIB_API], [$((SONAME+MINOR))]) dnl API incremented on every change
 AC_SUBST([SAFTLIB_SONAME], SONAME)
 
-AC_CONFIG_FILES([Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
+AC_CONFIG_FILES([Makefile BDus/Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
 AC_OUTPUT

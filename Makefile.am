@@ -1,4 +1,5 @@
-SUBDIRS = interfaces
+SUBDIRS = interfaces \
+          BDus
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check
@@ -13,7 +14,7 @@ pkg_DATA = saftlib.pc
 EXTRA_DIST = saftlib.pc.in
 
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_srcdir)/interfaces/BDus
+AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/BDus
 
 BUILT_SOURCES = version.h
 .PHONY: version.h debian # causes build.cpp to be rebuilt every run
@@ -54,41 +55,41 @@ saftd_SOURCES = version.h \
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
 	src/globals.cpp			src/main.cpp
 
-saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la
+saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 saftd_LDFLAGS = -rdynamic # needed for stack trace
 
 client_SOURCES = src/client.cpp
-client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_ctl_SOURCES = src/saft-ctl.cpp src/CommonFunctions.cpp
-saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
-saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp src/CommonFunctions.cpp
-saft_scu_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_scu_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp
-saft_fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_fg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp
-saft_mfg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la -lpthread
+saft_mfg_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la -lpthread BDus/libbdus.la
 
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp src/CommonFunctions.cpp
-saft_io_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_io_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_pps_gen_SOURCES = src/saft-pps-gen.cpp
-saft_pps_gen_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_pps_gen_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_clk_gen_SOURCES = src/saft-clk-gen.cpp src/CommonFunctions.cpp
-saft_clk_gen_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_clk_gen_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_dm_SOURCES = src/saft-dm.cpp src/CommonFunctions.cpp
-saft_dm_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_dm_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 saft_gmt_check_SOURCES = src/saft-gmt-check.cpp src/CommonFunctions.cpp
-saft_gmt_check_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la
+saft_gmt_check_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la BDus/libbdus.la
 
 if GIT_TREE
 version.h:

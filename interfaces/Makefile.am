@@ -27,7 +27,7 @@ XSL = h.xsl cpp.xsl doc.xsl common.xsl fix-docbook.xsl
 EXTRA_DIST = $(XSL) $(NODES) $(INTERFACES)
 CLEANFILES = *.cpp *.h *.pdf *.doc-xml
 
-AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/interfaces/BDus
+AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/BDus
 
 lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib
@@ -66,12 +66,8 @@ nodist_saftlib_HEADERS = 	\
 	EmbeddedCPUCondition.h	\
 	SoftwareActionSink.h	\
 	SoftwareCondition.h	    \
-	TimingReceiver.h        \
-	BDus/Proxy.h            \
-	BDus/Error.h            \
-	BDus/Connection.h       \
-	BDus/Interface.h        \
-	BDus/bdus.h  
+	TimingReceiver.h
+
 
 if INTERFACE_DOCS
 doc_DATA = 			\
@@ -134,12 +130,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	EmbeddedCPUCondition.cpp	\
 	SoftwareActionSink.cpp	\
 	SoftwareCondition.cpp	\
-	TimingReceiver.cpp      \
-	BDus/Proxy.cpp          \
-	BDus/Error.cpp          \
-	BDus/Connection.cpp     \
-	BDus/Interface.cpp      \
-	BDus/bdus.cpp
+	TimingReceiver.cpp
 
 
 $(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES) $(nodist_saftlib_HEADERS):	$(NODES) $(INTERFACES) $(XSL)
