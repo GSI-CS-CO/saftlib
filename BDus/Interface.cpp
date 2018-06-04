@@ -48,10 +48,12 @@ void NodeInfo::unreference()
 Glib::RefPtr<NodeInfo> NodeInfo::create_for_xml (const Glib::ustring&  xml_data)
 {
 	std::cerr << "NodeInfo::create_for_xml() called" << std::endl;
+	return Glib::RefPtr<NodeInfo>(new NodeInfo);
 }
 Glib::RefPtr<InterfaceInfo> NodeInfo::lookup_interface ()
 {
 	std::cerr << "NodeInfo::lookup_interface () called" << std::endl;
+	return Glib::RefPtr<InterfaceInfo>(new InterfaceInfo);
 }
 
 }

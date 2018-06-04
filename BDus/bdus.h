@@ -27,6 +27,12 @@ namespace BDus
 	guint own_name (BusType bus_type, const Glib::ustring& name, const SlotBusAcquired& bus_acquired_slot=SlotBusAcquired(), const SlotNameAcquired& name_acquired_slot=SlotNameAcquired(), const SlotNameLost& name_lost_slot=SlotNameLost());//, BusNameOwnerFlags flags=Gio::DBus::BUS_NAME_OWNER_FLAGS_NONE);
 	void unown_name(guint id);
 
+	extern SlotBusAcquired   bus_acquired;
+	extern SlotNameAcquired  name_acquired;
+	extern SlotNameAppeared  name_appeared;
+	extern SlotNameLost      name_lost;
+	extern SlotNameVanished  name_vanished;
+	extern Glib::RefPtr<Connection> connection;
 
 }
 

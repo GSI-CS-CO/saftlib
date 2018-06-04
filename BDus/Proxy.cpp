@@ -16,7 +16,7 @@ Proxy::Proxy(G10::BDus::BusType  	bus_type,
 	ProxyFlags  	flags
 )
 {
-
+	std::cerr << "Proxy::Proxy() called" << std::endl;
 }
 
 void Proxy::reference()
@@ -30,7 +30,7 @@ void Proxy::unreference()
 
 void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const 
 {
-
+	std::cerr << "Proxy::get_cached_property() called" << std::endl;
 }
 
 void Proxy::on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties)

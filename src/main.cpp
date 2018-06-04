@@ -170,27 +170,27 @@ int main(int argc, char** argv)
   signal(SIGQUIT, &on_sigint);
   signal(SIGHUP,  SIG_IGN);
   
-  if (chdir("/") == -1) {
-    std::cerr << "failed to leave current directory" << std::endl;
-    return 1;
-  }
+  // if (chdir("/") == -1) {
+  //   std::cerr << "failed to leave current directory" << std::endl;
+  //   return 1;
+  // }
   
-  // turn into a daemon
-  switch (fork()) {
-  case -1: std::cerr << "failed to fork" << std::endl; exit(1);
-  case 0:  break;
-  default: exit(0);
-  }
+  // // turn into a daemon
+  // switch (fork()) {
+  // case -1: std::cerr << "failed to fork" << std::endl; exit(1);
+  // case 0:  break;
+  // default: exit(0);
+  // }
   
-  // leave current session once we fork again
-  setsid();
+  // // leave current session once we fork again
+  // setsid();
   
-  // second fork ensures we are an orphan
-  switch (fork()) {
-  case -1: std::cerr << "failed to fork" << std::endl; exit(1);
-  case 0:  break;
-  default: exit(0);
-  }
+  // // second fork ensures we are an orphan
+  // switch (fork()) {
+  // case -1: std::cerr << "failed to fork" << std::endl; exit(1);
+  // case 0:  break;
+  // default: exit(0);
+  // }
 
   // initialize gio
   std::locale::global(std::locale(""));
