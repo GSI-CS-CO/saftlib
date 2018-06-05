@@ -44,6 +44,8 @@ namespace BDus
 		Glib::ustring get_name() const;
 
 		const Glib::VariantContainerBase& call_sync(std::string function_name, Glib::VariantContainerBase query);
+
+	private:
 	};
 
 }

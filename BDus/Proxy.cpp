@@ -16,7 +16,10 @@ Proxy::Proxy(G10::BDus::BusType  	bus_type,
 	ProxyFlags  	flags
 )
 {
-	std::cerr << "Proxy::Proxy() called" << std::endl;
+	std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called" << std::endl;
+
+	// establish a connection to the service
+	// ...
 }
 
 void Proxy::reference()
@@ -30,7 +33,15 @@ void Proxy::unreference()
 
 void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const 
 {
-	std::cerr << "Proxy::get_cached_property() called" << std::endl;
+	std::cerr << "Proxy::get_cached_property(" << property_name << ") called" << std::endl;
+
+	// fake a response
+	if (property_name == "Devices")
+	{
+		std::map<Glib::ustring, Glib::ustring> devices;
+		devices["tr0"] = "/de/gsi/saftlib";
+		property = Glib::Variant< std::map< Glib::ustring, Glib::ustring > >::create(devices);
+	}
 }
 
 void Proxy::on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties)
@@ -57,7 +68,10 @@ Glib::ustring Proxy::get_name() const
 
 const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, Glib::VariantContainerBase query)
 {
-	std::cerr << "Proxy::call_sync() called" << std::endl;
+	std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
+	std::vector<std::string> response_vector(1, "/de/gsi/saftlib/tr0/softwareActionSink");
+	query = Glib::Variant< std::vector < std::string > >::create(response_vector);
+	return query;
 }
 
 }

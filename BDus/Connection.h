@@ -3,6 +3,8 @@
 
 #include <giomm.h>
 
+#include <map>
+
 #include "Interface.h"
 
 namespace G10
@@ -17,6 +19,9 @@ namespace BDus
 	{
 
 	public:
+
+		Connection();
+
 		void reference();
 		void unreference();
 
@@ -40,6 +45,11 @@ namespace BDus
 
 
 		Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name=Glib::ustring(), int timeout_msec=-1);
+
+
+		std::vector<std::string> _bdus_objects;
+		int counter = 0;
+
 	};
 
 }

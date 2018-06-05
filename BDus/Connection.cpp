@@ -8,6 +8,12 @@ namespace G10
 namespace BDus
 {
 
+Connection::Connection()
+	: _bdus_objects()
+	, counter(0)
+{
+}
+
 void Connection::reference()
 {
 
@@ -17,13 +23,26 @@ void Connection::unreference()
 
 }
 
-guint 	Connection::register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable)
+guint Connection::register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable)
 {
-	std::cerr << "Connection::register_object() called" << std::endl;
+	std::cerr << "Connection::register_object("<< object_path <<") called" << std::endl;
+	//_bdus_objects[object_path] = counter++;
+	guint result = _bdus_objects.size();
+	_bdus_objects.push_back(object_path);
+	for(auto iter = _bdus_objects.begin(); iter != _bdus_objects.end(); ++iter)
+	{
+		std::cerr << *iter << std::endl;
+	}
+	return result;
 }
-bool 	Connection::unregister_object (guint registration_id)
+bool Connection::unregister_object (guint registration_id)
 {
-
+	if (registration_id < _bdus_objects.size())
+	{
+		_bdus_objects[registration_id] = "";
+		return true;
+	}
+	return false;
 }
 
 
@@ -53,7 +72,8 @@ void 	Connection::emit_signal (const Glib::ustring& object_path, const Glib::ust
 
 Glib::VariantContainerBase Connection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
 {
-	std::cerr << "Connection::call_sync() called" << std::endl;
+	std::cerr << "Connection::call_sync(" << object_path << "," << interface_name << "," << method_name << ") called" << std::endl;
+	return Glib::VariantContainerBase();
 }
 
 
