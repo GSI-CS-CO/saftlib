@@ -26,7 +26,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <bdus.h>
+#include <saftbus.h>
 
 #include "SAFTd.h"
 #include "Driver.h"
@@ -103,7 +103,7 @@ std::map< Glib::ustring, Glib::ustring > SAFTd::getDevices() const
   return out;
 }
 
-void SAFTd::setConnection(const Glib::RefPtr<G10::BDus::Connection>& c)
+void SAFTd::setConnection(const Glib::RefPtr<saftbus::Connection>& c)
 {
   assert (!m_connection);
   m_connection = c;
@@ -118,9 +118,9 @@ static inline bool not_isalnum_(char c)
 Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
 {
   if (devs.find(name) != devs.end())
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "device already exists");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
   if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
   
   try {
     etherbone::Device edev;
@@ -135,10 +135,10 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
       eb_address_t size = last - first;
     
       if (((size + 1) & size) != 0)
-        throw G10::BDus::Error(G10::BDus::Error::IO_ERROR, "Device has strange sized MSI range");
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
     
       if ((first & size) != 0)
-        throw G10::BDus::Error(G10::BDus::Error::IO_ERROR, "Device has unaligned MSI first address");
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
     
       struct OpenDevice od(edev, first, last);
       od.name = name;
@@ -152,7 +152,7 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
         Devices(getDevices());
         return od.objectPath;
       } else {
-        throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "no driver available for this device");
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no driver available for this device");
       }
     } catch (...) {
       edev.close();
@@ -161,7 +161,7 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;
     str << "AttachDevice: failed to open: " << e;
-    throw G10::BDus::Error(G10::BDus::Error::IO_ERROR, str.str().c_str());
+    throw saftbus::Error(saftbus::Error::IO_ERROR, str.str().c_str());
   }
 }
 
@@ -169,7 +169,7 @@ void SAFTd::RemoveDevice(const Glib::ustring& name)
 {
   std::map< Glib::ustring, OpenDevice >::iterator elem = devs.find(name);
   if (elem == devs.end())
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "no such device");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
   
   elem->second.ref.clear();
   elem->second.device.close();

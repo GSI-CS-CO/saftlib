@@ -7,10 +7,7 @@
 
 #include "Interface.h"
 
-namespace G10
-{
-
-namespace BDus
+namespace saftbus
 {
 
 
@@ -54,6 +51,5 @@ namespace BDus
 
 }
 
-}
 
 #endif

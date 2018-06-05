@@ -23,7 +23,7 @@
 #include "interfaces/SAFTd.h"
 #include "OpenDevice.h"
 
-#include <bdus.h>
+#include <saftbus.h>
 
 namespace saftlib {
 
@@ -33,10 +33,10 @@ class SAFTd : public iSAFTd
     static SAFTd& get() { return saftd; }
     ~SAFTd();
     
-    void setConnection(const Glib::RefPtr<G10::BDus::Connection>& connection);
+    void setConnection(const Glib::RefPtr<saftbus::Connection>& connection);
     
     const Glib::RefPtr<Glib::MainLoop>&        loop()       { return m_loop; }
-    const Glib::RefPtr<G10::BDus::Connection>& connection() { return m_connection; }
+    const Glib::RefPtr<saftbus::Connection>& connection() { return m_connection; }
     
     Glib::ustring AttachDevice(const Glib::ustring& name, const Glib::ustring& path);
     void RemoveDevice(const Glib::ustring& name);
@@ -51,7 +51,7 @@ class SAFTd : public iSAFTd
     
     SAFTd_Service m_service;
     Glib::RefPtr<Glib::MainLoop> m_loop;
-    Glib::RefPtr<G10::BDus::Connection> m_connection;
+    Glib::RefPtr<saftbus::Connection> m_connection;
     etherbone::Socket socket;
     sigc::connection eb_source;
     sigc::connection msi_source;

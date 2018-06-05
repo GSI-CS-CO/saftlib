@@ -93,7 +93,7 @@ static void my_terminate()
   print_backtrace(am_daemon ? (clog << kLogErr) : std::cerr, "Unhandled exception ");
 }
 
-static void on_bus_acquired(const Glib::RefPtr<G10::BDus::Connection>& connection, const Glib::ustring& /* name */)
+static void on_bus_acquired(const Glib::RefPtr<saftbus::Connection>& connection, const Glib::ustring& /* name */)
 {
   try {
     SAFTd::get().setConnection(connection);
@@ -102,7 +102,7 @@ static void on_bus_acquired(const Glib::RefPtr<G10::BDus::Connection>& connectio
   }
 }
 
-static void on_name_acquired(const Glib::RefPtr<G10::BDus::Connection>& /* connection */, const Glib::ustring& /* name */, int argc, char** argv)
+static void on_name_acquired(const Glib::RefPtr<saftbus::Connection>& /* connection */, const Glib::ustring& /* name */, int argc, char** argv)
 {
   for (int i = 1; i < argc; ++i) {
     // parse the string
@@ -147,7 +147,7 @@ static void on_name_acquired(const Glib::RefPtr<G10::BDus::Connection>& /* conne
   clog << kLogInfo << buildInfo << std::endl;
 }
 
-static void on_name_lost(const Glib::RefPtr<G10::BDus::Connection>& connection, const Glib::ustring& /* name */)
+static void on_name_lost(const Glib::RefPtr<saftbus::Connection>& connection, const Glib::ustring& /* name */)
 {
   // Something else claimed the saftlib name
   (am_daemon ? (clog << kLogErr) : std::cerr) << "Unable to acquire name---dbus saftlib.conf installed?" << std::endl;
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
   Gio::init();
   
   // Connect to the dbus system daemon
-  const guint id = G10::BDus::own_name(G10::BDus::BUS_TYPE_SYSTEM,
+  const guint id = saftbus::own_name(saftbus::BUS_TYPE_SYSTEM,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
     sigc::bind(sigc::bind(sigc::ptr_fun(&on_name_acquired), argv), argc),
@@ -207,7 +207,7 @@ int main(int argc, char** argv)
   SAFTd::get().loop()->run();
   
   // Cleanup
-  G10::BDus::unown_name(id);
+  saftbus::unown_name(id);
 
   return 0;
 }

@@ -1,11 +1,8 @@
-#include "bdus.h"
+#include "saftbus.h"
 
 #include <iostream>
 
-namespace G10 
-{
-
-namespace BDus
+namespace saftbus
 {
 
 	SlotBusAcquired   bus_acquired;
@@ -40,7 +37,3 @@ namespace BDus
 
 
 }
-
-
-}
-

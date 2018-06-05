@@ -5,12 +5,9 @@
 #include <giomm.h>
 
 #include "Connection.h"
-#include "bdus.h"
+#include "saftbus.h"
 
-namespace G10
-{
-
-namespace BDus
+namespace saftbus
 {
 
 	enum ProxyFlags
@@ -22,7 +19,7 @@ namespace BDus
 	class Proxy
 	{
 	public:
-		Proxy(G10::BDus::BusType  	bus_type,
+		Proxy(saftbus::BusType  	bus_type,
 			const Glib::ustring&  	name,
 			const Glib::ustring&  	object_path,
 			const Glib::ustring&  	interface_name,
@@ -38,7 +35,7 @@ namespace BDus
 
 		virtual void 	on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties);
 		virtual void 	on_signal (const Glib::ustring& sender_name, const Glib::ustring& signal_name, const Glib::VariantContainerBase& parameters);
-		Glib::RefPtr<G10::BDus::Connection> get_connection() const;
+		Glib::RefPtr<saftbus::Connection> get_connection() const;
 
 		Glib::ustring get_object_path() const;
 		Glib::ustring get_name() const;
@@ -46,10 +43,10 @@ namespace BDus
 		const Glib::VariantContainerBase& call_sync(std::string function_name, Glib::VariantContainerBase query);
 
 	private:
+		saftbus::Connection _connection;
 	};
 
 }
 
-}
 
 #endif

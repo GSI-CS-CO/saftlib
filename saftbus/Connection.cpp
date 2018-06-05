@@ -2,10 +2,7 @@
 
 #include <iostream>
 
-namespace G10 
-{
-
-namespace BDus
+namespace saftbus
 {
 
 Connection::Connection()
@@ -78,5 +75,4 @@ Glib::VariantContainerBase Connection::call_sync (const Glib::ustring& object_pa
 
 
 
-}
 }

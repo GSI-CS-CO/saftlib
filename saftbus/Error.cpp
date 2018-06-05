@@ -1,10 +1,7 @@
 #include "Error.h"
 
 
-namespace G10
-{
-
-namespace BDus
+namespace saftbus
 {
 
 	Error::Error(Type type, const Glib::ustring &msg)
@@ -21,4 +18,3 @@ namespace BDus
 
 }
 
-}

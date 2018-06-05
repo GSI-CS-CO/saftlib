@@ -47,7 +47,7 @@ Glib::ustring MILbusActionSink::NewCondition(bool active, guint64 id, guint64 ma
 void MILbusActionSink::InjectTag(guint16 tag)
 {
   ownerOnly();
-  throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
 Glib::RefPtr<MILbusActionSink> MILbusActionSink::create(const ConstructorType& args)

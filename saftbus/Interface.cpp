@@ -3,10 +3,7 @@
 #include <iostream>
 
 
-namespace G10 
-{
-
-namespace BDus
+namespace saftbus
 {
 
 
@@ -14,7 +11,7 @@ void MethodInvocation::return_value (const Glib::VariantContainerBase& 	paramete
 {
 
 }
-void MethodInvocation::return_error (const G10::BDus::Error& error) 
+void MethodInvocation::return_error (const saftbus::Error& error) 
 {
 
 }
@@ -56,5 +53,4 @@ Glib::RefPtr<InterfaceInfo> NodeInfo::lookup_interface ()
 	return Glib::RefPtr<InterfaceInfo>(new InterfaceInfo);
 }
 
-}
 }

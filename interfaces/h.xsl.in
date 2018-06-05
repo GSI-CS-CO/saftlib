@@ -71,8 +71,8 @@
     <xsl:text>      const Glib::ustring&amp; name</xsl:text>
     <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>
     <xsl:text>,&#10;</xsl:text>
-    <xsl:text>      G10::BDus::BusType bus_type = G10::BDus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
-    <xsl:text>      G10::BDus::ProxyFlags flags = G10::BDus::PROXY_FLAGS_NONE);&#10;</xsl:text>
+    <xsl:text>      saftbus::BusType bus_type = saftbus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
+    <xsl:text>      saftbus::ProxyFlags flags = saftbus::PROXY_FLAGS_NONE);&#10;</xsl:text>
 
     <xsl:text>    ~</xsl:text>
     <xsl:value-of select="$name"/>
@@ -155,8 +155,8 @@
     <xsl:text>_Proxy(&#10;</xsl:text>
     <xsl:text>      const Glib::ustring&amp; object_path,&#10;</xsl:text>
     <xsl:text>      const Glib::ustring&amp; name,&#10;</xsl:text>
-    <xsl:text>      G10::BDus::BusType bus_type = G10::BDus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
-    <xsl:text>      G10::BDus::ProxyFlags flags = G10::BDus::PROXY_FLAGS_NONE);&#10;</xsl:text>
+    <xsl:text>      saftbus::BusType bus_type = saftbus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
+    <xsl:text>      saftbus::ProxyFlags flags = saftbus::PROXY_FLAGS_NONE);&#10;</xsl:text>
 
     <!-- The proxy objects -->
     <xsl:for-each select="interface">
@@ -212,12 +212,12 @@
     <xsl:text>    </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service(T* impl, sigc::slot&lt;void, const char*&gt; rethrow);&#10;&#10;</xsl:text>
-    <xsl:text>    void register_self(const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
+    <xsl:text>    void register_self(const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
     <xsl:text>    void unregister_self();&#10;</xsl:text>
     <xsl:text>    bool isActive() const;&#10;</xsl:text>
     <xsl:text>    const Glib::ustring&amp; getSender() const;&#10;</xsl:text>
     <xsl:text>    const Glib::ustring&amp; getObjectPath() const;&#10;</xsl:text>
-    <xsl:text>    const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; getConnection() const;&#10;</xsl:text>
+    <xsl:text>    const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; getConnection() const;&#10;</xsl:text>
     <xsl:text>&#10;</xsl:text>
 
     <!-- The service objects -->
@@ -279,7 +279,7 @@
       <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;</xsl:text>
       <xsl:text>#include &lt;giomm/dbuserror.h&gt;&#10;&#10;</xsl:text>
       <xsl:text>#include &lt;giomm.h&gt;&#10;&#10;</xsl:text>
-      <xsl:text>#include &lt;bdus.h&gt;&#10;&#10;</xsl:text>
+      <xsl:text>#include &lt;saftbus.h&gt;&#10;&#10;</xsl:text>
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
       <!-- Forward definitions -->
@@ -357,13 +357,13 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>,</xsl:text>
       <xsl:if test="not($proxy_abc)">*/</xsl:if>
-      <xsl:text> public G10::BDus::Proxy {&#10;</xsl:text>
+      <xsl:text> public saftbus::Proxy {&#10;</xsl:text>
       <xsl:text>  public:</xsl:text>
     static Glib::RefPtr&lt;i<xsl:value-of select="$iface"/>_Proxy&gt; create(
       const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; name,
-      G10::BDus::BusType bus_type, 
-      G10::BDus::ProxyFlags flags);&#10;&#10;<xsl:text/>
+      saftbus::BusType bus_type, 
+      saftbus::ProxyFlags flags);&#10;&#10;<xsl:text/>
       
       <!-- Concrete implementations -->
       <xsl:text>    // Implement abstract base class methods&#10;</xsl:text>
@@ -428,24 +428,24 @@
     void update_property(const char* name, const Glib::VariantBase&amp; val);
 
     i<xsl:value-of select="$iface"/>_Proxy(
-      G10::BDus::BusType bus_type,
+      saftbus::BusType bus_type,
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; interface_name,
-      G10::BDus::ProxyFlags flags);
+      saftbus::ProxyFlags flags);
 };
 
 class i<xsl:value-of select="$iface"/>_Service {
   public:
     i<xsl:value-of select="$iface"/>_Service(i<xsl:value-of select="$iface"/>* impl, sigc::slot&lt;void, const char*&gt; rethrow);
     ~i<xsl:value-of select="$iface"/>_Service();
-    void register_self(const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
+    void register_self(const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
     void unregister_self();
 
     bool isActive() const;
     const Glib::ustring&amp; getSender() const;
     const Glib::ustring&amp; getObjectPath() const;
-    const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; getConnection() const;
+    const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; getConnection() const;
 
   private:
     // non-copyable
@@ -462,14 +462,14 @@ class i<xsl:value-of select="$iface"/>_Service {
     <xsl:for-each select="signal">
     sigc::connection con_sig<xsl:value-of select="@name"/>;<xsl:text/>
     </xsl:for-each>
-    const G10::BDus::InterfaceVTable interface_vtable;
+    const saftbus::InterfaceVTable interface_vtable;
     const Glib::ustring* sender;
     const Glib::ustring* objectPath;
-    Glib::RefPtr&lt;G10::BDus::Connection&gt; connection;
+    Glib::RefPtr&lt;saftbus::Connection&gt; connection;
     struct Export {
-      Export(const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) :
+      Export(const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) :
         connection(c), object_path(o), id(i) { }
-      Glib::RefPtr&lt;G10::BDus::Connection&gt; connection;
+      Glib::RefPtr&lt;saftbus::Connection&gt; connection;
       Glib::ustring object_path;
       guint id;
     };
@@ -493,18 +493,18 @@ class i<xsl:value-of select="$iface"/>_Service {
       <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
     void on_method_call(
-      const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection,
+      const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
       const Glib::VariantContainerBase&amp; parameters,
-      const Glib::RefPtr&lt;G10::BDus::MethodInvocation&gt;&amp; invocation);
+      const Glib::RefPtr&lt;saftbus::MethodInvocation&gt;&amp; invocation);
     void on_get_property(
       Glib::VariantBase&amp; property,
-      const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection,
+      const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name);
     bool on_set_property(
-      const Glib::RefPtr&lt;G10::BDus::Connection&gt;&amp; connection,
+      const Glib::RefPtr&lt;saftbus::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path, 
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
       const Glib::VariantBase&amp; value);
@@ -518,17 +518,17 @@ template&lt;typename T&gt;
 void write_vector_to_pipe(int fd, const T &amp; std_vector) {
   guint32 size = std_vector.size();
   if (write(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "File descriptor data transfer failed");
   }
   if (write(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back()))) == -1) {
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "File descriptor data transfer failed");
   }
 }
 template&lt;typename T&gt;
 void write_vector_to_pipe(int fd, const std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
   guint32 size = std_vector_vector.size();
   if (write(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "File descriptor data transfer failed");
   }
   for (guint32 i = 0; i &lt; size; ++i) {
     write_vector_to_pipe(fd, std_vector_vector[i]);
@@ -538,18 +538,18 @@ template&lt;typename T&gt;
 void read_vector_from_pipe(int fd, T &amp; std_vector) {
   guint32 size = std_vector.size();
   if (read(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "File descriptor data transfer failed");
   }
   std_vector.resize(size);
   if (read(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back()))) == -1) {
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "File descriptor data transfer failed");
   }
 }
 template&lt;typename T&gt;
 void read_vector_from_pipe(int fd, std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
   guint32 size = std_vector_vector.size();
   if (read(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw G10::BDus::Error(G10::BDus::Error::INVALID_ARGS, "File descriptor data transfer failed");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "File descriptor data transfer failed");
   }
   std_vector_vector.resize(size);
   for (guint32 i = 0; i &lt; size; ++i) {

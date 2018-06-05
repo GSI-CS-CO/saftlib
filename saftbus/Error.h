@@ -3,10 +3,7 @@
 
 #include <giomm.h>
 
-namespace G10
-{
-
-namespace BDus
+namespace saftbus
 {
 
 	class Error
@@ -32,6 +29,5 @@ namespace BDus
 
 }
 
-}
 
 #endif

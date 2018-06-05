@@ -2,13 +2,10 @@
 
 #include <iostream>
 
-namespace G10
+namespace saftbus
 {
 
-namespace BDus
-{
-
-Proxy::Proxy(G10::BDus::BusType  	bus_type,
+Proxy::Proxy(saftbus::BusType  	bus_type,
 	const Glib::ustring&  	name,
 	const Glib::ustring&  	object_path,
 	const Glib::ustring&  	interface_name,
@@ -52,7 +49,7 @@ void Proxy::on_signal (const Glib::ustring& sender_name, const Glib::ustring& si
 {
 	std::cerr << "Proxy::on_signal() called" << std::endl;
 }
-Glib::RefPtr<G10::BDus::Connection> Proxy::get_connection() const
+Glib::RefPtr<saftbus::Connection> Proxy::get_connection() const
 {
 	std::cerr << "Proxy::get_connection() called " << std::endl;
 }
@@ -74,5 +71,4 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, Gl
 	return query;
 }
 
-}
 }

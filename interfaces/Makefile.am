@@ -27,7 +27,7 @@ XSL = h.xsl cpp.xsl doc.xsl common.xsl fix-docbook.xsl
 EXTRA_DIST = $(XSL) $(NODES) $(INTERFACES)
 CLEANFILES = *.cpp *.h *.pdf *.doc-xml
 
-AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/BDus
+AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/saftbus
 
 lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib

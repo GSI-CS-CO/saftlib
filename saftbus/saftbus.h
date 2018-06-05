@@ -4,10 +4,7 @@
 
 #include <giomm.h>
 
-namespace G10 
-{
-
-namespace BDus
+namespace saftbus
 {
 
 	enum BusType
@@ -36,8 +33,6 @@ namespace BDus
 
 }
 
-
-}
 
 #include "Error.h"
 #include "Interface.h"

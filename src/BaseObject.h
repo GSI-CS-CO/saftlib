@@ -21,7 +21,7 @@
 #define OBJECT_H
 
 #include <giomm.h>
-#include <bdus.h>
+#include <saftbus.h>
 
 namespace saftlib {
 
@@ -35,7 +35,7 @@ class BaseObject : public Glib::Object
     
     // provided by RegisteredObject
     virtual const Glib::ustring& getSender() const = 0;
-    virtual const Glib::RefPtr<G10::BDus::Connection>& getConnection() const = 0;
+    virtual const Glib::RefPtr<saftbus::Connection>& getConnection() const = 0;
     
   protected:
     Glib::ustring objectPath;

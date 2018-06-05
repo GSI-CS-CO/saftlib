@@ -4,10 +4,7 @@
 
 #include <giomm.h>
 
-namespace G10 
-{
-
-namespace BDus
+namespace saftbus
 {
 
 	class Connection;
@@ -17,7 +14,7 @@ namespace BDus
 	{
 	public:
 		void return_value 	( 	const Glib::VariantContainerBase&  	parameters	) ;
-		void return_error 	( 	const G10::BDus::Error&  	error	) 	;
+		void return_error 	( 	const saftbus::Error&  	error	) 	;
 	};
 
 
@@ -57,6 +54,5 @@ namespace BDus
 
 }
 
-}
 
 #endif
