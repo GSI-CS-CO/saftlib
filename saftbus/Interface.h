@@ -18,11 +18,9 @@ namespace saftbus
 	};
 
 
-	class InterfaceInfo
+	class InterfaceInfo : public Glib::Object//Base
 	{
 	public:
-		void reference();
-		void unreference();
 
 	};
 
@@ -40,11 +38,9 @@ namespace saftbus
 			); 	
 	};
 
-	class NodeInfo
+	class NodeInfo : public Glib::Object//Base
 	{
 	public:
-		void reference();
-		void unreference();
 
 		static Glib::RefPtr<NodeInfo> create_for_xml (const Glib::ustring&  xml_data); 	
 		//Glib::RefPtr<InterfaceInfo> lookup_interface (const Glib::ustring&  name);

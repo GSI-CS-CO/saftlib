@@ -5,6 +5,9 @@
 namespace saftbus
 {
 
+Glib::RefPtr<saftbus::Connection> Proxy::_connection;
+bool Proxy::_connection_created = false;
+
 Proxy::Proxy(saftbus::BusType  	bus_type,
 	const Glib::ustring&  	name,
 	const Glib::ustring&  	object_path,
@@ -13,20 +16,18 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	ProxyFlags  	flags
 )
 {
+
 	std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called" << std::endl;
 
+	if (!_connection_created)
+	{
+		bool server = false;
+		_connection = Glib::RefPtr<saftbus::Connection>(new Connection(server));
+	}
 	// establish a connection to the service
 	// ...
 }
 
-void Proxy::reference()
-{
-
-}
-void Proxy::unreference()
-{
-
-}
 
 void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const 
 {
@@ -52,6 +53,7 @@ void Proxy::on_signal (const Glib::ustring& sender_name, const Glib::ustring& si
 Glib::RefPtr<saftbus::Connection> Proxy::get_connection() const
 {
 	std::cerr << "Proxy::get_connection() called " << std::endl;
+	return _connection;
 }
 
 Glib::ustring Proxy::get_object_path() const

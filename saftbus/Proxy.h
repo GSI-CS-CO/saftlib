@@ -16,7 +16,7 @@ namespace saftbus
 	};
 
 
-	class Proxy
+	class Proxy : public Glib::Object//Base
 	{
 	public:
 		Proxy(saftbus::BusType  	bus_type,
@@ -28,8 +28,6 @@ namespace saftbus
 		);
 
 		using MapChangedProperties = std::map<Glib::ustring, Glib::VariantBase>;
-		void reference();
-		void unreference();
 
 		void get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const ;
 
@@ -43,7 +41,8 @@ namespace saftbus
 		const Glib::VariantContainerBase& call_sync(std::string function_name, Glib::VariantContainerBase query);
 
 	private:
-		saftbus::Connection _connection;
+		static Glib::RefPtr<saftbus::Connection> _connection;
+		static bool _connection_created;
 	};
 
 }

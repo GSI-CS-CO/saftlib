@@ -17,13 +17,6 @@ void MethodInvocation::return_error (const saftbus::Error& error)
 }
 
 
-void InterfaceInfo::reference()
-{
-}
-void InterfaceInfo::unreference()
-{
-}
-
 
 InterfaceVTable::InterfaceVTable ( 	const SlotInterfaceMethodCall&  slot_method_call,
 									const SlotInterfaceGetProperty&  slot_get_property,
@@ -33,14 +26,7 @@ InterfaceVTable::InterfaceVTable ( 	const SlotInterfaceMethodCall&  slot_method_
 	std::cerr << "InterfaceVTable::InterfaceVTable() called" << std::endl;
 }
 
-void NodeInfo::reference()
-{
 
-}
-void NodeInfo::unreference()
-{
-
-}
 
 Glib::RefPtr<NodeInfo> NodeInfo::create_for_xml (const Glib::ustring&  xml_data)
 {

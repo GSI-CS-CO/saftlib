@@ -6,21 +6,18 @@
 #include <map>
 
 #include "Interface.h"
+#include "core.h"
+
 
 namespace saftbus
 {
 
-
-
-	class Connection
+	class Connection : public Glib::Object//Base
 	{
 
 	public:
 
-		Connection();
-
-		void reference();
-		void unreference();
+		Connection(bool server);
 
 		//guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info);
 		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
@@ -44,9 +41,20 @@ namespace saftbus
 		Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name=Glib::ustring(), int timeout_msec=-1);
 
 
-		std::vector<std::string> _bdus_objects;
-		int counter = 0;
+	private:
+		struct  SaftbusObject
+		{
+			std::string 				object_path;
+			Glib::RefPtr<InterfaceInfo> interface_info;
+			InterfaceVTable 			vtable;
+			SaftbusObject();
+			SaftbusObject(const std::string &object, const Glib::RefPtr<InterfaceInfo> &info, const InterfaceVTable &table);
+			SaftbusObject(const SaftbusObject &rhs);
+		};
 
+		std::vector<SaftbusObject> _saftbus_objects;
+
+		std::vector<UnSocket> _sockets;
 	};
 
 }
