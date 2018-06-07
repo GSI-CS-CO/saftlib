@@ -762,7 +762,13 @@
           <xsl:text>      if (!fd_list) { &#10;</xsl:text>
           <xsl:text>        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
           <xsl:text>      }&#10;</xsl:text>
-          <xsl:text>      if (g_unix_fd_list_get_length(fd_list) != 2) { &#10;</xsl:text>
+          <xsl:text>      int num_expected_fds = </xsl:text>
+          <xsl:value-of select="count(arg[@type='h'])"/>
+          <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
+            <xsl:text> + 2</xsl:text>
+          </xsl:if>
+          <xsl:text>;&#10;</xsl:text>
+          <xsl:text>      if (g_unix_fd_list_get_length(fd_list) != num_expected_fds) { &#10;</xsl:text>
           <xsl:text>        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Wrong number of file descriptors received");&#10;</xsl:text>
           <xsl:text>      }&#10;</xsl:text>
           <xsl:text>      int fd_index = 0;&#10;</xsl:text>
