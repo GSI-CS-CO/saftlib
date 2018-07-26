@@ -1,5 +1,5 @@
-#ifndef G10_BDUS_CONNECTION_H_
-#define G10_BDUS_CONNECTION_H_
+#ifndef PROXY_ProxyCONNECTION_H_
+#define PROXY_CONNECTION_H_
 
 #include <giomm.h>
 
@@ -9,23 +9,21 @@
 #include "core.h"
 
 
-
 namespace saftbus
 {
-	class Socket;
 
-	class Connection : public Glib::Object//Base
+	class ProxyConnection : public Glib::Object//Base
 	{
 
 	public:
 
-		Connection(bool server);
+		ProxyConnection(bool server);
 
 		//guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info);
 		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
 		bool 	unregister_object (guint registration_id);
 
-		using SlotSignal = sigc::slot<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
+		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
 
 		guint signal_subscribe 	( 	const SlotSignal&  	slot,
 									const Glib::ustring&  	sender = Glib::ustring(),
@@ -41,9 +39,6 @@ namespace saftbus
 
 
 		Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name=Glib::ustring(), int timeout_msec=-1);
-
-
-		bool dispatch(Glib::IOCondition condition, Socket *socket);
 
 
 	private:

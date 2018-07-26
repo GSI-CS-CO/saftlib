@@ -1,4 +1,5 @@
 #include "Connection.h"
+#include "Socket.h"
 
 #include <iostream>
 #include <sstream>
@@ -110,6 +111,12 @@ void 	Connection::emit_signal (const Glib::ustring& object_path, const Glib::ust
 		std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << std::endl;
 	}
 }
+
+bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
+{
+	return true;
+}
+
 
 
 Glib::VariantContainerBase Connection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
