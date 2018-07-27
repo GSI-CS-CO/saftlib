@@ -11,21 +11,6 @@
 namespace saftbus
 {
 
-class UnSocket
-{
-public:
-	UnSocket(const std::string &name, bool server);
-	~UnSocket();
-
-//	void accept();
-
-private:
-
-	int                _lock;
-	int                _socket;
-	int                _accepted;
-	struct sockaddr_un _address;
-};
 
 }
 

@@ -505,8 +505,8 @@
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name));&#10;</xsl:text>
-      <xsl:text>  Glib::RefPtr&lt;saftbus::Connection&gt; connection =&#10;</xsl:text>
-      <xsl:text>    Glib::RefPtr&lt;saftbus::Connection&gt;::cast_const(get_connection());&#10;</xsl:text>
+      <xsl:text>  Glib::RefPtr&lt;saftbus::ProxyConnection&gt; connection =&#10;</xsl:text>
+      <xsl:text>    Glib::RefPtr&lt;saftbus::ProxyConnection&gt;::cast_const(get_connection());&#10;</xsl:text>
       <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; result =&#10;</xsl:text>
       <xsl:text>    connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", &#10;</xsl:text>
@@ -546,7 +546,7 @@
       <xsl:text>"));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));&#10;</xsl:text>
-      <xsl:text>  Glib::RefPtr&lt;saftbus::Connection&gt; connection = get_connection();&#10;</xsl:text>
+      <xsl:text>  Glib::RefPtr&lt;saftbus::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
       <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
       <xsl:text>  connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set",&#10;</xsl:text>
       <xsl:text>    Glib::VariantContainerBase::create_tuple(params), get_name());&#10;}&#10;&#10;</xsl:text>

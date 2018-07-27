@@ -24,8 +24,7 @@ namespace saftbus
 		// if this will be a Connection on the server side or the proxy side
 		// Saftbus is a one-to-many IPC, while DBus is a many-to-many IPC
 		// The Saftbus daemon can run inside the server side Connection Object.
-		bool server = true;
-		connection = Glib::RefPtr<Connection>(new Connection(server));
+		connection = Glib::RefPtr<Connection>(new Connection);
 
 		bus_acquired(connection, "blub bus bus_acquired");
 		name_acquired(connection, "blub name acquired");

@@ -1,5 +1,5 @@
-#ifndef PROXY_ProxyCONNECTION_H_
-#define PROXY_CONNECTION_H_
+#ifndef SAFTBUS_PROXY_CONNECTION_H_
+#define SAFTBUS_PROXY_CONNECTION_H_
 
 #include <giomm.h>
 
@@ -12,49 +12,59 @@
 namespace saftbus
 {
 
+	class Proxy;
+
 	class ProxyConnection : public Glib::Object//Base
 	{
-
 	public:
+		ProxyConnection(const Glib::ustring &base_name = "/tmp/saftbus_");
 
-		ProxyConnection(bool server);
-
+		// not needed by Proxies
 		//guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info);
-		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
-		bool 	unregister_object (guint registration_id);
+		// guint register_object(const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
+		// bool  unregister_object(guint registration_id);
 
 		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
 
-		guint signal_subscribe 	( 	const SlotSignal&  	slot,
-									const Glib::ustring&  	sender = Glib::ustring(),
-									const Glib::ustring&  	interface_name = Glib::ustring(),
-									const Glib::ustring&  	member = Glib::ustring(),
-									const Glib::ustring&  	object_path = Glib::ustring(),
-									const Glib::ustring&  	arg0 = Glib::ustring()//,
-									//SignalFlags  	flags = SIGNAL_FLAGS_NONE 
-			);
-		void signal_unsubscribe 	( 	guint  	subscription_id	) ;
+		guint signal_subscribe( const SlotSignal&    slot,
+								const Glib::ustring& sender = Glib::ustring(),
+								const Glib::ustring& interface_name = Glib::ustring(),
+								const Glib::ustring& member = Glib::ustring(),
+								const Glib::ustring& object_path = Glib::ustring(),
+								const Glib::ustring& arg0 = Glib::ustring()//,SignalFlags  	flags = SIGNAL_FLAGS_NONE 
+								);
+		void signal_unsubscribe(guint subscription_id);
 
-		void 	emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name=Glib::ustring(), const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
+		// void emit_signal(const Glib::ustring& object_path, 
+		// 				const Glib::ustring& interface_name, 
+		// 				const Glib::ustring& signal_name, 
+		// 				const Glib::ustring& destination_bus_name=Glib::ustring(), 
+		// 				const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
+
+		Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, 
+											const Glib::ustring& interface_name, 
+											const Glib::ustring& method_name, 
+											const Glib::VariantContainerBase& parameters, 
+											const Glib::ustring& bus_name=Glib::ustring(), 
+											int timeout_msec=-1);
 
 
-		Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name=Glib::ustring(), int timeout_msec=-1);
-
-
+	// internal stuff (not part the DBus fake api)
 	private:
-		struct  SaftbusObject
-		{
-			std::string 				object_path;
-			Glib::RefPtr<InterfaceInfo> interface_info;
-			InterfaceVTable 			vtable;
-			SaftbusObject();
-			SaftbusObject(const std::string &object, const Glib::RefPtr<InterfaceInfo> &info, const InterfaceVTable &table);
-			SaftbusObject(const SaftbusObject &rhs);
-		};
+		bool dispatch(Glib::IOCondition condition);
+	public:
+		int get_fd() const {return _create_socket; }
+	private:
 
-		std::vector<SaftbusObject> _saftbus_objects;
+		// this is the information that is needed to keep connected to a socket
+		int _create_socket;
+		struct sockaddr_un _address;
+		std::string _filename;
 
-		std::vector<UnSocket> _sockets;
+		// having only one proxy per interface object path disallows multiple proxies of the same service in one process...
+		//   .... maybe it does make sense to allow multiple proxies? TODO: take a decision !
+		      // interface_name         object_path
+		std::map<Glib::ustring, std::map<Glib::ustring, Proxy*> > _proxies; // maps object_paths to Proxies
 	};
 
 }

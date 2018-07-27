@@ -1,5 +1,5 @@
-#ifndef G10_BDUS_CONNECTION_H_
-#define G10_BDUS_CONNECTION_H_
+#ifndef SAFTBUS_CONNECTION_H_
+#define SAFTBUS_CONNECTION_H_
 
 #include <giomm.h>
 
@@ -7,7 +7,6 @@
 
 #include "Interface.h"
 #include "core.h"
-
 
 
 namespace saftbus
@@ -19,7 +18,7 @@ namespace saftbus
 
 	public:
 
-		Connection(bool server);
+		Connection();
 
 		//guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info);
 		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
@@ -27,6 +26,7 @@ namespace saftbus
 
 		using SlotSignal = sigc::slot<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
 
+		// signal_subscribe and signal_unsubscribe are ONLY used by the driver of Owned.
 		guint signal_subscribe 	( 	const SlotSignal&  	slot,
 									const Glib::ustring&  	sender = Glib::ustring(),
 									const Glib::ustring&  	interface_name = Glib::ustring(),
@@ -40,7 +40,7 @@ namespace saftbus
 		void 	emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name=Glib::ustring(), const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
 
 
-		Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name=Glib::ustring(), int timeout_msec=-1);
+		// Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name=Glib::ustring(), int timeout_msec=-1);
 
 
 		bool dispatch(Glib::IOCondition condition, Socket *socket);
@@ -56,10 +56,8 @@ namespace saftbus
 			SaftbusObject(const std::string &object, const Glib::RefPtr<InterfaceInfo> &info, const InterfaceVTable &table);
 			SaftbusObject(const SaftbusObject &rhs);
 		};
-
 		std::vector<SaftbusObject> _saftbus_objects;
 
-		std::vector<UnSocket> _sockets;
 	};
 
 }

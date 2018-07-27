@@ -27,35 +27,9 @@ Connection::SaftbusObject::SaftbusObject(const SaftbusObject &rhs)
 	, vtable(rhs.vtable)
 {}
 
-Connection::Connection(bool server)
-	: _saftbus_objects(1, Connection::SaftbusObject())
+Connection::Connection()
 {
-	std::cerr << "Connection::Connection(" << server << ") called" << std::endl;
-	if (server)
-	{
-		for (int i = 0; i < 16; ++i)
-		{
-			std::ostringstream name;
-			name << "/tmp/saftbus.socket.";
-			name << i;
-			_sockets.push_back(UnSocket(name.str(),server));
-		}
-	} else {
-		for (int i = 0; i < 16; ++i)
-		{
-			std::ostringstream name;
-			name << "/tmp/saftbus.socket.";
-			name << i;
-			try {
-				UnSocket socket = UnSocket(name.str(), server);
-				break;
-			}
-			catch(...)
-			{
-				std::cerr << "caught an expected exception" << std::endl;
-			}
-		}
-	}
+
 }
 
 
@@ -83,22 +57,22 @@ bool Connection::unregister_object (guint registration_id)
 }
 
 
-guint Connection::signal_subscribe 	( 	const SlotSignal&  	slot,
-										const Glib::ustring&  	sender,
-										const Glib::ustring&  	interface_name,
-										const Glib::ustring&  	member,
-										const Glib::ustring&  	object_path,
-										const Glib::ustring&  	arg0//,
-										)//SignalFlags  	flags)
-{
-	std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ") called" << std::endl;
-	return 0;
-}
+// guint Connection::signal_subscribe 	( 	const SlotSignal&  	slot,
+// 										const Glib::ustring&  	sender,
+// 										const Glib::ustring&  	interface_name,
+// 										const Glib::ustring&  	member,
+// 										const Glib::ustring&  	object_path,
+// 										const Glib::ustring&  	arg0//,
+// 										)//SignalFlags  	flags)
+// {
+// 	std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ") called" << std::endl;
+// 	return 0;
+// }
 
-void Connection::signal_unsubscribe 	( 	guint  	subscription_id	) 
-{
-	std::cerr << "Connection::signal_unsubscribe() called" << std::endl;
-}
+// void Connection::signal_unsubscribe 	( 	guint  	subscription_id	) 
+// {
+// 	std::cerr << "Connection::signal_unsubscribe() called" << std::endl;
+// }
 
 
 void 	Connection::emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
@@ -108,7 +82,7 @@ void 	Connection::emit_signal (const Glib::ustring& object_path, const Glib::ust
 	{
 		Glib::VariantBase child;
 		parameters.get_child(child, n);
-		std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << std::endl;
+		std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
 	}
 }
 
@@ -119,11 +93,11 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 
 
 
-Glib::VariantContainerBase Connection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
-{
-	std::cerr << "Connection::call_sync(" << object_path << "," << interface_name << "," << method_name << ") called" << std::endl;
-	return Glib::VariantContainerBase();
-}
+// Glib::VariantContainerBase Connection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
+// {
+// 	std::cerr << "Connection::call_sync(" << object_path << "," << interface_name << "," << method_name << ") called" << std::endl;
+// 	return Glib::VariantContainerBase();
+// }
 
 
 

@@ -412,6 +412,7 @@ int main(int argc, char** argv)
     Gio::init();
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
+    std::cerr << "1" << std::endl;
     // do display information that is INDEPENDANT of a specific device
     if (infoDispSW) displayInfoSW(saftd);
     if (infoDispHW) displayInfoHW(saftd);
@@ -477,6 +478,7 @@ int main(int argc, char** argv)
     
     // snoop
     if (eventSnoop) {
+      std::cerr << "starting to snoop " << std::endl;
       Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
       Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
