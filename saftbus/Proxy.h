@@ -4,7 +4,6 @@
 #include <map>
 #include <giomm.h>
 
-#include "ProxyConnection.h"
 #include "saftbus.h"
 
 namespace saftbus
@@ -15,6 +14,7 @@ namespace saftbus
 		PROXY_FLAGS_NONE,
 	};
 
+	class ProxyConnection;
 
 	class Proxy : public Glib::Object//Base
 	{
@@ -43,6 +43,10 @@ namespace saftbus
 	private:
 		static Glib::RefPtr<saftbus::ProxyConnection> _connection;
 		static bool _connection_created;
+
+		Glib::ustring _name;
+		Glib::ustring _object_path;
+		Glib::ustring _interface_name;
 	};
 
 }

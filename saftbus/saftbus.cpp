@@ -39,5 +39,24 @@ namespace saftbus
 	}
 
 
+	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size)
+	{
+		GVariant *grestored = g_variant_new_from_data(((const GVariantType *) "av"),
+													  (gconstpointer) data,  size, false,
+													  nullptr, nullptr);
+		bool normal_form = g_variant_is_normal_form(grestored);
+		std::cerr << "deserialize() recieve variant has normal form? => " << normal_form << std::endl;
+		result = Glib::Variant<std::vector<Glib::VariantBase> >(grestored);
+		return true;
+	}
+	bool deserialize(Glib::Variant<Glib::VariantBase> &result, const char *data, gsize size)
+	{
+		GVariant *grestored = g_variant_new_from_data(((const GVariantType *) "v"),
+													  (gconstpointer) data,  size, true,
+													  nullptr, nullptr);
+		result = Glib::Variant<Glib::VariantBase>(grestored);
+		return true;
+	}
+
 
 }

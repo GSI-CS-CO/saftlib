@@ -21,7 +21,10 @@ namespace saftbus
 	class InterfaceInfo : public Glib::Object//Base
 	{
 	public:
-
+		InterfaceInfo(const Glib::ustring &interface_name);
+		const Glib::ustring &get_interface_name();
+	private:
+		Glib::ustring _interface_name;
 	};
 
 
@@ -36,15 +39,20 @@ namespace saftbus
 								const SlotInterfaceGetProperty&  	slot_get_property = SlotInterfaceGetProperty(),
 								const SlotInterfaceSetProperty&  	slot_set_property = SlotInterfaceSetProperty() 
 			); 	
+		SlotInterfaceGetProperty get_property;
+		SlotInterfaceSetProperty set_property;
+		SlotInterfaceMethodCall  method_call;
 	};
 
 	class NodeInfo : public Glib::Object//Base
 	{
 	public:
-
-		static Glib::RefPtr<NodeInfo> create_for_xml (const Glib::ustring&  xml_data); 	
+		NodeInfo(const Glib::ustring &interface_name);
+		static Glib::RefPtr<NodeInfo> create_for_xml(const Glib::ustring&  xml_data);
 		//Glib::RefPtr<InterfaceInfo> lookup_interface (const Glib::ustring&  name);
-		Glib::RefPtr<InterfaceInfo> lookup_interface ();
+		Glib::RefPtr<InterfaceInfo> lookup_interface();
+	private:
+		Glib::RefPtr<InterfaceInfo> _interface_info;
 	};
 
 

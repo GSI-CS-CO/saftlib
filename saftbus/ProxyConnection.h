@@ -1,12 +1,17 @@
 #ifndef SAFTBUS_PROXY_CONNECTION_H_
 #define SAFTBUS_PROXY_CONNECTION_H_
 
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
 #include <giomm.h>
 
 #include <map>
 
 #include "Interface.h"
-#include "core.h"
+#include "saftbus.h"
 
 
 namespace saftbus
@@ -41,7 +46,8 @@ namespace saftbus
 		// 				const Glib::ustring& destination_bus_name=Glib::ustring(), 
 		// 				const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
 
-		Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, 
+		// is used by Proxies to fetch properties
+		Glib::VariantContainerBase& call_sync (const Glib::ustring& object_path, 
 											const Glib::ustring& interface_name, 
 											const Glib::ustring& method_name, 
 											const Glib::VariantContainerBase& parameters, 
@@ -53,6 +59,13 @@ namespace saftbus
 	private:
 		bool dispatch(Glib::IOCondition condition);
 	public:
+		void register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy);
+
+		// wait for response from server, expect a specific message type
+		// if a signal is coming instead, handle the signal
+		// do this until the correct type comes and return to caller
+		bool expect_from_server(MessageTypeS2C type);
+
 		int get_fd() const {return _create_socket; }
 	private:
 
@@ -65,6 +78,9 @@ namespace saftbus
 		//   .... maybe it does make sense to allow multiple proxies? TODO: take a decision !
 		      // interface_name         object_path
 		std::map<Glib::ustring, std::map<Glib::ustring, Proxy*> > _proxies; // maps object_paths to Proxies
+		
+		Glib::Variant<std::vector<Glib::VariantBase> > _call_sync_result;
+		std::vector<char> _call_sync_result_buffer;
 	};
 
 }

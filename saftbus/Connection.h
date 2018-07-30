@@ -1,12 +1,17 @@
 #ifndef SAFTBUS_CONNECTION_H_
 #define SAFTBUS_CONNECTION_H_
 
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
 #include <giomm.h>
 
 #include <map>
 
 #include "Interface.h"
-#include "core.h"
+#include "saftbus.h"
 
 
 namespace saftbus
@@ -18,7 +23,7 @@ namespace saftbus
 
 	public:
 
-		Connection();
+		Connection(int number_of_sockets = 8, const std::string& base_name = "/tmp/saftbus_");
 
 		//guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info);
 		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
@@ -47,16 +52,26 @@ namespace saftbus
 
 
 	private:
-		struct  SaftbusObject
-		{
-			std::string 				object_path;
-			Glib::RefPtr<InterfaceInfo> interface_info;
-			InterfaceVTable 			vtable;
-			SaftbusObject();
-			SaftbusObject(const std::string &object, const Glib::RefPtr<InterfaceInfo> &info, const InterfaceVTable &table);
-			SaftbusObject(const SaftbusObject &rhs);
-		};
-		std::vector<SaftbusObject> _saftbus_objects;
+		int socket_nr(Socket *socket);
+
+		// struct  SaftbusObject
+		// {
+		// 	std::string 				object_path;
+		// 	Glib::RefPtr<InterfaceInfo> interface_info;
+		// 	InterfaceVTable 			vtable;
+		// 	SaftbusObject();
+		// 	SaftbusObject(const std::string &object, const Glib::RefPtr<InterfaceInfo> &info, const InterfaceVTable &table);
+		// 	SaftbusObject(const SaftbusObject &rhs);
+		// };
+		//std::vector<SaftbusObject> _saftbus_objects;
+
+				// interface_name       // object_path
+		std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
+
+		std::vector<std::shared_ptr<InterfaceVTable> > _saftbus_objects;
+
+		// TODO: use std::set instead of std::vector
+		std::vector<std::shared_ptr<Socket> > _sockets; 
 
 	};
 

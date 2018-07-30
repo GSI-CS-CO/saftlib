@@ -1,5 +1,5 @@
-#ifndef G10_BDUS_BDUS_H_
-#define G10_BDUS_BDUS_H_
+#ifndef SAFTBUS_H_
+#define SAFTBUS_H_
 
 
 #include <giomm.h>
@@ -31,12 +31,30 @@ namespace saftbus
 	extern SlotNameVanished  name_vanished;
 	extern Glib::RefPtr<Connection> connection;
 
+	enum MessageTypeS2C {
+		CLIENT_REGISTERED,
+		METHOD_REPLY,
+		SIGNAL,
+		PORPERTY_CHANGED,
+		PROPERTY_VALUE,
+	};
+	enum MessageTypeC2S {
+		REGISTER_CLIENT,
+		METHOD_CALL,
+		PROPERTY_SET,
+		PROPERTY_GET,
+	};
+
+	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
+	bool deserialize(Glib::Variant<Glib::VariantBase>               &result, const char *data, gsize size);
+
 }
 
 
 #include "Error.h"
 #include "Interface.h"
 #include "Connection.h"
+#include "ProxyConnection.h"
 #include "Proxy.h"
 
 

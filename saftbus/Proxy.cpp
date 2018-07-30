@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "saftbus.h"
+
 namespace saftbus
 {
 
@@ -14,14 +16,16 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	const Glib::ustring&  	interface_name,
 	const Glib::RefPtr< InterfaceInfo >&  	info,
 	ProxyFlags  	flags
-)
+) : _name(name)
+  , _object_path(object_path)
+  , _interface_name(interface_name)
 {
+	std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << _connection.get() << std::endl;
 
-	std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called" << std::endl;
-
-	if (!_connection_created)
-	{
+	if (!_connection.get()) {
+		std::cerr << "   this process has no ProxyConnection yet. Creating one now" << std::endl;
 		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
+		std::cerr << "   ProxyConnection created" << std::endl;
 	}
 	// establish a connection to the service
 	// ...
@@ -34,13 +38,13 @@ void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustrin
 
 	return; // empty response
 
-	// fake a response
-	if (property_name == "Devices")
-	{
-		std::map<Glib::ustring, Glib::ustring> devices;
-		devices["tr0"] = "/de/gsi/saftlib";
-		property = Glib::Variant< std::map< Glib::ustring, Glib::ustring > >::create(devices);
-	}
+	// // fake a response
+	// if (property_name == "Devices")
+	// {
+	// 	std::map<Glib::ustring, Glib::ustring> devices;
+	// 	devices["tr0"] = "/de/gsi/saftlib";
+	// 	property = Glib::Variant< std::map< Glib::ustring, Glib::ustring > >::create(devices);
+	// }
 }
 
 void Proxy::on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties)
@@ -60,19 +64,21 @@ Glib::RefPtr<saftbus::ProxyConnection> Proxy::get_connection() const
 Glib::ustring Proxy::get_object_path() const
 {
 	std::cerr << "Proxy::get_object_path() called" << std::endl;
-	return "/unknown/";
+	return _object_path;
 }
 Glib::ustring Proxy::get_name() const
 {
 	std::cerr << "Proxy::get_name() called" << std::endl;
-	return "unknon";
+	return _name;
 }
 
 const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, Glib::VariantContainerBase query)
 {
 	std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
-	std::vector<std::string> response_vector(1, "/de/gsi/saftlib/tr0/softwareActionSink");
-	query = Glib::Variant< std::vector < std::string > >::create(response_vector);
+	// return _connection->call_sync(_object_path, 
+	// 	                          _interface_name,
+	// 	                          function_name,
+	// 	                          query);
 	return query;
 }
 
