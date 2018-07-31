@@ -38,7 +38,7 @@ namespace saftbus
 		Glib::ustring get_object_path() const;
 		Glib::ustring get_name() const;
 
-		const Glib::VariantContainerBase& call_sync(std::string function_name, Glib::VariantContainerBase query);
+		const Glib::VariantContainerBase& call_sync(std::string function_name, const Glib::VariantContainerBase &query);
 
 	private:
 		static Glib::RefPtr<saftbus::ProxyConnection> _connection;
@@ -47,6 +47,13 @@ namespace saftbus
 		Glib::ustring _name;
 		Glib::ustring _object_path;
 		Glib::ustring _interface_name;
+
+
+		Glib::Variant<std::vector<Glib::VariantBase> > _call_sync_result;
+		std::vector<char> _call_sync_result_buffer;
+
+		Glib::VariantContainerBase _result;
+
 	};
 
 }

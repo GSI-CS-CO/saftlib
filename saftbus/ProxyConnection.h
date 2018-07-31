@@ -67,6 +67,7 @@ namespace saftbus
 		bool expect_from_server(MessageTypeS2C type);
 
 		int get_fd() const {return _create_socket; }
+		Glib::ustring get_saftbus_id() { return _saftbus_id; }
 	private:
 
 		// this is the information that is needed to keep connected to a socket
@@ -81,6 +82,9 @@ namespace saftbus
 		
 		Glib::Variant<std::vector<Glib::VariantBase> > _call_sync_result;
 		std::vector<char> _call_sync_result_buffer;
+
+		Glib::VariantContainerBase _result;
+
 
 		Glib::ustring _saftbus_id; 
 	};
