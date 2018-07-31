@@ -83,8 +83,9 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	saftbus::write_all(get_fd(), data_ptr, size);
 
 	// receive from socket
-	saftbus::MessageTypeS2C type;
-	saftbus::read(get_fd(), type);
+	saftbus::MessageTypeS2C type = saftbus::METHOD_REPLY;
+	while(!expect_from_server(type));
+	//saftbus::read(get_fd(), type);
 	if (_debug_level) std::cerr << "got response " << type << std::endl;
 	saftbus::read(get_fd(), size);
 	_call_sync_result_buffer.resize(size);
@@ -117,7 +118,7 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 	MessageTypeS2C type;
 	while (true)
 	{
-		int result = saftbus::read(_create_socket, type);
+		int result = saftbus::read(get_fd(), type);
 		if (result == -1) {
 			return false;
 		}
@@ -125,7 +126,8 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 				if (_debug_level) std::cerr << "ProxyConnection::expect_from_server() got expected type" << std::endl;
 				return true;
 		} else if (type == saftbus::SIGNAL) {
-			//dispatchSignal();
+			std::cerr << "got a SIGNAL **************************************" << std::endl;
+			dispatchSignal();
 			continue;
 		} else {
 			if (_debug_level) std::cerr << "unexpected type " << type << " while expecting " << expected_type << std::endl;
@@ -135,48 +137,89 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 	return false;
 }
 
-// void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy)
-// {
-// 	int _debug_level = 1;
-// 	std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
-// 	for(auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
-// 	{
-// 		for(auto it = itr->second.begin(); it != itr->second.end(); ++it)
-// 		{
-// 			if (_debug_level) std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
-// 		}
-// 	}
-// 	auto interfaces = _proxies.find(interface_name);
-// 	if (interfaces != _proxies.end()) {
-// 		if (interfaces->second.find(object_path) != interfaces->second.end()) {
-// 			// we already have a proxy for this
-// 			if (_debug_level) std::cerr << interface_name << " -> " << object_path << " has already a proxy object associated with it." << std::endl;
-// 			return ;
-// 		    	//throw std::runtime_error("ProxyConnection::register_proxy ERROR object_path " + object_path + " has already a proxy object associated with it.");
-// 		}
-// 	}
-// 	_proxies[interface_name][object_path] = proxy; // map the object_path to the proxy object
+void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy)
+{
+	std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
 
-// 	if (_debug_level) std::cerr << "ProxyConnection::register_proxy() called:  registered object_path " << interface_name << " " <<  object_path << std::endl;
-// 	if (_debug_level) std::cerr << "   informing server connection about this" << std::endl;
-// 	// inform the client connection that we (the given object path) are sitting behind that (the one we have written to ) socket
-// 	saftbus::write(_create_socket, saftbus::REGISTER_CLIENT);
-// 	//saftbus::write(_create_socket, interface_name);
-// 	//saftbus::write(_create_socket, object_path);
-// 	bool result = expect_from_server(saftbus::CLIENT_REGISTERED);
-// 	if (result == false) {
-// 		if (_debug_level) std::cerr << "didn't get expected reply from server" << std::endl;
-// 		return;
-// 	}
-// }
+	// for(auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
+	// {
+	// 	for(auto it = itr->second.begin(); it != itr->second.end(); ++it)
+	// 	{
+	// 		if (_debug_level) std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
+	// 	}
+	// }
+	auto interfaces = _proxies.find(interface_name);
+	if (interfaces != _proxies.end()) {
+		if (interfaces->second.find(object_path) != interfaces->second.end()) {
+			// we already have a proxy for this
+			if (_debug_level) std::cerr << interface_name << " -> " << object_path << " has already a proxy object associated with it." << std::endl;
+			return ;
+		    	//throw std::runtime_error("ProxyConnection::register_proxy ERROR object_path " + object_path + " has already a proxy object associated with it.");
+		}
+	}
+	_proxies[interface_name][object_path] = proxy; // map the object_path to the proxy object
+
+	// if (_debug_level) std::cerr << "ProxyConnection::register_proxy() called:  registered object_path " << interface_name << " " <<  object_path << std::endl;
+	// if (_debug_level) std::cerr << "   informing server connection about this" << std::endl;
+	// // inform the client connection that we (the given object path) are sitting behind that (the one we have written to ) socket
+	// saftbus::write(_create_socket, saftbus::REGISTER_CLIENT);
+	// //saftbus::write(_create_socket, interface_name);
+	// //saftbus::write(_create_socket, object_path);
+	// bool result = expect_from_server(saftbus::CLIENT_REGISTERED);
+	// if (result == false) {
+	// 	if (_debug_level) std::cerr << "didn't get expected reply from server" << std::endl;
+	// 	return;
+	// }
+}
 
 bool ProxyConnection::dispatch(Glib::IOCondition condition) 
 {
-	int _debug_level = 1;
 	if (_debug_level) std::cerr << "ProxyConnection::dispatch() called" << std::endl;
 
+	saftbus::MessageTypeS2C type = saftbus::SIGNAL;
+	while(!expect_from_server(type));
+
+	dispatchSignal();
 
 	return true;
+}
+
+void ProxyConnection::dispatchSignal()
+{
+	guint32 size;
+	saftbus::read(get_fd(), size);
+	if (_debug_level) std::cerr << "expecting message with size " << size << std::endl;
+	std::vector<char> buffer(size);
+	saftbus::read_all(get_fd(), &buffer[0], size);
+	Glib::Variant<std::vector<Glib::VariantBase> > payload;
+	deserialize(payload, &buffer[0], buffer.size());
+	std::cerr << "got signal content " << payload.get_type_string() << " " << payload.print() << std::endl;
+	Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
+	Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
+	Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
+	Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(3));
+
+	std::cerr << "object_path = " << object_path.get() << std::endl;
+	std::cerr << "interface_name = " << interface_name.get() << std::endl;
+	std::cerr << "signal_name = " << signal_name.get() << std::endl;
+
+	std::cerr << "calling the on_signal function " << std::endl;
+	for (auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
+	{
+		for (auto it = itr->second.begin(); it != itr->second.end(); ++it)
+		{
+			std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
+		}
+	}
+
+	auto interfaces = _proxies.find(interface_name.get());
+	if (interfaces != _proxies.end()) {
+		if (interfaces->second.find(object_path.get()) != interfaces->second.end()) {
+			_proxies[interface_name.get()][object_path.get()]->on_signal("saftd", signal_name.get(), parameters);
+		}
+	}
+
+
 }
 
 

@@ -43,6 +43,7 @@ namespace saftbus
 	// internal stuff (not part the DBus fake api)
 	private:
 		bool dispatch(Glib::IOCondition condition);
+		void dispatchSignal();
 	public:
 		void register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy);
 

@@ -47,25 +47,25 @@ bool Connection::unregister_object (guint registration_id)
 }
 
 
-guint Connection::signal_subscribe 	( 	const SlotSignal&  	slot,
-										const Glib::ustring&  	sender,
-										const Glib::ustring&  	interface_name,
-										const Glib::ustring&  	member,
-										const Glib::ustring&  	object_path,
-										const Glib::ustring&  	arg0//,
-										)//SignalFlags  	flags)
+guint Connection::signal_subscribe(const SlotSignal& slot,
+								   const Glib::ustring& sender,
+								   const Glib::ustring& interface_name,
+								   const Glib::ustring& member,
+								   const Glib::ustring& object_path,
+								   const Glib::ustring& arg0//,
+								   )//SignalFlags  	flags)
 {
 	if (_debug_level) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ") called" << std::endl;
 	return 0;
 }
 
-void Connection::signal_unsubscribe 	( 	guint  	subscription_id	) 
+void Connection::signal_unsubscribe(guint subscription_id) 
 {
 	if (_debug_level) std::cerr << "Connection::signal_unsubscribe() called" << std::endl;
 }
 
 
-void 	Connection::emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
+void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
 	if (_debug_level) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << destination_bus_name << ") called" << std::endl;
 	for (unsigned n = 0; n < parameters.get_n_children(); ++n)
@@ -81,8 +81,22 @@ void 	Connection::emit_signal (const Glib::ustring& object_path, const Glib::ust
 	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(signal_name));
 	signal_msg.push_back(parameters);
 	Glib::Variant<std::vector<Glib::VariantBase> > var_signal_msg = Glib::Variant<std::vector<Glib::VariantBase> >::create(signal_msg);
-	std::cerr << "signal message " << var_signal_msg.get_type_string() << " " << var_signal_msg.print() << std::endl;
 
+	if (_debug_level) std::cerr << "signal message " << var_signal_msg.get_type_string() << " " << var_signal_msg.print() << std::endl;
+	guint32 size = var_signal_msg.get_size();
+	if (_debug_level) std::cerr << " size of signal is " << size << std::endl;
+	const char *data_ptr = static_cast<const char*>(var_signal_msg.get_data());
+
+	for (auto it = _sockets.begin(); it != _sockets.end(); ++it) 
+	{
+		Socket &socket = **it;
+		if (socket.get_active()) 
+		{
+			saftbus::write(socket.get_fd(), saftbus::SIGNAL);
+			saftbus::write(socket.get_fd(), size);
+			saftbus::write_all(socket.get_fd(), data_ptr, size);
+		}
+	}
 }
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 

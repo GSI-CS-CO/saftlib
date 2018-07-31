@@ -29,6 +29,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 		if (_debug_level) std::cerr << "   ProxyConnection created" << std::endl;
 	}
 
+	_connection->register_proxy(interface_name, object_path, this);
 }
 
 
@@ -104,8 +105,10 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, co
 	saftbus::write_all(_connection->get_fd(), data_ptr, size);
 
 	// receive from socket
-	saftbus::MessageTypeS2C type;
-	saftbus::read(_connection->get_fd(), type);
+	saftbus::MessageTypeS2C type = saftbus::METHOD_REPLY;
+	while(!_connection->expect_from_server(type));
+	// saftbus::MessageTypeS2C type;
+	// saftbus::read(_connection->get_fd(), type);
 	if (_debug_level) std::cerr << "got response " << type << std::endl;
 	saftbus::read(_connection->get_fd(), size);
 	_call_sync_result_buffer.resize(size);
