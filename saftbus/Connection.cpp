@@ -10,24 +10,6 @@
 namespace saftbus
 {
 
-// Connection::SaftbusObject::SaftbusObject()
-// 	: object_path("")
-// 	, interface_info()
-// 	, vtable(InterfaceVTable::SlotInterfaceMethodCall())
-// {}
-
-// Connection::SaftbusObject::SaftbusObject(const std::string &object, const Glib::RefPtr<InterfaceInfo> &info, const InterfaceVTable &table)
-// 	: object_path(object)
-// 	, interface_info(info)
-// 	, vtable(table)
-// {}
-
-// Connection::SaftbusObject::SaftbusObject(const SaftbusObject &rhs)
-// 	: object_path(rhs.object_path)
-// 	, interface_info(rhs.interface_info)
-// 	, vtable(rhs.vtable)
-// {}
-
 Connection::Connection(int number_of_sockets, const std::string& base_name)
 	: _client_id(1)
 {
@@ -196,19 +178,6 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 						saftbus::write_all(socket->get_fd(), data_ptr, size);
 
 					}
-
-					// for (auto itr = _saftbus_indices.begin(); itr != _saftbus_indices.end(); ++itr)
-					// {
-					// 	for (auto it = itr->second.begin(); it != itr->second.end(); ++it)
-					// 	{
-					// 		std::cerr << "_saftbus_objects[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
-					// 	}
-					// }
- 					// TODO ... this is not correct ... the receiver complains like this: 
- 					//       (process:31705): GLib-CRITICAL **: 21:08:01.314: g_variant_get_variant: assertion 'g_variant_is_of_type (value, G_VARIANT_TYPE_VARIANT)' failed
-
-
-					//saftbus::write(socket->get_fd(), saftbus::CLIENT_REGISTERED);
 				}
 				break;
 

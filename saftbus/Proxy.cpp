@@ -29,9 +29,6 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 		std::cerr << "   ProxyConnection created" << std::endl;
 	}
 
-	// establish a connection to the service: the service needs to know which proxies are connected in order to dispatch the incoming signals
-	// ...
-	//_connection->register_proxy(_interface_name, _object_path, this);
 }
 
 
@@ -86,6 +83,7 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, co
 	// return result;
 
 	// I'm duplicating large parts of the ProxyConnection::call_sync because of small differences in how method calls and property get/set are handled
+	// Maybe at some point it is possible to do that by calling ProxyConnection::call_sync (commented above)
 
 	std::cerr << "Proxy::call_sync(" << _object_path << "," << _interface_name << "," << function_name << ") called" << std::endl;
 	// first append message meta informations like: type of message, recipient, sender, interface name
@@ -113,23 +111,10 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, co
 	_call_sync_result_buffer.resize(size);
 	saftbus::read_all(_connection->get_fd(), &_call_sync_result_buffer[0], size);
 
-	// deserialize
-	//Glib::Variant<std::vector<Glib::VariantBase> > payload;
 	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
-
 	std::cerr << "Proxy::call_sync _call_sync_result = " << _call_sync_result.get_type_string() << " " << _call_sync_result.print() << std::endl;
-
 	_result = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>(_call_sync_result.get_child(0));
-
 	std::cerr << "Proxy::call_sync _result = " << _result.get_type_string() << " " << _result.print() << std::endl;
-	//Glib::VariantBase result    = Glib::VariantBase::cast_dynamic<Glib::VariantBase >(payload.get_child(0));
-	// std::cerr << " payload.get_type_string() = " << _call_sync_result.get_type_string() << "     .value = " << _call_sync_result.print() << std::endl;
-	// for (unsigned n = 0; n < _call_sync_result.get_n_children(); ++n)
-	// {
-	// 	Glib::VariantBase child = _call_sync_result.get_child(n);
-	// 	std::cerr << "     parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
-	// }
-	// std::cerr << "just before returning " << _call_sync_result.print() << std::endl;
 	return _result;		
 
 }

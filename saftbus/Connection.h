@@ -25,7 +25,6 @@ namespace saftbus
 
 		Connection(int number_of_sockets = 8, const std::string& base_name = "/tmp/saftbus_");
 
-		//guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info);
 		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
 		bool 	unregister_object (guint registration_id);
 
@@ -44,26 +43,11 @@ namespace saftbus
 
 		void 	emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name=Glib::ustring(), const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
 
-
-		// Glib::VariantContainerBase call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name=Glib::ustring(), int timeout_msec=-1);
-
-
 		bool dispatch(Glib::IOCondition condition, Socket *socket);
 
 
 	private:
 		int socket_nr(Socket *socket);
-
-		// struct  SaftbusObject
-		// {
-		// 	std::string 				object_path;
-		// 	Glib::RefPtr<InterfaceInfo> interface_info;
-		// 	InterfaceVTable 			vtable;
-		// 	SaftbusObject();
-		// 	SaftbusObject(const std::string &object, const Glib::RefPtr<InterfaceInfo> &info, const InterfaceVTable &table);
-		// 	SaftbusObject(const SaftbusObject &rhs);
-		// };
-		//std::vector<SaftbusObject> _saftbus_objects;
 
 				// interface_name       // object_path
 		std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
