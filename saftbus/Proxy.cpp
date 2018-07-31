@@ -27,8 +27,10 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
 		std::cerr << "   ProxyConnection created" << std::endl;
 	}
-	// establish a connection to the service
+
+	// establish a connection to the service: the service needs to know which proxies are connected in order to dispatch the incoming signals
 	// ...
+	//_connection->register_proxy(_interface_name, _object_path, this);
 }
 
 
@@ -75,11 +77,12 @@ Glib::ustring Proxy::get_name() const
 const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, Glib::VariantContainerBase query)
 {
 	std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
-	// return _connection->call_sync(_object_path, 
-	// 	                          _interface_name,
-	// 	                          function_name,
-	// 	                          query);
-	return query;
+	Glib::VariantContainerBase &result = _connection->call_sync(_object_path, 
+		                          _interface_name,
+		                          function_name,
+		                          query);
+	std::cerr << "result = " << result.print() << std::endl;
+	return result;
 }
 
 }

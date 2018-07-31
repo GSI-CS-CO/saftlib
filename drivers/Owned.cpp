@@ -22,6 +22,7 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <iostream>
 #include "Owned.h"
 #include "clog.h"
 #include "Device.h"
@@ -36,10 +37,12 @@ static void do_unsubscribe(Glib::RefPtr<saftbus::Connection> connection, guint i
 Owned::Owned(const Glib::ustring& objectPath, sigc::slot<void> destroy_)
  : BaseObject(objectPath), destroy(destroy_)
 {
+  std::cerr << "Owned::Owned(" << objectPath << ")" << std::endl;
 }
 
 Owned::~Owned()
 {
+  std::cerr << "Owned::~Owned(" << ")" << std::endl;
   try {
     Destroyed(); 
     if (!owner.empty()) unsubscribe();
@@ -50,6 +53,7 @@ Owned::~Owned()
 
 void Owned::Disown()
 {
+  std::cerr << "Owned::Disown(" << ")" << std::endl;
   if (owner.empty()) {
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
   } else {
@@ -62,11 +66,13 @@ void Owned::Disown()
 
 void Owned::Own()
 {
+  std::cerr << "Owned::Own()  ,   getSender() = " << getSender() << std::endl;
   initOwner(getConnection(), getSender());
 }
 
 void Owned::initOwner(const Glib::RefPtr<saftbus::Connection>& connection_, const Glib::ustring& owner_)
 {
+  std::cerr << "Owned::initOwner( , " << owner_ << " ) " <<std::endl;
   if (owner.empty()) {
     owner = owner_;
     Glib::RefPtr<saftbus::Connection> connection = connection_;
@@ -105,13 +111,16 @@ bool Owned::getDestructible() const
 
 void Owned::ownerOnly() const
 {
+  std::cerr << "Owned::ownerOnly() getSender() = " << getSender() << std::endl;
+  if (!owner.empty())
+    std::cerr << "owner = " << owner << std::endl;
   if (!owner.empty() && owner != getSender())
     throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "You are not my Owner");
 }
 
 void Owned::ownerQuit()
 {
-}
+} 
 
 void Owned::owner_quit_handler(
   const Glib::RefPtr<saftbus::Connection>&,

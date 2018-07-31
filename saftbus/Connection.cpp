@@ -29,6 +29,7 @@ namespace saftbus
 // {}
 
 Connection::Connection(int number_of_sockets, const std::string& base_name)
+	: _client_id(1)
 {
 	for (int i = 0; i < number_of_sockets; ++i)
 	{
@@ -114,11 +115,14 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				{
 					if (_debug_level) std::cerr << "Connection::dispatch() REGISTER_CLIENT received" << std::endl;
 					saftbus::write(socket->get_fd(), saftbus::CLIENT_REGISTERED);
+					std::cerr << "     writing client id " << _client_id << std::endl;
+					saftbus::write(socket->get_fd(), _client_id);
+					++_client_id;
 				}
 				break;
-				case saftbus::PROPERTY_GET: 
+				case saftbus::METHOD_CALL: 
 				{
-					if (_debug_level) std::cerr << "Connection::dispatch() PROPERTY_GET received" << std::endl;
+					if (_debug_level) std::cerr << "Connection::dispatch() METHOD_CALL received" << std::endl;
 					guint32 size;
 					saftbus::read(socket->get_fd(), size);
 					std::cerr << "expecting message with size " << size << std::endl;
@@ -127,43 +131,81 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					Glib::Variant<std::vector<Glib::VariantBase> > payload;
 					deserialize(payload, &buffer[0], buffer.size());
 					Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
-					Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
-					Glib::Variant<Glib::ustring> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
-					Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(3));
-
-					Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
-					Glib::Variant<Glib::ustring> property_name          = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(1));
-
-					std::cerr << "name = " << name.get() << "   object_path = " << object_path.get() <<  "    interface_name = " << interface_name.get() << std::endl;
-					std::cerr << "property_name = " << property_name.get() << "   derived_interface_name = " << derived_interface_name.get() << std::endl;
-
-					for (unsigned n = 0; n < parameters.get_n_children(); ++n)
-					{
-						Glib::VariantBase child;
-						parameters.get_child(child, n);
-						std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
-					}					
-					int index = _saftbus_indices[derived_interface_name.get()][object_path.get()];
-					std::cerr << "found saftbus object at index " << index << std::endl;
-					
+					Glib::Variant<Glib::ustring> sender         = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
+					Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
+					Glib::Variant<Glib::ustring> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(3));
+					Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
+					std::cerr << "sender = " << sender.get() <<  "    name = " << name.get() << "   object_path = " << object_path.get() <<  "    interface_name = " << interface_name.get() << std::endl;
+					std::cerr << "parameters = " << parameters.print() << std::endl;
 					Glib::VariantBase result;
-					Glib::ustring sender = object_path.get();
-					_saftbus_objects[index]->get_property(result, saftbus::connection, sender, object_path.get(), derived_interface_name.get(), property_name.get());
+					if (interface_name.get() == "org.freedesktop.DBus.Properties") {
+						std::cerr << " interface for Set/Get property was called" << std::endl;
 
-					std::cerr << "result is: " << result.get_type_string() << "   .value = " << result.print() << std::endl;
+						Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
+						Glib::Variant<Glib::ustring> property_name          = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(1));
 
+						std::cerr << "property_name = " << property_name.get() << "   derived_interface_name = " << derived_interface_name.get() << std::endl;
+
+						for (unsigned n = 0; n < parameters.get_n_children(); ++n)
+						{
+							Glib::VariantBase child;
+							parameters.get_child(child, n);
+							std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
+						}					
+						int index = _saftbus_indices[derived_interface_name.get()][object_path.get()];
+						std::cerr << "found saftbus object at index " << index << std::endl;
+						
+						_saftbus_objects[index]->get_property(result, saftbus::connection, sender.get(), object_path.get(), derived_interface_name.get(), property_name.get());
+
+						std::cerr << "result is: " << result.get_type_string() << "   .value = " << result.print() << std::endl;
+
+						std::vector<Glib::VariantBase> response;
+						response.push_back(result);
+						Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
+
+						std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
+						size = var_response.get_size();
+						const char *data_ptr = static_cast<const char*>(var_response.get_data());
+						saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
+						saftbus::write(socket->get_fd(), size);
+						saftbus::write_all(socket->get_fd(), data_ptr, size);
+
+					}
+					else
+					{
+						std::cerr << "a real method call: " << std::endl;
+						int index = _saftbus_indices[interface_name.get()][object_path.get()];
+						std::cerr << "found saftbus object at index " << index << std::endl;
+						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
+						std::cerr << "doing the function call" << std::endl;
+						std::cerr << "saftbus::connection.get() " << saftbus::connection.get() << std::endl;
+						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);
+						result = method_invocation_rptr->get_return_value();
+						std::cerr << "result is " << result.get_type_string() << " " << result.print() << std::endl;
+
+						// std::vector<Glib::VariantBase> response;
+						// response.push_back(result);
+						// Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
+
+						std::cerr << "response is " << result.get_type_string() << " " << result.print() << std::endl;
+						size = result.get_size();
+						const char *data_ptr = static_cast<const char*>(result.get_data());
+						saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
+						saftbus::write(socket->get_fd(), size);
+						saftbus::write_all(socket->get_fd(), data_ptr, size);
+
+					}
+
+					// for (auto itr = _saftbus_indices.begin(); itr != _saftbus_indices.end(); ++itr)
+					// {
+					// 	for (auto it = itr->second.begin(); it != itr->second.end(); ++it)
+					// 	{
+					// 		std::cerr << "_saftbus_objects[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
+					// 	}
+					// }
  					// TODO ... this is not correct ... the receiver complains like this: 
  					//       (process:31705): GLib-CRITICAL **: 21:08:01.314: g_variant_get_variant: assertion 'g_variant_is_of_type (value, G_VARIANT_TYPE_VARIANT)' failed
 
-					std::vector<Glib::VariantBase> response;
-					response.push_back(result);
-					Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
-
-					size = var_response.get_size();
-					const char *data_ptr = static_cast<const char*>(var_response.get_data());
-					saftbus::write(socket->get_fd(), saftbus::PROPERTY_VALUE);
-					saftbus::write(socket->get_fd(), size);
-					saftbus::write_all(socket->get_fd(), data_ptr, size);
 
 					//saftbus::write(socket->get_fd(), saftbus::CLIENT_REGISTERED);
 				}

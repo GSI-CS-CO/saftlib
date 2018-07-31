@@ -1,4 +1,5 @@
 #include "Interface.h"
+#include "Error.h"
 
 #include <iostream>
 #include <algorithm>
@@ -7,14 +8,7 @@ namespace saftbus
 {
 
 
-void MethodInvocation::return_value (const Glib::VariantContainerBase& 	parameters)
-{
 
-}
-void MethodInvocation::return_error (const saftbus::Error& error) 
-{
-
-}
 
 
 
@@ -36,6 +30,26 @@ const Glib::ustring &InterfaceInfo::get_interface_name()
 {
 	return _interface_name;
 }
+
+
+void MethodInvocation::return_value	(const Glib::VariantContainerBase& parameters)
+{
+	std::cerr << "MethodInvocation::return_value()" << std::endl;
+	std::cerr << "   parameters  = " << parameters.print() << std::endl;
+	_parameters = parameters;
+	std::cerr << "   _parameters = " << _parameters.print() << std::endl;
+}
+void MethodInvocation::return_error	(const saftbus::Error& error)
+{
+	_error = error;
+}
+Glib::VariantContainerBase& MethodInvocation::get_return_value()
+{
+	std::cerr << "MethodInvocation::get_return_value()" << std::endl;
+	std::cerr << "   _parameters = " << _parameters.print() << std::endl;
+	return _parameters;
+}
+
 
 
 NodeInfo::NodeInfo(const Glib::ustring &interface_name)

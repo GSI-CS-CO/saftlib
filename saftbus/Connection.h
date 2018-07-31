@@ -73,6 +73,8 @@ namespace saftbus
 		// TODO: use std::set instead of std::vector
 		std::vector<std::shared_ptr<Socket> > _sockets; 
 
+		int _client_id;
+
 	};
 
 }

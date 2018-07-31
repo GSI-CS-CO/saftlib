@@ -81,6 +81,8 @@ namespace saftbus
 		
 		Glib::Variant<std::vector<Glib::VariantBase> > _call_sync_result;
 		std::vector<char> _call_sync_result_buffer;
+
+		Glib::ustring _saftbus_id; 
 	};
 
 }

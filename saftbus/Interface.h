@@ -1,22 +1,26 @@
-#ifndef G10_BDUS_INTERFACE_H_
-#define G10_BDUS_INTERFACE_H_
+#ifndef SAFTBUS_INTERFACE_H_
+#define SAFTBUS_INTERFACE_H_
 
 
 #include <giomm.h>
+#include "Error.h"
 
 namespace saftbus
 {
 
 	class Connection;
-	class Error;
 
-	class MethodInvocation
+	class MethodInvocation : public Glib::Object
 	{
 	public:
-		void return_value 	( 	const Glib::VariantContainerBase&  	parameters	) ;
-		void return_error 	( 	const saftbus::Error&  	error	) 	;
-	};
+		void return_value(const Glib::VariantContainerBase& parameters);
+		void return_error(const saftbus::Error& error);
 
+		Glib::VariantContainerBase& get_return_value();
+	private:
+		Glib::VariantContainerBase _parameters;
+		saftbus::Error _error;
+	};
 
 	class InterfaceInfo : public Glib::Object//Base
 	{

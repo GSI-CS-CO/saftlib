@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <sstream>
 #include <iomanip>
 #include <utility>
 #include <errno.h>
@@ -54,6 +55,9 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 		}
 	}
     Glib::signal_io().connect(sigc::mem_fun(*this, &ProxyConnection::dispatch), _create_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
+    std::ostringstream id_out;
+    id_out << this;
+    _saftbus_id = id_out.str();
 }
 
 
@@ -117,6 +121,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	// first append message meta informations like: type of message, recipient, sender, interface name
 	std::vector<Glib::VariantBase> message;
 	message.push_back(Glib::Variant<Glib::ustring>::create(object_path));
+	message.push_back(Glib::Variant<Glib::ustring>::create(_saftbus_id));
 	message.push_back(Glib::Variant<Glib::ustring>::create(interface_name));
 	message.push_back(Glib::Variant<Glib::ustring>::create(name)); // name can be method_name or property_name
 	message.push_back(parameters);
@@ -126,7 +131,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	guint32 size = var_message.get_size();
 	const char *data_ptr =  static_cast<const char*>(var_message.get_data());
 	// send over socket
-	saftbus::write(get_fd(), saftbus::PROPERTY_GET);
+	saftbus::write(get_fd(), saftbus::METHOD_CALL);
 	saftbus::write(get_fd(), size);
 	saftbus::write_all(get_fd(), data_ptr, size);
 
@@ -142,6 +147,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	//Glib::Variant<std::vector<Glib::VariantBase> > payload;
 	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
 
+	std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
 	//Glib::VariantBase result    = Glib::VariantBase::cast_dynamic<Glib::VariantBase >(payload.get_child(0));
 	// std::cerr << " payload.get_type_string() = " << _call_sync_result.get_type_string() << "     .value = " << _call_sync_result.print() << std::endl;
 	// for (unsigned n = 0; n < _call_sync_result.get_n_children(); ++n)
@@ -182,42 +188,40 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 	return false;
 }
 
-void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy)
-{
-	int _debug_level = 1;
-	if (_debug_level) std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
-	for(auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
-	{
-		for(auto it = itr->second.begin(); it != itr->second.end(); ++it)
-		{
-			if (_debug_level) std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
-		}
-	}
-	auto interfaces = _proxies.find(interface_name);
-	if (interfaces != _proxies.end()) {
-		if (interfaces->second.find(object_path) != interfaces->second.end()) {
-			// we already have a proxy for this
-			if (_debug_level) std::cerr << interface_name << " -> " << object_path << " has already a proxy object associated with it." << std::endl;
-			return ;
-		    	//throw std::runtime_error("ProxyConnection::register_proxy ERROR object_path " + object_path + " has already a proxy object associated with it.");
-		}
-	}
-	_proxies[interface_name][object_path] = proxy; // map the object_path to the proxy object
+// void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy)
+// {
+// 	int _debug_level = 1;
+// 	std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
+// 	for(auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
+// 	{
+// 		for(auto it = itr->second.begin(); it != itr->second.end(); ++it)
+// 		{
+// 			if (_debug_level) std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
+// 		}
+// 	}
+// 	auto interfaces = _proxies.find(interface_name);
+// 	if (interfaces != _proxies.end()) {
+// 		if (interfaces->second.find(object_path) != interfaces->second.end()) {
+// 			// we already have a proxy for this
+// 			if (_debug_level) std::cerr << interface_name << " -> " << object_path << " has already a proxy object associated with it." << std::endl;
+// 			return ;
+// 		    	//throw std::runtime_error("ProxyConnection::register_proxy ERROR object_path " + object_path + " has already a proxy object associated with it.");
+// 		}
+// 	}
+// 	_proxies[interface_name][object_path] = proxy; // map the object_path to the proxy object
 
-	if (_debug_level) std::cerr << "ProxyConnection::register_proxy() called:  registered object_path " << interface_name << " " <<  object_path << std::endl;
-	if (_debug_level) std::cerr << "   informing server connection about this" << std::endl;
-	// inform the client connection that we (the given object path) are sitting behind that (the one we have written to ) socket
-	saftbus::write(_create_socket, saftbus::REGISTER_CLIENT);
-	saftbus::write(_create_socket, interface_name);
-	saftbus::write(_create_socket, object_path);
-	bool result = expect_from_server(saftbus::CLIENT_REGISTERED);
-	if (result == false) {
-		if (_debug_level) std::cerr << "didn't get expected reply from server" << std::endl;
-		return;
-	}
-	if (_debug_level) std::cerr << "client successfully registered " << std::endl;
-
-}
+// 	if (_debug_level) std::cerr << "ProxyConnection::register_proxy() called:  registered object_path " << interface_name << " " <<  object_path << std::endl;
+// 	if (_debug_level) std::cerr << "   informing server connection about this" << std::endl;
+// 	// inform the client connection that we (the given object path) are sitting behind that (the one we have written to ) socket
+// 	saftbus::write(_create_socket, saftbus::REGISTER_CLIENT);
+// 	//saftbus::write(_create_socket, interface_name);
+// 	//saftbus::write(_create_socket, object_path);
+// 	bool result = expect_from_server(saftbus::CLIENT_REGISTERED);
+// 	if (result == false) {
+// 		if (_debug_level) std::cerr << "didn't get expected reply from server" << std::endl;
+// 		return;
+// 	}
+// }
 
 bool ProxyConnection::dispatch(Glib::IOCondition condition) 
 {

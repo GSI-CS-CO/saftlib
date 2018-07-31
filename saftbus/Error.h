@@ -1,5 +1,5 @@
-#ifndef G10_BDUS_ERROR_H_
-#define G10_BDUS_ERROR_H_
+#ifndef SAFTBUS_ERROR_H_
+#define SAFTBUS_ERROR_H_
 
 #include <giomm.h>
 
@@ -11,6 +11,7 @@ namespace saftbus
 	public:
 		enum Type
 		{
+			NO_ERROR,
 			INVALID_ARGS,
 			UNKNOWN_METHOD,
 			IO_ERROR,
@@ -18,7 +19,9 @@ namespace saftbus
 			FAILED,
 		};
 
+		Error();
 		Error(Type type, const Glib::ustring &msg);
+		Error(const Error& error);
 
 		Glib::ustring what() const;
 
