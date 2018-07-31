@@ -21,7 +21,7 @@ namespace saftbus
 
   int write_all(int fd, const void *buffer, int size)
   {
-    std::cerr << "write_all(buffer, " << size << ") called " << std::endl;
+    //std::cerr << "write_all(buffer, " << size << ") called " << std::endl;
     const char *ptr = static_cast<const char*>(buffer);
     int n_written = 0;
     do {
@@ -43,7 +43,7 @@ namespace saftbus
 
   int read_all(int fd, void *buffer, int size)
   {
-    std::cerr << "read_all(buffer, " << size << ") called " << std::endl;
+    //std::cerr << "read_all(buffer, " << size << ") called " << std::endl;
     char* ptr = static_cast<char*>(buffer);
     int n_read = 0;
     do { 

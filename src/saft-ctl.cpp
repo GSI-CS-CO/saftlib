@@ -193,7 +193,14 @@ static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
   map< Glib::ustring, Glib::ustring > gatewareInfo;
   map<Glib::ustring, Glib::ustring>::iterator j;
   
+
+  struct timespec start, stop;
+  clock_gettime( CLOCK_REALTIME, &start);
   allDevices      = saftd->getDevices();
+  clock_gettime( CLOCK_REALTIME, &stop);
+  double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+            - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
+  std::cout << "**************function call took " << dt << " us" << std::endl;          
   
   std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
   for (i = allDevices.begin(); i != allDevices.end(); i++ ) {
@@ -466,7 +473,13 @@ int main(int argc, char** argv)
       } // ppsAlign
       else eventTime = wrTime + eventTNext;
       
+      struct timespec start, stop;
+      clock_gettime( CLOCK_REALTIME, &start);
       receiver->InjectEvent(eventID, eventParam, eventTime);
+      clock_gettime( CLOCK_REALTIME, &stop);
+      double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+                - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
+      std::cout << "**************function call took " << dt << " us" << std::endl;          
       if (pmode & PMODE_HEX)
       {
         std::cout << "Injected event (eventID/parameter/time): 0x" << std::hex << std::setw(16) << std::setfill('0') << eventID 

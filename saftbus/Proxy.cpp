@@ -24,9 +24,9 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << _connection.get() << std::endl;
 
 	if (!_connection.get()) {
-		std::cerr << "   this process has no ProxyConnection yet. Creating one now" << std::endl;
+		if (_debug_level) std::cerr << "   this process has no ProxyConnection yet. Creating one now" << std::endl;
 		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
-		std::cerr << "   ProxyConnection created" << std::endl;
+		if (_debug_level) std::cerr << "   ProxyConnection created" << std::endl;
 	}
 
 }
@@ -34,7 +34,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 
 void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const 
 {
-	std::cerr << "Proxy::get_cached_property(" << property_name << ") called" << std::endl;
+	if (_debug_level) std::cerr << "Proxy::get_cached_property(" << property_name << ") called" << std::endl;
 
 	return; // empty response
 
@@ -49,26 +49,26 @@ void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustrin
 
 void Proxy::on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties)
 {
-	std::cerr << "Proxy::on_properties_changed() called" << std::endl;
+	if (_debug_level) std::cerr << "Proxy::on_properties_changed() called" << std::endl;
 }
 void Proxy::on_signal (const Glib::ustring& sender_name, const Glib::ustring& signal_name, const Glib::VariantContainerBase& parameters)
 {
-	std::cerr << "Proxy::on_signal() called" << std::endl;
+	if (_debug_level) std::cerr << "Proxy::on_signal() called" << std::endl;
 }
 Glib::RefPtr<saftbus::ProxyConnection> Proxy::get_connection() const
 {
-	std::cerr << "Proxy::get_connection() called " << std::endl;
+	if (_debug_level) std::cerr << "Proxy::get_connection() called " << std::endl;
 	return _connection;
 }
 
 Glib::ustring Proxy::get_object_path() const
 {
-	std::cerr << "Proxy::get_object_path() called" << std::endl;
+	if (_debug_level) std::cerr << "Proxy::get_object_path() called" << std::endl;
 	return _object_path;
 }
 Glib::ustring Proxy::get_name() const
 {
-	std::cerr << "Proxy::get_name() called" << std::endl;
+	if (_debug_level) std::cerr << "Proxy::get_name() called" << std::endl;
 	return _name;
 }
 
@@ -85,7 +85,7 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, co
 	// I'm duplicating large parts of the ProxyConnection::call_sync because of small differences in how method calls and property get/set are handled
 	// Maybe at some point it is possible to do that by calling ProxyConnection::call_sync (commented above)
 
-	std::cerr << "Proxy::call_sync(" << _object_path << "," << _interface_name << "," << function_name << ") called" << std::endl;
+	if (_debug_level) std::cerr << "Proxy::call_sync(" << _object_path << "," << _interface_name << "," << function_name << ") called" << std::endl;
 	// first append message meta informations like: type of message, recipient, sender, interface name
 	std::vector<Glib::VariantBase> message;
 	message.push_back(Glib::Variant<Glib::ustring>::create(_object_path));
@@ -106,15 +106,15 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, co
 	// receive from socket
 	saftbus::MessageTypeS2C type;
 	saftbus::read(_connection->get_fd(), type);
-	std::cerr << "got response " << type << std::endl;
+	if (_debug_level) std::cerr << "got response " << type << std::endl;
 	saftbus::read(_connection->get_fd(), size);
 	_call_sync_result_buffer.resize(size);
 	saftbus::read_all(_connection->get_fd(), &_call_sync_result_buffer[0], size);
 
 	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
-	std::cerr << "Proxy::call_sync _call_sync_result = " << _call_sync_result.get_type_string() << " " << _call_sync_result.print() << std::endl;
+	if (_debug_level) std::cerr << "Proxy::call_sync _call_sync_result = " << _call_sync_result.get_type_string() << " " << _call_sync_result.print() << std::endl;
 	_result = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>(_call_sync_result.get_child(0));
-	std::cerr << "Proxy::call_sync _result = " << _result.get_type_string() << " " << _result.print() << std::endl;
+	if (_debug_level) std::cerr << "Proxy::call_sync _result = " << _result.get_type_string() << " " << _result.print() << std::endl;
 	return _result;		
 
 }

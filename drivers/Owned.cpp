@@ -37,7 +37,7 @@ static void do_unsubscribe(Glib::RefPtr<saftbus::Connection> connection, guint i
 Owned::Owned(const Glib::ustring& objectPath, sigc::slot<void> destroy_)
  : BaseObject(objectPath), destroy(destroy_)
 {
-  std::cerr << "Owned::Owned(" << objectPath << ")" << std::endl;
+  //std::cerr << "Owned::Owned(" << objectPath << ")" << std::endl;
 }
 
 Owned::~Owned()
@@ -66,13 +66,13 @@ void Owned::Disown()
 
 void Owned::Own()
 {
-  std::cerr << "Owned::Own()  ,   getSender() = " << getSender() << std::endl;
+  //std::cerr << "Owned::Own()  ,   getSender() = " << getSender() << std::endl;
   initOwner(getConnection(), getSender());
 }
 
 void Owned::initOwner(const Glib::RefPtr<saftbus::Connection>& connection_, const Glib::ustring& owner_)
 {
-  std::cerr << "Owned::initOwner( , " << owner_ << " ) " <<std::endl;
+  //std::cerr << "Owned::initOwner( , " << owner_ << " ) " <<std::endl;
   if (owner.empty()) {
     owner = owner_;
     Glib::RefPtr<saftbus::Connection> connection = connection_;
@@ -111,9 +111,9 @@ bool Owned::getDestructible() const
 
 void Owned::ownerOnly() const
 {
-  std::cerr << "Owned::ownerOnly() getSender() = " << getSender() << std::endl;
-  if (!owner.empty())
-    std::cerr << "owner = " << owner << std::endl;
+  //std::cerr << "Owned::ownerOnly() getSender() = " << getSender() << std::endl;
+  //if (!owner.empty())
+  //  std::cerr << "owner = " << owner << std::endl;
   if (!owner.empty() && owner != getSender())
     throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "You are not my Owner");
 }

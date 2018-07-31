@@ -1,5 +1,5 @@
 #include "saftbus.h"
-
+#include "core.h"
 #include <iostream>
 
 namespace saftbus
@@ -15,7 +15,7 @@ namespace saftbus
 
 	guint own_name (BusType bus_type, const Glib::ustring& name, const SlotBusAcquired& bus_acquired_slot, const SlotNameAcquired& name_acquired_slot, const SlotNameLost& name_lost_slot)//, BusNameOwnerFlags flags=Gio::DBus::BUS_NAME_OWNER_FLAGS_NONE)
 	{
-		std::cerr << "own_name("<< bus_type<< "," << name <<") called" << std::endl;
+		if (_debug_level) std::cerr << "own_name("<< bus_type<< "," << name <<") called" << std::endl;
 		bus_acquired  = bus_acquired_slot;
 		name_acquired = name_acquired_slot;
 		name_lost     = name_lost_slot;
@@ -34,7 +34,7 @@ namespace saftbus
 
 	void unown_name(guint id)
 	{
-		std::cerr << "unown_name() called" << std::endl;
+		if (_debug_level) std::cerr << "unown_name() called" << std::endl;
 
 	}
 
@@ -45,7 +45,7 @@ namespace saftbus
 													  (gconstpointer) data,  size, false,
 													  nullptr, nullptr);
 		bool normal_form = g_variant_is_normal_form(grestored);
-		std::cerr << "deserialize() recieve variant has normal form? => " << normal_form << std::endl;
+		if (_debug_level) std::cerr << "deserialize() recieve variant has normal form? => " << normal_form << std::endl;
 		result = Glib::Variant<std::vector<Glib::VariantBase> >(grestored);
 		return true;
 	}
