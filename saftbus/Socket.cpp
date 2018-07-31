@@ -58,6 +58,10 @@ bool Socket::get_active()
   return _active;
 }
 
+std::string Socket::get_filename()
+{
+  return _filename;
+}
 
 Socket::Socket(const std::string &name, Connection *server_connection)
   : _filename(name)

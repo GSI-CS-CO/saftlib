@@ -33,6 +33,8 @@ class Socket
 
 		bool get_active();
 
+		std::string get_filename();
+
 	private:
 		//int _debug_level = 0;
 

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-
+#include <ctime>
 
 namespace saftbus
 {
@@ -75,10 +75,15 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 		if (_debug_level) std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
 	}
 
+    struct timespec start_time;
+    clock_gettime( CLOCK_REALTIME, &start_time);
+
 	std::vector<Glib::VariantBase> signal_msg;
 	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(object_path));
 	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(interface_name));
 	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(signal_name));
+	signal_msg.push_back(Glib::Variant<gint64>::create(start_time.tv_sec));
+	signal_msg.push_back(Glib::Variant<gint64>::create(start_time.tv_nsec));
 	signal_msg.push_back(parameters);
 	Glib::Variant<std::vector<Glib::VariantBase> > var_signal_msg = Glib::Variant<std::vector<Glib::VariantBase> >::create(signal_msg);
 
@@ -92,6 +97,7 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 		Socket &socket = **it;
 		if (socket.get_active()) 
 		{
+			std::cerr << "sending signal to socket " << socket.get_filename() << std::endl;
 			saftbus::write(socket.get_fd(), saftbus::SIGNAL);
 			saftbus::write(socket.get_fd(), size);
 			saftbus::write_all(socket.get_fd(), data_ptr, size);
@@ -176,15 +182,14 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 
 						} else if (name.get() == "Set") {
 							if (_debug_level) std::cerr << "setting property" << std::endl;
-							auto par2 = parameters.get_child(2);
-							std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
-							//Glib::Variant<bool> value = Glib::VariantBase::cast_dynamic<Glib::Variant<bool> >(parameters.get_child(2));
-							Glib::Variant<bool> vb = Glib::Variant<bool>::create(true);
-							std::cerr << "vb = " << vb.get_type_string() << " " << vb.print() << std::endl;
+							 Glib::Variant<Glib::VariantBase> par2 = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::VariantBase> >(parameters.get_child(2));
+							 std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
+							// Glib::Variant<bool> vb = Glib::Variant<bool>::create(true);
+							// std::cerr << "vb = " << vb.get_type_string() << " " << vb.print() << std::endl;
 
 							//std::cerr << "value = " << value << std::endl;
 							// if (_debug_level) std::cerr << " value = " << value.get_type_string() << " " << value.print() << std::endl;
-							bool result = _saftbus_objects[index]->set_property(saftbus::connection, sender.get(), object_path.get(), derived_interface_name.get(), property_name.get(), vb);
+							bool result = _saftbus_objects[index]->set_property(saftbus::connection, sender.get(), object_path.get(), derived_interface_name.get(), property_name.get(), par2.get());
 
 							std::vector<Glib::VariantBase> response;
 							response.push_back(Glib::Variant<bool>::create(result));

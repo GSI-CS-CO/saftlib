@@ -10,6 +10,7 @@
 #include <utility>
 #include <errno.h>
 #include <algorithm>
+#include <ctime>
 
 namespace saftbus
 {
@@ -126,7 +127,7 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 				if (_debug_level) std::cerr << "ProxyConnection::expect_from_server() got expected type" << std::endl;
 				return true;
 		} else if (type == saftbus::SIGNAL) {
-			std::cerr << "got a SIGNAL **************************************" << std::endl;
+			if (_debug_level) std::cerr << "got a SIGNAL **************************************" << std::endl;
 			dispatchSignal();
 			continue;
 		} else {
@@ -139,7 +140,7 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 
 void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy)
 {
-	std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
+	if (_debug_level) std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
 
 	// for(auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
 	// {
@@ -154,22 +155,9 @@ void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring
 			// we already have a proxy for this
 			if (_debug_level) std::cerr << interface_name << " -> " << object_path << " has already a proxy object associated with it." << std::endl;
 			return ;
-		    	//throw std::runtime_error("ProxyConnection::register_proxy ERROR object_path " + object_path + " has already a proxy object associated with it.");
 		}
 	}
 	_proxies[interface_name][object_path] = proxy; // map the object_path to the proxy object
-
-	// if (_debug_level) std::cerr << "ProxyConnection::register_proxy() called:  registered object_path " << interface_name << " " <<  object_path << std::endl;
-	// if (_debug_level) std::cerr << "   informing server connection about this" << std::endl;
-	// // inform the client connection that we (the given object path) are sitting behind that (the one we have written to ) socket
-	// saftbus::write(_create_socket, saftbus::REGISTER_CLIENT);
-	// //saftbus::write(_create_socket, interface_name);
-	// //saftbus::write(_create_socket, object_path);
-	// bool result = expect_from_server(saftbus::CLIENT_REGISTERED);
-	// if (result == false) {
-	// 	if (_debug_level) std::cerr << "didn't get expected reply from server" << std::endl;
-	// 	return;
-	// }
 }
 
 bool ProxyConnection::dispatch(Glib::IOCondition condition) 
@@ -193,22 +181,34 @@ void ProxyConnection::dispatchSignal()
 	saftbus::read_all(get_fd(), &buffer[0], size);
 	Glib::Variant<std::vector<Glib::VariantBase> > payload;
 	deserialize(payload, &buffer[0], buffer.size());
-	std::cerr << "got signal content " << payload.get_type_string() << " " << payload.print() << std::endl;
+	if (_debug_level) std::cerr << "got signal content " << payload.get_type_string() << " " << payload.print() << std::endl;
 	Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
 	Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
 	Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
-	Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(3));
+	Glib::Variant<gint64> sec    = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >(payload.get_child(3));
+	Glib::Variant<gint64> nsec    = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >(payload.get_child(4));
+	Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(5));
 
-	std::cerr << "object_path = " << object_path.get() << std::endl;
-	std::cerr << "interface_name = " << interface_name.get() << std::endl;
-	std::cerr << "signal_name = " << signal_name.get() << std::endl;
+    struct timespec stop;
+    clock_gettime( CLOCK_REALTIME, &stop);
+      double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 
-	std::cerr << "calling the on_signal function " << std::endl;
-	for (auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
-	{
-		for (auto it = itr->second.begin(); it != itr->second.end(); ++it)
+   	//std::cerr << "got signal after " << dt << " us" << std::endl;
+    if (_debug_level) 
+    {
+
+		std::cerr << "object_path = " << object_path.get() << std::endl;
+		std::cerr << "interface_name = " << interface_name.get() << std::endl;
+		std::cerr << "signal_name = " << signal_name.get() << std::endl;
+		std::cerr << "calling the on_signal function " << std::endl;
+	 
+		for (auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
 		{
-			std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
+			for (auto it = itr->second.begin(); it != itr->second.end(); ++it)
+			{
+				std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
+			}
 		}
 	}
 

@@ -21,7 +21,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
   , _object_path(object_path)
   , _interface_name(interface_name)
 {
-	std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << _connection.get() << std::endl;
+	if (_debug_level) std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << _connection.get() << std::endl;
 
 	if (!_connection.get()) {
 		if (_debug_level) std::cerr << "   this process has no ProxyConnection yet. Creating one now" << std::endl;
