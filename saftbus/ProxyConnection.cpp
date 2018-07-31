@@ -61,39 +61,10 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 }
 
 
-guint ProxyConnection::signal_subscribe(const SlotSignal&  	slot,
-										const Glib::ustring&  	sender,
-										const Glib::ustring&  	interface_name,
-										const Glib::ustring&  	member,
-										const Glib::ustring&  	object_path,
-										const Glib::ustring&  	arg0//,
-										)//SignalFlags  	flags)
-{
-	std::cerr << "ProxyConnection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ") called" << std::endl;
-	return 0;
-}
-
-void ProxyConnection::signal_unsubscribe(guint subscription_id)
-{
-	std::cerr << "ProxyConnection::signal_unsubscribe() called" << std::endl;
-}
-
-
-// void 	ProxyConnection::emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
-// {
-// 	std::cerr << "ProxyConnection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << destination_bus_name << ") called" << std::endl;
-// 	for (unsigned n = 0; n < parameters.get_n_children(); ++n)
-// 	{
-// 		Glib::VariantBase child;
-// 		parameters.get_child(child, n);
-// 		std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << std::endl;
-// 	}
-// }
-
 
 Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
 {
-	std::cerr << "ProxyConnection::call_sync(" << object_path << "," << interface_name << "," << name << ") called" << std::endl;
+	if (_debug_level) std::cerr << "ProxyConnection::call_sync(" << object_path << "," << interface_name << "," << name << ") called" << std::endl;
 	// first append message meta informations like: type of message, recipient, sender, interface name
 	std::vector<Glib::VariantBase> message;
 	message.push_back(Glib::Variant<Glib::ustring>::create(object_path));
@@ -114,7 +85,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	// receive from socket
 	saftbus::MessageTypeS2C type;
 	saftbus::read(get_fd(), type);
-	std::cerr << "got response " << type << std::endl;
+	if (_debug_level) std::cerr << "got response " << type << std::endl;
 	saftbus::read(get_fd(), size);
 	_call_sync_result_buffer.resize(size);
 	saftbus::read_all(get_fd(), &_call_sync_result_buffer[0], size);
@@ -123,7 +94,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	//Glib::Variant<std::vector<Glib::VariantBase> > payload;
 	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
 
-	std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
+	if (_debug_level) std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
 	//Glib::VariantBase result    = Glib::VariantBase::cast_dynamic<Glib::VariantBase >(payload.get_child(0));
 	// std::cerr << " payload.get_type_string() = " << _call_sync_result.get_type_string() << "     .value = " << _call_sync_result.print() << std::endl;
 	// for (unsigned n = 0; n < _call_sync_result.get_n_children(); ++n)

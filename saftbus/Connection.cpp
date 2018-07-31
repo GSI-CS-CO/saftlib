@@ -74,6 +74,15 @@ void 	Connection::emit_signal (const Glib::ustring& object_path, const Glib::ust
 		parameters.get_child(child, n);
 		if (_debug_level) std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
 	}
+
+	std::vector<Glib::VariantBase> signal_msg;
+	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(object_path));
+	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(interface_name));
+	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(signal_name));
+	signal_msg.push_back(parameters);
+	Glib::Variant<std::vector<Glib::VariantBase> > var_signal_msg = Glib::Variant<std::vector<Glib::VariantBase> >::create(signal_msg);
+	std::cerr << "signal message " << var_signal_msg.get_type_string() << " " << var_signal_msg.print() << std::endl;
+
 }
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 

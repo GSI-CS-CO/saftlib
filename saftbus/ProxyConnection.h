@@ -31,21 +31,6 @@ namespace saftbus
 
 		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
 
-		guint signal_subscribe( const SlotSignal&    slot,
-								const Glib::ustring& sender = Glib::ustring(),
-								const Glib::ustring& interface_name = Glib::ustring(),
-								const Glib::ustring& member = Glib::ustring(),
-								const Glib::ustring& object_path = Glib::ustring(),
-								const Glib::ustring& arg0 = Glib::ustring()//,SignalFlags  	flags = SIGNAL_FLAGS_NONE 
-								);
-		void signal_unsubscribe(guint subscription_id);
-
-		// void emit_signal(const Glib::ustring& object_path, 
-		// 				const Glib::ustring& interface_name, 
-		// 				const Glib::ustring& signal_name, 
-		// 				const Glib::ustring& destination_bus_name=Glib::ustring(), 
-		// 				const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
-
 		// is used by Proxies to fetch properties
 		Glib::VariantContainerBase& call_sync (const Glib::ustring& object_path, 
 											const Glib::ustring& interface_name, 
