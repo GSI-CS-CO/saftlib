@@ -64,10 +64,15 @@ void Connection::signal_unsubscribe(guint subscription_id)
 	if (_debug_level) std::cerr << "Connection::signal_unsubscribe() called" << std::endl;
 }
 
+double delta_t(struct timespec start, struct timespec stop) 
+{
+	return (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+         - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
+}
 
 void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
-	if (_debug_level) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << destination_bus_name << ") called" << std::endl;
+	if (_debug_level) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
 	for (unsigned n = 0; n < parameters.get_n_children(); ++n)
 	{
 		Glib::VariantBase child;
@@ -92,17 +97,28 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	if (_debug_level) std::cerr << " size of signal is " << size << std::endl;
 	const char *data_ptr = static_cast<const char*>(var_signal_msg.get_data());
 
+
+	std::vector<struct timespec> times;
+	struct timespec now;
 	for (auto it = _sockets.begin(); it != _sockets.end(); ++it) 
 	{
 		Socket &socket = **it;
 		if (socket.get_active()) 
 		{
-			std::cerr << "sending signal to socket " << socket.get_filename() << std::endl;
+			clock_gettime(CLOCK_REALTIME, &now);
+			times.push_back(now);
+			//std::cerr << "sending signal to socket " << socket.get_filename() << std::endl;
 			saftbus::write(socket.get_fd(), saftbus::SIGNAL);
 			saftbus::write(socket.get_fd(), size);
 			saftbus::write_all(socket.get_fd(), data_ptr, size);
 		}
 	}
+	std::cerr << "signal emit start" << std::endl;
+	for (int i = 0; i < times.size(); ++i)
+	{
+		std::cerr << "dt[" << i << "] = " << delta_t(times[0], times[i]) << " us" << std::endl;
+	}
+	std::cerr << "----" << std::endl;
 }
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
@@ -182,8 +198,8 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 
 						} else if (name.get() == "Set") {
 							if (_debug_level) std::cerr << "setting property" << std::endl;
-							 Glib::Variant<Glib::VariantBase> par2 = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::VariantBase> >(parameters.get_child(2));
-							 std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
+							Glib::Variant<Glib::VariantBase> par2 = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::VariantBase> >(parameters.get_child(2));
+							if (_debug_level) std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
 							// Glib::Variant<bool> vb = Glib::Variant<bool>::create(true);
 							// std::cerr << "vb = " << vb.get_type_string() << " " << vb.print() << std::endl;
 
