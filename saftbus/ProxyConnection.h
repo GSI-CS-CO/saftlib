@@ -37,7 +37,8 @@ namespace saftbus
 											const Glib::ustring& method_name, 
 											const Glib::VariantContainerBase& parameters, 
 											const Glib::ustring& bus_name=Glib::ustring(), 
-											int timeout_msec=-1);
+											int timeout_msec=-1,
+											Glib::VariantContainerBase *result = nullptr);
 
 
 	// internal stuff (not part the DBus fake api)

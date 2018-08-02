@@ -75,51 +75,13 @@ Glib::ustring Proxy::get_name() const
 
 const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, const Glib::VariantContainerBase &query)
 {
-	// std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
-	// Glib::VariantContainerBase &result = _connection->call_sync(_object_path, 
-	// 	                          _interface_name,
-	// 	                          function_name,
-	// 	                          query);
-	// std::cerr << "result = " << result.print() << std::endl;
-	// return result;
-
-	// I'm duplicating large parts of the ProxyConnection::call_sync because of small differences in how method calls and property get/set are handled
-	// Maybe at some point it is possible to do that by calling ProxyConnection::call_sync (commented above)
-
-	if (_debug_level) std::cerr << "Proxy::call_sync(" << _object_path << "," << _interface_name << "," << function_name << ") called" << std::endl;
-	// first append message meta informations like: type of message, recipient, sender, interface name
-	std::vector<Glib::VariantBase> message;
-	message.push_back(Glib::Variant<Glib::ustring>::create(_object_path));
-	message.push_back(Glib::Variant<Glib::ustring>::create(_connection->get_saftbus_id()));
-	message.push_back(Glib::Variant<Glib::ustring>::create(_interface_name));
-	message.push_back(Glib::Variant<Glib::ustring>::create(function_name)); // name can be method_name or property_name
-	message.push_back(query);
-	// then convert inot a variant vector type
-	Glib::Variant<std::vector<Glib::VariantBase> > var_message = Glib::Variant<std::vector<Glib::VariantBase> >::create(message);
-	// serialize
-	guint32 size = var_message.get_size();
-	const char *data_ptr =  static_cast<const char*>(var_message.get_data());
-	// send over socket
-	saftbus::write(_connection->get_fd(), saftbus::METHOD_CALL);
-	saftbus::write(_connection->get_fd(), size);
-	saftbus::write_all(_connection->get_fd(), data_ptr, size);
-
-	// receive from socket
-	saftbus::MessageTypeS2C type = saftbus::METHOD_REPLY;
-	while(!_connection->expect_from_server(type));
-	// saftbus::MessageTypeS2C type;
-	// saftbus::read(_connection->get_fd(), type);
-	if (_debug_level) std::cerr << "got response " << type << std::endl;
-	saftbus::read(_connection->get_fd(), size);
-	_call_sync_result_buffer.resize(size);
-	saftbus::read_all(_connection->get_fd(), &_call_sync_result_buffer[0], size);
-
-	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
-	if (_debug_level) std::cerr << "Proxy::call_sync _call_sync_result = " << _call_sync_result.get_type_string() << " " << _call_sync_result.print() << std::endl;
-	_result = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>(_call_sync_result.get_child(0));
-	if (_debug_level) std::cerr << "Proxy::call_sync _result = " << _result.get_type_string() << " " << _result.print() << std::endl;
-	return _result;		
-
+	std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
+	_result =  _connection->call_sync(_object_path, 
+		                          _interface_name,
+		                          function_name,
+		                          query, Glib::ustring(), -1, &_result);
+	//std::cerr << "result = " << result.print() << std::endl;
+	return _result;
 }
 
 }
