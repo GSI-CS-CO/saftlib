@@ -228,7 +228,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 						if (_debug_level) std::cerr << "found saftbus object at index " << index << std::endl;
 						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
 						if (_debug_level) std::cerr << "doing the function call" << std::endl;
-						if (_debug_level) std::cerr << "saftbus::connection.get() " << saftbus::connection.get() << std::endl;
+						if (_debug_level) std::cerr << "saftbus::connection.get() " << static_cast<bool>(saftbus::connection) << std::endl;
 						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);
 						Glib::VariantContainerBase result;
 						result = method_invocation_rptr->get_return_value();
