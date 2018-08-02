@@ -76,11 +76,14 @@ Glib::ustring Proxy::get_name() const
 const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, const Glib::VariantContainerBase &query)
 {
 	std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
-	_result =  _connection->call_sync(_object_path, 
-		                          _interface_name,
-		                          function_name,
-		                          query, Glib::ustring(), -1, &_result);
-	//std::cerr << "result = " << result.print() << std::endl;
+	// call the Connection::call_sync in a special way that  it to cast the result in a special way. Otherwise the 
+	// generated Proxy code cannot handle the resulting variant type.
+	_result = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>(
+			  	Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector<Glib::VariantBase> > >(
+						_connection->call_sync(_object_path, 
+		                			          _interface_name,
+		                			          function_name,
+		                			          query)).get_child(0));
 	return _result;
 }
 
