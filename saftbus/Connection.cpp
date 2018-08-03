@@ -37,10 +37,10 @@ guint Connection::register_object (const Glib::ustring& object_path, const Glib:
 }
 bool Connection::unregister_object (guint registration_id)
 {
-	if (_debug_level) std::cerr << "Connection::unregister_object("<< registration_id <<") called" << std::endl;
+	if (_debug_level) std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
 	if (registration_id < _saftbus_objects.size())
 	{
-		//_saftbus_objects[registration_id].object_path = "";
+		_saftbus_objects.erase(_saftbus_objects.begin()+registration_id);
 		return true;
 	}
 	return false;
@@ -55,7 +55,8 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 								   const Glib::ustring& arg0//,
 								   )//SignalFlags  	flags)
 {
-	if (_debug_level) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ") called" << std::endl;
+	if (_debug_level) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
+	_owned_signals[arg0].connect(slot);
 	return 0;
 }
 
@@ -130,18 +131,29 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 		int result = saftbus::read(socket->get_fd(), type);
 		if (result == -1) {
 			if (_debug_level) std::cerr << "client disconnected" << std::endl;
+			Glib::VariantContainerBase arg;
+			Glib::ustring& saftbus_id = socket->saftbus_id();
 			socket->close_connection();
 			socket->wait_for_client();
+			std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+			_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
 		} else {
 			switch(type)
 			{
+				case saftbus::SENDER_ID:
+				{
+					if (_debug_level) std::cerr << "Connection::dispatch() SENDER_ID received" << std::endl;
+					Glib::ustring sender_id;
+					saftbus::read(socket->get_fd(), sender_id);
+					socket->saftbus_id() = sender_id;
+				}
 				case saftbus::REGISTER_CLIENT: 
 				{
-					if (_debug_level) std::cerr << "Connection::dispatch() REGISTER_CLIENT received" << std::endl;
-					saftbus::write(socket->get_fd(), saftbus::CLIENT_REGISTERED);
-					if (_debug_level) std::cerr << "     writing client id " << _client_id << std::endl;
-					saftbus::write(socket->get_fd(), _client_id);
-					++_client_id;
+					// if (_debug_level) std::cerr << "Connection::dispatch() REGISTER_CLIENT received" << std::endl;
+					// saftbus::write(socket->get_fd(), saftbus::CLIENT_REGISTERED);
+					// if (_debug_level) std::cerr << "     writing client id " << _client_id << std::endl;
+					// saftbus::write(socket->get_fd(), _client_id);
+					// ++_client_id;
 				}
 				break;
 				case saftbus::METHOD_CALL: 

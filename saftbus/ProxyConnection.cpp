@@ -56,9 +56,14 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 		}
 	}
     Glib::signal_io().connect(sigc::mem_fun(*this, &ProxyConnection::dispatch), _create_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
+
+	// create what is called "Sender" in DBus terms. It is a number unique to the running process
     std::ostringstream id_out;
     id_out << this;
+    std::cerr << "ProxyConnection::ProxyConnection(" << base_name << ") created id " << id_out.str() << std::endl;
     _saftbus_id = id_out.str();
+	write(get_fd(), saftbus::SENDER_ID);
+	write(get_fd(), _saftbus_id);
 }
 
 

@@ -93,6 +93,10 @@ int Socket::get_fd()
 {
   return _new_socket;
 }
+Glib::ustring& Socket::saftbus_id()
+{
+  return _saftbus_id;
+}
 
 
 Socket::~Socket()

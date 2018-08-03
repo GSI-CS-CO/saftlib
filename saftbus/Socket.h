@@ -34,6 +34,7 @@ class Socket
 		bool get_active();
 
 		std::string get_filename();
+		Glib::ustring& saftbus_id();
 
 	private:
 		//int _debug_level = 0;
@@ -44,6 +45,7 @@ class Socket
 		socklen_t _addrlen;
 
 		Connection *_server_connection;
+		Glib::ustring _saftbus_id;
 
 
 		bool _active;

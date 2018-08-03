@@ -59,6 +59,8 @@ namespace saftbus
 
 		int _client_id;
 
+		std::map<Glib::ustring, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _owned_signals;
+
 	};
 
 }
