@@ -40,7 +40,7 @@ bool Connection::unregister_object (guint registration_id)
 	if (_debug_level) std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
 	if (registration_id < _saftbus_objects.size())
 	{
-		_saftbus_objects.erase(_saftbus_objects.begin()+registration_id);
+		//_saftbus_objects.erase(_saftbus_objects.begin()+registration_id);
 		return true;
 	}
 	return false;
@@ -56,13 +56,23 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 								   )//SignalFlags  	flags)
 {
 	if (_debug_level) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
-	_owned_signals[arg0].connect(slot);
+	Glib::ustring signature = object_path + interface_name + member;
+	if (_owned_signals_signatures.find(signature) != _owned_signals_signatures.end())
+	{
+		_owned_signals[arg0].connect(slot);
+		_owned_signal_id_signature_map[arg0] = signature;
+		_owned_signals_signatures.insert(signature);
+	}
+
+	std::cerr << "_owned_signals[" << arg0 << "].connect(slot)  sender=" << sender << "   interface_name=" << interface_name << "  member=" << member << "  object_path=" << object_path << std::endl;
 	return 0;
 }
 
 void Connection::signal_unsubscribe(guint subscription_id) 
 {
 	if (_debug_level) std::cerr << "Connection::signal_unsubscribe() called" << std::endl;
+	// have to implement this 
+	// _owned_signals[] has to be cleared
 }
 
 double delta_t(struct timespec start, struct timespec stop) 
@@ -136,7 +146,11 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 			socket->close_connection();
 			socket->wait_for_client();
 			std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+			std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
 			_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
+			_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
+			_owned_signal_id_signature_map.erase(saftbus_id);
+			std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 		} else {
 			switch(type)
 			{

@@ -9,6 +9,7 @@
 #include <giomm.h>
 
 #include <map>
+#include <set>
 
 #include "Interface.h"
 #include "saftbus.h"
@@ -59,6 +60,9 @@ namespace saftbus
 
 		int _client_id;
 
+
+		std::set<Glib::ustring> _owned_signals_signatures; //save all signatures (=object_path+interface_name+member) to prevent that two slots of the same kind are connected
+		std::map<Glib::ustring, Glib::ustring> _owned_signal_id_signature_map; // identify the signatures that belong to a saftbus_id
 		std::map<Glib::ustring, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _owned_signals;
 
 	};

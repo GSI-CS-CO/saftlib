@@ -26,7 +26,7 @@ namespace saftbus
     int n_written = 0;
     do {
       int result = ::write(fd, ptr, size-n_written);
-      //std::cerr << "written " << result << " bytes" << std::endl;
+      //std::cerr << "write result = " << result << " " << std::endl;
       if (result > 0)
       {
         ptr       += result;
@@ -48,6 +48,7 @@ namespace saftbus
     int n_read = 0;
     do { 
       int result = ::read(fd, ptr, size-n_read);//, MSG_DONTWAIT); 
+      //std::cerr << "read result = " << result << " " << std::endl;
       if (result > 0)
       {
         ptr    += result;
