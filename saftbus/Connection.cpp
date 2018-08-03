@@ -124,12 +124,12 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 			saftbus::write_all(socket.get_fd(), data_ptr, size);
 		}
 	}
-	std::cerr << "signal emit start" << std::endl;
+	//std::cerr << "signal emit start" << std::endl;
 	for (int i = 0; i < times.size(); ++i)
 	{
 		std::cerr << "dt[" << i << "] = " << delta_t(times[0], times[i]) << " us" << std::endl;
 	}
-	std::cerr << "----" << std::endl;
+	//std::cerr << "----" << std::endl;
 }
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
@@ -145,12 +145,12 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 			Glib::ustring& saftbus_id = socket->saftbus_id();
 			socket->close_connection();
 			socket->wait_for_client();
-			std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
-			std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
+			//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+			//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
 			_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
 			_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
 			_owned_signal_id_signature_map.erase(saftbus_id);
-			std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
+			//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 		} else {
 			switch(type)
 			{
