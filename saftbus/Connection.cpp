@@ -57,7 +57,7 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 {
 	if (_debug_level) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
 	Glib::ustring signature = object_path + interface_name + member;
-	if (_owned_signals_signatures.find(signature) != _owned_signals_signatures.end())
+	if (_owned_signals_signatures.find(signature) == _owned_signals_signatures.end())
 	{
 		_owned_signals[arg0].connect(slot);
 		_owned_signal_id_signature_map[arg0] = signature;
@@ -84,6 +84,9 @@ double delta_t(struct timespec start, struct timespec stop)
 void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
 	if (_debug_level) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
+		// std::cerr << "   signals" << std::endl;
+		// for(auto it = _owned_signals_signatures.begin() ; it != _owned_signals_signatures.end(); ++it) 
+		// 		std::cerr << "     " << *it << std::endl;
 	for (unsigned n = 0; n < parameters.get_n_children(); ++n)
 	{
 		Glib::VariantBase child;
@@ -124,19 +127,19 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 			saftbus::write_all(socket.get_fd(), data_ptr, size);
 		}
 	}
-	//std::cerr << "signal emit start" << std::endl;
-	for (int i = 0; i < times.size(); ++i)
-	{
-		std::cerr << "dt[" << i << "] = " << delta_t(times[0], times[i]) << " us" << std::endl;
-	}
-	//std::cerr << "----" << std::endl;
+	// std::cerr << "signal emit start" << std::endl;
+	// for (int i = 0; i < times.size(); ++i)
+	// {
+	// 	std::cerr << "dt[" << i << "] = " << delta_t(times[0], times[i]) << " us" << std::endl;
+	// }
+	// std::cerr << "----" << std::endl;
 }
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
 {
 		static int cnt = 0;
 		++cnt;
-		if (_debug_level) std::cerr << "Connection::dispatch() called one socket[" << socket_nr(socket) << "]" << std::endl;
+		if (_debug_level)  std::cerr << "Connection::dispatch() called one socket[" << socket_nr(socket) << "]" << std::endl;
 		MessageTypeC2S type;
 		int result = saftbus::read(socket->get_fd(), type);
 		if (result == -1) {
