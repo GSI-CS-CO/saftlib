@@ -31,8 +31,8 @@ namespace saftbus
 
 		void get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const ;
 
-		virtual void 	on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties);
-		virtual void 	on_signal (const Glib::ustring& sender_name, const Glib::ustring& signal_name, const Glib::VariantContainerBase& parameters);
+		virtual void on_properties_changed(const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties);
+		virtual void on_signal (const Glib::ustring& sender_name, const Glib::ustring& signal_name, const Glib::VariantContainerBase& parameters);
 		Glib::RefPtr<saftbus::ProxyConnection> get_connection() const;
 
 		Glib::ustring get_object_path() const;

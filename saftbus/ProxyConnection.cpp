@@ -207,6 +207,7 @@ void ProxyConnection::dispatchSignal()
 		std::cerr << "object_path = " << object_path.get() << std::endl;
 		std::cerr << "interface_name = " << interface_name.get() << std::endl;
 		std::cerr << "signal_name = " << signal_name.get() << std::endl;
+
 		std::cerr << "calling the on_signal function " << std::endl;
 	 
 		for (auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
@@ -218,12 +219,42 @@ void ProxyConnection::dispatchSignal()
 		}
 	}
 
-	auto interfaces = _proxies.find(interface_name.get());
-	if (interfaces != _proxies.end()) {
-		if (interfaces->second.find(object_path.get()) != interfaces->second.end()) {
-			_proxies[interface_name.get()][object_path.get()]->on_signal("saftd", signal_name.get(), parameters);
+
+
+	// special treatment for property changes
+	if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
+	{
+		std::cerr << "******8888888 DO SOMETHING TO NOTIFY THE PROXY ABOUT the property change" << std::endl;			
+
+		// std::map<Glib::ustring, Glib::VariantBase> property_map;
+		// parametrs.get(property_map 0)
+		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
+		std::cerr << "derived_interface_name = " << derived_interface_name.print() << std::endl;
+		auto interfaces = _proxies.find(derived_interface_name.get());
+		if (interfaces != _proxies.end()) {
+			if (interfaces->second.find(object_path.get()) != interfaces->second.end()) {
+
+				Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > property_map = Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > >(parameters.get_child(1));
+				Glib::Variant<std::vector< Glib::ustring > > invalidated_properies = Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< Glib::ustring > > >(parameters.get_child(2));
+				std::cerr << "property_map = " << property_map.print() << std::endl;
+				std::cerr << "invalidated_properies = " << invalidated_properies.print() << std::endl;
+				_proxies[derived_interface_name.get()][object_path.get()]->on_properties_changed(property_map.get(), invalidated_properies.get());
+			}
 		}
+
+
 	}
+	else // all other signals)
+	{
+		auto interfaces = _proxies.find(interface_name.get());
+		if (interfaces != _proxies.end()) {
+			if (interfaces->second.find(object_path.get()) != interfaces->second.end()) {
+				_proxies[interface_name.get()][object_path.get()]->on_signal("de.gsi.saftlib", signal_name.get(), parameters);
+			}
+		}
+
+	}
+
 
 
 }
