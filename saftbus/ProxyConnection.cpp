@@ -195,10 +195,6 @@ void ProxyConnection::dispatchSignal()
 	Glib::Variant<gint64> nsec    = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >(payload.get_child(4));
 	Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(5));
 
-    struct timespec stop;
-    clock_gettime( CLOCK_REALTIME, &stop);
-      double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 
    	//std::cerr << "got signal after " << dt << " us" << std::endl;
     if (_debug_level) 
@@ -224,8 +220,6 @@ void ProxyConnection::dispatchSignal()
 	// special treatment for property changes
 	if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
 	{
-		std::cerr << "******8888888 DO SOMETHING TO NOTIFY THE PROXY ABOUT the property change" << std::endl;			
-
 		// std::map<Glib::ustring, Glib::VariantBase> property_map;
 		// parametrs.get(property_map 0)
 		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
@@ -236,9 +230,15 @@ void ProxyConnection::dispatchSignal()
 
 				Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > property_map = Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > >(parameters.get_child(1));
 				Glib::Variant<std::vector< Glib::ustring > > invalidated_properies = Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< Glib::ustring > > >(parameters.get_child(2));
-				std::cerr << "property_map = " << property_map.print() << std::endl;
-				std::cerr << "invalidated_properies = " << invalidated_properies.print() << std::endl;
+				// std::cerr << "property_map = " << property_map.print() << std::endl;
+				// std::cerr << "invalidated_properies = " << invalidated_properies.print() << std::endl;
+			    struct timespec stop;
+			    clock_gettime( CLOCK_REALTIME, &stop);
+			      double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+			                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
+			    // deliver the signal
 				_proxies[derived_interface_name.get()][object_path.get()]->on_properties_changed(property_map.get(), invalidated_properies.get());
+			    std::cerr << "signal flight time = " << dt << " us" << std::endl;
 			}
 		}
 
@@ -249,7 +249,13 @@ void ProxyConnection::dispatchSignal()
 		auto interfaces = _proxies.find(interface_name.get());
 		if (interfaces != _proxies.end()) {
 			if (interfaces->second.find(object_path.get()) != interfaces->second.end()) {
+			    // deliver the signal
+			    struct timespec stop;
+			    clock_gettime( CLOCK_REALTIME, &stop);
+			      double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+			                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 				_proxies[interface_name.get()][object_path.get()]->on_signal("de.gsi.saftlib", signal_name.get(), parameters);
+			    std::cerr << "signal flight time = " << dt << " us" << std::endl;
 			}
 		}
 
