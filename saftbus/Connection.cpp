@@ -87,11 +87,13 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 		// std::cerr << "   signals" << std::endl;
 		// for(auto it = _owned_signals_signatures.begin() ; it != _owned_signals_signatures.end(); ++it) 
 		// 		std::cerr << "     " << *it << std::endl;
-	for (unsigned n = 0; n < parameters.get_n_children(); ++n)
-	{
-		Glib::VariantBase child;
-		parameters.get_child(child, n);
-		if (_debug_level) std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
+	if (_debug_level) {
+		for (unsigned n = 0; n < parameters.get_n_children(); ++n)
+		{
+			Glib::VariantBase child;
+			parameters.get_child(child, n);
+			std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
+		}
 	}
 
     struct timespec start_time;
@@ -135,6 +137,22 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	// std::cerr << "----" << std::endl;
 }
 
+void Connection::handle_disconnect(Socket *socket)
+{
+	if (_debug_level) std::cerr << "client disconnected" << std::endl;
+	Glib::VariantContainerBase arg;
+	Glib::ustring& saftbus_id = socket->saftbus_id();
+	socket->close_connection();
+	socket->wait_for_client();
+	//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+	//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
+	_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
+	_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
+	_owned_signal_id_signature_map.erase(saftbus_id);
+	//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
+}
+
+
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
 {
 		static int cnt = 0;
@@ -143,17 +161,18 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 		MessageTypeC2S type;
 		int result = saftbus::read(socket->get_fd(), type);
 		if (result == -1) {
-			if (_debug_level) std::cerr << "client disconnected" << std::endl;
-			Glib::VariantContainerBase arg;
-			Glib::ustring& saftbus_id = socket->saftbus_id();
-			socket->close_connection();
-			socket->wait_for_client();
-			//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
-			//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
-			_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
-			_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
-			_owned_signal_id_signature_map.erase(saftbus_id);
-			//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
+			handle_disconnect(socket);
+			// if (_debug_level) std::cerr << "client disconnected" << std::endl;
+			// Glib::VariantContainerBase arg;
+			// Glib::ustring& saftbus_id = socket->saftbus_id();
+			// socket->close_connection();
+			// socket->wait_for_client();
+			// //std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+			// //std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
+			// _owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
+			// _owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
+			// _owned_signal_id_signature_map.erase(saftbus_id);
+			// //std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 		} else {
 			switch(type)
 			{
@@ -190,7 +209,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
 					if (_debug_level) std::cerr << "sender = " << sender.get() <<  "    name = " << name.get() << "   object_path = " << object_path.get() <<  "    interface_name = " << interface_name.get() << std::endl;
 					if (_debug_level) std::cerr << "parameters = " << parameters.print() << std::endl;
-					if (interface_name.get() == "org.freedesktop.DBus.Properties") {
+					if (interface_name.get() == "org.freedesktop.DBus.Properties") { // property get/set method call
 						if (_debug_level) std::cerr << " interface for Set/Get property was called" << std::endl;
 
 						Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
@@ -250,7 +269,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 						}
 
 					}
-					else
+					else // normal method calls 
 					{
 						if (_debug_level) std::cerr << "a real method call: " << std::endl;
 						int index = _saftbus_indices[interface_name.get()][object_path.get()];

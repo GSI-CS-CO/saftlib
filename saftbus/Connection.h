@@ -46,8 +46,9 @@ namespace saftbus
 
 		bool dispatch(Glib::IOCondition condition, Socket *socket);
 
-
 	private:
+		void handle_disconnect(Socket *socket);
+
 		int socket_nr(Socket *socket);
 
 				// interface_name       // object_path
