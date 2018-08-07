@@ -21,7 +21,7 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 	// try to open first available socket
 	_create_socket = socket(PF_LOCAL, SOCK_STREAM, 0);
 	if (_create_socket > 0) {
-		if (_debug_level) std::cerr << "socket created" << std::endl;
+		if (_debug_level > 5) std::cerr << "socket created" << std::endl;
 	} // TODO: else { ... }
 	_address.sun_family = AF_LOCAL;
 
@@ -30,18 +30,18 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 		std::ostringstream name_out;
 		name_out << base_name << std::setw(2) << std::setfill('0') << i;
 		strcpy(_address.sun_path, name_out.str().c_str());
-		if (_debug_level) std::cerr << "try to connect to " << name_out.str() << std::endl;
+		if (_debug_level > 5) std::cerr << "try to connect to " << name_out.str() << std::endl;
 		int connect_result = connect( _create_socket, (struct sockaddr *)&_address , sizeof(_address));
 		if (connect_result == 0) {
-			if (_debug_level) std::cerr << "connection established" << std::endl;
+			if (_debug_level > 5) std::cerr << "connection established" << std::endl;
 			//char msg = 't';
 			//int result = send(_create_socket, &msg, 1, MSG_DONTWAIT); 
-			//if (_debug_level) std::cerr << "result = " << result << std::endl;
+			//if (_debug_level > 5) std::cerr << "result = " << result << std::endl;
 			break;
 		} else {
-			if (_debug_level) std::cerr << "connect_result = " << connect_result << std::endl;
+			if (_debug_level > 5) std::cerr << "connect_result = " << connect_result << std::endl;
 			if (connect_result == -1) {
-				if (_debug_level) std::cerr << "  errno = " << errno << " -> " << strerror(errno) << std::endl;
+				if (_debug_level > 5) std::cerr << "  errno = " << errno << " -> " << strerror(errno) << std::endl;
 				switch(errno) {
 					case ECONNREFUSED:
 						continue;
@@ -70,7 +70,7 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 
 Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
 {
-	if (_debug_level) std::cerr << "ProxyConnection::call_sync(" << object_path << "," << interface_name << "," << name << ") called" << std::endl;
+	if (_debug_level > 5) std::cerr << "ProxyConnection::call_sync(" << object_path << "," << interface_name << "," << name << ") called" << std::endl;
 	// first append message meta informations like: type of message, recipient, sender, interface name
 	std::vector<Glib::VariantBase> message;
 	message.push_back(Glib::Variant<Glib::ustring>::create(object_path));
@@ -92,7 +92,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	saftbus::MessageTypeS2C type = saftbus::METHOD_REPLY;
 	while(!expect_from_server(type));
 	//saftbus::read(get_fd(), type);
-	if (_debug_level) std::cerr << "got response " << type << std::endl;
+	if (_debug_level > 5) std::cerr << "got response " << type << std::endl;
 	saftbus::read(get_fd(), size);
 	_call_sync_result_buffer.resize(size);
 	saftbus::read_all(get_fd(), &_call_sync_result_buffer[0], size);
@@ -101,7 +101,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	//Glib::Variant<std::vector<Glib::VariantBase> > payload;
 	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
 
-	if (_debug_level) std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
+	if (_debug_level > 5) std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
 	//Glib::VariantBase result    = Glib::VariantBase::cast_dynamic<Glib::VariantBase >(payload.get_child(0));
 	// std::cerr << " payload.get_type_string() = " << _call_sync_result.get_type_string() << "     .value = " << _call_sync_result.print() << std::endl;
 	// for (unsigned n = 0; n < _call_sync_result.get_n_children(); ++n)
@@ -130,14 +130,14 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 			return false;
 		}
 		if (type == expected_type) {
-				if (_debug_level) std::cerr << "ProxyConnection::expect_from_server() got expected type" << std::endl;
+				if (_debug_level > 5) std::cerr << "ProxyConnection::expect_from_server() got expected type" << std::endl;
 				return true;
 		} else if (type == saftbus::SIGNAL) {
-			if (_debug_level) std::cerr << "got a SIGNAL **************************************" << std::endl;
+			if (_debug_level > 5) std::cerr << "got a SIGNAL **************************************" << std::endl;
 			dispatchSignal();
 			continue;
 		} else {
-			if (_debug_level) std::cerr << "unexpected type " << type << " while expecting " << expected_type << std::endl;
+			if (_debug_level > 5) std::cerr << "unexpected type " << type << " while expecting " << expected_type << std::endl;
 			return false;
 		}
 	}
@@ -146,20 +146,20 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 
 void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy)
 {
-	if (_debug_level) std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
+	if (_debug_level > 5) std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
 
 	// for(auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
 	// {
 	// 	for(auto it = itr->second.begin(); it != itr->second.end(); ++it)
 	// 	{
-	// 		if (_debug_level) std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
+	// 		if (_debug_level > 5) std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
 	// 	}
 	// }
 	auto interfaces = _proxies.find(interface_name);
 	if (interfaces != _proxies.end()) {
 		if (interfaces->second.find(object_path) != interfaces->second.end()) {
 			// we already have a proxy for this
-			if (_debug_level) std::cerr << interface_name << " -> " << object_path << " has already a proxy object associated with it." << std::endl;
+			if (_debug_level > 5) std::cerr << interface_name << " -> " << object_path << " has already a proxy object associated with it." << std::endl;
 			return ;
 		}
 	}
@@ -168,7 +168,7 @@ void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring
 
 bool ProxyConnection::dispatch(Glib::IOCondition condition) 
 {
-	if (_debug_level) std::cerr << "ProxyConnection::dispatch() called" << std::endl;
+	if (_debug_level > 5) std::cerr << "ProxyConnection::dispatch() called" << std::endl;
 
 	saftbus::MessageTypeS2C type = saftbus::SIGNAL;
 	while(!expect_from_server(type));
@@ -182,12 +182,12 @@ void ProxyConnection::dispatchSignal()
 {
 	guint32 size;
 	saftbus::read(get_fd(), size);
-	if (_debug_level) std::cerr << "expecting message with size " << size << std::endl;
+	if (_debug_level > 5) std::cerr << "expecting message with size " << size << std::endl;
 	std::vector<char> buffer(size);
 	saftbus::read_all(get_fd(), &buffer[0], size);
 	Glib::Variant<std::vector<Glib::VariantBase> > payload;
 	deserialize(payload, &buffer[0], buffer.size());
-	if (_debug_level) std::cerr << "got signal content " << payload.get_type_string() << " " << payload.print() << std::endl;
+	if (_debug_level > 5) std::cerr << "got signal content " << payload.get_type_string() << " " << payload.print() << std::endl;
 	Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
 	Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
 	Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
@@ -197,7 +197,7 @@ void ProxyConnection::dispatchSignal()
 
 
    	//std::cerr << "got signal after " << dt << " us" << std::endl;
-    if (_debug_level) 
+    if (_debug_level > 5) 
     {
 
 		std::cerr << "object_path = " << object_path.get() << std::endl;

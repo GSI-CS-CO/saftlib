@@ -17,7 +17,7 @@
 
 namespace saftbus
 {
-  int _debug_level = 1;
+  int _debug_level = 0;
 
   int write_all(int fd, const void *buffer, int size)
   {
@@ -71,19 +71,19 @@ namespace saftbus
 
   template<>
   int write<Glib::ustring>(int fd, const Glib::ustring & std_vector) {
-    if (_debug_level) std::cerr << "ustring write \"" << std_vector << "\"" << std::endl;
+    if (_debug_level > 5) std::cerr << "ustring write \"" << std_vector << "\"" << std::endl;
     std::string strg(std_vector);
     guint32 size = strg.size();
     int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
-    if (_debug_level) std::cerr << "ustring write, result = " << result << std::endl;
+    if (_debug_level > 5) std::cerr << "ustring write, result = " << result << std::endl;
     if (result == -1) return result;
     if (size > 0) result =  write_all(fd, static_cast<const void*>(&strg[0]), size*sizeof(decltype(strg.back())));
-    if (_debug_level) std::cerr << "ustring write, result = " << result << std::endl;
+    if (_debug_level > 5) std::cerr << "ustring write, result = " << result << std::endl;
     return result;
   }
   template<>
   int read<Glib::ustring>(int fd, Glib::ustring & std_vector) {
-    if (_debug_level) std::cerr << "ustring read" << std::endl;
+    if (_debug_level > 5) std::cerr << "ustring read" << std::endl;
     std::string strg(std_vector);
     guint32 size;
     int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
@@ -96,7 +96,7 @@ namespace saftbus
 
   template<>
   int write<std::string>(int fd, const std::string & std_vector) {
-    if (_debug_level) std::cerr << "std::string write " << std_vector << std::endl;
+    if (_debug_level > 5) std::cerr << "std::string write " << std_vector << std::endl;
     std::string strg(std_vector);
     guint32 size = strg.size();
     int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
@@ -106,7 +106,7 @@ namespace saftbus
   }
   template<>
   int read<std::string>(int fd, std::string & std_vector) {
-    if (_debug_level) std::cerr << "std::string read" << std::endl;
+    if (_debug_level > 5) std::cerr << "std::string read" << std::endl;
     std::string strg(std_vector);
     guint32 size;
     int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));

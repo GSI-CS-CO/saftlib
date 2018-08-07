@@ -28,23 +28,23 @@ namespace saftbus
 
 	template<typename T>
 	int write(int fd, const T & scalar)	{
-		if (_debug_level) std::cerr << "scalar write: " << scalar << std::endl;
+		if (_debug_level > 5) std::cerr << "scalar write: " << scalar << std::endl;
 		int result = write_all(fd, static_cast<const void*>(&scalar), sizeof(scalar));
-		if (_debug_level) std::cerr << "done " << std::endl;
+		if (_debug_level > 5) std::cerr << "done " << std::endl;
 		return result;
 	}
 	template<typename T>
 	int read(int fd, T & scalar) {
-		if (_debug_level) std::cerr << "scalar read" << std::endl;
+		if (_debug_level > 5) std::cerr << "scalar read" << std::endl;
 		int result = read_all(fd, static_cast<void*>(&scalar), sizeof(scalar));
-		if (_debug_level) std::cerr << scalar << "  done " << std::endl;
+		if (_debug_level > 5) std::cerr << scalar << "  done " << std::endl;
 		return result;
 	}
 
 	// std::vectors and nested std::vectors
 	template<typename T>
 	int write(int fd, const std::vector<T>& std_vector) {
-		if (_debug_level) std::cerr << "non-nested vector write" << std::endl;
+		if (_debug_level > 5) std::cerr << "non-nested vector write" << std::endl;
 		guint32 size = std_vector.size();
 		int result = write_all(fd, static_cast<void*>(&size), sizeof(guint32));
 		if (result == -1) return result;
@@ -52,7 +52,7 @@ namespace saftbus
 	}
 	template<typename T>
 	int write(int fd, const std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
-		if (_debug_level) std::cerr << "nested vector write" << std::endl;
+		if (_debug_level > 5) std::cerr << "nested vector write" << std::endl;
 		guint32 size = std_vector_vector.size();
 		int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
 		if (result == -1) return result;
@@ -64,7 +64,7 @@ namespace saftbus
 	}
 	template<typename T>
 	int read(int fd, std::vector<T> & std_vector) {
-		if (_debug_level) std::cerr << "vector read" << std::endl;
+		if (_debug_level > 5) std::cerr << "vector read" << std::endl;
 		guint32 size;
 		int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
 		if (result == -1) return result;
@@ -73,7 +73,7 @@ namespace saftbus
 	}
 	template<typename T>
 	int read(int fd, std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
-		if (_debug_level) std::cerr << "nested vector read" << std::endl;
+		if (_debug_level > 5) std::cerr << "nested vector read" << std::endl;
 		guint32 size;
 		int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
 		if (result == -1) return result;
@@ -97,7 +97,7 @@ namespace saftbus
 	// std::maps of arbitrary type
 	template<class K, class V>
 	int write(int fd, const std::map<K,V> &map) {
-		if (_debug_level) std::cerr << "map write" << std::endl;
+		if (_debug_level > 5) std::cerr << "map write" << std::endl;
 		guint32 size = map.size();
 		int result = write(fd, size);
 		if (result == -1) return result;
@@ -111,7 +111,7 @@ namespace saftbus
 	}
 	template<class K, class V>
 	int read(int fd, std::map<K,V> &map) {
-		if (_debug_level) std::cerr << "map read" << std::endl;
+		if (_debug_level > 5) std::cerr << "map read" << std::endl;
 		map.clear();
 		guint32 size;
 		int result = read(fd, size);
@@ -130,7 +130,7 @@ namespace saftbus
 
 	template<class Tfirst, class ... Tother>
 	int write(int fd, Tfirst first, Tother ... other) {
-		if (_debug_level) std::cerr << "tuple write" << std::endl;
+		if (_debug_level > 5) std::cerr << "tuple write" << std::endl;
 		if (write(fd, first) == -1) return -1;
 		if (write(fd, other ...) == -1) return -1;
 		return 1;
@@ -138,7 +138,7 @@ namespace saftbus
 
 	template<class Tfirst, class ... Tother>
 	int read(int fd, Tfirst first, Tother ... other) {
-		if (_debug_level) std::cerr << "tuple read" << std::endl;
+		if (_debug_level > 5) std::cerr << "tuple read" << std::endl;
 		if (read(fd, first) == -1) return -1;
 		if (read(fd, other ...) == -1) return -1;
 		return 1;

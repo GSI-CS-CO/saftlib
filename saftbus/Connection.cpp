@@ -12,6 +12,8 @@ namespace saftbus
 
 Connection::Connection(int number_of_sockets, const std::string& base_name)
 	: _client_id(1)
+	, _saftbus_object_counter(1)
+	, _saftbus_signal_counter(1)
 {
 	for (int i = 0; i < number_of_sockets; ++i)
 	{
@@ -20,14 +22,19 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 		_sockets.push_back(std::shared_ptr<Socket>(new Socket(name_out.str(), this)));
 	}
 }
-
+// Add an object to the set of saftbus controlled objects. The objects are identified by 
+// their object_path and interface_name and provide a vtable (a table with functions for 
+// "method_call" "set_property" and "get_property"). The saftbus routes all redirects function
+// calles to one of the registered object's vtable.
 guint Connection::register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable)
 {
-	if (_debug_level) std::cerr << "Connection::register_object("<< object_path <<") called" << std::endl;
-	guint result = _saftbus_objects.size();
-	_saftbus_objects.push_back(std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable)));
+	++_saftbus_object_counter;
+	if (_debug_level > 4) std::cerr << "Connection::register_object("<< object_path <<") called . id = " << _saftbus_object_counter << std::endl;
+	//guint result = _saftbus_objects.size();
+	guint result = _saftbus_object_counter;
+	_saftbus_objects[_saftbus_object_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
 	Glib::ustring interface_name = interface_info->get_interface_name();
-	if (_debug_level) std::cerr << "    got interface_name = " << interface_name << std::endl;
+	if (_debug_level > 4) std::cerr << "    got interface_name = " << interface_name << std::endl;
 	_saftbus_indices[interface_name][object_path] = result;
 	// for(auto iter = _saftbus_objects.begin(); iter != _saftbus_objects.end(); ++iter)
 	// {
@@ -37,16 +44,20 @@ guint Connection::register_object (const Glib::ustring& object_path, const Glib:
 }
 bool Connection::unregister_object (guint registration_id)
 {
-	if (_debug_level) std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
+	if (_debug_level > 4) ;
+	std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
 	if (registration_id < _saftbus_objects.size())
 	{
-		//_saftbus_objects.erase(_saftbus_objects.begin()+registration_id);
+		_saftbus_objects.erase(registration_id);
 		return true;
 	}
 	return false;
 }
 
 
+// if any saftbus_object requests a signal (on the saftbus side), it has to call this function to register.
+// all registered signals will be redirected to the saftbus_objects. These are of type Owned. 
+// @param slot is the function that will be called when a signal arrives
 guint Connection::signal_subscribe(const SlotSignal& slot,
 								   const Glib::ustring& sender,
 								   const Glib::ustring& interface_name,
@@ -55,7 +66,7 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 								   const Glib::ustring& arg0//,
 								   )//SignalFlags  	flags)
 {
-	if (_debug_level) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
+	if (_debug_level > 4) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
 	Glib::ustring signature = object_path + interface_name + member;
 	if (_owned_signals_signatures.find(signature) == _owned_signals_signatures.end())
 	{
@@ -64,13 +75,23 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 		_owned_signals_signatures.insert(signature);
 	}
 
-	std::cerr << "_owned_signals[" << arg0 << "].connect(slot)  sender=" << sender << "   interface_name=" << interface_name << "  member=" << member << "  object_path=" << object_path << std::endl;
+	if (_debug_level > 4) {
+		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it) {
+			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
+		}
+	}
+
 	return 0;
 }
 
 void Connection::signal_unsubscribe(guint subscription_id) 
 {
-	if (_debug_level) std::cerr << "Connection::signal_unsubscribe() called" << std::endl;
+	if (_debug_level > 4) std::cerr << "Connection::signal_unsubscribe(" << subscription_id << ") called" << std::endl;
+	if (_debug_level > 4) {
+		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it) {
+			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
+		}
+	}
 	// have to implement this 
 	// _owned_signals[] has to be cleared
 }
@@ -83,11 +104,11 @@ double delta_t(struct timespec start, struct timespec stop)
 
 void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
-	if (_debug_level) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
+	if (_debug_level > 5) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
 		// std::cerr << "   signals" << std::endl;
 		// for(auto it = _owned_signals_signatures.begin() ; it != _owned_signals_signatures.end(); ++it) 
 		// 		std::cerr << "     " << *it << std::endl;
-	if (_debug_level) {
+	if (_debug_level > 5) {
 		for (unsigned n = 0; n < parameters.get_n_children(); ++n)
 		{
 			Glib::VariantBase child;
@@ -108,9 +129,9 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	signal_msg.push_back(parameters);
 	Glib::Variant<std::vector<Glib::VariantBase> > var_signal_msg = Glib::Variant<std::vector<Glib::VariantBase> >::create(signal_msg);
 
-	if (_debug_level) std::cerr << "signal message " << var_signal_msg.get_type_string() << " " << var_signal_msg.print() << std::endl;
+	if (_debug_level > 5) std::cerr << "signal message " << var_signal_msg.get_type_string() << " " << var_signal_msg.print() << std::endl;
 	guint32 size = var_signal_msg.get_size();
-	if (_debug_level) std::cerr << " size of signal is " << size << std::endl;
+	if (_debug_level > 5) std::cerr << " size of signal is " << size << std::endl;
 	const char *data_ptr = static_cast<const char*>(var_signal_msg.get_data());
 
 
@@ -139,16 +160,31 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 
 void Connection::handle_disconnect(Socket *socket)
 {
-	if (_debug_level) std::cerr << "client disconnected" << std::endl;
+	if (_debug_level > 5) std::cerr << "client disconnected" << std::endl;
 	Glib::VariantContainerBase arg;
 	Glib::ustring& saftbus_id = socket->saftbus_id();
 	socket->close_connection();
 	socket->wait_for_client();
 	//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
 	//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
+	if (_debug_level > 4) {
+		std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;;
+		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
+		{
+			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
+		}
+	}
 	_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
 	_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
 	_owned_signal_id_signature_map.erase(saftbus_id);
+
+	if (_debug_level > 4) {
+		std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;
+		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
+		{
+			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
+		}
+	}
 	//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 }
 
@@ -157,47 +193,47 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 {
 		static int cnt = 0;
 		++cnt;
-		if (_debug_level)  std::cerr << "Connection::dispatch() called one socket[" << socket_nr(socket) << "]" << std::endl;
+		if (_debug_level > 5)  std::cerr << "Connection::dispatch() called one socket[" << socket_nr(socket) << "]" << std::endl;
 		MessageTypeC2S type;
 		int result = saftbus::read(socket->get_fd(), type);
 		if (result == -1) {
-			handle_disconnect(socket);
-			// if (_debug_level) std::cerr << "client disconnected" << std::endl;
-			// Glib::VariantContainerBase arg;
-			// Glib::ustring& saftbus_id = socket->saftbus_id();
-			// socket->close_connection();
-			// socket->wait_for_client();
-			// //std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
-			// //std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
-			// _owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
-			// _owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
-			// _owned_signal_id_signature_map.erase(saftbus_id);
-			// //std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
+			//handle_disconnect(socket);
+			if (_debug_level > 4) std::cerr << "client disconnected" << std::endl;
+			Glib::VariantContainerBase arg;
+			Glib::ustring& saftbus_id = socket->saftbus_id();
+			socket->close_connection();
+			socket->wait_for_client();
+			//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+			//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
+			_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
+			_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
+			_owned_signal_id_signature_map.erase(saftbus_id);
+			//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 		} else {
 			switch(type)
 			{
 				case saftbus::SENDER_ID:
 				{
-					if (_debug_level) std::cerr << "Connection::dispatch() SENDER_ID received" << std::endl;
+					if (_debug_level > 5) std::cerr << "Connection::dispatch() SENDER_ID received" << std::endl;
 					Glib::ustring sender_id;
 					saftbus::read(socket->get_fd(), sender_id);
 					socket->saftbus_id() = sender_id;
 				}
 				case saftbus::REGISTER_CLIENT: 
 				{
-					// if (_debug_level) std::cerr << "Connection::dispatch() REGISTER_CLIENT received" << std::endl;
+					// if (_debug_level > 5) std::cerr << "Connection::dispatch() REGISTER_CLIENT received" << std::endl;
 					// saftbus::write(socket->get_fd(), saftbus::CLIENT_REGISTERED);
-					// if (_debug_level) std::cerr << "     writing client id " << _client_id << std::endl;
+					// if (_debug_level > 5) std::cerr << "     writing client id " << _client_id << std::endl;
 					// saftbus::write(socket->get_fd(), _client_id);
 					// ++_client_id;
 				}
 				break;
 				case saftbus::METHOD_CALL: 
 				{
-					if (_debug_level) std::cerr << "Connection::dispatch() METHOD_CALL received" << std::endl;
+					if (_debug_level > 5) std::cerr << "Connection::dispatch() METHOD_CALL received" << std::endl;
 					guint32 size;
 					saftbus::read(socket->get_fd(), size);
-					if (_debug_level) std::cerr << "expecting message with size " << size << std::endl;
+					if (_debug_level > 5) std::cerr << "expecting message with size " << size << std::endl;
 					std::vector<char> buffer(size);
 					saftbus::read_all(socket->get_fd(), &buffer[0], size);
 					Glib::Variant<std::vector<Glib::VariantBase> > payload;
@@ -207,61 +243,61 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
 					Glib::Variant<Glib::ustring> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(3));
 					Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
-					if (_debug_level) std::cerr << "sender = " << sender.get() <<  "    name = " << name.get() << "   object_path = " << object_path.get() <<  "    interface_name = " << interface_name.get() << std::endl;
-					if (_debug_level) std::cerr << "parameters = " << parameters.print() << std::endl;
+					if (_debug_level > 5) std::cerr << "sender = " << sender.get() <<  "    name = " << name.get() << "   object_path = " << object_path.get() <<  "    interface_name = " << interface_name.get() << std::endl;
+					if (_debug_level > 5) std::cerr << "parameters = " << parameters.print() << std::endl;
 					if (interface_name.get() == "org.freedesktop.DBus.Properties") { // property get/set method call
-						if (_debug_level) std::cerr << " interface for Set/Get property was called" << std::endl;
+						if (_debug_level > 5) std::cerr << " interface for Set/Get property was called" << std::endl;
 
 						Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
 						Glib::Variant<Glib::ustring> property_name          = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(1));
 
-						if (_debug_level) std::cerr << "property_name = " << property_name.get() << "   derived_interface_name = " << derived_interface_name.get() << std::endl;
+						if (_debug_level > 5) std::cerr << "property_name = " << property_name.get() << "   derived_interface_name = " << derived_interface_name.get() << std::endl;
 
 						for (unsigned n = 0; n < parameters.get_n_children(); ++n)
 						{
 							Glib::VariantBase child;
 							parameters.get_child(child, n);
-							if (_debug_level) std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
+							if (_debug_level > 5) std::cerr << "parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
 						}					
 						int index = _saftbus_indices[derived_interface_name.get()][object_path.get()];
-						if (_debug_level) std::cerr << "found saftbus object at index " << index << std::endl;
+						if (_debug_level > 5) std::cerr << "found saftbus object at index " << index << std::endl;
 						
 						if (name.get() == "Get") {
 							Glib::VariantBase result;
 							_saftbus_objects[index]->get_property(result, saftbus::connection, sender.get(), object_path.get(), derived_interface_name.get(), property_name.get());
-							if (_debug_level) std::cerr << "getting property " << result.get_type_string() << " " << result.print() << std::endl;
-							if (_debug_level) std::cerr << "result is: " << result.get_type_string() << "   .value = " << result.print() << std::endl;
+							if (_debug_level > 5) std::cerr << "getting property " << result.get_type_string() << " " << result.print() << std::endl;
+							if (_debug_level > 5) std::cerr << "result is: " << result.get_type_string() << "   .value = " << result.print() << std::endl;
 
 							std::vector<Glib::VariantBase> response;
 							response.push_back(result);
 							Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
 
-							if (_debug_level) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
+							if (_debug_level > 5) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
 							size = var_response.get_size();
-							if (_debug_level) std::cerr << " size of response is " << size << std::endl;
+							if (_debug_level > 5) std::cerr << " size of response is " << size << std::endl;
 							const char *data_ptr = static_cast<const char*>(var_response.get_data());
 							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
 							saftbus::write(socket->get_fd(), size);
 							saftbus::write_all(socket->get_fd(), data_ptr, size);
 
 						} else if (name.get() == "Set") {
-							if (_debug_level) std::cerr << "setting property" << std::endl;
+							if (_debug_level > 5) std::cerr << "setting property" << std::endl;
 							Glib::Variant<Glib::VariantBase> par2 = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::VariantBase> >(parameters.get_child(2));
-							if (_debug_level) std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
+							if (_debug_level > 5) std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
 							// Glib::Variant<bool> vb = Glib::Variant<bool>::create(true);
 							// std::cerr << "vb = " << vb.get_type_string() << " " << vb.print() << std::endl;
 
 							//std::cerr << "value = " << value << std::endl;
-							// if (_debug_level) std::cerr << " value = " << value.get_type_string() << " " << value.print() << std::endl;
+							// if (_debug_level > 5) std::cerr << " value = " << value.get_type_string() << " " << value.print() << std::endl;
 							bool result = _saftbus_objects[index]->set_property(saftbus::connection, sender.get(), object_path.get(), derived_interface_name.get(), property_name.get(), par2.get());
 
 							std::vector<Glib::VariantBase> response;
 							response.push_back(Glib::Variant<bool>::create(result));
 							Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
 
-							if (_debug_level) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
+							if (_debug_level > 5) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
 							size = var_response.get_size();
-							if (_debug_level) std::cerr << " size of response is " << size << std::endl;
+							if (_debug_level > 5) std::cerr << " size of response is " << size << std::endl;
 							const char *data_ptr = static_cast<const char*>(var_response.get_data());
 							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
 							saftbus::write(socket->get_fd(), size);
@@ -271,22 +307,22 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					}
 					else // normal method calls 
 					{
-						if (_debug_level) std::cerr << "a real method call: " << std::endl;
+						if (_debug_level > 5) std::cerr << "a real method call: " << std::endl;
 						int index = _saftbus_indices[interface_name.get()][object_path.get()];
-						if (_debug_level) std::cerr << "found saftbus object at index " << index << std::endl;
+						if (_debug_level > 5) std::cerr << "found saftbus object at index " << index << std::endl;
 						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
-						if (_debug_level) std::cerr << "doing the function call" << std::endl;
-						if (_debug_level) std::cerr << "saftbus::connection.get() " << static_cast<bool>(saftbus::connection) << std::endl;
+						if (_debug_level > 5) std::cerr << "doing the function call" << std::endl;
+						if (_debug_level > 5) std::cerr << "saftbus::connection.get() " << static_cast<bool>(saftbus::connection) << std::endl;
 						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);
 						Glib::VariantContainerBase result;
 						result = method_invocation_rptr->get_return_value();
-						if (_debug_level) std::cerr << "result is " << result.get_type_string() << " " << result.print() << std::endl;
+						if (_debug_level > 5) std::cerr << "result is " << result.get_type_string() << " " << result.print() << std::endl;
 
 						std::vector<Glib::VariantBase> response;
 						response.push_back(result);
 						Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
 
-						if (_debug_level) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
+						if (_debug_level > 5) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
 						size = var_response.get_size();
 						const char *data_ptr = static_cast<const char*>(var_response.get_data());
 						saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
@@ -298,7 +334,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				break;
 
 				default:
-					if (_debug_level) std::cerr << "Connection::dispatch() unknown message type: " << type << std::endl;
+					if (_debug_level > 5) std::cerr << "Connection::dispatch() unknown message type: " << type << std::endl;
 					return false;
 				break;				
 			}
