@@ -11,9 +11,8 @@ namespace saftbus
 {
 
 Connection::Connection(int number_of_sockets, const std::string& base_name)
-	: _client_id(1)
-	, _saftbus_object_counter(1)
-	, _saftbus_signal_counter(1)
+	: _saftbus_object_id_counter(1)
+	, _saftbus_signal_handle_counter(1)
 {
 	for (int i = 0; i < number_of_sockets; ++i)
 	{
@@ -28,11 +27,11 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 // calles to one of the registered object's vtable.
 guint Connection::register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable)
 {
-	++_saftbus_object_counter;
-	if (_debug_level > 4) std::cerr << "Connection::register_object("<< object_path <<") called . id = " << _saftbus_object_counter << std::endl;
+	++_saftbus_object_id_counter;
+	if (_debug_level > 3) std::cerr << "Connection::register_object("<< object_path <<") called . id = " << _saftbus_object_id_counter << std::endl;
 	//guint result = _saftbus_objects.size();
-	guint result = _saftbus_object_counter;
-	_saftbus_objects[_saftbus_object_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
+	guint result = _saftbus_object_id_counter;
+	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
 	Glib::ustring interface_name = interface_info->get_interface_name();
 	if (_debug_level > 4) std::cerr << "    got interface_name = " << interface_name << std::endl;
 	_saftbus_indices[interface_name][object_path] = result;
@@ -44,7 +43,7 @@ guint Connection::register_object (const Glib::ustring& object_path, const Glib:
 }
 bool Connection::unregister_object (guint registration_id)
 {
-	if (_debug_level > 4) ;
+	if (_debug_level > 3) ;
 	std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
 	if (registration_id < _saftbus_objects.size())
 	{
@@ -55,7 +54,7 @@ bool Connection::unregister_object (guint registration_id)
 }
 
 
-// if any saftbus_object requests a signal (on the saftbus side), it has to call this function to register.
+// subscribe to local signal (local inside the saftbus process)
 // all registered signals will be redirected to the saftbus_objects. These are of type Owned. 
 // @param slot is the function that will be called when a signal arrives
 guint Connection::signal_subscribe(const SlotSignal& slot,
@@ -66,35 +65,79 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 								   const Glib::ustring& arg0//,
 								   )//SignalFlags  	flags)
 {
-	if (_debug_level > 4) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
-	Glib::ustring signature = object_path + interface_name + member;
-	if (_owned_signals_signatures.find(signature) == _owned_signals_signatures.end())
-	{
-		_owned_signals[arg0].connect(slot);
-		_owned_signal_id_signature_map[arg0] = signature;
-		_owned_signals_signatures.insert(signature);
-	}
+	if (_debug_level > 3) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
 
-	if (_debug_level > 4) {
-		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it) {
-			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
+	// return result;
+	++_saftbus_signal_handle_counter;
+	_handle_to_signal_map[_saftbus_signal_handle_counter].connect(slot);
+
+	_id_handles_map[arg0].insert(_saftbus_signal_handle_counter);
+
+	if (_debug_level > 3) {
+		for(auto it = _id_handles_map.begin(); it != _id_handles_map.end(); ++it) {
+			for (auto i = it->second.begin(); i != it->second.end(); ++i) {
+				std::cerr << "_id_handles_map[" << it->first << "]:" << *i << std::endl;
+			}
 		}
 	}
 
-	return 0;
+	return _saftbus_signal_handle_counter;
 }
 
 void Connection::signal_unsubscribe(guint subscription_id) 
 {
-	if (_debug_level > 4) std::cerr << "Connection::signal_unsubscribe(" << subscription_id << ") called" << std::endl;
+	if (_debug_level > 3) std::cerr << "Connection::signal_unsubscribe(" << subscription_id << ") called" << std::endl;
 	if (_debug_level > 4) {
-		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it) {
+		for(auto it = _handle_to_signal_map.begin(); it != _handle_to_signal_map.end(); ++it) {
 			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
 		}
 	}
-	// have to implement this 
+	_handle_to_signal_map.erase(subscription_id);
+
+	// // have to implement this 
 	// _owned_signals[] has to be cleared
 }
+
+void Connection::handle_disconnect(Socket *socket)
+{
+	if (_debug_level > 4) std::cerr << "client disconnected" << std::endl;
+	Glib::VariantContainerBase arg;
+	Glib::ustring& saftbus_id = socket->saftbus_id();
+	socket->close_connection();
+	socket->wait_for_client();
+
+	if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { // we have to emit the quit signals
+		for(auto it = _id_handles_map[saftbus_id].begin(); it != _id_handles_map[saftbus_id].end(); ++it) {
+			std::cerr << "sending signal to clean up" << std::endl;
+			_handle_to_signal_map[*it].emit(saftbus::connection, "", "", "", "" , arg);
+		}
+	}
+	_id_handles_map.erase(saftbus_id);
+
+
+	//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+	//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
+	// if (_debug_level > 4) {
+	// 	std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;;
+	// 	for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
+	// 	{
+	// 		std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
+	// 	}
+	// }
+	// _owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
+	// _owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
+	// _owned_signal_id_signature_map.erase(saftbus_id);
+
+	// if (_debug_level > 4) {
+	// 	std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;
+	// 	for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
+	// 	{
+	// 		std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
+	// 	}
+	// }
+	//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
+}
+
 
 double delta_t(struct timespec start, struct timespec stop) 
 {
@@ -102,9 +145,11 @@ double delta_t(struct timespec start, struct timespec stop)
          - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
 }
 
+// send a signal to all connected sockets
+// I think I would be possible to filter the signals and send them only to sockets where they are actually expected
 void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
-	if (_debug_level > 5) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
+	if (_debug_level > 4) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
 		// std::cerr << "   signals" << std::endl;
 		// for(auto it = _owned_signals_signatures.begin() ; it != _owned_signals_signatures.end(); ++it) 
 		// 		std::cerr << "     " << *it << std::endl;
@@ -158,35 +203,6 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	// std::cerr << "----" << std::endl;
 }
 
-void Connection::handle_disconnect(Socket *socket)
-{
-	if (_debug_level > 5) std::cerr << "client disconnected" << std::endl;
-	Glib::VariantContainerBase arg;
-	Glib::ustring& saftbus_id = socket->saftbus_id();
-	socket->close_connection();
-	socket->wait_for_client();
-	//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
-	//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
-	if (_debug_level > 4) {
-		std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;;
-		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
-		{
-			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
-		}
-	}
-	_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
-	_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
-	_owned_signal_id_signature_map.erase(saftbus_id);
-
-	if (_debug_level > 4) {
-		std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;
-		for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
-		{
-			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
-		}
-	}
-	//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
-}
 
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
@@ -197,18 +213,18 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 		MessageTypeC2S type;
 		int result = saftbus::read(socket->get_fd(), type);
 		if (result == -1) {
-			//handle_disconnect(socket);
-			if (_debug_level > 4) std::cerr << "client disconnected" << std::endl;
-			Glib::VariantContainerBase arg;
-			Glib::ustring& saftbus_id = socket->saftbus_id();
-			socket->close_connection();
-			socket->wait_for_client();
-			//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
-			//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
-			_owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
-			_owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
-			_owned_signal_id_signature_map.erase(saftbus_id);
-			//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
+			handle_disconnect(socket);
+			// if (_debug_level > 4) std::cerr << "client disconnected" << std::endl;
+			// Glib::VariantContainerBase arg;
+			// Glib::ustring& saftbus_id = socket->saftbus_id();
+			// socket->close_connection();
+			// socket->wait_for_client();
+			// //std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
+			// //std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
+			// _owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
+			// _owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
+			// _owned_signal_id_signature_map.erase(saftbus_id);
+			// //std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 		} else {
 			switch(type)
 			{
@@ -221,11 +237,6 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				}
 				case saftbus::REGISTER_CLIENT: 
 				{
-					// if (_debug_level > 5) std::cerr << "Connection::dispatch() REGISTER_CLIENT received" << std::endl;
-					// saftbus::write(socket->get_fd(), saftbus::CLIENT_REGISTERED);
-					// if (_debug_level > 5) std::cerr << "     writing client id " << _client_id << std::endl;
-					// saftbus::write(socket->get_fd(), _client_id);
-					// ++_client_id;
 				}
 				break;
 				case saftbus::METHOD_CALL: 

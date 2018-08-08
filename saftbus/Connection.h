@@ -55,18 +55,18 @@ namespace saftbus
 		std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
 
 		std::map<int, std::shared_ptr<InterfaceVTable> > _saftbus_objects;
-		int _saftbus_object_counter; // log saftbus object creation
-		int _saftbus_signal_counter; // log signal subscriptions
+		int _saftbus_object_id_counter; // log saftbus object creation
+		int _saftbus_signal_handle_counter; // log signal subscriptions
 
 		// TODO: use std::set instead of std::vector
 		std::vector<std::shared_ptr<Socket> > _sockets; 
 
-		int _client_id;
+		//int _client_id;
 
 
-		std::set<Glib::ustring> _owned_signals_signatures; //save all signatures (=object_path+interface_name+member) to prevent that two slots of the same kind are connected
-		std::map<Glib::ustring, Glib::ustring> _owned_signal_id_signature_map; // maps saftbus_id -> signature (identify the signatures that belong to a saftbus_id)
-		std::map<Glib::ustring, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _owned_signals;
+		// 	     // handle    // signal
+		std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+		std::map<Glib::ustring, std::set<guint> > _id_handles_map;
 
 	};
 

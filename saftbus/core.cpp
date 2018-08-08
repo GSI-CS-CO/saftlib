@@ -17,7 +17,7 @@
 
 namespace saftbus
 {
-  int _debug_level = 0;
+  int _debug_level = 4;
 
   int write_all(int fd, const void *buffer, int size)
   {
