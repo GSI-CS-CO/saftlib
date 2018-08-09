@@ -20,9 +20,11 @@ namespace saftbus
 
 	extern int _debug_level;
 
+	void init();
 
 	int write_all(int fd, const void *buffer, int size);
 	int read_all(int fd, void *buffer, int size);
+
 
 
 

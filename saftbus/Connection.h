@@ -67,6 +67,7 @@ namespace saftbus
 		// 	     // handle    // signal
 		std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 		std::map<Glib::ustring, std::set<guint> > _id_handles_map;
+		std::set<guint> _erased_handles;
 
 	};
 

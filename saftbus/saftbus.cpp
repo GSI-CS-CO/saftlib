@@ -15,6 +15,7 @@ namespace saftbus
 
 	guint own_name (BusType bus_type, const Glib::ustring& name, const SlotBusAcquired& bus_acquired_slot, const SlotNameAcquired& name_acquired_slot, const SlotNameLost& name_lost_slot)//, BusNameOwnerFlags flags=Gio::DBus::BUS_NAME_OWNER_FLAGS_NONE)
 	{
+		init();
 		if (_debug_level > 5) std::cerr << "own_name("<< bus_type<< "," << name <<") called" << std::endl;
 		bus_acquired  = bus_acquired_slot;
 		name_acquired = name_acquired_slot;
@@ -45,18 +46,18 @@ namespace saftbus
 													  (gconstpointer) data,  size, false,
 													  nullptr, nullptr);
 		bool normal_form = g_variant_is_normal_form(grestored);
-		if (_debug_level > 5) std::cerr << "deserialize() recieve variant has normal form? => " << normal_form << std::endl;
+		if (_debug_level > 3) std::cerr << "deserialize() recieve variant has normal form? => " << normal_form << std::endl;
 		result = Glib::Variant<std::vector<Glib::VariantBase> >(grestored);
 		return true;
 	}
-	bool deserialize(Glib::Variant<Glib::VariantBase> &result, const char *data, gsize size)
-	{
-		GVariant *grestored = g_variant_new_from_data(((const GVariantType *) "v"),
-													  (gconstpointer) data,  size, true,
-													  nullptr, nullptr);
-		result = Glib::Variant<Glib::VariantBase>(grestored);
-		return true;
-	}
+	// bool deserialize(Glib::Variant<Glib::VariantBase> &result, const char *data, gsize size)
+	// {
+	// 	GVariant *grestored = g_variant_new_from_data(((const GVariantType *) "v"),
+	// 												  (gconstpointer) data,  size, true,
+	// 												  nullptr, nullptr);
+	// 	result = Glib::Variant<Glib::VariantBase>(grestored);
+	// 	return true;
+	// }
 
 
 }

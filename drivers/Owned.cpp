@@ -128,6 +128,7 @@ void Owned::owner_quit_handler(
   const Glib::ustring&, const Glib::VariantContainerBase&,
   Owned* self)
 {
+  std::cerr << "Owned::owner_quit_handler() called" << std::endl;
   try {
     self->unsubscribe();
     self->owner.clear();

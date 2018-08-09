@@ -92,50 +92,46 @@ void Connection::signal_unsubscribe(guint subscription_id)
 			std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
 		}
 	}
-	_handle_to_signal_map.erase(subscription_id);
-
-	// // have to implement this 
-	// _owned_signals[] has to be cleared
+	std::cerr << "list to erase handle " << subscription_id << std::endl;
+	_erased_handles.insert(subscription_id);
 }
 
 void Connection::handle_disconnect(Socket *socket)
 {
+	// this doesn't work yet...  
 	if (_debug_level > 4) std::cerr << "client disconnected" << std::endl;
 	Glib::VariantContainerBase arg;
 	Glib::ustring& saftbus_id = socket->saftbus_id();
 	socket->close_connection();
 	socket->wait_for_client();
 
+	// only ouput
 	if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { // we have to emit the quit signals
 		for(auto it = _id_handles_map[saftbus_id].begin(); it != _id_handles_map[saftbus_id].end(); ++it) {
-			std::cerr << "sending signal to clean up" << std::endl;
-			_handle_to_signal_map[*it].emit(saftbus::connection, "", "", "", "" , arg);
+			std::cerr << "_handle_to_signal_map[" << *it << "]  " << std::endl;
 		}
 	}
+
+	std::cerr << "collect unsubscription handles" << std::endl;
+	// emit the signals
+	if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { // we have to emit the quit signals
+		for(auto it = _id_handles_map[saftbus_id].begin(); it != _id_handles_map[saftbus_id].end(); ++it) {
+			std::cerr << "sending signal to clean up: " << *it << std::endl;
+			// a signal should only be sent if (*it) is not in the list of _erased_handles 
+			if (_erased_handles.find(*it) == _erased_handles.end()) {
+				_handle_to_signal_map[*it].emit(saftbus::connection, "", "", "", "" , arg);
+			}
+		}
+	}
+
+	std::cerr << "delete unsubscribed handles" << std::endl;
+	// see which signals were unsubscribed
+	for (auto it = _erased_handles.begin(); it != _erased_handles.end(); ++it) {
+		std::cerr << "erase handle " << *it << std::endl;
+		_handle_to_signal_map.erase(*it);
+	}
+	_erased_handles.clear();
 	_id_handles_map.erase(saftbus_id);
-
-
-	//std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
-	//std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
-	// if (_debug_level > 4) {
-	// 	std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;;
-	// 	for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
-	// 	{
-	// 		std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
-	// 	}
-	// }
-	// _owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
-	// _owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
-	// _owned_signal_id_signature_map.erase(saftbus_id);
-
-	// if (_debug_level > 4) {
-	// 	std::cerr << "Connection::handle_disconnect(socket) saftbus_id of client socket = " << saftbus_id << std::endl;
-	// 	for(auto it = _owned_signals.begin(); it != _owned_signals.end(); ++it)
-	// 	{
-	// 		std::cerr << "_owned_signals[" << it->first << "]" << std::endl;
-	// 	}
-	// }
-	//std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 }
 
 
@@ -187,12 +183,17 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 		Socket &socket = **it;
 		if (socket.get_active()) 
 		{
-			clock_gettime(CLOCK_REALTIME, &now);
-			times.push_back(now);
-			//std::cerr << "sending signal to socket " << socket.get_filename() << std::endl;
-			saftbus::write(socket.get_fd(), saftbus::SIGNAL);
-			saftbus::write(socket.get_fd(), size);
-			saftbus::write_all(socket.get_fd(), data_ptr, size);
+			try {
+				clock_gettime(CLOCK_REALTIME, &now);
+				times.push_back(now);
+				//std::cerr << "sending signal to socket " << socket.get_filename() << std::endl;
+				saftbus::write(socket.get_fd(), saftbus::SIGNAL);
+				saftbus::write(socket.get_fd(), size);
+				saftbus::write_all(socket.get_fd(), data_ptr, size);
+			} catch (std::exception &e) {
+				std::cerr << "exception in Connection::emit_signal() : " << e.what() << std::endl;
+				handle_disconnect(&socket);
+			}
 		}
 	}
 	// std::cerr << "signal emit start" << std::endl;
@@ -207,6 +208,7 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
 {
+	try {
 		static int cnt = 0;
 		++cnt;
 		if (_debug_level > 5)  std::cerr << "Connection::dispatch() called one socket[" << socket_nr(socket) << "]" << std::endl;
@@ -353,6 +355,10 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 			return true;
 		}
 		return false;
+	} catch(std::exception &e) {
+		std::cerr << "exception in Connection::dispatch(): " << e.what() << std::endl;
+		handle_disconnect(socket);
+	}
 }
 
 int Connection::socket_nr(Socket *socket)

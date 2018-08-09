@@ -11,13 +11,41 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 
 
 #include <sys/file.h> // for flock()
 
 namespace saftbus
 {
-  int _debug_level = 4;
+  int _debug_level = 0;
+
+  void block_signal(int signal_to_block /* i.e. SIGPIPE */ )
+  {
+      sigset_t set;
+      sigset_t old_state;
+
+      // get the current state
+      //
+      sigprocmask(SIG_BLOCK, NULL, &old_state);
+
+      // add signal_to_block to that existing state
+      //
+      set = old_state;
+      sigaddset(&set, signal_to_block);
+
+      // block that signal also
+      //
+      sigprocmask(SIG_BLOCK, &set, NULL);
+
+      // ... deal with old_state if required ...
+  }
+  void init()
+  {
+    std::cerr << "ignoring SIGPIPE" << std::endl;
+    //signal(SIGPIPE, SIG_IGN);
+    block_signal(SIGPIPE);
+  }
 
   int write_all(int fd, const void *buffer, int size)
   {
