@@ -241,6 +241,15 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				{
 				}
 				break;
+				case saftbus::SIGNAL_FD: 
+				{
+					std::cerr << "Connection::dispatch() received SIGNAL_FD" << std::endl;
+					int fd = saftbus::recvfd(socket->get_fd());
+					std::cerr << "Connection::dispatch() got fd " << fd << std::endl;
+					int msg = 42;
+					write(fd, msg);
+				}
+				break;
 				case saftbus::METHOD_CALL: 
 				{
 					if (_debug_level > 5) std::cerr << "Connection::dispatch() METHOD_CALL received" << std::endl;

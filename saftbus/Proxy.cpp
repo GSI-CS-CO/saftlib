@@ -30,6 +30,20 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	}
 
 	_connection->register_proxy(interface_name, object_path, this);
+
+	int pipe_fd[2];
+	if (pipe(pipe_fd) != 0) {
+		std::cerr << "couldnt create pipe" << std::endl;
+	}
+	else {
+		std::cerr << "pipe is open pipe_fd[0] = " << pipe_fd[0] << "   pipe_fd[1] = " << pipe_fd[1] << std::endl;
+		write(_connection->get_fd(), saftbus::SIGNAL_FD);
+		sendfd(_connection->get_fd(), pipe_fd[1]);	// send the writing endo of pipe
+	}
+	int message;
+	read(pipe_fd[0], message);
+	std::cerr << "got message through pipe" << message << std::endl;
+
 }
 
 

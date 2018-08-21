@@ -19,7 +19,7 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 {
 	int _debug_level = 1;
 	// try to open first available socket
-	_create_socket = socket(PF_LOCAL, SOCK_STREAM, 0);
+	_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
 	if (_create_socket > 0) {
 		if (_debug_level > 5) std::cerr << "socket created" << std::endl;
 	} // TODO: else { ... }

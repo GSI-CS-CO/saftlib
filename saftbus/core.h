@@ -25,8 +25,8 @@ namespace saftbus
 	int write_all(int fd, const void *buffer, int size);
 	int read_all(int fd, void *buffer, int size);
 
-
-
+	int sendfd(int socket, int fd);
+	int recvfd(int socket);
 
 	template<typename T>
 	int write(int fd, const T & scalar)	{

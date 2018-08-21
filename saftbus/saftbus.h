@@ -44,6 +44,7 @@ namespace saftbus
 		PROPERTY_SET,
 		PROPERTY_GET,
 		SENDER_ID,
+		SIGNAL_FD,
 	};
 
 	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);

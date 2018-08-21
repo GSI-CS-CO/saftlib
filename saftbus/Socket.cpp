@@ -17,7 +17,7 @@ void Socket::wait_for_client()
   _active = false;
   struct timespec start, stop;
   clock_gettime( CLOCK_REALTIME, &start);
-  _create_socket = socket(AF_LOCAL, SOCK_STREAM, 0);
+  _create_socket = socket(AF_LOCAL, SOCK_SEQPACKET, 0);
   if (_create_socket > 0) {
     if (_debug_level > 5) std::cerr << "socket created" << std::endl;
   } // TODO: else { ... }
