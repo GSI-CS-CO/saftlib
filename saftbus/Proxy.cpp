@@ -48,7 +48,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 		std::cerr << "couldnt create pipe" << std::endl;
 	}
 	else {
-		std::cerr << "pipe is open _pipe_fd[0] = " << _pipe_fd[0] << "   _pipe_fd[1] = " << _pipe_fd[1] << std::endl;
+		//std::cerr << "pipe is open _pipe_fd[0] = " << _pipe_fd[0] << "   _pipe_fd[1] = " << _pipe_fd[1] << std::endl;
 		write(_connection->get_fd(), saftbus::SIGNAL_FD);
 		sendfd(_connection->get_fd(), _pipe_fd[1]);	// send the writing endo of pipe
 		write(_connection->get_fd(), _object_path);
@@ -57,7 +57,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	}
 	int message;
 	read(_pipe_fd[0], message);
-	std::cerr << "got message through pipe" << message << std::endl;
+	//std::cerr << "got message through pipe" << message << std::endl;
 
     Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
 }
@@ -66,7 +66,7 @@ Proxy::~Proxy()
 {
 	close(_pipe_fd[0]);
 	close(_pipe_fd[1]);
-	std::cerr << "Proxy::~Proxy() called " << _global_id << std::endl;
+	//std::cerr << "Proxy::~Proxy() called " << _global_id << std::endl;
 	write(_connection->get_fd(), saftbus::SIGNAL_REMOVE_FD);
 	write(_connection->get_fd(), _object_path);
 	write(_connection->get_fd(), _interface_name);
@@ -122,7 +122,7 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 	                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 	    // deliver the signal
 		on_properties_changed(property_map.get(), invalidated_properies.get());
-	    std::cerr << "signal flight time = " << dt << " us" << std::endl;
+	    //std::cerr << "signal flight time = " << dt << " us" << std::endl;
 	}
 	else // all other signals)
 	{
@@ -137,7 +137,7 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 	    double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
 	                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 		on_signal("de.gsi.saftlib", signal_name.get(), parameters);
-	    std::cerr << "signal flight time = " << dt << " us" << std::endl;
+	    //std::cerr << "signal flight time = " << dt << " us" << std::endl;
 	}
 
 	return true;

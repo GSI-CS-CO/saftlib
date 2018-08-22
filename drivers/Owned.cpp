@@ -42,7 +42,7 @@ Owned::Owned(const Glib::ustring& objectPath, sigc::slot<void> destroy_)
 
 Owned::~Owned()
 {
-  std::cerr << "Owned::~Owned(" << ")" << std::endl;
+  //std::cerr << "Owned::~Owned(" << ")" << std::endl;
   try {
     Destroyed(); 
     if (!owner.empty()) unsubscribe();
@@ -53,7 +53,7 @@ Owned::~Owned()
 
 void Owned::Disown()
 {
-  std::cerr << "Owned::Disown(" << ")" << std::endl;
+  //std::cerr << "Owned::Disown(" << ")" << std::endl;
   if (owner.empty()) {
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
   } else {
@@ -128,7 +128,7 @@ void Owned::owner_quit_handler(
   const Glib::ustring&, const Glib::VariantContainerBase&,
   Owned* self)
 {
-  std::cerr << "Owned::owner_quit_handler() called" << std::endl;
+  //std::cerr << "Owned::owner_quit_handler() called" << std::endl;
   try {
     self->unsubscribe();
     self->owner.clear();

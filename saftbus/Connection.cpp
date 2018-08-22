@@ -54,10 +54,10 @@ bool Connection::unregister_object (guint registration_id)
 				auto object_path = it->first;
 				if (it->second == registration_id) {
 					//_proxy_pipes[interface_name][object_path].erase(pp_done);
-					std::cerr << "closing all fds registered for " << interface_name << " " << object_path << std::endl;
+					//std::cerr << "closing all fds registered for " << interface_name << " " << object_path << std::endl;
 					std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
 					for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-						std::cerr << "   closing fd " << i->fd << std::endl;
+						//std::cerr << "   closing fd " << i->fd << std::endl;
 						close(i->fd);
 					}
 					setProxyPipe.clear();
