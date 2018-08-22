@@ -59,7 +59,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	read(_pipe_fd[0], message);
 	std::cerr << "got message through pipe" << message << std::endl;
 
-    //Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), _pipe_fd[1], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
+    Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
 }
 
 Proxy::~Proxy() 
@@ -77,7 +77,64 @@ Proxy::~Proxy()
 bool Proxy::dispatch(Glib::IOCondition condition)
 {
 	saftbus::MessageTypeS2C type;
-	read(_pipe_fd[1], type);
+	read(_pipe_fd[0], type);
+	std::cerr << "got signal through pipe " << std::endl;
+
+
+	guint32 size;
+	saftbus::read(_pipe_fd[0], size);
+	if (_debug_level > 5) std::cerr << "      expecting message with size " << size << std::endl;
+	std::vector<char> buffer(size);
+	saftbus::read_all(_pipe_fd[0], &buffer[0], size);
+	Glib::Variant<std::vector<Glib::VariantBase> > payload;
+	deserialize(payload, &buffer[0], buffer.size());
+	if (_debug_level > 5) std::cerr << "      got signal content " << payload.get_type_string() << " " << payload.print() << std::endl;
+	Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
+	Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
+	Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
+	Glib::Variant<gint64> sec    = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >(payload.get_child(3));
+	Glib::Variant<gint64> nsec    = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >(payload.get_child(4));
+	Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(5));
+
+
+
+	// special treatment for property changes
+	if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
+	{
+		// std::map<Glib::ustring, Glib::VariantBase> property_map;
+		// parametrs.get(property_map 0)
+		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
+		std::cerr << "derived_interface_name = " << derived_interface_name.print() << std::endl;
+		if (_interface_name != derived_interface_name.get()) {
+			std::cerr << "signal called with wrong interface name. expecting " << _interface_name << ",  got " << interface_name.get() << std::endl;
+		}
+		if (_object_path != object_path.get()) {
+			std::cerr << "signal called with wrong object_path. expecting " << _object_path << ",  got " << object_path.get() << std::endl;
+		}
+
+		Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > property_map = Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > >(parameters.get_child(1));
+		Glib::Variant<std::vector< Glib::ustring > > invalidated_properies = Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< Glib::ustring > > >(parameters.get_child(2));
+				// std::cerr << "property_map = " << property_map.print() << std::endl;
+				// std::cerr << "invalidated_properies = " << invalidated_properies.print() << std::endl;
+	    struct timespec stop;
+	    clock_gettime( CLOCK_REALTIME, &stop);
+	    double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+	                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
+	    // deliver the signal
+		on_properties_changed(property_map.get(), invalidated_properies.get());
+	    std::cerr << "signal flight time = " << dt << " us" << std::endl;
+	}
+	else // all other signals)
+	{
+		if (_interface_name != interface_name.get()) {
+			std::cerr << "signal called with wrong interface name. expecting " << _interface_name << ",  got " << interface_name.get() << std::endl;
+		}
+		if (_object_path != object_path.get()) {
+			std::cerr << "signal called with wrong object_path. expecting " << _object_path << ",  got " << object_path.get() << std::endl;
+		}
+		on_signal("de.gsi.saftlib", signal_name.get(), parameters);
+	}
+
 	return true;
 }
 

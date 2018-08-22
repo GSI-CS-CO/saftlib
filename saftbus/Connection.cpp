@@ -197,42 +197,33 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 
 
 
-	// directly send signal
-	std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
-	for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-		write(i->fd, saftbus::SIGNAL);
-	}
 
+	if (signal_name == "PropertiesChanged") { // special case for property changed signals
+		Glib::VariantContainerBase* params = const_cast<Glib::VariantContainerBase*>(&parameters);
+		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(params->get_child(0));
+		std::cerr << "PropertiesChaned ----> derived_interface_name = " << derived_interface_name.get() << " " << object_path << std::endl;
 
+		// directly send signal
+		std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[derived_interface_name.get()][object_path];
+		for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+			std::cerr << "sending signal through pipe" << std::endl;
+			write(i->fd, saftbus::SIGNAL);
+			write(i->fd, size);
+			write_all(i->fd, data_ptr, size);
+		}
 
+	} else {
+		std::cerr << "Normal Signal ----> interface_name = " << interface_name << " " << object_path << std::endl;
 
-
-	std::vector<struct timespec> times;
-	struct timespec now;
-	for (auto it = _sockets.begin(); it != _sockets.end(); ++it) 
-	{
-		Socket &socket = **it;
-		if (socket.get_active()) 
-		{
-			try {
-				clock_gettime(CLOCK_REALTIME, &now);
-				times.push_back(now);
-				//std::cerr << "sending signal to socket " << socket.get_filename() << std::endl;
-				saftbus::write(socket.get_fd(), saftbus::SIGNAL);
-				saftbus::write(socket.get_fd(), size);
-				saftbus::write_all(socket.get_fd(), data_ptr, size);
-			} catch (std::exception &e) {
-				std::cerr << "exception in Connection::emit_signal() : " << e.what() << std::endl;
-				handle_disconnect(&socket);
-			}
+		// directly send signal
+		std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
+		for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+			std::cerr << "sending signal through pipe" << std::endl;
+			write(i->fd, saftbus::SIGNAL);
+			write(i->fd, size);
+			write_all(i->fd, data_ptr, size);
 		}
 	}
-	// std::cerr << "signal emit start" << std::endl;
-	// for (int i = 0; i < times.size(); ++i)
-	// {
-	// 	std::cerr << "dt[" << i << "] = " << delta_t(times[0], times[i]) << " us" << std::endl;
-	// }
-	// std::cerr << "----" << std::endl;
 }
 
 

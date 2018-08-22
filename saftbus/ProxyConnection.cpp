@@ -56,7 +56,7 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 			} 
 		}
 	}
-    Glib::signal_io().connect(sigc::mem_fun(*this, &ProxyConnection::dispatch), _create_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
+    //Glib::signal_io().connect(sigc::mem_fun(*this, &ProxyConnection::dispatch), _create_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
 
 	// create what is called "Sender" in DBus terms. It is a number unique to the running process
     std::ostringstream id_out;
@@ -137,10 +137,10 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 		if (type == expected_type) {
 				if (_debug_level > 5) std::cerr << "ProxyConnection::expect_from_server() got expected type" << std::endl;
 				return true;
-		} else if (type == saftbus::SIGNAL) {
-			if (_debug_level > 5) std::cerr << "got a SIGNAL **************************************" << std::endl;
-			dispatchSignal();
-			continue;
+		// } else if (type == saftbus::SIGNAL) {
+		// 	if (_debug_level > 5) std::cerr << "got a SIGNAL **************************************" << std::endl;
+		// 	//dispatchSignal();
+		// 	continue;
 		} else {
 			if (_debug_level > 5) std::cerr << "unexpected type " << type << " while expecting " << expected_type << std::endl;
 			return false;
@@ -170,107 +170,5 @@ void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring
 	}
 	_proxies[interface_name][object_path] = proxy; // map the object_path to the proxy object
 }
-
-bool ProxyConnection::dispatch(Glib::IOCondition condition) 
-{
-	if (_debug_level > 5) std::cerr << "ProxyConnection::dispatch() called" << std::endl;
-
-	saftbus::MessageTypeS2C type = saftbus::SIGNAL;
-	while(!expect_from_server(type));
-
-	dispatchSignal();
-
-	return true;
-}
-
-void ProxyConnection::dispatchSignal()
-{
-	guint32 size;
-	saftbus::read(get_fd(), size);
-	if (_debug_level > 5) std::cerr << "expecting message with size " << size << std::endl;
-	std::vector<char> buffer(size);
-	saftbus::read_all(get_fd(), &buffer[0], size);
-	Glib::Variant<std::vector<Glib::VariantBase> > payload;
-	deserialize(payload, &buffer[0], buffer.size());
-	if (_debug_level > 5) std::cerr << "got signal content " << payload.get_type_string() << " " << payload.print() << std::endl;
-	Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
-	Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
-	Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
-	Glib::Variant<gint64> sec    = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >(payload.get_child(3));
-	Glib::Variant<gint64> nsec    = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >(payload.get_child(4));
-	Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(5));
-
-
-   	//std::cerr << "got signal after " << dt << " us" << std::endl;
-    if (_debug_level > 5) 
-    {
-
-		std::cerr << "object_path = " << object_path.get() << std::endl;
-		std::cerr << "interface_name = " << interface_name.get() << std::endl;
-		std::cerr << "signal_name = " << signal_name.get() << std::endl;
-
-		std::cerr << "calling the on_signal function " << std::endl;
-	 
-		for (auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
-		{
-			for (auto it = itr->second.begin(); it != itr->second.end(); ++it)
-			{
-				std::cerr << "_proxies[" << itr->first << "][" << it->first << "] = " << it->second << std::endl;
-			}
-		}
-	}
-
-
-
-	// special treatment for property changes
-	if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
-	{
-		// std::map<Glib::ustring, Glib::VariantBase> property_map;
-		// parametrs.get(property_map 0)
-		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
-		std::cerr << "derived_interface_name = " << derived_interface_name.print() << std::endl;
-		auto interfaces = _proxies.find(derived_interface_name.get());
-		if (interfaces != _proxies.end()) {
-			if (interfaces->second.find(object_path.get()) != interfaces->second.end()) {
-
-				Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > property_map = Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > >(parameters.get_child(1));
-				Glib::Variant<std::vector< Glib::ustring > > invalidated_properies = Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< Glib::ustring > > >(parameters.get_child(2));
-				// std::cerr << "property_map = " << property_map.print() << std::endl;
-				// std::cerr << "invalidated_properies = " << invalidated_properies.print() << std::endl;
-			    struct timespec stop;
-			    clock_gettime( CLOCK_REALTIME, &stop);
-			      double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-			                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
-			    // deliver the signal
-				_proxies[derived_interface_name.get()][object_path.get()]->on_properties_changed(property_map.get(), invalidated_properies.get());
-			    std::cerr << "signal flight time = " << dt << " us" << std::endl;
-			}
-		}
-
-
-	}
-	else // all other signals)
-	{
-		auto interfaces = _proxies.find(interface_name.get());
-		if (interfaces != _proxies.end()) {
-			if (interfaces->second.find(object_path.get()) != interfaces->second.end()) {
-			    // deliver the signal
-			    struct timespec stop;
-			    clock_gettime( CLOCK_REALTIME, &stop);
-			      double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-			                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
-				_proxies[interface_name.get()][object_path.get()]->on_signal("de.gsi.saftlib", signal_name.get(), parameters);
-			    std::cerr << "signal flight time = " << dt << " us" << std::endl;
-			}
-		}
-
-	}
-
-
-
-}
-
-
-
 
 }
