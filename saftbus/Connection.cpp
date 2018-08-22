@@ -46,8 +46,27 @@ bool Connection::unregister_object (guint registration_id)
 {
 	if (_debug_level > 3) ;
 	std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
-	if (registration_id < _saftbus_objects.size())
+	//if (registration_id < _saftbus_objects.size())
 	{
+		// if any signal pipes are still open -> close them
+		//std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
+		for(auto itr = _saftbus_indices.begin(); itr != _saftbus_indices.end(); ++itr) {
+			auto interface_name = itr->first;
+			for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
+				auto object_path = it->first;
+				if (it->second == registration_id) {
+					//_proxy_pipes[interface_name][object_path].erase(pp_done);
+					std::cerr << "closing all fds registered for " << interface_name << " " << object_path << std::endl;
+					std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
+					for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+						std::cerr << "   closing fd " << i->fd << std::endl;
+						close(i->fd);
+					}
+					setProxyPipe.clear();
+				}
+			}
+		}
+
 		_saftbus_objects.erase(registration_id);
 		return true;
 	}

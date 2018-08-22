@@ -80,7 +80,7 @@ namespace saftbus
 
 
 		// store the pipes that go directly to a proxy
-				// interface_name
+				// interface_name        // object path
 		std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
 
 	};
