@@ -3,6 +3,7 @@
 
 #include <map>
 #include <giomm.h>
+#include <thread>
 
 #include "saftbus.h"
 
@@ -26,6 +27,7 @@ namespace saftbus
 			const Glib::RefPtr< InterfaceInfo >&  	info = Glib::RefPtr< InterfaceInfo >(),
 			ProxyFlags  	flags = PROXY_FLAGS_NONE 
 		);
+		~Proxy();
 
 		using MapChangedProperties = std::map<Glib::ustring, Glib::VariantBase>;
 
@@ -43,6 +45,10 @@ namespace saftbus
 	private:
 		static Glib::RefPtr<saftbus::ProxyConnection> _connection;
 		static bool _connection_created;
+
+		static int _global_id_counter;
+		static std::mutex _id_counter_mutex;
+		int _global_id;
 
 		Glib::ustring _name;
 		Glib::ustring _object_path;

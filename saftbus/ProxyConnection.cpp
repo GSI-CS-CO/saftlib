@@ -33,6 +33,7 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 		if (_debug_level > 5) std::cerr << "try to connect to " << name_out.str() << std::endl;
 		int connect_result = connect( _create_socket, (struct sockaddr *)&_address , sizeof(_address));
 		if (connect_result == 0) {
+			_connection_id = i;
 			if (_debug_level > 5) std::cerr << "connection established" << std::endl;
 			//char msg = 't';
 			//int result = send(_create_socket, &msg, 1, MSG_DONTWAIT); 
@@ -66,6 +67,10 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 	write(get_fd(), _saftbus_id);
 }
 
+int ProxyConnection::get_connection_id()
+{
+	return _connection_id;
+}
 
 
 Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)

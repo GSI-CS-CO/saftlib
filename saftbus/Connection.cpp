@@ -28,7 +28,8 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 guint Connection::register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
-	if (_debug_level > 3) std::cerr << "Connection::register_object("<< object_path <<") called . id = " << _saftbus_object_id_counter << std::endl;
+	if (_debug_level > 3) ;
+	std::cerr << "LLLLLLLLLLLLLLLLLLL ****************** Connection::register_object("<< object_path <<") called . id = " << _saftbus_object_id_counter << std::endl;
 	//guint result = _saftbus_objects.size();
 	guint result = _saftbus_object_id_counter;
 	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
@@ -245,9 +246,40 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				{
 					std::cerr << "Connection::dispatch() received SIGNAL_FD" << std::endl;
 					int fd = saftbus::recvfd(socket->get_fd());
-					std::cerr << "Connection::dispatch() got fd " << fd << std::endl;
+					Glib::ustring name, object_path, interface_name;
+					int proxy_id;
+					read(socket->get_fd(), object_path);
+					read(socket->get_fd(), interface_name);
+					read(socket->get_fd(), proxy_id);
+					std::cerr << "Connection::dispatch() got fd " << fd << " " << name << " " << object_path << " " << interface_name << " " << proxy_id << std::endl;
+
+					ProxyPipe pp;
+					pp.id = proxy_id;
+					pp.fd = fd;
+					_proxy_pipes[interface_name][object_path].insert(pp);
+
 					int msg = 42;
 					write(fd, msg);
+
+
+				}
+				break;
+				case saftbus::SIGNAL_REMOVE_FD: 
+				{
+					std::cerr << "Connection::dispatch() received SIGNAL_FD" << std::endl;
+					Glib::ustring name, object_path, interface_name;
+					int proxy_id;
+					read(socket->get_fd(), object_path);
+					read(socket->get_fd(), interface_name);
+					read(socket->get_fd(), proxy_id);
+					std::cerr << "Connection::dispatch() remove fd " << " " << name << " " << object_path << " " << interface_name << " " << proxy_id << std::endl;
+
+					ProxyPipe pp;
+					pp.id = proxy_id;
+					auto pp_done = _proxy_pipes[interface_name][object_path].find(pp);
+					close(pp_done->fd);
+					_proxy_pipes[interface_name][object_path].erase(pp_done);
+
 				}
 				break;
 				case saftbus::METHOD_CALL: 
@@ -363,11 +395,11 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 
 			return true;
 		}
-		return false;
 	} catch(std::exception &e) {
 		std::cerr << "exception in Connection::dispatch(): " << e.what() << std::endl;
 		handle_disconnect(socket);
 	}
+	return false;
 }
 
 int Connection::socket_nr(Socket *socket)

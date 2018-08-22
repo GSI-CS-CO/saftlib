@@ -19,6 +19,15 @@ namespace saftbus
 {
 	class Socket;
 
+	struct ProxyPipe
+	{
+		int id;
+		int fd;
+		bool operator<(const ProxyPipe& rhs) const {
+			return id < rhs.id;
+		}
+	};
+
 	class Connection : public Glib::Object//Base
 	{
 
@@ -68,6 +77,11 @@ namespace saftbus
 		std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 		std::map<Glib::ustring, std::set<guint> > _id_handles_map;
 		std::set<guint> _erased_handles;
+
+
+		// store the pipes that go directly to a proxy
+				// interface_name
+		std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
 
 	};
 

@@ -54,6 +54,7 @@ namespace saftbus
 
 		int get_fd() const {return _create_socket; }
 		Glib::ustring get_saftbus_id() { return _saftbus_id; }
+		int get_connection_id();
 	private:
 
 		// this is the information that is needed to keep connected to a socket
@@ -73,6 +74,8 @@ namespace saftbus
 
 
 		Glib::ustring _saftbus_id; 
+
+		int _connection_id;
 	};
 
 }

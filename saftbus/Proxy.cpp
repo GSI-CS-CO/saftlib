@@ -11,6 +11,9 @@ namespace saftbus
 Glib::RefPtr<saftbus::ProxyConnection> Proxy::_connection;
 bool Proxy::_connection_created = false;
 
+int Proxy::_global_id_counter = 0;
+std::mutex Proxy::_id_counter_mutex;
+
 Proxy::Proxy(saftbus::BusType  	bus_type,
 	const Glib::ustring&  	name,
 	const Glib::ustring&  	object_path,
@@ -21,13 +24,23 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
   , _object_path(object_path)
   , _interface_name(interface_name)
 {
-	if (_debug_level > 5) std::cerr << "Proxy::Proxy(" << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << static_cast<bool>(_connection) << std::endl;
+
 
 	if (!static_cast<bool>(_connection)) {
 		if (_debug_level > 5) std::cerr << "   this process has no ProxyConnection yet. Creating one now" << std::endl;
 		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
 		if (_debug_level > 5) std::cerr << "   ProxyConnection created" << std::endl;
 	}
+
+	// generate unique proxy id (unique for all running saftlib programs)
+	{
+		std::unique_lock<std::mutex> lock(_id_counter_mutex);
+		++_global_id_counter;
+		_global_id = 100*_global_id_counter + _connection->get_connection_id();
+	}
+
+	if (_debug_level > 5) std::cerr << "Proxy::Proxy(" << _global_id << " " << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << static_cast<bool>(_connection) << std::endl;
+
 
 	_connection->register_proxy(interface_name, object_path, this);
 
@@ -39,12 +52,25 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 		std::cerr << "pipe is open pipe_fd[0] = " << pipe_fd[0] << "   pipe_fd[1] = " << pipe_fd[1] << std::endl;
 		write(_connection->get_fd(), saftbus::SIGNAL_FD);
 		sendfd(_connection->get_fd(), pipe_fd[1]);	// send the writing endo of pipe
+		write(_connection->get_fd(), _object_path);
+		write(_connection->get_fd(), _interface_name);
+		write(_connection->get_fd(), _global_id);
 	}
 	int message;
 	read(pipe_fd[0], message);
 	std::cerr << "got message through pipe" << message << std::endl;
 
 }
+
+Proxy::~Proxy() 
+{
+	std::cerr << "Proxy::~Proxy() called " << _global_id << std::endl;
+	write(_connection->get_fd(), saftbus::SIGNAL_REMOVE_FD);
+	write(_connection->get_fd(), _object_path);
+	write(_connection->get_fd(), _interface_name);
+	write(_connection->get_fd(), _global_id);
+}
+
 
 
 void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const 
