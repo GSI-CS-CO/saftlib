@@ -8,6 +8,7 @@
 
 #include <giomm.h>
 
+#include <thread>
 #include <map>
 
 #include "Interface.h"
@@ -76,6 +77,8 @@ namespace saftbus
 		Glib::ustring _saftbus_id; 
 
 		int _connection_id;
+
+		std::mutex _socket_mutex;
 	};
 
 }

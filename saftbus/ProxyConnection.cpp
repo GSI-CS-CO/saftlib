@@ -17,6 +17,7 @@ namespace saftbus
 
 ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 {
+	std::unique_lock<std::mutex> lock(_socket_mutex);
 	int _debug_level = 1;
 	// try to open first available socket
 	_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
@@ -69,12 +70,14 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 
 int ProxyConnection::get_connection_id()
 {
+	std::unique_lock<std::mutex> lock(_socket_mutex);
 	return _connection_id;
 }
 
 
 Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
 {
+	std::unique_lock<std::mutex> lock(_socket_mutex);
 	if (_debug_level > 5) std::cerr << "ProxyConnection::call_sync(" << object_path << "," << interface_name << "," << name << ") called" << std::endl;
 	// first append message meta informations like: type of message, recipient, sender, interface name
 	std::vector<Glib::VariantBase> message;
@@ -94,8 +97,12 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	saftbus::write_all(get_fd(), data_ptr, size);
 
 	// receive from socket
-	saftbus::MessageTypeS2C type = saftbus::METHOD_REPLY;
-	while(!expect_from_server(type));
+	saftbus::MessageTypeS2C type;// = saftbus::METHOD_REPLY;
+	//while(!expect_from_server(type));
+	read(get_fd(), type);
+	if (type != saftbus::METHOD_REPLY) {
+		std::cerr << " unexpected type " << type << " instead of METHOD_REPLY" << std::endl;
+	}
 	//saftbus::read(get_fd(), type);
 	if (_debug_level > 5) std::cerr << "got response " << type << std::endl;
 	saftbus::read(get_fd(), size);
@@ -151,6 +158,7 @@ bool ProxyConnection::expect_from_server(MessageTypeS2C expected_type)
 
 void ProxyConnection::register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy)
 {
+	std::unique_lock<std::mutex> lock(_socket_mutex);
 	if (_debug_level > 5) std::cerr << "ProxyConnection::register_proxy(" << interface_name << ", " <<  object_path << ", " << proxy << ") called" << std::endl;
 
 	// for(auto itr = _proxies.begin(); itr != _proxies.end(); ++itr)
