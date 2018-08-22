@@ -2,7 +2,7 @@ SUBDIRS = interfaces \
           saftbus
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check
+bin_PROGRAMS = saft-ctl saft-mt-test saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check
 noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
@@ -63,6 +63,9 @@ client_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la saftbus/libsaftbus.la
 
 saft_ctl_SOURCES = src/saft-ctl.cpp src/CommonFunctions.cpp
 saft_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la saftbus/libsaftbus.la
+
+saft_mt_test_SOURCES = src/saft-mt-test.cpp src/CommonFunctions.cpp
+saft_mt_test_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la saftbus/libsaftbus.la -lpthread
 
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
 saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) interfaces/libsaftlib.la saftbus/libsaftbus.la
