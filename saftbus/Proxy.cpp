@@ -78,7 +78,7 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 {
 	saftbus::MessageTypeS2C type;
 	read(_pipe_fd[0], type);
-	std::cerr << "got signal through pipe " << std::endl;
+	//std::cerr << "got signal through pipe " << std::endl;
 
 
 	guint32 size;
@@ -104,7 +104,7 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 		// std::map<Glib::ustring, Glib::VariantBase> property_map;
 		// parametrs.get(property_map 0)
 		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
-		std::cerr << "derived_interface_name = " << derived_interface_name.print() << std::endl;
+		//std::cerr << "derived_interface_name = " << derived_interface_name.print() << std::endl;
 		if (_interface_name != derived_interface_name.get()) {
 			std::cerr << "signal called with wrong interface name. expecting " << _interface_name << ",  got " << interface_name.get() << std::endl;
 		}
@@ -132,7 +132,12 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 		if (_object_path != object_path.get()) {
 			std::cerr << "signal called with wrong object_path. expecting " << _object_path << ",  got " << object_path.get() << std::endl;
 		}
+	    struct timespec stop;
+	    clock_gettime( CLOCK_REALTIME, &stop);
+	    double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+	                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 		on_signal("de.gsi.saftlib", signal_name.get(), parameters);
+	    std::cerr << "signal flight time = " << dt << " us" << std::endl;
 	}
 
 	return true;
@@ -183,7 +188,7 @@ Glib::ustring Proxy::get_name() const
 
 const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, const Glib::VariantContainerBase &query)
 {
-	std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
+	//std::cerr << "Proxy::call_sync(" << function_name << ") called" << std::endl;
 	// call the Connection::call_sync in a special way that  it to cast the result in a special way. Otherwise the 
 	// generated Proxy code cannot handle the resulting variant type.
 	_result = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>(
