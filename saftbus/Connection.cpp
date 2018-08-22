@@ -196,6 +196,17 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	const char *data_ptr = static_cast<const char*>(var_signal_msg.get_data());
 
 
+
+	// directly send signal
+	std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
+	for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+		write(i->fd, saftbus::SIGNAL);
+	}
+
+
+
+
+
 	std::vector<struct timespec> times;
 	struct timespec now;
 	for (auto it = _sockets.begin(); it != _sockets.end(); ++it) 

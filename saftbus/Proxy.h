@@ -43,6 +43,10 @@ namespace saftbus
 		const Glib::VariantContainerBase& call_sync(std::string function_name, const Glib::VariantContainerBase &query);
 
 	private:
+		bool dispatch(Glib::IOCondition condition);
+
+	private:
+
 		static Glib::RefPtr<saftbus::ProxyConnection> _connection;
 		static bool _connection_created;
 
@@ -59,7 +63,7 @@ namespace saftbus
 		std::vector<char> _call_sync_result_buffer;
 
 		Glib::VariantContainerBase _result;
-
+		int _pipe_fd[2];
 	};
 
 }

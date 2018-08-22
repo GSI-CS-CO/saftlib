@@ -44,32 +44,43 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 
 	_connection->register_proxy(interface_name, object_path, this);
 
-	int pipe_fd[2];
-	if (pipe(pipe_fd) != 0) {
+	if (pipe(_pipe_fd) != 0) {
 		std::cerr << "couldnt create pipe" << std::endl;
 	}
 	else {
-		std::cerr << "pipe is open pipe_fd[0] = " << pipe_fd[0] << "   pipe_fd[1] = " << pipe_fd[1] << std::endl;
+		std::cerr << "pipe is open _pipe_fd[0] = " << _pipe_fd[0] << "   _pipe_fd[1] = " << _pipe_fd[1] << std::endl;
 		write(_connection->get_fd(), saftbus::SIGNAL_FD);
-		sendfd(_connection->get_fd(), pipe_fd[1]);	// send the writing endo of pipe
+		sendfd(_connection->get_fd(), _pipe_fd[1]);	// send the writing endo of pipe
 		write(_connection->get_fd(), _object_path);
 		write(_connection->get_fd(), _interface_name);
 		write(_connection->get_fd(), _global_id);
 	}
 	int message;
-	read(pipe_fd[0], message);
+	read(_pipe_fd[0], message);
 	std::cerr << "got message through pipe" << message << std::endl;
 
+    //Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), _pipe_fd[1], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
 }
 
 Proxy::~Proxy() 
 {
+	close(_pipe_fd[0]);
+	close(_pipe_fd[1]);
 	std::cerr << "Proxy::~Proxy() called " << _global_id << std::endl;
 	write(_connection->get_fd(), saftbus::SIGNAL_REMOVE_FD);
 	write(_connection->get_fd(), _object_path);
 	write(_connection->get_fd(), _interface_name);
 	write(_connection->get_fd(), _global_id);
 }
+
+
+bool Proxy::dispatch(Glib::IOCondition condition)
+{
+	saftbus::MessageTypeS2C type;
+	read(_pipe_fd[1], type);
+	return true;
+}
+
 
 
 
