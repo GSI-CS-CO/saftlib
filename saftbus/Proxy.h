@@ -17,6 +17,9 @@ namespace saftbus
 
 	class ProxyConnection;
 
+
+	// This class mimics the Gio::DBus::Proxy class interface. It is different from the Gio::DBus::Proxy 
+	// in that it depends on a dedicated saftbus::ProxyConnection class and not the saftbus::Connection class.
 	class Proxy : public Glib::Object//Base
 	{
 	public:
@@ -63,6 +66,11 @@ namespace saftbus
 		std::vector<char> _call_sync_result_buffer;
 
 		Glib::VariantContainerBase _result;
+
+		// A Unix pipe that is private between a Saftlib device and a Saftlib Proxy object.
+		// It serves as independent fast channel for signals from the device to the Proxy.
+		// The Proxy constructor creates it and sends the writing end of the pipe through the 
+		// socket connection
 		int _pipe_fd[2];
 	};
 

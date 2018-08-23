@@ -42,7 +42,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	if (_debug_level > 5) std::cerr << "Proxy::Proxy(" << _global_id << " " << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << static_cast<bool>(_connection) << std::endl;
 
 
-	_connection->register_proxy(interface_name, object_path, this);
+//	_connection->register_proxy(interface_name, object_path, this);
 
 	if (pipe(_pipe_fd) != 0) {
 		std::cerr << "couldnt create pipe" << std::endl;

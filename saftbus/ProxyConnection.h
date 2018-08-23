@@ -20,15 +20,14 @@ namespace saftbus
 
 	class Proxy;
 
+	// This class mimics the Gio::DBus::Connection object, but is limited to the functionality that is needed
+	// on the Proxy side. The connection management on the Service side is done in the saftbus::Connection class.
+	// This is different from the DBus interface where there is only one single Gio::DBus::Connection class. 
+	// DBus is a many-to-many communication protocol, while saftbus is only a one-to-many protocoll. 
 	class ProxyConnection : public Glib::Object//Base
 	{
 	public:
 		ProxyConnection(const Glib::ustring &base_name = "/tmp/saftbus_");
-
-		// not needed by Proxies
-		//guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info);
-		// guint register_object(const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
-		// bool  unregister_object(guint registration_id);
 
 		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
 
@@ -42,17 +41,7 @@ namespace saftbus
 
 
 	// internal stuff (not part the DBus fake api)
-	private:
-		// bool dispatch(Glib::IOCondition condition);
-		// void dispatchSignal();
 	public:
-		void register_proxy(Glib::ustring interface_name, Glib::ustring object_path, Proxy *proxy);
-
-		// wait for response from server, expect a specific message type
-		// if a signal is coming instead, handle the signal
-		// do this until the correct type comes and return to caller
-		bool expect_from_server(MessageTypeS2C type);
-
 		int get_fd() const {return _create_socket; }
 		Glib::ustring get_saftbus_id() { return _saftbus_id; }
 		int get_connection_id();
@@ -63,11 +52,7 @@ namespace saftbus
 		struct sockaddr_un _address;
 		std::string _filename;
 
-		// having only one proxy per interface object path disallows multiple proxies of the same service in one process...
-		//   .... maybe it does make sense to allow multiple proxies? TODO: take a decision !
-		      // interface_name         object_path
-		std::map<Glib::ustring, std::map<Glib::ustring, Proxy*> > _proxies; // maps object_paths to Proxies
-		
+
 		Glib::Variant<std::vector<Glib::VariantBase> > _call_sync_result;
 		std::vector<char> _call_sync_result_buffer;
 
