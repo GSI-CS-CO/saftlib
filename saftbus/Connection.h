@@ -23,11 +23,16 @@ namespace saftbus
 	{
 		int id;
 		int fd;
+		int socket_nr;
 		bool operator<(const ProxyPipe& rhs) const {
 			return id < rhs.id;
 		}
 	};
 
+	// This class mimics the Gio::DBus::Connection class interface. It is limited to what is 
+	// needed on the service side and all functionality for Proxy objects is removed.
+	// This class is used by Saftlib to manage object lifetime of devices, receive remote function calls
+	// and emit signals to Proxy objects.
 	class Connection : public Glib::Object//Base
 	{
 
@@ -60,6 +65,9 @@ namespace saftbus
 
 		int socket_nr(Socket *socket);
 
+		void print_all_fds();
+		void clean_all_fds_from_socket(Socket *socket);
+
 				// interface_name       // object_path
 		std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
 
@@ -79,9 +87,11 @@ namespace saftbus
 		std::set<guint> _erased_handles;
 
 
-		// store the pipes that go directly to a proxy
+		// store the pipes that go directly to one or many Proxy objects
 				// interface_name        // object path
 		std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
+
+		static int _saftbus_id_counter;
 
 	};
 

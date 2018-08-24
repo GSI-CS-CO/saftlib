@@ -42,14 +42,14 @@ namespace saftbus
   }
   void init()
   {
-    std::cerr << "ignoring SIGPIPE" << std::endl;
+    if (_debug_level > 5) std::cerr << "ignoring SIGPIPE" << std::endl;
     //signal(SIGPIPE, SIG_IGN);
     block_signal(SIGPIPE);
   }
 
   int write_all(int fd, const void *buffer, int size)
   {
-    //std::cerr << "write_all(buffer, " << size << ") called " << std::endl;
+    if (_debug_level > 5) std::cerr << "write_all(" << fd << ", buffer, " << size << ") called " << std::endl;
     const char *ptr = static_cast<const char*>(buffer);
     int n_written = 0;
     do {

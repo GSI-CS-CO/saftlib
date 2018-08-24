@@ -6,9 +6,14 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <unistd.h>
+#include <fcntl.h>
+
 
 namespace saftbus
 {
+
+int Connection::_saftbus_id_counter = 0;
 
 Connection::Connection(int number_of_sockets, const std::string& base_name)
 	: _saftbus_object_id_counter(1)
@@ -21,10 +26,13 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 		_sockets.push_back(std::shared_ptr<Socket>(new Socket(name_out.str(), this)));
 	}
 }
-// Add an object to the set of saftbus controlled objects. The objects are identified by 
+// Add an object to the set of saftbus controlled objects. Each registered object is assigned a unique ID.
+// The ID is returned by this function to Saftlib and is used later to unregister the object again.
+// saftbus Proxies address saftbus objects by their object_path and interface_name.
 // their object_path and interface_name and provide a vtable (a table with functions for 
 // "method_call" "set_property" and "get_property"). The saftbus routes all redirects function
 // calles to one of the registered object's vtable.
+// Saftbus objects have unique IDs, object_path and interface name serve to address the objects from outside (i.e. from Proxies).
 guint Connection::register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
@@ -43,27 +51,27 @@ guint Connection::register_object (const Glib::ustring& object_path, const Glib:
 }
 bool Connection::unregister_object (guint registration_id)
 {
-	if (_debug_level > 3) std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
-	//if (registration_id < _saftbus_objects.size())
+	if (_debug_level > 2) std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
+	if (registration_id < _saftbus_objects.size())
 	{
-		// if any signal pipes are still open -> close them
-		//std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
-		for(auto itr = _saftbus_indices.begin(); itr != _saftbus_indices.end(); ++itr) {
-			auto interface_name = itr->first;
-			for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
-				auto object_path = it->first;
-				if (it->second == registration_id) {
-					//_proxy_pipes[interface_name][object_path].erase(pp_done);
-					//std::cerr << "closing all fds registered for " << interface_name << " " << object_path << std::endl;
-					std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
-					for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-						//std::cerr << "   closing fd " << i->fd << std::endl;
-						close(i->fd);
-					}
-					setProxyPipe.clear();
-				}
-			}
-		}
+	// 	// if any signal pipes are still open -> close them
+	// 	//std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
+	// 	for(auto itr = _saftbus_indices.begin(); itr != _saftbus_indices.end(); ++itr) {
+	// 		auto interface_name = itr->first;
+	// 		for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
+	// 			auto object_path = it->first;
+	// 			if (it->second == registration_id) {
+	// 				//_proxy_pipes[interface_name][object_path].erase(pp_done);
+	// 				//std::cerr << "closing all fds registered for " << interface_name << " " << object_path << std::endl;
+	// 				std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
+	// 				for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+	// 					//std::cerr << "   closing fd " << i->fd << std::endl;
+	// 					close(i->fd);
+	// 				}
+	// 				setProxyPipe.clear();
+	// 			}
+	// 		}
+	// 	}
 
 		_saftbus_objects.erase(registration_id);
 		return true;
@@ -83,7 +91,7 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 								   const Glib::ustring& arg0//,
 								   )//SignalFlags  	flags)
 {
-	if (_debug_level > 3) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
+	if (_debug_level > 2) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
 
 	// return result;
 	++_saftbus_signal_handle_counter;
@@ -98,7 +106,7 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 			}
 		}
 	}
-
+	if (_debug_level > 2) std::cerr << "return signal handle " << _saftbus_signal_handle_counter << std::endl;
 	return _saftbus_signal_handle_counter;
 }
 
@@ -116,8 +124,9 @@ void Connection::signal_unsubscribe(guint subscription_id)
 
 void Connection::handle_disconnect(Socket *socket)
 {
-	// this doesn't work yet...  
-	if (_debug_level > 4) std::cerr << "client disconnected" << std::endl;
+	// this is called when the communication partner a particular socket (given as function argument) 
+	// disappeared. In that case we have to close the connection and destroy all objects 
+	if (_debug_level > 2) std::cerr << "Connection::handle_disconnect() called" << std::endl;
 	Glib::VariantContainerBase arg;
 	Glib::ustring& saftbus_id = socket->saftbus_id();
 	socket->close_connection();
@@ -130,13 +139,13 @@ void Connection::handle_disconnect(Socket *socket)
 		}
 	}
 
-	//std::cerr << "collect unsubscription handles" << std::endl;
+	if (_debug_level > 2) std::cerr << "collect unsubscription handles" << std::endl;
 	// emit the signals
 	if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { // we have to emit the quit signals
 		for(auto it = _id_handles_map[saftbus_id].begin(); it != _id_handles_map[saftbus_id].end(); ++it) {
-			//std::cerr << "sending signal to clean up: " << *it << std::endl;
 			// a signal should only be sent if (*it) is not in the list of _erased_handles 
 			if (_erased_handles.find(*it) == _erased_handles.end()) {
+				if (_debug_level > 2) std::cerr << "sending signal to clean up: " << *it << std::endl;
 				_handle_to_signal_map[*it].emit(saftbus::connection, "", "", "", "" , arg);
 			}
 		}
@@ -150,6 +159,13 @@ void Connection::handle_disconnect(Socket *socket)
 	}
 	_erased_handles.clear();
 	_id_handles_map.erase(saftbus_id);
+
+
+
+	clean_all_fds_from_socket(socket);
+
+	if (_debug_level > 2) print_all_fds();
+	if (_debug_level > 2) std::cerr << "Connection::handle_disconnect() done" << std::endl;
 }
 
 
@@ -199,27 +215,33 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	if (signal_name == "PropertiesChanged") { // special case for property changed signals
 		Glib::VariantContainerBase* params = const_cast<Glib::VariantContainerBase*>(&parameters);
 		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(params->get_child(0));
-		//std::cerr << "PropertiesChaned ----> derived_interface_name = " << derived_interface_name.get() << " " << object_path << std::endl;
+		if (_debug_level > 2) std::cerr << "PropertiesChaned ----> derived_interface_name = " << derived_interface_name.get() << " " << object_path << std::endl;
 
 		// directly send signal
 		std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[derived_interface_name.get()][object_path];
 		for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-			//std::cerr << "sending signal through pipe" << std::endl;
-			write(i->fd, saftbus::SIGNAL);
-			write(i->fd, size);
-			write_all(i->fd, data_ptr, size);
+			bool error = false;
+			if (_debug_level > 2) std::cerr << "sending signal through pipe " << i->fd << std::endl;
+			if (write(i->fd, saftbus::SIGNAL) < 0) error = true;
+			if (write(i->fd, size) < 0 ) error = true;
+			if (write_all(i->fd, data_ptr, size) < 0 ) error = true;
+			if (_debug_level > 2) std::cerr << "done with signal through pipe" << std::endl;
+			if (error) std::cerr << "there was an error sending the Properties Changed signal" << std::endl;
 		}
 
 	} else {
-		//std::cerr << "Normal Signal ----> interface_name = " << interface_name << " " << object_path << std::endl;
+		if (_debug_level > 2) std::cerr << "Normal Signal ----> interface_name = " << interface_name << " " << object_path << std::endl;
 
 		// directly send signal
 		std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
 		for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-			//std::cerr << "sending signal through pipe" << std::endl;
-			write(i->fd, saftbus::SIGNAL);
-			write(i->fd, size);
-			write_all(i->fd, data_ptr, size);
+			bool error = false;
+			if (_debug_level > 2) std::cerr << "sending signal through pipe " << i->fd  << std::endl;
+			if (write(i->fd, saftbus::SIGNAL) < 0 ) error = true;
+			if (write(i->fd, size) < 0 ) error = true;
+			if (write_all(i->fd, data_ptr, size) < 0 ) error = true;
+			if (_debug_level > 2) std::cerr << "done with signal through pipe" << std::endl;
+			if (error) std::cerr << "there was an error sending the (real) signal" << std::endl;
 		}
 	}
 }
@@ -231,12 +253,12 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 	try {
 		static int cnt = 0;
 		++cnt;
-		if (_debug_level > 5)  std::cerr << "Connection::dispatch() called one socket[" << socket_nr(socket) << "]" << std::endl;
+		if (_debug_level > 2)  std::cerr << "Connection::dispatch() called one socket[" << socket_nr(socket) << "]" << std::endl;
 		MessageTypeC2S type;
 		int result = saftbus::read(socket->get_fd(), type);
 		if (result == -1) {
+			if (_debug_level > 2) std::cerr << "client disconnected" << std::endl;
 			handle_disconnect(socket);
-			// if (_debug_level > 4) std::cerr << "client disconnected" << std::endl;
 			// Glib::VariantContainerBase arg;
 			// Glib::ustring& saftbus_id = socket->saftbus_id();
 			// socket->close_connection();
@@ -252,10 +274,16 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 			{
 				case saftbus::SENDER_ID:
 				{
-					if (_debug_level > 5) std::cerr << "Connection::dispatch() SENDER_ID received" << std::endl;
+					if (_debug_level > 2) std::cerr << "Connection::dispatch() SENDER_ID received" << std::endl;
 					Glib::ustring sender_id;
 					saftbus::read(socket->get_fd(), sender_id);
-					socket->saftbus_id() = sender_id;
+					// ignore the suggested sender_id from the client and generate a new, unique id
+					++_saftbus_id_counter; // generate a new id value (increasing numbers)
+					std::ostringstream id_out;
+					id_out << ":" << _saftbus_id_counter;
+					socket->saftbus_id() = id_out.str();
+					// send the id to the ProxyConnection
+					saftbus::write(socket->get_fd(), socket->saftbus_id());
 				}
 				case saftbus::REGISTER_CLIENT: 
 				{
@@ -263,18 +291,22 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				break;
 				case saftbus::SIGNAL_FD: 
 				{
-					//std::cerr << "Connection::dispatch() received SIGNAL_FD" << std::endl;
+					if (_debug_level > 2) std::cerr << "Connection::dispatch() received SIGNAL_FD" << std::endl;
 					int fd = saftbus::recvfd(socket->get_fd());
 					Glib::ustring name, object_path, interface_name;
 					int proxy_id;
 					read(socket->get_fd(), object_path);
 					read(socket->get_fd(), interface_name);
 					read(socket->get_fd(), proxy_id);
-					//std::cerr << "Connection::dispatch() got fd " << fd << " " << name << " " << object_path << " " << interface_name << " " << proxy_id << std::endl;
+					if (_debug_level > 2) std::cerr << "Connection::dispatch() got fd " << fd << " " << name << " " << object_path << " " << interface_name << " " << proxy_id << std::endl;
+
+					int flags = fcntl(fd, F_GETFL, 0);
+					fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 
 					ProxyPipe pp;
 					pp.id = proxy_id;
 					pp.fd = fd;
+					pp.socket_nr = socket_nr(socket);
 					_proxy_pipes[interface_name][object_path].insert(pp);
 
 					int msg = 42;
@@ -285,7 +317,8 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				break;
 				case saftbus::SIGNAL_REMOVE_FD: 
 				{
-					//std::cerr << "Connection::dispatch() received SIGNAL_FD" << std::endl;
+					if (_debug_level > 2) std::cerr << "Connection::dispatch() received SIGNAL_REMOVE_FD" << std::endl;
+					if (_debug_level > 2) print_all_fds();
 					Glib::ustring name, object_path, interface_name;
 					int proxy_id;
 					read(socket->get_fd(), object_path);
@@ -298,12 +331,14 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					auto pp_done = _proxy_pipes[interface_name][object_path].find(pp);
 					close(pp_done->fd);
 					_proxy_pipes[interface_name][object_path].erase(pp_done);
+					if (_debug_level > 2) std::cerr << "Connection::dispatch() after erasing pipe fd" << std::endl;
+					if (_debug_level > 2) print_all_fds();
 
 				}
 				break;
 				case saftbus::METHOD_CALL: 
 				{
-					if (_debug_level > 5) std::cerr << "Connection::dispatch() METHOD_CALL received" << std::endl;
+					if (_debug_level > 2) std::cerr << "Connection::dispatch() METHOD_CALL received" << std::endl;
 					guint32 size;
 					saftbus::read(socket->get_fd(), size);
 					if (_debug_level > 5) std::cerr << "expecting message with size " << size << std::endl;
@@ -338,7 +373,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 						if (name.get() == "Get") {
 							Glib::VariantBase result;
 							_saftbus_objects[index]->get_property(result, saftbus::connection, sender.get(), object_path.get(), derived_interface_name.get(), property_name.get());
-							if (_debug_level > 5) std::cerr << "getting property " << result.get_type_string() << " " << result.print() << std::endl;
+							if (_debug_level > 2) std::cerr << "getting property " << result.get_type_string() << " " << result.print() << std::endl;
 							if (_debug_level > 5) std::cerr << "result is: " << result.get_type_string() << "   .value = " << result.print() << std::endl;
 
 							std::vector<Glib::VariantBase> response;
@@ -354,7 +389,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 							saftbus::write_all(socket->get_fd(), data_ptr, size);
 
 						} else if (name.get() == "Set") {
-							if (_debug_level > 5) std::cerr << "setting property" << std::endl;
+							if (_debug_level > 2) std::cerr << "setting property" << std::endl;
 							Glib::Variant<Glib::VariantBase> par2 = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::VariantBase> >(parameters.get_child(2));
 							if (_debug_level > 5) std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
 							// Glib::Variant<bool> vb = Glib::Variant<bool>::create(true);
@@ -380,16 +415,17 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					}
 					else // normal method calls 
 					{
-						if (_debug_level > 5) std::cerr << "a real method call: " << std::endl;
+						if (_debug_level > 2) std::cerr << "a real method call: " << std::endl;
 						int index = _saftbus_indices[interface_name.get()][object_path.get()];
 						if (_debug_level > 5) std::cerr << "found saftbus object at index " << index << std::endl;
 						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
-						if (_debug_level > 5) std::cerr << "doing the function call" << std::endl;
 						if (_debug_level > 5) std::cerr << "saftbus::connection.get() " << static_cast<bool>(saftbus::connection) << std::endl;
+						if (_debug_level > 2) std::cerr << "doing the function call" << std::endl;
 						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);
+						if (_debug_level > 2) std::cerr << "function call done, getting result" << std::endl;
 						Glib::VariantContainerBase result;
 						result = method_invocation_rptr->get_return_value();
-						if (_debug_level > 5) std::cerr << "result is " << result.get_type_string() << " " << result.print() << std::endl;
+						if (_debug_level > 2) std::cerr << "result is " << result.get_type_string() << " " << result.print() << std::endl;
 
 						std::vector<Glib::VariantBase> response;
 						response.push_back(result);
@@ -416,9 +452,49 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 		}
 	} catch(std::exception &e) {
 		std::cerr << "exception in Connection::dispatch(): " << e.what() << std::endl;
+		if (_debug_level > 5) print_all_fds();
 		handle_disconnect(socket);
+		if (_debug_level > 5) print_all_fds();
 	}
 	return false;
+}
+
+void Connection::print_all_fds()
+{
+	std::cerr << "-------all pipe fds-------" << std::endl;
+	for (auto iter = _proxy_pipes.begin(); iter != _proxy_pipes.end(); ++iter) {
+		for (auto itr = iter->second.begin(); itr != iter->second.end(); ++itr) {
+			for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
+				std::cerr << "    " << iter->first 
+				          << "    " << itr->first
+				          << "    " << it->id << "->" << it->fd
+				          << "    socket(" << it->socket_nr << ")" 
+				          << std::endl;
+			}
+		}
+	}
+	std::cerr << "--------------------------" << std::endl;
+
+}
+
+void Connection::clean_all_fds_from_socket(Socket *socket)
+{
+	int nr = socket_nr(socket);
+	for (auto iter = _proxy_pipes.begin(); iter != _proxy_pipes.end(); ++iter) {
+		for (auto itr = iter->second.begin(); itr != iter->second.end(); ++itr) {
+			std::vector<std::set<ProxyPipe>::iterator > erase_iters;
+			for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
+				if (nr == it->socket_nr) {
+					erase_iters.push_back(it);
+					close(it->fd);
+				}
+			}
+			for(auto it = erase_iters.begin(); it != erase_iters.end(); ++it) {
+				itr->second.erase(*it);
+			}
+		}
+	}
+
 }
 
 int Connection::socket_nr(Socket *socket)
