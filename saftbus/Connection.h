@@ -68,6 +68,8 @@ namespace saftbus
 		void print_all_fds();
 		void clean_all_fds_from_socket(Socket *socket);
 
+		void list_all_resources();
+
 				// interface_name       // object_path
 		std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
 

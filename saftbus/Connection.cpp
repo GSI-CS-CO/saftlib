@@ -3,6 +3,7 @@
 #include "core.h"
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <iomanip>
 #include <ctime>
@@ -52,8 +53,8 @@ guint Connection::register_object (const Glib::ustring& object_path, const Glib:
 bool Connection::unregister_object (guint registration_id)
 {
 	if (_debug_level > 2) std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
-	if (registration_id < _saftbus_objects.size())
-	{
+	// if (registration_id < _saftbus_objects.size())
+	// {
 	// 	// if any signal pipes are still open -> close them
 	// 	//std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
 	// 	for(auto itr = _saftbus_indices.begin(); itr != _saftbus_indices.end(); ++itr) {
@@ -75,8 +76,9 @@ bool Connection::unregister_object (guint registration_id)
 
 		_saftbus_objects.erase(registration_id);
 		return true;
-	}
-	return false;
+	// }
+	// return false;
+	list_all_resources();
 }
 
 
@@ -210,40 +212,49 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	const char *data_ptr = static_cast<const char*>(var_signal_msg.get_data());
 
 
+	try {  
+		// it may happen that the Proxy that is supposed to read the signal
+		// does not have a running MainLoop. In this case the pipe will become full
+		// at some point and the write function will throw. We have to catch that
+		// to prevent the saft daemon from crashing
 
 
-	if (signal_name == "PropertiesChanged") { // special case for property changed signals
-		Glib::VariantContainerBase* params = const_cast<Glib::VariantContainerBase*>(&parameters);
-		Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(params->get_child(0));
-		if (_debug_level > 2) std::cerr << "PropertiesChaned ----> derived_interface_name = " << derived_interface_name.get() << " " << object_path << std::endl;
+		if (signal_name == "PropertiesChanged") { // special case for property changed signals
+			Glib::VariantContainerBase* params = const_cast<Glib::VariantContainerBase*>(&parameters);
+			Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(params->get_child(0));
+			if (_debug_level > 2) std::cerr << "PropertiesChaned ----> derived_interface_name = " << derived_interface_name.get() << " " << object_path << std::endl;
 
-		// directly send signal
-		std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[derived_interface_name.get()][object_path];
-		for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-			bool error = false;
-			if (_debug_level > 2) std::cerr << "sending signal through pipe " << i->fd << std::endl;
-			if (write(i->fd, saftbus::SIGNAL) < 0) error = true;
-			if (write(i->fd, size) < 0 ) error = true;
-			if (write_all(i->fd, data_ptr, size) < 0 ) error = true;
-			if (_debug_level > 2) std::cerr << "done with signal through pipe" << std::endl;
-			if (error) std::cerr << "there was an error sending the Properties Changed signal" << std::endl;
+			// directly send signal
+			std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[derived_interface_name.get()][object_path];
+			for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+				bool error = false;
+				if (_debug_level > 2) std::cerr << "sending signal through pipe " << i->fd << std::endl;
+				if (write(i->fd, saftbus::SIGNAL) < 0) error = true;
+				if (write(i->fd, size) < 0 ) error = true;
+				if (write_all(i->fd, data_ptr, size) < 0 ) error = true;
+				if (_debug_level > 2) std::cerr << "done with signal through pipe" << std::endl;
+				if (error) std::cerr << "there was an error sending the Properties Changed signal" << std::endl;
+			}
+
+		} else {
+			if (_debug_level > 2) std::cerr << "Normal Signal ----> interface_name = " << interface_name << " " << object_path << std::endl;
+
+			// directly send signal
+			std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
+			for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+				bool error = false;
+				if (_debug_level > 2) std::cerr << "sending signal through pipe " << i->fd  << std::endl;
+				if (write(i->fd, saftbus::SIGNAL) < 0 ) error = true;
+				if (write(i->fd, size) < 0 ) error = true;
+				if (write_all(i->fd, data_ptr, size) < 0 ) error = true;
+				if (_debug_level > 2) std::cerr << "done with signal through pipe" << std::endl;
+				if (error) std::cerr << "there was an error sending the (real) signal" << std::endl;
+			}
 		}
-
-	} else {
-		if (_debug_level > 2) std::cerr << "Normal Signal ----> interface_name = " << interface_name << " " << object_path << std::endl;
-
-		// directly send signal
-		std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
-		for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-			bool error = false;
-			if (_debug_level > 2) std::cerr << "sending signal through pipe " << i->fd  << std::endl;
-			if (write(i->fd, saftbus::SIGNAL) < 0 ) error = true;
-			if (write(i->fd, size) < 0 ) error = true;
-			if (write_all(i->fd, data_ptr, size) < 0 ) error = true;
-			if (_debug_level > 2) std::cerr << "done with signal through pipe" << std::endl;
-			if (error) std::cerr << "there was an error sending the (real) signal" << std::endl;
-		}
+	} catch (...) {
+		//std::cerr << "caught a signal (Pipe full? Proxy without Glib::MainLoop?)" << std::endl;
 	}
+	//list_all_resources();
 }
 
 
@@ -462,13 +473,23 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 void Connection::print_all_fds()
 {
 	std::cerr << "-------all pipe fds-------" << std::endl;
+	std::cerr 
+	          << std::setw(5) << "sock" 
+			  << std::setw(35) << "interface_name"
+	          << std::setw(35) << "object_path"
+	          << std::setw(5) << "id"
+	          << std::setw(5) << "fd"
+	          << std::endl;
+	std::cerr << "-----------------------------------------------------------------------------------------------" << std::endl;
 	for (auto iter = _proxy_pipes.begin(); iter != _proxy_pipes.end(); ++iter) {
 		for (auto itr = iter->second.begin(); itr != iter->second.end(); ++itr) {
 			for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
-				std::cerr << "    " << iter->first 
-				          << "    " << itr->first
-				          << "    " << it->id << "->" << it->fd
-				          << "    socket(" << it->socket_nr << ")" 
+				std::cerr 
+				          << std::setw(5) << it->socket_nr 
+						  << std::setw(35) << iter->first 
+				          << std::setw(35) << itr->first
+				          << std::setw(5) << it->id 
+				          << std::setw(5) << it->fd
 				          << std::endl;
 			}
 		}
@@ -496,6 +517,49 @@ void Connection::clean_all_fds_from_socket(Socket *socket)
 	}
 
 }
+
+void Connection::list_all_resources()
+{
+	std::cerr << "----- saftbus_objects -----" << std::endl;
+	std::cerr << "    " << std::setw(5) << "idx" << "  -> " 
+						<< std::setw(35) << "object_path"
+						<< " , " 
+						<< std::setw(35) << "interface_name"
+						<< std::setw(5) << "owner"
+						<< std::endl;
+	std::cerr << "-----------------------------------------------------------------------------------------------" << std::endl;
+
+	for(auto itr : _saftbus_objects) {
+		// reverse look-up
+		for (auto itr_interface_name : _saftbus_indices) {
+			for (auto itr_object_path : itr_interface_name.second) {
+				if (itr_object_path.second == itr.first) {
+					std::cerr << "    " << std::setw(5) << itr.first << "  -> " 
+										<< std::setw(35) << itr_object_path.first 
+										<< " , " 
+										<< std::setw(35) << itr_interface_name.first 
+										<< std::setw(5) << "??"
+										<< std::endl;
+				}
+			}
+		}
+	}
+
+
+	print_all_fds();
+
+	// id handles and owner
+	std::cerr << "  ----- id handles and owners -----" << std::endl;
+	std::cerr << "    " << std::setw(10) << "owner" << std::setw(10) << "handle" << std::endl;
+	std::cerr << "-----------------------------------------------------------------------------------------------" << std::endl;
+	for (auto itr: _id_handles_map) {
+		for (auto it: itr.second) {
+			std::cerr << "    " << std::setw(10) << itr.first << std::setw(10) << it << std::endl;
+		}
+	}
+
+}
+
 
 int Connection::socket_nr(Socket *socket)
 {

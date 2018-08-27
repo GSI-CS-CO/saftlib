@@ -40,6 +40,7 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
 	}
 
 	if (_debug_level > 5) std::cerr << "Proxy::Proxy(" << _global_id << " " << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << static_cast<bool>(_connection) << std::endl;
+	//std::cerr << "Proxy::Proxy() " << _global_id << "called " << std::endl;
 
 
 //	_connection->register_proxy(interface_name, object_path, this);
@@ -66,7 +67,7 @@ Proxy::~Proxy()
 {
 	close(_pipe_fd[0]);
 	close(_pipe_fd[1]);
-	//std::cerr << "Proxy::~Proxy() called " << _global_id << std::endl;
+	//std::cerr << "Proxy::~Proxy() " << _global_id << " called " << _global_id << std::endl;
 	write(_connection->get_fd(), saftbus::SIGNAL_REMOVE_FD);
 	write(_connection->get_fd(), _object_path);
 	write(_connection->get_fd(), _interface_name);

@@ -62,8 +62,13 @@ namespace saftbus
       }
       else
       {
-        if (result == 0) throw std::runtime_error(" could not write to pipe");
-        else             throw std::runtime_error(strerror(errno));
+        if (result == 0) { 
+          //std::cerr << "result == 0 : throwing exception " << std::endl;
+          throw std::runtime_error(" could not write to pipe");
+        } else {
+          //std::cerr << "result < 0 :  throwing exception " << std::endl;
+          throw std::runtime_error(strerror(errno));
+        } 
       }
     } while (n_written < size);
     return n_written;

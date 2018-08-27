@@ -67,7 +67,7 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 	write(get_fd(), saftbus::SENDER_ID);
 	write(get_fd(), _saftbus_id);
 	read(get_fd(), _saftbus_id);
-	std::cerr << "ProxyConnection::ProxyConnection() got an ID from the Server: " << _saftbus_id << std::endl;
+	//std::cerr << "ProxyConnection::ProxyConnection() got an ID from the Server: " << _saftbus_id << std::endl;
 }
 
 int ProxyConnection::get_connection_id()
