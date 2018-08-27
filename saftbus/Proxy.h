@@ -51,7 +51,6 @@ namespace saftbus
 	private:
 
 		static Glib::RefPtr<saftbus::ProxyConnection> _connection;
-		static bool _connection_created;
 
 		static int _global_id_counter;
 		static std::mutex _id_counter_mutex;

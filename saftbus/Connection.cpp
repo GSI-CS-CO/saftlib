@@ -284,8 +284,8 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					pp.socket_nr = socket_nr(socket);
 					_proxy_pipes[interface_name][object_path].insert(pp);
 
-					int msg = 42;
-					write(fd, msg);
+					// int msg = 42;
+					// write(fd, msg);
 				}
 				break;
 				case saftbus::SIGNAL_REMOVE_FD: 
