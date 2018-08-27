@@ -53,7 +53,6 @@ namespace saftbus
 	public:
 		NodeInfo(const Glib::ustring &interface_name);
 		static Glib::RefPtr<NodeInfo> create_for_xml(const Glib::ustring&  xml_data);
-		//Glib::RefPtr<InterfaceInfo> lookup_interface (const Glib::ustring&  name);
 		Glib::RefPtr<InterfaceInfo> lookup_interface();
 	private:
 		Glib::RefPtr<InterfaceInfo> _interface_info;

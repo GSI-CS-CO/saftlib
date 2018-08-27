@@ -57,17 +57,13 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 			} 
 		}
 	}
-    //Glib::signal_io().connect(sigc::mem_fun(*this, &ProxyConnection::dispatch), _create_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
 
-	// create what is called "Sender" in DBus terms. It is a number unique to the running process
     std::ostringstream id_out;
-    id_out << this;
-    //std::cerr << "ProxyConnection::ProxyConnection(" << base_name << ") created id " << id_out.str() << std::endl;
-    _saftbus_id = id_out.str();
-	write(get_fd(), saftbus::SENDER_ID);
-	write(get_fd(), _saftbus_id);
+    id_out << this; // revove this 
+    _saftbus_id = id_out.str(); // remove this 
+	write(get_fd(), saftbus::SENDER_ID);  // ask the server to give us an ID
+	write(get_fd(), _saftbus_id); // remove this (need to adapt the Connection class as well)
 	read(get_fd(), _saftbus_id);
-	//std::cerr << "ProxyConnection::ProxyConnection() got an ID from the Server: " << _saftbus_id << std::endl;
 }
 
 int ProxyConnection::get_connection_id()
@@ -99,31 +95,19 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	saftbus::write_all(get_fd(), data_ptr, size);
 
 	// receive from socket
-	saftbus::MessageTypeS2C type;// = saftbus::METHOD_REPLY;
-	//while(!expect_from_server(type));
+	saftbus::MessageTypeS2C type;
 	read(get_fd(), type);
 	if (type != saftbus::METHOD_REPLY) {
 		std::cerr << " unexpected type " << type << " instead of METHOD_REPLY" << std::endl;
 	}
-	//saftbus::read(get_fd(), type);
 	if (_debug_level > 5) std::cerr << "got response " << type << std::endl;
 	saftbus::read(get_fd(), size);
 	_call_sync_result_buffer.resize(size);
 	saftbus::read_all(get_fd(), &_call_sync_result_buffer[0], size);
 
-	// deserialize
-	//Glib::Variant<std::vector<Glib::VariantBase> > payload;
 	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
 
 	if (_debug_level > 5) std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
-	//Glib::VariantBase result    = Glib::VariantBase::cast_dynamic<Glib::VariantBase >(payload.get_child(0));
-	// std::cerr << " payload.get_type_string() = " << _call_sync_result.get_type_string() << "     .value = " << _call_sync_result.print() << std::endl;
-	// for (unsigned n = 0; n < _call_sync_result.get_n_children(); ++n)
-	// {
-	// 	Glib::VariantBase child = _call_sync_result.get_child(n);
-	// 	std::cerr << "     parameter[" << n << "].type = " << child.get_type_string() << "    .value = " << child.print() << std::endl;
-	// }
-	// std::cerr << "just before returning " << _call_sync_result.print() << std::endl;
 
 	return _call_sync_result;					
 }

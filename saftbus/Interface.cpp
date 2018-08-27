@@ -59,8 +59,9 @@ NodeInfo::NodeInfo(const Glib::ustring &interface_name)
 
 Glib::RefPtr<NodeInfo> NodeInfo::create_for_xml (const Glib::ustring&  xml_data)
 {
+	// This function only extracts the interface name from the xml interface description
+	// The rest is not needed by saftbus.
 	if (_debug_level > 5) std::cerr << "NodeInfo::create_for_xml() called" << std::endl;
-	//std::find(xml_data.begin(), xml_data.end(), "interface name=\'")
 	Glib::ustring::size_type pos_begin = xml_data.find("interface name=\'");
 	if (_debug_level > 5) std::cerr << " pos_begin = " << pos_begin << std::endl;
 	if (pos_begin != xml_data.npos) {

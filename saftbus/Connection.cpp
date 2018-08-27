@@ -44,41 +44,15 @@ guint Connection::register_object (const Glib::ustring& object_path, const Glib:
 	Glib::ustring interface_name = interface_info->get_interface_name();
 	if (_debug_level > 4) std::cerr << "    got interface_name = " << interface_name << std::endl;
 	_saftbus_indices[interface_name][object_path] = result;
-	// for(auto iter = _saftbus_objects.begin(); iter != _saftbus_objects.end(); ++iter)
-	// {
-	// 	std::cerr << *iter << std::endl;
-	// }
 	return result;
 }
 bool Connection::unregister_object (guint registration_id)
 {
 	if (_debug_level > 2) std::cerr << "MMMMMMMMMMMMMMMMMMM ****************** Connection::unregister_object("<< registration_id <<") called" << std::endl;
-	// if (registration_id < _saftbus_objects.size())
-	// {
-	// 	// if any signal pipes are still open -> close them
-	// 	//std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
-	// 	for(auto itr = _saftbus_indices.begin(); itr != _saftbus_indices.end(); ++itr) {
-	// 		auto interface_name = itr->first;
-	// 		for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
-	// 			auto object_path = it->first;
-	// 			if (it->second == registration_id) {
-	// 				//_proxy_pipes[interface_name][object_path].erase(pp_done);
-	// 				//std::cerr << "closing all fds registered for " << interface_name << " " << object_path << std::endl;
-	// 				std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
-	// 				for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-	// 					//std::cerr << "   closing fd " << i->fd << std::endl;
-	// 					close(i->fd);
-	// 				}
-	// 				setProxyPipe.clear();
-	// 			}
-	// 		}
-	// 	}
 
-		_saftbus_objects.erase(registration_id);
-		return true;
-	// }
-	// return false;
-	list_all_resources();
+	_saftbus_objects.erase(registration_id);
+	return true;
+	//list_all_resources();
 }
 
 
@@ -270,16 +244,6 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 		if (result == -1) {
 			if (_debug_level > 2) std::cerr << "client disconnected" << std::endl;
 			handle_disconnect(socket);
-			// Glib::VariantContainerBase arg;
-			// Glib::ustring& saftbus_id = socket->saftbus_id();
-			// socket->close_connection();
-			// socket->wait_for_client();
-			// //std::cerr << "call quit handler for saftbus_id " << saftbus_id << std::endl; 
-			// //std::cerr << "number of slots attached to the signal " << _owned_signals[saftbus_id].size() << std::endl;
-			// _owned_signals[saftbus_id].emit(saftbus::connection, "", "", "", "" , arg);
-			// _owned_signals_signatures.erase(_owned_signal_id_signature_map[saftbus_id]);
-			// _owned_signal_id_signature_map.erase(saftbus_id);
-			// //std::cerr << "----------_______________________done quit handler for saftbus_id " << saftbus_id << std::endl; 
 		} else {
 			switch(type)
 			{
@@ -322,8 +286,6 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 
 					int msg = 42;
 					write(fd, msg);
-
-
 				}
 				break;
 				case saftbus::SIGNAL_REMOVE_FD: 
@@ -335,7 +297,6 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					read(socket->get_fd(), object_path);
 					read(socket->get_fd(), interface_name);
 					read(socket->get_fd(), proxy_id);
-					//std::cerr << "Connection::dispatch() remove fd " << " " << name << " " << object_path << " " << interface_name << " " << proxy_id << std::endl;
 
 					ProxyPipe pp;
 					pp.id = proxy_id;
@@ -344,7 +305,6 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					_proxy_pipes[interface_name][object_path].erase(pp_done);
 					if (_debug_level > 2) std::cerr << "Connection::dispatch() after erasing pipe fd" << std::endl;
 					if (_debug_level > 2) print_all_fds();
-
 				}
 				break;
 				case saftbus::METHOD_CALL: 
@@ -569,14 +529,6 @@ int Connection::socket_nr(Socket *socket)
 	}
 	return -1;
 }
-
-
-// Glib::VariantContainerBase Connection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& method_name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
-// {
-// 	std::cerr << "Connection::call_sync(" << object_path << "," << interface_name << "," << method_name << ") called" << std::endl;
-// 	return Glib::VariantContainerBase();
-// }
-
 
 
 }

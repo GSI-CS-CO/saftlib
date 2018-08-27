@@ -50,14 +50,7 @@ namespace saftbus
 		result = Glib::Variant<std::vector<Glib::VariantBase> >(grestored);
 		return true;
 	}
-	// bool deserialize(Glib::Variant<Glib::VariantBase> &result, const char *data, gsize size)
-	// {
-	// 	GVariant *grestored = g_variant_new_from_data(((const GVariantType *) "v"),
-	// 												  (gconstpointer) data,  size, true,
-	// 												  nullptr, nullptr);
-	// 	result = Glib::Variant<Glib::VariantBase>(grestored);
-	// 	return true;
-	// }
+
 
 
 }
