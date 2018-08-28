@@ -155,7 +155,7 @@ double delta_t(struct timespec start, struct timespec stop)
 // I think I would be possible to filter the signals and send them only to sockets where they are actually expected
 void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
-    struct timespec start_time;
+    struct timespec start_time, packing_done_time;
     clock_gettime( CLOCK_REALTIME, &start_time);
 
 	if (_debug_level > 4) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
@@ -186,6 +186,7 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	if (_debug_level > 5) std::cerr << " size of signal is " << size << std::endl;
 	const char *data_ptr = static_cast<const char*>(var_signal_msg.get_data());
 
+    clock_gettime( CLOCK_REALTIME, &packing_done_time);
 
 	try {  
 		// it may happen that the Proxy that is supposed to read the signal
@@ -229,6 +230,8 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 	} catch (...) {
 		//std::cerr << "caught a signal (Pipe full? Proxy without Glib::MainLoop?)" << std::endl;
 	}
+
+	std::cerr << "signal packing time = " << delta_t(start_time, packing_done_time) << " us" << std::endl;
 	//list_all_resources();
 }
 
