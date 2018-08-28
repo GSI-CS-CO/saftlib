@@ -30,16 +30,16 @@ namespace saftbus
 
 	template<typename T>
 	int write(int fd, const T & scalar)	{
-		if (_debug_level > 5) std::cerr << "scalar write: " << scalar << std::endl;
+		//if (_debug_level > 5) std::cerr << "scalar write: " << scalar << std::endl;
 		int result = write_all(fd, static_cast<const void*>(&scalar), sizeof(scalar));
-		if (_debug_level > 5) std::cerr << "done " << std::endl;
+		//if (_debug_level > 5) std::cerr << "done " << std::endl;
 		return result;
 	}
 	template<typename T>
 	int read(int fd, T & scalar) {
-		if (_debug_level > 5) std::cerr << "scalar read" << std::endl;
+		//if (_debug_level > 5) std::cerr << "scalar read" << std::endl;
 		int result = read_all(fd, static_cast<void*>(&scalar), sizeof(scalar));
-		if (_debug_level > 5) std::cerr << scalar << "  done " << std::endl;
+		//if (_debug_level > 5) std::cerr << scalar << "  done " << std::endl;
 		return result;
 	}
 

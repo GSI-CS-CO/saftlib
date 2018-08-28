@@ -22,7 +22,7 @@ namespace saftbus
 	struct ProxyPipe
 	{
 		int id;
-		int fd;
+		int fd, fd_back;
 		int socket_nr;
 		bool operator<(const ProxyPipe& rhs) const {
 			return id < rhs.id;

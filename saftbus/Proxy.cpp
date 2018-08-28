@@ -105,6 +105,8 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 	                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 	    // deliver the signal
 		on_properties_changed(property_map.get(), invalidated_properies.get());
+		// write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
+		// write(_connection->get_fd(), dt);
 	}
 	else // all other signals)
 	{
@@ -119,6 +121,8 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 	    double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
 	                - (1.0e6*sec.get() + 1.0e-3*nsec.get());
 		on_signal("de.gsi.saftlib", signal_name.get(), parameters);
+		write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
+		write(_connection->get_fd(), dt);
 	}
 
 	return true;

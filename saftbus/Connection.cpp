@@ -155,6 +155,9 @@ double delta_t(struct timespec start, struct timespec stop)
 // I think I would be possible to filter the signals and send them only to sockets where they are actually expected
 void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
+    struct timespec start_time;
+    clock_gettime( CLOCK_REALTIME, &start_time);
+
 	if (_debug_level > 4) std::cerr << "Connection::emit_signal(" << object_path << "," << interface_name << "," << signal_name << "," << parameters.print() << ") called" << std::endl;
 		// std::cerr << "   signals" << std::endl;
 		// for(auto it = _owned_signals_signatures.begin() ; it != _owned_signals_signatures.end(); ++it) 
@@ -168,8 +171,6 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 		}
 	}
 
-    struct timespec start_time;
-    clock_gettime( CLOCK_REALTIME, &start_time);
 
 	std::vector<Glib::VariantBase> signal_msg;
 	signal_msg.push_back(Glib::Variant<Glib::ustring>::create(object_path));
@@ -262,6 +263,13 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				}
 				case saftbus::REGISTER_CLIENT: 
 				{
+				}
+				break;
+				case saftbus::SIGNAL_FLIGHT_TIME: 
+				{
+					double dt;
+					read(socket->get_fd(), dt);
+					std::cerr << "signal flight time reported: " << dt << " us" << std::endl;
 				}
 				break;
 				case saftbus::SIGNAL_FD: 

@@ -46,6 +46,7 @@ namespace saftbus
 		SENDER_ID,
 		SIGNAL_FD,
 		SIGNAL_REMOVE_FD,
+		SIGNAL_FLIGHT_TIME,
 	};
 
 	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
