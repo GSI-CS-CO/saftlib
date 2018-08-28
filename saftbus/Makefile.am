@@ -26,3 +26,10 @@ nodist_libsaftbus_la_SOURCES =	\
 	Interface.cpp        \
 	saftbus.cpp
 
+bin_PROGRAMS = saftbus-ctl
+
+saftbus_ctl_SOURCES = saftbus-ctl.cpp
+saftbus_ctl_LDADD   = $(GIOMM_LIBS) libsaftbus.la
+
+
+

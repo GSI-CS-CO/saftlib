@@ -254,6 +254,16 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 		} else {
 			switch(type)
 			{
+				case saftbus::SAFTBUS_CTL_HELLO:
+				{
+					std::cerr << "got signal from saftbus-ctl tool" << std::endl;
+				}
+				break;
+				case saftbus::SAFTBUS_CTL_STATUS:
+				{
+					saftbus::write(socket->get_fd(), _saftbus_indices);
+				}
+				break;
 				case saftbus::SENDER_ID:
 				{
 					if (_debug_level > 2) std::cerr << "Connection::dispatch() SENDER_ID received" << std::endl;

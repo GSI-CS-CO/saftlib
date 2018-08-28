@@ -47,6 +47,9 @@ namespace saftbus
 		SIGNAL_FD,
 		SIGNAL_REMOVE_FD,
 		SIGNAL_FLIGHT_TIME,
+
+		SAFTBUS_CTL_HELLO,
+		SAFTBUS_CTL_STATUS, // get saftbus status info
 	};
 
 	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
