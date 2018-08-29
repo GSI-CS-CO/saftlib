@@ -95,6 +95,11 @@ namespace saftbus
 
 		static int _saftbus_id_counter;
 
+
+
+		// histograms for timing analysis
+		std::map<int, int> _signal_flight_times;
+
 	};
 
 }

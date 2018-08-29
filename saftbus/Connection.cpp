@@ -233,8 +233,8 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 		//std::cerr << "caught a signal (Pipe full? Proxy without Glib::MainLoop?)" << std::endl;
 	}
 
-	std::cerr << "signal packing time = " << delta_t(start_time, packing_done_time) << " us" << std::endl;
-	std::cerr << "serialization  time = " << delta_t(packing_done_time, serialized_time) << " us" << std::endl;
+	//std::cerr << "signal packing time = " << delta_t(start_time, packing_done_time) << " us" << std::endl;
+	//std::cerr << "serialization  time = " << delta_t(packing_done_time, serialized_time) << " us" << std::endl;
 	//list_all_resources();
 }
 
@@ -262,6 +262,12 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				case saftbus::SAFTBUS_CTL_STATUS:
 				{
 					saftbus::write(socket->get_fd(), _saftbus_indices);
+					std::vector<int> indices;
+					for (auto it: _saftbus_objects) {
+						indices.push_back(it.first);
+					}
+					saftbus::write(socket->get_fd(), indices);
+					saftbus::write(socket->get_fd(), _signal_flight_times);
 				}
 				break;
 				case saftbus::SENDER_ID:
@@ -285,7 +291,12 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				{
 					double dt;
 					read(socket->get_fd(), dt);
-					std::cerr << "signal flight time reported: " << dt << " us" << std::endl;
+					int dt_us = dt;
+					++_signal_flight_times[dt_us];
+					if (dt > 600) {
+						std::cerr << "saftd: long signal flight time detected: " << dt << " us" << std::endl; 
+					}
+					//std::cerr << "signal flight time reported: " << dt << " us" << std::endl;
 				}
 				break;
 				case saftbus::SIGNAL_FD: 
