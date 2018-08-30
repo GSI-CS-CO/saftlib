@@ -3,6 +3,8 @@
 
 
 #include <giomm.h>
+#include <ctime>
+#include <map>
 
 namespace saftbus
 {
@@ -54,6 +56,26 @@ namespace saftbus
 
 	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
 	bool deserialize(Glib::Variant<Glib::VariantBase>               &result, const char *data, gsize size);
+
+
+	struct Timer 
+	{
+		struct timespec start, stop;
+		std::map<int, int> &hist;
+		double delta_t() 
+		{
+			return (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+		         - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
+		}	
+		Timer(std::map<int, int> &h) : hist(h) {
+			clock_gettime( CLOCK_REALTIME, &start);
+		}
+		~Timer() {
+		    clock_gettime( CLOCK_REALTIME, &stop);
+		    int dt = delta_t();
+		    ++hist[dt];
+		}
+	};
 
 }
 

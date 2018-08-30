@@ -6,6 +6,15 @@
 #include "Interface.h"
 
 
+void write_histogram(Glib::ustring filename, const std::map<int,int> &hist)
+{
+	std::ofstream out(filename.c_str());
+	for (auto it: hist) {
+		out << it.first << " " << it.second << std::endl;
+	}
+
+}
+
 int main()
 {
 	Glib::init();
@@ -26,6 +35,10 @@ int main()
 	std::map<int, int> signal_flight_times;
 	saftbus::read(connection->get_fd(), signal_flight_times);
 
+	std::map<Glib::ustring, std::map<int, int> > function_run_times;
+	saftbus::read(connection->get_fd(), function_run_times);
+
+
 	std::set<Glib::ustring> object_paths;
 
 	for (auto itr: saftbus_indices) {
@@ -44,12 +57,10 @@ int main()
 		std::cerr << "    " << it << std::endl;
 	}
 
-	std::ofstream signal_flight_times_out("signal_flight_times.dat");
-	for (auto it: signal_flight_times) {
-		std::cerr << it.first << " " << it.second << std::endl;
-		signal_flight_times_out << it.first << " " << it.second << std::endl;
+	write_histogram("signal_flight_times.dat", signal_flight_times);
+	for (auto function: function_run_times) {
+		write_histogram(function.first, function.second);
 	}
-
 
 
 	connection.reset();

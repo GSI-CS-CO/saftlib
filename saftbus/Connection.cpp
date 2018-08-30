@@ -67,6 +67,7 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 								   const Glib::ustring& arg0//,
 								   )//SignalFlags  	flags)
 {
+	saftbus::Timer f_time(_function_run_times["Connection::signal_subscribe"]);
 	if (_debug_level > 2) std::cerr << "Connection::signal_subscribe(" << sender << "," << interface_name << "," << member << "," << object_path << ", " << arg0 << ") called" << std::endl;
 
 	// return result;
@@ -88,6 +89,7 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 
 void Connection::signal_unsubscribe(guint subscription_id) 
 {
+	saftbus::Timer f_time(_function_run_times["Connection::signal_unsubscribe"]);
 	if (_debug_level > 3) std::cerr << "Connection::signal_unsubscribe(" << subscription_id << ") called" << std::endl;
 	if (_debug_level > 4) {
 		for(auto it = _handle_to_signal_map.begin(); it != _handle_to_signal_map.end(); ++it) {
@@ -100,6 +102,7 @@ void Connection::signal_unsubscribe(guint subscription_id)
 
 void Connection::handle_disconnect(Socket *socket)
 {
+	saftbus::Timer f_time(_function_run_times["Connection::handle_disconnect"]);
 	// this is called when the communication partner a particular socket (given as function argument) 
 	// disappeared. In that case we have to close the connection and destroy all objects 
 	if (_debug_level > 2) std::cerr << "Connection::handle_disconnect() called" << std::endl;
@@ -155,6 +158,8 @@ double delta_t(struct timespec start, struct timespec stop)
 // I think I would be possible to filter the signals and send them only to sockets where they are actually expected
 void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name, const Glib::VariantContainerBase& parameters)
 {
+	saftbus::Timer f_time(_function_run_times["Connection::emit_signal"]);
+
     struct timespec start_time, packing_done_time, serialized_time;
     clock_gettime( CLOCK_REALTIME, &start_time);
 
@@ -242,6 +247,7 @@ void Connection::emit_signal(const Glib::ustring& object_path, const Glib::ustri
 
 bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
 {
+	saftbus::Timer f_time(_function_run_times["Connection::dispatch"]);
 	try {
 		static int cnt = 0;
 		++cnt;
@@ -268,6 +274,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					}
 					saftbus::write(socket->get_fd(), indices);
 					saftbus::write(socket->get_fd(), _signal_flight_times);
+					saftbus::write(socket->get_fd(), _function_run_times);
 				}
 				break;
 				case saftbus::SENDER_ID:
@@ -344,6 +351,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 				break;
 				case saftbus::METHOD_CALL: 
 				{
+					saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL"]);
 					if (_debug_level > 2) std::cerr << "Connection::dispatch() METHOD_CALL received" << std::endl;
 					guint32 size;
 					saftbus::read(socket->get_fd(), size);
@@ -377,6 +385,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 						if (_debug_level > 5) std::cerr << "found saftbus object at index " << index << std::endl;
 						
 						if (name.get() == "Get") {
+							saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_GetProperty"]);
 							Glib::VariantBase result;
 							_saftbus_objects[index]->get_property(result, saftbus::connection, sender.get(), object_path.get(), derived_interface_name.get(), property_name.get());
 							if (_debug_level > 2) std::cerr << "getting property " << result.get_type_string() << " " << result.print() << std::endl;
@@ -395,6 +404,9 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 							saftbus::write_all(socket->get_fd(), data_ptr, size);
 
 						} else if (name.get() == "Set") {
+							std::ostringstream function_name;
+							function_name << "Connection::dispatch_METHOD_CALL_SetProperty_" << derived_interface_name.get() << "_" << property_name.get();
+							saftbus::Timer f_time(_function_run_times[function_name.str().c_str()]);
 							if (_debug_level > 2) std::cerr << "setting property" << std::endl;
 							Glib::Variant<Glib::VariantBase> par2 = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::VariantBase> >(parameters.get_child(2));
 							if (_debug_level > 5) std::cerr << "par2 = " << par2.get_type_string() << " "<< par2.print() << std::endl;
@@ -421,6 +433,10 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					}
 					else // normal method calls 
 					{
+						std::ostringstream function_name;
+						function_name << "Connection::dispatch_METHOD_CALL_" << name.get();
+						saftbus::Timer f_time(_function_run_times[function_name.str().c_str()]);
+
 						if (_debug_level > 2) std::cerr << "a real method call: " << std::endl;
 						int index = _saftbus_indices[interface_name.get()][object_path.get()];
 						if (_debug_level > 5) std::cerr << "found saftbus object at index " << index << std::endl;
@@ -495,6 +511,7 @@ void Connection::print_all_fds()
 
 void Connection::clean_all_fds_from_socket(Socket *socket)
 {
+	saftbus::Timer f_time(_function_run_times["Connection::clean_all_fds_from_socket"]);
 	int nr = socket_nr(socket);
 	for (auto iter = _proxy_pipes.begin(); iter != _proxy_pipes.end(); ++iter) {
 		for (auto itr = iter->second.begin(); itr != iter->second.end(); ++itr) {

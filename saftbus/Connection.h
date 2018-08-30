@@ -100,6 +100,8 @@ namespace saftbus
 		// histograms for timing analysis
 		std::map<int, int> _signal_flight_times;
 
+		std::map<Glib::ustring, std::map<int, int> > _function_run_times;
+
 	};
 
 }
