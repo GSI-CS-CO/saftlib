@@ -140,8 +140,10 @@ void Connection::handle_disconnect(Socket *socket)
 	_id_handles_map.erase(saftbus_id);
 
 
-
-	clean_all_fds_from_socket(socket);
+	{
+		saftbus::Timer f_time(_function_run_times["Connection::handle_disconnect_clean_fds_from_socket"]);
+		clean_all_fds_from_socket(socket);
+	}
 
 	if (_debug_level > 2) print_all_fds();
 	if (_debug_level > 2) std::cerr << "Connection::handle_disconnect() done" << std::endl;
