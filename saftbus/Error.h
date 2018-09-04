@@ -24,6 +24,7 @@ namespace saftbus
 		Error(const Error& error);
 
 		Glib::ustring what() const;
+		Type type() const;
 
 	private:
 		Glib::ustring msg_;

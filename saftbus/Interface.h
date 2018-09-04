@@ -17,9 +17,12 @@ namespace saftbus
 		void return_error(const saftbus::Error& error);
 
 		Glib::VariantContainerBase& get_return_value();
+		saftbus::Error& get_return_error();
+		bool has_error();
 	private:
 		Glib::VariantContainerBase _parameters;
 		saftbus::Error _error;
+		bool _has_error = false;
 	};
 
 	class InterfaceInfo : public Glib::Object//Base

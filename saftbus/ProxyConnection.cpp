@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <algorithm>
 #include <ctime>
+#include <giomm/dbuserror.h>
 
 namespace saftbus
 {
@@ -97,19 +98,28 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	// receive from socket
 	saftbus::MessageTypeS2C type;
 	read(get_fd(), type);
-	if (type != saftbus::METHOD_REPLY) {
-		std::cerr << " unexpected type " << type << " instead of METHOD_REPLY" << std::endl;
+	if (type == saftbus::METHOD_ERROR) {
+		saftbus::Error::Type type;
+		Glib::ustring what;
+		saftbus::read(get_fd(), type);
+		saftbus::read(get_fd(), what);
+		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, what);
+	} else if (type == saftbus::METHOD_REPLY) {
+		if (_debug_level > 5) std::cerr << "got response " << type << std::endl;
+		saftbus::read(get_fd(), size);
+		_call_sync_result_buffer.resize(size);
+		saftbus::read_all(get_fd(), &_call_sync_result_buffer[0], size);
+
+		deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
+
+		if (_debug_level > 5) std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
+
+		return _call_sync_result;					
+	} else {
+		std::ostringstream msg;
+		msg << " unexpected type " << type << " instead of METHOD_REPLY or METHOD_ERROR";
+		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, msg.str());
 	}
-	if (_debug_level > 5) std::cerr << "got response " << type << std::endl;
-	saftbus::read(get_fd(), size);
-	_call_sync_result_buffer.resize(size);
-	saftbus::read_all(get_fd(), &_call_sync_result_buffer[0], size);
-
-	deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
-
-	if (_debug_level > 5) std::cerr << "ProxyConnection::call_sync respsonse = " << _call_sync_result.print() << std::endl;
-
-	return _call_sync_result;					
 }
 
 }

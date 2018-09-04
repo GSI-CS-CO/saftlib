@@ -447,21 +447,26 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 						if (_debug_level > 2) std::cerr << "doing the function call" << std::endl;
 						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);
 						if (_debug_level > 2) std::cerr << "function call done, getting result" << std::endl;
-						Glib::VariantContainerBase result;
-						result = method_invocation_rptr->get_return_value();
-						if (_debug_level > 2) std::cerr << "result is " << result.get_type_string() << " " << result.print() << std::endl;
+						if (method_invocation_rptr->has_error()) {
+							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
+							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().type());
+							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().what());
+						} else {
+							Glib::VariantContainerBase result;
+							result = method_invocation_rptr->get_return_value();
+							if (_debug_level > 2) std::cerr << "result is " << result.get_type_string() << " " << result.print() << std::endl;
 
-						std::vector<Glib::VariantBase> response;
-						response.push_back(result);
-						Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
+							std::vector<Glib::VariantBase> response;
+							response.push_back(result);
+							Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
 
-						if (_debug_level > 5) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
-						size = var_response.get_size();
-						const char *data_ptr = static_cast<const char*>(var_response.get_data());
-						saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
-						saftbus::write(socket->get_fd(), size);
-						saftbus::write_all(socket->get_fd(), data_ptr, size);
-
+							if (_debug_level > 5) std::cerr << "response is " << var_response.get_type_string() << " " << var_response.print() << std::endl;
+							size = var_response.get_size();
+							const char *data_ptr = static_cast<const char*>(var_response.get_data());
+							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
+							saftbus::write(socket->get_fd(), size);
+							saftbus::write_all(socket->get_fd(), data_ptr, size);
+						}
 					}
 				}
 				break;

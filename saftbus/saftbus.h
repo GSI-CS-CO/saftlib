@@ -36,6 +36,7 @@ namespace saftbus
 	enum MessageTypeS2C {
 		CLIENT_REGISTERED,
 		METHOD_REPLY,
+		METHOD_ERROR,
 		SIGNAL,
 		PORPERTY_CHANGED,
 		PROPERTY_VALUE,

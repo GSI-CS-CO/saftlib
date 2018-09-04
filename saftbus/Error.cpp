@@ -27,6 +27,10 @@ namespace saftbus
 	{
 		return msg_;
 	}
+	Error::Type Error::type() const
+	{
+		return type_;
+	}
 
 
 }

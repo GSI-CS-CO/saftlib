@@ -42,6 +42,7 @@ void MethodInvocation::return_value	(const Glib::VariantContainerBase& parameter
 }
 void MethodInvocation::return_error	(const saftbus::Error& error)
 {
+	_has_error = true;
 	_error = error;
 }
 Glib::VariantContainerBase& MethodInvocation::get_return_value()
@@ -50,6 +51,15 @@ Glib::VariantContainerBase& MethodInvocation::get_return_value()
 	if (_debug_level > 5) std::cerr << "   _parameters = " << _parameters.print() << std::endl;
 	return _parameters;
 }
+bool MethodInvocation::has_error() 
+{
+	return _has_error;
+}
+saftbus::Error& MethodInvocation::get_return_error()
+{
+	return _error;
+}
+
 
 
 
