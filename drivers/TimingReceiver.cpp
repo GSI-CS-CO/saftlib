@@ -782,10 +782,19 @@ void TimingReceiver::compile()
 
   clock_gettime( CLOCK_REALTIME, &stop);
 
+    time_t rawtime;
+    struct tm * timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    char buffer[80];
+    strftime(buffer,80,"%c",timeinfo);
+    std::string timestring(buffer);
+    for (char ch: timestring) if (ch == ':') ch = '.';
+
   double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
-  log << "compile: " << dt << " us\n"; 
+  log << timestring << ": compile: " << dt << " us\n"; 
   log.flush();
-  std::cerr << "compile: " << dt << " us\n"; 
+  std::cerr << timestring << ": compile: " << dt << " us\n"; 
 
 }
 

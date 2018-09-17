@@ -19,10 +19,10 @@ public:
 	Logger& newMsg(int severity);
 	template<class T> 
 	Logger& add(const T &content) {
-		msg << content;
+		// msg << content;
 		return *this;
 	}
-	Logger& add(const Glib::ustring &content);
+	// Logger& add(const Glib::ustring &content);
 	void log();
 
 private:
