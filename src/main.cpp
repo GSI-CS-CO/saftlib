@@ -195,6 +195,7 @@ int main(int argc, char** argv)
   // initialize gio
   std::locale::global(std::locale(""));
   Gio::init();
+  Glib::init();
   
   // Connect to the dbus system daemon
   const guint id = saftbus::own_name(saftbus::BUS_TYPE_SYSTEM,

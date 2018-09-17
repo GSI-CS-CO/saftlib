@@ -5,6 +5,7 @@
 namespace saftbus
 {
 
+
 	SlotBusAcquired   bus_acquired;
 	SlotNameAcquired  name_acquired;
 	SlotNameAppeared  name_appeared;

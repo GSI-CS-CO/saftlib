@@ -13,6 +13,7 @@
 
 #include "Interface.h"
 #include "saftbus.h"
+#include "Logger.h"
 
 
 namespace saftbus
@@ -39,6 +40,7 @@ namespace saftbus
 	public:
 
 		Connection(int number_of_sockets = 32, const std::string& base_name = "/tmp/saftbus_");
+		~Connection();
 
 		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
 		bool 	unregister_object (guint registration_id);
@@ -102,6 +104,7 @@ namespace saftbus
 
 		std::map<Glib::ustring, std::map<int, int> > _function_run_times;
 
+		Logger logger;
 	};
 
 }

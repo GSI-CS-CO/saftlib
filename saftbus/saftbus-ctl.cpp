@@ -9,6 +9,7 @@
 
 void write_histogram(Glib::ustring filename, const std::map<int,int> &hist)
 {
+	std::cout << "writing histogram " << filename << std::endl;
 	std::ofstream out(filename.c_str());
 	for (auto it: hist) {
 		out << it.first << " " << it.second << std::endl;

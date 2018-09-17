@@ -6,6 +6,8 @@
 #include <ctime>
 #include <map>
 
+#include "Logger.h"
+
 namespace saftbus
 {
 
@@ -65,6 +67,7 @@ namespace saftbus
 		std::map<int, int> &hist;
 		double delta_t() 
 		{
+		    clock_gettime( CLOCK_REALTIME, &stop);
 			return (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
 		         - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
 		}	
@@ -72,9 +75,7 @@ namespace saftbus
 			clock_gettime( CLOCK_REALTIME, &start);
 		}
 		~Timer() {
-		    clock_gettime( CLOCK_REALTIME, &stop);
-		    int dt = delta_t();
-		    ++hist[dt];
+		    ++hist[delta_t()];
 		}
 	};
 

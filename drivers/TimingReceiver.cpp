@@ -26,6 +26,7 @@
 #include <sstream>
 #include <algorithm>
 #include <map>
+#include <time.h>
 
 #include "RegisteredObject.h"
 #include "Driver.h"
@@ -59,7 +60,8 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    watchdog(args.watchdog),
    pps(args.pps),
    sas_count(0),
-   locked(false)
+   locked(false),
+   log("timingReceiver.log")
 {
   // try to acquire watchdog
   eb_data_t retry;
@@ -654,6 +656,8 @@ struct WalkEntry {
 
 void TimingReceiver::compile()
 {
+  struct timespec start, stop;
+  clock_gettime( CLOCK_REALTIME, &start);
   // Store all active conditions into a vector for processing
   typedef std::vector<ECA_OpenClose> ID_Space;
   ID_Space id_space;
@@ -775,6 +779,14 @@ void TimingReceiver::compile()
   device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
   
   used_conditions = id_space.size()/2;
+
+  clock_gettime( CLOCK_REALTIME, &stop);
+
+  double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
+  log << "compile: " << dt << " us\n"; 
+  log.flush();
+  std::cerr << "compile: " << dt << " us\n"; 
+
 }
 
 void TimingReceiver::probe(OpenDevice& od)

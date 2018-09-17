@@ -51,11 +51,11 @@ static guint32 pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosi
 // this will be called, in case we are snooping for events
 static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
-  // std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
-  // std::cout << tr_formatActionEvent(id, pmode);
-  // std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
-  // std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
-  // std::cout << std::endl;
+  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
+  std::cout << tr_formatActionEvent(id, pmode);
+  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
+  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
+  std::cout << std::endl;
 } // on_action
 
 using namespace saftlib;

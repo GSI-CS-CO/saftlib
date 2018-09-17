@@ -228,15 +228,13 @@ int main (int argc, char** argv)
       Glib::ustring io_partner;
       outs = receiver->getOutputs();
       ins = receiver->getInputs();
-      Glib::RefPtr<Output_Proxy> output_proxy;
-      Glib::RefPtr<Input_Proxy> input_proxy;
       
       /* Check if IO exists output */
       if (!just_inject)
       {
         for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
         {
-          output_proxy = Output_Proxy::create(it->second);
+          Glib::RefPtr<Output_Proxy> output_proxy = Output_Proxy::create(it->second);
           if (verbose_mode) { std::cout << "Info: Found " << it->first << std::endl; }
           total_ios++;
           
@@ -257,7 +255,7 @@ int main (int argc, char** argv)
             if (verbose_mode) { std::cout << "Found Partner Path: " << io_partner << std::endl; }
             if (setup_io)
             {
-              input_proxy = Input_Proxy::create(io_partner);
+              Glib::RefPtr<Input_Proxy> input_proxy = Input_Proxy::create(io_partner);
               if (input_proxy->getInputTerminationAvailable())
               { 
                 if (verbose_mode) { std::cout << "Turning input termination off... " << std::endl; }
