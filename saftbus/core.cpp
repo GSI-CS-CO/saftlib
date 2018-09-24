@@ -64,10 +64,10 @@ namespace saftbus
 			{
 				if (result == 0) { 
 					//std::cerr << "result == 0 : throwing exception " << std::endl;
-					throw std::runtime_error(" could not write to pipe");
+					throw std::runtime_error(" write_all: could not write to pipe");
 				} else {
 					//std::cerr << "result < 0 :  throwing exception " << std::endl;
-					throw std::runtime_error(strerror(errno));
+					throw std::runtime_error((std::string(" write_all: ") + std::string(strerror(errno))).c_str());
 				} 
 			}
 		} while (n_written < size);
@@ -95,7 +95,7 @@ namespace saftbus
 						return -1; // -1 means end of file
 					}
 				}
-				else             throw std::runtime_error(strerror(errno));
+				else             throw std::runtime_error((std::string(" read_all: ") + std::string(strerror(errno))).c_str());
 			}
 		} while (n_read < size);
 		return n_read;

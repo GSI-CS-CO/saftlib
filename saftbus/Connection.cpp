@@ -347,7 +347,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SENDER_ID"]);
 					logger.add("     SENDER_ID received\n");
 					Glib::ustring sender_id;
-					saftbus::read(socket->get_fd(), sender_id);
+					//saftbus::read(socket->get_fd(), sender_id);
 					// ignore the suggested sender_id from the client and generate a new, unique id
 					++_saftbus_id_counter; // generate a new id value (increasing numbers)
 					std::ostringstream id_out;

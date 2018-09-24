@@ -39,7 +39,7 @@ namespace saftbus
 
 	public:
 
-		Connection(int number_of_sockets = 32, const std::string& base_name = "/tmp/saftbus_");
+		Connection(int number_of_sockets = N_CONNECTIONS, const std::string& base_name = "/tmp/saftbus_");
 		~Connection();
 
 		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);

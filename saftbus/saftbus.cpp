@@ -5,6 +5,7 @@
 namespace saftbus
 {
 
+	const int N_CONNECTIONS = 32;
 
 	SlotBusAcquired   bus_acquired;
 	SlotNameAcquired  name_acquired;

@@ -19,53 +19,52 @@ namespace saftbus
 ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
-	int _debug_level = 1;
-	// try to open first available socket
-	_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
-	if (_create_socket > 0) {
-		if (_debug_level > 5) std::cerr << "socket created" << std::endl;
-	} // TODO: else { ... }
-	_address.sun_family = AF_LOCAL;
+	for (;;) {
+		int _debug_level = 1;
+		// create a local unix socket
+		_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
+		if (_create_socket > 0) {
+			if (_debug_level > 5) std::cerr << "socket created" << std::endl;
+		} else { 
+			throw std::runtime_error("cannot create socket");
+		}
+		_address.sun_family = AF_LOCAL;
 
-	for (int i = 0; i < 100; ++i)
-	{
-		std::ostringstream name_out;
-		name_out << base_name << std::setw(2) << std::setfill('0') << i;
-		strcpy(_address.sun_path, name_out.str().c_str());
-		if (_debug_level > 5) std::cerr << "try to connect to " << name_out.str() << std::endl;
-		int connect_result = connect( _create_socket, (struct sockaddr *)&_address , sizeof(_address));
-		if (connect_result == 0) {
-			_connection_id = i;
-			if (_debug_level > 5) std::cerr << "connection established" << std::endl;
-			//char msg = 't';
-			//int result = send(_create_socket, &msg, 1, MSG_DONTWAIT); 
-			//if (_debug_level > 5) std::cerr << "result = " << result << std::endl;
-			break;
-		} else {
-			if (_debug_level > 5) std::cerr << "connect_result = " << connect_result << std::endl;
-			if (connect_result == -1) {
-				if (_debug_level > 5) std::cerr << "  errno = " << errno << " -> " << strerror(errno) << std::endl;
-				switch(errno) {
-					case ECONNREFUSED:
-						continue;
-					break;
-					case ENOENT:
-						throw std::runtime_error("all sockets busy");
-					break;
-					default:
-						throw std::runtime_error("unknown error");
-				}
-			} 
+		// try to open first available socket
+		int i;
+		for (i = 0; i < N_CONNECTIONS; ++i)
+		{
+			std::ostringstream name_out;
+			name_out << base_name << std::setw(2) << std::setfill('0') << i;
+			strcpy(_address.sun_path, name_out.str().c_str());
+			if (_debug_level > 5) std::cerr << "try to connect to " << name_out.str() << std::endl;
+			int connect_result = connect( _create_socket, (struct sockaddr *)&_address , sizeof(_address));
+			if (connect_result == 0) {
+				_connection_id = i;
+				break;
+			} else {
+				if (_debug_level > 5) std::cerr << "connect_result = " << connect_result << std::endl;
+				if (connect_result == -1) {
+					if (_debug_level > 5) std::cerr << "  errno = " << errno << " -> " << strerror(errno) << std::endl;
+					continue;
+				} 
+			}
+		}
+
+		if (i == N_CONNECTIONS) {
+			throw std::runtime_error("all sockets busy");
+		}
+
+		try {
+			write(get_fd(), saftbus::SENDER_ID);  // ask the server to give us an ID
+			read(get_fd(), _saftbus_id);
+			return;
+		}  catch (...) {
+			continue;
 		}
 	}
-
-    std::ostringstream id_out;
-    id_out << this; // revove this 
-    _saftbus_id = id_out.str(); // remove this 
-	write(get_fd(), saftbus::SENDER_ID);  // ask the server to give us an ID
-	write(get_fd(), _saftbus_id); // remove this (need to adapt the Connection class as well)
-	read(get_fd(), _saftbus_id);
 }
+
 
 int ProxyConnection::get_connection_id()
 {

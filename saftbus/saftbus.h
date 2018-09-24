@@ -11,6 +11,8 @@
 namespace saftbus
 {
 
+	extern const int N_CONNECTIONS;
+
 	enum BusType
 	{
 		BUS_TYPE_SESSION,

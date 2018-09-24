@@ -76,6 +76,9 @@ Socket::Socket(const std::string &name, Connection *server_connection)
 
 bool Socket::accept_connection(Glib::IOCondition condition)
 {
+	if (_active) {
+		return false;
+	}
 	_addrlen = sizeof(struct sockaddr_in);
 	_new_socket = accept(_create_socket, (struct sockaddr*) &_address, &_addrlen);
 	//std::cerr << "listen = " << listen(_create_socket, 0) << std::endl;
