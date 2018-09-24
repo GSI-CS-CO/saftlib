@@ -23,41 +23,34 @@ Proxy::Proxy(saftbus::BusType  	bus_type,
   , _object_path(object_path)
   , _interface_name(interface_name)
 {
-	try {
-		// if there is no ProxyConnection for this process yet we need to create one
-		if (!static_cast<bool>(_connection)) {
-			if (_debug_level > 5) std::cerr << "   this process has no ProxyConnection yet. Creating one now" << std::endl;
-			_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
-			if (_debug_level > 5) std::cerr << "   ProxyConnection created" << std::endl;
-		}
+	// if there is no ProxyConnection for this process yet we need to create one
+	if (!static_cast<bool>(_connection)) {
+		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
+	}
 
-		// generate unique proxy id (unique for all running saftlib programs)
-		{
-			std::unique_lock<std::mutex> lock(_id_counter_mutex);
-			++_global_id_counter;
-			_global_id = 100*_global_id_counter + _connection->get_connection_id();
-		}
+	// generate unique proxy id (unique for all running saftlib programs)
+	{
+		std::unique_lock<std::mutex> lock(_id_counter_mutex);
+		++_global_id_counter;
+		// thjs assumes there are no more than 100 saftbus sockets available ever
+		// (connection_id is the socket number XX in the socket filename "/tmp/saftbus_XX")
+		_global_id = 100*_global_id_counter + _connection->get_connection_id();
+	}
 
-		if (_debug_level > 5) std::cerr << "Proxy::Proxy(" << _global_id << " " << name << "," << object_path << "," << interface_name << ") called   _connection_created = " << static_cast<bool>(_connection) << std::endl;
+	// create a pipe through which we will receive signals from the saftd
+	if (pipe(_pipe_fd) != 0) {
+		throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
+	}
 
-		if (pipe(_pipe_fd) != 0) {
-			if (_debug_level > 5) std::cerr << "couldnt create pipe" << std::endl;
-		}
-		else {
-			write(_connection->get_fd(), saftbus::SIGNAL_FD);
-			sendfd(_connection->get_fd(), _pipe_fd[1]);	// send the writing endo of pipe
-			write(_connection->get_fd(), _object_path);
-			write(_connection->get_fd(), _interface_name);
-			write(_connection->get_fd(), _global_id);
-		}
-		// int message;
-		// read(_pipe_fd[0], message);
+	// send the writing end of a pipe to saftd 
+	write(_connection->get_fd(), saftbus::SIGNAL_FD);
+	sendfd(_connection->get_fd(), _pipe_fd[1]);	
+	write(_connection->get_fd(), _object_path);
+	write(_connection->get_fd(), _interface_name);
+	write(_connection->get_fd(), _global_id);
 
-	    Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
-    } catch( std::exception &e ) {
-    	if (_debug_level > 5) std::cerr << "exception in proxy contructor: " << e.what() << std::endl;
-    	throw;
-    }
+	// hook the reading end of the pipe into the default Glib::MainLoop
+	Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
 }
 
 Proxy::~Proxy() 
@@ -69,7 +62,6 @@ Proxy::~Proxy()
 	write(_connection->get_fd(), _interface_name);
 	write(_connection->get_fd(), _global_id);
 }
-
 
 bool Proxy::dispatch(Glib::IOCondition condition)
 {
