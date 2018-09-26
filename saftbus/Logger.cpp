@@ -8,24 +8,24 @@ namespace saftbus
 		: flush_after_log(flush_often)
 		, file(filename.c_str())
 	{
-		//newMsg(0).add("logger up and running").log();
+		newMsg(0).add("logger up and running").log();
 	}
 
 	Logger& Logger::newMsg(int severity) {
-		// msg.str("");
-		// msg << std::setw(2)  << severity << "  ";
-		// msg << std::setw(25) << getTimeTag() << ": ";
+		 msg.str("");
+		 msg << std::setw(2)  << severity << "  ";
+		 msg << std::setw(25) << getTimeTag() << ": ";
 		return *this;
 	}
-	// Logger& Logger::add(const Glib::ustring &content) {
-	// 	return add(content.c_str());
-	// }	
+	Logger& Logger::add(const Glib::ustring &content) {
+		return add(content.c_str());
+	}	
 
 	void Logger::log() {
-		// file << msg.str() << "\n";
-		// if (flush_after_log) {
-		// 	file.flush();
-		// }
+		file << msg.str() << "\n";
+		if (flush_after_log) {
+			file.flush();
+		}
 	}
 
 	std::string Logger::getTimeTag()
