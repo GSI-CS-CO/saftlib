@@ -163,6 +163,27 @@ void Connection::handle_disconnect(Socket *socket)
 		clean_all_fds_from_socket(socket);
 	}
 
+	// "garbage collection" : remove all inactive objects
+	std::vector<std::pair<Glib::ustring, Glib::ustring> > objects_to_be_erased;
+	for (auto saftbus_index: _saftbus_indices) {
+		Glib::ustring interface_name = saftbus_index.first;
+		for (auto object_path: saftbus_index.second) {
+			if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
+				objects_to_be_erased.push_back(std::make_pair(interface_name, object_path.first));
+				std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
+			}
+		}
+	}
+	for (auto erase: objects_to_be_erased) {
+		_saftbus_indices[erase.first].erase(erase.second);
+		if (_saftbus_indices[erase.first].size() == 0) {
+			_saftbus_indices.erase(erase.first);
+		}
+	}
+
+
+
+
 	logger.log();
 	// if (_debug_level > 2) print_all_fds();
 	// if (_debug_level > 2) std::cerr << "Connection::handle_disconnect() done" << std::endl;
@@ -338,6 +359,72 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					saftbus::write(socket->get_fd(), indices);
 					saftbus::write(socket->get_fd(), _signal_flight_times);
 					saftbus::write(socket->get_fd(), _function_run_times);
+				}
+				break;
+				case saftbus::SAFTBUS_CTL_GET_STATE:
+				{
+
+					//std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
+					saftbus::write(socket->get_fd(), _saftbus_indices);
+
+					//std::map<int, std::shared_ptr<InterfaceVTable> > _saftbus_objects;
+					std::vector<int> indices;
+					for (auto it: _saftbus_objects) {
+						indices.push_back(it.first);
+					}
+					saftbus::write(socket->get_fd(), indices);
+
+					//int _saftbus_object_id_counter; // log saftbus object creation
+					saftbus::write(socket->get_fd(), _saftbus_object_id_counter);
+					//int _saftbus_signal_handle_counter; // log signal subscriptions
+					saftbus::write(socket->get_fd(), _saftbus_signal_handle_counter);
+
+					// TODO: use std::set instead of std::vector
+					//std::vector<std::shared_ptr<Socket> > _sockets; 
+					std::vector<int> sockets_active;
+					for (auto socket: _sockets) {
+						sockets_active.push_back(socket->get_active());
+					}
+					saftbus::write(socket->get_fd(), sockets_active);
+
+					//int _client_id;
+
+
+					// 	     // handle    // signal
+					//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+					std::map<guint, int> handle_to_signal_map;
+					for(auto handle: _handle_to_signal_map) {
+						int num_slots = 0;
+						for (auto slt: handle.second.slots()) {
+							++num_slots;
+						}
+						handle_to_signal_map[handle.first] = num_slots;
+					}
+					saftbus::write(socket->get_fd(), handle_to_signal_map);
+
+
+
+					//std::map<Glib::ustring, std::set<guint> > _id_handles_map;
+					saftbus::write(socket->get_fd(), _id_handles_map);
+
+					//std::set<guint> erased_handles;
+					std::vector<guint> erased_handles;
+					for(auto erased_handle: _erased_handles) {
+						erased_handles.push_back(erased_handle);
+					}
+					saftbus::write(socket->get_fd(), erased_handles);
+
+
+
+					// store the pipes that go directly to one or many Proxy objects
+							// interface_name        // object path
+					//std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
+					saftbus::write(socket->get_fd(), _proxy_pipes);
+
+					//static int _saftbus_id_counter;
+					saftbus::write(socket->get_fd(), _saftbus_id_counter);
+
+
 				}
 				break;
 				case saftbus::SENDER_ID:

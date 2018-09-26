@@ -57,6 +57,7 @@ namespace saftbus
 
 		SAFTBUS_CTL_HELLO,
 		SAFTBUS_CTL_STATUS, // get saftbus status info
+		SAFTBUS_CTL_GET_STATE, 
 	};
 
 	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);

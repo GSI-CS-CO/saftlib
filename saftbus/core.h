@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <giomm.h>
 
 namespace saftbus 
@@ -42,6 +43,35 @@ namespace saftbus
 		//if (_debug_level > 5) std::cerr << scalar << "  done " << std::endl;
 		return result;
 	}
+
+	// std::set (not nested) 
+	template<typename T>
+	int write(int fd, const std::set<T>& std_set) {
+		guint32 size = std_set.size();
+		int result = write(fd, size);
+		if (result == -1) return result;
+		for (auto content: std_set ) {
+			result = write(fd, content);
+			if (result == -1) return result;
+		}
+		return 1;
+	}
+	template<typename T>
+	int read(int fd, std::set<T>& std_set) {
+		guint32 size;
+		int result = read(fd, size);
+		if (result == -1) return result;
+		std_set.clear();
+		for (guint32 i = 0; i < size; ++i) {
+			T content;
+			result = read(fd, content);
+			if (result == -1) return result;
+			std_set.insert(content);
+		}
+		return 1;
+	}
+
+
 
 	// std::vectors and nested std::vectors
 	template<typename T>
