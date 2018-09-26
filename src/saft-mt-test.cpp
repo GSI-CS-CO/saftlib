@@ -132,6 +132,8 @@ void *rtActionLoop(void *data)
 
 int main(int argc, char** argv)
 {
+  Glib::init();
+
   if (pipe(rt_event_pipe) != 0) {
     std::cerr << " couldn't open pipe " << std::endl;
     return 1;

@@ -407,8 +407,8 @@ int main(int argc, char** argv)
     Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
 
-    test_master_fg(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
-//    test_multiple_fgs(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
+//    test_master_fg(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
+    test_multiple_fgs(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
 
   } catch (const Glib::Error& error) {
     std::cerr << "Glib error: " << error.what() << std::endl;
