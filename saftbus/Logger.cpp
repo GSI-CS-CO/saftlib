@@ -1,5 +1,6 @@
 #include "Logger.h"
 
+#include <iostream>
 
 namespace saftbus 
 {
@@ -18,10 +19,12 @@ namespace saftbus
 		return *this;
 	}
 	Logger& Logger::add(const Glib::ustring &content) {
+		std::cerr << content;
 		return add(content.c_str());
 	}	
 
 	void Logger::log() {
+		std::cerr << "\n";
 		file << msg.str() << "\n";
 		if (flush_after_log) {
 			file.flush();

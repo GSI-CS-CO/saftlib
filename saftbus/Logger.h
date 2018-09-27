@@ -19,6 +19,7 @@ public:
 	Logger& newMsg(int severity);
 	template<class T> 
 	Logger& add(const T &content) {
+		std::cerr << content;
 		msg << content;
 		return *this;
 	}

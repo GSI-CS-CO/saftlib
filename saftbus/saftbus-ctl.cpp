@@ -63,7 +63,6 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 			}
 			std::cout << std::endl;
 		}
-		std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 		std::cout << std::endl;
 	}
 
@@ -79,11 +78,10 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 	int saftbus_signal_handle_counter; // log signal subscriptions
 	saftbus::read(connection->get_fd(), saftbus_signal_handle_counter);
 
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	std::cout << std::endl;
 	std::cout << "object id counter:     " << saftbus_object_id_counter << std::endl;
 	std::cout << "signal handle counter: " << saftbus_signal_handle_counter << std::endl;
-
-	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
-	std::cout << "list all sockets and if they are active " << std::endl;
 	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 	std::cout << std::endl;
 	std::vector<int> sockets_active;
@@ -110,7 +108,9 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 	//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 	std::map<guint, int> handle_to_signal_map;
 	saftbus::read(connection->get_fd(), handle_to_signal_map);
-
+	for (auto handle_signal: handle_to_signal_map) {
+		std::cout << handle_signal.first << " " << handle_signal.second << std::endl;
+	}
 
 
 	std::map<Glib::ustring, std::set<guint> > id_handles_map;
@@ -145,8 +145,6 @@ int main(int argc, char *argv[])
 
 	for (int i = 1; i < argc; ++i) {
 		std::string argvi = argv[i];
-		std::cerr << argvi << std::endl;
-
 		if (argvi == "-l") {
 			list_objects = true;
 		} else if (argvi == "-p") {

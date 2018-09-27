@@ -679,6 +679,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					//if (_debug_level > 5) std::cerr << "Connection::dispatch() unknown message type: " << type << std::endl;
 					logger.add("      unknown message type\n");
 					logger.log();
+					handle_disconnect(socket);
 					return false;
 				break;				
 			}

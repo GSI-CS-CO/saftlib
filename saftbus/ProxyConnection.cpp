@@ -56,6 +56,7 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 			saftbus::read(get_fd(), _saftbus_id);  
 			return;
 		}  catch (...) {
+			std::cerr << "ProxyConnection::ProxyConnection() threw" << std::endl;
 			// ... If above operation failed, our socket was probably assigned to 
 			//     another ProxyConnection as well, and we lost that race condition. 
 			//     We react with going to the next free socket filename

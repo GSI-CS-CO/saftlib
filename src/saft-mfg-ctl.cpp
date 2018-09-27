@@ -232,6 +232,7 @@ static void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
 // for thread safety tests
 static void* startFg(void *arg) 
 {
+  std::cerr << ">>>thread started" << std::endl;
   Glib::RefPtr<Glib::MainLoop> *tmp = (Glib::RefPtr<Glib::MainLoop> *)arg;
   Glib::RefPtr<Glib::MainLoop> loop = *tmp;
     
@@ -240,9 +241,14 @@ static void* startFg(void *arg)
     std::ostringstream msg;
     msg << __FILE__<< "::" << __FUNCTION__ << ":"  << __LINE__ << " start loop";
     if (loglevel>1) std::cout << msg.str() << std::endl; msg.str("");
-    loop->run();
+    try {
+      loop->run();
+    } catch (...) {
+      std::cerr << "startFg() : loop->run() threw" << std::endl;
+    }
   }
   if (loglevel>1) std::cout << "startFg Loop ended" << std::endl;
+  std::cerr << "<<<thread stopped" << std::endl;
   return NULL;
 }
 
@@ -272,6 +278,7 @@ static void slow_warning(int sig)
 
 int main(int argc, char** argv)
 {
+  std::cout << "******************** saft-mfg-ctl start ******************" << std::endl;
   try {
     Gio::init();
     Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
@@ -413,6 +420,8 @@ int main(int argc, char** argv)
   } catch (const Glib::Error& error) {
     std::cerr << "Glib error: " << error.what() << std::endl;
   }
+
+  std::cerr << "--------- main stopped" << std::endl;
   
   return 0;
 }
