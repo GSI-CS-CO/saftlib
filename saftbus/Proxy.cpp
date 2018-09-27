@@ -61,13 +61,11 @@ Proxy::~Proxy()
 {
 	std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
 	_signal_connection_handle.disconnect();
-//	std::cerr << " Proxy::~Proxy() pipe disconnected" << std::endl;
 	// free all resources ...
-	close(_pipe_fd[0]);
-	close(_pipe_fd[1]);
-	// std::cerr << " Proxy::~Proxy() pipes closed" << std::endl;
 	try {
 		_connection->remove_proxy_signal_fd(_object_path, _interface_name, _global_id);
+		close(_pipe_fd[0]);
+		close(_pipe_fd[1]);
 	} catch(std::exception &e) {
 		std::cerr << "Proxy::~Proxy() threw: " << e.what() << std::endl;
 	}
@@ -76,111 +74,105 @@ Proxy::~Proxy()
 bool Proxy::dispatch(Glib::IOCondition condition)
 {
 	// this method is called from the Glib::MainLoop whenever there is signal data in the pipe
-
 	try {
 
-	// read type and size of signal
-	saftbus::MessageTypeS2C type;
-	guint32                 size;
-	saftbus::read(_pipe_fd[0], type);
-	saftbus::read(_pipe_fd[0], size);
+		// read type and size of signal
+		saftbus::MessageTypeS2C type;
+		guint32                 size;
+		saftbus::read(_pipe_fd[0], type);
+		saftbus::read(_pipe_fd[0], size);
 
-	// prepare buffer of the right size for the incoming data
-	std::vector<char> buffer(size);
-	saftbus::read_all(_pipe_fd[0], &buffer[0], size);
+		// prepare buffer of the right size for the incoming data
+		std::vector<char> buffer(size);
+		saftbus::read_all(_pipe_fd[0], &buffer[0], size);
 
-	// de-serialize the data using the Glib::Variant infrastructure
-	Glib::Variant<std::vector<Glib::VariantBase> > payload;
-	deserialize(payload, &buffer[0], buffer.size());
-	// read content from the variant type (this works because we know what saftd will send us)
-	Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(0));
-	Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(1));
-	Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(2));
-	// the following two items are for signal flight time measurement (the time when the signal was sent)
-	Glib::Variant<gint64> sec                   = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(3));
-	Glib::Variant<gint64> nsec                  = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(4));
-	Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>    (payload.get_child(5));
+		// de-serialize the data using the Glib::Variant infrastructure
+		Glib::Variant<std::vector<Glib::VariantBase> > payload;
+		deserialize(payload, &buffer[0], buffer.size());
+		// read content from the variant type (this works because we know what saftd will send us)
+		Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(0));
+		Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(1));
+		Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(2));
+		// the following two items are for signal flight time measurement (the time when the signal was sent)
+		Glib::Variant<gint64> sec                   = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(3));
+		Glib::Variant<gint64> nsec                  = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(4));
+		Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>    (payload.get_child(5));
 
-	// if we don't get the expected _object path, saftd probably messed up the pipe lookup
-	if (_object_path != object_path.get()) {
-		std::ostringstream msg;
-		msg << "Proxy::dispatch() : signal with wrong object_path: expecting " 
-		    << _object_path 
-		    << ",  got " 
-		    << object_path.get();
-		throw std::runtime_error(msg.str());
-	}
-
-	double signal_flight_time;
-
-	// special treatment for property changes
-	if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
-	{
-		// in case of a property change, the interface name of the property 
-		// that was changed (here we call it derived_interface_name) is embedded in the data
-		Glib::Variant<Glib::ustring> derived_interface_name 
-				= Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
-		// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
-		if (_interface_name != derived_interface_name.get()) {
+		// if we don't get the expected _object path, saftd probably messed up the pipe lookup
+		if (_object_path != object_path.get()) {
 			std::ostringstream msg;
-			msg << "Proxy::dispatch() : signal with wrong interface name: expected " 
-			    << _interface_name 
+			msg << "Proxy::dispatch() : signal with wrong object_path: expecting " 
+			    << _object_path 
 			    << ",  got " 
-			    << derived_interface_name.get();
+			    << object_path.get();
 			throw std::runtime_error(msg.str());
 		}
 
-		// get the real data: which property has which value
-		Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > property_map 
-				= Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > >
-						(parameters.get_child(1));
-		Glib::Variant<std::vector< Glib::ustring > > invalidated_properies 
-				= Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< Glib::ustring > > >
-						(parameters.get_child(2));
+		double signal_flight_time;
 
-		// get the signal flight stop time right before we call the signal handler from the Proxy object
-	    struct timespec stop;
-	    clock_gettime( CLOCK_REALTIME, &stop);
-	    signal_flight_time = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-	                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
-		// report the measured signal flight time to saftd
-	    try {
-	    	_connection->send_signal_flight_time(signal_flight_time);
-			//saftbus::write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
-			//saftbus::write(_connection->get_fd(), signal_flight_time);
-	    // deliver the signal: call the property changed handler of the derived class
-			on_properties_changed(property_map.get(), invalidated_properies.get());
-		} catch(...) {
-			std::cerr << "Proxy::dispatch() : on_properties_changed threw " << std::endl;
-		}
-	}
-	else // all other signals
-	{
-		// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
-		if (_interface_name != interface_name.get()) {
-			std::ostringstream msg;
-			msg << "Proxy::dispatch() : signal with wrong interface name: expected " 
-			    << _interface_name 
-			    << ",  got " 
-			    << interface_name.get();
-			throw std::runtime_error(msg.str());
-		}
-		// get the signal flight stop time right before we call the signal handler from the Proxy object
-	    struct timespec stop;
-	    clock_gettime( CLOCK_REALTIME, &stop);
-	    signal_flight_time = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-	                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
-		// report the measured signal flight time to saftd
-	    try {
-			//saftbus::write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
-			//saftbus::write(_connection->get_fd(), signal_flight_time);
-	    // deliver the signal: call the signal handler of the derived class 
-			on_signal("de.gsi.saftlib", signal_name.get(), parameters);
-		} catch(...) {
-			std::cerr << "Proxy::dispatch() : on_signal threw " << std::endl;
-		}
-	}
+		// special treatment for property changes
+		if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
+		{
+			// in case of a property change, the interface name of the property 
+			// that was changed (here we call it derived_interface_name) is embedded in the data
+			Glib::Variant<Glib::ustring> derived_interface_name 
+					= Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
+			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
+			if (_interface_name != derived_interface_name.get()) {
+				std::ostringstream msg;
+				msg << "Proxy::dispatch() : signal with wrong interface name: expected " 
+				    << _interface_name 
+				    << ",  got " 
+				    << derived_interface_name.get();
+				throw std::runtime_error(msg.str());
+			}
 
+			// get the real data: which property has which value
+			Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > property_map 
+					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > >
+							(parameters.get_child(1));
+			Glib::Variant<std::vector< Glib::ustring > > invalidated_properies 
+					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< Glib::ustring > > >
+							(parameters.get_child(2));
+
+			// get the signal flight stop time right before we call the signal handler from the Proxy object
+		    struct timespec stop;
+		    clock_gettime( CLOCK_REALTIME, &stop);
+		    signal_flight_time = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+		                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
+			// report the measured signal flight time to saftd
+		    try {
+		    	_connection->send_signal_flight_time(signal_flight_time);
+			    // deliver the signal: call the property changed handler of the derived class
+				on_properties_changed(property_map.get(), invalidated_properies.get());
+			} catch(...) {
+				std::cerr << "Proxy::dispatch() : on_properties_changed threw " << std::endl;
+			}
+		}
+		else // all other signals
+		{
+			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
+			if (_interface_name != interface_name.get()) {
+				std::ostringstream msg;
+				msg << "Proxy::dispatch() : signal with wrong interface name: expected " 
+				    << _interface_name 
+				    << ",  got " 
+				    << interface_name.get();
+				throw std::runtime_error(msg.str());
+			}
+			// get the signal flight stop time right before we call the signal handler from the Proxy object
+		    struct timespec stop;
+		    clock_gettime( CLOCK_REALTIME, &stop);
+		    signal_flight_time = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+		                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
+			// report the measured signal flight time to saftd
+		    try {
+			    // deliver the signal: call the signal handler of the derived class 
+				on_signal("de.gsi.saftlib", signal_name.get(), parameters);
+			} catch(...) {
+				std::cerr << "Proxy::dispatch() : on_signal threw " << std::endl;
+			}
+		}
 	} catch (std::exception &e) {
 		std::cerr << "Proxy::dispatch() : exception : " << e.what() << std::endl;
 	}
