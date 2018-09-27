@@ -71,9 +71,40 @@ int ProxyConnection::get_connection_id()
 	return _connection_id;
 }
 
+void ProxyConnection::send_signal_flight_time(double signal_flight_time) {
+	std::unique_lock<std::mutex> lock(_socket_mutex);
+	saftbus::write(get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
+	saftbus::write(get_fd(), signal_flight_time);
+}
+
+
+void ProxyConnection::send_proxy_signal_fd(int pipe_fd, 
+	                                       Glib::ustring object_path,
+	                                       Glib::ustring interface_name,
+	                                       int global_id) 
+{
+	std::unique_lock<std::mutex> lock(_socket_mutex);
+	saftbus::write(get_fd(), saftbus::SIGNAL_FD);
+	saftbus::sendfd(get_fd(), pipe_fd);	
+	saftbus::write(get_fd(), object_path);
+	saftbus::write(get_fd(), interface_name);
+	saftbus::write(get_fd(), global_id);
+}
+
+void ProxyConnection::remove_proxy_signal_fd(Glib::ustring object_path,
+	                                         Glib::ustring interface_name,
+	                                         int global_id) 
+{
+	std::unique_lock<std::mutex> lock(_socket_mutex);
+	saftbus::write(get_fd(), saftbus::SIGNAL_REMOVE_FD);
+	saftbus::write(get_fd(), object_path);
+	saftbus::write(get_fd(), interface_name);
+	saftbus::write(get_fd(), global_id);
+}
 
 Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
 {
+	try {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
 	// perform a remote function call
 	// first append message meta informations like: type of message, recipient, sender, interface name
@@ -95,7 +126,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 
 	// receive response from socket
 	saftbus::MessageTypeS2C type;
-	read(get_fd(), type);
+	saftbus::read(get_fd(), type);
 	if (type == saftbus::METHOD_ERROR) {
 		// this was an error which will be converted into an exception
 		saftbus::Error::Type type;
@@ -117,6 +148,16 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 		msg << "ProxyConnection::call_sync() : unexpected type " << type << " instead of METHOD_REPLY or METHOD_ERROR";
 		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, msg.str());
 	}
+
+	} catch(std::exception &e) {
+		std::cerr << "ProxyConnection::call_sync() exception: " << e.what() << std::endl;
+		std::cerr << object_path << std::endl;
+		std::cerr << interface_name << std::endl;
+		std::cerr << name << std::endl;
+		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, e.what());
+	}
+
 }
+
 
 }

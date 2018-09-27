@@ -42,9 +42,20 @@ namespace saftbus
 
 	// internal stuff (not part the DBus fake api)
 	public:
-		int get_fd() const {return _create_socket; }
+		void send_signal_flight_time(double signal_flight_time);
+		void send_proxy_signal_fd(int pipe_fd, 
+                                  Glib::ustring object_path,
+                                  Glib::ustring interface_name,
+                                  int global_id);
+		void remove_proxy_signal_fd(Glib::ustring object_path,
+                                    Glib::ustring interface_name,
+                                    int global_id) ;
+
 		Glib::ustring get_saftbus_id() { return _saftbus_id; }
 		int get_connection_id();
+
+		// returned fd should only be used with a lock or in single threaded environments
+		int get_fd() const {return _create_socket; }
 	private:
 
 		// this is the information that is needed to keep connected to a socket

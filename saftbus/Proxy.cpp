@@ -23,6 +23,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	, _object_path(object_path)
 	, _interface_name(interface_name)
 {
+	std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
 		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
@@ -44,11 +45,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		}
 
 		// send the writing end of a pipe to saftd 
-		saftbus::write(_connection->get_fd(), saftbus::SIGNAL_FD);
-		saftbus::sendfd(_connection->get_fd(), _pipe_fd[1]);	
-		saftbus::write(_connection->get_fd(), _object_path);
-		saftbus::write(_connection->get_fd(), _interface_name);
-		saftbus::write(_connection->get_fd(), _global_id);
+		_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
 	} catch(...) {
 		std::cerr << "Proxy::~Proxy() threw" << std::endl;
 	}
@@ -62,16 +59,15 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 
 Proxy::~Proxy() 
 {
+	std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
 	_signal_connection_handle.disconnect();
+//	std::cerr << " Proxy::~Proxy() pipe disconnected" << std::endl;
 	// free all resources ...
 	close(_pipe_fd[0]);
 	close(_pipe_fd[1]);
+	// std::cerr << " Proxy::~Proxy() pipes closed" << std::endl;
 	try {
-		// ... and tell saftd that it can release the writing end signal pipe for this Proxy
-		saftbus::write(_connection->get_fd(), saftbus::SIGNAL_REMOVE_FD);
-		saftbus::write(_connection->get_fd(), _object_path);
-		saftbus::write(_connection->get_fd(), _interface_name);
-		saftbus::write(_connection->get_fd(), _global_id);
+		_connection->remove_proxy_signal_fd(_object_path, _interface_name, _global_id);
 	} catch(std::exception &e) {
 		std::cerr << "Proxy::~Proxy() threw: " << e.what() << std::endl;
 	}
@@ -149,8 +145,9 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 	                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
 		// report the measured signal flight time to saftd
 	    try {
-			saftbus::write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
-			saftbus::write(_connection->get_fd(), signal_flight_time);
+	    	_connection->send_signal_flight_time(signal_flight_time);
+			//saftbus::write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
+			//saftbus::write(_connection->get_fd(), signal_flight_time);
 	    // deliver the signal: call the property changed handler of the derived class
 			on_properties_changed(property_map.get(), invalidated_properies.get());
 		} catch(...) {
@@ -175,8 +172,8 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 	                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
 		// report the measured signal flight time to saftd
 	    try {
-			saftbus::write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
-			saftbus::write(_connection->get_fd(), signal_flight_time);
+			//saftbus::write(_connection->get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
+			//saftbus::write(_connection->get_fd(), signal_flight_time);
 	    // deliver the signal: call the signal handler of the derived class 
 			on_signal("de.gsi.saftlib", signal_name.get(), parameters);
 		} catch(...) {
