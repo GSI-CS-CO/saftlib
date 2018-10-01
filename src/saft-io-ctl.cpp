@@ -72,8 +72,8 @@ std::map<Glib::ustring,guint64>     map_PrefixName; /* Translation table IO name
 /* Prototypes */
 /* ==================================================================================================== */
 static void io_help        (void);
-static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_pps, int io_drive,
-                            bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_pps, bool set_drive,
+static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_pps, int io_drive, int stime,
+                            bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
                             bool verbose_mode);
 static int  io_create      (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative, bool translate_mask);
 static int  io_destroy     (bool verbose_mode);
@@ -423,6 +423,7 @@ static void io_help (void)
   std::cout << "  -m 0/1:                                        Toggle BuTiS t0 + TS gate/mux" << std::endl;
   std::cout << "  -p 0/1:                                        Toggle WR PPS gate/mux" << std::endl;
   std::cout << "  -d 0/1:                                        Drive output value" << std::endl;
+  std::cout << "  -k <time [ns]>                                 Change stable time" << std::endl;
   std::cout << std::endl;
   std::cout << "  -i:                                            List every IO and it's capability" << std::endl;
   std::cout << std::endl;
@@ -643,8 +644,8 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
 
 /* Function io_setup() */
 /* ==================================================================================================== */
-static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_pps, int io_drive,
-                    bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_pps, bool set_drive,
+static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_pps, int io_drive, int stime,
+                    bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
                     bool verbose_mode)
 {
   unsigned io_type  = 0;     /* Out, Inout or In? */
@@ -652,7 +653,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   bool     io_set   = false; /* IO set or get configuration */
 
   /* Check if there is at least one parameter to set */
-  io_set = set_oe | set_term | set_spec_out | set_spec_in | set_mux | set_pps | set_drive;
+  io_set = set_oe | set_term | set_spec_out | set_spec_in | set_mux | set_pps | set_drive | set_stime;
 
   /* Display information */
   if (verbose_mode)
@@ -793,7 +794,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         }
       }
 
-      /* Check special out configuration */
+      /* Check special in configuration */
       if (set_spec_in)
       {
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
@@ -842,6 +843,17 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         }
       }
 
+      /* Check if stable time can beset */
+      if (set_stime)
+      {
+        /* Plausibility check */
+        if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
+        {
+          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          return (__IO_RETURN_FAILURE);
+        }
+      }
+
       /* Set configuration */
       if (set_oe)       { output_proxy->setOutputEnable(io_oe); }
       if (set_term)     { input_proxy->setInputTermination(io_term); }
@@ -850,6 +862,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       if (set_mux)      { output_proxy->setBuTiSMultiplexer(io_mux); }
       if (set_pps)      { output_proxy->setPPSMultiplexer(io_pps); }
       if (set_drive)    { output_proxy->WriteOutput(io_drive); }
+      if (set_stime)    { input_proxy->setStableTime(stime); }
     }
     else
     {
@@ -909,6 +922,10 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
           if (input_proxy->getSpecialPurposeIn())   { std::cout << "  SpecialIn:        On" << std::endl; }
           else                                      { std::cout << "  SpecialIn:        Off" << std::endl; }
         }
+
+        /* Display stable time */
+        std::cout << "  StableTime:       " << input_proxy->getStableTime() << " ns" << std::endl;
+
       }
     }
   }
@@ -1040,6 +1057,7 @@ int main (int argc, char** argv)
   int  io_pps         = 0;     /* Gate (PPS) */
   int  io_drive       = 0;     /* Drive IO value */
   int  ioc_flip       = 0;     /* Flip active bit for all conditions */
+  int  stime          = 0;     /* Stable time to set */
   int  return_code    = 0;     /* Return code */
   guint64 eventID     = 0x0;   /* Event ID (new condition) */
   guint64 eventMask   = 0x0;   /* Event mask (new condition) */
@@ -1057,6 +1075,7 @@ int main (int argc, char** argv)
   bool set_mux        = false; /* Set? (BuTiS gate) */
   bool set_pps        = false; /* Set? (PPS gate) */
   bool set_drive      = false; /* Set? */
+  bool set_stime      = false; /* Set? (Stable time) */
   bool ios_snoop      = false; /* Snoop on an input(s) */
   bool ios_wipe       = false; /* Wipe/disable all events from input(s) */
   bool ios_i_to_e     = false; /* List input to event table */
@@ -1075,7 +1094,7 @@ int main (int argc, char** argv)
   deviceName = "NoDeviceNameGiven";
 
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "n:o:t:q:e:m:p:d:swyb:rc:guxfzlivh")) != -1)
+  while ((opt = getopt(argc, argv, "n:o:t:q:e:m:p:d:k:swyb:rc:guxfzlivh")) != -1)
   {
     switch (opt)
     {
@@ -1087,6 +1106,7 @@ int main (int argc, char** argv)
       case 'm': { io_mux         = atoi(optarg);   set_mux      = true; break; }
       case 'p': { io_pps         = atoi(optarg);   set_pps      = true; break; }
       case 'd': { io_drive       = atoi(optarg);   set_drive    = true; break; }
+      case 'k': { stime          = atoi(optarg);   set_stime    = true; break; }
       case 's': { ios_snoop      = true; break; }
       case 'w': { ios_wipe       = true; break; }
       case 'y': { ios_i_to_e     = true; break; }
@@ -1180,6 +1200,7 @@ int main (int argc, char** argv)
   if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 gate/mux setting is invalid!"         << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_pps > 1      || io_pps < 0)      { std::cout << "Error: WR PPS gate/mux setting is invalid!"           << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; return (__IO_RETURN_FAILURE); }
+  if (stime % 8 != 0)                     { std::cout << "Error: StableTime must be a multiple of 8ns"          << std::endl; return (__IO_RETURN_FAILURE); }
 
   /* Check if given IO name exists */
   if (ioNameGiven)
@@ -1224,7 +1245,7 @@ int main (int argc, char** argv)
     else if (ioc_destroy)    { return_code = io_destroy(verbose_mode); }
     else if (ioc_flip)       { return_code = io_flip(verbose_mode); }
     else if (ioc_list)       { return_code = io_list(); }
-    else                     { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_pps, io_drive, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_pps, set_drive, verbose_mode); }
+    else                     { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_pps, io_drive, stime, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_pps, set_drive, set_stime, verbose_mode); }
   }
 
   /* Done */
