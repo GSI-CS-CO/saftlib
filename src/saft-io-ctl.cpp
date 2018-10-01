@@ -1200,7 +1200,8 @@ int main (int argc, char** argv)
   if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 gate/mux setting is invalid!"         << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_pps > 1      || io_pps < 0)      { std::cout << "Error: WR PPS gate/mux setting is invalid!"           << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; return (__IO_RETURN_FAILURE); }
-  if (stime % 8 != 0)                     { std::cout << "Error: StableTime must be a multiple of 8ns"          << std::endl; return (__IO_RETURN_FAILURE); }
+  if (stime % 8 != 0)                     { std::cout << "Error: StableTime must be a multiple of 8 ns"         << std::endl; return (__IO_RETURN_FAILURE); }
+  if (stime < 16)                         { std::cout << "Error: StableTime must be at least 16 ns"             << std::endl; return (__IO_RETURN_FAILURE); }
 
   /* Check if given IO name exists */
   if (ioNameGiven)
