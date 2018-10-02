@@ -134,7 +134,7 @@ void Connection::handle_disconnect(Socket *socket)
 		Glib::VariantContainerBase dummy_arg;
 		Glib::ustring& saftbus_id = socket->saftbus_id();
 
-		//_socket_owner.erase(socket_nr(socket));
+		_socket_owner.erase(socket_nr(socket));
 
 		// make the socket available for new connection requests
 		socket->close_connection();
@@ -437,7 +437,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					std::ostringstream id_out;
 					id_out << ":" << _saftbus_id_counter;
 					socket->saftbus_id() = id_out.str();
-					std::cerr << "socket_nr " << socket_nr(socket) << "   id " << id_out.str() << std::endl;
+					//std::cerr << "socket_nr " << socket_nr(socket) << "   id " << id_out.str() << std::endl;
 					_socket_owner[socket_nr(socket)] = id_out.str();
 					// send the id to the ProxyConnection
 					saftbus::write(socket->get_fd(), socket->saftbus_id());
@@ -460,7 +460,6 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					int dt_us = dt;
 					++_signal_flight_times[dt_us];
 					logger.add(dt).add(" us\n");
-					std::cerr << "got signal flight time " << dt << std::endl;
 				}
 				break;
 				case saftbus::SIGNAL_FD: 

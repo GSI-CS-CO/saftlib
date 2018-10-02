@@ -18,12 +18,13 @@ void write_histogram(Glib::ustring filename, const std::map<int,int> &hist)
 }
 
 void show_help(const char *argv0) {
-	std::cerr << "usage: " << argv0 << "[options]" << std::endl;
-	std::cerr << "   options are:" << std::endl;
-	std::cerr << "   -s     print status" << std::endl;
-	std::cerr << "   -t     write signal flight time statistics to file" << std::endl;
-	std::cerr << "   -e     enable signal flight time statistics" << std::endl;
-	std::cerr << "   -d     disable signal flight time statistics" << std::endl;
+	std::cout << "usage: " << argv0 << " [options]" << std::endl;
+	std::cout << "   options are:" << std::endl;
+	std::cout << "   -s     print status" << std::endl;
+	std::cout << "   -t     write signal flight time statistics to file" << std::endl;
+	std::cout << "   -e     enable signal flight time statistics" << std::endl;
+	std::cout << "   -d     disable signal flight time statistics" << std::endl;
+	std::cout << "   -h     show this help" << std::endl;
 }
 
 
@@ -136,11 +137,12 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 		std::cout << "found vtable indices without saftbus object assigned" << std::endl;
 		std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 	}
-
-	std::cout << "socket owner" << std::endl;
+	std::cout << std::endl;
+	std::cout << std::setw(7) << "socket" << std::setw(7) << " owner" << std::endl;
 	for (auto owner: socket_owner) {
-		std::cout << owner.first << " " << owner.second << std::endl;
+		std::cout << std::setw(7) << owner.first << std::setw(7) << owner.second << std::endl;
 	}
+	std::cout << std::endl;
 	//int _client_id;
 
 }
@@ -156,9 +158,17 @@ int main(int argc, char *argv[])
 		bool save_signal_time_stats       = false;
 		std::string timing_stats_filename = "saftbus_timing.dat";
 
+		if (argc == 1) {
+			show_help(argv[0]);
+			return 0;
+		}
+
 		for (int i = 1; i < argc; ++i) {
 			std::string argvi = argv[i];
-			if (argvi == "-s") {
+			if (argvi == "-h") {
+				show_help(argv[0]);
+				return 0;
+			} else if (argvi == "-s") {
 				list_mutable_state = true;
 			} else if (argvi == "-t") {
 				save_signal_time_stats = true;
