@@ -23,7 +23,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	, _object_path(object_path)
 	, _interface_name(interface_name)
 {
-	std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
+	//std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
 		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
@@ -59,7 +59,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 
 Proxy::~Proxy() 
 {
-	std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
+	//std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
 	_signal_connection_handle.disconnect();
 	// free all resources ...
 	try {
@@ -96,7 +96,8 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 		// the following two items are for signal flight time measurement (the time when the signal was sent)
 		Glib::Variant<gint64> sec                   = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(3));
 		Glib::Variant<gint64> nsec                  = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(4));
-		Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>    (payload.get_child(5));
+		Glib::Variant<gint32> create_statistics     = Glib::VariantBase::cast_dynamic<Glib::Variant<gint32> >        (payload.get_child(5));
+		Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>    (payload.get_child(6));
 
 		// if we don't get the expected _object path, saftd probably messed up the pipe lookup
 		if (_object_path != object_path.get()) {
@@ -142,7 +143,9 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 		                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
 			// report the measured signal flight time to saftd
 		    try {
-		    	_connection->send_signal_flight_time(signal_flight_time);
+		    	if (create_statistics.get()) { // do this only if switched on
+		    		_connection->send_signal_flight_time(signal_flight_time);
+		    	}
 			    // deliver the signal: call the property changed handler of the derived class
 				on_properties_changed(property_map.get(), invalidated_properies.get());
 			} catch(...) {
@@ -167,6 +170,9 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 		                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
 			// report the measured signal flight time to saftd
 		    try {
+		    	if (create_statistics.get()) { // do this only if switched on
+			    	_connection->send_signal_flight_time(signal_flight_time);
+			    }
 			    // deliver the signal: call the signal handler of the derived class 
 				on_signal("de.gsi.saftlib", signal_name.get(), parameters);
 			} catch(...) {

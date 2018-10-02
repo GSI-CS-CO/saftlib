@@ -20,10 +20,10 @@ void write_histogram(Glib::ustring filename, const std::map<int,int> &hist)
 void show_help(const char *argv0) {
 	std::cerr << "usage: " << argv0 << "[options]" << std::endl;
 	std::cerr << "   options are:" << std::endl;
-	std::cerr << "   -l     list all active devices in saftlib (object paths)" << std::endl;
-	std::cerr << "   -p     show all open signal pipes to proxy objects" << std::endl;
-	std::cerr << "   -s     write timing statistics to file" << std::endl;
-	std::cerr << "   -m     print mutable state of connection" << std::endl;
+	std::cerr << "   -s     print status" << std::endl;
+	std::cerr << "   -t     write signal flight time statistics to file" << std::endl;
+	std::cerr << "   -e     enable signal flight time statistics" << std::endl;
+	std::cerr << "   -d     disable signal flight time statistics" << std::endl;
 }
 
 
@@ -37,7 +37,70 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 	std::vector<int> indices;
 	std::vector<int> assigned_indices;
 	saftbus::read(connection->get_fd(), indices);
+
+	int saftbus_object_id_counter; // log saftbus object creation
+	saftbus::read(connection->get_fd(), saftbus_object_id_counter);
+	int saftbus_signal_handle_counter; // log signal subscriptions
+	saftbus::read(connection->get_fd(), saftbus_signal_handle_counter);
+
+	std::vector<int> sockets_active;
+	saftbus::read(connection->get_fd(), sockets_active);
+
+	std::map<int, Glib::ustring> socket_owner;
+	saftbus::read(connection->get_fd(), socket_owner);
+
+	// 	     // handle    // signal
+	//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+	std::map<guint, int> handle_to_signal_map;
+	saftbus::read(connection->get_fd(), handle_to_signal_map);
+	// for (auto handle_signal: handle_to_signal_map) {
+	// 	std::cout << handle_signal.first << " " << handle_signal.second << std::endl;
+	// }
+
+
+	std::map<Glib::ustring, std::set<guint> > id_handles_map;
+	saftbus::read(connection->get_fd(), id_handles_map);
+
+
+	//std::set<guint> erased_handles;
+	std::vector<guint> erased_handles;
+	saftbus::read(connection->get_fd(), erased_handles);
+
+
+
+	// store the pipes that go directly to one or many Proxy objects
+			// interface_name        // object path
+	std::map<Glib::ustring, std::map < Glib::ustring , std::set< saftbus::ProxyPipe > > > proxy_pipes;
+	saftbus::read(connection->get_fd(), proxy_pipes);
+
+	int _saftbus_id_counter;
+	saftbus::read(connection->get_fd(), _saftbus_id_counter);
+
+
+
 	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	std::cout << std::endl;
+	std::cout << "object id counter:     " << saftbus_object_id_counter << std::endl;
+	std::cout << "signal handle counter: " << saftbus_signal_handle_counter << std::endl;
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	std::cout << std::endl;
+	std::cout << "socket: ";
+	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
+		std::cout << std::setw(3) << i;
+	}
+	std::cout << std::endl;
+	std::cout << "busy:   ";
+	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
+		if (sockets_active[i]) {
+			std::cout << std::setw(3) << "*";
+		} else {
+			std::cout << std::setw(3) << " ";
+		}
+	}
+	std::cout << std::endl;
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	std::cout << std::endl;
+
 	std::cout << std::left << std::setw(40) << "interface name" 
 	          << std::left << std::setw(50) << "object path" 
 	          << std::right << std::setw(10) << "index" 
@@ -65,6 +128,7 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 		}
 		std::cout << std::endl;
 	}
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 
 
 	if (assigned_indices.size() != indices.size()) {
@@ -73,155 +137,80 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 		std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 	}
 
-	int saftbus_object_id_counter; // log saftbus object creation
-	saftbus::read(connection->get_fd(), saftbus_object_id_counter);
-	int saftbus_signal_handle_counter; // log signal subscriptions
-	saftbus::read(connection->get_fd(), saftbus_signal_handle_counter);
-
-	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
-	std::cout << std::endl;
-	std::cout << "object id counter:     " << saftbus_object_id_counter << std::endl;
-	std::cout << "signal handle counter: " << saftbus_signal_handle_counter << std::endl;
-	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
-	std::cout << std::endl;
-	std::vector<int> sockets_active;
-	saftbus::read(connection->get_fd(), sockets_active);
-	std::cout << "socket: ";
-	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
-		std::cout << std::setw(3) << i;
+	std::cout << "socket owner" << std::endl;
+	for (auto owner: socket_owner) {
+		std::cout << owner.first << " " << owner.second << std::endl;
 	}
-	std::cout << std::endl;
-	std::cout << "busy:   ";
-	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
-		if (sockets_active[i]) {
-			std::cout << std::setw(3) << "*";
-		} else {
-			std::cout << std::setw(3) << " ";
-		}
-	}
-	std::cout << std::endl;
-	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
-	std::cout << std::endl;
 	//int _client_id;
-
-	// 	     // handle    // signal
-	//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
-	std::map<guint, int> handle_to_signal_map;
-	saftbus::read(connection->get_fd(), handle_to_signal_map);
-	for (auto handle_signal: handle_to_signal_map) {
-		std::cout << handle_signal.first << " " << handle_signal.second << std::endl;
-	}
-
-
-	std::map<Glib::ustring, std::set<guint> > id_handles_map;
-	saftbus::read(connection->get_fd(), id_handles_map);
-
-	//std::set<guint> erased_handles;
-	std::vector<guint> erased_handles;
-	saftbus::read(connection->get_fd(), erased_handles);
-
-
-
-	// store the pipes that go directly to one or many Proxy objects
-			// interface_name        // object path
-	std::map<Glib::ustring, std::map < Glib::ustring , std::set< saftbus::ProxyPipe > > > proxy_pipes;
-	saftbus::read(connection->get_fd(), proxy_pipes);
-
-	int _saftbus_id_counter;
-	saftbus::read(connection->get_fd(), _saftbus_id_counter);
 
 }
 
 int main(int argc, char *argv[])
 {
+	try {
+		Glib::init();
 
-	Glib::init();
+		bool list_mutable_state           = false;
+		bool enable_signal_stats          = false;
+		bool disable_signal_stats         = false;
+		bool save_signal_time_stats       = false;
+		std::string timing_stats_filename = "saftbus_timing.dat";
 
-	bool list_objects                 = false;
-	bool list_pipes                   = false;
-	bool get_timing_stats             = false;
-	bool list_mutable_state           = false;
-	std::string timing_stats_filename = "saftbus_timing.dat";
+		for (int i = 1; i < argc; ++i) {
+			std::string argvi = argv[i];
+			if (argvi == "-s") {
+				list_mutable_state = true;
+			} else if (argvi == "-t") {
+				save_signal_time_stats = true;
+			} else if (argvi == "-e") {
+				enable_signal_stats = true;
+			} else if (argvi == "-d") {
+				disable_signal_stats = true;
+			} else {
+				std::cerr << "unknown argument: " << argvi << std::endl;
+				return 1;
+			}
+		}
+		// connect to saft-daemon
+		auto connection = Glib::RefPtr<saftbus::ProxyConnection>(new saftbus::ProxyConnection);
 
-	for (int i = 1; i < argc; ++i) {
-		std::string argvi = argv[i];
-		if (argvi == "-l") {
-			list_objects = true;
-		} else if (argvi == "-p") {
-			list_pipes = true;
-		} else if (argvi == "-m") {
-			list_mutable_state = true;
-		} else if (argvi == "-s") {
-			get_timing_stats = true;
-			// if (++i < argc) {
-			// 	timing_stats_filename = argv[i];
-			// 	std::cerr << timing_stats_filename << std::endl;
-			// }
-		} else {
-			std::cerr << "unknown argument: " << argvi << std::endl;
+		if (list_mutable_state) {
+			print_mutable_state(connection);
+		}
+
+		if (enable_signal_stats && disable_signal_stats) {
+			std::cerr << "you can either disable or enable signal stats," << std::endl;
+			std::cerr << " not both at the same time" << std::endl;
 			return 1;
 		}
-	}
 
-	// connect to saft-daemon
-	auto connection = Glib::RefPtr<saftbus::ProxyConnection>(new saftbus::ProxyConnection);
-
-	// say hello to saftbus
-	saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_HELLO);
-
-	// tell saftbus to send us some information
-	saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_STATUS);
-
-
-	std::map<Glib::ustring, std::map<Glib::ustring, int> > saftbus_indices;
-	saftbus::read(connection->get_fd(), saftbus_indices);
-
-	std::vector<int> indices;
-	saftbus::read(connection->get_fd(), indices);
-
-	std::map<int, int> signal_flight_times;
-	saftbus::read(connection->get_fd(), signal_flight_times);
-
-	std::map<Glib::ustring, std::map<int, int> > function_run_times;
-	saftbus::read(connection->get_fd(), function_run_times);
-
-
-	std::set<Glib::ustring> object_paths;
-
-	for (auto itr: saftbus_indices) {
-		for (auto it: itr.second) {
-			object_paths.insert(it.first);
+		if (enable_signal_stats) {
+			std::cout << "enabling signal flight time statistics in saftd" << std::endl;
+			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_ENABLE_STATS);
 		}
-	}
-
-
-	if (list_objects) {
-		std::cerr << "listing all objects: " << std::endl;
-		for( auto it: object_paths) {
-			std::cerr << "    " << it << std::endl;
+		if (disable_signal_stats) {
+			std::cout << "disabling signal flight time statistics in saftd" << std::endl;
+			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_DISABLE_STATS);
 		}
-	}
 
-	if (list_pipes) {
-		std::cerr << "listing all active indices: " << std::endl;
-		for (auto it: indices) {
-			std::cerr << "    " << it << std::endl;
+		if (save_signal_time_stats) {
+			std::cout << "downloading signal timing statistics from saftd" << std::endl;
+			std::map<int, int> signal_flight_times;
+			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_GET_STATS);
+			saftbus::read(connection->get_fd(), signal_flight_times);
+			std::ofstream statfile("signal_flight_times.dat");
+			for (auto entry: signal_flight_times) {
+				statfile << entry.first << " " << entry.second << std::endl;
+			}
+			statfile.close();
 		}
+
+		connection.reset();
+		std::cerr << "saftbus-ctl done" << std::endl;
+	} catch (...) {
+		std::cout << "Error:" << std::endl;
+		std::cout << "   Failed to connect to saftd. " << std::endl;
+		std::cout << "   Either all sockets are busy, or saftd isn't running at all." << std::endl;
 	}
-
-	if (get_timing_stats) {
-		write_histogram(timing_stats_filename.c_str(), signal_flight_times);
-		for (auto function: function_run_times) {
-			write_histogram(function.first, function.second);
-		}
-	}
-
-	if (list_mutable_state) {
-		print_mutable_state(connection);
-	}
-
-
-	connection.reset();
-	std::cerr << "saftbus-ctl done" << std::endl;
 	return 0;
 }

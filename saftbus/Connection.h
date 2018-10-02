@@ -97,7 +97,7 @@ namespace saftbus
 
 		static int _saftbus_id_counter;
 
-
+		std::map<int, Glib::ustring> _socket_owner;
 
 		// histograms for timing analysis
 		std::map<int, int> _signal_flight_times;
@@ -105,6 +105,8 @@ namespace saftbus
 		std::map<Glib::ustring, std::map<int, int> > _function_run_times;
 
 		Logger logger;
+
+		bool _create_signal_flight_time_statistics;
 	};
 
 }

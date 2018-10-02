@@ -20,6 +20,7 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 	: _saftbus_object_id_counter(1)
 	, _saftbus_signal_handle_counter(1)
 	, logger("/tmp/saftbus_connection.log")
+	, _create_signal_flight_time_statistics(false)
 {
 	for (int i = 0; i < number_of_sockets; ++i)
 	{
@@ -133,6 +134,8 @@ void Connection::handle_disconnect(Socket *socket)
 		Glib::VariantContainerBase dummy_arg;
 		Glib::ustring& saftbus_id = socket->saftbus_id();
 
+		//_socket_owner.erase(socket_nr(socket));
+
 		// make the socket available for new connection requests
 		socket->close_connection();
 		socket->wait_for_client();
@@ -195,6 +198,7 @@ void Connection::handle_disconnect(Socket *socket)
 			clean_all_fds_from_socket(socket);
 		}
 
+
 		logger.log();
 	} catch (std::exception &e) {
 		std::cerr << "Connection::handle_disconnect() exception : " << e.what() << std::endl;
@@ -243,6 +247,7 @@ void Connection::emit_signal(const Glib::ustring& object_path,
 		signal_msg.push_back(Glib::Variant<Glib::ustring>::create(signal_name));
 		signal_msg.push_back(Glib::Variant<gint64>::create(start_time.tv_sec));
 		signal_msg.push_back(Glib::Variant<gint64>::create(start_time.tv_nsec));
+		signal_msg.push_back(Glib::Variant<gint32>::create(_create_signal_flight_time_statistics));
 		signal_msg.push_back(parameters);
 		Glib::Variant<std::vector<Glib::VariantBase> > var_signal_msg = Glib::Variant<std::vector<Glib::VariantBase> >::create(signal_msg);
 
@@ -320,6 +325,24 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 		} else {
 			switch(type)
 			{
+				case saftbus::SAFTBUS_CTL_ENABLE_STATS:
+				{
+					_create_signal_flight_time_statistics = true;
+					std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
+				}
+				break;
+				case saftbus::SAFTBUS_CTL_DISABLE_STATS:
+				{
+					_create_signal_flight_time_statistics = false;
+					std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
+				}
+				break;
+				case saftbus::SAFTBUS_CTL_GET_STATS:
+				{
+					saftbus::write(socket->get_fd(), _signal_flight_times);
+					std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
+				}
+				break;
 				case saftbus::SAFTBUS_CTL_HELLO:
 				{
 					path_indicator = 1;
@@ -369,6 +392,8 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					}
 					saftbus::write(socket->get_fd(), sockets_active);
 
+					saftbus::write(socket->get_fd(), _socket_owner);
+
 					// 	     // handle    // signal
 					//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 					std::map<guint, int> handle_to_signal_map;
@@ -398,6 +423,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 
 					//static int _saftbus_id_counter;
 					saftbus::write(socket->get_fd(), _saftbus_id_counter);
+
 				}
 				break;
 				case saftbus::SENDER_ID:
@@ -411,6 +437,8 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					std::ostringstream id_out;
 					id_out << ":" << _saftbus_id_counter;
 					socket->saftbus_id() = id_out.str();
+					std::cerr << "socket_nr " << socket_nr(socket) << "   id " << id_out.str() << std::endl;
+					_socket_owner[socket_nr(socket)] = id_out.str();
 					// send the id to the ProxyConnection
 					saftbus::write(socket->get_fd(), socket->saftbus_id());
 				}
@@ -432,6 +460,7 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 					int dt_us = dt;
 					++_signal_flight_times[dt_us];
 					logger.add(dt).add(" us\n");
+					std::cerr << "got signal flight time " << dt << std::endl;
 				}
 				break;
 				case saftbus::SIGNAL_FD: 
