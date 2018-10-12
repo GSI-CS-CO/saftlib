@@ -146,7 +146,7 @@ void Input::setEventPrefix(guint64 val)
   ownerOnly();
   
   if (val % 2 != 0)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "EventPrefix cannot have lowest bit set (EventBits=1)");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "EventPrefix cannot have lowest bit set (EventBits=1)");
   
   if (event == val) return;
   event = val;
@@ -160,9 +160,9 @@ void Input::setStableTime(guint32 val)
   ownerOnly();
   
   if (val % 8 != 0)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "StableTime must be a multiple of 8ns");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "StableTime must be a multiple of 8ns");
   if (val < 16)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "StableTime must be at least 16ns");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "StableTime must be at least 16ns");
   
   if (stable == val) return;
   stable = val;

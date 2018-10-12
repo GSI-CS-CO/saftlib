@@ -22,14 +22,13 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include <iostream>
 #include "Owned.h"
 #include "clog.h"
 #include "Device.h"
 
 namespace saftlib {
 
-static void do_unsubscribe(Glib::RefPtr<saftbus::Connection> connection, guint id) 
+static void do_unsubscribe(Glib::RefPtr<IPC_METHOD::Connection> connection, guint id) 
 {
   connection->signal_unsubscribe(id);
 }
@@ -37,12 +36,10 @@ static void do_unsubscribe(Glib::RefPtr<saftbus::Connection> connection, guint i
 Owned::Owned(const Glib::ustring& objectPath, sigc::slot<void> destroy_)
  : BaseObject(objectPath), destroy(destroy_)
 {
-  //std::cerr << "Owned::Owned(" << objectPath << ")" << std::endl;
 }
 
 Owned::~Owned()
 {
-  //std::cerr << "Owned::~Owned(" << ")" << std::endl;
   try {
     Destroyed(); 
     if (!owner.empty()) unsubscribe();
@@ -53,9 +50,8 @@ Owned::~Owned()
 
 void Owned::Disown()
 {
-  //std::cerr << "Owned::Disown(" << ")" << std::endl;
   if (owner.empty()) {
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Do not have an Owner");
   } else {
     ownerOnly();
     unsubscribe();
@@ -66,16 +62,14 @@ void Owned::Disown()
 
 void Owned::Own()
 {
-  //std::cerr << "Owned::Own()  ,   getSender() = " << getSender() << std::endl;
   initOwner(getConnection(), getSender());
 }
 
-void Owned::initOwner(const Glib::RefPtr<saftbus::Connection>& connection_, const Glib::ustring& owner_)
+void Owned::initOwner(const Glib::RefPtr<IPC_METHOD::Connection>& connection_, const Glib::ustring& owner_)
 {
-  //std::cerr << "Owned::initOwner( , " << owner_ << " ) " <<std::endl;
   if (owner.empty()) {
     owner = owner_;
-    Glib::RefPtr<saftbus::Connection> connection = connection_;
+    Glib::RefPtr<IPC_METHOD::Connection> connection = connection_;
     guint subscription_id = connection->signal_subscribe(
         sigc::bind(sigc::ptr_fun(&Owned::owner_quit_handler), this),
         "org.freedesktop.DBus",
@@ -86,14 +80,14 @@ void Owned::initOwner(const Glib::RefPtr<saftbus::Connection>& connection_, cons
     unsubscribe = sigc::bind(sigc::ptr_fun(&do_unsubscribe), connection, subscription_id);
     Owner(owner);
   } else {
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Already have an Owner");
   }
 }
 
 void Owned::Destroy()
 {
   if (!getDestructible())
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Attempt to Destroy non-Destructible Owned object");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Attempt to Destroy non-Destructible Owned object");
   
   ownerOnly();
   destroy();
@@ -111,24 +105,20 @@ bool Owned::getDestructible() const
 
 void Owned::ownerOnly() const
 {
-  //std::cerr << "Owned::ownerOnly() getSender() = " << getSender() << std::endl;
-  //if (!owner.empty())
-  //  std::cerr << "owner = " << owner << std::endl;
   if (!owner.empty() && owner != getSender())
-    throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "You are not my Owner");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::ACCESS_DENIED, "You are not my Owner");
 }
 
 void Owned::ownerQuit()
 {
-} 
+}
 
 void Owned::owner_quit_handler(
-  const Glib::RefPtr<saftbus::Connection>&,
+  const Glib::RefPtr<IPC_METHOD::Connection>&,
   const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
   const Glib::ustring&, const Glib::VariantContainerBase&,
   Owned* self)
 {
-  //std::cerr << "Owned::owner_quit_handler() called" << std::endl;
   try {
     self->unsubscribe();
     self->owner.clear();

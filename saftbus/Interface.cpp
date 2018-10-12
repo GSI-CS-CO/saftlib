@@ -8,10 +8,24 @@
 namespace saftbus
 {
 
+Glib::RefPtr<Message> Message::create(const std::vector<int> &fds)
+{
+	return Glib::RefPtr<Message>(new Message(fds));;
+}
 
 
+Message::Message(const std::vector<int> &fds)
+{
+	_fd_list = Gio::UnixFDList::create();
+	for(auto fd: fds) {
+		_fd_list->append(fd);
+	}
+}
 
-
+GUnixFDList* Message::gobj()
+{
+	return _fd_list->gobj();
+}
 
 InterfaceVTable::InterfaceVTable ( 	const SlotInterfaceMethodCall&  slot_method_call,
 									const SlotInterfaceGetProperty&  slot_get_property,
@@ -32,6 +46,20 @@ const Glib::ustring &InterfaceInfo::get_interface_name()
 	return _interface_name;
 }
 
+MethodInvocation::MethodInvocation()
+{}
+
+MethodInvocation::MethodInvocation(const std::vector<int> &fds)
+	: _fds(fds)
+{}
+
+MethodInvocation::~MethodInvocation()
+{
+	for (auto fd: _fds) {
+		close(fd);
+	}
+}
+
 
 void MethodInvocation::return_value	(const Glib::VariantContainerBase& parameters)
 {
@@ -45,6 +73,14 @@ void MethodInvocation::return_error	(const saftbus::Error& error)
 	_has_error = true;
 	_error = error;
 }
+
+Glib::RefPtr<saftbus::Message>	MethodInvocation::get_message()
+{
+	Glib::RefPtr<Message> msg = Message::create(_fds);
+	return msg;
+}
+
+
 Glib::VariantContainerBase& MethodInvocation::get_return_value()
 {
 	if (_debug_level > 5) std::cerr << "MethodInvocation::get_return_value()" << std::endl;

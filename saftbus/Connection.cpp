@@ -181,7 +181,7 @@ void Connection::handle_disconnect(Socket *socket)
 			for (auto object_path: saftbus_index.second) {
 				if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
 					objects_to_be_erased.push_back(std::make_pair(interface_name, object_path.first));
-					std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
+					//std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
 				}
 			}
 		}
@@ -626,6 +626,92 @@ bool Connection::dispatch(Glib::IOCondition condition, Socket *socket)
 						// saftbus object lookup
 						int index = _saftbus_indices[interface_name.get()][object_path.get()];
 						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
+
+						logger.add("     doing the function call ...\n");
+						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);
+						logger.add("     ... done \n");
+
+						if (method_invocation_rptr->has_error()) {
+							logger.add("     ... return an error \n");
+							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
+							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().type());
+							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().what());
+						} else {
+							logger.add("     ... return a normal return value \n");
+
+							// get the result and pack it in a way that 
+							//   can be digested by the auto-generated saftlib code
+ 							Glib::VariantContainerBase result;
+							result = method_invocation_rptr->get_return_value();
+
+							// pack response data
+							std::vector<Glib::VariantBase> response;
+							response.push_back(result);
+							Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
+
+							// serialize
+							size = var_response.get_size();
+							const char *data_ptr = static_cast<const char*>(var_response.get_data());
+							logger.add("         size of response -> method resoponse: size=").add(size).add("\n");
+
+							//send 
+							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
+							saftbus::write(socket->get_fd(), size);
+							saftbus::write_all(socket->get_fd(), data_ptr, size);
+							logger.add("         response was sent\n");
+						}
+					}
+				}
+				break;
+
+				case saftbus::METHOD_CALL_ASYNC: 
+				{
+					saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_ASYNC"]);
+					logger.add("           METHOD_CALL_ASYNC received: ");
+					
+					// read the size of serialized data
+					guint32 size;
+					saftbus::read(socket->get_fd(), size);
+					logger.add(" message size=").add(size);
+
+					// read the serialized data
+					std::vector<char> buffer(size);
+					saftbus::read_all(socket->get_fd(), &buffer[0], size);
+					Glib::Variant<std::vector<Glib::VariantBase> > payload;
+
+					guint32 fd_size;
+					saftbus::read(socket->get_fd(), fd_size);
+					std::vector<int> fd_list;
+					for (int i = 0; i < fd_size; ++i) {
+						int fd = saftbus::recvfd(socket->get_fd());
+						fd_list.push_back(fd);
+					}
+					// deserialize data and get content from the variant
+					deserialize(payload, &buffer[0], buffer.size());
+					Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
+					Glib::Variant<Glib::ustring> sender         = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
+					Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
+					Glib::Variant<Glib::ustring> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(3));
+					Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
+					logger.add(" sender=").add(sender.get())
+					      .add(" name=").add(name.get())
+					      .add(" object_path=").add(object_path.get())
+					      .add(" interface_name=").add(interface_name.get())
+					      .add(" \n");
+
+					if (interface_name.get() == "org.freedesktop.DBus.Properties") { // property get/set method call
+						// async set/get is not allowed
+						std::cerr << "Connection: get/set is not allowed in async calls" << std::endl;
+					}
+					else // normal method calls 
+					{
+						logger.add("         a normal method async_call\n");
+						std::ostringstream function_name;
+						function_name << "Connection::dispatch_METHOD_CALL_" << name.get();
+
+						// saftbus object lookup
+						int index = _saftbus_indices[interface_name.get()][object_path.get()];
+						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation(fd_list));
 
 						logger.add("     doing the function call ...\n");
 						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);

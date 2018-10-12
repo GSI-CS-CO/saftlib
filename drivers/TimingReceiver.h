@@ -25,9 +25,6 @@
 #include "EventSource.h"
 #include "interfaces/TimingReceiver.h"
 
-#include <iostream>
-#include <fstream>
-
 namespace saftlib {
 
 class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice {
@@ -125,9 +122,6 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     void popMissingQueue(unsigned channel, unsigned num);
   
   friend class ActionSink;
-
-  private:
-    std::ofstream log;
 };
 
 }

@@ -32,6 +32,7 @@ AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/saftbus
 lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib
 nodist_saftlib_HEADERS = 	\
+	saftlib_ipc.h \
 	SAFTd.h			\
 	FunctionGenerator.h	\
 	MasterFunctionGenerator.h	\

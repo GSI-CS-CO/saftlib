@@ -26,7 +26,6 @@
 #include <sstream>
 #include <algorithm>
 #include <map>
-#include <time.h>
 
 #include "RegisteredObject.h"
 #include "Driver.h"
@@ -60,18 +59,17 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    watchdog(args.watchdog),
    pps(args.pps),
    sas_count(0),
-   locked(false),
-   log("timingReceiver.log")
+   locked(false)
 {
   // try to acquire watchdog
   eb_data_t retry;
   device.read(watchdog, EB_DATA32, &watchdog_value);
   if ((watchdog_value & 0xFFFF) != 0)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Timing Receiver already locked");
   device.write(watchdog, EB_DATA32, watchdog_value);
   device.read(watchdog, EB_DATA32, &retry);
   if (((retry ^ watchdog_value) >> 16) != 0)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Timing Receiver already locked");
   
   // parse eb-info data
   setupGatewareInfo(args.info);
@@ -377,7 +375,7 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
     if (!alloc->second) break;
   
   if (alloc == actionSinks.end())
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
   
   Glib::ustring seq, name;
   std::ostringstream str;
@@ -390,13 +388,13 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   } else {
     name = name_;
     if (name[0] == '_')
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
+      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
     if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
     
     std::map< Glib::ustring, Glib::ustring > sinks = getSoftwareActionSinks();
     if (sinks.find(name) != sinks.end())
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
+      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Name already in use");
   }
   
   // nest the object under our own name
@@ -454,7 +452,7 @@ guint64 TimingReceiver::ReadRawCurrentTime()
 guint64 TimingReceiver::ReadCurrentTime()
 {
   if (!locked)
-    throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::IO_ERROR, "TimingReceiver is not Locked");
 
   return ReadRawCurrentTime();
 }
@@ -656,8 +654,6 @@ struct WalkEntry {
 
 void TimingReceiver::compile()
 {
-  struct timespec start, stop;
-  clock_gettime( CLOCK_REALTIME, &start);
   // Store all active conditions into a vector for processing
   typedef std::vector<ECA_OpenClose> ID_Space;
   ID_Space id_space;
@@ -697,7 +693,7 @@ void TimingReceiver::compile()
   
   // Don't proceed if too many actions for the ECA
   if (id_space.size()/2 >= max_conditions)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
+    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Too many active conditions for hardware");
   
   // Sort it by the open/close criteria
   std::sort(id_space.begin(), id_space.end());
@@ -722,7 +718,7 @@ void TimingReceiver::compile()
     // pop the walker stack for all closes
     while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
       if (next == -1)
-        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
+        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
       next = walk[next].next;
       ++i;
     }
@@ -779,23 +775,6 @@ void TimingReceiver::compile()
   device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
   
   used_conditions = id_space.size()/2;
-
-  clock_gettime( CLOCK_REALTIME, &stop);
-
-    time_t rawtime;
-    struct tm * timeinfo;
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    char buffer[80];
-    strftime(buffer,80,"%c",timeinfo);
-    std::string timestring(buffer);
-    for (char ch: timestring) if (ch == ':') ch = '.';
-
-  double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
-  log << timestring << ": compile: " << dt << " us\n"; 
-  log.flush();
-  std::cerr << timestring << ": compile: " << dt << " us\n"; 
-
 }
 
 void TimingReceiver::probe(OpenDevice& od)
@@ -844,7 +823,7 @@ void TimingReceiver::probe(OpenDevice& od)
     
     
     if (rom.size() != 1)
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
+      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
     
     eb_address_t rom_address = rom[0].sdb_component.addr_first;
     eb_data_t cpus, eps_per;
@@ -854,7 +833,7 @@ void TimingReceiver::probe(OpenDevice& od)
     cycle.close();
     
     if (cpus != fgs.size())
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
+      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
     
     // Check them all for the function generator microcontroller
     unsigned i;
@@ -879,7 +858,7 @@ void TimingReceiver::probe(OpenDevice& od)
       cycle.close();	
 
       if (mb_slot < 0 && mb_slot > 127)
-        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
+        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
 
       // swi address of fg is to be found in mailbox slot mb_slot
       eb_address_t swi = mbx[0].sdb_component.addr_first + mb_slot * 4 * 2;

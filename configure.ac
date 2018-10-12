@@ -62,6 +62,23 @@ AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
 AC_PATH_PROGS([DOCBOOK2MAN], [docbook2man])
 AC_PATH_PROGS([GIT], [git])
+
+
+
+
+### offer the saftbus option as an alternative to DBus
+AC_ARG_ENABLE([saftbus],
+              [AS_HELP_STRING([--enable-saftbus], [use saftbus for inter process communication instead of DBus])],
+              [],
+              [enable_saftbus=no]
+             )
+enable_saftbus=$(echo $enable_saftbus) # strip whitespace trick.
+AM_CONDITIONAL([ENABLE_SAFTBUS], [test x$enable_saftbus = xyes])
+AS_IF([test x$enable_saftbus = xyes], 
+      [AC_CONFIG_COMMANDS([saftlib_saftbus], [cp interfaces/saftlib_saftbus.h.in interfaces/saftlib_ipc.h])],
+      [AC_CONFIG_COMMANDS([saftlib_dbus], [cp interfaces/saftlib_dbus.h.in interfaces/saftlib_ipc.h])])
+### end of safbus stuff
+
 AM_CONDITIONAL([INTERFACE_DOCS], [test x$DOCBOOK2PDF != x -a x$GDBUS_CODEGEN != x])
 AM_CONDITIONAL([REBUILD_MAN_PAGES], [test x$DOCBOOK2MAN != x])
 AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e .git])

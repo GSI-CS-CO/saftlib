@@ -7,6 +7,7 @@
 #include <sys/un.h>
 
 #include <giomm.h>
+//#include <giomm/asyncresult.h>
 
 #include <thread>
 #include <map>
@@ -32,13 +33,24 @@ namespace saftbus
 		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
 
 		// is used by Proxies to fetch properties
-		Glib::VariantContainerBase& call_sync (const Glib::ustring& object_path, 
+		Glib::VariantContainerBase& call_sync(const Glib::ustring& object_path, 
 											const Glib::ustring& interface_name, 
 											const Glib::ustring& method_name, 
 											const Glib::VariantContainerBase& parameters, 
 											const Glib::ustring& bus_name=Glib::ustring(), 
 											int timeout_msec=-1);
 
+
+		using SlotAsyncReady = sigc::slot<void, Glib::RefPtr<Gio::AsyncResult>&>;
+		void call(const Glib::ustring& object_path,
+				  const Glib::ustring& interface_name,
+				  const Glib::ustring& method_name,
+				  const Glib::VariantContainerBase& parameters,
+				  const SlotAsyncReady& slot,
+				  const Glib::RefPtr< Gio::Cancellable >& cancellable,
+				  const Glib::RefPtr< Gio::UnixFDList >& fd_list,
+				  const Glib::ustring& bus_name);
+		Glib::VariantContainerBase& call_finish(const Glib::RefPtr< Gio::AsyncResult >&res);
 
 	// internal stuff (not part the DBus fake api)
 	public:
@@ -57,6 +69,8 @@ namespace saftbus
 		// returned fd should only be used with a lock or in single threaded environments
 		int get_fd() const {return _create_socket; }
 	private:
+
+		bool on_async_call_reply(Glib::IOCondition condition, const SlotAsyncReady& slot, const Glib::RefPtr< Gio::UnixFDList >& fd_list);
 
 		// this is the information that is needed to keep connected to a socket
 		int _create_socket;

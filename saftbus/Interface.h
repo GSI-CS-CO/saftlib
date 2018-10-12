@@ -5,16 +5,34 @@
 #include <giomm.h>
 #include "Error.h"
 
+
+
+
 namespace saftbus
 {
 
 	class Connection;
 
+	class Message : public Glib::Object {
+	public:
+		static Glib::RefPtr<Message> create(const std::vector<int> &fds);
+		GUnixFDList* gobj(); // this is a bit of a hack, but simplifies things by a lot
+	private:
+		Message(const std::vector<int> &fds);
+		Glib::RefPtr<Gio::UnixFDList> _fd_list;
+	};
+
 	class MethodInvocation : public Glib::Object
 	{
 	public:
+		MethodInvocation();
+		MethodInvocation(const std::vector<int> &fds);
+		~MethodInvocation();
+
 		void return_value(const Glib::VariantContainerBase& parameters);
 		void return_error(const saftbus::Error& error);
+
+		Glib::RefPtr<saftbus::Message>	get_message();
 
 		Glib::VariantContainerBase& get_return_value();
 		saftbus::Error& get_return_error();
@@ -23,6 +41,7 @@ namespace saftbus
 		Glib::VariantContainerBase _parameters;
 		saftbus::Error _error;
 		bool _has_error = false;
+		std::vector<int> _fds;
 	};
 
 	class InterfaceInfo : public Glib::Object//Base

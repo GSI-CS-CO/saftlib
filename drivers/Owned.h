@@ -20,6 +20,10 @@
 #ifndef OWNED_H
 #define OWNED_H
 
+#ifdef HAVE_SAFTBUS
+#include <saftbus.h>
+#endif
+
 #include "interfaces/iOwned.h"
 #include "BaseObject.h"
 
@@ -40,12 +44,12 @@ class Owned : public BaseObject, public iOwned
     // use this at the start of protected methods
     void ownerOnly() const;
     // only use this immediately after object creation
-    void initOwner(const Glib::RefPtr<saftbus::Connection>& connection, const Glib::ustring& owner);
+    void initOwner(const Glib::RefPtr<IPC_METHOD::Connection>& connection, const Glib::ustring& owner);
     
   protected:
     virtual void ownerQuit();
     static void owner_quit_handler(
-      const Glib::RefPtr<saftbus::Connection>&,
+      const Glib::RefPtr<IPC_METHOD::Connection>&,
       const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
       const Glib::ustring&, const Glib::VariantContainerBase&, Owned* self);
   

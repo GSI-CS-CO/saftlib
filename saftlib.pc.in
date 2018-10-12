@@ -1,11 +1,11 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
-includedir=@includedir@
+includedir=@includedir@/saftlib
 
 Name: saftlib
 Description: Simplified API for Timing
 Version: @VERSION@
-Requires: glibmm-2.4 >= 2.28.2
-Libs: -L${libdir} -lsaftlib
+Requires: glibmm-2.4 >= 2.28.2 giomm-2.4
+Libs: -L${libdir} -lsaftlib -lsaftbus
 Cflags: -I${includedir}
