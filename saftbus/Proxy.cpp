@@ -23,7 +23,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	, _object_path(object_path)
 	, _interface_name(interface_name)
 {
-	std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
+	//std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
 		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
@@ -59,7 +59,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 
 Proxy::~Proxy() 
 {
-	std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
+	//std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
 	_signal_connection_handle.disconnect();
 	// free all resources ...
 	try {
