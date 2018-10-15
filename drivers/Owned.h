@@ -20,10 +20,6 @@
 #ifndef OWNED_H
 #define OWNED_H
 
-#ifdef HAVE_SAFTBUS
-#include <saftbus.h>
-#endif
-
 #include "interfaces/iOwned.h"
 #include "BaseObject.h"
 

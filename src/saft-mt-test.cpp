@@ -57,7 +57,7 @@ Glib::RefPtr<saftlib::SoftwareCondition_Proxy> condition;
 // this will be called, in case we are snooping for events
 static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
-  std::cout << std::this_thread::get_id() << ": tDeadline: " << tr_formatDate(deadline, pmode);
+  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
   std::cout << tr_formatActionEvent(id, pmode);
   std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
   std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
