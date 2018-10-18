@@ -95,13 +95,13 @@
       -->
 
     <method name="AppendParameterSets">
-      <arg direction="in" type="aan" name="coeff_a"/>
-      <arg direction="in" type="aan" name="coeff_b"/>
-      <arg direction="in" type="aai" name="coeff_c"/>
-      <arg direction="in" type="aay" name="step"/>
-      <arg direction="in" type="aay" name="freq"/>
-      <arg direction="in" type="aay" name="shift_a"/>
-      <arg direction="in" type="aay" name="shift_b"/>
+      <arg direction="in" type="AAn" name="coeff_a"/>
+      <arg direction="in" type="AAn" name="coeff_b"/>
+      <arg direction="in" type="AAi" name="coeff_c"/>
+      <arg direction="in" type="AAy" name="step"/>
+      <arg direction="in" type="AAy" name="freq"/>
+      <arg direction="in" type="AAy" name="shift_a"/>
+      <arg direction="in" type="AAy" name="shift_b"/>
       <arg direction="in" type="b" name="arm"/>
       <arg direction="in" type="b" name="wait_for_arm_ack"/>
       <arg direction="out" type="b" name="low_fill"/>
