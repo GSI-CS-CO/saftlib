@@ -78,6 +78,18 @@
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy();&#10;&#10;</xsl:text>
 
+    <!-- Access to Proxy Objects -->
+    <xsl:text>    // Access to Proxy objects&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>_Proxy&gt; get</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>_Proxy() { return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>; }&#10;</xsl:text>
+    </xsl:for-each>
+
     <!-- Methods -->
     <xsl:text>    // Proxy all methods to interfaces&#10;</xsl:text>
     <xsl:for-each select="interface">
