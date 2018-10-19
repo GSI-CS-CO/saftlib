@@ -12,7 +12,10 @@ namespace saftbus
 
 	enum ProxyFlags
 	{
-		PROXY_FLAGS_NONE,
+		PROXY_FLAGS_NONE = 0,
+		PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL = 1, // if this is set, the signals are not 
+		                                        // delivered by a Glib::MainLoop, but 
+		                                        // by a call to 
 	};
 
 	class ProxyConnection;
@@ -44,6 +47,9 @@ namespace saftbus
 		Glib::ustring get_name() const;
 
 		const Glib::VariantContainerBase& call_sync(std::string function_name, const Glib::VariantContainerBase &query);
+
+
+		static void wait_for_signal(const std::vector<Glib::RefPtr<Proxy> > &proxy_band);
 
 	private:
 		bool dispatch(Glib::IOCondition condition);

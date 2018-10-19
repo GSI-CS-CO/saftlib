@@ -5,6 +5,8 @@
 #include "saftbus.h"
 #include "core.h"
 
+#include <poll.h>
+
 namespace saftbus
 {
 
@@ -50,11 +52,16 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		std::cerr << "Proxy::~Proxy() threw" << std::endl;
 	}
 
-	// hook the reading end of the pipe into the default Glib::MainLoop with 
-	//     HIGH priority and connect the dispatch method as signal handler
-	_signal_connection_handle = Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), 
-	                          _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, 
-	                          Glib::PRIORITY_HIGH);
+	// if the PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL flag is set, the reading end of the signal pipe
+	// is not hooked into the default MainContext, but has to be read using the wait_for_signal()
+	// function
+	if (!(flags & PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL)) {
+		// hook the reading end of the pipe into the default Glib::MainLoop with 
+		//     HIGH priority and connect the dispatch method as signal handler
+		_signal_connection_handle = Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), 
+		                          _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, 
+		                          Glib::PRIORITY_HIGH);
+	}
 }
 
 Proxy::~Proxy() 
@@ -227,5 +234,31 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, co
 		                			          query)).get_child(0));
 	return _result;
 }
+
+// wait for an even on one of the proxy_band members
+void Proxy::wait_for_signal(const std::vector<Glib::RefPtr<Proxy> > &proxy_band)
+{
+	if (proxy_band.size() == 0) {
+		return;
+	}
+
+	std::vector<struct pollfd> fds(proxy_band.size());
+
+	for(unsigned i = 0; i < proxy_band.size(); ++i) {
+		fds[i].fd = proxy_band[i]->_pipe_fd[0];
+		fds[i].events = POLLIN | POLLHUP| POLLERR;
+	}
+
+	if (poll(&fds[0], fds.size(), -1) > 0) {
+		int idx = 0;
+		for (auto fd: fds) {
+			if (fd.revents & POLLIN) {
+				proxy_band[idx]->dispatch(Glib::IOCondition());
+			}
+			++idx;
+		}
+	}
+}
+
 
 }

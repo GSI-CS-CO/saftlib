@@ -490,9 +490,12 @@ int main(int argc, char** argv)
     
     // snoop
     if (eventSnoop) {
-      std::cerr << "starting to snoop " << std::endl;
       Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-      Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
+      Glib::RefPtr<SoftwareCondition_Proxy> condition 
+        = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset), 
+                                          "de.gsi.saftlib", 
+                                          saftbus::BUS_TYPE_SYSTEM,
+                                          saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       // Accept all errors
       condition->setAcceptLate(true);
       condition->setAcceptEarly(true);
@@ -500,7 +503,13 @@ int main(int argc, char** argv)
       condition->setAcceptDelayed(true);
       condition->Action.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
-      loop->run();
+      std::vector<Glib::RefPtr<saftbus::Proxy> > proxy_band;
+      proxy_band.push_back(condition->getOwned_Proxy());
+      proxy_band.push_back(condition->getCondition_Proxy());
+      proxy_band.push_back(condition->getSoftwareCondition_Proxy());
+      while(true) {
+        saftbus::Proxy::wait_for_signal(proxy_band);
+      }
     } // eventSnoop
     
   } catch (const Glib::Error& error) {
