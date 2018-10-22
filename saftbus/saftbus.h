@@ -94,6 +94,7 @@ namespace saftbus
 #include "Connection.h"
 #include "ProxyConnection.h"
 #include "Proxy.h"
+#include "SignalGroup.h"
 
 
 

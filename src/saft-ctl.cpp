@@ -503,12 +503,13 @@ int main(int argc, char** argv)
       condition->setAcceptDelayed(true);
       condition->Action.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
-      std::vector<Glib::RefPtr<saftbus::Proxy> > proxy_band;
-      proxy_band.push_back(condition->getOwned_Proxy());
-      proxy_band.push_back(condition->getCondition_Proxy());
-      proxy_band.push_back(condition->getSoftwareCondition_Proxy());
+      saftlib::SignalGroup group;
+        // add all interfaces
+        group.add(condition->getOwned_Proxy());
+        group.add(condition->getCondition_Proxy());
+        group.add(condition->getSoftwareCondition_Proxy());
       while(true) {
-        saftbus::Proxy::wait_for_signal(proxy_band);
+        group.wait_for_signal();
       }
     } // eventSnoop
     

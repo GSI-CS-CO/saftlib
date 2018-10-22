@@ -96,6 +96,8 @@ endif
 libsaftlib_la_LIBADD = $(GIOMM_LIBS)
 libsaftlib_la_LDFLAGS = -version-info @SAFTLIB_API@:@SAFTLIB_REVISION@:@SAFTLIB_MINOR@ # @SAFTLIB_SONAME@
 
+
+
 nodist_libsaftlib_la_SOURCES =	\
 	SAFTd.cpp		\
 	FunctionGenerator.cpp	\

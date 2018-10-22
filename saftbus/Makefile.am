@@ -12,6 +12,7 @@ saftbus_HEADERS = \
 	Connection.h       \
 	ProxyConnection.h  \
 	Interface.h        \
+	SignalGroup.h      \
 	saftbus.h  
 
 libsaftbus_la_LIBADD = 
@@ -26,6 +27,7 @@ nodist_libsaftbus_la_SOURCES = \
 	Connection.cpp               \
 	ProxyConnection.cpp          \
 	Interface.cpp                \
+	SignalGroup.cpp              \
 	saftbus.cpp
 
 bin_PROGRAMS = saftbus-ctl

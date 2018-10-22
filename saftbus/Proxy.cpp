@@ -5,8 +5,6 @@
 #include "saftbus.h"
 #include "core.h"
 
-#include <poll.h>
-
 namespace saftbus
 {
 
@@ -77,6 +75,12 @@ Proxy::~Proxy()
 		std::cerr << "Proxy::~Proxy() threw: " << e.what() << std::endl;
 	}
 }
+
+int Proxy::get_reading_end_of_signal_pipe()
+{
+	return _pipe_fd[0];
+}
+
 
 bool Proxy::dispatch(Glib::IOCondition condition)
 {
@@ -235,30 +239,6 @@ const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, co
 	return _result;
 }
 
-// wait for an even on one of the proxy_band members
-void Proxy::wait_for_signal(const std::vector<Glib::RefPtr<Proxy> > &proxy_band)
-{
-	if (proxy_band.size() == 0) {
-		return;
-	}
-
-	std::vector<struct pollfd> fds(proxy_band.size());
-
-	for(unsigned i = 0; i < proxy_band.size(); ++i) {
-		fds[i].fd = proxy_band[i]->_pipe_fd[0];
-		fds[i].events = POLLIN | POLLHUP| POLLERR;
-	}
-
-	if (poll(&fds[0], fds.size(), -1) > 0) {
-		int idx = 0;
-		for (auto fd: fds) {
-			if (fd.revents & POLLIN) {
-				proxy_band[idx]->dispatch(Glib::IOCondition());
-			}
-			++idx;
-		}
-	}
-}
 
 
 }

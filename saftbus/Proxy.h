@@ -51,7 +51,9 @@ namespace saftbus
 
 		static void wait_for_signal(const std::vector<Glib::RefPtr<Proxy> > &proxy_band);
 
-	private:
+		int get_reading_end_of_signal_pipe();
+
+	public:
 		bool dispatch(Glib::IOCondition condition);
 
 	private:
