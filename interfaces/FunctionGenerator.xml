@@ -63,6 +63,7 @@
          either upon completion or after a call to Abort.
       -->
     <property name="Enabled" type="b" access="read"/>
+    <signal name="SigEnabled"/>
 
     <!-- Armed: Upon receipt of StartTag, output will begin.
          If a function generator is Armed, it is also Enabled. Once waveform
@@ -72,6 +73,7 @@
          StartTag is received, Armed changes to false and Started is emitted.
       -->
     <property name="Armed" type="b" access="read"/>
+    <signal name="SigArmed"/>
     
     <!-- Running: The function generator is currently producing a waveform.
          Function generation is started by sending a SCUbus tag which matches the
@@ -80,6 +82,7 @@
          transitions to false, the Stopped signal is emitted.
       -->
     <property name="Running" type="b" access="read"/>
+    <signal name="SigRunning"/>
 
     <!-- Started: Function generation has begun.
          @time:   Time when function generation began in nanoseconds since 1970

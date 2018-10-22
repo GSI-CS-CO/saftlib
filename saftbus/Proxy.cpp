@@ -126,7 +126,7 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 
 		// special treatment for property changes
 		if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
-		{
+		{	/*
 			// in case of a property change, the interface name of the property 
 			// that was changed (here we call it derived_interface_name) is embedded in the data
 			Glib::Variant<Glib::ustring> derived_interface_name 
@@ -164,6 +164,7 @@ bool Proxy::dispatch(Glib::IOCondition condition)
 			} catch(...) {
 				std::cerr << "Proxy::dispatch() : on_properties_changed threw " << std::endl;
 			}
+			*/
 		}
 		else // all other signals
 		{

@@ -261,8 +261,8 @@ void Connection::emit_signal(const Glib::ustring& object_path,
 			// does not have a running MainLoop. In this case the pipe will become full
 			// at some point and the write function will throw. We have to catch that
 			// to prevent the saft daemon from crashing
-
 			if (signal_name == "PropertiesChanged") { // special case for property changed signals
+				/*
 				Glib::VariantContainerBase* params = const_cast<Glib::VariantContainerBase*>(&parameters);
 				Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(params->get_child(0));
 				logger.add("     PropertiesChaned: ").add(derived_interface_name).add("\n");
@@ -279,7 +279,7 @@ void Connection::emit_signal(const Glib::ustring& object_path,
 						logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
 					}
 				}
-
+				*/
 			} else {
 				logger.add("     Normal signal: ").add(interface_name).add("\n");
 				// directly send signal
