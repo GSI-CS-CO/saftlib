@@ -105,14 +105,6 @@ static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool 
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
 }
 
-// When the function generator becomes disabled, stop the loop
-static void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
-{
-  if (value) return;
-  // terminate the main event loop
-  loop->quit();
-}
-
 static void help(Glib::RefPtr<SAFTd_Proxy> saftd)
 {
   std::cerr << "Usage: saft-fg-ctl [OPTION] < wavedata.txt\n";
@@ -139,7 +131,6 @@ int main(int argc, char** argv)
 {
   try {
     Gio::init();
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
@@ -265,7 +256,10 @@ int main(int argc, char** argv)
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second, 
+                                                                              "de.gsi.saftlib", 
+                                                                              saftbus::BUS_TYPE_SYSTEM,
+                                                                              saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
     
     // Get a list of function generators on the receiver
     map<Glib::ustring, Glib::ustring> fgs = receiver->getInterfaces()["FunctionGenerator"];
@@ -280,14 +274,20 @@ int main(int argc, char** argv)
         std::cerr << "More than one function generator; specify one with '-f <function-generator>'" << std::endl;
         error = 1;
       } else {
-        gen = FunctionGenerator_Proxy::create(fgs.begin()->second);
+        gen = FunctionGenerator_Proxy::create(fgs.begin()->second, 
+                                              "de.gsi.saftlib", 
+                                              saftbus::BUS_TYPE_SYSTEM,
+                                              saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       }
     } else {
       if (fgs.find(fg) == fgs.end()) {
         std::cerr << "Could not find function generator '" << fg << "'; pick one that exists" << std::endl;
         error = 1;
       } else {
-        gen = FunctionGenerator_Proxy::create(fgs[fg]);
+        gen = FunctionGenerator_Proxy::create(fgs[fg], 
+                                              "de.gsi.saftlib", 
+                                              saftbus::BUS_TYPE_SYSTEM,
+                                              saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       }
     }
     
@@ -308,8 +308,7 @@ int main(int argc, char** argv)
     gen->Abort();
     
     // Wait until not Enabled
-    gen->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
-    if (gen->getEnabled()) loop->run();
+    while (gen->getEnabled()) saftlib::wait_for_signal();
     
     // Clear any old waveform data
     gen->Flush();
@@ -344,7 +343,9 @@ int main(int argc, char** argv)
     // ... if we don't care to keep repeating the waveform, we could quit immediately;
     //     SAFTd has been properly configured to run autonomously at this point.
     // ... of course, then the user doesn't get the final error status message either
-    loop->run();
+    while(true) {
+      saftlib::wait_for_signal();
+    }
     
     // Print summary
     std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
