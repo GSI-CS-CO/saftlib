@@ -503,13 +503,8 @@ int main(int argc, char** argv)
       condition->setAcceptDelayed(true);
       condition->Action.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
-      saftlib::SignalGroup group;
-        // add all interfaces
-        group.add(condition->getOwned_Proxy());
-        group.add(condition->getCondition_Proxy());
-        group.add(condition->getSoftwareCondition_Proxy());
       while(true) {
-        group.wait_for_signal();
+        saftlib::wait_for_signal();
       }
     } // eventSnoop
     

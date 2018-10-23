@@ -59,6 +59,8 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		_signal_connection_handle = Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), 
 		                          _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, 
 		                          Glib::PRIORITY_HIGH);
+	} else {
+		saftlib::globalSignalGroup.add(Glib::RefPtr<saftbus::Proxy>(this)) ;
 	}
 }
 

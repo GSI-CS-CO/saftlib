@@ -2,6 +2,12 @@
 
 namespace saftlib
 {
+	SignalGroup globalSignalGroup;
+
+	void wait_for_signal() 
+	{
+		globalSignalGroup.wait_for_signal();
+	}
 
 	void SignalGroup::add(Glib::RefPtr<saftbus::Proxy> proxy) 
 	{

@@ -8,6 +8,7 @@
 namespace saftlib
 {
 
+
 	class SignalGroup
 	{
 	public:
@@ -19,6 +20,9 @@ namespace saftlib
 		std::vector<struct pollfd> _fds;
 	};
 
+	void wait_for_signal();
+
+	extern SignalGroup globalSignalGroup;
 
 } // namespace saftlib
 
