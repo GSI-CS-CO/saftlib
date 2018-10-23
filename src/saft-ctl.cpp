@@ -493,8 +493,6 @@ int main(int argc, char** argv)
       Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
       Glib::RefPtr<SoftwareCondition_Proxy> condition 
         = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset), 
-                                          "de.gsi.saftlib", 
-                                          saftbus::BUS_TYPE_SYSTEM,
                                           saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       // Accept all errors
       condition->setAcceptLate(true);

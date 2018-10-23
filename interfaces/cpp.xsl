@@ -41,14 +41,19 @@
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy::create(&#10;</xsl:text>
     <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
-    <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
+<!--     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
-    <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text>
+ -->    <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text>
     <xsl:text>  return Glib::RefPtr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt;(new </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Proxy(object_path, name, bus_type, flags));&#10;}&#10;&#10;</xsl:text>
+    <xsl:text>_Proxy(object_path, "</xsl:text>
+    <xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>
+    <xsl:text>", </xsl:text>
+    <xsl:text> IPC_METHOD::BUS_TYPE_SYSTEM, </xsl:text>
+     <!-- name, bus_type, -->
+    <xsl:text> flags));&#10;}&#10;&#10;</xsl:text>
 
     <!-- Proxy Constructor -->
     <xsl:value-of select="$name"/>

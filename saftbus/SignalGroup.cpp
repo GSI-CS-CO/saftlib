@@ -1,4 +1,5 @@
 #include "SignalGroup.h"
+#include <iostream>
 
 namespace saftlib
 {

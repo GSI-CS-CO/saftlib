@@ -256,10 +256,7 @@ int main(int argc, char** argv)
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second, 
-                                                                              "de.gsi.saftlib", 
-                                                                              saftbus::BUS_TYPE_SYSTEM,
-                                                                              saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
     
     // Get a list of function generators on the receiver
     map<Glib::ustring, Glib::ustring> fgs = receiver->getInterfaces()["FunctionGenerator"];
@@ -274,20 +271,14 @@ int main(int argc, char** argv)
         std::cerr << "More than one function generator; specify one with '-f <function-generator>'" << std::endl;
         error = 1;
       } else {
-        gen = FunctionGenerator_Proxy::create(fgs.begin()->second, 
-                                              "de.gsi.saftlib", 
-                                              saftbus::BUS_TYPE_SYSTEM,
-                                              saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+        gen = FunctionGenerator_Proxy::create(fgs.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       }
     } else {
       if (fgs.find(fg) == fgs.end()) {
         std::cerr << "Could not find function generator '" << fg << "'; pick one that exists" << std::endl;
         error = 1;
       } else {
-        gen = FunctionGenerator_Proxy::create(fgs[fg], 
-                                              "de.gsi.saftlib", 
-                                              saftbus::BUS_TYPE_SYSTEM,
-                                              saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+        gen = FunctionGenerator_Proxy::create(fgs[fg], saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       }
     }
     
