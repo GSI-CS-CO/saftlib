@@ -95,41 +95,6 @@ void *rtActionLoop(void *data)
   return nullptr;
 }
 
-
-
-
-
-// // runs in separate thread
-// void* snoop(void *data) 
-// {
-//   Glib::RefPtr<Glib::MainContext> context = Glib::MainContext::create();
-//   Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create(context);
-//   saftbus::ProxyConnection::set_default_context(context);
-//   Glib::ustring deviceName = "tr0";
-//   std::cerr << "snoop tread : " << pthread_self() << std::endl;
-//   Glib::RefPtr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
-//   std::cerr << "snoop tread : got a TimingReceiver_Proxy :)" << std::endl;    
-
-//   std::map<Glib::ustring, Glib::ustring> devices = saftd->getDevices();
-//   std::cerr << "snoop tread : got the devices list" << std::endl;
-//   for (auto it = devices.begin(); it != devices.end(); ++it) {
-//    std::cerr << "snoop tread : " << it->first << ":" << it->second << std::endl;
-//   }
-//   Glib::RefPtr<saftlib::TimingReceiver_Proxy> receiver = saftlib::TimingReceiver_Proxy::create(devices[deviceName]);
-//   Glib::RefPtr<saftlib::SoftwareActionSink_Proxy> sink = saftlib::SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-//   Glib::RefPtr<saftlib::SoftwareCondition_Proxy> condition = saftlib::SoftwareCondition_Proxy::create(sink->NewCondition(false, 0, 0, 0));
-//   // Accept all errors
-//   condition->setAcceptLate(true);
-//   condition->setAcceptEarly(true);
-//   condition->setAcceptConflict(true);
-//   condition->setAcceptDelayed(true);
-//   condition->Action.connect(sigc::ptr_fun(&on_action));
-//   condition->setActive(true);
-
-//   loop->run();
-//   return nullptr;
-// }
-
 int main(int argc, char** argv)
 {
   Glib::init();

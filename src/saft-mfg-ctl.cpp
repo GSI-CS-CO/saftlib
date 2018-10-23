@@ -103,7 +103,7 @@ struct ParamSet {
 };
 
   
-void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
+void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
 void test_multiple_fgs(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
 
 
@@ -210,7 +210,7 @@ static void on_all_armed()
 
 }
 
-static void on_all_stop(guint64 time, Glib::RefPtr<Glib::MainLoop> loop)
+static void on_all_stop(guint64 time)
 {
   std::cout << "All fgs stopped at " << format_time(time) << std::endl;
   {
@@ -222,31 +222,34 @@ static void on_all_stop(guint64 time, Glib::RefPtr<Glib::MainLoop> loop)
 
 
 // When the function generator becomes disabled, stop the loop
-static void on_enabled(bool value, Glib::RefPtr<Glib::MainLoop> loop)
-{
-  if (value) return;
-  // terminate the main event loop
-  loop->quit();
-}
+// static void on_enabled(bool value)
+// {
+//   if (value) return;
+//   // terminate the main event loop
+//   loop->quit();
+// }
 
 // for thread safety tests
 static void* startFg(void *arg) 
 {
   std::cerr << ">>>thread started" << std::endl;
-  Glib::RefPtr<Glib::MainLoop> *tmp = (Glib::RefPtr<Glib::MainLoop> *)arg;
-  Glib::RefPtr<Glib::MainLoop> loop = *tmp;
+  // Glib::RefPtr<Glib::MainLoop> *tmp = (Glib::RefPtr<Glib::MainLoop> *)arg;
+  // Glib::RefPtr<Glib::MainLoop> loop = *tmp;
     
   //std::cout << "startFg Loop created" << std::endl;
-  if (!loop->is_running()) {
+//  if (!loop->is_running()) {
     std::ostringstream msg;
     msg << __FILE__<< "::" << __FUNCTION__ << ":"  << __LINE__ << " start loop";
     if (loglevel>1) std::cout << msg.str() << std::endl; msg.str("");
-    try {
-      loop->run();
-    } catch (...) {
-      std::cerr << "startFg() : loop->run() threw" << std::endl;
+    while(!fg_all_stopped) {
+      saftlib::wait_for_signal();
     }
-  }
+    // try {
+    //   loop->run();
+    // } catch (...) {
+    //   std::cerr << "startFg() : loop->run() threw" << std::endl;
+    // }
+//  }
   if (loglevel>1) std::cout << "startFg Loop ended" << std::endl;
   std::cerr << "<<<thread stopped" << std::endl;
   return NULL;
@@ -281,7 +284,7 @@ int main(int argc, char** argv)
   std::cout << "******************** saft-mfg-ctl start ******************" << std::endl;
   try {
     Gio::init();
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+    //Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
@@ -386,14 +389,14 @@ int main(int argc, char** argv)
         std::cerr << "More than one device; specify a device with '-d <device>'" << std::endl;
         error = 1;
       } else {
-       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
+       receiver = TimingReceiver_Proxy::create(devices.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       }
     } else {
       if (devices.find(device) == devices.end()) {
         std::cerr << "Could not find device '" << device << "'; pick one that exists" << std::endl;
         error = 1;
       } else {
-       receiver = TimingReceiver_Proxy::create(devices[device]);
+       receiver = TimingReceiver_Proxy::create(devices[device], saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
       }
     }
     
@@ -411,10 +414,10 @@ int main(int argc, char** argv)
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
     
 
-    test_master_fg(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
+    test_master_fg(scu, receiver, params, eventSet, event, repeat, generate, tag);
 //    test_multiple_fgs(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
 
   } catch (const Glib::Error& error) {
@@ -422,7 +425,6 @@ int main(int argc, char** argv)
   }
 
   std::cerr << "--------- main stopped" << std::endl;
-  
   return 0;
 }
 
@@ -432,11 +434,11 @@ int main(int argc, char** argv)
 
 
 
-void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
+void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
 {
     map<Glib::ustring, Glib::ustring> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
     std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
-    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
+    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
    
     // Claim the function generator for ourselves
     master_gen->Own();
@@ -460,8 +462,8 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
     master_gen->Refill.connect(sigc::ptr_fun(&on_master_refill));
 
     // master signals for control
-    master_gen->AllStopped.connect(sigc::bind(sigc::ptr_fun(&on_all_stop), loop));
-    master_gen->AllArmed.connect(sigc::ptr_fun(&on_all_armed));
+    master_gen->AllStopped.connect(sigc::ptr_fun(&on_all_stop));
+    master_gen->AllArmed.connect(&on_all_armed);
 
     // Stop whatever the function generator was doing
  		if (loglevel>0) std::cout << "Abort via Master" << std::endl;
@@ -469,12 +471,12 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
     
     // Wait until not Enabled - test polling as alternative to Abort(true)
     
-    Glib::RefPtr<Glib::MainContext> context  = loop->get_context();
+    //Glib::RefPtr<Glib::MainContext> context  = loop->get_context();
 
     vector<int> enabled_gens = master_gen->ReadEnabled();
     while (std::find(enabled_gens.begin(), enabled_gens.end(), 1) != enabled_gens.end()) 
     {      
-      context->iteration(false);
+      saftlib::wait_for_signal();
       enabled_gens = master_gen->ReadEnabled();
     }
 
@@ -485,7 +487,7 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     int ret=0;
-    if ((ret = pthread_create(&bg_thread, &attr, &startFg, &loop)) == 0) {
+    if ((ret = pthread_create(&bg_thread, &attr, &startFg, nullptr)) == 0) {
       if (loglevel>1) std::cout << "Created thread for mainloop " << std::endl;      
     } 
 
@@ -645,106 +647,5 @@ void test_master_fg(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionS
    		std::cout << "Done" << std::endl;
     }
   } 
-}
-
-// test multiple fgs triggering on the same start tag
-// use the individual FunctionGenerator dbus interface
-// use the last fg's signals
-void test_multiple_fgs(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
-{
-// Get a list of function generators on the receiver
-    map<Glib::ustring, Glib::ustring> fgs = receiver->getInterfaces()["FunctionGenerator"];
-
-  std::vector<std::string> names = {"fg-2-0","fg-2-1"};
-//    std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0","fg-6-1","fg-8-0","fg-8-1","fg-9-0","fg-9-1"};
-//		std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0","fg-6-1"};
-//		std::vector<std::string> names = {"fg-3-0","fg-3-1","fg-4-0","fg-4-1","fg-5-0","fg-5-1","fg-6-0"};
-		std::vector< Glib::RefPtr<FunctionGenerator_Proxy> > gens;
-		for (auto name : names)
-		{	
-			gens.push_back(FunctionGenerator_Proxy::create(fgs[name]));
-		}
-    
-   // Ok! Find all the devices is now out of the way. Let's get some work done.
-    std::cout << "Using Proxies for ";  
-    for (auto name : names)
-      std::cout << name << ",";
-    std::cout << std::endl;
-
-    // Claim the function generator for ourselves
-  for (auto gen : gens)
-    gen->Own();
-    
-    // Stop whatever the function generator was doing
-  for (auto gen : gens)    
-    gen->Abort();
-    
-    // Wait until not Enabled
-    gens.back()->Enabled.connect(sigc::bind(sigc::ptr_fun(&on_enabled), loop));
-    if (gens.back()->getEnabled()) loop->run();
-    
-    // Clear any old waveform data
-  for (auto gen : gens)    
-    gen->Flush();
-    
-    // Watch for events on the function generator
-    gens.back()->Started.connect(sigc::ptr_fun(&on_start));
-    gens.back()->Stopped.connect(sigc::ptr_fun(&on_stop));
-    
-    // Load up the parameters, possibly repeating until full
-  for (auto gen : gens)
-  {    
-    while (fill(gen, params) && repeat) { }
-  }  
-    // Repeat the waveform forever?
-//    if (repeat) {
-      // listen to refill indicator
-//      gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
-//    }
-    
-    // FYI, how much data is this?
- for (auto gen : gens)
-    std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
-    
-    // Watch for a timing event? => generate tag on event
-    if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
-
-    // Trigger the function generator ourselves?
-    if (generate)
-    { 
-    	gens.back()->Armed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
-    }
-    
-    
-    // Ready to execute!
-			for (auto gen : gens)
-			{    
-				gen->setStartTag(tag);
-				gen->Arm();
-	  		std::cout << "Arming " << std::endl; 
-			}
-			
-  		std::cout << "All Armed" << std::endl; 
-  		
-			if (generate)
-			{
-				// Wait until not enabled / function generator is done
-				// ... if we don't care to keep repeating the waveform, we could quit immediately;
-				//     SAFTd has been properly configured to run autonomously at this point.
-				// ... of course, then the user doesn't get the final error status message either
-				loop->run();
-		    sleep(1);
-        loop->get_context()->iteration(false);
-        loop->get_context()->iteration(false);
-        loop->get_context()->iteration(false);
-				// Print summary
-				for (auto gen : gens)
-					std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
-			}
-			else
-			{
-		  		std::cout << "Not generating Starttag, waiting forever" << std::endl; 
-					loop->run();
-			}
 }
 

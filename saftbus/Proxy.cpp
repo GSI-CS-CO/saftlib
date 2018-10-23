@@ -60,7 +60,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		                          _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, 
 		                          Glib::PRIORITY_HIGH);
 	} else {
-		saftlib::globalSignalGroup.add(Glib::RefPtr<saftbus::Proxy>(this)) ;
+		saftlib::globalSignalGroup.add(this) ;
 	}
 }
 
@@ -68,6 +68,8 @@ Proxy::~Proxy()
 {
 	//std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
 	_signal_connection_handle.disconnect();
+	saftlib::globalSignalGroup.remove(this);
+
 	// free all resources ...
 	try {
 		_connection->remove_proxy_signal_fd(_object_path, _interface_name, _global_id);

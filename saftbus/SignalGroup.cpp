@@ -10,7 +10,7 @@ namespace saftlib
 		return globalSignalGroup.wait_for_signal(timeout_ms);
 	}
 
-	void SignalGroup::add(Glib::RefPtr<saftbus::Proxy> proxy) 
+	void SignalGroup::add(saftbus::Proxy *proxy) 
 	{
 		_signal_group.push_back(proxy);
 		struct pollfd pfd;
@@ -19,10 +19,26 @@ namespace saftlib
 		_fds.push_back(pfd);
 	}
 
+	void SignalGroup::remove(saftbus::Proxy *proxy) 
+	{
+		int idx = 0;
+		std::vector<saftbus::Proxy*> new_signal_group;
+		std::vector<struct pollfd>   new_fds;
+		for(auto p: _signal_group) {
+			if (p != proxy) {
+				new_signal_group.push_back(p);
+				new_fds.push_back(_fds[idx]);
+			}
+			++idx;
+		}
+		_fds          = new_fds;
+		_signal_group = new_signal_group;
+	}
+
 	int SignalGroup::wait_for_signal(int timeout_ms)
 	{
 		int result;
-		if (result = poll(&_fds[0], _fds.size(), timeout_ms) > 0) {
+		if ((result = poll(&_fds[0], _fds.size(), timeout_ms)) > 0) {
 			int idx = 0;
 			for (auto fd: _fds) {
 				if (fd.revents & POLLIN) {
