@@ -13,14 +13,14 @@ namespace saftlib
 	{
 	public:
 		void add(Glib::RefPtr<saftbus::Proxy> proxy);
-		void wait_for_signal();
+		int wait_for_signal(int timeout_ms = -1);
 
 	private:
 		std::vector<Glib::RefPtr<saftbus::Proxy> > _signal_group;
 		std::vector<struct pollfd> _fds;
 	};
 
-	void wait_for_signal();
+	int wait_for_signal(int timeout_ms = -1);
 
 	extern SignalGroup globalSignalGroup;
 

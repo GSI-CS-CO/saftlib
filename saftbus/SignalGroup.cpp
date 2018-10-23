@@ -5,9 +5,9 @@ namespace saftlib
 {
 	SignalGroup globalSignalGroup;
 
-	void wait_for_signal() 
+	int wait_for_signal(int timeout_ms) 
 	{
-		globalSignalGroup.wait_for_signal();
+		return globalSignalGroup.wait_for_signal(timeout_ms);
 	}
 
 	void SignalGroup::add(Glib::RefPtr<saftbus::Proxy> proxy) 
@@ -19,9 +19,10 @@ namespace saftlib
 		_fds.push_back(pfd);
 	}
 
-	void SignalGroup::wait_for_signal()
+	int SignalGroup::wait_for_signal(int timeout_ms)
 	{
-		if (poll(&_fds[0], _fds.size(), -1) > 0) {
+		int result;
+		if (result = poll(&_fds[0], _fds.size(), timeout_ms) > 0) {
 			int idx = 0;
 			for (auto fd: _fds) {
 				if (fd.revents & POLLIN) {
@@ -29,7 +30,8 @@ namespace saftlib
 				}
 				++idx;
 			}
-		}		
+		}
+		return result;
 	}
 
 } // namespace saftlib
