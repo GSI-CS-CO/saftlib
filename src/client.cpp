@@ -134,7 +134,7 @@ using namespace std;
 int main(int, char**)
 {
   Gio::init();
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+  //Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   try {
     // Get a list of devices from the saftlib directory
@@ -196,7 +196,9 @@ int main(int, char**)
     // Run the Glib event loop
     // Inside callbacks you can still run all the methods like we did above
     std::cout << "Waiting for timing events" << std::endl;
-    loop->run();
+    while(true) {
+      saftlib::wait_for_signal();
+    }
 
   } catch (const Glib::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;

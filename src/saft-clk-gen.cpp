@@ -44,7 +44,6 @@ static const char *deviceName  = NULL;  /* Name of the device */
 static int clk_show_table (void)
 {
   /* Initialize saftlib components */
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   /* Try to get the table */
   try
@@ -103,7 +102,6 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
   }
 
   /* Initialize saftlib components */
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   /* Try to get the table */
   try

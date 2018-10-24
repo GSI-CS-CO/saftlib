@@ -260,7 +260,6 @@ int main(int argc, char** argv)
       
     // count
     if (count) {
-      Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
       Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
       condition->setAcceptLate(true);
@@ -270,7 +269,9 @@ int main(int argc, char** argv)
       condition->Action.connect(sigc::ptr_fun(&on_action));
 
       condition->setActive(true);
-      loop->run();
+      while(true) {
+        saftlib::wait_for_signal();
+      }
     } // count messages
     
   } catch (const Glib::Error& error) {

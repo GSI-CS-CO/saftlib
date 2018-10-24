@@ -150,7 +150,6 @@ int main (int argc, char** argv)
   
   /* Initialize Glib stuff */
   Gio::init();
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   /* Try to connect to saftd */
   try 
@@ -194,7 +193,7 @@ int main (int argc, char** argv)
       condition->setAcceptEarly(true);
       condition->setAcceptLate(true);
       
-      /* Run the Glib event loop in case the sink should not be disowned */
+      /* Run the event loop in case the sink should not be disowned */
       if (disown_sink)
       {
         std::cout << "Action sink configured and disowned..." << std::endl;
@@ -204,7 +203,9 @@ int main (int argc, char** argv)
       else
       {
         std::cout << "Action sink configured..." << std::endl;
-        loop->run();
+        while(true) {
+          saftlib::wait_for_signal();
+        }
       }
     }
     else if (destroy_sink)
