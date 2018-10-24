@@ -68,10 +68,10 @@ static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 execu
 
 void *mainloop(void *data)
 {
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-
   // snoop for events
-  loop->run();
+  while(true) {
+    saftlib::wait_for_signal();
+  }
   return nullptr;
 }
 
