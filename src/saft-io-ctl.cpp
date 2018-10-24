@@ -104,7 +104,6 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
   /* Perform selected action(s) */
   try
   {
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
@@ -160,7 +159,11 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
 
     /* Disown and quit or keep waiting */
     if (disown) { condition->Disown(); }
-    else        { std::cout << "Condition created..." << std::endl; loop->run(); }
+    else        { std::cout << "Condition created..." << std::endl; 
+      while(true) {
+        saftlib::wait_for_signal();
+      }
+    }
   }
   catch (const Glib::Error& error)
   {
@@ -184,7 +187,6 @@ static int io_destroy (bool verbose_mode)
   /* Perform selected action(s) */
   try
   {
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
@@ -241,7 +243,6 @@ static int io_flip (bool verbose_mode)
   /* Perform selected action(s) */
   try
   {
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
@@ -310,7 +311,6 @@ static int io_list (void)
   /* Perform selected action(s) */
   try
   {
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
@@ -470,7 +470,6 @@ static int io_list_i_to_e()
   /* Get inputs and snoop */
   try
   {
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< Glib::ustring, Glib::ustring > inputs = receiver->getInputs();
@@ -560,7 +559,6 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
   /* Get inputs and snoop */
   try
   {
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< Glib::ustring, Glib::ustring > inputs = receiver->getInputs();
@@ -622,7 +620,9 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
       {
         std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
         std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
-        loop->run();
+        while(true) {
+          saftlib::wait_for_signal();
+        }
       }
     }
     else
@@ -669,7 +669,6 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   }
 
   /* Initialize saftlib components */
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
 
   /* Perform selected action(s) */
   try
@@ -928,7 +927,6 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
 static int io_print_table(bool verbose_mode)
 {
   /* Initialize saftlib components */
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
 
   /* Try to get the table */
   try

@@ -104,7 +104,6 @@ struct ParamSet {
 
   
 void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
-void test_multiple_fgs(Glib::RefPtr<Glib::MainLoop> loop,Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
 
 
 // Hand off the entire datafile to SAFTd
@@ -233,8 +232,6 @@ static void on_all_stop(guint64 time)
 static void* startFg(void *arg) 
 {
   std::cerr << ">>>thread started" << std::endl;
-  // Glib::RefPtr<Glib::MainLoop> *tmp = (Glib::RefPtr<Glib::MainLoop> *)arg;
-  // Glib::RefPtr<Glib::MainLoop> loop = *tmp;
     
   //std::cout << "startFg Loop created" << std::endl;
 //  if (!loop->is_running()) {
@@ -284,7 +281,6 @@ int main(int argc, char** argv)
   std::cout << "******************** saft-mfg-ctl start ******************" << std::endl;
   try {
     Gio::init();
-    //Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
@@ -480,7 +476,7 @@ void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<Timin
       enabled_gens = master_gen->ReadEnabled();
     }
 
-    // threading test: start a background thread in which to perform mainloop->run
+    // threading test: start a background thread in which to perform wait_for_signal()
     // to test File Descriptor Async Methods
     
     pthread_t bg_thread;
@@ -488,7 +484,7 @@ void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<Timin
     pthread_attr_init(&attr);
     int ret=0;
     if ((ret = pthread_create(&bg_thread, &attr, &startFg, nullptr)) == 0) {
-      if (loglevel>1) std::cout << "Created thread for mainloop " << std::endl;      
+      if (loglevel>1) std::cout << "Created thread for receiving signals " << std::endl;      
     } 
 
   //for (int reps=0;reps<1;reps++)
