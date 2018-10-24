@@ -31,7 +31,7 @@ namespace saftbus
 			const Glib::ustring&  	object_path,
 			const Glib::ustring&  	interface_name,
 			const Glib::RefPtr< InterfaceInfo >&  	info = Glib::RefPtr< InterfaceInfo >(),
-			ProxyFlags  	flags = PROXY_FLAGS_NONE 
+			ProxyFlags  	flags = PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL 
 		);
 		~Proxy();
 

@@ -191,7 +191,6 @@ int main (int argc, char** argv)
   {
     /* Initialize saftlib components */
     Gio::init();
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     
     /* Try to setup all outputs */
     try
@@ -360,7 +359,9 @@ int main (int argc, char** argv)
         sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
         
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
-        loop->run();
+        while (true) {
+          saftlib::wait_for_signal();
+        }
       }
     }
     catch (const Glib::Error& error) 
