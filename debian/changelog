@@ -1,3 +1,5 @@
+*** Deprecated ***
+
 saftlib (1.3.1-1) unstable; urgency=medium
 
   * Added a function ReadRunning to return the Running state of all FGs
