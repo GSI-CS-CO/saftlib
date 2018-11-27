@@ -43,7 +43,8 @@
     <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
 <!--     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
- -->    <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text>
+ -->    <!-- <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text> -->
+    <xsl:text>   saftlib::SignalGroup *signalGroup)&#10;{&#10;</xsl:text>
     <xsl:text>  return Glib::RefPtr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt;(new </xsl:text>
@@ -53,7 +54,7 @@
     <xsl:text>", </xsl:text>
     <xsl:text> IPC_METHOD::BUS_TYPE_SYSTEM, </xsl:text>
      <!-- name, bus_type, -->
-    <xsl:text> flags));&#10;}&#10;&#10;</xsl:text>
+    <xsl:text> signalGroup));&#10;}&#10;&#10;</xsl:text>
 
     <!-- Proxy Constructor -->
     <xsl:value-of select="$name"/>
@@ -63,14 +64,14 @@
     <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
-    <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;</xsl:text>
+    <xsl:text>  saftlib::SignalGroup *signalGroup)&#10;</xsl:text>
     <xsl:text>: </xsl:text>
     <xsl:for-each select="interface">
       <xsl:if test="position()>1">,&#10;  </xsl:if>
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>(i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
-      <xsl:text>_Proxy::create(object_path, name, bus_type, flags))</xsl:text>
+      <xsl:text>_Proxy::create(object_path, name, bus_type, signalGroup))</xsl:text>
     </xsl:for-each>
     <xsl:for-each select="interface">
       <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
@@ -660,8 +661,8 @@
       <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; interface_name,&#10;</xsl:text>
-      <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;</xsl:text>
-      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, Glib::RefPtr&lt;IPC_METHOD::InterfaceInfo&gt;(), flags)&#10;</xsl:text>
+      <xsl:text>  saftlib::SignalGroup *signalGroup)&#10;</xsl:text>
+      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, Glib::RefPtr&lt;IPC_METHOD::InterfaceInfo&gt;(), signalGroup)&#10;</xsl:text>
       <xsl:text>{&#10;}&#10;&#10;</xsl:text>
 
       <!-- Create -->
@@ -673,7 +674,7 @@
       <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
-      <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text>
+      <xsl:text>  saftlib::SignalGroup *signalGroup)&#10;{&#10;</xsl:text>
       <xsl:text>  return Glib::RefPtr&lt;i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy&gt;(new i</xsl:text>
@@ -681,7 +682,7 @@
       <xsl:text>_Proxy(bus_type, name,&#10;</xsl:text>
       <xsl:text>    object_path, "</xsl:text>
       <xsl:value-of select="$iface_full"/>
-      <xsl:text>", flags));&#10;}&#10;&#10;</xsl:text>
+      <xsl:text>", signalGroup));&#10;}&#10;&#10;</xsl:text>
 
       <!-- Register method -->
       <xsl:text>void i</xsl:text>

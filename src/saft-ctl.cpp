@@ -491,8 +491,7 @@ int main(int argc, char** argv)
     // snoop
     if (eventSnoop) {
       Glib::RefPtr<SoftwareCondition_Proxy> condition 
-        = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset), 
-                                          saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+        = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
       condition->setAcceptLate(true);
       condition->setAcceptEarly(true);

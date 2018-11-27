@@ -12,7 +12,7 @@ namespace saftlib
 	class SignalGroup
 	{
 	public:
-		void add(saftbus::Proxy *proxy);
+		void add(saftbus::Proxy *proxy, bool automatic_dispatch = true);
 		void remove(saftbus::Proxy *proxy);
 		int wait_for_signal(int timeout_ms = -1);
 

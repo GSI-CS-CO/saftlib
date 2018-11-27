@@ -72,7 +72,9 @@
     <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>
     <xsl:text>,&#10;</xsl:text>
     <xsl:text>      IPC_METHOD::BusType bus_type = IPC_METHOD::BUS_TYPE_SYSTEM,&#10;</xsl:text> -->
-    <xsl:text>      IPC_METHOD::ProxyFlags flags = IPC_METHOD::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);&#10;</xsl:text>
+    <!-- <xsl:text>      IPC_METHOD::ProxyFlags flags = IPC_METHOD::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);&#10;</xsl:text> -->
+    <xsl:text>      saftlib::SignalGroup *signalGroup = nullptr);&#10;</xsl:text>
+
 
     <xsl:text>    ~</xsl:text>
     <xsl:value-of select="$name"/>
@@ -168,7 +170,7 @@
     <xsl:text>      const Glib::ustring&amp; object_path,&#10;</xsl:text>
     <xsl:text>      const Glib::ustring&amp; name,&#10;</xsl:text>
     <xsl:text>      IPC_METHOD::BusType bus_type = IPC_METHOD::BUS_TYPE_SYSTEM,&#10;</xsl:text>
-    <xsl:text>      IPC_METHOD::ProxyFlags flags = IPC_METHOD::PROXY_FLAGS_NONE);&#10;</xsl:text>
+    <xsl:text>      saftlib::SignalGroup *signalGroup = nullptr);&#10;</xsl:text>
 
     <!-- The proxy objects -->
     <xsl:for-each select="interface">
@@ -377,7 +379,7 @@
       const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; name,
       IPC_METHOD::BusType bus_type, 
-      IPC_METHOD::ProxyFlags flags);&#10;&#10;<xsl:text/>
+      saftlib::SignalGroup *signalGroup);&#10;&#10;<xsl:text/>
       
       <!-- Concrete implementations -->
       <xsl:text>    // Implement abstract base class methods&#10;</xsl:text>
@@ -446,7 +448,7 @@
       const Glib::ustring&amp; name,
       const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; interface_name,
-      IPC_METHOD::ProxyFlags flags);
+      saftlib::SignalGroup *signalGroup);
 };
 
 class i<xsl:value-of select="$iface"/>_Service {

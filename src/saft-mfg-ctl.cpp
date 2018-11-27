@@ -385,14 +385,14 @@ int main(int argc, char** argv)
         std::cerr << "More than one device; specify a device with '-d <device>'" << std::endl;
         error = 1;
       } else {
-       receiver = TimingReceiver_Proxy::create(devices.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
       }
     } else {
       if (devices.find(device) == devices.end()) {
         std::cerr << "Could not find device '" << device << "'; pick one that exists" << std::endl;
         error = 1;
       } else {
-       receiver = TimingReceiver_Proxy::create(devices[device], saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+       receiver = TimingReceiver_Proxy::create(devices[device]);
       }
     }
     
@@ -410,7 +410,7 @@ int main(int argc, char** argv)
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
 
     test_master_fg(scu, receiver, params, eventSet, event, repeat, generate, tag);
@@ -434,7 +434,7 @@ void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<Timin
 {
     map<Glib::ustring, Glib::ustring> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
     std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
-    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second, saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);
+    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
    
     // Claim the function generator for ourselves
     master_gen->Own();

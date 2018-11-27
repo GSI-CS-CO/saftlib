@@ -18,7 +18,8 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
              const Glib::ustring&  object_path,
              const Glib::ustring&  interface_name,
              const Glib::RefPtr< InterfaceInfo >& info,
-             ProxyFlags            flags)
+             //ProxyFlags            flags,
+             saftlib::SignalGroup *signalGroup)
 	: _name(name)
 	, _object_path(object_path)
 	, _interface_name(interface_name)
@@ -53,14 +54,16 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	// if the PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL flag is set, the reading end of the signal pipe
 	// is not hooked into the default MainContext, but has to be read using the wait_for_signal()
 	// function
-	if (!(flags & PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL)) {
+	//if (!(flags & PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL)) {
+	if (signalGroup == nullptr) {
 		// hook the reading end of the pipe into the default Glib::MainLoop with 
 		//     HIGH priority and connect the dispatch method as signal handler
-		_signal_connection_handle = Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), 
-		                          _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, 
-		                          Glib::PRIORITY_HIGH);
-	} else {
+		// _signal_connection_handle = Glib::signal_io().connect(sigc::mem_fun(*this, &Proxy::dispatch), 
+		//                           _pipe_fd[0], Glib::IO_IN | Glib::IO_HUP, 
+		//                           Glib::PRIORITY_HIGH);
 		saftlib::globalSignalGroup.add(this) ;
+	} else {
+		signalGroup->add(this);
 	}
 }
 

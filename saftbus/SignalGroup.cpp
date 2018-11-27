@@ -10,9 +10,9 @@ namespace saftlib
 		return globalSignalGroup.wait_for_signal(timeout_ms);
 	}
 
-	void SignalGroup::add(saftbus::Proxy *proxy) 
+	void SignalGroup::add(saftbus::Proxy *proxy, bool automatic_dispatch) 
 	{
-		_signal_group.push_back(proxy);
+		_signal_group.push_back(automatic_dispatch?proxy:nullptr);
 		struct pollfd pfd;
 		pfd.fd = proxy->get_reading_end_of_signal_pipe();
 		pfd.events = POLLIN;
@@ -42,7 +42,9 @@ namespace saftlib
 			int idx = 0;
 			for (auto fd: _fds) {
 				if (fd.revents & POLLIN) {
-					_signal_group[idx]->dispatch(Glib::IOCondition());
+					if (_signal_group[idx] != nullptr) {
+						_signal_group[idx]->dispatch(Glib::IOCondition());
+					}
 				}
 				++idx;
 			}

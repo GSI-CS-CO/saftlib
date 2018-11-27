@@ -7,6 +7,11 @@
 
 #include "saftbus.h"
 
+namespace saftlib
+{
+	class SignalGroup;
+}
+
 namespace saftbus
 {
 
@@ -21,6 +26,7 @@ namespace saftbus
 	class ProxyConnection;
 
 
+
 	// This class mimics the Gio::DBus::Proxy class interface. It is different from the Gio::DBus::Proxy 
 	// in that it depends on a dedicated saftbus::ProxyConnection class and not the saftbus::Connection class.
 	class Proxy : public Glib::Object//Base
@@ -31,7 +37,8 @@ namespace saftbus
 			const Glib::ustring&  	object_path,
 			const Glib::ustring&  	interface_name,
 			const Glib::RefPtr< InterfaceInfo >&  	info = Glib::RefPtr< InterfaceInfo >(),
-			ProxyFlags  	flags = PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL 
+			//ProxyFlags  	flags = PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL,
+            saftlib::SignalGroup    *signalGroup = nullptr 
 		);
 		~Proxy();
 
