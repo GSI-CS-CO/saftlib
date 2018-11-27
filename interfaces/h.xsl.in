@@ -430,11 +430,6 @@
       <xsl:value-of select="$iface"/>_Proxy&amp; operator=(const i<xsl:value-of select="$iface"/>_Proxy&amp;);&#10;<xsl:text/>
 
 
-      <!-- Create AsyncCallReady function declaration -->
-      <xsl:text>    void </xsl:text>
-      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, GMainLoop *loop, Glib::VariantContainerBase *result, Glib::ustring *exceptionMsg);&#10;&#10;</xsl:text>
-
-      <xsl:text>    // notification if async DBus call is completed&#10;</xsl:text>
 
       <!-- Implementation -->
   protected:
