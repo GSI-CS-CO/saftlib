@@ -70,7 +70,7 @@ AC_PATH_PROGS([GIT], [git])
 AC_ARG_ENABLE([saftbus],
               [AS_HELP_STRING([--enable-saftbus], [use saftbus for inter process communication instead of DBus])],
               [],
-              [enable_saftbus=no]
+              [enable_saftbus=yes]
              )
 enable_saftbus=$(echo $enable_saftbus) # strip whitespace trick.
 AM_CONDITIONAL([ENABLE_SAFTBUS], [test x$enable_saftbus = xyes])
