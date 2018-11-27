@@ -145,95 +145,52 @@ void *serve_fg(void *data) {
   map<Glib::ustring, Glib::ustring> &fgs = fgData->fgs;
   ParamSet &params = fgData->params;
 
-// void serve_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, 
-//               Glib::ustring fg, 
-//               map<Glib::ustring, Glib::ustring> &fgs, 
-//               ParamSet &params) {
+  guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
+  saftlib::SignalGroup fgSignalGroup;
+  int error = 0;
+  // Find the target FunctionGenerator (omit the check if it exists)
+  // pass the saftlib::SignalGroup that is later used to do blocking wait 
+  Glib::RefPtr<FunctionGenerator_Proxy> gen = FunctionGenerator_Proxy::create(fgs[fg], &fgSignalGroup);
+  
+  
+  // Claim the function generator for ourselves,
+  // stop whatever the function generator was doing,
+  // wait until not Enabled,
+  // and Clear any old waveform data
+  gen->Own();
+  gen->Abort();
+  while (gen->getEnabled()) saftlib::wait_for_signal();
+  gen->Flush();
+  
+  // Watch for events on the function generator
+  gen->Started.connect(sigc::ptr_fun(&on_start));
+  gen->Stopped.connect(sigc::ptr_fun(&on_stop));
+  
+  // Load up the parameters, possibly repeating until full
+  while (fill(gen, params)) { }
+  
+  // Repeat the waveform forever!
+  gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
+  
+  // FYI, how much data is this?
+  std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
+  
+  // Trigger the function generator ourselves?
+  gen->SigArmed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
+  
+  // Ready to execute!
+  gen->setStartTag(tag);
+  gen->Arm();
 
-    guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
+  // the event loop
+  while(true) {
+    fgSignalGroup.wait_for_signal();
+  }
+  
+  // Print summary
+  std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
 
-    saftlib::SignalGroup fgSignalGroup;
-    int error = 0;
-    Glib::RefPtr<FunctionGenerator_Proxy> gen;
-    // Find the target FunctionGenerator
-    if (fg.empty()) {
-      if (fgs.empty()) {
-        std::cerr << "No function generators found" << std::endl;
-        return nullptr;
-      } else if (fgs.size() != 1) {
-        std::cerr << "More than one function generator; specify one with '-f <function-generator>'" << std::endl;
-        error = 1;
-      } else {
-        gen = FunctionGenerator_Proxy::create(fgs.begin()->second, &fgSignalGroup);
-      }
-    } else {
-      if (fgs.find(fg) == fgs.end()) {
-        std::cerr << "Could not find function generator '" << fg << "'; pick one that exists" << std::endl;
-        error = 1;
-      } else {
-        gen = FunctionGenerator_Proxy::create(fgs[fg], &fgSignalGroup);
-      }
-    }
-    
-    // List available function generators
-    if (error) {
-      std::cerr << "Available function generators:" << std::endl;
-      for (map<Glib::ustring, Glib::ustring>::iterator i = fgs.begin(); i != fgs.end(); ++i)
-        std::cerr << "  " << i->first << std::endl;
-      return nullptr;
-    }
-    
-    // Ok! Find all the devices is now out of the way. Let's get some work done.
-    
-    // Claim the function generator for ourselves
-    gen->Own();
-    
-    // Stop whatever the function generator was doing
-    gen->Abort();
-    
-    // Wait until not Enabled
-    while (gen->getEnabled()) saftlib::wait_for_signal();
-    
-    // Clear any old waveform data
-    gen->Flush();
-    
-    // Watch for events on the function generator
-    gen->Started.connect(sigc::ptr_fun(&on_start));
-    gen->Stopped.connect(sigc::ptr_fun(&on_stop));
-    
-    // Load up the parameters, possibly repeating until full
-    while (fill(gen, params)) { }
-    
-    // Repeat the waveform forever?
-    gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
-    
-    // FYI, how much data is this?
-    std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
-    
-    // Watch for a timing event? => generate tag on event
-    //if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
-
-    // Trigger the function generator ourselves?
-    //if (generate) 
-      gen->SigArmed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
-    
-    // Ready to execute!
-    gen->setStartTag(tag);
-    gen->Arm();
-    
-    // Wait until not enabled / function generator is done
-    // ... if we don't care to keep repeating the waveform, we could quit immediately;
-    //     SAFTd has been properly configured to run autonomously at this point.
-    // ... of course, then the user doesn't get the final error status message either
-
-    while(true) {
-      fgSignalGroup.wait_for_signal();
-    }
-    
-    // Print summary
-    std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
-
-    return nullptr;
+  return nullptr;
 }
 
 int main(int argc, char** argv)
@@ -248,32 +205,13 @@ int main(int argc, char** argv)
     guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
     guint64 event = 0;
     bool eventSet = false;
-    bool repeat = false;
-    bool generate = false;
+    bool repeat = true;
+    bool generate = true;
     
     // Process command-line
     int opt, error = 0;
-    while ((opt = getopt(argc, argv, "d:f:rght:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "h:")) != -1) {
       switch (opt) {
-        case 'd':
-          device = optarg;
-          break;
-        case 'f':
-          fg = optarg;
-          break;
-        case 'r':
-          repeat = true;
-          break;
-        case 'g':
-          generate = true;
-          break;
-        case 't':
-          tag = strtoul(optarg, 0, 0);
-          break;
-        case 'e':
-          event = strtoul(optarg, 0, 0);
-          eventSet = true;
-          break;
         case 'h':
           help(saftd);
           return 0;
@@ -330,34 +268,11 @@ int main(int argc, char** argv)
     // Get a list of devices from the saftlib directory
     map<Glib::ustring, Glib::ustring> devices = saftd->getDevices();
     
-    // Find the requested device
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
-    if (device.empty()) {
-      if (devices.empty()) {
-        std::cerr << "No devices found" << std::endl;
-        return 1;
-      } else if (devices.size() != 1) {
-        std::cerr << "More than one device; specify a device with '-d <device>'" << std::endl;
-        error = 1;
-      } else {
-       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
-      }
-    } else {
-      if (devices.find(device) == devices.end()) {
-        std::cerr << "Could not find device '" << device << "'; pick one that exists" << std::endl;
-        error = 1;
-      } else {
-       receiver = TimingReceiver_Proxy::create(devices[device]);
-      }
-    }
-    
-    // List available devices
-    if (error) {
-      std::cerr << "Available devices:" << std::endl;
-      for (map<Glib::ustring, Glib::ustring>::iterator i = devices.begin(); i != devices.end(); ++i)
-        std::cerr << "  " << i->first << std::endl;
+    if (devices.empty()) {
+      std::cerr << "No devices found" << std::endl;
       return 1;
     }
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices.begin()->second);
     
     // Confirm this device is an SCU
     map<Glib::ustring, Glib::ustring> scus = receiver->getInterfaces()["SCUbusActionSink"];
@@ -375,17 +290,14 @@ int main(int argc, char** argv)
     fgData20.fg = "fg-2-0";
     fgData20.fgs = fgs;
     fgData20.params = params;
-    std::cerr << "fgData20.fg " << fgData20.fg << std::endl;
 
     FgThreadData fgData21 = fgData20;
     fgData21.fg = "fg-2-1";
-    std::cerr << "fgData21.fg " << fgData21.fg << std::endl;
 
     pthread_t p1, p2;
 
     std::cerr << "main thread " << pthread_self() << std::endl;
     pthread_create(&p1, nullptr, serve_fg, &fgData20);
-    sleep(1);
     pthread_create(&p2, nullptr, serve_fg, &fgData21);
 
     pthread_join(p1,nullptr);
@@ -398,3 +310,5 @@ int main(int argc, char** argv)
   
   return 0;
 }
+
+
