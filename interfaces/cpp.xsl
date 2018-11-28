@@ -44,7 +44,7 @@
 <!--     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
  -->    <!-- <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text> -->
-    <xsl:text>   saftlib::SignalGroup *signalGroup)&#10;{&#10;</xsl:text>
+    <xsl:text>   saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
     <xsl:text>  return Glib::RefPtr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt;(new </xsl:text>
@@ -64,7 +64,7 @@
     <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
-    <xsl:text>  saftlib::SignalGroup *signalGroup)&#10;</xsl:text>
+    <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;</xsl:text>
     <xsl:text>: </xsl:text>
     <xsl:for-each select="interface">
       <xsl:if test="position()>1">,&#10;  </xsl:if>
@@ -644,7 +644,7 @@
       <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; interface_name,&#10;</xsl:text>
-      <xsl:text>  saftlib::SignalGroup *signalGroup)&#10;</xsl:text>
+      <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;</xsl:text>
       <xsl:text>: Proxy(bus_type, name, object_path, interface_name, Glib::RefPtr&lt;IPC_METHOD::InterfaceInfo&gt;(), signalGroup)&#10;</xsl:text>
       <xsl:text>{&#10;}&#10;&#10;</xsl:text>
 
@@ -657,7 +657,7 @@
       <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
-      <xsl:text>  saftlib::SignalGroup *signalGroup)&#10;{&#10;</xsl:text>
+      <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
       <xsl:text>  return Glib::RefPtr&lt;i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy&gt;(new i</xsl:text>

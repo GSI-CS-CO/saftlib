@@ -150,7 +150,7 @@ void *serve_fg(void *data) {
   int error = 0;
   // Find the target FunctionGenerator (omit the check if it exists)
   // pass the saftlib::SignalGroup that is later used to do blocking wait 
-  Glib::RefPtr<FunctionGenerator_Proxy> gen = FunctionGenerator_Proxy::create(fgs[fg], &fgSignalGroup);
+  Glib::RefPtr<FunctionGenerator_Proxy> gen = FunctionGenerator_Proxy::create(fgs[fg], fgSignalGroup);
   
   
   // Claim the function generator for ourselves,

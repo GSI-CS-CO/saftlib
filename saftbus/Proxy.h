@@ -10,6 +10,7 @@
 namespace saftlib
 {
 	class SignalGroup;
+	extern SignalGroup globalSignalGroup;
 }
 
 namespace saftbus
@@ -38,7 +39,7 @@ namespace saftbus
 			const Glib::ustring&  	interface_name,
 			const Glib::RefPtr< InterfaceInfo >&  	info = Glib::RefPtr< InterfaceInfo >(),
 			//ProxyFlags  	flags = PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL,
-            saftlib::SignalGroup    *signalGroup = nullptr 
+            saftlib::SignalGroup    &signalGroup = saftlib::globalSignalGroup 
 		);
 		~Proxy();
 
