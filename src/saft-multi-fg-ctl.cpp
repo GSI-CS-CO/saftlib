@@ -82,10 +82,12 @@ static const char *format_time(guint64 time)
   return full;
 }
 
-static void on_armed(Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
+static void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
 {
-  std::cout << "Generating StartTag" << std::endl;
-  scu->InjectTag(tag);
+  if (armed) {
+    std::cout << "Generating StartTag" << std::endl;
+    scu->InjectTag(tag);
+  }
 }
 
 // Report when the function generator starts

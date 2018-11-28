@@ -56,9 +56,8 @@ void FunctionGenerator::on_fg_running(bool b)
 {
   if (!getOwner().empty())
   {
-    if (b) {
-  	 SigRunning();
-    }
+    Running(b);
+    SigRunning(b);
   }
 }
 
@@ -66,9 +65,8 @@ void FunctionGenerator::on_fg_armed(bool b)
 {
   if (!getOwner().empty())
   {  
-    if (b) {
-  	  SigArmed();
-    }
+    Armed(b);
+ 	  SigArmed(b);
   }
 }
 
@@ -76,9 +74,8 @@ void FunctionGenerator::on_fg_enabled(bool b)
 {
   if (!getOwner().empty())
   {
-    if (b) {
-  	  SigEnabled();
-    }
+    Enabled(b);
+  	SigEnabled(b);
   }
 }
 
