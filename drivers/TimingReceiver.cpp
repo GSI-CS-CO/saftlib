@@ -928,15 +928,18 @@ void TimingReceiver::probe(OpenDevice& od)
       tr->otherStuff["MasterFunctionGenerator"]["masterfg"] = fg;
 
 
-      // WrMilGateway
-      std::ostringstream wrmilpath;
-      wrmilpath.imbue(std::locale("C"));
-      wrmilpath << od.objectPath << "/wrmilgateway";
-      path = wrmilpath.str();
-      WrMilGateway::ConstructorType wrmilargs = { path, tr.operator->() };
-      Glib::RefPtr<WrMilGateway> wrmil = WrMilGateway::create(wrmilargs);
-
-      tr->otherStuff["WrMilGateway"]["wrmilgateway"] = wrmil;
+      // see if there is an active WrMilGateway firmware running
+      try {
+        std::ostringstream wrmilpath;
+        wrmilpath.imbue(std::locale("C"));
+        wrmilpath << od.objectPath << "/wrmilgateway";
+        path = wrmilpath.str();
+        WrMilGateway::ConstructorType wrmilargs = { path, tr.operator->() };
+        Glib::RefPtr<WrMilGateway> wrmil = WrMilGateway::create(wrmilargs);
+        tr->otherStuff["WrMilGateway"]["wrmilgateway"] = wrmil;
+      } catch (IPC_METHOD::Error &e) {
+        clog << kLogDebug << "no WR-MIL-Gateway found" << std::endl;
+      }
 
     }
   }

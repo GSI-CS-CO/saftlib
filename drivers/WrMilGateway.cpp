@@ -23,6 +23,7 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <iostream>
+#include <iomanip>
 
 #include <assert.h>
 
@@ -36,79 +37,47 @@ namespace saftlib {
 
 WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
-   dev(args.dev)
+   dev(args.dev),
+   have_wrmilgw(false),
+   registerContent(13,0)
 {
-  // etherbone::Cycle cycle;
-  // cycle.open(dev->getDevice());
-
-  // cycle.read()
-
-
-
-  // cycle.close();
-
-    // EB_STATUS_OR_VOID_T sdb_find_by_address(eb_address_t address, struct sdb_device* output);
-    // EB_STATUS_OR_VOID_T sdb_find_by_identity(uint64_t vendor_id, uint32_t device_id, std::vector<struct sdb_device>& output);
-    // EB_STATUS_OR_VOID_T sdb_find_by_identity_msi(uint64_t vendor_id, uint32_t device_id, std::vector<struct sdb_msi_device>& output);
+  // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
   std::vector<struct sdb_device> devices;
   dev->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), devices);
+  for(auto device: devices) {
+    guint32 wr_mil_gw_magic_number = 0;
+    dev->getDevice().read(device.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET, 
+                          EB_DATA32, 
+                          (eb_data_t*)&wr_mil_gw_magic_number);
+    if (wr_mil_gw_magic_number == WR_MIL_GW_MAGIC_NUMBER) {
+      wrmilgw_device = device;
+      have_wrmilgw = true;
+      break;
+    }
+  }
 
-  std::cerr << "found " << devices.size() << " LM32 devices" << std::endl;
+  // just throw if there is no active firmware
+  if (!have_wrmilgw) {
+    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "No WR-MIL-Gateway found");
+  }
 
+   // see if the firmware is running (it should reset the CMD register to 0 after a command is put there)
+   // submit a test command 
+  dev->getDevice().write(wrmilgw_device.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET + WR_MIL_GW_REG_COMMAND,
+                         EB_DATA32,
+                         (eb_data_t)WR_MIL_GW_CMD_TEST);
+  usleep(50000);
+  guint32 value;
+  dev->getDevice().read(wrmilgw_device.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET + WR_MIL_GW_REG_COMMAND,
+                         EB_DATA32,
+                         (eb_data_t*)&value);
+  // the firmware is not running if the command value was not overwritten
+  if (value) {
+    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "WR-MIL-Gateway not running");
+  }
 
-  // dev->getDevice().read(mb_base, EB_DATA32, &mb_value);
-  // while((mb_value != 0xffffffff) && slot < 128) {
-  //   dev->getDevice().read(mb_base + slot * 4 * 2, EB_DATA32, &mb_value);
-  //   slot++;
-  // }
-
-
-  // cycle.read (dev->getBase() + ECA_LATENCY_GET,           EB_DATA32, &raw_latency);
-  // cycle.read (dev->getBase() + ECA_OFFSET_BITS_GET,       EB_DATA32, &raw_offset_bits);
-
-
-  // /* open Etherbone device and socket */
-  // if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die(argv[0], "eb_socket_open", eb_status);
-  // if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die(argv[0], "eb_device_open", eb_status);
-
-  // // find user LM32 devices
-  // #define MAX_DEVICES 8
-  // struct sdb_device devices[MAX_DEVICES];
-  // int num_devices = MAX_DEVICES;
-  // eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0x54111351), devices, &num_devices);
-  // if (num_devices == 0) {
-  //   fprintf(stderr, "%s: no matching devices found\n", argv[0]);
-  //   return 1;
-  // }
-
-  // //printf("found %d devices\n", num_devices);
-  // int device_idx = -1;
-  // uint64_t device_addr = 0;
-  // for (int i = 0; i < num_devices; ++i)
-  // {
-  //   uint64_t addr_first = devices[i].sdb_component.addr_first;
-
-  //   uint32_t magic_number;
-  //   eb_status_t status;
-  //   // find the correct user LM32 by reading the first value of the shared memory segment and expecting a certain value for the WR-MIL gateway
-  //   status = eb_device_read(device, addr_first+WR_MIL_GW_SHARED_OFFSET, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&magic_number, 0, eb_block);   
-  //   if (status != EB_OK){
-  //     printf("not ok\n");
-  //     continue;
-  //   }
-  //   else{
-  //     //printf("%d %x\n", (int)status, (int)magic_number);
-  //   }
-    
-  //   if (magic_number == WR_MIL_GW_MAGIC_NUMBER)
-  //   {
-  //     device_idx = 1;
-  //     device_addr = addr_first;
-  //     break;
-  //   }
-  // }
-
-
+  // read all registers once
+  getRegisterContent();
 }
 
 WrMilGateway::~WrMilGateway()
@@ -122,7 +91,13 @@ Glib::RefPtr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
 
 std::vector< guint32 > WrMilGateway::getRegisterContent() const
 {
-  return std::vector< guint32 >(10,0);
+  for (unsigned i = 0; i < registerContent.size(); ++i) {
+    dev->getDevice().read(wrmilgw_device.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET + 4*i, 
+                          EB_DATA32, 
+                          (eb_data_t*)&registerContent[i]);
+  }
+
+  return registerContent;
 }
 
 void WrMilGateway::Reset() 

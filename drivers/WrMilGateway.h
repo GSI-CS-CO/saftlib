@@ -60,6 +60,10 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void ownerQuit();
             
     TimingReceiver* dev;
+
+    struct sdb_device wrmilgw_device; // store the LM32 device with WR-MIL-Gateway firmware running
+    bool   have_wrmilgw;
+    std::vector< guint32 > registerContent; 
 };
 
 }
