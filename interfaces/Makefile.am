@@ -13,7 +13,8 @@ NODES =				\
 	EmbeddedCPUCondition.xml	\
 	SoftwareActionSink.xml	\
 	SoftwareCondition.xml	\
-	TimingReceiver.xml
+	TimingReceiver.xml      \
+	WrMilGateway.xml
 INTERFACES =			\
 	ActionSink.xml		\
 	Condition.xml		\
@@ -57,6 +58,7 @@ nodist_saftlib_HEADERS = 	\
 	iSoftwareActionSink.h	\
 	iSoftwareCondition.h	\
 	iTimingReceiver.h	\
+	iWrMilGateway.h     \
 	MILbusActionSink.h	\
 	MILbusCondition.h	\
 	OutputCondition.h	\
@@ -67,7 +69,8 @@ nodist_saftlib_HEADERS = 	\
 	EmbeddedCPUCondition.h	\
 	SoftwareActionSink.h	\
 	SoftwareCondition.h	    \
-	TimingReceiver.h
+	TimingReceiver.h        \
+	WrMilGateway.h
 
 
 if INTERFACE_DOCS
@@ -90,7 +93,8 @@ doc_DATA = 			\
 	EmbeddedCPUCondition.pdf	\
 	SoftwareActionSink.pdf	\
 	SoftwareCondition.pdf	\
-	TimingReceiver.pdf
+	TimingReceiver.pdf     \
+	WrMilGateway.pdf
 endif
 
 libsaftlib_la_LIBADD = $(GIOMM_LIBS)
@@ -123,6 +127,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	iSoftwareActionSink.cpp	\
 	iSoftwareCondition.cpp	\
 	iTimingReceiver.cpp	\
+	iWrMilGateway.cpp   \
 	MILbusActionSink.cpp	\
 	MILbusCondition.cpp	\
 	OutputCondition.cpp	\
@@ -133,7 +138,8 @@ nodist_libsaftlib_la_SOURCES =	\
 	EmbeddedCPUCondition.cpp	\
 	SoftwareActionSink.cpp	\
 	SoftwareCondition.cpp	\
-	TimingReceiver.cpp
+	TimingReceiver.cpp     \
+	WrMilGateway.cpp
 
 
 $(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES) $(nodist_saftlib_HEADERS):	$(NODES) $(INTERFACES) $(XSL)

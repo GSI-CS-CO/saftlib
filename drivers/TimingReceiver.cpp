@@ -37,6 +37,7 @@
 #include "FunctionGenerator.h"
 #include "FunctionGeneratorImpl.h"
 #include "MasterFunctionGenerator.h"
+#include "WrMilGateway.h"
 #include "eca_regs.h"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
@@ -925,6 +926,18 @@ void TimingReceiver::probe(OpenDevice& od)
       Glib::RefPtr<MasterFunctionGenerator> fg = MasterFunctionGenerator::create(args);
 
       tr->otherStuff["MasterFunctionGenerator"]["masterfg"] = fg;
+
+
+      // WrMilGateway
+      std::ostringstream wrmilpath;
+      wrmilpath.imbue(std::locale("C"));
+      wrmilpath << od.objectPath << "/wrmilgateway";
+      path = wrmilpath.str();
+      WrMilGateway::ConstructorType wrmilargs = { path, tr.operator->() };
+      Glib::RefPtr<WrMilGateway> wrmil = WrMilGateway::create(wrmilargs);
+
+      tr->otherStuff["WrMilGateway"]["wrmilgateway"] = wrmil;
+
     }
   }
 }

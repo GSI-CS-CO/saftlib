@@ -1,0 +1,14 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="WrMilGateway">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  
+  <!-- Include base interfaces -->
+  <xi:include href="Owned.xml"/>
+  
+  <interface name="de.gsi.saftlib.WrMilGateway">
+    
+    <!-- SCUbusSlot: Slot number of the slave card -->
+    <property name="RegisterContent"   type="au" access="read">
+    </property>
+
+  </interface>
+</node>
