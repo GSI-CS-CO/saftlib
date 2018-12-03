@@ -100,6 +100,96 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
   return registerContent;
 }
 
+void WrMilGateway::StartSIS18()
+{
+
+}
+void WrMilGateway::StartESR()
+{
+
+}
+void WrMilGateway::ResetGateway()
+{
+
+}
+void WrMilGateway::KillGateway()
+{
+
+}
+
+
+guint32 WrMilGateway::getWrMilMagic() const
+{
+  return 0;
+}
+guint32 WrMilGateway::getFirmwareState() const
+{
+  return 0;
+}
+guint32 WrMilGateway::getEventSource() const
+{
+
+  return 0;
+}
+unsigned char WrMilGateway::getUtcTrigger() const
+{
+
+  return 0;
+}
+guint32 WrMilGateway::getEventLatency() const
+{
+
+  return 0;
+}
+guint32 WrMilGateway::getUtcUtcDelay() const
+{
+
+  return 0;
+}
+guint32 WrMilGateway::getTriggerUtcDelay() const
+{
+
+  return 0;
+}
+guint64 WrMilGateway::getUTCOffset() const
+{
+
+  return 0;
+}
+guint64 WrMilGateway::getNumMilEvents() const
+{
+
+  return 0;
+}
+guint32 WrMilGateway::getNumLateMilEvents() const
+{
+
+  return 0;
+}
+
+void WrMilGateway::setUtcTrigger(unsigned char val)
+{
+
+}
+void WrMilGateway::setEventLatency(guint32 val)
+{
+
+}
+void WrMilGateway::setUtcUtcDelay(guint32 val)
+{
+
+}
+void WrMilGateway::setTriggerUtcDelay(guint32 val)
+{
+
+}
+void WrMilGateway::setUTCOffset(guint64 val)
+{
+
+}
+
+
+
 void WrMilGateway::Reset() 
 {
 }

@@ -6,9 +6,82 @@
   
   <interface name="de.gsi.saftlib.WrMilGateway">
     
-    <!-- SCUbusSlot: Slot number of the slave card -->
+    <!-- Access all registers of the WrMilGateway -->
     <property name="RegisterContent"   type="au" access="read">
     </property>
+
+    <!-- WR-MIL magic number -->
+    <property name="WrMilMagic"   type="u" access="read">
+    </property>
+
+    <!-- WR-MIL firmware state -->
+    <property name="FirmwareState"   type="u" access="read">
+    </property>
+
+    <!-- WR-MIL event source. This can be either 
+         0 -> not configured (default)
+         1 -> SIS18 (work as SIS18 "Pulszentrale")
+         2 -> ESR   (work as ESR "Pulszentrale")   -->
+    <property name="EventSource"   type="u" access="read">
+    </property>
+
+    <!-- The event number that triggers generation of UTC events -->
+    <property name="UtcTrigger"   type="y" access="readwrite">
+    </property>
+
+    <!-- event latency in microseconds. This is the time between the 
+         WR-event deadline and the rising edge at the TIF module caused
+         by the translated MIL event -->
+    <property name="EventLatency"   type="u" access="readwrite">
+    </property>
+
+    <!-- Time between the generated UTC MIL events -->
+    <property name="UtcUtcDelay"   type="u" access="readwrite">
+    </property>
+
+    <!-- Time between the UTC trigger event and the first UTC MIL event -->
+    <property name="TriggerUtcDelay"   type="u" access="readwrite">
+    </property>
+
+    <!-- The number of seconds that is added to the WR-TAI 
+         (which starts at 1970) to create a UTC time that  
+         starts at 2008 (64bit value) -->
+    <property name="UTCOffset"   type="t" access="readwrite">
+    </property>
+
+
+    <!-- The number of translated events (as 64bit value) -->
+    <property name="NumMilEvents"   type="t" access="read">
+    </property>
+
+
+    <!-- The number of translated events that were submitted later  
+         than the anticipated WR event deadline -->
+    <property name="NumLateMilEvents"   type="u" access="read">
+    </property>
+
+    <!-- Configure Gateway as SIS18 "Pulszentrale" and start -->
+    <method name="StartSIS18"/>
+
+    <!-- Configure Gateway as ESR "Pulszentrale" and start -->
+    <method name="StartESR"/>
+
+    <!-- Stop WR-MIL Gateway and restart after 1 second pause -->
+    <method name="ResetGateway"/>
+
+    <!-- Kill WR-MIL Gateway. Only MCU reset can recover (useful to 
+         do before loading new firmware)-->
+    <method name="KillGateway"/>
+
+    <!-- emitted when the WR-MIL Gateway started its operation -->
+    <signal name="SigGatewayStarted"/>
+
+    <!-- emitted when the WR-MIL Gateway stopped its operation -->
+    <signal name="SigGatewayStopped"/>
+
+    <!-- emitted when there were new Late events since this signal
+         was emitted last time -->
+    <signal name="SigLateEventsDetected"/>
 
   </interface>
 </node>

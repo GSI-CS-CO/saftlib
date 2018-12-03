@@ -52,6 +52,29 @@ class WrMilGateway : public Owned, public iWrMilGateway
     
     // iWrMilGateway overrides
     std::vector< guint32 > getRegisterContent() const;
+
+    void StartSIS18();
+    void StartESR();
+    void ResetGateway();
+    void KillGateway();
+
+
+    guint32 getWrMilMagic() const;
+    guint32 getFirmwareState() const;
+    guint32 getEventSource() const;
+    unsigned char getUtcTrigger() const;
+    guint32 getEventLatency() const;
+    guint32 getUtcUtcDelay() const;
+    guint32 getTriggerUtcDelay() const;
+    guint64 getUTCOffset() const;
+    guint64 getNumMilEvents() const;
+    guint32 getNumLateMilEvents() const;
+
+    void setUtcTrigger(unsigned char val);
+    void setEventLatency(guint32 val);
+    void setUtcUtcDelay(guint32 val);
+    void setTriggerUtcDelay(guint32 val);
+    void setUTCOffset(guint64 val);
     
   protected:
     WrMilGateway(const ConstructorType& args);
