@@ -46,47 +46,51 @@ class WrMilGateway : public Owned, public iWrMilGateway
     struct ConstructorType {
       Glib::ustring objectPath;
       TimingReceiver* dev;
+      eb_address_t base;
     };
     
     static Glib::RefPtr<WrMilGateway> create(const ConstructorType& args);
     
-    // iWrMilGateway overrides
-    std::vector< guint32 > getRegisterContent() const;
-
     void StartSIS18();
     void StartESR();
     void ResetGateway();
     void KillGateway();
 
-
-    guint32 getWrMilMagic() const;
-    guint32 getFirmwareState() const;
-    guint32 getEventSource() const;
-    unsigned char getUtcTrigger() const;
-    guint32 getEventLatency() const;
-    guint32 getUtcUtcDelay() const;
-    guint32 getTriggerUtcDelay() const;
-    guint64 getUTCOffset() const;
-    guint64 getNumMilEvents() const;
-    guint32 getNumLateMilEvents() const;
+    // iWrMilGateway overrides
+    std::vector< guint32 > getRegisterContent()  const;
+    guint32                getWrMilMagic()       const;
+    guint32                getFirmwareState()    const;
+    guint32                getEventSource()      const;
+    unsigned char          getUtcTrigger()       const;
+    guint32                getEventLatency()     const;
+    guint32                getUtcUtcDelay()      const;
+    guint32                getTriggerUtcDelay()  const;
+    guint64                getUtcOffset()        const;
+    guint64                getNumMilEvents()     const;
+    guint32                getNumLateMilEvents() const;
+    bool                   getFirmwareRunning()  const;
 
     void setUtcTrigger(unsigned char val);
     void setEventLatency(guint32 val);
     void setUtcUtcDelay(guint32 val);
     void setTriggerUtcDelay(guint32 val);
-    void setUTCOffset(guint64 val);
+    void setUtcOffset(guint64 val);
     
   protected:
     WrMilGateway(const ConstructorType& args);
     ~WrMilGateway();
     void Reset();
     void ownerQuit();
-            
-    TimingReceiver* dev;
 
+    guint32 readRegisterContent(guint32 reg_offset) const;
+    void    writeRegisterContent(guint32 reg_offset, guint32 value);
+    bool    firmwareRunning() const;
+
+
+    TimingReceiver*   dev;
     struct sdb_device wrmilgw_device; // store the LM32 device with WR-MIL-Gateway firmware running
-    bool   have_wrmilgw;
-    std::vector< guint32 > registerContent; 
+    eb_address_t      base;
+    bool              have_wrmilgw;
 };
 
 }

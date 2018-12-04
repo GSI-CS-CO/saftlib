@@ -18,6 +18,10 @@
     <property name="FirmwareState"   type="u" access="read">
     </property>
 
+    <!-- WR-MIL firmware is active (not stalled) -->
+    <property name="FirmwareRunning"   type="b" access="read">
+    </property>
+
     <!-- WR-MIL event source. This can be either 
          0 -> not configured (default)
          1 -> SIS18 (work as SIS18 "Pulszentrale")
@@ -46,7 +50,7 @@
     <!-- The number of seconds that is added to the WR-TAI 
          (which starts at 1970) to create a UTC time that  
          starts at 2008 (64bit value) -->
-    <property name="UTCOffset"   type="t" access="readwrite">
+    <property name="UtcOffset"   type="t" access="readwrite">
     </property>
 
 

@@ -19,7 +19,7 @@ namespace saftbus
 ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
-	std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
+	//std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
 	for (;;) {
 		// create a local unix socket
 		_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
