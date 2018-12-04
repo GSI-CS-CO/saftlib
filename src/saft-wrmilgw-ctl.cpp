@@ -54,67 +54,83 @@ static void wrmilgw_help (void)
   std::cout << "  -r:                            Pause gateway for 1 s, and reset" << std::endl;
   std::cout << "  -k:                            Kill gateway. Only LM32 reset can recover." << std::endl;
   std::cout << "                                 This is useful before flashing new firmware." << std::endl;
+  std::cout << "  -c:                            No color on console ouput" << std::endl;
   std::cout << "  -h:                            Print help (this message)" << std::endl;
-  // std::cout << std::endl;
-  // std::cout << "Example:" << std::endl;
-  // std::cout << program << " exploder5a_123t " << "-c 64 58 0x2 0x4 -d"<< std::endl;
-  // std::cout << "  This will create a new condition and disown it" << std::endl;
-  // std::cout << std::endl;
-  // std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
-  // std::cout << "Licensed under the GPLv3" << std::endl;
   std::cout << std::endl;
 }
+
+std::string red_color       = "\033[1;31m";
+std::string green_color     = "\033[1;32m";
+std::string default_color   = "\033[0m";
 
 const int key_width = 25;
 const int value_width = 15;
 
+bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state) {
+  return     (receiver_locked  == true)
+          && (firmware_running == true)
+          && (firmware_state   == WR_MIL_GW_STATE_CONFIGURED);
+}
+
 // Print basic info
 void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
 {
+  auto receiver_locked  = receiver->getLocked();
+  auto firmware_running = wrmilgw->getFirmwareRunning();
+  auto firmware_state   = wrmilgw->getFirmwareState(); 
+  auto event_source     = wrmilgw->getEventSource();
+
   std::cout << std::endl;
+  std::cout << std::setw(key_width) << std::left << "OP_READY:";
+  if (op_ready(receiver_locked, firmware_running, firmware_state)) {
+    std::cout << green_color << std::setw(value_width) << std::right << "YES" << default_color << std::endl;
+  } else {
+    std::cout << red_color << std::setw(value_width) << std::right << "NO" << default_color << std::endl;
+  }
   std::cout << std::setw(key_width) << std::left << "TimingReceiver status:";
-  if (receiver->getLocked()) {
-    std::cout << std::setw(value_width) << std::right << "LOCKED" << std::endl;
+  if (receiver_locked) {
+    std::cout << green_color << std::setw(value_width) << std::right << "LOCKED" << default_color << std::endl;
   } else {
-    std::cout << std::setw(value_width) << std::right << "NOT LOCKED" << std::endl;
+    std::cout << red_color << std::setw(value_width) << std::right << "NOT LOCKED" << default_color << std::endl;
   }
-  std::cout << std::setw(key_width) << std::left << "Gateway type:";
-  auto eventSource = wrmilgw->getEventSource();
-  switch(eventSource) {
-    case WR_MIL_GW_EVENT_SOURCE_SIS:
-      std::cout << std::setw(value_width) << std::right << "SIS18" << std::endl;
-    break;
-    case WR_MIL_GW_EVENT_SOURCE_ESR:
-      std::cout << std::setw(value_width) << std::right << "ESR  " << std::endl;
-    break;
-    default:
-      std::cout << std::setw(value_width) << std::right << "UNKNOWN" << std::endl;
-  }
+
   std::cout << std::setw(key_width) << std::left << "Gateway firmware:";
-  if (wrmilgw->getFirmwareRunning()) {
-    std::cout << std::setw(value_width) << std::right << "RUNNING" << std::endl;
+  if (firmware_running) {
+    std::cout << green_color << std::setw(value_width) << std::right << "RUNNING" << default_color << std::endl;
   } else {
-    std::cout << std::setw(value_width) << std::right << "STALLED" << std::endl;
+    std::cout << red_color << std::setw(value_width) << std::right << "STALLED" << default_color << std::endl;
   }
 
   std::cout << std::setw(key_width) << std::left << "Gateway state:";
-  auto firmwareStatus = wrmilgw->getFirmwareState();
-  switch(firmwareStatus) {
+  switch(firmware_state) {
     case WR_MIL_GW_STATE_INIT:
-      std::cout << std::setw(value_width) << std::right << "INIT" << std::endl;
+      std::cout << red_color << std::setw(value_width) << std::right << "INIT" << default_color << std::endl;
     break;         
     case WR_MIL_GW_STATE_UNCONFIGURED:
-      std::cout << std::setw(value_width) << std::right << "UNCONFIGURED" << std::endl;
+      std::cout << red_color << std::setw(value_width) << std::right << "UNCONFIGURED" << default_color << std::endl;
     break; 
     case WR_MIL_GW_STATE_CONFIGURED:
-      std::cout << std::setw(value_width) << std::right << "CONFIGURED" << std::endl;
+      std::cout << green_color << std::setw(value_width) << std::right << "CONFIGURED" << default_color << std::endl;
     break;   
     case WR_MIL_GW_STATE_PAUSED:
-      std::cout << std::setw(value_width) << std::right << "PAUSED" << std::endl;
+      std::cout << red_color << std::setw(value_width) << std::right << "PAUSED" << default_color << std::endl;
     break;       
     default:
-      std::cout << std::setw(value_width) << std::right << "UNKNOWN" << std::endl;
+      std::cout << red_color << std::setw(value_width) << std::right << "UNKNOWN" << default_color << std::endl;
   }
+
+  std::cout << std::setw(key_width) << std::left << "Gateway type:";
+  switch(event_source) {
+    case WR_MIL_GW_EVENT_SOURCE_SIS:
+      std::cout << green_color << std::setw(value_width) << std::right << "SIS18" << default_color << std::endl;
+    break;
+    case WR_MIL_GW_EVENT_SOURCE_ESR:
+      std::cout << green_color << std::setw(value_width) << std::right << "ESR" << default_color << std::endl;
+    break;
+    default:
+      std::cout << red_color << std::setw(value_width) << std::right << "UNKNOWN" << default_color << std::endl;
+  }
+
   std::cout << std::endl;
 }
 
@@ -177,10 +193,11 @@ int main (int argc, char** argv)
   
   /* Parse arguments */
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkimM:")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicmM:")) != -1) 
   {
     switch (opt)
     {
+      case 'c': { red_color = green_color = default_color = ""; break; }
       case 's': { configSIS18 = true; break; }
       case 'e': { configESR   = true; break; }
       case 'i': { ++info; break; } // more info by putting -i multiple times
