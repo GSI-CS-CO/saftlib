@@ -47,10 +47,15 @@
 #include "interfaces/iOwned.h"
 #include "src/CommonFunctions.h"
 
+// FID
 #define FID          0x1
 
+// GID
+#define FROM_UNI     0x1f2
 #define SIS18_RING   0x12c
+#define TO_ESR       0x1f8
 #define ESR_RING     0x154
+#define TO_CRYRING   0xcb
 #define CRYRING_RING 0xd2
 #define YRT1IN       0xc8
 #define TO_HHD       0x1fa
@@ -63,9 +68,12 @@
 #define TO_HTA       0x20f
 #define TO_HTP       0x211
 
+// EVTNO
 #define COMMAND      0xff
 #define SEQ_START    0x101
 #define UNI_TCREQ    0x15e
+
+#define MAXRULES     32
 
 using namespace std;
 
@@ -94,19 +102,22 @@ static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 ex
 
   // machine name
   switch (gid) {
-  case SIS18_RING   : gName = "SIS18";    break;
-  case ESR_RING     : gName = "ESR";      break;
-  case YRT1IN       : gName = "YRT1IN";   break;
-  case CRYRING_RING : gName = "CRYRING";  break;
-  case TO_HHD       : gName = "HHD";      break;
-  case TO_HFS       : gName = "HFS";      break;
-  case TO_HHT       : gName = "HHT";      break;
-  case TO_HADES     : gName = "HADES";    break;
-  case TO_HTM       : gName = "HTM";      break;
-  case TO_HTC       : gName = "HTC";      break;
-  case TO_HTD       : gName = "HTD";      break;
-  case TO_HTA       : gName = "HTA";      break;       
-  case TO_HTP       : gName = "HTP";      break;       
+  case FROM_UNI     : gName = "UNILAC";     break;
+  case SIS18_RING   : gName = "SIS18";      break;
+  case TO_ESR       : gName = "TO_ESR";     break;
+  case ESR_RING     : gName = "ESR";        break;
+  case YRT1IN       : gName = "YRT1IN";     break;
+  case TO_CRYRING   : gName = "TO_CRYRING"; break;
+  case CRYRING_RING : gName = "CRYRING";    break;
+  case TO_HHD       : gName = "HHD";        break;
+  case TO_HFS       : gName = "HFS";        break;
+  case TO_HHT       : gName = "HHT";        break;
+  case TO_HADES     : gName = "HADES";      break;
+  case TO_HTM       : gName = "HTM";        break;
+  case TO_HTC       : gName = "HTC";        break;
+  case TO_HTD       : gName = "HTD";        break;
+  case TO_HTA       : gName = "HTA";        break;       
+  case TO_HTP       : gName = "HTP";        break;       
   default : gName = "N/A";
   }
 
@@ -130,7 +141,7 @@ static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 ex
       } // if gid
     break; 
   case UNI_TCREQ :
-    if (mSelect == SIS18_RING) std::cout << " [UNI " << vacc << "]";
+    if (mSelect == FROM_UNI) std::cout << ", [UNI " << vacc << "]";
     break;
   default : ;
   } // switch evtno
@@ -151,7 +162,7 @@ static void help(void) {
   std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
   std::cout << std::endl;
   std::cout << "  snoop <source>       snoops and displays Beam Production Chains, CTRL+C to exit (try 'snoop 0'')" << std::endl;
-  std::cout << "                       machine: 0 SIS18, 1 ESR, 2 CRYRING" << std::endl;
+  std::cout << "                       machine: 0 UNILAC, 1 ESR, 2 YRT1IN" << std::endl;
   std::cout << std::endl;
   std::cout << "This tool provides a very basic display of beam production chains in the facility." << std::endl;
   std::cout << std::endl;
@@ -226,7 +237,7 @@ int main(int argc, char** argv)
       snoop = true;
       dummy = strtoull(argv[optind+2], &value_end, 0);
       switch (dummy) {
-      case 0 : mSelect = SIS18_RING;   std::cout << "SIS18"   ; break;
+      case 0 : mSelect = FROM_UNI;     std::cout << "UNILAC"  ; break;
       case 1 : mSelect = ESR_RING;     std::cout << "ESR"     ; break;
       case 2 : mSelect = YRT1IN;       std::cout << "CRYRING Linac" ; break;
       default: std::cerr << std::endl << program << ": invalid machine -- " << dummy << std::endl; return 1;
@@ -235,7 +246,7 @@ int main(int argc, char** argv)
       if (pmode & PMODE_VERBOSE) std::cout << "verbose mode: idle patterns and other BPCs are shown in brackets" << std::endl;
       std::cout << std::endl;
 
-      std::cout << "  BPCID: source [UNI vAcc], target(s)" << std::endl;
+      std::cout << "  BPCID: source, [UNI vAcc], target(s)" << std::endl;
       std::cout << "--------------------------------------" << std::endl;
     } // "snoop"
 
@@ -281,11 +292,15 @@ int main(int argc, char** argv)
 
       snoopMask = 0xfffffff000000000;
 
-      Glib::RefPtr<SoftwareCondition_Proxy> condition[20];
+      Glib::RefPtr<SoftwareCondition_Proxy> condition[32];
       int nCon = 0;
      
-      snoopID   = ((guint64)FID << 60) | ((guint64)SIS18_RING << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((guint64)FID << 60) | ((guint64)FROM_UNI << 48) | ((guint64)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nCon++;
+
+      snoopID   = ((guint64)FID << 60) | ((guint64)SIS18_RING << 48) | ((guint64)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 8));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)SIS18_RING << 48) | ((guint64)UNI_TCREQ << 36);
@@ -296,60 +311,68 @@ int main(int argc, char** argv)
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)YRT1IN << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nCon++;
-
-      snoopID   = ((guint64)FID << 60) | ((guint64)CRYRING_RING << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
-      nCon++;
-      
-      snoopID   = ((guint64)FID << 60) | ((guint64)CRYRING_RING << 48) | ((guint64)COMMAND << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      snoopID   = ((guint64)FID << 60) | ((guint64)TO_ESR << 48) | ((guint64)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 16));
       nCon++;
 
       snoopID   = ((guint64)FID << 60) | ((guint64)ESR_RING << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 8));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)ESR_RING << 48) | ((guint64)COMMAND << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 8));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 16));
+      nCon++;
+
+      snoopID   = ((guint64)FID << 60) | ((guint64)YRT1IN << 48) | ((guint64)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      nCon++;
+
+      snoopID   = ((guint64)FID << 60) | ((guint64)TO_CRYRING << 48) | ((guint64)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 32));
+      nCon++;
+
+      snoopID   = ((guint64)FID << 60) | ((guint64)CRYRING_RING << 48) | ((guint64)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 40));
+      nCon++;
+      
+      snoopID   = ((guint64)FID << 60) | ((guint64)CRYRING_RING << 48) | ((guint64)COMMAND << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 32));
       nCon++;
 
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HHD << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HFS << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
 
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HHT << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HADES << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTM << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTC << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTD << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTA << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTP << 48) | ((guint64)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 42));
       nCon++;
       
       for (int i=0; i<nCon; i++) {
