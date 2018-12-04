@@ -146,7 +146,7 @@ static void help(void) {
   std::cout << std::endl << "Usage: " << program << " <device name> [OPTIONS] [command]" << std::endl;
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
-  std::cout << "  -e                  display version" << std::endl;
+  std::cout << "  -e                   display version" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
   std::cout << std::endl;
