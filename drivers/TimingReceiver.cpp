@@ -349,6 +349,7 @@ bool TimingReceiver::getLocked() const
   /* Update signal */
   if (newLocked != locked) {
     locked = newLocked;
+    SigLocked(locked);
     Locked(locked);
   }
   

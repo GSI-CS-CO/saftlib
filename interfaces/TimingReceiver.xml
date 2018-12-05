@@ -51,6 +51,11 @@
       -->
     <property name="Locked" type="b" access="read"/>
   
+    <!-- This signal is sent when the Lock Property changes -->
+    <signal name="SigLocked">
+      <arg name="locked" type="b"/>
+    </signal>
+
     <!-- ReadCurrentTime: The current time in nanoseconds since 1970.
          @result:         Nanoseconds since 1970.
          Due to delays in software, the returned value is probably several

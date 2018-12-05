@@ -46,18 +46,19 @@ static void wrmilgw_help (void)
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
   // std::cout << "  -c <id> <mask> <offset> <tag>: Create a new condition" << std::endl;
-  std::cout << "  -s:                            Start WR-MIL Gateway as SIS18 Pulszentrale" << std::endl;
-  std::cout << "  -e:                            Start WR-MIL Gateway as ESR   Pulszentrale" << std::endl;
-  std::cout << "  -l <latency>:                  Set MIL event latency [us]" << std::endl;
-  std::cout << "  -t <trigger>:                  Set UTC-trigger event [0..255]" << std::endl;
-  std::cout << "  -o <offset>:                   Set UTC-offset [s] (value is added to WR-time)" << std::endl;
-  std::cout << "  -d <delay>:                    Set Trigger-UTC delay [us]" << std::endl;
-  std::cout << "  -u <delay>:                    Set UTC-UTC delay [us]" << std::endl;
-  std::cout << "  -r:                            Pause gateway for 1 s, and reset" << std::endl;
-  std::cout << "  -k:                            Kill gateway. Only LM32 reset can recover." << std::endl;
-  std::cout << "                                 This is useful before flashing new firmware." << std::endl;
-  std::cout << "  -c:                            No color on console ouput" << std::endl;
-  std::cout << "  -h:                            Print help (this message)" << std::endl;
+  std::cout << "  -m                            Start monitoring loop"                          << std::endl;
+  std::cout << "  -s                            Start WR-MIL Gateway as SIS18 Pulszentrale"     << std::endl;
+  std::cout << "  -e                            Start WR-MIL Gateway as ESR   Pulszentrale"     << std::endl;
+  std::cout << "  -l <latency>                  Set MIL event latency [us]"                     << std::endl;
+  std::cout << "  -t <trigger>                  Set UTC-trigger event [0..255]"                 << std::endl;
+  std::cout << "  -o <offset>                   Set UTC-offset [s] (value is added to WR-time)" << std::endl;
+  std::cout << "  -d <delay>                    Set Trigger-UTC delay [us]"                     << std::endl;
+  std::cout << "  -u <delay>                    Set UTC-UTC delay [us]"                         << std::endl;
+  std::cout << "  -r                            Pause gateway for 1 s, and reset"               << std::endl;
+  std::cout << "  -k                            Kill gateway. Only LM32 reset can recover."     << std::endl;
+  std::cout << "                                 This is useful before flashing new firmware."  << std::endl;
+  std::cout << "  -c                            No color on console ouput"                      << std::endl;
+  std::cout << "  -h                            Print help (this message)"                      << std::endl;
   std::cout << std::endl;
 }
 
@@ -223,6 +224,14 @@ void destroyGatewayConditions(Glib::RefPtr<TimingReceiver_Proxy> receiver)
   }  
 }
 
+void on_locked(bool is_locked) 
+{
+  if (is_locked) {
+    std::cout << "got WR-Lock" << std::endl;
+  } else {
+    std::cout << "WR-Lock lost!" << std::endl;
+  }
+}
 /* Function main() */
 /* ==================================================================================================== */
 int main (int argc, char** argv)
@@ -241,6 +250,7 @@ int main (int argc, char** argv)
   bool    configSIS18    = false;
   bool    configESR      = false;
   bool    show_help      = false;
+  bool    monitoring     = false;
   
   /* Get the application name */
   program = argv[0]; 
@@ -251,6 +261,7 @@ int main (int argc, char** argv)
   {
     switch (opt)
     {
+      case 'm': { monitoring = true; break; }
       case 'c': { red_color = green_color = default_color = ""; break; }
       case 's': { configSIS18 = true; break; }
       case 'e': { configESR   = true; break; }
@@ -315,8 +326,12 @@ int main (int argc, char** argv)
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
       return -1;
     }
+
+
+    saftlib::SignalGroup signal_group;
+
     // Get TimingReceiver Proxy
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName], signal_group);
 
     // Search for WR-MIL Gateway 
     map<Glib::ustring, Glib::ustring> wrmilgws = receiver->getInterfaces()["WrMilGateway"];
@@ -325,7 +340,7 @@ int main (int argc, char** argv)
       return -1;
     }
     // Get Gateway Proxy
-    Glib::RefPtr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second);
+    Glib::RefPtr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second, signal_group);
 
 
     if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
@@ -425,6 +440,13 @@ int main (int argc, char** argv)
     }
     if (info > 2) {
       print_info3(receiver, wrmilgw);
+    }
+
+    if (monitoring) {
+      receiver->SigLocked.connect(sigc::ptr_fun(&on_locked));
+      while(true) {
+        signal_group.wait_for_signal();
+      }
     }
     
   } 
