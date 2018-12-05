@@ -14,6 +14,8 @@
 #include <giomm.h>
 
 #include "interfaces/SAFTd.h"
+#include "interfaces/EmbeddedCPUActionSink.h"
+#include "interfaces/EmbeddedCPUCondition.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/WrMilGateway.h"
 #include "drivers/wr_mil_gw_regs.h"
@@ -79,14 +81,16 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   auto firmware_running = wrmilgw->getFirmwareRunning();
   auto firmware_state   = wrmilgw->getFirmwareState(); 
   auto event_source     = wrmilgw->getEventSource();
-
-  std::cout << std::endl;
+  for (int i = 0; i < key_width+value_width; ++i) std::cout << '_';
+  std::cout << std::endl << std::endl;
   std::cout << std::setw(key_width) << std::left << "OP_READY:";
   if (op_ready(receiver_locked, firmware_running, firmware_state)) {
     std::cout << green_color << std::setw(value_width) << std::right << "YES" << default_color << std::endl;
   } else {
     std::cout << red_color << std::setw(value_width) << std::right << "NO" << default_color << std::endl;
   }
+  for (int i = 0; i < key_width+value_width; ++i) std::cout << '_';
+  std::cout << std::endl << std::endl;
   std::cout << std::setw(key_width) << std::left << "TimingReceiver status:";
   if (receiver_locked) {
     std::cout << green_color << std::setw(value_width) << std::right << "LOCKED" << default_color << std::endl;
@@ -167,6 +171,56 @@ void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
             << std::endl;
 
   std::cout << std::endl;
+}
+
+
+const auto SIS18EventID = UINT64_C(0x112c000000000000);
+const auto   ESREventID = UINT64_C(0x1154000000000000);
+
+void createCondition(Glib::RefPtr<TimingReceiver_Proxy> receiver, guint64 eventID)
+{
+  // create the embedded CPU action sink for SIS18 WR events
+  std::map<Glib::ustring, Glib::ustring> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+  if (e_cpus.size() != 1)  {
+    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "No embedded CPU action sink found");
+  }
+  Glib::RefPtr<EmbeddedCPUActionSink_Proxy> e_cpu 
+      = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
+  auto eventMask = UINT64_C(0xfffff00000000000);
+  auto offset    = INT64_C(-100000);
+  auto tag       = UINT32_C(0x4);
+
+  Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition 
+      = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
+  /* Accept every kind of event */
+  condition->setAcceptConflict(true);
+  condition->setAcceptDelayed(true);
+  condition->setAcceptEarly(true);
+  condition->setAcceptLate(true);
+  condition->Disown();
+}
+void destroyGatewayConditions(Glib::RefPtr<TimingReceiver_Proxy> receiver)
+{
+  // Get the conditions
+  std::map<Glib::ustring, Glib::ustring> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+  if (e_cpus.size() != 1)  {
+    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "No embedded CPU action sink found");
+  }
+  Glib::RefPtr<EmbeddedCPUActionSink_Proxy> e_cpu 
+      = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
+  std::vector< Glib::ustring > all_conditions = e_cpu->getAllConditions();
+ 
+  // Destroy conditions if possible
+  for (auto condition_name: all_conditions)  {
+    Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition = EmbeddedCPUCondition_Proxy::create(condition_name);
+    if (condition->getDestructible() && condition->getOwner() == "" &&
+        condition->getMask() == UINT64_C(0xfffff00000000000) &&
+        condition->getOffset()    == INT64_C(-100000) &&
+        (condition->getID() == SIS18EventID || 
+         condition->getID() == ESREventID) )  {
+      condition->Destroy();
+    }
+  }  
 }
 
 /* Function main() */
@@ -326,6 +380,7 @@ int main (int argc, char** argv)
       } else if (configSIS18) {
         if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
           std::cout << "Starting WR-MIL Gateway as SIS18 Pulszentrale" << std::endl;
+          createCondition(receiver, SIS18EventID);
           wrmilgw->StartSIS18();
         } else if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_CONFIGURED) {
           std::cerr << "Gateway is already configured and running." << std::endl;
@@ -335,6 +390,7 @@ int main (int argc, char** argv)
       } else if (configESR) {
         if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
           std::cout << "Starting WR-MIL Gateway as ESR Pulszentrale" << std::endl;
+          createCondition(receiver, ESREventID);
           wrmilgw->StartESR();
         } else if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_CONFIGURED) {
           std::cerr << "Gateway is already configured and running." << std::endl;
@@ -345,10 +401,12 @@ int main (int argc, char** argv)
 
       if (kill) {
         std::cout << "Killing Gateway." << std::endl;
+        destroyGatewayConditions(receiver);
         wrmilgw->KillGateway();
       }
       if (reset) {
         std::cout << "Pausing Gateway firmware, resetting after 1 second." << std::endl;
+        destroyGatewayConditions(receiver);
         wrmilgw->ResetGateway();
       }
     } else if (configESR   ||

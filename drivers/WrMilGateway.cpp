@@ -24,12 +24,13 @@
 
 #include <iostream>
 #include <iomanip>
+#include <map>
 
 #include <assert.h>
 
 #include "RegisteredObject.h"
-#include "WrMilGateway.h"
 #include "TimingReceiver.h"
+#include "WrMilGateway.h"
 #include "wr_mil_gw_regs.h" 
 #include "clog.h"
 
@@ -37,41 +38,57 @@ namespace saftlib {
 
 WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
-   dev(args.dev),
-   base(args.base),
+   receiver(args.receiver),
+   base_addr(args.base_addr),
    have_wrmilgw(false)
 {
   // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
   std::vector<struct sdb_device> devices;
-  dev->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), devices);
-  for(auto device: devices) {
+  receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), devices);
+  int cpu_idx = 0;
+  for(auto lm32_ram_user: devices) {
     eb_data_t wr_mil_gw_magic_number = 0;
-    dev->getDevice().read(device.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET, 
+    receiver->getDevice().read(lm32_ram_user.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET, 
                           EB_DATA32, 
                           &wr_mil_gw_magic_number);
     if (wr_mil_gw_magic_number == WR_MIL_GW_MAGIC_NUMBER) {
-      wrmilgw_device = device;
-      base = wrmilgw_device.sdb_component.addr_first;
+      wrmilgw_device = lm32_ram_user;
+      base_addr = wrmilgw_device.sdb_component.addr_first;
       have_wrmilgw = true;
       break;
     }
+    ++cpu_idx;
   }
 
   // just throw if there is no active firmware
   if (!have_wrmilgw) {
     throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "No WR-MIL-Gateway found");
   }
-
-
   // the firmware is not running if the command value was not overwritten
   if (!firmwareRunning()) {
     throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "WR-MIL-Gateway not running");
   }
 
-  std::cerr << "WR-MIL Gateway firmware running" << std::endl;
+  // reset all other LM32 CPUs to make sure that no other firmware disturbs our actions
+  // (in particular the function generator firmware)
+  receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
+  for (auto reset_device: devices) {
+    // use the first reset device
+    guint32 set_bits = ~(1<<cpu_idx) & 0xff;
+    guint32 clr_bits =  (1<<cpu_idx);
+    //GET; 8 -> SET; c -> CLR
+    const int SET = 0x8;
+    const int CLR = 0xc;
+    receiver->getDevice().write(reset_device.sdb_component.addr_first + CLR, 
+                          EB_DATA32, 
+                          clr_bits);
+    receiver->getDevice().write(reset_device.sdb_component.addr_first + SET, 
+                          EB_DATA32, 
+                          set_bits);
+    break;
+  }
 
-  // read all registers once
-  //getRegisterContent();
+  // done
 }
 
 WrMilGateway::~WrMilGateway()
@@ -101,17 +118,16 @@ bool WrMilGateway::getFirmwareRunning()  const
 guint32 WrMilGateway::readRegisterContent(guint32 reg_offset) const
 {
     eb_data_t value;
-    dev->getDevice().read(base + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, &value);
+    receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, &value);
     return value;
 }
 void WrMilGateway::writeRegisterContent(guint32 reg_offset, guint32 value)
 {
-    dev->getDevice().write(base + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
+    receiver->getDevice().write(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
 }
 
 Glib::RefPtr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
 {
-  std::cerr << "WrMilGateway::create() called" << std::endl;
   return RegisteredObject<WrMilGateway>::create(args.objectPath, args);
 }
 
@@ -120,18 +136,21 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
   std::vector<guint32> registerContent((WR_MIL_GW_REG_LAST-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 0);
   for (unsigned i = 0; i < registerContent.size(); ++i) {
     eb_data_t value;
-    dev->getDevice().read(base + WR_MIL_GW_SHARED_OFFSET + 4*i, EB_DATA32, &value);
+    receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + 4*i, EB_DATA32, &value);
     registerContent.push_back(value);
   }
   return registerContent;
 }
 
+
 void WrMilGateway::StartSIS18()
 {
+  // configure WR-MIL Gateway firmware to start operation as SIS18 Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_SIS);
 }
 void WrMilGateway::StartESR()
 {
+  // configure WR-MIL Gateway firmware to start operation as ESR Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_ESR);
 }
 void WrMilGateway::ResetGateway()

@@ -44,9 +44,9 @@ class WrMilGateway : public Owned, public iWrMilGateway
   public:
     typedef WrMilGateway_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
-      TimingReceiver* dev;
-      eb_address_t base;
+      Glib::ustring   objectPath;
+      TimingReceiver* receiver;
+      eb_address_t    base_addr;
     };
     
     static Glib::RefPtr<WrMilGateway> create(const ConstructorType& args);
@@ -86,10 +86,9 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void    writeRegisterContent(guint32 reg_offset, guint32 value);
     bool    firmwareRunning() const;
 
-
-    TimingReceiver*   dev;
+    TimingReceiver*   receiver;
     struct sdb_device wrmilgw_device; // store the LM32 device with WR-MIL-Gateway firmware running
-    eb_address_t      base;
+    eb_address_t      base_addr;
     bool              have_wrmilgw;
 };
 
