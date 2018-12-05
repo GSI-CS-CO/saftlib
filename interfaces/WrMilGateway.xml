@@ -17,11 +17,16 @@
     <!-- WR-MIL firmware state -->
     <property name="FirmwareState"   type="u" access="read">
     </property>
+    <!-- signal emitted if firmware state changes -->
+    <signal name="SigFirmwareState">
+      <arg name="state" type="u"/>
+    </signal>
 
     <!-- WR-MIL firmware is active (not stalled) -->
     <property name="FirmwareRunning"   type="b" access="read">
     </property>
 
+    <!-- signal emitted if starts/stops running -->
     <signal name="SigFirmwareRunning">
       <arg name="running" type="b"/>
     </signal>
@@ -32,6 +37,11 @@
          2 -> ESR   (work as ESR "Pulszentrale")   -->
     <property name="EventSource"   type="u" access="read">
     </property>
+    <!-- signal emitted if event source changes -->
+    <signal name="SigEventSource">
+      <arg name="source" type="u"/>
+    </signal>
+
 
     <!-- The event number that triggers generation of UTC events -->
     <property name="UtcTrigger"   type="y" access="readwrite">
@@ -67,12 +77,11 @@
          than the anticipated WR event deadline -->
     <property name="NumLateMilEvents"   type="u" access="read">
     </property>
-
-    <!-- This signal is sent when the Lock Property changes -->
-    <signal name="SigLateEvents">
-      <arg name="number" type="u"/>
+    <!-- signal emitted if number of late events increases -->
+    <signal name="SigNumLateMilEvents">
+      <arg name="total" type="u"/>
+      <arg name="since_last_signal" type="u"/>
     </signal>
-
 
 
     <!-- Configure Gateway as SIS18 "Pulszentrale" and start -->

@@ -92,7 +92,10 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   }
 
   firmware_running = firmwareRunning();
-
+  firmware_state   = readRegisterContent(WR_MIL_GW_REG_STATE);
+  event_source     = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
+  num_late_events  = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
+  
   // poll every 1s some registers
   std::cerr << "want to poll" << std::endl;
   pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), 200);
@@ -113,7 +116,7 @@ bool WrMilGateway::firmwareRunning() const
    // see if the firmware is running (it should reset the CMD register to 0 after a command is put there)
    // submit a test command 
   nonconst->writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_TEST);
-  usleep(50000);
+  usleep(10000);
   // command register will be cleared if the firmware is running;
   return (nonconst->readRegisterContent(WR_MIL_GW_REG_COMMAND) == 0);
 }
@@ -163,6 +166,10 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
 bool WrMilGateway::poll()
 {
   getFirmwareRunning();
+  getFirmwareState();
+  getEventSource();
+  getNumLateMilEvents();
+
   return true; // return true to continue polling
 }
 
@@ -192,11 +199,22 @@ guint32 WrMilGateway::getWrMilMagic() const
 }
 guint32 WrMilGateway::getFirmwareState() const
 {
-  return readRegisterContent(WR_MIL_GW_REG_STATE);
+
+  auto new_firmware_state = readRegisterContent(WR_MIL_GW_REG_STATE);
+  if (firmware_state != new_firmware_state) {
+    firmware_state = new_firmware_state;
+    SigFirmwareState(firmware_state);
+  }
+  return firmware_state;
 }
 guint32 WrMilGateway::getEventSource() const
 {
-  return readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
+  auto new_event_source = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
+  if (event_source != new_event_source) {
+    event_source = new_event_source;
+    SigEventSource(event_source);
+  }
+  return event_source;
 }
 unsigned char WrMilGateway::getUtcTrigger() const
 {
@@ -230,7 +248,17 @@ guint64 WrMilGateway::getNumMilEvents() const
 }
 guint32 WrMilGateway::getNumLateMilEvents() const
 {
-  return readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
+  guint32 new_num_late_events = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
+  if (num_late_events != new_num_late_events) {
+    // send the current number and the ones since last signal
+    guint32 difference = 0;
+    if (new_num_late_events >= num_late_events) {
+      difference = new_num_late_events - num_late_events;
+    }
+    SigNumLateMilEvents(new_num_late_events, difference);
+    num_late_events = new_num_late_events;
+  }
+  return num_late_events;
 }
 
 void WrMilGateway::setUtcTrigger(unsigned char val)

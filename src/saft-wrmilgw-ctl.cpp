@@ -29,8 +29,8 @@ using namespace std;
 
 // Globals 
 // ==================================================================================================== 
-static const char *deviceName = NULL; /* Name of the device */
-static const char *program    = NULL; /* Name of the application */
+static const char *deviceName = NULL; // Name of the device 
+static const char *program    = NULL; // Name of the application 
 
 // Prototypes 
 // ==================================================================================================== 
@@ -40,7 +40,7 @@ static void wrmilgw_help (void);
 // ==================================================================================================== 
 static void wrmilgw_help (void)
 {
-  /* Print arguments and options */
+  // Print arguments and options 
   std::cout << "wrmilgw-ctl for SAFTlib" << std::endl;
   std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
@@ -75,6 +75,40 @@ bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state) {
           && (firmware_state   == WR_MIL_GW_STATE_CONFIGURED);
 }
 
+void print_firmware_state(guint32 firmware_state)
+{
+  switch(firmware_state) {
+    case WR_MIL_GW_STATE_INIT:
+      std::cout << red_color << std::setw(value_width) << std::right << "INIT" << default_color << std::endl;
+    break;         
+    case WR_MIL_GW_STATE_UNCONFIGURED:
+      std::cout << red_color << std::setw(value_width) << std::right << "UNCONFIGURED" << default_color << std::endl;
+    break; 
+    case WR_MIL_GW_STATE_CONFIGURED:
+      std::cout << green_color << std::setw(value_width) << std::right << "CONFIGURED" << default_color << std::endl;
+    break;   
+    case WR_MIL_GW_STATE_PAUSED:
+      std::cout << red_color << std::setw(value_width) << std::right << "PAUSED" << default_color << std::endl;
+    break;       
+    default:
+      std::cout << red_color << std::setw(value_width) << std::right << "UNKNOWN" << default_color << std::endl;
+  }  
+}
+
+void printf_event_source(guint32 event_source)
+{
+  switch(event_source) {
+    case WR_MIL_GW_EVENT_SOURCE_SIS:
+      std::cout << green_color << std::setw(value_width) << std::right << "SIS18" << default_color << std::endl;
+    break;
+    case WR_MIL_GW_EVENT_SOURCE_ESR:
+      std::cout << green_color << std::setw(value_width) << std::right << "ESR" << default_color << std::endl;
+    break;
+    default:
+      std::cout << red_color << std::setw(value_width) << std::right << "UNKNOWN" << default_color << std::endl;
+  }  
+}
+
 // Print basic info
 void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
 {
@@ -107,34 +141,10 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   }
 
   std::cout << std::setw(key_width) << std::left << "Gateway state:";
-  switch(firmware_state) {
-    case WR_MIL_GW_STATE_INIT:
-      std::cout << red_color << std::setw(value_width) << std::right << "INIT" << default_color << std::endl;
-    break;         
-    case WR_MIL_GW_STATE_UNCONFIGURED:
-      std::cout << red_color << std::setw(value_width) << std::right << "UNCONFIGURED" << default_color << std::endl;
-    break; 
-    case WR_MIL_GW_STATE_CONFIGURED:
-      std::cout << green_color << std::setw(value_width) << std::right << "CONFIGURED" << default_color << std::endl;
-    break;   
-    case WR_MIL_GW_STATE_PAUSED:
-      std::cout << red_color << std::setw(value_width) << std::right << "PAUSED" << default_color << std::endl;
-    break;       
-    default:
-      std::cout << red_color << std::setw(value_width) << std::right << "UNKNOWN" << default_color << std::endl;
-  }
+  print_firmware_state(firmware_state);
 
-  std::cout << std::setw(key_width) << std::left << "Gateway type:";
-  switch(event_source) {
-    case WR_MIL_GW_EVENT_SOURCE_SIS:
-      std::cout << green_color << std::setw(value_width) << std::right << "SIS18" << default_color << std::endl;
-    break;
-    case WR_MIL_GW_EVENT_SOURCE_ESR:
-      std::cout << green_color << std::setw(value_width) << std::right << "ESR" << default_color << std::endl;
-    break;
-    default:
-      std::cout << red_color << std::setw(value_width) << std::right << "UNKNOWN" << default_color << std::endl;
-  }
+  std::cout << std::setw(key_width) << std::left << "Source type:";
+  printf_event_source(event_source);
 
   std::cout << std::endl;
 }
@@ -191,7 +201,7 @@ void createCondition(Glib::RefPtr<TimingReceiver_Proxy> receiver, guint64 eventI
 
   Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition 
       = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
-  /* Accept every kind of event */
+  // Accept every kind of event 
   condition->setAcceptConflict(true);
   condition->setAcceptDelayed(true);
   condition->setAcceptEarly(true);
@@ -222,28 +232,50 @@ void destroyGatewayConditions(Glib::RefPtr<TimingReceiver_Proxy> receiver)
   }  
 }
 
+// Signal callbacks 
+// ==================================================================================================== 
 void on_locked(bool is_locked) 
 {
   if (is_locked) {
-    std::cout << "got WR-Lock" << std::endl;
+    std::cout << "WR-MIL-Gateway: got WR-Lock" << std::endl;
   } else {
-    std::cout << "WR-Lock lost!" << std::endl;
+    std::cout << "WR-MIL-Gateway: WR-Lock lost!" << std::endl;
   }
 }
 
 void on_firmware_running(bool is_running) 
 {
   if (is_running) {
-    std::cout << "firmware is running now" << std::endl;
+    std::cout << "WR-MIL-Gateway: firmware started" << std::endl;
   } else {
-    std::cout << "firmware stopped running" << std::endl;
+    std::cout << "WR-MIL-Gateway: firmware stopped" << std::endl;
   }
 }
-/* Function main() */
-/* ==================================================================================================== */
+
+void on_firmware_state(guint32 state) 
+{
+  std::cout << "WR-MIL-Gateway: firmware state changed to "; 
+  print_firmware_state(state);
+}
+
+void on_event_source(guint32 source) 
+{
+  std::cout << "WR-MIL-Gateway: source type changed to    "; 
+  printf_event_source(source);
+}
+
+void on_num_late_mil_events(guint32 total, guint32 since_last_signal) 
+{
+  std::cout << "WR-MIL-Gateway: late MIL event detected. Total/New = " 
+            << total << '/' << since_last_signal
+            << std::endl;
+}
+
+// Function main() 
+// ==================================================================================================== 
 int main (int argc, char** argv)
 {
-  /* Helpers */
+  // Helpers 
   int     opt            = 0;
   char   *pEnd           = NULL;
   int     info           =  0;
@@ -259,10 +291,10 @@ int main (int argc, char** argv)
   bool    show_help      = false;
   bool    monitoring     = false;
   
-  /* Get the application name */
+  // Get the application name 
   program = argv[0]; 
   
-  /* Parse arguments */
+  // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
   while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicmM:")) != -1) 
   {
@@ -303,11 +335,11 @@ int main (int argc, char** argv)
       case 'h': { show_help       = true; break; }
       default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
     }
-    /* Break loop if help is needed */
+    // Break loop if help is needed 
     if (show_help) { break; }
   }
     
-  /* Does the user need help */
+  // Does the user need help 
   if (show_help)
   {
     wrmilgw_help();
@@ -450,10 +482,38 @@ int main (int argc, char** argv)
     }
 
     if (monitoring) {
+      // switch off colors in monitoring mode
+      red_color = green_color = default_color = "";
+      // if monitoring was called on a running gateway and 
+      //  no SIS18/ESR information was given, then get this
+      //  information from the gateway.
+      if (configSIS18 == false && configESR == false) {
+        auto source = wrmilgw->getEventSource();
+        if (source == WR_MIL_GW_EVENT_SOURCE_SIS) {
+          configSIS18 = true;
+        } else if (source == WR_MIL_GW_EVENT_SOURCE_ESR) {
+          configESR = true;
+        }
+      }
+
       receiver->SigLocked.connect(sigc::ptr_fun(&on_locked));
       wrmilgw->SigFirmwareRunning.connect(sigc::ptr_fun(&on_firmware_running));
+      wrmilgw->SigFirmwareState.connect(sigc::ptr_fun(&on_firmware_state));
+      wrmilgw->SigEventSource.connect(sigc::ptr_fun(&on_event_source));
+      wrmilgw->SigNumLateMilEvents.connect(sigc::ptr_fun(&on_num_late_mil_events));
+      bool opReady = op_ready(receiver->getLocked(), 
+                              wrmilgw->getFirmwareRunning(),
+                              wrmilgw->getFirmwareState());
       while(true) {
         signal_group.wait_for_signal();
+        // check OP_READY and notify on change
+        bool new_opReady = op_ready(receiver->getLocked(), 
+                                    wrmilgw->getFirmwareRunning(),
+                                    wrmilgw->getFirmwareState());
+        if (new_opReady != opReady) {
+          std::cout << "WR-MIL-Gateway: OP_READY=" << (new_opReady?"YES":"NO ") << std::endl;
+          opReady = new_opReady;
+        }
       }
     }
     

@@ -50,13 +50,13 @@ class WrMilGateway : public Owned, public iWrMilGateway
     };
     
     static Glib::RefPtr<WrMilGateway> create(const ConstructorType& args);
+    // iWrMilGateway overrides
     
     void StartSIS18();
     void StartESR();
     void ResetGateway();
     void KillGateway();
 
-    // iWrMilGateway overrides
     std::vector< guint32 > getRegisterContent()  const;
     guint32                getWrMilMagic()       const;
     guint32                getFirmwareState()    const;
@@ -91,7 +91,10 @@ class WrMilGateway : public Owned, public iWrMilGateway
     bool    firmwareRunning() const;
 
 
-    mutable bool firmware_running;
+    mutable bool    firmware_running;
+    mutable guint32 firmware_state;
+    mutable guint32 event_source;
+    mutable guint32 num_late_events;
 
     sigc::connection pollConnection;
 
