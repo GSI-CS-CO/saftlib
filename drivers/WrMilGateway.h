@@ -82,9 +82,19 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void Reset();
     void ownerQuit();
 
+    // Polling method
+    bool poll();
+
+
     guint32 readRegisterContent(guint32 reg_offset) const;
     void    writeRegisterContent(guint32 reg_offset, guint32 value);
     bool    firmwareRunning() const;
+
+
+    mutable bool firmware_running;
+
+    sigc::connection pollConnection;
+
 
     TimingReceiver*   receiver;
     struct sdb_device wrmilgw_device; // store the LM32 device with WR-MIL-Gateway firmware running

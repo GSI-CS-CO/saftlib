@@ -22,6 +22,10 @@
     <property name="FirmwareRunning"   type="b" access="read">
     </property>
 
+    <signal name="SigFirmwareRunning">
+      <arg name="running" type="b"/>
+    </signal>
+
     <!-- WR-MIL event source. This can be either 
          0 -> not configured (default)
          1 -> SIS18 (work as SIS18 "Pulszentrale")
@@ -63,6 +67,13 @@
          than the anticipated WR event deadline -->
     <property name="NumLateMilEvents"   type="u" access="read">
     </property>
+
+    <!-- This signal is sent when the Lock Property changes -->
+    <signal name="SigLateEvents">
+      <arg name="number" type="u"/>
+    </signal>
+
+
 
     <!-- Configure Gateway as SIS18 "Pulszentrale" and start -->
     <method name="StartSIS18"/>

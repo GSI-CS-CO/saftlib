@@ -76,7 +76,10 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
     // use the first reset device
     guint32 set_bits = ~(1<<cpu_idx) & 0xff;
     guint32 clr_bits =  (1<<cpu_idx);
-    //GET; 8 -> SET; c -> CLR
+    // reset register offsets
+    //0x4 -> GET 
+    //0x8 -> SET 
+    //0xc -> CLR
     const int SET = 0x8;
     const int CLR = 0xc;
     receiver->getDevice().write(reset_device.sdb_component.addr_first + CLR, 
@@ -88,12 +91,17 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
     break;
   }
 
-  // done
+  firmware_running = firmwareRunning();
+
+  // poll every 1s some registers
+  std::cerr << "want to poll" << std::endl;
+  pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), 200);
+  std::cerr << "polling now" << std::endl;
 }
 
 WrMilGateway::~WrMilGateway()
 {
-  std::cerr << "~WrMilGateway called " << std::endl;
+  pollConnection.disconnect();
 }
 
 bool WrMilGateway::firmwareRunning() const
@@ -112,7 +120,15 @@ bool WrMilGateway::firmwareRunning() const
 
 bool WrMilGateway::getFirmwareRunning()  const
 {
-  return firmwareRunning();
+  bool new_firmware_running = firmwareRunning();
+
+  // emit signal on change
+  if (new_firmware_running != firmware_running) {
+    firmware_running = new_firmware_running;
+    SigFirmwareRunning(firmware_running);
+  }
+
+  return firmware_running;
 }
 
 guint32 WrMilGateway::readRegisterContent(guint32 reg_offset) const
@@ -142,6 +158,13 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
   return registerContent;
 }
 
+
+
+bool WrMilGateway::poll()
+{
+  getFirmwareRunning();
+  return true; // return true to continue polling
+}
 
 void WrMilGateway::StartSIS18()
 {

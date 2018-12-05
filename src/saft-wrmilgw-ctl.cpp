@@ -1,14 +1,14 @@
-/* Synopsis */
-/* ==================================================================================================== */
-/* Embedded CPU interface control application */
+// Synopsis 
+// ==================================================================================================== 
+// WhiteRabbit to MIL gateway control application 
 
-/* Defines */
-/* ==================================================================================================== */
+// Defines 
+// ==================================================================================================== 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-/* Includes */
-/* ==================================================================================================== */
+// Includes 
+// ==================================================================================================== 
 #include <stdio.h>
 #include <iostream>
 #include <giomm.h>
@@ -22,22 +22,22 @@
 
 #include "src/CommonFunctions.h"
 
-/* Namespaces */
-/* ==================================================================================================== */
+// Namespaces 
+// ==================================================================================================== 
 using namespace saftlib;
 using namespace std;
 
-/* Globals */
-/* ==================================================================================================== */
+// Globals 
+// ==================================================================================================== 
 static const char *deviceName = NULL; /* Name of the device */
 static const char *program    = NULL; /* Name of the application */
 
-/* Prototypes */
-/* ==================================================================================================== */
+// Prototypes 
+// ==================================================================================================== 
 static void wrmilgw_help (void);
 
-/* Function wrmilgw_help() */
-/* ==================================================================================================== */
+// Function wrmilgw_help() 
+// ==================================================================================================== 
 static void wrmilgw_help (void)
 {
   /* Print arguments and options */
@@ -139,6 +139,7 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   std::cout << std::endl;
 }
 
+// print number of events info
 void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
 {
     //std::cout << std::setw(key_width) << std::left << "WR-TimingReceiver status:";
@@ -151,10 +152,9 @@ void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   std::cout << std::endl;
 }
 
+// print timnig and UTC-trigger configuration info
 void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
 {
-    //std::cout << std::setw(key_width) << std::left << "WR-TimingReceiver status:";
-
   std::cout << std::setw(key_width) << std::left << "MIL event latency:" 
             << std::setw(value_width) << std::right << wrmilgw->getEventLatency() << " us"
             << std::endl;
@@ -170,10 +170,8 @@ void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   std::cout << std::setw(key_width) << std::left << "Trigger-UTC delay:" 
             << std::setw(value_width) << std::right << wrmilgw->getTriggerUtcDelay() << " us"
             << std::endl;
-
   std::cout << std::endl;
 }
-
 
 const auto SIS18EventID = UINT64_C(0x112c000000000000);
 const auto   ESREventID = UINT64_C(0x1154000000000000);
@@ -230,6 +228,15 @@ void on_locked(bool is_locked)
     std::cout << "got WR-Lock" << std::endl;
   } else {
     std::cout << "WR-Lock lost!" << std::endl;
+  }
+}
+
+void on_firmware_running(bool is_running) 
+{
+  if (is_running) {
+    std::cout << "firmware is running now" << std::endl;
+  } else {
+    std::cout << "firmware stopped running" << std::endl;
   }
 }
 /* Function main() */
@@ -345,7 +352,8 @@ int main (int argc, char** argv)
 
     if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
       ///////////////////////////////////////////
-      // Gateway configuration
+      // Gateway configuration (only allowed  if 
+      //        firmware is not configured yet)
       ///////////////////////////////////////////
 
       // set MIL latency
@@ -380,7 +388,6 @@ int main (int argc, char** argv)
       std::cerr << "You cannot change Gateway configureation while Gateway is running" << std::endl;
       std::cerr << " Reset Gateway first (option -r)" << std::endl;
     }
-
 
     if (wrmilgw->getFirmwareRunning()) {
       ///////////////////////////////////////////
@@ -444,6 +451,7 @@ int main (int argc, char** argv)
 
     if (monitoring) {
       receiver->SigLocked.connect(sigc::ptr_fun(&on_locked));
+      wrmilgw->SigFirmwareRunning.connect(sigc::ptr_fun(&on_firmware_running));
       while(true) {
         signal_group.wait_for_signal();
       }
@@ -455,6 +463,6 @@ int main (int argc, char** argv)
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   
-  /* Done */
+  // Done 
   return (0);
 }
