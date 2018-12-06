@@ -46,6 +46,8 @@ static void wrmilgw_help (void)
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
   // std::cout << "  -c <id> <mask> <offset> <tag>: Create a new condition" << std::endl;
+  std::cout << "  -i                            Show gateway information. Repeat the option"    << std::endl;
+  std::cout << "                                 to get more detailed information, e.g. -iii"   << std::endl;
   std::cout << "  -m                            Start monitoring loop"                          << std::endl;
   std::cout << "  -s                            Start WR-MIL Gateway as SIS18 Pulszentrale"     << std::endl;
   std::cout << "  -e                            Start WR-MIL Gateway as ESR   Pulszentrale"     << std::endl;
@@ -124,18 +126,28 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   auto receiver_locked  = receiver->getLocked();
   auto firmware_running = wrmilgw->getFirmwareRunning();
   auto firmware_state   = wrmilgw->getFirmwareState(); 
-  auto event_source     = wrmilgw->getEventSource();
 
-  for (int i = 0; i < key_width+value_width; ++i) std::cout << '_';
-  std::cout << std::endl << std::endl;
-  std::cout << std::setw(key_width) << std::left << "OP_READY:";
+  std::cout << std::setw(key_width) << std::left << "Gateway OP_READY:";
   if (op_ready(receiver_locked, firmware_running, firmware_state)) {
     std::cout << green_color << std::setw(value_width) << std::right << "YES" << default_color << std::endl;
   } else {
     std::cout << red_color << std::setw(value_width) << std::right << "NO" << default_color << std::endl;
   }
-  for (int i = 0; i < key_width+value_width; ++i) std::cout << '_';
-  std::cout << std::endl << std::endl;
+
+  auto in_use = wrmilgw->getInUse();
+  std::cout << std::setw(key_width) << std::left << "Gateway in use:";
+  print_in_use(in_use);
+}
+
+// print number of events info
+void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
+{
+  auto receiver_locked  = receiver->getLocked();
+  auto firmware_running = wrmilgw->getFirmwareRunning();
+  auto firmware_state   = wrmilgw->getFirmwareState(); 
+  auto event_source     = wrmilgw->getEventSource();
+
+  std::cout << std::endl;
   std::cout << std::setw(key_width) << std::left << "TimingReceiver status:";
   if (receiver_locked) {
     std::cout << green_color << std::setw(value_width) << std::right << "LOCKED" << default_color << std::endl;
@@ -159,25 +171,15 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   std::cout << std::endl;
 }
 
-// print number of events info
-void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
+// print timnig and UTC-trigger configuration info
+void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
 {
-  //std::cout << std::setw(key_width) << std::left << "WR-TimingReceiver status:";
-  auto in_use = wrmilgw->getInUse();
-  std::cout << std::setw(key_width) << std::left << "Gateway in use:";
-  print_in_use(in_use);
   std::cout << std::setw(key_width) << std::left << "Total MIL events:" 
             << std::setw(value_width) << std::right << wrmilgw->getNumMilEvents()
             << std::endl;
   std::cout << std::setw(key_width) << std::left << "Late MIL events:" 
             << std::setw(value_width) << std::right << wrmilgw->getNumLateMilEvents()
             << std::endl;
-  std::cout << std::endl;
-}
-
-// print timnig and UTC-trigger configuration info
-void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
-{
   std::cout << std::setw(key_width) << std::left << "MIL event latency:" 
             << std::setw(value_width) << std::right << wrmilgw->getEventLatency() << " us"
             << std::endl;
@@ -385,6 +387,7 @@ int main (int argc, char** argv)
     // Search for device name 
     if (deviceName == NULL)  { 
       std::cerr << "Missing device name!" << std::endl;
+      wrmilgw_help();
       return -1;
     }
     map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
@@ -444,7 +447,7 @@ int main (int argc, char** argv)
               utc_offset     >= 0 ||
               trig_utc_delay >= 0 || 
               utc_utc_delay  >= 0) {
-      std::cerr << red_color << "You cannot change Gateway configureation while Gateway is running" << default_color << std::endl;
+      std::cerr << red_color << "You cannot change Gateway configuration while Gateway is running" << default_color << std::endl;
       std::cerr << " Reset Gateway first (option -r)" << std::endl;
     }
 
@@ -536,12 +539,20 @@ int main (int argc, char** argv)
       bool opReady = op_ready(receiver->getLocked(), 
                               wrmilgw->getFirmwareRunning(),
                               wrmilgw->getFirmwareState());
+
+      std::cout << "WrMilGateway: starting monitoring loop" << std::endl;
       while(true) {
         signal_group.wait_for_signal();
         // check OP_READY and notify on change
         bool new_opReady = op_ready(receiver->getLocked(), 
                                     wrmilgw->getFirmwareRunning(),
                                     wrmilgw->getFirmwareState());
+#ifdef USEMASP
+        {
+          MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
+          scoped_emitter.set_OP_READY(op_ready);
+        }
+#endif 
         if (new_opReady != opReady) {
           std::cout << "WR-MIL-Gateway: OP_READY=" << (new_opReady?"YES":"NO ") << std::endl;
           opReady = new_opReady;

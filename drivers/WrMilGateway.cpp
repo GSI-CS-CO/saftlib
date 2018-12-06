@@ -99,9 +99,7 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   num_late_events  = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
   
   // poll every 1s some registers
-  std::cerr << "want to poll" << std::endl;
   pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
-  std::cerr << "polling now" << std::endl;
 }
 
 WrMilGateway::~WrMilGateway()
