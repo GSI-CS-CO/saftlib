@@ -40,6 +40,7 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
    poll_period(200), // [ms]
    max_time_without_mil_events(10000), // 10 seconds
+   time_without_mil_events(max_time_without_mil_events),
    receiver(args.receiver),
    base_addr(args.base_addr),
    have_wrmilgw(false)
