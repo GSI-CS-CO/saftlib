@@ -168,18 +168,18 @@ void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   std::cout << std::setw(key_width) << std::left << "Source type:";
   print_event_source(event_source);
 
-  std::cout << std::endl;
-}
-
-// print timnig and UTC-trigger configuration info
-void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
-{
   std::cout << std::setw(key_width) << std::left << "Total MIL events:" 
             << std::setw(value_width) << std::right << wrmilgw->getNumMilEvents()
             << std::endl;
   std::cout << std::setw(key_width) << std::left << "Late MIL events:" 
             << std::setw(value_width) << std::right << wrmilgw->getNumLateMilEvents()
             << std::endl;
+}
+
+// print timnig and UTC-trigger configuration info
+void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
+{
+  std::cout << std::endl;
   std::cout << std::setw(key_width) << std::left << "MIL event latency:" 
             << std::setw(value_width) << std::right << wrmilgw->getEventLatency() << " us"
             << std::endl;
@@ -195,7 +195,6 @@ void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   std::cout << std::setw(key_width) << std::left << "Trigger-UTC delay:" 
             << std::setw(value_width) << std::right << wrmilgw->getTriggerUtcDelay() << " us"
             << std::endl;
-  std::cout << std::endl;
 }
 
 const auto SIS18EventID = UINT64_C(0x112c000000000000);
