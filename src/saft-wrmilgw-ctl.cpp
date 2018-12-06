@@ -35,6 +35,21 @@ static const char *program    = NULL; // Name of the application
 // Prototypes 
 // ==================================================================================================== 
 static void wrmilgw_help (void);
+bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state);
+void print_firmware_state(guint32 firmware_state);
+void print_event_source(guint32 event_source);
+void print_in_use(bool in_use);
+void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
+void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
+void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
+void createCondition(Glib::RefPtr<TimingReceiver_Proxy> receiver, guint64 eventID);
+void destroyGatewayConditions(Glib::RefPtr<TimingReceiver_Proxy> receiver);
+void on_locked(bool is_locked);
+void on_firmware_running(bool is_running);
+void on_firmware_state(guint32 state);
+void on_event_source(guint32 source);
+void on_num_late_mil_events(guint32 total, guint32 since_last_signal, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
+void on_in_use(bool in_use);
 
 // Function wrmilgw_help() 
 // ==================================================================================================== 
@@ -49,6 +64,7 @@ static void wrmilgw_help (void)
   std::cout << "  -i                            Show gateway information. Repeat the option"    << std::endl;
   std::cout << "                                 to get more detailed information, e.g. -iii"   << std::endl;
   std::cout << "  -m                            Start monitoring loop"                          << std::endl;
+  std::cout << "  -H                            Show MIL-event histogram"                       << std::endl;
   std::cout << "  -s                            Start WR-MIL Gateway as SIS18 Pulszentrale"     << std::endl;
   std::cout << "  -e                            Start WR-MIL Gateway as ESR   Pulszentrale"     << std::endl;
   std::cout << "  -l <latency>                  Set MIL event latency [us]"                     << std::endl;
@@ -71,7 +87,8 @@ std::string default_color   = "\033[0m";
 const int key_width = 25;
 const int value_width = 15;
 
-bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state) {
+bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state)
+{
   return     (receiver_locked  == true)
           && (firmware_running == true)
           && (firmware_state   == WR_MIL_GW_STATE_CONFIGURED);
@@ -325,17 +342,19 @@ int main (int argc, char** argv)
   bool    monitoring     = false;
   bool    clearStat      = false;
   bool    lateHist       = false;
+  bool    show_histogram = false;
   
   // Get the application name 
   program = argv[0]; 
   
   // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicCLmM:")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicCLmM:H")) != -1) 
   {
     switch (opt)
     {
       case 'm': { monitoring = true; break; }
+      case 'H': { show_histogram = true; break; }
       case 'c': { red_color = green_color = default_color = ""; break; }
       case 'C': { clearStat = true; break; }
       case 'L': { lateHist = true; break; }
@@ -527,12 +546,38 @@ int main (int argc, char** argv)
     if (lateHist) {
       auto histogram = wrmilgw->getLateHistogram();
       std::cout << "late mil events:" << std::endl;
-      std::cout << std::setw(10) << "delay[us]" << std::setw(10) << "counts" << std::endl;
-      for (int i = 0; i < histogram.size(); ++i) {
+      std::cout << std::setw(10) << "delay[us]" << std::setw(10) << "count" << std::endl;
+      for (unsigned i = 0; i < histogram.size(); ++i) {
         std::cout << "  < " << std::dec << std::setw(5) << (1<<(i+10))/1000 << std::setw(10) << histogram[i] << std::endl;
       }
     }
 
+    if (show_histogram) {
+      std::cout << "MIL event histogram" << std::endl;
+      auto histogram = wrmilgw->getMilHistogram();
+      double max = 0;
+      for (auto bin: histogram) {
+        if (max < bin) {
+          max = bin;
+        }
+      }
+      if (max == 0) {
+        std::cout << "histogram empty" << std::endl;
+      } else {
+        std::cout << "max value = " << max << std::endl;
+        std::cout << std::setw (10) << "EVT_NO" << std::setw(10) << "count" << std::endl;
+        for (unsigned int i = 0; i < histogram.size(); ++i) {
+          if (histogram[i]) {
+            std::cout << std::setw (10) << std::dec << i << std::setw(10) << histogram[i] << std::endl;
+          }
+        }
+      }
+    }
+
+
+    ///////////////////////////////////////////
+    // Monitoring Loop
+    ///////////////////////////////////////////
     if (monitoring) {
       // switch off colors in monitoring mode
       red_color = green_color = default_color = "";

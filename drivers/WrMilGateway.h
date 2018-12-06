@@ -59,6 +59,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void KillGateway();
 
     std::vector< guint32 > getRegisterContent()  const;
+    std::vector< guint32 > getMilHistogram()     const;
     guint32                getWrMilMagic()       const;
     guint32                getFirmwareState()    const;
     guint32                getEventSource()      const;

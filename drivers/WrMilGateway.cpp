@@ -141,6 +141,7 @@ guint32 WrMilGateway::readRegisterContent(guint32 reg_offset) const
     receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, &value);
     return value;
 }
+
 void WrMilGateway::writeRegisterContent(guint32 reg_offset, guint32 value)
 {
     receiver->getDevice().write(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
@@ -158,6 +159,17 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
     registerContent[i] = readRegisterContent(4*i);
   }
   return registerContent;
+}
+
+std::vector< guint32 > WrMilGateway::getMilHistogram() const
+{
+  std::vector< guint32 > histogram;
+  for (int i = 0; i < 256; ++i) {
+    eb_data_t value;
+    receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + WR_MIL_GW_REG_MIL_HISTOGRAM + 4*i, EB_DATA32, &value);
+    histogram.push_back(value);
+  }
+  return histogram;
 }
 
 bool WrMilGateway::getInUse() const
@@ -212,7 +224,7 @@ void WrMilGateway::StartESR()
 }
 void WrMilGateway::ClearStatistics()
 {
-  for (int i = 0; i < (WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_NUM_EVENTS_HI)/4; ++i) {
+  for (int i = 0; i < (WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_NUM_EVENTS_HI)/4+256; ++i) {
     writeRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI + i*4, 0x0);
   }
 }
@@ -336,8 +348,6 @@ void WrMilGateway::Reset()
 
 void WrMilGateway::ownerQuit()
 {
-  // owner quit without Disown? probably a crash => turn off the function generator
-  Reset();
 }
 
 }

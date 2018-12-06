@@ -10,6 +10,10 @@
     <property name="RegisterContent"   type="au" access="read">
     </property>
 
+    <!-- Access MIL event histogram WrMilGateway -->
+    <property name="MilHistogram"   type="au" access="read">
+    </property>
+
     <!-- WR-MIL magic number -->
     <property name="WrMilMagic"   type="u" access="read">
     </property>
