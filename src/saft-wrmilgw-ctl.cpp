@@ -95,7 +95,7 @@ void print_firmware_state(guint32 firmware_state)
   }  
 }
 
-void printf_event_source(guint32 event_source)
+void print_event_source(guint32 event_source)
 {
   switch(event_source) {
     case WR_MIL_GW_EVENT_SOURCE_SIS:
@@ -109,6 +109,15 @@ void printf_event_source(guint32 event_source)
   }  
 }
 
+void print_in_use(bool in_use) 
+{
+  if (in_use) {
+    std::cout << green_color << std::setw(value_width) << std::right << "YES" << default_color << std::endl;
+  } else {
+    std::cout << red_color << std::setw(value_width) << std::right << "NO" << default_color << std::endl;
+  }
+}
+
 // Print basic info
 void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
 {
@@ -116,6 +125,7 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   auto firmware_running = wrmilgw->getFirmwareRunning();
   auto firmware_state   = wrmilgw->getFirmwareState(); 
   auto event_source     = wrmilgw->getEventSource();
+
   for (int i = 0; i < key_width+value_width; ++i) std::cout << '_';
   std::cout << std::endl << std::endl;
   std::cout << std::setw(key_width) << std::left << "OP_READY:";
@@ -144,7 +154,7 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
   print_firmware_state(firmware_state);
 
   std::cout << std::setw(key_width) << std::left << "Source type:";
-  printf_event_source(event_source);
+  print_event_source(event_source);
 
   std::cout << std::endl;
 }
@@ -152,7 +162,10 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
 // print number of events info
 void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
 {
-    //std::cout << std::setw(key_width) << std::left << "WR-TimingReceiver status:";
+  //std::cout << std::setw(key_width) << std::left << "WR-TimingReceiver status:";
+  auto in_use = wrmilgw->getInUse();
+  std::cout << std::setw(key_width) << std::left << "Gateway in use:";
+  print_in_use(in_use);
   std::cout << std::setw(key_width) << std::left << "Total MIL events:" 
             << std::setw(value_width) << std::right << wrmilgw->getNumMilEvents()
             << std::endl;
@@ -224,7 +237,7 @@ void destroyGatewayConditions(Glib::RefPtr<TimingReceiver_Proxy> receiver)
     Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition = EmbeddedCPUCondition_Proxy::create(condition_name);
     if (condition->getDestructible() && condition->getOwner() == "" &&
         condition->getMask() == UINT64_C(0xfffff00000000000) &&
-        condition->getOffset()    == INT64_C(-100000) &&
+        condition->getOffset() == INT64_C(-100000) &&
         (condition->getID() == SIS18EventID || 
          condition->getID() == ESREventID) )  {
       condition->Destroy();
@@ -261,14 +274,28 @@ void on_firmware_state(guint32 state)
 void on_event_source(guint32 source) 
 {
   std::cout << "WR-MIL-Gateway: source type changed to    "; 
-  printf_event_source(source);
+  print_event_source(source);
 }
 
 void on_num_late_mil_events(guint32 total, guint32 since_last_signal) 
 {
-  std::cout << "WR-MIL-Gateway: late MIL event detected. Total/New = " 
-            << total << '/' << since_last_signal
-            << std::endl;
+  // If gateway is reset, callback will be called with total=0
+  // To prevent this to be displayed as "late MIL event detected", 
+  //  we treat this as a special case.
+  if (total > 0) {
+    std::cout << "WR-MIL-Gateway: late MIL event detected. Total/New = " 
+              << total << '/' << since_last_signal
+              << std::endl;
+  }
+}
+
+void on_in_use(bool in_use) 
+{
+  if (in_use) {
+    std::cout << "WR-MIL-Gateway: gateway is in use again (seeing MIL events)" << std::endl; 
+  } else {
+    std::cout << "WR-MIL-Gateway: gateway not used (no MIL events for more than 10 seconds)" << std::endl;
+  }
 }
 
 // Function main() 
@@ -417,7 +444,7 @@ int main (int argc, char** argv)
               utc_offset     >= 0 ||
               trig_utc_delay >= 0 || 
               utc_utc_delay  >= 0) {
-      std::cerr << "You cannot change Gateway configureation while Gateway is running" << std::endl;
+      std::cerr << red_color << "You cannot change Gateway configureation while Gateway is running" << default_color << std::endl;
       std::cerr << " Reset Gateway first (option -r)" << std::endl;
     }
 
@@ -428,26 +455,28 @@ int main (int argc, char** argv)
 
       // config and start Gateway
       if (configSIS18 && configESR) {
-        std::cerr << "You cannot configure Gateway as SIS18 _and_ ESR" << std::endl;
+        std::cerr << red_color << "You cannot configure Gateway as SIS18 _and_ ESR" << default_color << std::endl;
         std::cerr << " choose SIS18 (option -s) or ESR (option -e)" << std::endl;
         return -1;
       } else if (configSIS18) {
         if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
           std::cout << "Starting WR-MIL Gateway as SIS18 Pulszentrale" << std::endl;
+          destroyGatewayConditions(receiver);
           createCondition(receiver, SIS18EventID);
           wrmilgw->StartSIS18();
         } else if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_CONFIGURED) {
-          std::cerr << "Gateway is already configured and running." << std::endl;
+          std::cerr << red_color << "Gateway is already configured and running." << default_color << std::endl;
           std::cerr << " If you want to change the configuration" << std::endl;
           std::cerr << " you need to reset first (option -r)" << std::endl;
         }
       } else if (configESR) {
         if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
           std::cout << "Starting WR-MIL Gateway as ESR Pulszentrale" << std::endl;
+          destroyGatewayConditions(receiver);
           createCondition(receiver, ESREventID);
           wrmilgw->StartESR();
         } else if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_CONFIGURED) {
-          std::cerr << "Gateway is already configured and running." << std::endl;
+          std::cerr << red_color << "Gateway is already configured and running." << default_color << std::endl;
           std::cerr << " If you want to change the configuration" << std::endl;
           std::cerr << " you need to reset first (option -r)" << std::endl;
         }
@@ -467,7 +496,7 @@ int main (int argc, char** argv)
                configSIS18 || 
                kill        ||
                reset) { // Firmware not running
-      std::cerr << "Cannot act on gateway because firmware is not running" << std::endl;
+      std::cerr << red_color << "Cannot act on gateway because firmware is not running" << default_color << std::endl;
     }
 
     // Print Info (as much as asked for)
@@ -496,11 +525,14 @@ int main (int argc, char** argv)
         }
       }
 
+      // connect some callbacks
       receiver->SigLocked.connect(sigc::ptr_fun(&on_locked));
       wrmilgw->SigFirmwareRunning.connect(sigc::ptr_fun(&on_firmware_running));
       wrmilgw->SigFirmwareState.connect(sigc::ptr_fun(&on_firmware_state));
       wrmilgw->SigEventSource.connect(sigc::ptr_fun(&on_event_source));
       wrmilgw->SigNumLateMilEvents.connect(sigc::ptr_fun(&on_num_late_mil_events));
+      wrmilgw->SigInUse.connect(sigc::ptr_fun(&on_in_use));
+
       bool opReady = op_ready(receiver->getLocked(), 
                               wrmilgw->getFirmwareRunning(),
                               wrmilgw->getFirmwareState());

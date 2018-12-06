@@ -69,6 +69,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     guint64                getNumMilEvents()     const;
     guint32                getNumLateMilEvents() const;
     bool                   getFirmwareRunning()  const;
+    bool                   getInUse()            const;
 
     void setUtcTrigger(unsigned char val);
     void setEventLatency(guint32 val);
@@ -84,6 +85,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
 
     // Polling method
     bool poll();
+    const int poll_period; // [ms]
 
 
     guint32 readRegisterContent(guint32 reg_offset) const;
@@ -95,6 +97,9 @@ class WrMilGateway : public Owned, public iWrMilGateway
     mutable guint32 firmware_state;
     mutable guint32 event_source;
     mutable guint32 num_late_events;
+    guint64 num_mil_events;
+    guint32 time_without_mil_events;
+    const guint32 max_time_without_mil_events; // if time_without_events exceeds this, we conclude the gateway isn't used
 
     sigc::connection pollConnection;
 

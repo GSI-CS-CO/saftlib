@@ -38,6 +38,8 @@ namespace saftlib {
 
 WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
+   poll_period(200), // [ms]
+   max_time_without_mil_events(10000), // 10 seconds
    receiver(args.receiver),
    base_addr(args.base_addr),
    have_wrmilgw(false)
@@ -98,7 +100,7 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   
   // poll every 1s some registers
   std::cerr << "want to poll" << std::endl;
-  pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), 200);
+  pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
   std::cerr << "polling now" << std::endl;
 }
 
@@ -161,6 +163,11 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
   return registerContent;
 }
 
+bool WrMilGateway::getInUse() const
+{
+  return time_without_mil_events <= max_time_without_mil_events;
+}
+
 
 
 bool WrMilGateway::poll()
@@ -169,6 +176,29 @@ bool WrMilGateway::poll()
   getFirmwareState();
   getEventSource();
   getNumLateMilEvents();
+
+  // check if the gateway is used (translates events)
+  guint64 new_num_mil_events = getNumMilEvents();
+  if (num_mil_events != new_num_mil_events) {
+    if (!getInUse()) {
+      // in this case we change back to being "in use"
+      SigInUse(true);
+    }
+    time_without_mil_events = 0;
+    num_mil_events = new_num_mil_events;
+  } else {
+    bool inUse = getInUse();
+    time_without_mil_events += poll_period;
+    bool new_inUse = getInUse();
+    if (inUse && !new_inUse) {
+      // Not seen a MIL event for too long... 
+      //  ... that counts as not being used because
+      //  we expect event 255 (EVT_COMMAND) 
+      //  every second in normal operation
+      // Only produce this signal once
+      SigInUse(false);
+    }
+  }
 
   return true; // return true to continue polling
 }

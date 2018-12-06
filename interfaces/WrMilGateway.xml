@@ -84,6 +84,15 @@
     </signal>
 
 
+    <property name="InUse"   type="b" access="read">
+    </property>
+    <!-- signal emitted if number of late events increases -->
+    <signal name="SigInUse">
+      <arg name="inUse" type="b"/>
+    </signal>
+
+
+
     <!-- Configure Gateway as SIS18 "Pulszentrale" and start -->
     <method name="StartSIS18"/>
 
