@@ -153,11 +153,9 @@ Glib::RefPtr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
 
 std::vector< guint32 > WrMilGateway::getRegisterContent() const
 {
-  std::vector<guint32> registerContent((WR_MIL_GW_REG_LAST-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 0);
+  std::vector<guint32> registerContent((WR_MIL_GW_REG_LATE_HISTOGRAM-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 0);
   for (unsigned i = 0; i < registerContent.size(); ++i) {
-    eb_data_t value;
-    receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + 4*i, EB_DATA32, &value);
-    registerContent.push_back(value);
+    registerContent[i] = readRegisterContent(4*i);
   }
   return registerContent;
 }
@@ -212,6 +210,13 @@ void WrMilGateway::StartESR()
   // configure WR-MIL Gateway firmware to start operation as ESR Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_ESR);
 }
+void WrMilGateway::ClearStatistics()
+{
+  for (int i = 0; i < (WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_NUM_EVENTS_HI)/4; ++i) {
+    writeRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI + i*4, 0x0);
+  }
+}
+
 void WrMilGateway::ResetGateway()
 {
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
@@ -289,6 +294,16 @@ guint32 WrMilGateway::getNumLateMilEvents() const
   }
   return num_late_events;
 }
+std::vector< guint32 > WrMilGateway::getLateHistogram() const
+{
+  std::vector<guint32> lateHistogram((WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_LATE_HISTOGRAM) / 4, 0);
+  for (unsigned i = 0; i < lateHistogram.size(); ++i) {
+    lateHistogram[i] = readRegisterContent(WR_MIL_GW_REG_LATE_HISTOGRAM + 4*i);
+  }
+  return lateHistogram;
+
+}
+
 
 void WrMilGateway::setUtcTrigger(unsigned char val)
 {

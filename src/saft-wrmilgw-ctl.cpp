@@ -278,7 +278,7 @@ void on_event_source(guint32 source)
   print_event_source(source);
 }
 
-void on_num_late_mil_events(guint32 total, guint32 since_last_signal) 
+void on_num_late_mil_events(guint32 total, guint32 since_last_signal, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw) 
 {
   // If gateway is reset, callback will be called with total=0
   // To prevent this to be displayed as "late MIL event detected", 
@@ -286,14 +286,19 @@ void on_num_late_mil_events(guint32 total, guint32 since_last_signal)
   if (total > 0) {
     std::cout << "WR-MIL-Gateway: late MIL event detected. Total/New = " 
               << total << '/' << since_last_signal
-              << std::endl;
+              << ". Histogram = ";
+    auto histogram = wrmilgw->getLateHistogram();
+    for (auto bin: histogram) {
+      std::cout << bin << " ";
+    }
+    std::cout << std::endl;
   }
 }
 
 void on_in_use(bool in_use) 
 {
   if (in_use) {
-    std::cout << "WR-MIL-Gateway: gateway is in use again (seeing MIL events)" << std::endl; 
+    std::cout << "WR-MIL-Gateway: gateway is in use (seeing MIL events)" << std::endl; 
   } else {
     std::cout << "WR-MIL-Gateway: gateway not used (no MIL events for more than 10 seconds)" << std::endl;
   }
@@ -318,18 +323,22 @@ int main (int argc, char** argv)
   bool    configESR      = false;
   bool    show_help      = false;
   bool    monitoring     = false;
+  bool    clearStat      = false;
+  bool    lateHist       = false;
   
   // Get the application name 
   program = argv[0]; 
   
   // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicmM:")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicCLmM:")) != -1) 
   {
     switch (opt)
     {
       case 'm': { monitoring = true; break; }
       case 'c': { red_color = green_color = default_color = ""; break; }
+      case 'C': { clearStat = true; break; }
+      case 'L': { lateHist = true; break; }
       case 's': { configSIS18 = true; break; }
       case 'e': { configESR   = true; break; }
       case 'i': { ++info; break; } // more info by putting -i multiple times
@@ -410,6 +419,9 @@ int main (int argc, char** argv)
     // Get Gateway Proxy
     Glib::RefPtr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second, signal_group);
 
+    if (clearStat) {
+      wrmilgw->ClearStatistics();
+    }
 
     if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
       ///////////////////////////////////////////
@@ -512,6 +524,15 @@ int main (int argc, char** argv)
       print_info3(receiver, wrmilgw);
     }
 
+    if (lateHist) {
+      auto histogram = wrmilgw->getLateHistogram();
+      std::cout << "late mil events:" << std::endl;
+      std::cout << std::setw(10) << "delay[us]" << std::setw(10) << "counts" << std::endl;
+      for (int i = 0; i < histogram.size(); ++i) {
+        std::cout << "  < " << std::dec << std::setw(5) << (1<<(i+10))/1000 << std::setw(10) << histogram[i] << std::endl;
+      }
+    }
+
     if (monitoring) {
       // switch off colors in monitoring mode
       red_color = green_color = default_color = "";
@@ -532,7 +553,7 @@ int main (int argc, char** argv)
       wrmilgw->SigFirmwareRunning.connect(sigc::ptr_fun(&on_firmware_running));
       wrmilgw->SigFirmwareState.connect(sigc::ptr_fun(&on_firmware_state));
       wrmilgw->SigEventSource.connect(sigc::ptr_fun(&on_event_source));
-      wrmilgw->SigNumLateMilEvents.connect(sigc::ptr_fun(&on_num_late_mil_events));
+      wrmilgw->SigNumLateMilEvents.connect(sigc::bind(sigc::ptr_fun(&on_num_late_mil_events), wrmilgw));
       wrmilgw->SigInUse.connect(sigc::ptr_fun(&on_in_use));
 
       bool opReady = op_ready(receiver->getLocked(), 

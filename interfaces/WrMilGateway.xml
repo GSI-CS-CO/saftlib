@@ -72,6 +72,17 @@
     <property name="NumMilEvents"   type="t" access="read">
     </property>
 
+    <!-- read a histogram of event delays 
+          [0]: delay < 2^10 ns
+          [1]: delay < 2^11 ns
+          [2]: delay < 2^12 ns
+         ...
+         [14]: delay < 2^24 ns
+         [15]: delay < 2^25 ns
+    -->
+    <property name="LateHistogram"   type="au" access="read">
+    </property>
+
 
     <!-- The number of translated events that were submitted later  
          than the anticipated WR event deadline -->
@@ -98,6 +109,9 @@
 
     <!-- Configure Gateway as ESR "Pulszentrale" and start -->
     <method name="StartESR"/>
+
+    <!-- Reset all event counters and histograms -->
+    <method name="ClearStatistics"/>
 
     <!-- Stop WR-MIL Gateway and restart after 1 second pause -->
     <method name="ResetGateway"/>

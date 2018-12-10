@@ -54,6 +54,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     
     void StartSIS18();
     void StartESR();
+    void ClearStatistics();
     void ResetGateway();
     void KillGateway();
 
@@ -67,6 +68,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     guint32                getTriggerUtcDelay()  const;
     guint64                getUtcOffset()        const;
     guint64                getNumMilEvents()     const;
+    std::vector< guint32 > getLateHistogram()    const;
     guint32                getNumLateMilEvents() const;
     bool                   getFirmwareRunning()  const;
     bool                   getInUse()            const;

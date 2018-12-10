@@ -29,7 +29,8 @@
 #define WR_MIL_GW_REG_NUM_EVENTS_HI  0x28  // number of translated events from WR to MIL, high word
 #define WR_MIL_GW_REG_NUM_EVENTS_LO  0x2C  // number of translated events from WR to MIL, low word
 #define WR_MIL_GW_REG_LATE_EVENTS    0x30  // number of translated events that could not be delivered in time
-#define WR_MIL_GW_REG_LAST           0x34  // dummy register to indicate position after the last valid register
+#define WR_MIL_GW_REG_LATE_HISTOGRAM 0x34  // dummy register to indicate position after the last valid register
+#define WR_MIL_GW_REG_MIL_HISTOGRAM  0x74  // dummy register to indicate position after the last valid register
 
 // states of the software
 #define WR_MIL_GW_STATE_INIT         0
