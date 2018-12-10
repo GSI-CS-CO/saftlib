@@ -163,11 +163,9 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
 
 std::vector< guint32 > WrMilGateway::getMilHistogram() const
 {
-  std::vector< guint32 > histogram;
-  for (int i = 0; i < 256; ++i) {
-    eb_data_t value;
-    receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + WR_MIL_GW_REG_MIL_HISTOGRAM + 4*i, EB_DATA32, &value);
-    histogram.push_back(value);
+  std::vector< guint32 > histogram(256,0);
+  for (int i = 0; i < histogram.size(); ++i) {
+    histogram[i] = readRegisterContent(WR_MIL_GW_REG_MIL_HISTOGRAM + 4*i);
   }
   return histogram;
 }
