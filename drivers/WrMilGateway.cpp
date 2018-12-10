@@ -231,10 +231,12 @@ void WrMilGateway::ClearStatistics()
 
 void WrMilGateway::ResetGateway()
 {
+  ClearStatistics();
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
 }
 void WrMilGateway::KillGateway()
 {
+  ClearStatistics();
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_KILL);
 }
 
