@@ -2,7 +2,7 @@ SUBDIRS = interfaces saftbus
 SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl saft-mt-test saft-fg-ctl saft-multi-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-wrmilgw-ctl
+bin_PROGRAMS = saft-ctl saft-mt-test saft-fg-ctl saft-multi-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check
 noinst_PROGRAMS = client
 
 dbussystemdir = @sysconfdir@/dbus-1/system.d
@@ -97,9 +97,6 @@ saft_dm_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_gmt_check_SOURCES = src/saft-gmt-check.cpp src/CommonFunctions.cpp
 saft_gmt_check_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
-
-saft_wrmilgw_ctl_SOURCES = src/saft-wrmilgw-ctl.cpp src/CommonFunctions.cpp
-saft_wrmilgw_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 if GIT_TREE
 version.h:
