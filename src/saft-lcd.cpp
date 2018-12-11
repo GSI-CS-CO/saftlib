@@ -7,7 +7,7 @@
 //
 // A CLI that allows to see what happens in the facility.
 //
-// verison: 2018-Dec-10
+// version: 2018-Dec-11
 //
 //*****************************************************************************
 // This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
 //
-#define SAFT_LCD_VERSION "0.0.3"
+#define SAFT_LCD_VERSION "0.0.4"
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -201,8 +201,21 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "This tool provides a very basic display of beam production chains in the facility." << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
-  std::cout << "Licensed under the GPL v3." << std::endl;
+  std::cout << "Example: 'saft-lcd bla -f snoop 0' snoops facility for BPCs with origin at UNILAC(TK)," << std::endl;
+  std::cout << "         the following information is displayed" << std::endl;
+  std::cout << "BPCID: source-target(s) [UNI vAcc]"              << std::endl;
+  std::cout << "----------------------------------"              << std::endl;
+  std::cout << "    6: UNILAC-SIS18-NE5-HADES [10]"              << std::endl;
+  std::cout << "    '       '     '   '     '   '"               << std::endl;
+  std::cout << "    '       '     '   '     '   '- # of virt acc requested from UNILAC" << std::endl;
+  std::cout << "    '       '     '   '     '- BPC target"       << std::endl;
+  std::cout << "    '       '     '   '- via"                    << std::endl;
+  std::cout << "    '       '     '- via"                        << std::endl;
+  std::cout << "    '       '- BPC origin"                       << std::endl;
+  std::cout << "    '- BPCID"                                    << std::endl;
+  std::cout << std::endl;
+  std::cout << "Report bugs to <d.beck@gsi.de> !!!"              << std::endl;
+  std::cout << "Licensed under the GPL v3" << std::endl;
   std::cout << std::endl;
 } // help
 
