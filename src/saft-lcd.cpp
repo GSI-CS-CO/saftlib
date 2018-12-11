@@ -1,4 +1,4 @@
-// @file saft-bcv.cpp
+// @file saft-lcd.cpp
 // @brief Live Chain Dispaly. This tool uses saftlib for on-line snooping 
 //        and display of beam production chains
 // @author Dietrich Beck  <d.beck@gsi.de>
@@ -7,7 +7,7 @@
 //
 // A CLI that allows to see what happens in the facility.
 //
-// verison: 2018-Dec-04
+// verison: 2018-Dec-10
 //
 //*****************************************************************************
 // This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
 //
-#define SAFT_LCD_VERSION "0.0.2"
+#define SAFT_LCD_VERSION "0.0.3"
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -93,6 +93,7 @@ static int      getVersion = 0;      // print version?
 static guint32  source;              // GID of source
 static guint32  idleSource;          // GID played when BPC idle
 static guint32  bpcAct;              // actual BPC 
+static guint32  vaccAct;             // actual vAcc from UNILAC
 static int      nCmd;                // counts command events for desired machine
 
 
@@ -146,10 +147,12 @@ static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 ex
     if (gid == source) {
 
       // old BPC finished
+      if ((vaccAct == 0xffffffff) && (source == GTK3MV4_TO_PLTKMH2)) std::cout << " [no vAcc requested] ";
       std::cout << std::endl;
 
       // start new BPC
       bpcAct  = bpcid;
+      vaccAct = 0xffffffff;
       nCmd    = 0;
       std::cout << std::setw(7) << bpcid << ": " << gName;
     }  // if gid
@@ -169,6 +172,7 @@ static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 ex
     break; 
   case UNI_TCREQ :
     if (source == GTK3MV4_TO_PLTKMH2) {
+      vaccAct = vacc;
       std::cout << " [" << vacc;
       if (dry) std::cout << "(dry)";
       std::cout <<  "] ";
