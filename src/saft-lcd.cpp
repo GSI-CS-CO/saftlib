@@ -161,14 +161,14 @@ static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 ex
       else {if (pmode & PMODE_VERBOSE) std::cout << "(" << gName << ")";}
     } // else
     break;
-    case COMMAND : 
-      if (gid == idleSource) {
-        nCmd++;
-        switch (nCmd) {
-        case 180 : std::cout << std::endl << "   idle: " << gName; nCmd = 0; break; // idle since a long time ...
-        default  : if (pmode & PMODE_VERBOSE) std::cout << std::endl << "(  idle: " << gName << ")"; break;
-        } // switch nCmd
-      } // if gid
+  case COMMAND : 
+    if (gid == idleSource) {
+      nCmd++;
+      switch (nCmd) {
+      case 180 : std::cout << std::endl << "   idle: " << gName; nCmd = 0; break; // idle since a long time ...
+      default  : if (pmode & PMODE_VERBOSE) std::cout << std::endl << "(  idle: " << gName << ")"; break;
+      } // switch nCmd
+    } // if gid
     break; 
   case UNI_TCREQ :
     if (source == GTK3MV4_TO_PLTKMH2) {
