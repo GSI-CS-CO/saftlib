@@ -50,7 +50,7 @@ namespace saftlib {
 
 WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
-   poll_period(200), // [ms]
+   poll_period(1000), // [ms]
    max_time_without_mil_events(10000), // 10 seconds
    time_without_mil_events(max_time_without_mil_events),
    receiver(args.receiver),
@@ -258,9 +258,11 @@ bool WrMilGateway::getInUse() const
 bool WrMilGateway::poll()
 {
   getFirmwareRunning();
-  getFirmwareState();
-  getEventSource();
-  getNumLateMilEvents();
+
+  // these three checks are done on MSI base now (no polling needed)
+  // getFirmwareState();
+  // getEventSource();
+  // getNumLateMilEvents();
 
   // check if the gateway is used (translates events)
   guint64 new_num_mil_events = getNumMilEvents();
@@ -328,6 +330,9 @@ guint32 WrMilGateway::getFirmwareState() const
   if (firmware_state != new_firmware_state) {
     firmware_state = new_firmware_state;
     SigFirmwareState(firmware_state);
+    // in case the firmware state has changed 
+    // also check for the event source configuration
+    getEventSource(); 
   }
   return firmware_state;
 }
@@ -429,15 +434,14 @@ void WrMilGateway::ownerQuit()
 }
 
 
-void WrMilGateway::irq_handler(eb_data_t msg)
+void WrMilGateway::irq_handler(eb_data_t msg) const 
 {
-  std::cerr << "WrMilGateway::irq_handler(" << std::dec << msg << ")" << std::endl; 
   switch(msg) {
     case WR_MIL_GW_MSI_LATE_EVENT:
+      getNumLateMilEvents(); 
     break;
-    case WR_MIL_GW_MSI_STARTED:
-    break;
-    case WR_MIL_GW_MSI_STOPPED:
+    case WR_MIL_GW_MSI_STATE_CHANGED:
+      getFirmwareState();
     break;
     default:
       std::cerr << "WrMilGateway unknown Interrupt: " << std::dec << msg << std::endl; 

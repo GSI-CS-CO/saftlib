@@ -124,15 +124,5 @@
          do before loading new firmware)-->
     <method name="KillGateway"/>
 
-    <!-- emitted when the WR-MIL Gateway started its operation -->
-    <signal name="SigGatewayStarted"/>
-
-    <!-- emitted when the WR-MIL Gateway stopped its operation -->
-    <signal name="SigGatewayStopped"/>
-
-    <!-- emitted when there were new Late events since this signal
-         was emitted last time -->
-    <signal name="SigLateEventsDetected"/>
-
   </interface>
 </node>
