@@ -44,9 +44,10 @@ class WrMilGateway : public Owned, public iWrMilGateway
   public:
     typedef WrMilGateway_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring   objectPath;
-      TimingReceiver* receiver;
-      eb_address_t    base_addr;
+      Glib::ustring             objectPath;
+      TimingReceiver*           receiver;
+      etherbone::sdb_msi_device sdb_msi_base;
+      sdb_device                mailbox;
     };
     
     static Glib::RefPtr<WrMilGateway> create(const ConstructorType& args);
@@ -95,6 +96,8 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void    writeRegisterContent(guint32 reg_offset, guint32 value);
     bool    firmwareRunning() const;
 
+    void irq_handler(eb_data_t msg);
+
 
     mutable bool    firmware_running;
     mutable guint32 firmware_state;
@@ -107,10 +110,17 @@ class WrMilGateway : public Owned, public iWrMilGateway
     sigc::connection pollConnection;
 
 
-    TimingReceiver*   receiver;
-    struct sdb_device wrmilgw_device; // store the LM32 device with WR-MIL-Gateway firmware running
-    eb_address_t      base_addr;
-    bool              have_wrmilgw;
+    TimingReceiver*           receiver;
+    struct sdb_device         wrmilgw_device; // store the LM32 device with WR-MIL-Gateway firmware running
+    eb_address_t              base_addr;
+    etherbone::sdb_msi_device sdb_msi_base;
+    sdb_device                mailbox;
+    eb_address_t              irq;
+    bool                      have_wrmilgw;
+
+    eb_address_t              mailbox_slot_address;
+    unsigned mbx_slot;
+
 };
 
 }

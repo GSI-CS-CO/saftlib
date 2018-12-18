@@ -34,6 +34,18 @@
 #include "wr_mil_gw_regs.h" 
 #include "clog.h"
 
+#define LM32_RAM_USER_VENDOR      0x651       //vendor ID
+#define LM32_RAM_USER_PRODUCT     0x54111351  //product ID
+#define LM32_RAM_USER_VMAJOR      1           //major revision
+#define LM32_RAM_USER_VMINOR      1           //minor revision
+
+#define LM32_CLUSTER_ROM_VENDOR   0x651
+#define LM32_CLUSTER_ROM_PRODUCT  0x10040086
+
+#define MSI_MAILBOX_VENDOR        0x651
+#define MSI_MAILBOX_PRODUCT       0xfab0bdd8
+
+
 namespace saftlib {
 
 WrMilGateway::WrMilGateway(const ConstructorType& args)
@@ -42,9 +54,35 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
    max_time_without_mil_events(10000), // 10 seconds
    time_without_mil_events(max_time_without_mil_events),
    receiver(args.receiver),
-   base_addr(args.base_addr),
+   sdb_msi_base(args.sdb_msi_base),
+   mailbox(args.mailbox),
+   irq(args.receiver->getDevice().request_irq(args.sdb_msi_base, sigc::mem_fun(*this, &WrMilGateway::irq_handler))),
    have_wrmilgw(false)
 {
+
+  // configure MSI that triggers our irq_handler
+  eb_address_t mailbox_base = args.mailbox.sdb_component.addr_first;
+  eb_data_t mailbox_value;
+  unsigned slot = 0;
+
+  receiver->getDevice().read(mailbox_base, EB_DATA32, &mailbox_value);
+  while((mailbox_value != 0xffffffff) && slot < 128) {
+    receiver->getDevice().read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
+    slot++;
+  }
+
+  if (slot < 128)
+    mbx_slot = --slot;
+  else
+    clog << kLogErr << "WrMilGateway: no free slot in mailbox left"  << std::endl;
+
+  //save the irq address in the odd mailbox slot
+  //keep postal address to free later
+  mailbox_slot_address = mailbox_base + slot * 4 * 2 + 4;
+  receiver->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
+  std::cerr << "WrMilGateway: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
+  // done with MSI configuration
+
   // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
   std::vector<struct sdb_device> devices;
   receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), devices);
@@ -72,6 +110,12 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
     throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "WR-MIL-Gateway not running");
   }
 
+
+
+
+
+ 
+
   // reset all other LM32 CPUs to make sure that no other firmware disturbs our actions
   // (in particular the function generator firmware)
   receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
@@ -98,8 +142,19 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   firmware_state   = readRegisterContent(WR_MIL_GW_REG_STATE);
   event_source     = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
   num_late_events  = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
+
+  // // configure mailbox for MSI to Saftlib
+  // // get mailbox slot number for swi host=>lm32
+  // eb_data_t mb_slot;
+  // mb_slot = readRegisterContent(WR_MIL_GW_REG_MSI_SLOT);
+  // std::cerr << "mb_slot = " << mb_slot << std::endl;
+
+
+  // tell the LM32 which slot in mailbox is ours
+  writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, slot);
+  std::cerr << "lm32 slot configured to = " << slot << std::endl;
   
-  // poll every 1s some registers
+  // poll some registers periodically
   pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
 }
 
@@ -135,6 +190,7 @@ bool WrMilGateway::getFirmwareRunning()  const
   return firmware_running;
 }
 
+
 guint32 WrMilGateway::readRegisterContent(guint32 reg_offset) const
 {
     eb_data_t value;
@@ -152,19 +208,41 @@ Glib::RefPtr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
   return RegisteredObject<WrMilGateway>::create(args.objectPath, args);
 }
 
+// void registerContentCallback(eb_user_data_t data , eb_device_t device , eb_operation_t operation , eb_status_t status)
+// {
+//   std::cerr << "registerContentCallback called" << std::endl;
+//   int i = 0;
+//   std::cerr << "EB_NULL = " << EB_NULL << std::endl;
+//   guint32 *userdata = (guint32*)data;
+//   std::cerr << "userdata = " << *userdata << std::endl;
+//   //std::cerr << "vector->size() = " << vector->size() << std::endl;
+//   while (operation != EB_NULL) {
+//     //reg[i++] = eb_operation_data(operation);
+//     std::cerr << "operation " << eb_operation_data(operation) << std::endl;
+//     operation = eb_operation_next(operation);
+//   }
+// }
+
 std::vector< guint32 > WrMilGateway::getRegisterContent() const
 {
-  std::vector<guint32> registerContent((WR_MIL_GW_REG_LATE_HISTOGRAM-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 0);
-  for (unsigned i = 0; i < registerContent.size(); ++i) {
-    registerContent[i] = readRegisterContent(4*i);
-  }
+  etherbone::Cycle cycle;
+  std::vector<guint32> registerContent((WR_MIL_GW_REG_LATE_HISTOGRAM-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 42);
+  // guint32 userdata = 1234;
+  // cycle.open(receiver->getDevice(), &userdata, &registerContentCallback);
+  // //cycle.open<eb_user_data_t>(receiver->getDevice(), nullptr, &registerContentCallback);
+  // for (unsigned i = 0; i < registerContent.size(); ++i) {
+  //   std::cerr << "reading " << i << std::endl;
+  //   cycle.read(base_addr + WR_MIL_GW_SHARED_OFFSET + i*4);
+  // }
+  // cycle.close();
+  // std::cerr << "userdata = " << userdata << std::endl;
   return registerContent;
 }
 
 std::vector< guint32 > WrMilGateway::getMilHistogram() const
 {
   std::vector< guint32 > histogram(256,0);
-  for (int i = 0; i < histogram.size(); ++i) {
+  for (unsigned i = 0; i < histogram.size(); ++i) {
     histogram[i] = readRegisterContent(WR_MIL_GW_REG_MIL_HISTOGRAM + 4*i);
   }
   return histogram;
@@ -349,5 +427,24 @@ void WrMilGateway::Reset()
 void WrMilGateway::ownerQuit()
 {
 }
+
+
+void WrMilGateway::irq_handler(eb_data_t msg)
+{
+  std::cerr << "WrMilGateway::irq_handler(" << std::dec << msg << ")" << std::endl; 
+  switch(msg) {
+    case WR_MIL_GW_MSI_LATE_EVENT:
+    break;
+    case WR_MIL_GW_MSI_STARTED:
+    break;
+    case WR_MIL_GW_MSI_STOPPED:
+    break;
+    default:
+      std::cerr << "WrMilGateway unknown Interrupt: " << std::dec << msg << std::endl; 
+  }
+}
+
+
+
 
 }

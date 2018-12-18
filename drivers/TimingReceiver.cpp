@@ -864,7 +864,8 @@ void TimingReceiver::probe(OpenDevice& od)
 
       // swi address of fg is to be found in mailbox slot mb_slot
       eb_address_t swi = mbx[0].sdb_component.addr_first + mb_slot * 4 * 2;
-      clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
+      //clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
+      std::cerr <<  "mailbox address for swi is 0x" << std::hex << swi << std::endl;
       eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
       
       // Probe the configuration and hardware macros
@@ -923,7 +924,7 @@ void TimingReceiver::probe(OpenDevice& od)
       spath << od.objectPath << "/masterfg";
       Glib::ustring path = spath.str();
 
-      MasterFunctionGenerator::ConstructorType args = { path, tr.operator->(), functionGeneratorImplementations };
+      MasterFunctionGenerator::ConstructorType args = { path, tr.operator->(), functionGeneratorImplementations};
       Glib::RefPtr<MasterFunctionGenerator> fg = MasterFunctionGenerator::create(args);
 
       tr->otherStuff["MasterFunctionGenerator"]["masterfg"] = fg;
@@ -935,7 +936,7 @@ void TimingReceiver::probe(OpenDevice& od)
         std::ostringstream wrmil_path;
         wrmil_path.imbue(std::locale("C"));
         wrmil_path << od.objectPath << "/" << wrmilgw_str;
-        WrMilGateway::ConstructorType wrmil_args = { wrmil_path.str(), tr.operator->() };
+        WrMilGateway::ConstructorType wrmil_args = { wrmil_path.str(), tr.operator->(), mbx_msi[0], mbx[0]  };
         tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
       } catch (IPC_METHOD::Error &e) {
         clog << kLogDebug << "no WR-MIL-Gateway found" << std::endl;
