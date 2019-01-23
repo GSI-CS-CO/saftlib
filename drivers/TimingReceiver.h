@@ -39,6 +39,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
       eb_address_t info;
       eb_address_t watchdog;
       eb_address_t pps;
+      eb_address_t ats;
     };
     typedef TimingReceiver_Service ServiceType;
     
@@ -58,6 +59,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     std::map< Glib::ustring, Glib::ustring > getGatewareInfo() const;
     Glib::ustring getGatewareVersion() const;
     bool getLocked() const;
+    gint32 getTemperature() const;
     std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
     std::map< Glib::ustring, Glib::ustring > getOutputs() const;
     std::map< Glib::ustring, Glib::ustring > getInputs() const;
@@ -85,12 +87,14 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     eb_address_t stream;
     eb_address_t watchdog;
     eb_address_t pps;
+    eb_address_t ats;
     guint64 sas_count;
     eb_address_t arrival_irq;
     eb_address_t generator_irq;
     
     std::map<Glib::ustring, Glib::ustring> info;
     mutable bool locked;
+    mutable gint32 temperature;
     eb_data_t watchdog_value;
     
     sigc::connection pollConnection;

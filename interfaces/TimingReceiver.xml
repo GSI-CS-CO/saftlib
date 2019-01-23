@@ -51,6 +51,12 @@
       -->
     <property name="Locked" type="b" access="read"/>
   
+    <!-- Temperature: The current temperature value.
+         The valid temperature range is from -70 to 127 degree in Celsius.
+         The data type is 32-bit signed integer.
+      -->
+    <property name="Temperature" type="i" access="read"/>
+
     <!-- ReadCurrentTime: The current time in nanoseconds since 1970.
          @result:         Nanoseconds since 1970.
          Due to delays in software, the returned value is probably several
