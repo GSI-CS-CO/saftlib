@@ -45,6 +45,7 @@
 #include "InoutImpl.h"
 #include "Output.h"
 #include "Input.h"
+#include "ats_regs.h"
 
 namespace saftlib {
 
@@ -276,10 +277,6 @@ Glib::ustring TimingReceiver::getName() const
 #define WR_PPS_GEN_ESCR_MASK    0xc       //bit 2: PPS valid, bit 3: TS valid
 #endif
 #define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
-
-#define ATS_SDB_VENDOR_ID       0x00000651  // Altera temperature sensor (ATS)
-#define ATS_SDB_DEVICE_ID       0x7e3d5e25
-#define ALTERA_TEMP_DEGREE      0x04      //Register for Altera temperature sensor (in degree)
 
 void TimingReceiver::setupGatewareInfo(guint32 address)
 {
