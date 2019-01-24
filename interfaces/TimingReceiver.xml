@@ -50,7 +50,12 @@
          receiver has a correct timestamp.
       -->
     <property name="Locked" type="b" access="read"/>
-  
+
+    <!-- TemperatureSensorAvail: Check if a temperature sensor is available
+         in a timing receiver.
+      -->
+    <property name="TemperatureSensorAvail" type="b" access="read"/>
+
     <!-- CurrentTemperature: The current temperature in degree Celsius.
          @result:         Temperature in degree Celsius.
          The valid temperature range is from -70 to 127 degree Celsius.

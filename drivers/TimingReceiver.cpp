@@ -62,7 +62,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    ats(args.ats),
    sas_count(0),
    locked(false),
-   temperature(255)
+   temperature(0)
 {
   // try to acquire watchdog
   eb_data_t retry;
@@ -355,6 +355,11 @@ bool TimingReceiver::getLocked() const
   }
   
   return newLocked;
+}
+
+bool TimingReceiver::getTemperatureSensorAvail() const
+{
+  return ats != 0;
 }
 
 gint32 TimingReceiver::CurrentTemperature()
