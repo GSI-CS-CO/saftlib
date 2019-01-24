@@ -59,7 +59,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     std::map< Glib::ustring, Glib::ustring > getGatewareInfo() const;
     Glib::ustring getGatewareVersion() const;
     bool getLocked() const;
-    gint32 getTemperature() const;
+    gint32 CurrentTemperature();
     std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
     std::map< Glib::ustring, Glib::ustring > getOutputs() const;
     std::map< Glib::ustring, Glib::ustring > getInputs() const;

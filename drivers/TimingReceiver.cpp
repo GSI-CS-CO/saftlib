@@ -357,7 +357,7 @@ bool TimingReceiver::getLocked() const
   return newLocked;
 }
 
-gint32 TimingReceiver::getTemperature() const
+gint32 TimingReceiver::CurrentTemperature()
 {
   if (ats) {
     eb_data_t data;

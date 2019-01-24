@@ -51,11 +51,14 @@
       -->
     <property name="Locked" type="b" access="read"/>
   
-    <!-- Temperature: The current temperature value.
-         The valid temperature range is from -70 to 127 degree in Celsius.
+    <!-- CurrentTemperature: The current temperature in degree Celsius.
+         @result:         Temperature in degree Celsius.
+         The valid temperature range is from -70 to 127 degree Celsius.
          The data type is 32-bit signed integer.
       -->
-    <property name="Temperature" type="i" access="read"/>
+    <method name="CurrentTemperature">
+      <arg  direction="out" type="i" name="result"/>
+    </method>
 
     <!-- ReadCurrentTime: The current time in nanoseconds since 1970.
          @result:         Nanoseconds since 1970.
