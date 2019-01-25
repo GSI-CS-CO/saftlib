@@ -308,7 +308,7 @@ void Connection::emit_signal(const Glib::ustring& object_path,
 
 
 
-bool Connection::dispatch(Glib::IOCondition condition, Socket *socket) 
+bool Connection::dispatch(Slib::IOCondition condition, Socket *socket) 
 {
 	// handle a request coming from one of the sockets
 	try {

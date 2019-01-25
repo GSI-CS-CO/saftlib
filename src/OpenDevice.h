@@ -21,6 +21,7 @@
 #define SAFTLIB_OPEN_DEVICE_H
 
 #include "Device.h"
+#include <glibmm.h>
 
 namespace saftlib {
 

@@ -81,7 +81,7 @@ int Proxy::get_reading_end_of_signal_pipe()
 }
 
 
-bool Proxy::dispatch(Glib::IOCondition condition)
+bool Proxy::dispatch(Slib::IOCondition condition)
 {
 	// this method is called from the Glib::MainLoop whenever there is signal data in the pipe
 	try {

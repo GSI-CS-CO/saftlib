@@ -14,6 +14,7 @@
 #include "Interface.h"
 #include "saftbus.h"
 #include "Logger.h"
+#include "PollFD.h"
 
 
 namespace saftbus
@@ -60,7 +61,7 @@ namespace saftbus
 
 		void 	emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name=Glib::ustring(), const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
 
-		bool dispatch(Glib::IOCondition condition, Socket *socket);
+		bool dispatch(Slib::IOCondition condition, Socket *socket);
 
 	private:
 		void handle_disconnect(Socket *socket);

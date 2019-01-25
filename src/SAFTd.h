@@ -22,6 +22,8 @@
 
 #include "interfaces/SAFTd.h"
 #include "OpenDevice.h"
+#include "MainLoop.h"
+#include <memory>
 
 namespace saftlib {
 
@@ -33,7 +35,7 @@ class SAFTd : public iSAFTd
     
     void setConnection(const Glib::RefPtr<IPC_METHOD::Connection>& connection);
     
-    const Glib::RefPtr<Glib::MainLoop>&        loop()       { return m_loop; }
+    const std::shared_ptr<Slib::MainLoop>&      loop()       { return m_loop; }
     const Glib::RefPtr<IPC_METHOD::Connection>& connection() { return m_connection; }
     
     Glib::ustring AttachDevice(const Glib::ustring& name, const Glib::ustring& path);
@@ -48,7 +50,7 @@ class SAFTd : public iSAFTd
     SAFTd();
     
     SAFTd_Service m_service;
-    Glib::RefPtr<Glib::MainLoop> m_loop;
+    std::shared_ptr<Slib::MainLoop> m_loop;
     Glib::RefPtr<IPC_METHOD::Connection> m_connection;
     etherbone::Socket socket;
     sigc::connection eb_source;

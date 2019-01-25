@@ -9,6 +9,7 @@
 #include "core.h"
 
 
+
 namespace saftbus
 {
 
@@ -34,7 +35,7 @@ void Socket::wait_for_client()
 	//_addrlen = sizeof(struct sockaddr_in);
 	// the connection will wait for incoming calls
 	try {
-		Glib::signal_io().connect(sigc::mem_fun(*this, &Socket::accept_connection), _create_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_LOW);
+		Slib::signal_io().connect(sigc::mem_fun(*this, &Socket::accept_connection), _create_socket, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 	} catch(std::exception &e)
 	{
 		if (_debug_level > 5) std::cerr << "wait_for_client exception: " << e.what() << std::endl;
@@ -70,11 +71,11 @@ Socket::Socket(const std::string &name, Connection *server_connection)
 
 {
 	// // the connection will wait for incoming calls
-	// Glib::signal_io().connect(sigc::mem_fun(*this, &Socket::accept_connection), _create_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_LOW);
+	// Slib::signal_io().connect(sigc::mem_fun(*this, &Socket::accept_connection), _create_socket, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 	wait_for_client();
 }
 
-bool Socket::accept_connection(Glib::IOCondition condition)
+bool Socket::accept_connection(Slib::IOCondition condition)
 {
 	if (_active) {
 		return false;
@@ -87,7 +88,7 @@ bool Socket::accept_connection(Glib::IOCondition condition)
 	{
 		if (_debug_level > 5) std::cerr << "client connected " << std::endl;
 	}
-	Glib::signal_io().connect(sigc::bind(sigc::mem_fun(_server_connection, &Connection::dispatch), this), _new_socket, Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
+	Slib::signal_io().connect(sigc::bind(sigc::mem_fun(_server_connection, &Connection::dispatch), this), _new_socket, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_HIGH);
 	_active = true;
 	return false; // MainLoop should stop watching _create_socket file descriptor
 }

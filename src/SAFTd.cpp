@@ -40,7 +40,7 @@ static void just_rethrow(const char*)
 }
 
 SAFTd::SAFTd()
- : m_service(this, sigc::ptr_fun(&just_rethrow)), m_loop(Glib::MainLoop::create())
+ : m_service(this, sigc::ptr_fun(&just_rethrow)), m_loop(Slib::MainLoop::create())
 {
   // Setup the global etherbone socket
   try {

@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include "giomm.h"
+#include "MainContext.h"
 
 namespace saftbus
 {
@@ -24,7 +25,7 @@ class Socket
 		Socket(const std::string & name, Connection *server_connection); // if server_connection is 0 then we are a client
 		~Socket();
 
-		bool accept_connection(Glib::IOCondition condition);
+		bool accept_connection(Slib::IOCondition condition);
 
 		void wait_for_client(); 
 		void close_connection();

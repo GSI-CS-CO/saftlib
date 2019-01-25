@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "saftbus.h"
+#include "MainContext.h"
 
 namespace saftlib
 {
@@ -62,7 +63,7 @@ namespace saftbus
 		int get_reading_end_of_signal_pipe();
 
 	public:
-		bool dispatch(Glib::IOCondition condition);
+		bool dispatch(Slib::IOCondition condition);
 
 	private:
 

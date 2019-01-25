@@ -13,7 +13,11 @@ saftbus_HEADERS = \
 	ProxyConnection.h  \
 	Interface.h        \
 	SignalGroup.h      \
-	saftbus.h  
+	saftbus.h          \
+	MainContext.h		\
+	MainLoop.h			\
+	Source.h			\
+	PollFD.h			
 
 libsaftbus_la_LIBADD = 
 libsaftbus_la_LDFLAGS = -version-info @SAFTLIB_API@:@SAFTLIB_REVISION@:@SAFTLIB_MINOR@ # @SAFTLIB_SONAME@
@@ -28,8 +32,11 @@ nodist_libsaftbus_la_SOURCES = \
 	ProxyConnection.cpp          \
 	Interface.cpp                \
 	SignalGroup.cpp              \
-	saftbus.cpp
-
+	saftbus.cpp                  \
+	MainContext.cpp		         \
+	MainLoop.cpp		         \
+	Source.cpp			         \
+	PollFD.cpp			          
 bin_PROGRAMS = saftbus-ctl
 
 saftbus_ctl_SOURCES = saftbus-ctl.cpp
