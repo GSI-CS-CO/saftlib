@@ -19,7 +19,7 @@ namespace saftbus
 ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
-	//std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
+	std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
 	for (;;) {
 		// create a local unix socket
 		_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
@@ -52,9 +52,11 @@ ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
 		}
 
 		try {
+			std::cerr << "ProxyConnection ask for _saftbus_id" << std::endl;
 			// see if we can really write and read on the socket...
 			saftbus::write(get_fd(), saftbus::SENDER_ID);  // ask the saftd for an ID on the saftbus
 			saftbus::read(get_fd(), _saftbus_id);  
+			std::cerr << "received _saftbus_id " << _saftbus_id << std::endl;
 			return;
 		}  catch (...) {
 			std::cerr << "ProxyConnection::ProxyConnection() threw" << std::endl;
