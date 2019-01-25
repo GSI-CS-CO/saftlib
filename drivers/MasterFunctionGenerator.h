@@ -38,11 +38,11 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     struct ConstructorType {
       Glib::ustring objectPath;
       TimingReceiver* dev;
- 			//std::vector<Glib::RefPtr<FunctionGeneratorImpl>> functionGenerators;
+ 			//std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;
  			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;            
     };
     
-    static Glib::RefPtr<MasterFunctionGenerator> create(const ConstructorType& args);
+    static std::shared_ptr<MasterFunctionGenerator> create(const ConstructorType& args);
    
     // iMasterFunctionGenerator overrides
     void Arm();

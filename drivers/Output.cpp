@@ -28,7 +28,7 @@
 
 namespace saftlib {
 
-Glib::RefPtr<Output> Output::create(const ConstructorType& args)
+std::shared_ptr<Output> Output::create(const ConstructorType& args)
 {
   return RegisteredObject<Output>::create(args.objectPath, args);
 }

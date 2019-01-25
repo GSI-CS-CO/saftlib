@@ -43,10 +43,10 @@ namespace saftbus
 		Connection(int number_of_sockets = N_CONNECTIONS, const std::string& base_name = "/tmp/saftbus_");
 		~Connection();
 
-		guint 	register_object (const Glib::ustring& object_path, const Glib::RefPtr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
+		guint 	register_object (const Glib::ustring& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
 		bool 	unregister_object (guint registration_id);
 
-		using SlotSignal = sigc::slot<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
+		using SlotSignal = sigc::slot<void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
 
 		// signal_subscribe and signal_unsubscribe are ONLY used by the driver of Owned.
 		guint signal_subscribe 	( 	const SlotSignal&  	slot,
@@ -87,7 +87,7 @@ namespace saftbus
 
 
 		// 	     // handle    // signal
-		std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+		std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 		std::map<Glib::ustring, std::set<guint> > _id_handles_map;
 		std::set<guint> _erased_handles;
 

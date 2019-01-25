@@ -50,7 +50,7 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
  			std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
     };
     
-    static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
+    static std::shared_ptr<FunctionGenerator> create(const ConstructorType& args);
     
     // iFunctionGenerator overrides
     void Arm();
@@ -85,7 +85,7 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     void on_fg_stopped(guint64, bool, bool, bool);
 
     /*
-    Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
+    std::shared_ptr<FunctionGeneratorChannelAllocation> allocation;
     eb_address_t shm;
     eb_address_t swi;
     etherbone::sdb_msi_device base;

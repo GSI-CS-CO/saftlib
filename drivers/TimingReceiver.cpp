@@ -408,7 +408,7 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), alloc->first);
   
   SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
-  Glib::RefPtr<ActionSink> softwareActionSink = SoftwareActionSink::create(args);
+  std::shared_ptr<ActionSink> softwareActionSink = SoftwareActionSink::create(args);
   softwareActionSink->initOwner(getConnection(), getSender());
   
   // Own it and inform changes to properties
@@ -464,8 +464,10 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks(
   typedef ActionSinks::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    Glib::RefPtr<SoftwareActionSink> softwareActionSink =
-      Glib::RefPtr<SoftwareActionSink>::cast_dynamic(i->second);
+    std::shared_ptr<SoftwareActionSink> softwareActionSink =
+      std::dynamic_pointer_cast<SoftwareActionSink>(i->second);
+    // std::shared_ptr<SoftwareActionSink> softwareActionSink =
+    //   std::shared_ptr<SoftwareActionSink>::cast_dynamic(i->second);
     if (!softwareActionSink) continue;
     out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
   }
@@ -477,8 +479,10 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
   typedef ActionSinks::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    Glib::RefPtr<Output> output =
-      Glib::RefPtr<Output>::cast_dynamic(i->second);
+    std::shared_ptr<Output> output =
+      std::dynamic_pointer_cast<Output>(i->second);
+    // std::shared_ptr<Output> output =
+    //   std::shared_ptr<Output>::cast_dynamic(i->second);
     if (!output) continue;
     out[output->getObjectName()] = output->getObjectPath();
   }
@@ -490,8 +494,10 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
   typedef EventSources::const_iterator iterator;
   std::map< Glib::ustring, Glib::ustring > out;
   for (iterator i = eventSources.begin(); i != eventSources.end(); ++i) {
-    Glib::RefPtr<Input> input =
-      Glib::RefPtr<Input>::cast_dynamic(i->second);
+    std::shared_ptr<Input> input =
+      std::dynamic_pointer_cast<Input>(i->second);
+    // std::shared_ptr<Input> input =
+    //   std::shared_ptr<Input>::cast_dynamic(i->second);
     if (!input) continue;
     out[input->getObjectName()] = input->getObjectPath();
   }
@@ -810,7 +816,7 @@ void TimingReceiver::probe(OpenDevice& od)
     (eb_address_t)watchdogs[0].sdb_component.addr_first,
     (eb_address_t)pps[0].sdb_component.addr_first,
   };
-  Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
+  std::shared_ptr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
     
   // Add special SCU hardware
@@ -877,7 +883,7 @@ void TimingReceiver::probe(OpenDevice& od)
       cycle.close();
       
       // Create an allocation buffer
-      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation(
+      std::shared_ptr<FunctionGeneratorChannelAllocation> allocation(
         new FunctionGeneratorChannelAllocation);
       allocation->indexes.resize(num_channels, -1);
       
@@ -887,7 +893,7 @@ void TimingReceiver::probe(OpenDevice& od)
         cycle.write(swi, EB_DATA32, SWI_DISABLE | j);
       cycle.close();
 
-//			std::vector<Glib::RefPtr<FunctionGenerator>> functionGenerators;      
+//			std::vector<std::shared_ptr<FunctionGenerator>> functionGenerators;      
 			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGeneratorImplementations;      			
       // Create the objects to control the channels
       for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
@@ -907,7 +913,7 @@ void TimingReceiver::probe(OpenDevice& od)
 				functionGeneratorImplementations.push_back(fgImpl);
 				
 				FunctionGenerator::ConstructorType fgargs = { path, tr.operator->(), fgImpl };
-        Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(fgargs);				
+        std::shared_ptr<FunctionGenerator> fg = FunctionGenerator::create(fgargs);				
         std::ostringstream name;
         name.imbue(std::locale("C"));
         name << "fg-" << (int)fgImpl->getSCUbusSlot() << "-" << (int)fgImpl->getDeviceNumber();
@@ -925,7 +931,7 @@ void TimingReceiver::probe(OpenDevice& od)
       Glib::ustring path = spath.str();
 
       MasterFunctionGenerator::ConstructorType args = { path, tr.operator->(), functionGeneratorImplementations};
-      Glib::RefPtr<MasterFunctionGenerator> fg = MasterFunctionGenerator::create(args);
+      std::shared_ptr<MasterFunctionGenerator> fg = MasterFunctionGenerator::create(args);
 
       tr->otherStuff["MasterFunctionGenerator"]["masterfg"] = fg;
 

@@ -86,7 +86,7 @@ class ActionSink : public Owned, public iActionSink
     //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 , guint64 > Delayed;
 
     // Do the grunt work to create a condition
-    typedef sigc::slot<Glib::RefPtr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
+    typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
     Glib::ustring NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor);
 
     // Emit AllConditions, ActiveConditions, InactiveConditions
@@ -98,7 +98,7 @@ class ActionSink : public Owned, public iActionSink
     const Glib::ustring &getObjectName() const { return name; }
 
     // Used by TimingReciever::compile
-    typedef std::map< guint32, Glib::RefPtr<Condition> > Conditions;
+    typedef std::map< guint32, std::shared_ptr<Condition> > Conditions;
     const Conditions& getConditions() const { return conditions; }
     unsigned getChannel() const { return channel; }
     unsigned getNum() const { return num; }

@@ -28,7 +28,7 @@
 
 namespace saftlib {
 
-Glib::RefPtr<Input> Input::create(const ConstructorType& args)
+std::shared_ptr<Input> Input::create(const ConstructorType& args)
 {
   return RegisteredObject<Input>::create(args.objectPath, args);
 }

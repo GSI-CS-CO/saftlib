@@ -31,7 +31,7 @@ class EmbeddedCPUCondition : public Condition, public iEmbeddedCPUCondition
     typedef EmbeddedCPUCondition_Service ServiceType;
     typedef Condition_ConstructorType ConstructorType;
     
-    static Glib::RefPtr<EmbeddedCPUCondition> create(const ConstructorType& args);
+    static std::shared_ptr<EmbeddedCPUCondition> create(const ConstructorType& args);
     
     // iEmbeddedCPUCondition
     guint32 getTag() const;

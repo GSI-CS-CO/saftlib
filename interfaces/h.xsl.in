@@ -226,12 +226,12 @@
     <xsl:text>    </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service(T* impl, sigc::slot&lt;void, const char*&gt; rethrow);&#10;&#10;</xsl:text>
-    <xsl:text>    void register_self(const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
+    <xsl:text>    void register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
     <xsl:text>    void unregister_self();&#10;</xsl:text>
     <xsl:text>    bool isActive() const;&#10;</xsl:text>
     <xsl:text>    const Glib::ustring&amp; getSender() const;&#10;</xsl:text>
     <xsl:text>    const Glib::ustring&amp; getObjectPath() const;&#10;</xsl:text>
-    <xsl:text>    const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; getConnection() const;&#10;</xsl:text>
+    <xsl:text>    const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; getConnection() const;&#10;</xsl:text>
     <xsl:text>&#10;</xsl:text>
 
     <!-- The service objects -->
@@ -450,13 +450,13 @@ class i<xsl:value-of select="$iface"/>_Service {
   public:
     i<xsl:value-of select="$iface"/>_Service(i<xsl:value-of select="$iface"/>* impl, sigc::slot&lt;void, const char*&gt; rethrow);
     ~i<xsl:value-of select="$iface"/>_Service();
-    void register_self(const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
+    void register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
     void unregister_self();
 
     bool isActive() const;
     const Glib::ustring&amp; getSender() const;
     const Glib::ustring&amp; getObjectPath() const;
-    const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; getConnection() const;
+    const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; getConnection() const;
 
   private:
     // non-copyable
@@ -476,11 +476,11 @@ class i<xsl:value-of select="$iface"/>_Service {
     const IPC_METHOD::InterfaceVTable interface_vtable;
     const Glib::ustring* sender;
     const Glib::ustring* objectPath;
-    Glib::RefPtr&lt;IPC_METHOD::Connection&gt; connection;
+    std::shared_ptr&lt;IPC_METHOD::Connection&gt; connection;
     struct Export {
-      Export(const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) :
+      Export(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) :
         connection(c), object_path(o), id(i) { }
-      Glib::RefPtr&lt;IPC_METHOD::Connection&gt; connection;
+      std::shared_ptr&lt;IPC_METHOD::Connection&gt; connection;
       Glib::ustring object_path;
       guint id;
     };
@@ -504,18 +504,18 @@ class i<xsl:value-of select="$iface"/>_Service {
       <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
     void on_method_call(
-      const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection,
+      const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
       const Glib::VariantContainerBase&amp; parameters,
-      const Glib::RefPtr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation);
+      const std::shared_ptr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation);
     void on_get_property(
       Glib::VariantBase&amp; property,
-      const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection,
+      const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
       const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name);
     bool on_set_property(
-      const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection,
+      const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection,
       const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path, 
       const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
       const Glib::VariantBase&amp; value);

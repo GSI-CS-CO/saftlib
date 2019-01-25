@@ -36,7 +36,7 @@ class MILbusActionSink : public ActionSink, public iMILbusActionSink
       unsigned channel;
     };
     
-    static Glib::RefPtr<MILbusActionSink> create(const ConstructorType& args);
+    static std::shared_ptr<MILbusActionSink> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     

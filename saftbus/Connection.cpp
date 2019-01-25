@@ -43,7 +43,7 @@ Connection::~Connection()
 // "method_call" "set_property" and "get_property"). The interface_name is extracted from the 
 // interface_info object. 
 guint Connection::register_object (const Glib::ustring& object_path, 
-								   const Glib::RefPtr< InterfaceInfo >& interface_info, 
+								   const std::shared_ptr< InterfaceInfo >& interface_info, 
 								   const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
@@ -395,7 +395,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::write(socket->get_fd(), _socket_owner);
 
 					// 	     // handle    // signal
-					//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+					//std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 					std::map<guint, int> handle_to_signal_map;
 					for(auto handle: _handle_to_signal_map) {
 						int num_slots = 0;
@@ -625,7 +625,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 
 						// saftbus object lookup
 						int index = _saftbus_indices[interface_name.get()][object_path.get()];
-						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
+						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
 
 						logger.add("     doing the function call ...\n");
 						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);
@@ -711,7 +711,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 
 						// saftbus object lookup
 						int index = _saftbus_indices[interface_name.get()][object_path.get()];
-						Glib::RefPtr<MethodInvocation> method_invocation_rptr(new MethodInvocation(fd_list));
+						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation(fd_list));
 
 						logger.add("     doing the function call ...\n");
 						_saftbus_objects[index]->method_call(saftbus::connection, sender.get(), object_path.get(), interface_name.get(), name.get(), parameters, method_invocation_rptr);

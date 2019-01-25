@@ -38,7 +38,7 @@ SoftwareActionSink::SoftwareActionSink(const ConstructorType& args)
 {
 }
 
-Glib::RefPtr<SoftwareActionSink> SoftwareActionSink::create(const ConstructorType& args)
+std::shared_ptr<SoftwareActionSink> SoftwareActionSink::create(const ConstructorType& args)
 {
   return RegisteredObject<SoftwareActionSink>::create(args.objectPath, args);
 }
@@ -97,8 +97,10 @@ void SoftwareActionSink::receiveMSI(guint8 code)
       return;
     } 
     
-    Glib::RefPtr<SoftwareCondition> softwareCondition =
-      Glib::RefPtr<SoftwareCondition>::cast_dynamic(it->second);
+    std::shared_ptr<SoftwareCondition> softwareCondition =
+      std::dynamic_pointer_cast<SoftwareCondition>(it->second);
+    // std::shared_ptr<SoftwareCondition> softwareCondition =
+    //   std::shared_ptr<SoftwareCondition>::cast_dynamic(it->second);
     if (!softwareCondition) {
       clog << kLogErr << "SoftwareActionSink: a Condition was not a SoftwareCondition" << std::endl;
       return;

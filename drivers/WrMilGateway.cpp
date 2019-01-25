@@ -203,7 +203,7 @@ void WrMilGateway::writeRegisterContent(guint32 reg_offset, guint32 value)
     receiver->getDevice().write(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
 }
 
-Glib::RefPtr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
+std::shared_ptr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
 {
   return RegisteredObject<WrMilGateway>::create(args.objectPath, args);
 }

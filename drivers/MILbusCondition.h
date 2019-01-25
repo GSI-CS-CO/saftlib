@@ -31,7 +31,7 @@ class MILbusCondition : public Condition, public iMILbusCondition
     typedef MILbusCondition_Service ServiceType;
     typedef Condition_ConstructorType ConstructorType;
     
-    static Glib::RefPtr<MILbusCondition> create(const ConstructorType& args);
+    static std::shared_ptr<MILbusCondition> create(const ConstructorType& args);
     
     // iMILbusCondition
     guint16 getTag() const;

@@ -56,7 +56,7 @@ void OutputCondition::setOn(bool v)
   }
 }
 
-Glib::RefPtr<OutputCondition> OutputCondition::create(const ConstructorType& args)
+std::shared_ptr<OutputCondition> OutputCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<OutputCondition>::create(args.objectPath, args);
 }

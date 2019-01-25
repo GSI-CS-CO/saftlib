@@ -133,7 +133,7 @@
     <!-- Register all interfaces -->
     <xsl:text>void </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service::register_self(const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; con, const Glib::ustring&amp; path)&#10;{&#10;</xsl:text>
+    <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; con, const Glib::ustring&amp; path)&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -193,7 +193,7 @@
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <!-- getConnection method -->
-    <xsl:text>const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; </xsl:text>
+    <xsl:text>const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
@@ -670,8 +670,8 @@
       <!-- Register method -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Service::register_self(const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path)&#10;{&#10;</xsl:text>
-      <xsl:text>  static Glib::RefPtr&lt;IPC_METHOD::NodeInfo&gt; introspection;&#10;</xsl:text>
+      <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path)&#10;{&#10;</xsl:text>
+      <xsl:text>  static std::shared_ptr&lt;IPC_METHOD::NodeInfo&gt; introspection;&#10;</xsl:text>
       <xsl:text>  if (!introspection)&#10;</xsl:text>
       <xsl:text>    introspection = IPC_METHOD::NodeInfo::create_for_xml(xml);&#10;</xsl:text>
       <xsl:text>  guint id = connection->register_object(&#10;</xsl:text>
@@ -692,7 +692,7 @@
       <xsl:text>bool i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::isActive() const&#10;{&#10;</xsl:text>
-      <xsl:text>  // implicit conversion from Glib::RefPtr to bool is not possible in later versions (&gt;=2.49.1) of Glibmm&#10;</xsl:text>
+      <xsl:text>  // implicit conversion from std::shared_ptr to bool is not possible in later versions (&gt;=2.49.1) of Glibmm&#10;</xsl:text>
       <xsl:text>  return static_cast&lt;bool&gt;(connection);&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
@@ -713,7 +713,7 @@
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- getConnection method -->
-      <xsl:text>const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; i</xsl:text>
+      <xsl:text>const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
       <xsl:text>  if (!isActive()) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
@@ -724,11 +724,11 @@
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_method_call(&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp;  sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; parameters,&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
       <xsl:text>  connection = connection_;&#10;</xsl:text>
@@ -740,7 +740,7 @@
         <xsl:text>    try {&#10;</xsl:text>
         <!-- take a fildescriptor pair from fd_list in case there is any type 'A' present -->
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0) or not(count(arg[@type='h'])=0)">
-          <xsl:text>      Glib::RefPtr&lt;IPC_METHOD::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
+          <xsl:text>      std::shared_ptr&lt;IPC_METHOD::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
           <xsl:text>      GUnixFDList *fd_list  = g_dbus_message_get_unix_fd_list(message-&gt;gobj());&#10;</xsl:text>
           <xsl:text>      if (!fd_list) { &#10;</xsl:text>
           <xsl:text>        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
@@ -873,7 +873,7 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_get_property(&#10;</xsl:text>
       <xsl:text>  Glib::VariantBase&amp; property,&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
@@ -906,7 +906,7 @@
       <xsl:text>bool i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_set_property(&#10;</xsl:text>
-      <xsl:text>  const Glib::RefPtr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantBase&amp; value)&#10;{&#10;</xsl:text>

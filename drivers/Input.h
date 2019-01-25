@@ -38,11 +38,11 @@ class Input : public EventSource, public iInputEventSource
       TimingReceiver* dev;
       eb_address_t tlu;
       unsigned channel;
-      Glib::RefPtr<InoutImpl> impl;
+      std::shared_ptr<InoutImpl> impl;
       sigc::slot<void> destroy;
     };
 
-    static Glib::RefPtr<Input> create(const ConstructorType& args);
+    static std::shared_ptr<Input> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
@@ -80,7 +80,7 @@ class Input : public EventSource, public iInputEventSource
     
   protected:
     Input(const ConstructorType& args);
-    Glib::RefPtr<InoutImpl> impl;
+    std::shared_ptr<InoutImpl> impl;
     Glib::ustring partnerPath;
     eb_address_t tlu;
     unsigned channel;

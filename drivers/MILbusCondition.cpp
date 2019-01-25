@@ -54,7 +54,7 @@ void MILbusCondition::setTag(guint16 val)
   }
 }
 
-Glib::RefPtr<MILbusCondition> MILbusCondition::create(const ConstructorType& args)
+std::shared_ptr<MILbusCondition> MILbusCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<MILbusCondition>::create(args.objectPath, args);
 }

@@ -21,6 +21,7 @@
 #define OBJECT_H
 
 #include <giomm.h>
+#include <memory>
 #include "interfaces/saftlib_ipc.h"
 
 namespace saftlib {
@@ -35,7 +36,7 @@ class BaseObject : public Glib::Object
     
     // provided by RegisteredObject
     virtual const Glib::ustring& getSender() const = 0;
-    virtual const Glib::RefPtr<IPC_METHOD::Connection>& getConnection() const = 0;
+    virtual const std::shared_ptr<IPC_METHOD::Connection>& getConnection() const = 0;
     
   protected:
     Glib::ustring objectPath;

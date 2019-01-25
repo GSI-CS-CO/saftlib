@@ -21,11 +21,11 @@ namespace saftbus
 
 	class Connection;
 
-	using SlotBusAcquired = sigc::slot<void, const Glib::RefPtr<Connection>&, Glib::ustring>;
-	using SlotNameAcquired = sigc::slot<void, const Glib::RefPtr<Connection>&, Glib::ustring>;
-	using SlotNameAppeared = sigc::slot<void, const Glib::RefPtr<Connection>&, Glib::ustring, const Glib::ustring&>;
-	using SlotNameLost = sigc::slot<void, const Glib::RefPtr<Connection>&, Glib::ustring>;
-	using SlotNameVanished = sigc::slot<void, const Glib::RefPtr<Connection>&, Glib::ustring>;
+	using SlotBusAcquired = sigc::slot<void, const std::shared_ptr<Connection>&, Glib::ustring>;
+	using SlotNameAcquired = sigc::slot<void, const std::shared_ptr<Connection>&, Glib::ustring>;
+	using SlotNameAppeared = sigc::slot<void, const std::shared_ptr<Connection>&, Glib::ustring, const Glib::ustring&>;
+	using SlotNameLost = sigc::slot<void, const std::shared_ptr<Connection>&, Glib::ustring>;
+	using SlotNameVanished = sigc::slot<void, const std::shared_ptr<Connection>&, Glib::ustring>;
 
 	guint own_name (BusType bus_type, const Glib::ustring& name, const SlotBusAcquired& bus_acquired_slot=SlotBusAcquired(), const SlotNameAcquired& name_acquired_slot=SlotNameAcquired(), const SlotNameLost& name_lost_slot=SlotNameLost());//, BusNameOwnerFlags flags=Gio::DBus::BUS_NAME_OWNER_FLAGS_NONE);
 	void unown_name(guint id);
@@ -35,7 +35,7 @@ namespace saftbus
 	extern SlotNameAppeared  name_appeared;
 	extern SlotNameLost      name_lost;
 	extern SlotNameVanished  name_vanished;
-	extern Glib::RefPtr<Connection> connection;
+	extern std::shared_ptr<Connection> connection;
 
 	enum MessageTypeS2C {
 		CLIENT_REGISTERED,

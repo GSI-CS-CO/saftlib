@@ -105,7 +105,7 @@ void FunctionGenerator::on_fg_stopped(guint64 time, bool abort, bool hardwareUnd
 }
 
 
-Glib::RefPtr<FunctionGenerator> FunctionGenerator::create(const ConstructorType& args)
+std::shared_ptr<FunctionGenerator> FunctionGenerator::create(const ConstructorType& args)
 {
   return RegisteredObject<FunctionGenerator>::create(args.objectPath, args);
 }

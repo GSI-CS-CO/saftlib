@@ -58,9 +58,9 @@ namespace saftbus
 	{
 	public:
 
-		using SlotInterfaceGetProperty = sigc::slot< void, Glib::VariantBase&, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring& >;
-		using SlotInterfaceMethodCall = sigc::slot< void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&, const Glib::RefPtr<MethodInvocation>& >;
-		using SlotInterfaceSetProperty = sigc::slot< bool, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantBase& >;
+		using SlotInterfaceGetProperty = sigc::slot< void, Glib::VariantBase&, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring& >;
+		using SlotInterfaceMethodCall = sigc::slot< void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&, const std::shared_ptr<MethodInvocation>& >;
+		using SlotInterfaceSetProperty = sigc::slot< bool, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantBase& >;
 		InterfaceVTable 	( 	const SlotInterfaceMethodCall&  	slot_method_call,
 								const SlotInterfaceGetProperty&  	slot_get_property = SlotInterfaceGetProperty(),
 								const SlotInterfaceSetProperty&  	slot_set_property = SlotInterfaceSetProperty() 
@@ -74,10 +74,10 @@ namespace saftbus
 	{
 	public:
 		NodeInfo(const Glib::ustring &interface_name);
-		static Glib::RefPtr<NodeInfo> create_for_xml(const Glib::ustring&  xml_data);
-		Glib::RefPtr<InterfaceInfo> lookup_interface();
+		static std::shared_ptr<NodeInfo> create_for_xml(const Glib::ustring&  xml_data);
+		std::shared_ptr<InterfaceInfo> lookup_interface();
 	private:
-		Glib::RefPtr<InterfaceInfo> _interface_info;
+		std::shared_ptr<InterfaceInfo> _interface_info;
 	};
 
 

@@ -33,9 +33,9 @@ template <typename T>
 class RegisteredObject : public T
 {
   public:
-    static Glib::RefPtr< RegisteredObject<T> > create(const Glib::ustring& object_path, const typename T::ConstructorType& args);
+    static std::shared_ptr< RegisteredObject<T> > create(const Glib::ustring& object_path, const typename T::ConstructorType& args);
     
-    const Glib::RefPtr<IPC_METHOD::Connection>& getConnection() const;
+    const std::shared_ptr<IPC_METHOD::Connection>& getConnection() const;
     const Glib::ustring& getSender() const;
     
   protected:
@@ -46,9 +46,9 @@ class RegisteredObject : public T
 };
 
 template <typename T>
-Glib::RefPtr< RegisteredObject<T> > RegisteredObject<T>::create(const Glib::ustring& object_path, const typename T::ConstructorType& args)
+std::shared_ptr< RegisteredObject<T> > RegisteredObject<T>::create(const Glib::ustring& object_path, const typename T::ConstructorType& args)
 {
-  return Glib::RefPtr< RegisteredObject<T> >(new RegisteredObject<T>(object_path, args));
+  return std::shared_ptr< RegisteredObject<T> >(new RegisteredObject<T>(object_path, args));
 }
 
 template <typename T>
@@ -59,7 +59,7 @@ RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path, const ty
 }
 
 template <typename T>
-const Glib::RefPtr<IPC_METHOD::Connection>& RegisteredObject<T>::getConnection() const
+const std::shared_ptr<IPC_METHOD::Connection>& RegisteredObject<T>::getConnection() const
 {
   return service.getConnection();
 }

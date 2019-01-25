@@ -50,7 +50,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
       sdb_device                mailbox;
     };
     
-    static Glib::RefPtr<WrMilGateway> create(const ConstructorType& args);
+    static std::shared_ptr<WrMilGateway> create(const ConstructorType& args);
     // iWrMilGateway overrides
     
     void StartSIS18();

@@ -30,7 +30,7 @@ struct OpenDevice {
   Glib::ustring name;
   Glib::ustring objectPath;
   Glib::ustring etherbonePath;
-  Glib::RefPtr<Glib::Object> ref;
+  std::shared_ptr<Glib::Object> ref;
   
   OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last);
 };

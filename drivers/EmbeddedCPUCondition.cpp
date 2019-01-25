@@ -51,7 +51,7 @@ void EmbeddedCPUCondition::setTag(guint32 val)
   }
 }
 
-Glib::RefPtr<EmbeddedCPUCondition> EmbeddedCPUCondition::create(const ConstructorType& args)
+std::shared_ptr<EmbeddedCPUCondition> EmbeddedCPUCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<EmbeddedCPUCondition>::create(args.objectPath, args);
 }

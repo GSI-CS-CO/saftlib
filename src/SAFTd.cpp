@@ -63,7 +63,7 @@ SAFTd::~SAFTd()
   bool daemon = false;
   try {
     for (std::map< Glib::ustring, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
-      i->second.ref.clear(); // should destroy the driver
+      i->second.ref.reset(); // should destroy the driver
       i->second.device.close();
     }
     devs.clear();
@@ -101,7 +101,7 @@ std::map< Glib::ustring, Glib::ustring > SAFTd::getDevices() const
   return out;
 }
 
-void SAFTd::setConnection(const Glib::RefPtr<IPC_METHOD::Connection>& c)
+void SAFTd::setConnection(const std::shared_ptr<IPC_METHOD::Connection>& c)
 {
   assert (!m_connection);
   m_connection = c;
@@ -169,7 +169,7 @@ void SAFTd::RemoveDevice(const Glib::ustring& name)
   if (elem == devs.end())
     throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "no such device");
   
-  elem->second.ref.clear();
+  elem->second.ref.reset();
   elem->second.device.close();
   devs.erase(elem);
   

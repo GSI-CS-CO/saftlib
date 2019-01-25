@@ -103,7 +103,7 @@ NodeInfo::NodeInfo(const Glib::ustring &interface_name)
 	: _interface_info(new InterfaceInfo(interface_name))
 {}
 
-Glib::RefPtr<NodeInfo> NodeInfo::create_for_xml (const Glib::ustring&  xml_data)
+std::shared_ptr<NodeInfo> NodeInfo::create_for_xml (const Glib::ustring&  xml_data)
 {
 	// This function only extracts the interface name from the xml interface description
 	// The rest is not needed by saftbus.
@@ -115,11 +115,11 @@ Glib::RefPtr<NodeInfo> NodeInfo::create_for_xml (const Glib::ustring&  xml_data)
 		if (_debug_level > 5) std::cerr << " pos_end = " << pos_end << std::endl;
 		Glib::ustring interface_name = xml_data.substr(pos_begin+16u,pos_end-pos_begin-16u);
 		if (_debug_level > 5) std::cerr << "found interface name " << interface_name << std::endl;
-		return Glib::RefPtr<NodeInfo>(new NodeInfo(interface_name));
+		return std::shared_ptr<NodeInfo>(new NodeInfo(interface_name));
 	}
-	return Glib::RefPtr<NodeInfo>();
+	return std::shared_ptr<NodeInfo>();
 }
-Glib::RefPtr<InterfaceInfo> NodeInfo::lookup_interface ()
+std::shared_ptr<InterfaceInfo> NodeInfo::lookup_interface ()
 {
 	if (_debug_level > 5) std::cerr << "NodeInfo::lookup_interface () called" << std::endl;
 	return _interface_info;

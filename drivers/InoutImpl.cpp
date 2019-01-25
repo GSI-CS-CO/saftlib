@@ -524,7 +524,7 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
     InoutImpl::ConstructorType impl_args = { 
       tr, channel, internal_id, special, logic_level, oe_available, 
       term_available, spec_out_available, spec_in_available, ioctl_address, clkgen_address };
-    Glib::RefPtr<InoutImpl> impl(new InoutImpl(impl_args));
+    std::shared_ptr<InoutImpl> impl(new InoutImpl(impl_args));
 
     unsigned eca_channel = 0; // ECA channel 0 is always for IO
     TimingReceiver::SinkKey key_in (eca_channel, eca_in);  // order: gpio_inout, gpio_in,  lvds_inout, lvds_in

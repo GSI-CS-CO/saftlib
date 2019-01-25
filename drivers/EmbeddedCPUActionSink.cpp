@@ -42,7 +42,7 @@ Glib::ustring EmbeddedCPUActionSink::NewCondition(bool active, guint64 id, guint
     sigc::ptr_fun(&EmbeddedCPUCondition::create));
 }
 
-Glib::RefPtr<EmbeddedCPUActionSink> EmbeddedCPUActionSink::create(const ConstructorType& args)
+std::shared_ptr<EmbeddedCPUActionSink> EmbeddedCPUActionSink::create(const ConstructorType& args)
 {
   return RegisteredObject<EmbeddedCPUActionSink>::create(args.objectPath, args);
 }

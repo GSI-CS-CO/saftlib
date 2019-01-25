@@ -28,7 +28,7 @@
 
 namespace saftlib {
 
-static void do_unsubscribe(Glib::RefPtr<IPC_METHOD::Connection> connection, guint id) 
+static void do_unsubscribe(std::shared_ptr<IPC_METHOD::Connection> connection, guint id) 
 {
   connection->signal_unsubscribe(id);
 }
@@ -65,11 +65,11 @@ void Owned::Own()
   initOwner(getConnection(), getSender());
 }
 
-void Owned::initOwner(const Glib::RefPtr<IPC_METHOD::Connection>& connection_, const Glib::ustring& owner_)
+void Owned::initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection_, const Glib::ustring& owner_)
 {
   if (owner.empty()) {
     owner = owner_;
-    Glib::RefPtr<IPC_METHOD::Connection> connection = connection_;
+    std::shared_ptr<IPC_METHOD::Connection> connection = connection_;
     guint subscription_id = connection->signal_subscribe(
         sigc::bind(sigc::ptr_fun(&Owned::owner_quit_handler), this),
         "org.freedesktop.DBus",
@@ -114,7 +114,7 @@ void Owned::ownerQuit()
 }
 
 void Owned::owner_quit_handler(
-  const Glib::RefPtr<IPC_METHOD::Connection>&,
+  const std::shared_ptr<IPC_METHOD::Connection>&,
   const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
   const Glib::ustring&, const Glib::VariantContainerBase&,
   Owned* self)

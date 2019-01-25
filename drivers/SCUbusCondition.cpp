@@ -54,7 +54,7 @@ void SCUbusCondition::setTag(guint32 val)
   }
 }
 
-Glib::RefPtr<SCUbusCondition> SCUbusCondition::create(const ConstructorType& args)
+std::shared_ptr<SCUbusCondition> SCUbusCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<SCUbusCondition>::create(args.objectPath, args);
 }

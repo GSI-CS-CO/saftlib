@@ -508,7 +508,7 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
 
   // Pick a random number
   std::pair<Conditions::iterator, bool> attempt;
-  do attempt = conditions.insert(Conditions::value_type(random(), Glib::RefPtr<Condition>()));
+  do attempt = conditions.insert(Conditions::value_type(random(), std::shared_ptr<Condition>()));
   while (!attempt.second);
 
   // Setup a destruction callback
@@ -519,7 +519,7 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
   str << getObjectPath() << "/_" << attempt.first->first;
   Glib::ustring path = str.str();
 
-  Glib::RefPtr<Condition> condition;
+  std::shared_ptr<Condition> condition;
   try {
     Condition::Condition_ConstructorType args = {
       path, this, active, id, mask, offset, tagIsKey?attempt.first->first:tag, destroy

@@ -41,7 +41,7 @@ class FunctionGeneratorImpl : public Glib::Object
     struct ConstructorType {
       Glib::ustring objectPath;
       TimingReceiver* dev;
-      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
+      std::shared_ptr<FunctionGeneratorChannelAllocation> allocation;
       eb_address_t fgb;
       eb_address_t swi;
       etherbone::sdb_msi_device base;
@@ -54,7 +54,7 @@ class FunctionGeneratorImpl : public Glib::Object
     FunctionGeneratorImpl(const ConstructorType& args);
     ~FunctionGeneratorImpl();
     
-    //static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
+    //static std::shared_ptr<FunctionGenerator> create(const ConstructorType& args);
     
 
 
@@ -103,7 +103,7 @@ class FunctionGeneratorImpl : public Glib::Object
             
             
     TimingReceiver* dev;
-    Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
+    std::shared_ptr<FunctionGeneratorChannelAllocation> allocation;
     eb_address_t shm;
     eb_address_t swi;
     etherbone::sdb_msi_device base;

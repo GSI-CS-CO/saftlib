@@ -38,11 +38,11 @@ class Output : public ActionSink, public iOutputActionSink
       TimingReceiver* dev;
       unsigned channel;
       unsigned num;
-      Glib::RefPtr<InoutImpl> impl;
+      std::shared_ptr<InoutImpl> impl;
       sigc::slot<void> destroy;
     };
 
-    static Glib::RefPtr<Output> create(const ConstructorType& args);
+    static std::shared_ptr<Output> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
@@ -77,7 +77,7 @@ class Output : public ActionSink, public iOutputActionSink
   
   protected:
     Output(const ConstructorType& args);
-    Glib::RefPtr<InoutImpl> impl;
+    std::shared_ptr<InoutImpl> impl;
     Glib::ustring partnerPath;
 };
 

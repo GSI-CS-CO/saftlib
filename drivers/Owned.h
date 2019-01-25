@@ -40,12 +40,12 @@ class Owned : public BaseObject, public iOwned
     // use this at the start of protected methods
     void ownerOnly() const;
     // only use this immediately after object creation
-    void initOwner(const Glib::RefPtr<IPC_METHOD::Connection>& connection, const Glib::ustring& owner);
+    void initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection, const Glib::ustring& owner);
     
   protected:
     virtual void ownerQuit();
     static void owner_quit_handler(
-      const Glib::RefPtr<IPC_METHOD::Connection>&,
+      const std::shared_ptr<IPC_METHOD::Connection>&,
       const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
       const Glib::ustring&, const Glib::VariantContainerBase&, Owned* self);
   

@@ -42,7 +42,7 @@ class TLU : public RegisteredObject<TLU_Service>
     
     guint64 CurrentTime();
     
-    static Glib::RefPtr<TLU> create(saftlib::Device& device, eb_address_t base, int channel);
+    static std::shared_ptr<TLU> create(saftlib::Device& device, eb_address_t base, int channel);
     static void probe();
     
   protected:
@@ -87,9 +87,9 @@ TLU::~TLU()
   }
 }
 
-Glib::RefPtr<TLU> TLU::create(Device& device, eb_address_t base, int channel)
+std::shared_ptr<TLU> TLU::create(Device& device, eb_address_t base, int channel)
 {
-  return Glib::RefPtr<TLU>(new TLU(device, base, channel));
+  return std::shared_ptr<TLU>(new TLU(device, base, channel));
 }
 
 void TLU::setHandler(bool enable, eb_data_t address, eb_data_t message)
@@ -200,7 +200,7 @@ void TLU::probe()
       
       // Create all dbus channel objects
       for (eb_data_t channel = 0; channel < num_channels; ++channel) {
-        Glib::RefPtr<TLU> object = TLU::create(*device, address, channel);
+        std::shared_ptr<TLU> object = TLU::create(*device, address, channel);
         Directory::get()->add("TLU", object->getObjectPath(), object);
       }
       

@@ -135,7 +135,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
   }
 }
 
-Glib::RefPtr<MasterFunctionGenerator> MasterFunctionGenerator::create(const ConstructorType& args)
+std::shared_ptr<MasterFunctionGenerator> MasterFunctionGenerator::create(const ConstructorType& args)
 {
   return RegisteredObject<MasterFunctionGenerator>::create(args.objectPath, args);
 }
@@ -443,22 +443,22 @@ bool MasterFunctionGenerator::all_stopped()
 
 void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
 {
-  if (waitTimeout.connected()) {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
-  }
-  waitTimeout = Glib::signal_timeout().connect(
-      sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
+  // if (waitTimeout.connected()) {
+  //   throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
+  // }
+  // waitTimeout = Glib::signal_timeout().connect(
+  //     sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
 
-  Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
-  Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
-  do
-  {
-    context->iteration(false);
-    if (!waitTimeout.connected()) {
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
-    }
-  } while (condition() == false) ;
-  waitTimeout.disconnect();
+  // std::shared_ptr<Glib::MainLoop>    mainloop = Slib::MainLoop::create();
+  // std::shared_ptr<Glib::MainContext> context  = mainloop->get_context();
+  // do
+  // {
+  //   context->iteration(false);
+  //   if (!waitTimeout.connected()) {
+  //     throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
+  //   }
+  // } while (condition() == false) ;
+  // waitTimeout.disconnect();
 }
 
 

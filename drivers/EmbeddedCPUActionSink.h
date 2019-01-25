@@ -37,7 +37,7 @@ class EmbeddedCPUActionSink : public ActionSink, public iEmbeddedCPUActionSink
       eb_address_t embedded_cpu;
     };
     
-    static Glib::RefPtr<EmbeddedCPUActionSink> create(const ConstructorType& args);
+    static std::shared_ptr<EmbeddedCPUActionSink> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     

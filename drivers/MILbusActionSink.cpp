@@ -50,7 +50,7 @@ void MILbusActionSink::InjectTag(guint16 tag)
   throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-Glib::RefPtr<MILbusActionSink> MILbusActionSink::create(const ConstructorType& args)
+std::shared_ptr<MILbusActionSink> MILbusActionSink::create(const ConstructorType& args)
 {
   return RegisteredObject<MILbusActionSink>::create(args.objectPath, args);
 }

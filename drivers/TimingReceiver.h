@@ -24,6 +24,7 @@
 #include "ActionSink.h"
 #include "EventSource.h"
 #include "interfaces/TimingReceiver.h"
+#include <memory>
 
 namespace saftlib {
 
@@ -74,8 +75,8 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
     // public type, even though the member is private
     typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
-    typedef std::map< SinkKey, Glib::RefPtr<ActionSink> >  ActionSinks;
-    typedef std::map< SinkKey, Glib::RefPtr<EventSource> > EventSources;
+    typedef std::map< SinkKey, std::shared_ptr<ActionSink> >  ActionSinks;
+    typedef std::map< SinkKey, std::shared_ptr<EventSource> > EventSources;
     
   protected:
     mutable saftlib::Device device;
@@ -103,7 +104,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     std::vector<eb_address_t> queue_addresses;
     std::vector<guint16> most_full;
         
-    typedef std::map< Glib::ustring, Glib::RefPtr<Owned> > Owneds;
+    typedef std::map< Glib::ustring, std::shared_ptr<Owned> > Owneds;
     typedef std::map< Glib::ustring, Owneds >              OtherStuff;
     
     ActionSinks  actionSinks;
