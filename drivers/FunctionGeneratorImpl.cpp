@@ -78,7 +78,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
   //keep postal address to free later
   mailbox_slot_address = mb_base + slot * 4 * 2 + 4;
   dev->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
-  clog << kLogDebug << "FunctionGenerator: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << std::endl;
+  std::cerr << "FunctionGenerator: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
 }
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()

@@ -254,7 +254,10 @@ bool WrMilGateway::getInUse() const
 }
 
 
-
+// the poll function determines status information that cannot be
+// delivered by interrupts: if the firmware is running and if the 
+// number of translated event increases (i.e. the gateway is 
+// actively used). 
 bool WrMilGateway::poll()
 {
   getFirmwareRunning();
@@ -281,8 +284,9 @@ bool WrMilGateway::poll()
       // Not seen a MIL event for too long... 
       //  ... that counts as not being used because
       //  we expect event 255 (EVT_COMMAND) 
-      //  every second in normal operation
-      // Only produce this signal once
+      //  every second in normal operation.
+      // This signal is only produced only once
+      //  if the status changes.
       SigInUse(false);
     }
   }

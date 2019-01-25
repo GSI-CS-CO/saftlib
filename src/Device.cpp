@@ -26,6 +26,7 @@
 #include <string.h>
 #include "Device.h"
 #include "clog.h"
+#include <iostream>
 
 namespace saftlib {
 
@@ -149,21 +150,27 @@ MSI_Source::MSI_Source()
 bool MSI_Source::prepare(int& timeout_ms)
 {
   // returning true means immediately ready
+  bool result;
   if (Device::msis.empty()) {
-    return false;
+    result = false;
   } else {
     timeout_ms = 0;
-    return true;
+    result = true;
   }
+  std::cerr << "MSI_Source::prepare(" << timeout_ms << ") " << this << " " << result << std::endl;
+  return result;
 }
 
 bool MSI_Source::check()
 {
-  return !Device::msis.empty(); // true means ready after glib's poll
+  bool result = !Device::msis.empty(); // true means ready after glib's poll
+  std::cerr << "MSI_Source::check()    " << this << " " << result << std::endl;
+  return result;
 }
 
 bool MSI_Source::dispatch(sigc::slot_base* slot)
 {
+  std::cerr << "MSI_Source::dispatch() " << this << std::endl;
   // Don't process more than 10 MSIs in one go (must give dbus some service too)
   int limit = 10;
   
