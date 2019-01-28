@@ -178,6 +178,114 @@ namespace saftbus
 
 
 	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
+
+
+
+
+
+
+
+
+
+	class Serial
+	{
+	public:
+		Serial()
+		{
+			_iter = _data.begin();
+		}
+		// hast to be called before any call to get()
+		void get_init(const std::vector<char> &data) 
+		{
+			_data = data;
+			get_init();
+		}
+		// hast to be called before any call to get()
+		void get_init() 
+		{
+			_iter = _data.begin();
+		}
+		// POD structs and build-in types
+		template<typename T>
+		void put(const T &val) {
+			char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
+			char* end   = begin + sizeof(val);
+			_data.insert(_data.end(), begin, end);
+		}
+		template<typename T>
+		void get(T &val) {
+			val    = *reinterpret_cast<T*>(&(*_iter));
+			_iter += sizeof(val);
+		}
+		// std::vector and nested std::vector
+		template<typename T>
+		void put(const std::vector<T>& std_vector) {
+			size_t size = std_vector.size();
+			put(size);
+			char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_vector[0]));
+			char* end   = begin + size*sizeof(std_vector[0]);
+			_data.insert(_data.end(), begin, end);
+		}
+		template<typename T>
+		void put(const std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
+			size_t size = std_vector_vector.size();
+			put(size);
+			for (size_t i = 0; i < size; ++i) {
+				put(std_vector_vector[i]);
+			}
+		}
+		template<typename T>
+		void get(std::vector<T> &std_vector) {
+			size_t size;
+			get(size);
+			T* begin = reinterpret_cast<T*>(&(*_iter));
+			T* end   = begin + size;
+			std_vector.clear();
+			std_vector.insert(std_vector.end(), begin, end);
+			_iter += sizeof(T)*size;
+		}
+		template<typename T>
+		void get(std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
+			size_t size;
+			get(size);
+			std_vector_vector.resize(size);
+			for (size_t i = 0; i < size; ++i) {
+				get(std_vector_vector[i]);
+			}
+		}
+		// std::string and std::vector of std::string
+		void put(const std::string& std_string) {
+			size_t size = std_string.size();
+			put(size);
+			char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
+			char* end   = begin + size*sizeof(std_string[0]);
+			_data.insert(_data.end(), begin, end);
+		}
+		void get(std::string &std_string) {
+			size_t size;
+			get(size);
+			char* begin = &(*_iter);
+			char* end   = begin + size;
+			std_string.clear();
+			std_string.insert(std_string.end(), begin, end);
+			_iter += size;
+		}
+		std::vector<char>& data() {
+			return _data;
+		}
+		void print() {
+			std::cerr << _data.size() << std::endl;
+			for (auto ch: _data) {
+				std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)ch << std::dec << std::endl;
+			}
+		}
+	private:
+		std::vector<char> _data;
+		std::vector<char>::iterator _iter;
+	};
+
+
+
 }
 
 #endif
