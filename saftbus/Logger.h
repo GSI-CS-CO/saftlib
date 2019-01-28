@@ -23,7 +23,7 @@ public:
 		//msg << content;
 		return *this;
 	}
-	Logger& add(const Glib::ustring &content);
+	Logger& add(const std::string &content);
 	void log();
 
 private:

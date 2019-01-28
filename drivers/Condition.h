@@ -32,7 +32,7 @@ class Condition : public Owned, public iCondition
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
     struct Condition_ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       ActionSink* sink;
       bool active;
       guint64 id;

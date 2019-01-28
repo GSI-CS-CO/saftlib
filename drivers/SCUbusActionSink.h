@@ -30,9 +30,9 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
   public:
     typedef SCUbusActionSink_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       TimingReceiver* dev;
-      Glib::ustring name;
+      std::string name;
       unsigned channel;
       eb_address_t scubus;
     };
@@ -42,7 +42,7 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
     const char *getInterfaceName() const;
     
     // iSCUbusAcitonSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag);
+    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag);
     void InjectTag(guint32 tag);
     
   protected:

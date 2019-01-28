@@ -39,7 +39,7 @@ class FunctionGeneratorImpl : public Glib::Object
   public:
 //    typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       TimingReceiver* dev;
       std::shared_ptr<FunctionGeneratorChannelAllocation> allocation;
       eb_address_t fgb;
@@ -74,7 +74,7 @@ class FunctionGeneratorImpl : public Glib::Object
     guint32 ReadExecutedParameterCount();
     void setStartTag(guint32 val);
 
-    Glib::ustring GetName();
+    std::string GetName();
 
     sigc::signal<void, bool> signal_enabled;
     sigc::signal<void, bool> signal_running;

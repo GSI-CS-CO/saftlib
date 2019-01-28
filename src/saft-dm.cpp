@@ -154,7 +154,7 @@ int main(int argc, char** argv)
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
 	// get a specific device
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver;
     switch (useFirstDev) {
     case true  :

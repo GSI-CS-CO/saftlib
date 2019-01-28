@@ -27,7 +27,7 @@
 
 namespace saftlib {
 
-EventSource::EventSource(const Glib::ustring& objectPath, TimingReceiver* dev_, const Glib::ustring& name_, sigc::slot<void> destroy)
+EventSource::EventSource(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, sigc::slot<void> destroy)
  : Owned(objectPath, destroy), dev(dev_), name(name_)
 {
 }

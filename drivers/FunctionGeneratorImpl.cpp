@@ -536,7 +536,7 @@ void FunctionGeneratorImpl::setStartTag(guint32 val)
   }
 }
 
-Glib::ustring FunctionGeneratorImpl::GetName()
+std::string FunctionGeneratorImpl::GetName()
 {
     std::ostringstream ss;
     ss << "fg-" << (int)getSCUbusSlot() << "-" << (int)getDeviceNumber();

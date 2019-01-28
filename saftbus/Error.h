@@ -20,14 +20,14 @@ namespace saftbus
 		};
 
 		Error();
-		Error(Type type, const Glib::ustring &msg);
+		Error(Type type, const std::string &msg);
 		Error(const Error& error);
 
-		Glib::ustring what() const;
+		std::string what() const;
 		Type type() const;
 
 	private:
-		Glib::ustring msg_;
+		std::string msg_;
 		Type type_;
 	};
 

@@ -43,23 +43,23 @@ namespace saftbus
 		Connection(int number_of_sockets = N_CONNECTIONS, const std::string& base_name = "/tmp/saftbus_");
 		~Connection();
 
-		guint 	register_object (const Glib::ustring& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
+		guint 	register_object (const std::string& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
 		bool 	unregister_object (guint registration_id);
 
-		using SlotSignal = sigc::slot<void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
+		using SlotSignal = sigc::slot<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&>;
 
 		// signal_subscribe and signal_unsubscribe are ONLY used by the driver of Owned.
 		guint signal_subscribe 	( 	const SlotSignal&  	slot,
-									const Glib::ustring&  	sender = Glib::ustring(),
-									const Glib::ustring&  	interface_name = Glib::ustring(),
-									const Glib::ustring&  	member = Glib::ustring(),
-									const Glib::ustring&  	object_path = Glib::ustring(),
-									const Glib::ustring&  	arg0 = Glib::ustring()//,
+									const std::string&  	sender = std::string(),
+									const std::string&  	interface_name = std::string(),
+									const std::string&  	member = std::string(),
+									const std::string&  	object_path = std::string(),
+									const std::string&  	arg0 = std::string()//,
 									//SignalFlags  	flags = SIGNAL_FLAGS_NONE 
 			);
 		void signal_unsubscribe 	( 	guint  	subscription_id	) ;
 
-		void 	emit_signal (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& signal_name, const Glib::ustring& destination_bus_name=Glib::ustring(), const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
+		void 	emit_signal (const std::string& object_path, const std::string& interface_name, const std::string& signal_name, const std::string& destination_bus_name=std::string(), const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
 
 		bool dispatch(Slib::IOCondition condition, Socket *socket);
 
@@ -74,7 +74,7 @@ namespace saftbus
 		void list_all_resources();
 
 				// interface_name       // object_path
-		std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
+		std::map<std::string, std::map<std::string, int> > _saftbus_indices; 
 
 		std::map<int, std::shared_ptr<InterfaceVTable> > _saftbus_objects;
 		int _saftbus_object_id_counter; // log saftbus object creation
@@ -87,23 +87,23 @@ namespace saftbus
 
 
 		// 	     // handle    // signal
-		std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
-		std::map<Glib::ustring, std::set<guint> > _id_handles_map;
+		std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+		std::map<std::string, std::set<guint> > _id_handles_map;
 		std::set<guint> _erased_handles;
 
 
 		// store the pipes that go directly to one or many Proxy objects
 				// interface_name        // object path
-		std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
+		std::map<std::string, std::map < std::string , std::set< ProxyPipe > > > _proxy_pipes;
 
 		static int _saftbus_id_counter;
 
-		std::map<int, Glib::ustring> _socket_owner;
+		std::map<int, std::string> _socket_owner;
 
 		// histograms for timing analysis
 		std::map<int, int> _signal_flight_times;
 
-		std::map<Glib::ustring, std::map<int, int> > _function_run_times;
+		std::map<std::string, std::map<int, int> > _function_run_times;
 
 		Logger logger;
 

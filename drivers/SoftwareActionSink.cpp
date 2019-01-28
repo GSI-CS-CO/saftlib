@@ -115,7 +115,7 @@ void SoftwareActionSink::receiveMSI(guint8 code)
   }
 }
 
-Glib::ustring SoftwareActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset)
+std::string SoftwareActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset)
 {
   return NewConditionHelper(active, id, mask, offset, 0, true,
     sigc::ptr_fun(&SoftwareCondition::create));

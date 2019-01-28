@@ -78,8 +78,8 @@ int main (int argc, char** argv)
   guint64 eventMask    = 0x0;
   gint64  offset       = 0x0;
   gint32  tag          = 0x0;
-  Glib::ustring scu_name = "None";
-  Glib::ustring scu_sink_name = "Unknown";
+  std::string scu_name = "None";
+  std::string scu_sink_name = "Unknown";
   
   /* Get the application name */
   program = argv[0]; 
@@ -153,7 +153,7 @@ int main (int argc, char** argv)
       std::cerr << "Missing device name!" << std::endl;
       return (-1);
     }
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     if (devices.find(deviceName) == devices.end())
     {
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
@@ -162,7 +162,7 @@ int main (int argc, char** argv)
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
     /* Search for embedded CPU channel */
-    map<Glib::ustring, Glib::ustring> scus = receiver->getInterfaces()["SCUbusActionSink"];
+    map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1)
     {
       std::cerr << "Device '" << receiver->getName() << "' has no SCU bus" << std::endl;
@@ -204,7 +204,7 @@ int main (int argc, char** argv)
     else if (destroy_sink)
     {
       /* Get the conditions */
-      std::vector< Glib::ustring > all_conditions = scu->getAllConditions();
+      std::vector< std::string > all_conditions = scu->getAllConditions();
       
       /* Destroy conditions if possible */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
@@ -225,7 +225,7 @@ int main (int argc, char** argv)
     else if (list_conditions)
     {
       /* Get the conditions */
-      std::vector< Glib::ustring > all_conditions = scu->getAllConditions();
+      std::vector< std::string > all_conditions = scu->getAllConditions();
       
       /* List conditions */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)

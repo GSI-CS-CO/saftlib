@@ -14,9 +14,9 @@ int Proxy::_global_id_counter = 0;
 std::mutex Proxy::_id_counter_mutex;
 
 Proxy::Proxy(saftbus::BusType  	   bus_type,
-             const Glib::ustring&  name,
-             const Glib::ustring&  object_path,
-             const Glib::ustring&  interface_name,
+             const std::string&  name,
+             const std::string&  object_path,
+             const std::string&  interface_name,
              const Glib::RefPtr< InterfaceInfo >& info,
              //ProxyFlags            flags,
              saftlib::SignalGroup &signalGroup)
@@ -100,9 +100,9 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		Glib::Variant<std::vector<Glib::VariantBase> > payload;
 		deserialize(payload, &buffer[0], buffer.size());
 		// read content from the variant type (this works because we know what saftd will send us)
-		Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(0));
-		Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(1));
-		Glib::Variant<Glib::ustring> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> > (payload.get_child(2));
+		Glib::Variant<std::string> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> > (payload.get_child(0));
+		Glib::Variant<std::string> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> > (payload.get_child(1));
+		Glib::Variant<std::string> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> > (payload.get_child(2));
 		// the following two items are for signal flight time measurement (the time when the signal was sent)
 		Glib::Variant<gint64> sec                   = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(3));
 		Glib::Variant<gint64> nsec                  = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(4));
@@ -126,8 +126,8 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		{	/*
 			// in case of a property change, the interface name of the property 
 			// that was changed (here we call it derived_interface_name) is embedded in the data
-			Glib::Variant<Glib::ustring> derived_interface_name 
-					= Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
+			Glib::Variant<std::string> derived_interface_name 
+					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(0));
 			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
 			if (_interface_name != derived_interface_name.get()) {
 				std::ostringstream msg;
@@ -139,11 +139,11 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			}
 
 			// get the real data: which property has which value
-			Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > property_map 
-					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<Glib::ustring, Glib::VariantBase> > >
+			Glib::Variant<std::map<std::string, Glib::VariantBase> > property_map 
+					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<std::string, Glib::VariantBase> > >
 							(parameters.get_child(1));
-			Glib::Variant<std::vector< Glib::ustring > > invalidated_properies 
-					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< Glib::ustring > > >
+			Glib::Variant<std::vector< std::string > > invalidated_properies 
+					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< std::string > > >
 							(parameters.get_child(2));
 
 			// get the signal flight stop time right before we call the signal handler from the Proxy object
@@ -198,17 +198,17 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 	return true;
 }
 
-void Proxy::get_cached_property (Glib::VariantBase& property, const Glib::ustring& property_name) const 
+void Proxy::get_cached_property (Glib::VariantBase& property, const std::string& property_name) const 
 {
 	// this is not implemented yet and it is questionable if this is beneficial in case of saftlib
 	return; // empty response
 }
 
-void Proxy::on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< Glib::ustring >& invalidated_properties)
+void Proxy::on_properties_changed (const MapChangedProperties& changed_properties, const std::vector< std::string >& invalidated_properties)
 {
 	// this will be overloaded by the derived Proxy class
 }
-void Proxy::on_signal (const Glib::ustring& sender_name, const Glib::ustring& signal_name, const Glib::VariantContainerBase& parameters)
+void Proxy::on_signal (const std::string& sender_name, const std::string& signal_name, const Glib::VariantContainerBase& parameters)
 {
 	// this will be overloaded by the derived Proxy class
 }
@@ -217,11 +217,11 @@ Glib::RefPtr<saftbus::ProxyConnection> Proxy::get_connection() const
 	return _connection;
 }
 
-Glib::ustring Proxy::get_object_path() const
+std::string Proxy::get_object_path() const
 {
 	return _object_path;
 }
-Glib::ustring Proxy::get_name() const
+std::string Proxy::get_name() const
 {
 	return _name;
 }

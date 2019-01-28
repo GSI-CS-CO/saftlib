@@ -28,30 +28,30 @@ namespace saftbus
 	class ProxyConnection : public Glib::Object//Base
 	{
 	public:
-		ProxyConnection(const Glib::ustring &base_name = "/tmp/saftbus_");
+		ProxyConnection(const std::string &base_name = "/tmp/saftbus_");
 
-		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&>;
+		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&>;
 
 		// is used by Proxies to fetch properties
-		Glib::VariantContainerBase& call_sync(const Glib::ustring& object_path, 
-											const Glib::ustring& interface_name, 
-											const Glib::ustring& method_name, 
+		Glib::VariantContainerBase& call_sync(const std::string& object_path, 
+											const std::string& interface_name, 
+											const std::string& method_name, 
 											const Glib::VariantContainerBase& parameters, 
-											const Glib::ustring& bus_name=Glib::ustring(), 
+											const std::string& bus_name=std::string(), 
 											int timeout_msec=-1);
 
 	// internal stuff (not part the DBus fake api)
 	public:
 		void send_signal_flight_time(double signal_flight_time);
 		void send_proxy_signal_fd(int pipe_fd, 
-                                  Glib::ustring object_path,
-                                  Glib::ustring interface_name,
+                                  std::string object_path,
+                                  std::string interface_name,
                                   int global_id);
-		void remove_proxy_signal_fd(Glib::ustring object_path,
-                                    Glib::ustring interface_name,
+		void remove_proxy_signal_fd(std::string object_path,
+                                    std::string interface_name,
                                     int global_id) ;
 
-		Glib::ustring get_saftbus_id() { return _saftbus_id; }
+		std::string get_saftbus_id() { return _saftbus_id; }
 		int get_connection_id();
 
 		// returned fd should only be used with a lock or in single threaded environments
@@ -70,7 +70,7 @@ namespace saftbus
 		Glib::VariantContainerBase _result;
 
 
-		Glib::ustring _saftbus_id; 
+		std::string _saftbus_id; 
 
 		int _connection_id;
 

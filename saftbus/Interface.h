@@ -47,10 +47,10 @@ namespace saftbus
 	class InterfaceInfo : public Glib::Object//Base
 	{
 	public:
-		InterfaceInfo(const Glib::ustring &interface_name);
-		const Glib::ustring &get_interface_name();
+		InterfaceInfo(const std::string &interface_name);
+		const std::string &get_interface_name();
 	private:
-		Glib::ustring _interface_name;
+		std::string _interface_name;
 	};
 
 
@@ -58,9 +58,9 @@ namespace saftbus
 	{
 	public:
 
-		using SlotInterfaceGetProperty = sigc::slot< void, Glib::VariantBase&, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring& >;
-		using SlotInterfaceMethodCall = sigc::slot< void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&, const std::shared_ptr<MethodInvocation>& >;
-		using SlotInterfaceSetProperty = sigc::slot< bool, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantBase& >;
+		using SlotInterfaceGetProperty = sigc::slot< void, Glib::VariantBase&, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string& >;
+		using SlotInterfaceMethodCall = sigc::slot< void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&, const std::shared_ptr<MethodInvocation>& >;
+		using SlotInterfaceSetProperty = sigc::slot< bool, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantBase& >;
 		InterfaceVTable 	( 	const SlotInterfaceMethodCall&  	slot_method_call,
 								const SlotInterfaceGetProperty&  	slot_get_property = SlotInterfaceGetProperty(),
 								const SlotInterfaceSetProperty&  	slot_set_property = SlotInterfaceSetProperty() 
@@ -73,8 +73,8 @@ namespace saftbus
 	class NodeInfo : public Glib::Object//Base
 	{
 	public:
-		NodeInfo(const Glib::ustring &interface_name);
-		static std::shared_ptr<NodeInfo> create_for_xml(const Glib::ustring&  xml_data);
+		NodeInfo(const std::string &interface_name);
+		static std::shared_ptr<NodeInfo> create_for_xml(const std::string&  xml_data);
 		std::shared_ptr<InterfaceInfo> lookup_interface();
 	private:
 		std::shared_ptr<InterfaceInfo> _interface_info;

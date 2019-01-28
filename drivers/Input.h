@@ -32,9 +32,9 @@ class Input : public EventSource, public iInputEventSource
   public:
     typedef Input_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring name;
-      Glib::ustring objectPath;
-      Glib::ustring partnerPath;
+      std::string name;
+      std::string objectPath;
+      std::string partnerPath;
       TimingReceiver* dev;
       eb_address_t tlu;
       unsigned channel;
@@ -54,9 +54,9 @@ class Input : public EventSource, public iInputEventSource
     bool getSpecialPurposeIn() const;
     bool getInputTerminationAvailable() const;
     bool getSpecialPurposeInAvailable() const;
-    Glib::ustring getLogicLevelIn() const;
-    Glib::ustring getTypeIn() const;
-    Glib::ustring getOutput() const;
+    std::string getLogicLevelIn() const;
+    std::string getTypeIn() const;
+    std::string getOutput() const;
     // Property setters
     void setStableTime(guint32 val);
     void setInputTermination(bool val);
@@ -81,7 +81,7 @@ class Input : public EventSource, public iInputEventSource
   protected:
     Input(const ConstructorType& args);
     std::shared_ptr<InoutImpl> impl;
-    Glib::ustring partnerPath;
+    std::string partnerPath;
     eb_address_t tlu;
     unsigned channel;
     bool enable;

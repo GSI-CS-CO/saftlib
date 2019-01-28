@@ -195,7 +195,7 @@ int main (int argc, char** argv)
     /* Try to setup all outputs */
     try
     {
-      map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+      map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
       if (devices.find(deviceName) == devices.end())
       {
         std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
@@ -221,17 +221,17 @@ int main (int argc, char** argv)
       }
       
       /* Search for outputs and inoutputs */
-      std::map< Glib::ustring, Glib::ustring > outs;
-      std::map< Glib::ustring, Glib::ustring > ins;
-      Glib::ustring io_path;
-      Glib::ustring io_partner;
+      std::map< std::string, std::string > outs;
+      std::map< std::string, std::string > ins;
+      std::string io_path;
+      std::string io_partner;
       outs = receiver->getOutputs();
       ins = receiver->getInputs();
       
       /* Check if IO exists output */
       if (!just_inject)
       {
-        for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+        for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
         {
           Glib::RefPtr<Output_Proxy> output_proxy = Output_Proxy::create(it->second);
           if (verbose_mode) { std::cout << "Info: Found " << it->first << std::endl; }
@@ -286,7 +286,7 @@ int main (int argc, char** argv)
       if (setup_scu_bus)
       {
         /* Search for SCU bus channel */
-        map<Glib::ustring, Glib::ustring> e_scubusses = receiver->getInterfaces()["SCUbusActionSink"];
+        map<std::string, std::string> e_scubusses = receiver->getInterfaces()["SCUbusActionSink"];
         if (e_scubusses.size() != 1)
         {
           std::cerr << "Device '" << receiver->getName() << "' has no SCU bus!" << std::endl;

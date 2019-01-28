@@ -56,7 +56,7 @@ class TLU : public RegisteredObject<TLU_Service>
     eb_address_t irq;
 };
 
-static Glib::ustring path(Device& device_, eb_address_t base_, int channel_)
+static std::string path(Device& device_, eb_address_t base_, int channel_)
 {
   std::ostringstream stream;
   stream.imbue(std::locale("C"));

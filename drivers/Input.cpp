@@ -76,17 +76,17 @@ bool Input::getSpecialPurposeInAvailable() const
   return impl->getSpecialPurposeInAvailable();
 }
 
-Glib::ustring Input::getLogicLevelIn() const
+std::string Input::getLogicLevelIn() const
 {
   return impl->getLogicLevelIn();
 }
 
-Glib::ustring Input::getTypeIn() const
+std::string Input::getTypeIn() const
 {
   return impl->getTypeIn();
 }
 
-Glib::ustring Input::getOutput() const
+std::string Input::getOutput() const
 {
   return partnerPath;
 }

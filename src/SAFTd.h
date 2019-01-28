@@ -38,13 +38,13 @@ class SAFTd : public iSAFTd
     const std::shared_ptr<Slib::MainLoop>&      loop()       { return m_loop; }
     const std::shared_ptr<IPC_METHOD::Connection>& connection() { return m_connection; }
     
-    Glib::ustring AttachDevice(const Glib::ustring& name, const Glib::ustring& path);
-    void RemoveDevice(const Glib::ustring& name);
+    std::string AttachDevice(const std::string& name, const std::string& path);
+    void RemoveDevice(const std::string& name);
     void Quit();
-    std::map< Glib::ustring, Glib::ustring > getDevices() const;
+    std::map< std::string, std::string > getDevices() const;
     
-    Glib::ustring getSourceVersion() const;
-    Glib::ustring getBuildInfo() const;
+    std::string getSourceVersion() const;
+    std::string getBuildInfo() const;
     
   protected:
     SAFTd();
@@ -56,7 +56,7 @@ class SAFTd : public iSAFTd
     sigc::connection eb_source;
     sigc::connection msi_source;
     
-    std::map< Glib::ustring, OpenDevice > devs;
+    std::map< std::string, OpenDevice > devs;
 
     static SAFTd saftd;
 };

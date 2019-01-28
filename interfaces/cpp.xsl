@@ -40,8 +40,8 @@
     <xsl:text>_Proxy&gt; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy::create(&#10;</xsl:text>
-    <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
-<!--     <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
+    <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
+<!--     <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
  -->    <!-- <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text> -->
     <xsl:text>   saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
@@ -61,8 +61,8 @@
     <xsl:text>_Proxy::</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy(&#10;</xsl:text>
-    <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
-    <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
+    <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
+    <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
     <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;</xsl:text>
     <xsl:text>: </xsl:text>
@@ -133,7 +133,7 @@
     <!-- Register all interfaces -->
     <xsl:text>void </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; con, const Glib::ustring&amp; path)&#10;{&#10;</xsl:text>
+    <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; con, const std::string&amp; path)&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -165,7 +165,7 @@
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <!-- getSender method -->
-    <xsl:text>const Glib::ustring&amp; </xsl:text>
+    <xsl:text>const std::string&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getSender() const&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
@@ -179,7 +179,7 @@
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <!-- getObjectPath method -->
-    <xsl:text>const Glib::ustring&amp; </xsl:text>
+    <xsl:text>const std::string&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getObjectPath() const&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
@@ -227,7 +227,7 @@
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
       <!-- XML interface file -->
-      <xsl:text>const Glib::ustring i</xsl:text>
+      <xsl:text>const std::string i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::xml =&#10;"&lt;node&gt;</xsl:text>
       <!-- unfortunately, the following line needs to be replaced by a bunch of code to copy all but the 'Ax' args; is there a simpler way of achieving the same ? -->
@@ -392,7 +392,7 @@
             <xsl:text>  GMainContext *context = g_main_context_new ();&#10;</xsl:text>
             <xsl:text>  GMainLoop    *loop    = g_main_loop_new (context, FALSE);&#10;</xsl:text>
             <xsl:text>  g_main_context_push_thread_default (context);&#10;</xsl:text>
-            <xsl:text>  Glib::ustring exceptionMsg;&#10;</xsl:text>
+            <xsl:text>  std::string exceptionMsg;&#10;</xsl:text>
             <!-- make asynchronous call -->
             <xsl:text>  connection-&gt;call(&#10;</xsl:text>
             <xsl:text>      get_object_path(), &#10;</xsl:text>
@@ -501,10 +501,10 @@
       <xsl:text>_Proxy::fetch_property(const char* name, Glib::VariantBase&amp; val) const&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
       <xsl:text>  std::vector&lt; Glib::VariantBase &gt; params;&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create("</xsl:text>
+      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name));&#10;</xsl:text>
+      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text>
       <xsl:text>  Glib::RefPtr&lt;IPC_METHOD::ProxyConnection&gt; connection =&#10;</xsl:text>
       <xsl:text>    Glib::RefPtr&lt;IPC_METHOD::ProxyConnection&gt;::cast_const(get_connection());&#10;</xsl:text>
       <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
@@ -541,10 +541,10 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy::update_property(const char* name, const Glib::VariantBase&amp; val)&#10;{&#10;</xsl:text>
       <xsl:text>  std::vector&lt; Glib::VariantBase &gt; params;&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create("</xsl:text>
+      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; Glib::ustring &gt;::create(name));&#10;</xsl:text>
+      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));&#10;</xsl:text>
       <xsl:text>  Glib::RefPtr&lt;IPC_METHOD::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
       <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
@@ -569,7 +569,7 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy::on_properties_changed(&#10;</xsl:text>
       <xsl:text>  const MapChangedProperties&amp; changed_properties,&#10;</xsl:text>
-      <xsl:text>  const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties)&#10;</xsl:text>
+      <xsl:text>  const std::vector&lt; std::string &gt;&amp; invalidated_properties)&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::Proxy::on_properties_changed(changed_properties, invalidated_properties);&#10;</xsl:text>
       <xsl:text>  for (MapChangedProperties::const_iterator i = changed_properties.begin(); i != changed_properties.end(); ++i) {&#10;</xsl:text>
@@ -598,8 +598,8 @@
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy::on_signal(&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; sender_name,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; signal_name,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; sender_name,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; signal_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; parameters)&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::Proxy::on_signal(sender_name, signal_name, parameters);&#10;</xsl:text>
@@ -641,9 +641,9 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy(&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; interface_name,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; interface_name,&#10;</xsl:text>
       <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;</xsl:text>
       <xsl:text>: Proxy(bus_type, name, object_path, interface_name, Glib::RefPtr&lt;IPC_METHOD::InterfaceInfo&gt;(), signalGroup)&#10;</xsl:text>
       <xsl:text>{&#10;}&#10;&#10;</xsl:text>
@@ -654,8 +654,8 @@
       <xsl:text>_Proxy&gt; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy::create(&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; object_path,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; name,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
       <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
       <xsl:text>  return Glib::RefPtr&lt;i</xsl:text>
@@ -670,7 +670,7 @@
       <!-- Register method -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection, const Glib::ustring&amp; object_path)&#10;{&#10;</xsl:text>
+      <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection, const std::string&amp; object_path)&#10;{&#10;</xsl:text>
       <xsl:text>  static std::shared_ptr&lt;IPC_METHOD::NodeInfo&gt; introspection;&#10;</xsl:text>
       <xsl:text>  if (!introspection)&#10;</xsl:text>
       <xsl:text>    introspection = IPC_METHOD::NodeInfo::create_for_xml(xml);&#10;</xsl:text>
@@ -697,7 +697,7 @@
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- getSender method -->
-      <xsl:text>const Glib::ustring&amp; i</xsl:text>
+      <xsl:text>const std::string&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getSender() const&#10;{&#10;</xsl:text>
       <xsl:text>  if (!isActive()) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
@@ -705,7 +705,7 @@
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- getObjectPath method -->
-      <xsl:text>const Glib::ustring&amp; i</xsl:text>
+      <xsl:text>const std::string&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getObjectPath() const&#10;{&#10;</xsl:text>
       <xsl:text>  if (!isActive()) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
@@ -725,8 +725,8 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_method_call(&#10;</xsl:text>
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp;  sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp;  sender_, const std::string&amp; object_path,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; /* interface_name */, const std::string&amp; method_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantContainerBase&amp; parameters,&#10;</xsl:text>
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
@@ -874,8 +874,8 @@
       <xsl:text>_Service::on_get_property(&#10;</xsl:text>
       <xsl:text>  Glib::VariantBase&amp; property,&#10;</xsl:text>
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name)&#10;{&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; sender_, const std::string&amp; object_path,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; /*interface_name */, const std::string&amp; property_name)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
       <xsl:text>  connection = connection_;&#10;</xsl:text>
@@ -907,8 +907,8 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_set_property(&#10;</xsl:text>
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; sender_, const Glib::ustring&amp; object_path,&#10;</xsl:text>
-      <xsl:text>  const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; sender_, const std::string&amp; object_path,&#10;</xsl:text>
+      <xsl:text>  const std::string&amp; /* interface_name */, const std::string&amp; property_name,&#10;</xsl:text>
       <xsl:text>  const Glib::VariantBase&amp; value)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
@@ -1050,15 +1050,15 @@
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::report_property_change(const char* property, const Glib::VariantBase&amp; value)&#10;{&#10;</xsl:text>
-      <xsl:text>  std::map&lt; Glib::ustring, Glib::VariantBase &gt; updated;&#10;</xsl:text>
-      <xsl:text>  std::vector&lt; Glib::ustring &gt; invalidated;&#10;</xsl:text>
+      <xsl:text>  std::map&lt; std::string, Glib::VariantBase &gt; updated;&#10;</xsl:text>
+      <xsl:text>  std::vector&lt; std::string &gt; invalidated;&#10;</xsl:text>
       <xsl:text>  std::vector&lt;Glib::VariantBase&gt; message_vector;&#10;</xsl:text>
       <xsl:text>  updated[property] = value;&#10;</xsl:text>
-      <xsl:text>  message_vector.push_back(Glib::Variant&lt; Glib::ustring &gt;::create("</xsl:text>
+      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
-      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::map&lt; Glib::ustring, Glib::VariantBase &gt; &gt;::create(updated));&#10;</xsl:text>
-      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::vector&lt; Glib::ustring &gt; &gt;::create(invalidated));&#10;</xsl:text>
+      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::map&lt; std::string, Glib::VariantBase &gt; &gt;::create(updated));&#10;</xsl:text>
+      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::vector&lt; std::string &gt; &gt;::create(invalidated));&#10;</xsl:text>
       <xsl:text>  for (unsigned i = 0; i &lt; exports.size(); ++i) {&#10;</xsl:text>
       <xsl:text>    exports[i].connection->emit_signal(exports[i].object_path,&#10;</xsl:text>
       <xsl:text>      "org.freedesktop.DBus.Properties", "PropertiesChanged", "",&#10;</xsl:text>

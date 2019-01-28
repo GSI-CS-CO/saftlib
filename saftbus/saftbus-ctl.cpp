@@ -7,7 +7,7 @@
 #include "Interface.h"
 
 
-void write_histogram(Glib::ustring filename, const std::map<int,int> &hist)
+void write_histogram(std::string filename, const std::map<int,int> &hist)
 {
 	std::cout << "writing histogram " << filename << std::endl;
 	std::ofstream out(filename.c_str());
@@ -33,7 +33,7 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 	saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_GET_STATE);
 
 
-	std::map<Glib::ustring, std::map<Glib::ustring, int> > saftbus_indices; 
+	std::map<std::string, std::map<std::string, int> > saftbus_indices; 
 	saftbus::read(connection->get_fd(), saftbus_indices);
 	std::vector<int> indices;
 	std::vector<int> assigned_indices;
@@ -47,11 +47,11 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 	std::vector<int> sockets_active;
 	saftbus::read(connection->get_fd(), sockets_active);
 
-	std::map<int, Glib::ustring> socket_owner;
+	std::map<int, std::string> socket_owner;
 	saftbus::read(connection->get_fd(), socket_owner);
 
 	// 	     // handle    // signal
-	//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+	//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 	std::map<guint, int> handle_to_signal_map;
 	saftbus::read(connection->get_fd(), handle_to_signal_map);
 	// for (auto handle_signal: handle_to_signal_map) {
@@ -59,7 +59,7 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 	// }
 
 
-	std::map<Glib::ustring, std::set<guint> > id_handles_map;
+	std::map<std::string, std::set<guint> > id_handles_map;
 	saftbus::read(connection->get_fd(), id_handles_map);
 
 
@@ -71,7 +71,7 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 
 	// store the pipes that go directly to one or many Proxy objects
 			// interface_name        // object path
-	std::map<Glib::ustring, std::map < Glib::ustring , std::set< saftbus::ProxyPipe > > > proxy_pipes;
+	std::map<std::string, std::map < std::string , std::set< saftbus::ProxyPipe > > > proxy_pipes;
 	saftbus::read(connection->get_fd(), proxy_pipes);
 
 	int _saftbus_id_counter;

@@ -45,7 +45,7 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       TimingReceiver* dev;
  			std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
     };

@@ -30,7 +30,7 @@
 
 namespace saftlib {
 
-ActionSink::ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev_, const Glib::ustring& name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
+ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
  : Owned(objectPath, destroy), dev(dev_), name(name_), channel(channel_), num(num_),
    minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(100000000L),
    overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
@@ -107,27 +107,27 @@ guint16 ActionSink::ReadFill()
   return dev->updateMostFull(channel);
 }
 
-std::vector< Glib::ustring > ActionSink::getAllConditions() const
+std::vector< std::string > ActionSink::getAllConditions() const
 {
-  std::vector< Glib::ustring > out;
+  std::vector< std::string > out;
   Conditions::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     out.push_back(i->second->getObjectPath());
   return out;
 }
 
-std::vector< Glib::ustring > ActionSink::getActiveConditions() const
+std::vector< std::string > ActionSink::getActiveConditions() const
 {
-  std::vector< Glib::ustring > out;
+  std::vector< std::string > out;
   Conditions::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     if (i->second->getActive()) out.push_back(i->second->getObjectPath());
   return out;
 }
 
-std::vector< Glib::ustring > ActionSink::getInactiveConditions() const
+std::vector< std::string > ActionSink::getInactiveConditions() const
 {
-  std::vector< Glib::ustring > out;
+  std::vector< std::string > out;
   Conditions::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     if (!i->second->getActive()) out.push_back(i->second->getObjectPath());
@@ -494,7 +494,7 @@ void ActionSink::compile()
   dev->compile();
 }
 
-Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor)
+std::string ActionSink::NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor)
 {
   ownerOnly();
 
@@ -517,7 +517,7 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
   std::ostringstream str;
   str.imbue(std::locale("C"));
   str << getObjectPath() << "/_" << attempt.first->first;
-  Glib::ustring path = str.str();
+  std::string path = str.str();
 
   std::shared_ptr<Condition> condition;
   try {

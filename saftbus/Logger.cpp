@@ -18,7 +18,7 @@ namespace saftbus
 		 //msg << std::setw(25) << getTimeTag() << ": ";
 		return *this;
 	}
-	Logger& Logger::add(const Glib::ustring &content) {
+	Logger& Logger::add(const std::string &content) {
 		//std::cerr << content;
 		return add(content.c_str());
 	}	

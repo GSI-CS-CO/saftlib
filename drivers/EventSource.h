@@ -29,15 +29,15 @@ class TimingReceiver;
 
 class EventSource : public Owned, public iEventSource {
   public:
-    EventSource(const Glib::ustring& objectPath, TimingReceiver* dev, const Glib::ustring& name, sigc::slot<void> destroy = sigc::slot<void>());
+    EventSource(const std::string& objectPath, TimingReceiver* dev, const std::string& name, sigc::slot<void> destroy = sigc::slot<void>());
     
     // The name under which this EventSource is listed in TimingReceiver::Iterfaces
     virtual const char *getInterfaceName() const = 0;
-    const Glib::ustring &getObjectName() const { return name; }
+    const std::string &getObjectName() const { return name; }
   
   protected:
     TimingReceiver* dev;
-    Glib::ustring name;
+    std::string name;
 };
 
 }

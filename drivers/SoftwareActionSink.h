@@ -30,9 +30,9 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
   public:
     typedef SoftwareActionSink_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       TimingReceiver* dev;
-      Glib::ustring name;
+      std::string name;
       unsigned channel;
       unsigned num;
       eb_address_t queue;
@@ -47,7 +47,7 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     void receiveMSI(guint8 code);
     
     // iSoftwareAcitonSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
+    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
     
   protected:
     SoftwareActionSink(const ConstructorType& args);

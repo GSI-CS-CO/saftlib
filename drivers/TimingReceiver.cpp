@@ -154,7 +154,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
           std::vector<sdb_device> scubus;
           device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
           if (scubus.size() == 1 && num == 0) {
-            Glib::ustring path = getObjectPath() + "/scubus";
+            std::string path = getObjectPath() + "/scubus";
             SCUbusActionSink::ConstructorType args = { path, this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
             actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(args);
           }
@@ -177,7 +177,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
 #if DEBUG_COMPILE
                 clog << kLogDebug << "ECA: Found embedded CPU channel!" << std::endl;
 #endif
-                Glib::ustring path = getObjectPath() + "/embedded_cpu";
+                std::string path = getObjectPath() + "/embedded_cpu";
                 EmbeddedCPUActionSink::ConstructorType args = { path, this, "embedded_cpu", i, queue_addresses[queue_id] };
                 actionSinks[SinkKey(i, num)] = EmbeddedCPUActionSink::create(args);
               }
@@ -257,12 +257,12 @@ void TimingReceiver::Remove()
   SAFTd::get().RemoveDevice(name);
 }
 
-Glib::ustring TimingReceiver::getEtherbonePath() const
+std::string TimingReceiver::getEtherbonePath() const
 {
   return etherbonePath;
 }
 
-Glib::ustring TimingReceiver::getName() const
+std::string TimingReceiver::getName() const
 {
   return name;
 }
@@ -314,17 +314,17 @@ void TimingReceiver::setupGatewareInfo(guint32 address)
   }
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getGatewareInfo() const
+std::map< std::string, std::string > TimingReceiver::getGatewareInfo() const
 {
   return info;
 }
 
-Glib::ustring TimingReceiver::getGatewareVersion() const
+std::string TimingReceiver::getGatewareVersion() const
 {
-  std::map< Glib::ustring, Glib::ustring >         gatewareInfo;
-  std::map<Glib::ustring, Glib::ustring>::iterator j;
-  Glib::ustring                                    rawVersion;
-  Glib::ustring                                    findString = "-v";
+  std::map< std::string, std::string >         gatewareInfo;
+  std::map<std::string, std::string>::iterator j;
+  std::string                                    rawVersion;
+  std::string                                    findString = "-v";
   int                                              pos = 0;
 
   gatewareInfo = getGatewareInfo();
@@ -369,7 +369,7 @@ static inline bool not_isalnum_(char c)
   return !(isalnum(c) || c == '_');
 }
 
-Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
+std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 {
   // Is there an available software channel?
   ActionSinks::iterator alloc;
@@ -379,7 +379,7 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   if (alloc == actionSinks.end())
     throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
   
-  Glib::ustring seq, name;
+  std::string seq, name;
   std::ostringstream str;
   str.imbue(std::locale("C"));
   str << "_" << ++sas_count;
@@ -394,13 +394,13 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
     if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
       throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
     
-    std::map< Glib::ustring, Glib::ustring > sinks = getSoftwareActionSinks();
+    std::map< std::string, std::string > sinks = getSoftwareActionSinks();
     if (sinks.find(name) != sinks.end())
       throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Name already in use");
   }
   
   // nest the object under our own name
-  Glib::ustring path = getObjectPath() + "/software/" + seq;
+  std::string path = getObjectPath() + "/software/" + seq;
   
   unsigned channel = alloc->first.first;
   unsigned num     = alloc->first.second;
@@ -459,10 +459,10 @@ guint64 TimingReceiver::ReadCurrentTime()
   return ReadRawCurrentTime();
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks() const
+std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const
 {
   typedef ActionSinks::const_iterator iterator;
-  std::map< Glib::ustring, Glib::ustring > out;
+  std::map< std::string, std::string > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     std::shared_ptr<SoftwareActionSink> softwareActionSink =
       std::dynamic_pointer_cast<SoftwareActionSink>(i->second);
@@ -474,10 +474,10 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks(
   return out;
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
+std::map< std::string, std::string > TimingReceiver::getOutputs() const
 {
   typedef ActionSinks::const_iterator iterator;
-  std::map< Glib::ustring, Glib::ustring > out;
+  std::map< std::string, std::string > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     std::shared_ptr<Output> output =
       std::dynamic_pointer_cast<Output>(i->second);
@@ -489,10 +489,10 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
   return out;
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
+std::map< std::string, std::string > TimingReceiver::getInputs() const
 {
   typedef EventSources::const_iterator iterator;
-  std::map< Glib::ustring, Glib::ustring > out;
+  std::map< std::string, std::string > out;
   for (iterator i = eventSources.begin(); i != eventSources.end(); ++i) {
     std::shared_ptr<Input> input =
       std::dynamic_pointer_cast<Input>(i->second);
@@ -504,9 +504,9 @@ std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
   return out;
 }
 
-std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiver::getInterfaces() const
+std::map< std::string, std::map< std::string, std::string > > TimingReceiver::getInterfaces() const
 {
-  std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > out;
+  std::map< std::string, std::map< std::string, std::string > > out;
   
   typedef ActionSinks::const_iterator sink;
   for (sink i = actionSinks.begin(); i != actionSinks.end(); ++i) {
@@ -904,7 +904,7 @@ void TimingReceiver::probe(OpenDevice& od)
         std::ostringstream spath;
         spath.imbue(std::locale("C"));
         spath << od.objectPath << "/fg_" << j;
-        Glib::ustring path = spath.str();
+        std::string path = spath.str();
         
         FunctionGeneratorImpl::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, mbx_msi[0], mbx[0], (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
 
@@ -928,7 +928,7 @@ void TimingReceiver::probe(OpenDevice& od)
       std::ostringstream spath;
       spath.imbue(std::locale("C"));
       spath << od.objectPath << "/masterfg";
-      Glib::ustring path = spath.str();
+      std::string path = spath.str();
 
       MasterFunctionGenerator::ConstructorType args = { path, tr.operator->(), functionGeneratorImplementations};
       std::shared_ptr<MasterFunctionGenerator> fg = MasterFunctionGenerator::create(args);

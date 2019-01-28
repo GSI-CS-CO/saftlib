@@ -31,15 +31,15 @@ class TimingReceiver;
 class ActionSink : public Owned, public iActionSink
 {
   public:
-    ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev, const Glib::ustring& name, unsigned channel, unsigned num, sigc::slot<void> destroy = sigc::slot<void>());
+    ActionSink(const std::string& objectPath, TimingReceiver* dev, const std::string& name, unsigned channel, unsigned num, sigc::slot<void> destroy = sigc::slot<void>());
     ~ActionSink();
     
     void ToggleActive();
     guint16 ReadFill();
     
-    std::vector< Glib::ustring > getAllConditions() const;
-    std::vector< Glib::ustring > getActiveConditions() const;
-    std::vector< Glib::ustring > getInactiveConditions() const;
+    std::vector< std::string > getAllConditions() const;
+    std::vector< std::string > getActiveConditions() const;
+    std::vector< std::string > getInactiveConditions() const;
     gint64 getMinOffset() const;
     gint64 getMaxOffset() const;
     guint64 getLatency() const;
@@ -66,9 +66,9 @@ class ActionSink : public Owned, public iActionSink
     void setDelayedCount(guint64 val);
     
     // These property signals are available from base classes
-    //   sigc::signal< void, const std::vector< Glib::ustring >& > AllConditions;
-    //   sigc::signal< void, const std::vector< Glib::ustring >& > ActiveConditions;
-    //   sigc::signal< void, const std::vector< Glib::ustring >& > InactiveConditions;
+    //   sigc::signal< void, const std::vector< std::string >& > AllConditions;
+    //   sigc::signal< void, const std::vector< std::string >& > ActiveConditions;
+    //   sigc::signal< void, const std::vector< std::string >& > InactiveConditions;
     //   sigc::signal< void, gint64 > MinOffset;
     //   sigc::signal< void, gint64 > MaxOffset;
     //   sigc::signal< void, guint16 > MostFull;
@@ -87,7 +87,7 @@ class ActionSink : public Owned, public iActionSink
 
     // Do the grunt work to create a condition
     typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
-    Glib::ustring NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor);
+    std::string NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor);
 
     // Emit AllConditions, ActiveConditions, InactiveConditions
     void notify(bool active = true, bool inactive = true);
@@ -95,7 +95,7 @@ class ActionSink : public Owned, public iActionSink
     
     // The name under which this ActionSink is listed in TimingReceiver::Iterfaces
     virtual const char *getInterfaceName() const = 0;
-    const Glib::ustring &getObjectName() const { return name; }
+    const std::string &getObjectName() const { return name; }
 
     // Used by TimingReciever::compile
     typedef std::map< guint32, std::shared_ptr<Condition> > Conditions;
@@ -108,7 +108,7 @@ class ActionSink : public Owned, public iActionSink
     
   protected:
     TimingReceiver* dev;
-    Glib::ustring name;
+    std::string name;
     unsigned channel;
     unsigned num;
     

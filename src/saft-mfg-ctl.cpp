@@ -165,27 +165,27 @@ static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool 
 }
 
 // Report on the individual function generators
-static void on_master_started(Glib::ustring fg_name, guint64 time)
+static void on_master_started(std::string fg_name, guint64 time)
 {
   if (loglevel>0) std::cout << fg_name << " started at " << format_time(time) << std::endl;
 }
-static void on_master_armed(Glib::ustring fg_name, bool armed)
+static void on_master_armed(std::string fg_name, bool armed)
 {
   if (loglevel>0) std::cout << fg_name << (armed ? " armed" : " disarmed")  << std::endl;
 }
-static void on_master_enabled(Glib::ustring fg_name, bool enabled)
+static void on_master_enabled(std::string fg_name, bool enabled)
 {
   if (loglevel>0) std::cout << fg_name << (enabled ? " enabled" : " disabled")  << std::endl;
 }
-static void on_master_running(Glib::ustring fg_name, bool running)
+static void on_master_running(std::string fg_name, bool running)
 {
   if (loglevel>0) std::cout << fg_name << (running ? " running" : " not running") << std::endl;
 }
-static void on_master_refill(Glib::ustring fg_name)
+static void on_master_refill(std::string fg_name)
 {
   if (loglevel>0) std::cout << fg_name << " refill request" << std::endl;
 }
-static void on_master_stop(Glib::ustring fg_name, guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
+static void on_master_stop(std::string fg_name, guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   if (loglevel>0) std::cout << fg_name << " stopped at " << format_time(time) << std::endl;
   // was there an error?
@@ -284,8 +284,8 @@ int main(int argc, char** argv)
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
-    Glib::ustring device;
-    Glib::ustring fg;
+    std::string device;
+    std::string fg;
     guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
     guint64 event = 0;
     bool eventSet = false;
@@ -373,7 +373,7 @@ int main(int argc, char** argv)
       return 1;
     }
     // Get a list of devices from the saftlib directory
-    map<Glib::ustring, Glib::ustring> devices = saftd->getDevices();
+    map<std::string, std::string> devices = saftd->getDevices();
     
     // Find the requested device
     Glib::RefPtr<TimingReceiver_Proxy> receiver;
@@ -399,13 +399,13 @@ int main(int argc, char** argv)
     // List available devices
     if (error) {
       std::cerr << "Available devices:" << std::endl;
-      for (map<Glib::ustring, Glib::ustring>::iterator i = devices.begin(); i != devices.end(); ++i)
+      for (map<std::string, std::string>::iterator i = devices.begin(); i != devices.end(); ++i)
         std::cerr << "  " << i->first << std::endl;
       return 1;
     }
     
     // Confirm this device is an SCU
-    map<Glib::ustring, Glib::ustring> scus = receiver->getInterfaces()["SCUbusActionSink"];
+    map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1) {
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
@@ -432,7 +432,7 @@ int main(int argc, char** argv)
 
 void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
 {
-    map<Glib::ustring, Glib::ustring> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
+    map<std::string, std::string> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
     std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
     Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
    

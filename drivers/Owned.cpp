@@ -33,7 +33,7 @@ static void do_unsubscribe(std::shared_ptr<IPC_METHOD::Connection> connection, g
   connection->signal_unsubscribe(id);
 }
 
-Owned::Owned(const Glib::ustring& objectPath, sigc::slot<void> destroy_)
+Owned::Owned(const std::string& objectPath, sigc::slot<void> destroy_)
  : BaseObject(objectPath), destroy(destroy_)
 {
 }
@@ -65,7 +65,7 @@ void Owned::Own()
   initOwner(getConnection(), getSender());
 }
 
-void Owned::initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection_, const Glib::ustring& owner_)
+void Owned::initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection_, const std::string& owner_)
 {
   if (owner.empty()) {
     owner = owner_;
@@ -93,7 +93,7 @@ void Owned::Destroy()
   destroy();
 }
 
-Glib::ustring Owned::getOwner() const
+std::string Owned::getOwner() const
 {
   return owner;
 }
@@ -115,8 +115,8 @@ void Owned::ownerQuit()
 
 void Owned::owner_quit_handler(
   const std::shared_ptr<IPC_METHOD::Connection>&,
-  const Glib::ustring&, const Glib::ustring&, const Glib::ustring&,
-  const Glib::ustring&, const Glib::VariantContainerBase&,
+  const std::string&, const std::string&, const std::string&,
+  const std::string&, const Glib::VariantContainerBase&,
   Owned* self)
 {
   try {

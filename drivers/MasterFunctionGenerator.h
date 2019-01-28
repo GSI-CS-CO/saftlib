@@ -36,7 +36,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
   public:
     typedef MasterFunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       TimingReceiver* dev;
  			//std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;
  			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;            
@@ -57,13 +57,13 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void setGenerateIndividualSignals(bool);
     bool getGenerateIndividualSignals() const;
 
-    std::vector<Glib::ustring> ReadAllNames();
-    std::vector<Glib::ustring> ReadNames();
+    std::vector<std::string> ReadAllNames();
+    std::vector<std::string> ReadNames();
     std::vector<int> ReadArmed();
     std::vector<int> ReadEnabled();
     std::vector<int> ReadRunning();
     void ResetActiveFunctionGenerators();
-    void SetActiveFunctionGenerators(const std::vector<Glib::ustring>&);
+    void SetActiveFunctionGenerators(const std::vector<std::string>&);
 
   protected:
     MasterFunctionGenerator(const ConstructorType& args);

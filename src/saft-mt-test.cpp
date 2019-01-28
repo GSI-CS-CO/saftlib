@@ -105,7 +105,7 @@ int main(int argc, char** argv)
   }
 
   Glib::RefPtr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
-  std::map<Glib::ustring, Glib::ustring> devices = saftd->getDevices();
+  std::map<std::string, std::string> devices = saftd->getDevices();
 
   receiver  = saftlib::TimingReceiver_Proxy::create(devices["tr0"]);
   sink      = saftlib::SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));

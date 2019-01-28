@@ -116,11 +116,11 @@ namespace saftbus
 		}
 		return 1; // meaning success
 	}
-	// specialize for Glib::ustring and std::string
+	// specialize for std::string and std::string
 	template<>
-	int write<Glib::ustring>(int fd, const Glib::ustring & std_vector);
+	int write<std::string>(int fd, const std::string & std_vector);
 	template<>
-	int read<Glib::ustring>(int fd, Glib::ustring & std_vector);
+	int read<std::string>(int fd, std::string & std_vector);
 	template<>
 	int write<std::string>(int fd, const std::string & std_vector);
 	template<>

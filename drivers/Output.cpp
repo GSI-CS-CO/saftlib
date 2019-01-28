@@ -47,7 +47,7 @@ const char *Output::getInterfaceName() const
   return "Output";
 }
 
-Glib::ustring Output::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on)
+std::string Output::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on)
 {
   return NewConditionHelper(active, id, mask, offset, on?2:1, false, // 2 is on, 1 is off
     sigc::ptr_fun(&OutputCondition::create));
@@ -106,17 +106,17 @@ bool Output::StopClock()
   return impl->StopClock();
 }
 
-Glib::ustring Output::getLogicLevelOut() const
+std::string Output::getLogicLevelOut() const
 {
   return impl->getLogicLevelOut();
 }
 
-Glib::ustring Output::getTypeOut() const
+std::string Output::getTypeOut() const
 {
   return impl->getTypeOut();
 }
 
-Glib::ustring Output::getInput() const
+std::string Output::getInput() const
 {
   return partnerPath;
 }

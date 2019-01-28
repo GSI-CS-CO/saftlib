@@ -30,9 +30,9 @@ class MILbusActionSink : public ActionSink, public iMILbusActionSink
   public:
     typedef MILbusActionSink_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       TimingReceiver* dev;
-      Glib::ustring name;
+      std::string name;
       unsigned channel;
     };
     
@@ -41,7 +41,7 @@ class MILbusActionSink : public ActionSink, public iMILbusActionSink
     const char *getInterfaceName() const;
     
     // iMILbusAcitonSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint16 tag);
+    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint16 tag);
     void InjectTag(guint16 tag);
     
   protected:

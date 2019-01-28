@@ -42,7 +42,7 @@ Connection::~Connection()
 // object_path and interface_name link to the vtable given to this function (a table with functions for 
 // "method_call" "set_property" and "get_property"). The interface_name is extracted from the 
 // interface_info object. 
-guint Connection::register_object (const Glib::ustring& object_path, 
+guint Connection::register_object (const std::string& object_path, 
 								   const std::shared_ptr< InterfaceInfo >& interface_info, 
 								   const InterfaceVTable& vtable)
 {
@@ -50,7 +50,7 @@ guint Connection::register_object (const Glib::ustring& object_path,
 	logger.newMsg(0).add("Connection::register_object(").add(object_path).add(")\n");
 	guint registration_id = _saftbus_object_id_counter;
 	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
-	Glib::ustring interface_name = interface_info->get_interface_name();
+	std::string interface_name = interface_info->get_interface_name();
 	logger.add(" interface_name:").add(interface_name).add(" -> id:").add(registration_id).log();
 	_saftbus_indices[interface_name][object_path] = registration_id;
 	return registration_id;
@@ -71,11 +71,11 @@ bool Connection::unregister_object (guint registration_id)
 // sender, interface_name, member, and object_path are not used here
 // arg0 is the saftbus_id of the object that is also known to the proxies
 guint Connection::signal_subscribe(const SlotSignal& slot,
-								   const Glib::ustring& sender,
-								   const Glib::ustring& interface_name,
-								   const Glib::ustring& member,
-								   const Glib::ustring& object_path,
-								   const Glib::ustring& arg0)
+								   const std::string& sender,
+								   const std::string& interface_name,
+								   const std::string& member,
+								   const std::string& object_path,
+								   const std::string& arg0)
 {
 	try {
 		saftbus::Timer f_time(_function_run_times["Connection::signal_subscribe"]);
@@ -132,7 +132,7 @@ void Connection::handle_disconnect(Socket *socket)
 		saftbus::Timer f_time(_function_run_times["Connection::handle_disconnect"]);
 		logger.newMsg(0).add("Connection::handle_disconnect()\n");
 		Glib::VariantContainerBase dummy_arg;
-		Glib::ustring& saftbus_id = socket->saftbus_id();
+		std::string& saftbus_id = socket->saftbus_id();
 
 		_socket_owner.erase(socket_nr(socket));
 
@@ -175,9 +175,9 @@ void Connection::handle_disconnect(Socket *socket)
 
 
 		// "garbage collection" : remove all inactive objects
-		std::vector<std::pair<Glib::ustring, Glib::ustring> > objects_to_be_erased;
+		std::vector<std::pair<std::string, std::string> > objects_to_be_erased;
 		for (auto saftbus_index: _saftbus_indices) {
-			Glib::ustring interface_name = saftbus_index.first;
+			std::string interface_name = saftbus_index.first;
 			for (auto object_path: saftbus_index.second) {
 				if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
 					objects_to_be_erased.push_back(std::make_pair(interface_name, object_path.first));
@@ -214,10 +214,10 @@ void Connection::handle_disconnect(Socket *socket)
 
 // send a signal to all connected sockets
 // I think I would be possible to filter the signals and send them only to sockets where they are actually expected
-void Connection::emit_signal(const Glib::ustring& object_path, 
-	                         const Glib::ustring& interface_name, 
-	                         const Glib::ustring& signal_name, 
-	                         const Glib::ustring& destination_bus_name, 
+void Connection::emit_signal(const std::string& object_path, 
+	                         const std::string& interface_name, 
+	                         const std::string& signal_name, 
+	                         const std::string& destination_bus_name, 
 	                         const Glib::VariantContainerBase& parameters)
 {
 	try {
@@ -242,9 +242,9 @@ void Connection::emit_signal(const Glib::ustring& object_path,
 		
 		// use Glib::Variant to serialize the signal data
 		std::vector<Glib::VariantBase> signal_msg;
-		signal_msg.push_back(Glib::Variant<Glib::ustring>::create(object_path));
-		signal_msg.push_back(Glib::Variant<Glib::ustring>::create(interface_name));
-		signal_msg.push_back(Glib::Variant<Glib::ustring>::create(signal_name));
+		signal_msg.push_back(Glib::Variant<std::string>::create(object_path));
+		signal_msg.push_back(Glib::Variant<std::string>::create(interface_name));
+		signal_msg.push_back(Glib::Variant<std::string>::create(signal_name));
 		signal_msg.push_back(Glib::Variant<gint64>::create(start_time.tv_sec));
 		signal_msg.push_back(Glib::Variant<gint64>::create(start_time.tv_nsec));
 		signal_msg.push_back(Glib::Variant<gint32>::create(_create_signal_flight_time_statistics));
@@ -264,7 +264,7 @@ void Connection::emit_signal(const Glib::ustring& object_path,
 			if (signal_name == "PropertiesChanged") { // special case for property changed signals
 				/*
 				Glib::VariantContainerBase* params = const_cast<Glib::VariantContainerBase*>(&parameters);
-				Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(params->get_child(0));
+				Glib::Variant<std::string> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(params->get_child(0));
 				logger.add("     PropertiesChaned: ").add(derived_interface_name).add("\n");
 
 				// directly send signal
@@ -370,7 +370,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					// Send all mutable state variables of the Connection object.
 					// This is supposed to be used by the saftbus-ctl tool.
 
-					//std::map<Glib::ustring, std::map<Glib::ustring, int> > _saftbus_indices; 
+					//std::map<std::string, std::map<std::string, int> > _saftbus_indices; 
 					saftbus::write(socket->get_fd(), _saftbus_indices);
 
 					//std::map<int, std::shared_ptr<InterfaceVTable> > _saftbus_objects;
@@ -395,7 +395,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::write(socket->get_fd(), _socket_owner);
 
 					// 	     // handle    // signal
-					//std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::ustring&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+					//std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 					std::map<guint, int> handle_to_signal_map;
 					for(auto handle: _handle_to_signal_map) {
 						int num_slots = 0;
@@ -406,7 +406,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					}
 					saftbus::write(socket->get_fd(), handle_to_signal_map);
 
-					//std::map<Glib::ustring, std::set<guint> > _id_handles_map;
+					//std::map<std::string, std::set<guint> > _id_handles_map;
 					saftbus::write(socket->get_fd(), _id_handles_map);
 
 					//std::set<guint> erased_handles;
@@ -418,7 +418,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 
 					// store the pipes that go directly to one or many Proxy objects
 							// interface_name        // object path
-					//std::map<Glib::ustring, std::map < Glib::ustring , std::set< ProxyPipe > > > _proxy_pipes;
+					//std::map<std::string, std::map < std::string , std::set< ProxyPipe > > > _proxy_pipes;
 					saftbus::write(socket->get_fd(), _proxy_pipes);
 
 					//static int _saftbus_id_counter;
@@ -431,7 +431,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					path_indicator = 3;
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SENDER_ID"]);
 					logger.add("     SENDER_ID received\n");
-					Glib::ustring sender_id;
+					std::string sender_id;
 					// generate a new id value (increasing numbers)
 					++_saftbus_id_counter; 
 					std::ostringstream id_out;
@@ -470,7 +470,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_FD"]);
 					logger.add("     SIGNAL_FD received: ");
 					int fd = saftbus::recvfd(socket->get_fd());
-					Glib::ustring name, object_path, interface_name;
+					std::string name, object_path, interface_name;
 					int proxy_id;
 					saftbus::read(socket->get_fd(), object_path);
 					saftbus::read(socket->get_fd(), interface_name);
@@ -498,7 +498,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_REMOVE_FD"]);
 
 					logger.add("           SIGNAL_REMOVE_FD received: ");
-					Glib::ustring name, object_path, interface_name;
+					std::string name, object_path, interface_name;
 					int proxy_id;
 					saftbus::read(socket->get_fd(), object_path);
 					saftbus::read(socket->get_fd(), interface_name);
@@ -532,10 +532,10 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 
 					// deserialize data and get content from the variant
 					deserialize(payload, &buffer[0], buffer.size());
-					Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
-					Glib::Variant<Glib::ustring> sender         = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
-					Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
-					Glib::Variant<Glib::ustring> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(3));
+					Glib::Variant<std::string> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(0));
+					Glib::Variant<std::string> sender         = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(1));
+					Glib::Variant<std::string> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(2));
+					Glib::Variant<std::string> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(3));
 					Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
 					logger.add(" sender=").add(sender.get())
 					      .add(" name=").add(name.get())
@@ -546,8 +546,8 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					if (interface_name.get() == "org.freedesktop.DBus.Properties") { // property get/set method call
 
 						logger.add("       Set/Get was called: ");
-						Glib::Variant<Glib::ustring> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(0));
-						Glib::Variant<Glib::ustring> property_name          = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(parameters.get_child(1));
+						Glib::Variant<std::string> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(0));
+						Glib::Variant<std::string> property_name          = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(1));
 						logger.add(" derived_interface_name=").add(derived_interface_name.get())
 						      .add(" property_name=").add(property_name.get())
 						      .add("\n");
@@ -688,10 +688,10 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					}
 					// deserialize data and get content from the variant
 					deserialize(payload, &buffer[0], buffer.size());
-					Glib::Variant<Glib::ustring> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(0));
-					Glib::Variant<Glib::ustring> sender         = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(1));
-					Glib::Variant<Glib::ustring> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(2));
-					Glib::Variant<Glib::ustring> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::ustring> >(payload.get_child(3));
+					Glib::Variant<std::string> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(0));
+					Glib::Variant<std::string> sender         = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(1));
+					Glib::Variant<std::string> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(2));
+					Glib::Variant<std::string> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(3));
 					Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
 					logger.add(" sender=").add(sender.get())
 					      .add(" name=").add(name.get())

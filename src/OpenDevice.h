@@ -27,9 +27,9 @@ namespace saftlib {
 
 struct OpenDevice {
   Device device;
-  Glib::ustring name;
-  Glib::ustring objectPath;
-  Glib::ustring etherbonePath;
+  std::string name;
+  std::string objectPath;
+  std::string etherbonePath;
   std::shared_ptr<Glib::Object> ref;
   
   OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last);

@@ -39,7 +39,7 @@ const char *SCUbusActionSink::getInterfaceName() const
   return "SCUbusActionSink";
 }
 
-Glib::ustring SCUbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag)
+std::string SCUbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag)
 {
   return NewConditionHelper(active, id, mask, offset, tag, false,
     sigc::ptr_fun(&SCUbusCondition::create));

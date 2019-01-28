@@ -29,17 +29,17 @@ namespace saftlib {
 class BaseObject : public Glib::Object
 {
   public:
-    BaseObject(const Glib::ustring& objectPath);
+    BaseObject(const std::string& objectPath);
     
     // Most classes need this to build paths recursively
-    const Glib::ustring& getObjectPath() const { return objectPath; }
+    const std::string& getObjectPath() const { return objectPath; }
     
     // provided by RegisteredObject
-    virtual const Glib::ustring& getSender() const = 0;
+    virtual const std::string& getSender() const = 0;
     virtual const std::shared_ptr<IPC_METHOD::Connection>& getConnection() const = 0;
     
   protected:
-    Glib::ustring objectPath;
+    std::string objectPath;
 };
 
 }

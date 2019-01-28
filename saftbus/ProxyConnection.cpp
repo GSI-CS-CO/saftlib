@@ -16,7 +16,7 @@
 namespace saftbus
 {
 
-ProxyConnection::ProxyConnection(const Glib::ustring &base_name)
+ProxyConnection::ProxyConnection(const std::string &base_name)
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
 	std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
@@ -82,8 +82,8 @@ void ProxyConnection::send_signal_flight_time(double signal_flight_time) {
 
 
 void ProxyConnection::send_proxy_signal_fd(int pipe_fd, 
-	                                       Glib::ustring object_path,
-	                                       Glib::ustring interface_name,
+	                                       std::string object_path,
+	                                       std::string interface_name,
 	                                       int global_id) 
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
@@ -94,8 +94,8 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 	saftbus::write(get_fd(), global_id);
 }
 
-void ProxyConnection::remove_proxy_signal_fd(Glib::ustring object_path,
-	                                         Glib::ustring interface_name,
+void ProxyConnection::remove_proxy_signal_fd(std::string object_path,
+	                                         std::string interface_name,
 	                                         int global_id) 
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
@@ -105,17 +105,17 @@ void ProxyConnection::remove_proxy_signal_fd(Glib::ustring object_path,
 	saftbus::write(get_fd(), global_id);
 }
 
-Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& object_path, const Glib::ustring& interface_name, const Glib::ustring& name, const Glib::VariantContainerBase& parameters, const Glib::ustring& bus_name, int timeout_msec)
+Glib::VariantContainerBase& ProxyConnection::call_sync (const std::string& object_path, const std::string& interface_name, const std::string& name, const Glib::VariantContainerBase& parameters, const std::string& bus_name, int timeout_msec)
 {
 	try {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
 	// perform a remote function call
 	// first append message meta informations like: type of message, recipient, sender, interface name
 	std::vector<Glib::VariantBase> message;
-	message.push_back(Glib::Variant<Glib::ustring>::create(object_path));
-	message.push_back(Glib::Variant<Glib::ustring>::create(_saftbus_id));
-	message.push_back(Glib::Variant<Glib::ustring>::create(interface_name));
-	message.push_back(Glib::Variant<Glib::ustring>::create(name)); // name can be method_name or property_name
+	message.push_back(Glib::Variant<std::string>::create(object_path));
+	message.push_back(Glib::Variant<std::string>::create(_saftbus_id));
+	message.push_back(Glib::Variant<std::string>::create(interface_name));
+	message.push_back(Glib::Variant<std::string>::create(name)); // name can be method_name or property_name
 	message.push_back(parameters);
 	// then convert into a variant vector type
 	Glib::Variant<std::vector<Glib::VariantBase> > var_message = Glib::Variant<std::vector<Glib::VariantBase> >::create(message);
@@ -133,7 +133,7 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const Glib::ustring& obj
 	if (type == saftbus::METHOD_ERROR) {
 		// this was an error which will be converted into an exception
 		saftbus::Error::Type type;
-		Glib::ustring what;
+		std::string what;
 		saftbus::read(get_fd(), type);
 		saftbus::read(get_fd(), what);
 		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, what);

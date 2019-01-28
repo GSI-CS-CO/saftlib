@@ -104,11 +104,11 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
   int           width;
   string        fmt;
   
-  map<Glib::ustring, Glib::ustring> allSinks;
+  map<std::string, std::string> allSinks;
   Glib::RefPtr<SoftwareActionSink_Proxy> aSink;
   
-  map<Glib::ustring, Glib::ustring>::iterator i;
-  vector<Glib::ustring>::iterator j;
+  map<std::string, std::string>::iterator i;
+  vector<std::string>::iterator j;
 
   // display White Rabbit status
   wrLocked        = receiver->getLocked();
@@ -148,7 +148,7 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
                 << " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate() / 1000000000.0) << "Hz)"
                 << std::endl;
       // get all conditions for this sink
-      vector< Glib::ustring > allConditions = aSink->getAllConditions();
+      vector< std::string > allConditions = aSink->getAllConditions();
       std::cout << "  -- conditions: " << allConditions.size() << std::endl;
       for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
         Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
@@ -169,8 +169,8 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
 
 // display information on the software environmet
 static void displayInfoSW(Glib::RefPtr<SAFTd_Proxy> saftd) {
-  Glib::ustring sourceVersion;
-  Glib::ustring buildInfo;
+  std::string sourceVersion;
+  std::string buildInfo;
   
   sourceVersion   = saftd->getSourceVersion();
   buildInfo       = saftd->getBuildInfo();
@@ -182,16 +182,16 @@ static void displayInfoSW(Glib::RefPtr<SAFTd_Proxy> saftd) {
 
 // display information on the hardware environmet
 static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
-  Glib::ustring sourceVersion;
-  Glib::ustring buildInfo;
-  Glib::ustring ebDevice;  
-  Glib::ustring devName;
-  map< Glib::ustring, Glib::ustring > allDevices;
-  map<Glib::ustring, Glib::ustring>::iterator i;
+  std::string sourceVersion;
+  std::string buildInfo;
+  std::string ebDevice;  
+  std::string devName;
+  map< std::string, std::string > allDevices;
+  map<std::string, std::string>::iterator i;
   Glib::RefPtr<TimingReceiver_Proxy> aDevice;
   
-  map< Glib::ustring, Glib::ustring > gatewareInfo;
-  map<Glib::ustring, Glib::ustring>::iterator j;
+  map< std::string, std::string > gatewareInfo;
+  map<std::string, std::string>::iterator j;
   
 
   struct timespec start, stop;
@@ -438,7 +438,7 @@ int main(int argc, char** argv)
     if (saftdQuit) saftd->Quit();
     
     // get a specific device
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver;
     switch (useFirstDev) {
     case true  :

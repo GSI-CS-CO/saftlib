@@ -518,7 +518,7 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
     
     /* Get IO name */
     cIOName = s_aIOCONTROL_SetupField[io_table_iterator].uName;
-    Glib::ustring IOName = cIOName;
+    std::string IOName = cIOName;
     
     /* Create the IO controller object */
     InoutImpl::ConstructorType impl_args = { 
@@ -530,8 +530,8 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
     TimingReceiver::SinkKey key_in (eca_channel, eca_in);  // order: gpio_inout, gpio_in,  lvds_inout, lvds_in
     TimingReceiver::SinkKey key_out(eca_channel, eca_out); // order: gpio_inout, gpio_out, lvds_inout, lvds_out
     
-    Glib::ustring input_path  = tr->getObjectPath() + "/inputs/"  + IOName;
-    Glib::ustring output_path = tr->getObjectPath() + "/outputs/" + IOName;
+    std::string input_path  = tr->getObjectPath() + "/inputs/"  + IOName;
+    std::string output_path = tr->getObjectPath() + "/outputs/" + IOName;
     sigc::slot<void> nill;
     
     /* Add sinks depending on their direction */
@@ -772,11 +772,11 @@ bool InoutImpl::ConfigureClock(double high_phase, double low_phase, guint64 phas
   else                                                                  { return true; }
 }
 
-Glib::ustring InoutImpl::getLogicLevelOut() const { return getLogicLevel(); }
-Glib::ustring InoutImpl::getLogicLevelIn() const { return getLogicLevel(); }
-Glib::ustring InoutImpl::getLogicLevel() const
+std::string InoutImpl::getLogicLevelOut() const { return getLogicLevel(); }
+std::string InoutImpl::getLogicLevelIn() const { return getLogicLevel(); }
+std::string InoutImpl::getLogicLevel() const
 {
-  Glib::ustring IOLogicLevel;
+  std::string IOLogicLevel;
   
   switch(io_logic_level)
   {
@@ -791,11 +791,11 @@ Glib::ustring InoutImpl::getLogicLevel() const
   return IOLogicLevel;
 }
 
-Glib::ustring InoutImpl::getTypeOut() const { return getType(); }
-Glib::ustring InoutImpl::getTypeIn() const { return getType(); }
-Glib::ustring InoutImpl::getType() const
+std::string InoutImpl::getTypeOut() const { return getType(); }
+std::string InoutImpl::getTypeIn() const { return getType(); }
+std::string InoutImpl::getType() const
 {
-  Glib::ustring IOType;
+  std::string IOType;
   
   switch(io_channel)
   {

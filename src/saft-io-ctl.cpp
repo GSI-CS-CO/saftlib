@@ -67,7 +67,7 @@ static const char   *deviceName   = NULL;  /* Name of the device */
 static const char   *ioName       = NULL;  /* Name of the IO */
 static bool          ioNameGiven  = false; /* IO name given? */
 static bool          ioNameExists = false; /* IO name does exist? */
-std::map<Glib::ustring,guint64>     map_PrefixName; /* Translation table IO name <> prefix */
+std::map<std::string,guint64>     map_PrefixName; /* Translation table IO name <> prefix */
 
 /* Prototypes */
 /* ==================================================================================================== */
@@ -104,12 +104,12 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
   /* Perform selected action(s) */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
-    std::map< Glib::ustring, Glib::ustring > outs;
-    Glib::ustring io_path;
+    std::map< std::string, std::string > outs;
+    std::string io_path;
     outs = receiver->getOutputs();
     Glib::RefPtr<Output_Proxy> output_proxy;
 
@@ -125,7 +125,7 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
     /* Check if IO exists output */
     if (ioNameGiven)
     {
-      for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+      for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
       {
         if (it->first == ioName)
         {
@@ -181,26 +181,26 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
 static int io_destroy (bool verbose_mode)
 {
   /* Helper */
-  Glib::ustring c_name = "Unknown";
+  std::string c_name = "Unknown";
   std::vector <Glib::RefPtr<OutputCondition_Proxy> > prox;
 
   /* Perform selected action(s) */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
-    std::map< Glib::ustring, Glib::ustring > outs;
-    Glib::ustring io_path;
+    std::map< std::string, std::string > outs;
+    std::string io_path;
     outs = receiver->getOutputs();
     Glib::RefPtr<Output_Proxy> output_proxy;
 
     /* Check if IO exists output */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       output_proxy = Output_Proxy::create(it->second);
-      std::vector< Glib::ustring > all_conditions = output_proxy->getAllConditions();
+      std::vector< std::string > all_conditions = output_proxy->getAllConditions();
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
         if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
@@ -238,26 +238,26 @@ static int io_destroy (bool verbose_mode)
 static int io_flip (bool verbose_mode)
 {
   /* Helper */
-  Glib::ustring c_name = "Unknown";
+  std::string c_name = "Unknown";
 
   /* Perform selected action(s) */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
-    std::map< Glib::ustring, Glib::ustring > outs;
-    Glib::ustring io_path;
+    std::map< std::string, std::string > outs;
+    std::string io_path;
     outs = receiver->getOutputs();
     Glib::RefPtr<Output_Proxy> output_proxy;
-    std::vector< Glib::ustring > conditions_to_destroy;
+    std::vector< std::string > conditions_to_destroy;
 
     /* Check if IO exists output */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       output_proxy = Output_Proxy::create(it->second);
-      std::vector< Glib::ustring > all_conditions = output_proxy->getAllConditions();
+      std::vector< std::string > all_conditions = output_proxy->getAllConditions();
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
         if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
@@ -306,22 +306,22 @@ static int io_list (void)
   /* Helpers */
   bool     io_found     = false;
   bool     header_shown = false;
-  Glib::ustring c_name  = "Unknown";
+  std::string c_name  = "Unknown";
 
   /* Perform selected action(s) */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
-    std::map< Glib::ustring, Glib::ustring > outs;
-    Glib::ustring io_path;
+    std::map< std::string, std::string > outs;
+    std::string io_path;
     outs = receiver->getOutputs();
     Glib::RefPtr<Output_Proxy> output_proxy;
 
     /* Check if IO exists output */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       output_proxy = Output_Proxy::create(it->second);
 
@@ -334,7 +334,7 @@ static int io_list (void)
       }
 
       if (ioNameGiven && (it->first == ioName)) { io_found = true; }
-      std::vector< Glib::ustring > all_conditions = output_proxy->getAllConditions();
+      std::vector< std::string > all_conditions = output_proxy->getAllConditions();
 
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
@@ -470,12 +470,12 @@ static int io_list_i_to_e()
   /* Get inputs and snoop */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > inputs = receiver->getInputs();
+    std::map< std::string, std::string > inputs = receiver->getInputs();
 
     /* Check inputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
     {
 
       if (!printed_header)
@@ -522,11 +522,11 @@ static void io_catch_input(guint64 event, guint64 param, guint64 deadline, guint
 {
   /* Helpers */
   guint64 time = deadline - IO_CONDITION_OFFSET;
-  Glib::ustring catched_io = "Unknown";
+  std::string catched_io = "Unknown";
 
   /* !!! evaluate prefix<>name map */
-  for (std::map<Glib::ustring,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event == it->second) { catched_io = it->first; } } /* Rising */
-  for (std::map<Glib::ustring,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event-1 == it->second) { catched_io = it->first; } } /* Falling */
+  for (std::map<std::string,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event == it->second) { catched_io = it->first; } } /* Rising */
+  for (std::map<std::string,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event-1 == it->second) { catched_io = it->first; } } /* Falling */
 
   /* Format output */
   std::cout << std::left;
@@ -559,12 +559,12 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
   /* Get inputs and snoop */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > inputs = receiver->getInputs();
+    std::map< std::string, std::string > inputs = receiver->getInputs();
 
     /* Check inputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
@@ -673,21 +673,21 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   /* Perform selected action(s) */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
-    std::map< Glib::ustring, Glib::ustring > outs;
-    std::map< Glib::ustring, Glib::ustring > ins;
-    Glib::ustring io_path;
-    Glib::ustring io_partner;
+    std::map< std::string, std::string > outs;
+    std::map< std::string, std::string > ins;
+    std::string io_path;
+    std::string io_partner;
     outs = receiver->getOutputs();
     ins = receiver->getInputs();
     Glib::RefPtr<Output_Proxy> output_proxy;
     Glib::RefPtr<Input_Proxy> input_proxy;
 
     /* Check if IO exists as input */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
     {
       if (it->first == ioName)
       {
@@ -699,7 +699,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
     }
 
     /* Check if IO exists output */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if (it->first == ioName)
       {
@@ -931,10 +931,10 @@ static int io_print_table(bool verbose_mode)
   /* Try to get the table */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > outs;
-    std::map< Glib::ustring, Glib::ustring > ins;
+    std::map< std::string, std::string > outs;
+    std::map< std::string, std::string > ins;
     outs = receiver->getOutputs();
     ins = receiver->getInputs();
 
@@ -942,12 +942,12 @@ static int io_print_table(bool verbose_mode)
     if (verbose_mode)
     {
       std::cout << "Discovered Output(s): " << std::endl;
-      for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+      for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
       {
         std::cout << it->first << " => " << it->second << '\n';
       }
       std::cout << "Discovered Inputs(s) " << std::endl;
-      for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it)
+      for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
       {
         std::cout << it->first << " => " << it->second << '\n';
       }
@@ -958,7 +958,7 @@ static int io_print_table(bool verbose_mode)
     std::cout << "--------------------------------------------------------------------------------------------------------" << std::endl;
 
     /* Print Outputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
@@ -985,7 +985,7 @@ static int io_print_table(bool verbose_mode)
     }
 
     /* Print Inputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
@@ -1162,7 +1162,7 @@ int main (int argc, char** argv)
     return (__IO_RETURN_FAILURE);
   }
   Gio::init();
-  map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+  map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
   if (devices.find(deviceName) == devices.end())
   {
     std::cerr << "Device " << deviceName << " does not exist!" << std::endl;
@@ -1183,18 +1183,18 @@ int main (int argc, char** argv)
   if (ioNameGiven)
   {
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > outs;
-    std::map< Glib::ustring, Glib::ustring > ins;
+    std::map< std::string, std::string > outs;
+    std::map< std::string, std::string > ins;
     outs = receiver->getOutputs();
     ins = receiver->getInputs();
 
     /* Check all inputs and outputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if (it->first == ioName)          { ioNameExists = true; }
       if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (output)!" << std::endl; break; }
     }
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=ins.begin(); it!=ins.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
     {
       if (it->first == ioName)          { ioNameExists = true; }
       if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (input)!" << std::endl; break; }

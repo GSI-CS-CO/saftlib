@@ -135,16 +135,16 @@ static void slow_warning(int sig)
 struct FgThreadData
 {
   Glib::RefPtr<SCUbusActionSink_Proxy> scu;
-  Glib::ustring fg;
-  map<Glib::ustring, Glib::ustring> fgs;
+  std::string fg;
+  map<std::string, std::string> fgs;
   ParamSet params;
 };
 
 void *serve_fg(void *data) {
   FgThreadData *fgData = (FgThreadData*)data;
   Glib::RefPtr<SCUbusActionSink_Proxy> &scu = fgData->scu;
-  Glib::ustring &fg = fgData->fg;
-  map<Glib::ustring, Glib::ustring> &fgs = fgData->fgs;
+  std::string &fg = fgData->fg;
+  map<std::string, std::string> &fgs = fgData->fgs;
   ParamSet &params = fgData->params;
 
   guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
@@ -202,8 +202,8 @@ int main(int argc, char** argv)
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
-    Glib::ustring device;
-    Glib::ustring fg;
+    std::string device;
+    std::string fg;
     guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
     guint64 event = 0;
     bool eventSet = false;
@@ -268,7 +268,7 @@ int main(int argc, char** argv)
     }
     
     // Get a list of devices from the saftlib directory
-    map<Glib::ustring, Glib::ustring> devices = saftd->getDevices();
+    map<std::string, std::string> devices = saftd->getDevices();
     
     if (devices.empty()) {
       std::cerr << "No devices found" << std::endl;
@@ -277,7 +277,7 @@ int main(int argc, char** argv)
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices.begin()->second);
     
     // Confirm this device is an SCU
-    map<Glib::ustring, Glib::ustring> scus = receiver->getInterfaces()["SCUbusActionSink"];
+    map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1) {
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
@@ -285,7 +285,7 @@ int main(int argc, char** argv)
     Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
     // Get a list of function generators on the receiver
-    map<Glib::ustring, Glib::ustring> fgs = receiver->getInterfaces()["FunctionGenerator"];
+    map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];
     
     FgThreadData fgData20;
     fgData20.scu = scu;

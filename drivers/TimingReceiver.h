@@ -32,9 +32,9 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
   public:
     struct ConstructorType {
       Device device;
-      Glib::ustring name;
-      Glib::ustring etherbonePath;
-      Glib::ustring objectPath;
+      std::string name;
+      std::string etherbonePath;
+      std::string objectPath;
       etherbone::sdb_msi_device base;
       eb_address_t stream;
       eb_address_t info;
@@ -49,20 +49,20 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
     // iDevice
     void Remove();
-    Glib::ustring getEtherbonePath() const;
-    Glib::ustring getName() const;
+    std::string getEtherbonePath() const;
+    std::string getName() const;
     
     // iTimingReceiver
-    Glib::ustring NewSoftwareActionSink(const Glib::ustring& name);
+    std::string NewSoftwareActionSink(const std::string& name);
     void InjectEvent(guint64 event, guint64 param, guint64 time);
     guint64 ReadCurrentTime();
-    std::map< Glib::ustring, Glib::ustring > getGatewareInfo() const;
-    Glib::ustring getGatewareVersion() const;
+    std::map< std::string, std::string > getGatewareInfo() const;
+    std::string getGatewareVersion() const;
     bool getLocked() const;
-    std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
-    std::map< Glib::ustring, Glib::ustring > getOutputs() const;
-    std::map< Glib::ustring, Glib::ustring > getInputs() const;
-    std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > getInterfaces() const;
+    std::map< std::string, std::string > getSoftwareActionSinks() const;
+    std::map< std::string, std::string > getOutputs() const;
+    std::map< std::string, std::string > getInputs() const;
+    std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
     guint32 getFree() const;
     
     // Compile the condition table
@@ -80,8 +80,8 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
   protected:
     mutable saftlib::Device device;
-    Glib::ustring name;
-    Glib::ustring etherbonePath;
+    std::string name;
+    std::string etherbonePath;
     eb_address_t base;
     eb_address_t stream;
     eb_address_t watchdog;
@@ -90,7 +90,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     eb_address_t arrival_irq;
     eb_address_t generator_irq;
     
-    std::map<Glib::ustring, Glib::ustring> info;
+    std::map<std::string, std::string> info;
     mutable bool locked;
     eb_data_t watchdog_value;
     
@@ -104,8 +104,8 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     std::vector<eb_address_t> queue_addresses;
     std::vector<guint16> most_full;
         
-    typedef std::map< Glib::ustring, std::shared_ptr<Owned> > Owneds;
-    typedef std::map< Glib::ustring, Owneds >              OtherStuff;
+    typedef std::map< std::string, std::shared_ptr<Owned> > Owneds;
+    typedef std::map< std::string, Owneds >              OtherStuff;
     
     ActionSinks  actionSinks;
     EventSources eventSources;

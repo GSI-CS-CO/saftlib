@@ -136,8 +136,8 @@ int main(int argc, char** argv)
     Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
-    Glib::ustring device;
-    Glib::ustring fg;
+    std::string device;
+    std::string fg;
     guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
     guint64 event = 0;
     bool eventSet = false;
@@ -221,7 +221,7 @@ int main(int argc, char** argv)
     }
     
     // Get a list of devices from the saftlib directory
-    map<Glib::ustring, Glib::ustring> devices = saftd->getDevices();
+    map<std::string, std::string> devices = saftd->getDevices();
     
     // Find the requested device
     Glib::RefPtr<TimingReceiver_Proxy> receiver;
@@ -247,13 +247,13 @@ int main(int argc, char** argv)
     // List available devices
     if (error) {
       std::cerr << "Available devices:" << std::endl;
-      for (map<Glib::ustring, Glib::ustring>::iterator i = devices.begin(); i != devices.end(); ++i)
+      for (map<std::string, std::string>::iterator i = devices.begin(); i != devices.end(); ++i)
         std::cerr << "  " << i->first << std::endl;
       return 1;
     }
     
     // Confirm this device is an SCU
-    map<Glib::ustring, Glib::ustring> scus = receiver->getInterfaces()["SCUbusActionSink"];
+    map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1) {
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
@@ -261,7 +261,7 @@ int main(int argc, char** argv)
     Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
     // Get a list of function generators on the receiver
-    map<Glib::ustring, Glib::ustring> fgs = receiver->getInterfaces()["FunctionGenerator"];
+    map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];
     
     // Find the target FunctionGenerator
     Glib::RefPtr<FunctionGenerator_Proxy> gen;
@@ -287,7 +287,7 @@ int main(int argc, char** argv)
     // List available function generators
     if (error) {
       std::cerr << "Available function generators:" << std::endl;
-      for (map<Glib::ustring, Glib::ustring>::iterator i = fgs.begin(); i != fgs.end(); ++i)
+      for (map<std::string, std::string>::iterator i = fgs.begin(); i != fgs.end(); ++i)
         std::cerr << "  " << i->first << std::endl;
       return 1;
     }

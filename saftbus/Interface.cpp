@@ -38,10 +38,10 @@ InterfaceVTable::InterfaceVTable ( 	const SlotInterfaceMethodCall&  slot_method_
 	if (_debug_level > 5) std::cerr << "InterfaceVTable::InterfaceVTable() called" << std::endl;
 }
 
-InterfaceInfo::InterfaceInfo(const Glib::ustring &interface_name)
+InterfaceInfo::InterfaceInfo(const std::string &interface_name)
 	: _interface_name(interface_name)
 {}
-const Glib::ustring &InterfaceInfo::get_interface_name()
+const std::string &InterfaceInfo::get_interface_name()
 {
 	return _interface_name;
 }
@@ -99,21 +99,21 @@ saftbus::Error& MethodInvocation::get_return_error()
 
 
 
-NodeInfo::NodeInfo(const Glib::ustring &interface_name)
+NodeInfo::NodeInfo(const std::string &interface_name)
 	: _interface_info(new InterfaceInfo(interface_name))
 {}
 
-std::shared_ptr<NodeInfo> NodeInfo::create_for_xml (const Glib::ustring&  xml_data)
+std::shared_ptr<NodeInfo> NodeInfo::create_for_xml (const std::string&  xml_data)
 {
 	// This function only extracts the interface name from the xml interface description
 	// The rest is not needed by saftbus.
 	if (_debug_level > 5) std::cerr << "NodeInfo::create_for_xml() called" << std::endl;
-	Glib::ustring::size_type pos_begin = xml_data.find("interface name=\'");
+	std::string::size_type pos_begin = xml_data.find("interface name=\'");
 	if (_debug_level > 5) std::cerr << " pos_begin = " << pos_begin << std::endl;
 	if (pos_begin != xml_data.npos) {
-		Glib::ustring::size_type pos_end = xml_data.find("\'",pos_begin+16u);
+		std::string::size_type pos_end = xml_data.find("\'",pos_begin+16u);
 		if (_debug_level > 5) std::cerr << " pos_end = " << pos_end << std::endl;
-		Glib::ustring interface_name = xml_data.substr(pos_begin+16u,pos_end-pos_begin-16u);
+		std::string interface_name = xml_data.substr(pos_begin+16u,pos_end-pos_begin-16u);
 		if (_debug_level > 5) std::cerr << "found interface name " << interface_name << std::endl;
 		return std::shared_ptr<NodeInfo>(new NodeInfo(interface_name));
 	}

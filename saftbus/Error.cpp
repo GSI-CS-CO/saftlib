@@ -10,7 +10,7 @@ namespace saftbus
 	{
 	}
 
-	Error::Error(Type type, const Glib::ustring &msg)
+	Error::Error(Type type, const std::string &msg)
 		: msg_(msg)
 		, type_(type)
 	{
@@ -23,7 +23,7 @@ namespace saftbus
 	}
 
 
-	Glib::ustring Error::what() const
+	std::string Error::what() const
 	{
 		return msg_;
 	}

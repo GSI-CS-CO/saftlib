@@ -102,30 +102,30 @@ namespace saftbus
 	}
 
 
-	template<>
-	int write<Glib::ustring>(int fd, const Glib::ustring & std_vector) {
-		if (_debug_level > 5) std::cerr << "ustring write \"" << std_vector << "\"" << std::endl;
-		std::string strg(std_vector);
-		guint32 size = strg.size();
-		int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
-		if (_debug_level > 5) std::cerr << "ustring write, result = " << result << std::endl;
-		if (result == -1) return result;
-		if (size > 0) result =  write_all(fd, static_cast<const void*>(&strg[0]), size*sizeof(decltype(strg.back())));
-		if (_debug_level > 5) std::cerr << "ustring write, result = " << result << std::endl;
-		return result;
-	}
-	template<>
-	int read<Glib::ustring>(int fd, Glib::ustring & std_vector) {
-		if (_debug_level > 5) std::cerr << "ustring read" << std::endl;
-		std::string strg(std_vector);
-		guint32 size;
-		int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
-		if (result == -1) return result;
-		strg.resize(size);
-		if (size > 0) result = read_all(fd, static_cast<void*>(&strg[0]), size*sizeof(decltype(strg.back())));
-		std_vector = strg;
-		return result;
-	}
+	// template<>
+	// int write<std::string>(int fd, const std::string & std_vector) {
+	// 	if (_debug_level > 5) std::cerr << "ustring write \"" << std_vector << "\"" << std::endl;
+	// 	std::string strg(std_vector);
+	// 	guint32 size = strg.size();
+	// 	int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
+	// 	if (_debug_level > 5) std::cerr << "ustring write, result = " << result << std::endl;
+	// 	if (result == -1) return result;
+	// 	if (size > 0) result =  write_all(fd, static_cast<const void*>(&strg[0]), size*sizeof(decltype(strg.back())));
+	// 	if (_debug_level > 5) std::cerr << "ustring write, result = " << result << std::endl;
+	// 	return result;
+	// }
+	// template<>
+	// int read<std::string>(int fd, std::string & std_vector) {
+	// 	if (_debug_level > 5) std::cerr << "ustring read" << std::endl;
+	// 	std::string strg(std_vector);
+	// 	guint32 size;
+	// 	int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
+	// 	if (result == -1) return result;
+	// 	strg.resize(size);
+	// 	if (size > 0) result = read_all(fd, static_cast<void*>(&strg[0]), size*sizeof(decltype(strg.back())));
+	// 	std_vector = strg;
+	// 	return result;
+	// }
 
 	template<>
 	int write<std::string>(int fd, const std::string & std_vector) {

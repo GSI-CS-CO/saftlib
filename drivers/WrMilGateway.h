@@ -44,7 +44,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
   public:
     typedef WrMilGateway_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring             objectPath;
+      std::string             objectPath;
       TimingReceiver*           receiver;
       etherbone::sdb_msi_device sdb_msi_base;
       sdb_device                mailbox;

@@ -62,7 +62,7 @@ SAFTd::~SAFTd()
 {
   bool daemon = false;
   try {
-    for (std::map< Glib::ustring, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
+    for (std::map< std::string, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
       i->second.ref.reset(); // should destroy the driver
       i->second.device.close();
     }
@@ -92,10 +92,10 @@ void SAFTd::Quit()
   m_loop->quit();
 }
 
-std::map< Glib::ustring, Glib::ustring > SAFTd::getDevices() const
+std::map< std::string, std::string > SAFTd::getDevices() const
 {
-  std::map< Glib::ustring, Glib::ustring > out;
-  for (std::map< Glib::ustring, OpenDevice >::const_iterator i = devs.begin(); i != devs.end(); ++i) {
+  std::map< std::string, std::string > out;
+  for (std::map< std::string, OpenDevice >::const_iterator i = devs.begin(); i != devs.end(); ++i) {
     out[i->first] = i->second.objectPath;
   }
   return out;
@@ -113,7 +113,7 @@ static inline bool not_isalnum_(char c)
   return !(isalnum(c) || c == '_');
 }
 
-Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
+std::string SAFTd::AttachDevice(const std::string& name, const std::string& path)
 {
   if (devs.find(name) != devs.end())
     throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "device already exists");
@@ -163,9 +163,9 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
   }
 }
 
-void SAFTd::RemoveDevice(const Glib::ustring& name)
+void SAFTd::RemoveDevice(const std::string& name)
 {
-  std::map< Glib::ustring, OpenDevice >::iterator elem = devs.find(name);
+  std::map< std::string, OpenDevice >::iterator elem = devs.find(name);
   if (elem == devs.end())
     throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "no such device");
   
@@ -177,12 +177,12 @@ void SAFTd::RemoveDevice(const Glib::ustring& name)
   Devices(getDevices());
 }
 
-Glib::ustring SAFTd::getSourceVersion() const
+std::string SAFTd::getSourceVersion() const
 {
   return sourceVersion;
 }
 
-Glib::ustring SAFTd::getBuildInfo() const
+std::string SAFTd::getBuildInfo() const
 {
   return buildInfo;
 }

@@ -325,9 +325,9 @@ std::vector<guint64> MasterFunctionGenerator::ReadFillLevels()
 	return levels;
 }
 
-std::vector<Glib::ustring> MasterFunctionGenerator::ReadAllNames()
+std::vector<std::string> MasterFunctionGenerator::ReadAllNames()
 {
-	std::vector<Glib::ustring> names;
+	std::vector<std::string> names;
 	for (auto fg : allFunctionGenerators)
 	{
 		names.push_back(fg->GetName());
@@ -335,9 +335,9 @@ std::vector<Glib::ustring> MasterFunctionGenerator::ReadAllNames()
 	return names;
 }
 
-std::vector<Glib::ustring> MasterFunctionGenerator::ReadNames()
+std::vector<std::string> MasterFunctionGenerator::ReadNames()
 {
-	std::vector<Glib::ustring> names;
+	std::vector<std::string> names;
 	for (auto fg : activeFunctionGenerators)
 	{
 		names.push_back(fg->GetName());
@@ -383,7 +383,7 @@ void MasterFunctionGenerator::ResetActiveFunctionGenerators()
   generateIndividualSignals=false;
 }
 
-void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<Glib::ustring>& names)
+void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std::string>& names)
 {
   ownerOnly();
   if (names.size()==0)

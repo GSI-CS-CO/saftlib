@@ -48,9 +48,9 @@ static int clk_show_table (void)
   /* Try to get the table */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > outs;
+    std::map< std::string, std::string > outs;
     outs = receiver->getOutputs();
     
     /* Print table header */
@@ -58,7 +58,7 @@ static int clk_show_table (void)
     std::cout << "--------------------------" << std::endl;
     
     /* Print Outputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
@@ -106,13 +106,13 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
   /* Try to get the table */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > outs;
+    std::map< std::string, std::string > outs;
     outs = receiver->getOutputs();
     
     /* Configure clock */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if ((ioNameGiven && (it->first == ioName)))
       {
@@ -243,7 +243,7 @@ int main (int argc, char** argv)
     return (-1);
   }
   Gio::init();
-  map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+  map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
   if (devices.find(deviceName) == devices.end())
   {
     std::cerr << "Device " << deviceName << " does not exist!" << std::endl;

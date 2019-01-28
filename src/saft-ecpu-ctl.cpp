@@ -82,8 +82,8 @@ int main (int argc, char** argv)
   guint64 eventMask    = 0x0;
   gint64  offset       = 0x0;
   gint32  tag          = 0x0;
-  Glib::ustring e_cpu  = "None";
-  Glib::ustring e_sink = "Unknown";
+  std::string e_cpu  = "None";
+  std::string e_sink = "Unknown";
   
   /* Get the application name */
   program = argv[0]; 
@@ -160,7 +160,7 @@ int main (int argc, char** argv)
       std::cerr << "Missing device name!" << std::endl;
       return (-1);
     }
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     if (devices.find(deviceName) == devices.end())
     {
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
@@ -169,7 +169,7 @@ int main (int argc, char** argv)
     Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
     /* Search for embedded CPU channel */
-    map<Glib::ustring, Glib::ustring> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+    map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
     if (e_cpus.size() != 1)
     {
       std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
@@ -211,7 +211,7 @@ int main (int argc, char** argv)
     else if (destroy_sink)
     {
       /* Get the conditions */
-      std::vector< Glib::ustring > all_conditions = e_cpu->getAllConditions();
+      std::vector< std::string > all_conditions = e_cpu->getAllConditions();
       
       /* Destroy conditions if possible */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
@@ -232,7 +232,7 @@ int main (int argc, char** argv)
     else if (list_conditions)
     {
       /* Get the conditions */
-      std::vector< Glib::ustring > all_conditions = e_cpu->getAllConditions();
+      std::vector< std::string > all_conditions = e_cpu->getAllConditions();
       
       /* List conditions */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)

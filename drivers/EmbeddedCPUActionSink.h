@@ -30,9 +30,9 @@ class EmbeddedCPUActionSink : public ActionSink, public iEmbeddedCPUActionSink
   public:
     typedef EmbeddedCPUActionSink_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
+      std::string objectPath;
       TimingReceiver* dev;
-      Glib::ustring name;
+      std::string name;
       unsigned channel;
       eb_address_t embedded_cpu;
     };
@@ -42,7 +42,7 @@ class EmbeddedCPUActionSink : public ActionSink, public iEmbeddedCPUActionSink
     const char *getInterfaceName() const;
     
     // iEmbeddedCPUAcitonSink
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag);
+    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag);
     
   protected:
     EmbeddedCPUActionSink(const ConstructorType& args);
