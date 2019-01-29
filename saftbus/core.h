@@ -270,6 +270,14 @@ namespace saftbus
 			std_string.insert(std_string.end(), begin, end);
 			_iter += size;
 		}
+		// nested Serials
+		void put(const Serial &ser) {
+			put(ser._data);
+		}
+		void get(Serial &ser) {
+			get(ser._data);
+		}
+
 		std::vector<char>& data() {
 			return _data;
 		}

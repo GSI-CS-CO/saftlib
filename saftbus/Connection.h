@@ -15,6 +15,7 @@
 #include "saftbus.h"
 #include "Logger.h"
 #include "PollFD.h"
+#include "core.h"
 
 
 namespace saftbus
