@@ -20,36 +20,39 @@ before_install:
 - echo $(uname -a)
 
 # install required packages
-install:
-- sudo apt-get install build-essential --install-suggests
-- sudo apt-get install docbook-utils
-- sudo apt-get install libreadline-dev
-- sudo apt-get install zlib1g:i386
-- sudo apt-get install 
-- sudo apt-get install linux-headers-$(uname -r)
-- sudo apt-get install sdcc fxload
-- sudo apt-get install autotools-dev
-- sudo apt-get install automake
-- sudo apt-get install libtool
-- sudo apt-get install libglibmm-2.4
-- sudo apt-get install libglib2.0
-- sudo apt-get install xsltproc
+#install:
+#- sudo apt-get install build-essential --install-suggests
+#- sudo apt-get install docbook-utils
+#- sudo apt-get install libreadline-dev
+#- sudo apt-get install zlib1g:i386
+#- sudo apt-get install 
+#- sudo apt-get install linux-headers-$(uname -r)
+#- sudo apt-get install sdcc fxload
+#- sudo apt-get install autotools-dev
+#- sudo apt-get install automake
+#- sudo apt-get install libtool
+#- sudo apt-get install libglibmm-2.4
+#- sudo apt-get install libglib2.0
+#- sudo apt-get install xsltproc
 
 # hack Makefile to fix make failure regarding spec_wb.o
 # update submodules
 before_script:
-- git clone --recursive https://github.com/ebold/bel_projects.git
-- cd bel_projects
-- git checkout master
-- ./fix-git.sh
-- sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
-- cd ip_cores/saftlib && git checkout $TRAVIS_BRANCH
-- cd ../..
+- echo $TRAIVS_BRANCH
+- echo $TRAVIS_PULL_REQUEST_BRANCH
+- echo $TRAVIS_REPO_SLUG
+#- git clone --recursive https://github.com/ebold/bel_projects.git
+#- cd bel_projects
+#- git checkout master
+#- ./fix-git.sh
+#- sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
+#- cd ip_cores/saftlib && git checkout $TRAVIS_BRANCH
+#- cd ../..
 
-script:
-- make etherbone
-- make tools
-- make driver
-- sudo make install
-- make saftlib
-- sudo make saftlib-install
+#script:
+#- make etherbone
+#- make tools
+#- make driver
+#- sudo make install
+#- make saftlib
+#- sudo make saftlib-install
