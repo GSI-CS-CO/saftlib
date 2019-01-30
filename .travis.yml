@@ -38,8 +38,11 @@ install:
 # hack Makefile to fix make failure regarding spec_wb.o
 # update submodules
 before_script:
-- sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
+- git clone --recursive https://github.com/ebold/bel_projects.git
+- cd bel_projects
+- git checkout master
 - ./fix-git.sh
+- sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
 
 script:
 - make etherbone
