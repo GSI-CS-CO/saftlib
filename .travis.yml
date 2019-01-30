@@ -9,8 +9,7 @@ compiler:
 branches:
   only:
   - master
-  - doomsday
-  - temp_sense
+  - travisci
 
 env:
   global:
