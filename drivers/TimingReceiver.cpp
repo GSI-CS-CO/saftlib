@@ -59,7 +59,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    watchdog(args.watchdog),
    pps(args.pps),
    sas_count(0),
-   locked(false)
+   locked(true)
 {
   // try to acquire watchdog
   eb_data_t retry;
