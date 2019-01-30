@@ -18,6 +18,7 @@ env:
 
 before_install:
 - echo $(uname -a)
+- echo $TRAVIS_PULL_REQUEST_SLUG
 
 # install required packages
 #install:
