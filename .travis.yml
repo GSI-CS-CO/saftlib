@@ -43,6 +43,8 @@ before_script:
 - git checkout master
 - ./fix-git.sh
 - sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
+- cd ip_cores/saftlib && git checkout $TRAVIS_BRANCH
+- cd ../..
 
 script:
 - make etherbone
