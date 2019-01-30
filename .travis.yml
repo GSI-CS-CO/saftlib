@@ -1,0 +1,50 @@
+language: cpp
+os: linux
+dist: xenial
+sudo: required
+
+compiler:
+- gcc
+
+branches:
+  only:
+  - master
+  - doomsday
+  - temp_sense
+
+env:
+  global:
+  - LC_NUMERIC=en_us.UTF8
+
+before_install:
+- echo $(uname -a)
+
+# install required packages
+install:
+- sudo apt-get install build-essential --install-suggests
+- sudo apt-get install docbook-utils
+- sudo apt-get install libreadline-dev
+- sudo apt-get install zlib1g:i386
+- sudo apt-get install 
+- sudo apt-get install linux-headers-$(uname -r)
+- sudo apt-get install sdcc fxload
+- sudo apt-get install autotools-dev
+- sudo apt-get install automake
+- sudo apt-get install libtool
+- sudo apt-get install libglibmm-2.4
+- sudo apt-get install libglib2.0
+- sudo apt-get install xsltproc
+
+# hack Makefile to fix make failure regarding spec_wb.o
+# update submodules
+before_script:
+- sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
+- ./fix-git.sh
+
+script:
+- make etherbone
+- make tools
+- make driver
+- sudo make install
+- make saftlib
+- sudo make saftlib-install
