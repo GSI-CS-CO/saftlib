@@ -64,8 +64,8 @@ namespace saftbus
 		SAFTBUS_CTL_GET_STATE, 
 	};
 
-	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
-	bool deserialize(Glib::Variant<Glib::VariantBase>               &result, const char *data, gsize size);
+	// bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
+	// bool deserialize(Glib::Variant<Glib::VariantBase>               &result, const char *data, gsize size);
 
 
 	struct Timer 

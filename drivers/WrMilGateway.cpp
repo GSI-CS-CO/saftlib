@@ -60,28 +60,6 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
    have_wrmilgw(false)
 {
 
-  // configure MSI that triggers our irq_handler
-  eb_address_t mailbox_base = args.mailbox.sdb_component.addr_first;
-  eb_data_t mailbox_value;
-  unsigned slot = 0;
-
-  receiver->getDevice().read(mailbox_base, EB_DATA32, &mailbox_value);
-  while((mailbox_value != 0xffffffff) && slot < 128) {
-    receiver->getDevice().read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
-    slot++;
-  }
-
-  if (slot < 128)
-    mbx_slot = --slot;
-  else
-    clog << kLogErr << "WrMilGateway: no free slot in mailbox left"  << std::endl;
-
-  //save the irq address in the odd mailbox slot
-  //keep postal address to free later
-  mailbox_slot_address = mailbox_base + slot * 4 * 2 + 4;
-  receiver->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
-  std::cerr << "WrMilGateway: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
-  // done with MSI configuration
 
   // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
   std::vector<struct sdb_device> devices;
@@ -111,6 +89,28 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   }
 
 
+  // configure MSI that triggers our irq_handler
+  eb_address_t mailbox_base = args.mailbox.sdb_component.addr_first;
+  eb_data_t mailbox_value;
+  unsigned slot = 0;
+
+  receiver->getDevice().read(mailbox_base, EB_DATA32, &mailbox_value);
+  while((mailbox_value != 0xffffffff) && slot < 128) {
+    receiver->getDevice().read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
+    slot++;
+  }
+
+  if (slot < 128)
+    mbx_slot = --slot;
+  else
+    clog << kLogErr << "WrMilGateway: no free slot in mailbox left"  << std::endl;
+
+  //save the irq address in the odd mailbox slot
+  //keep postal address to free later
+  mailbox_slot_address = mailbox_base + slot * 4 * 2 + 4;
+  receiver->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
+  std::cerr << "WrMilGateway: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
+  // done with MSI configuration
 
 
 

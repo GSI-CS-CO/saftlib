@@ -151,11 +151,11 @@ int main(int argc, char** argv)
   try {
     // initialize required stuff
     Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
 	// get a specific device
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
     switch (useFirstDev) {
     case true  :
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);

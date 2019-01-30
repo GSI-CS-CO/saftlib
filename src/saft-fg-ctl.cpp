@@ -48,7 +48,7 @@ struct ParamSet {
 };
 
 // Hand off the entire datafile to SAFTd
-static bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   return gen->AppendParameterSet(
     params.coeff_a,
@@ -61,7 +61,7 @@ static bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& para
 }
 
 // Refill the function generator if the buffer fill gets low
-static void on_refill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+static void on_refill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   while (fill(gen, params)) { }
 }
@@ -80,7 +80,7 @@ static const char *format_time(guint64 time)
   return full;
 }
 
-static void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
+static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, guint64 tag)
 {
   if (armed) {
     std::cout << "Generating StartTag" << std::endl;
@@ -107,7 +107,7 @@ static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool 
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
 }
 
-static void help(Glib::RefPtr<SAFTd_Proxy> saftd)
+static void help(std::shared_ptr<SAFTd_Proxy> saftd)
 {
   std::cerr << "Usage: saft-fg-ctl [OPTION] < wavedata.txt\n";
   std::cerr << "\n";
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
 {
   try {
     Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
     std::string device;
@@ -221,10 +221,15 @@ int main(int argc, char** argv)
     }
     
     // Get a list of devices from the saftlib directory
+    std::cerr << "saftd->getDevices()" << std::endl;
     map<std::string, std::string> devices = saftd->getDevices();
+    for(auto &dev: devices) {
+      std::cerr << dev.first << " " << dev.second << std::endl;
+    }
+    std::cerr << "saftd->getDevices() done" << std::endl;
     
     // Find the requested device
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
     if (device.empty()) {
       if (devices.empty()) {
         std::cerr << "No devices found" << std::endl;
@@ -258,13 +263,13 @@ int main(int argc, char** argv)
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+    std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
     // Get a list of function generators on the receiver
     map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];
     
     // Find the target FunctionGenerator
-    Glib::RefPtr<FunctionGenerator_Proxy> gen;
+    std::shared_ptr<FunctionGenerator_Proxy> gen;
     if (fg.empty()) {
       if (fgs.empty()) {
         std::cerr << "No function generators found" << std::endl;
@@ -337,6 +342,7 @@ int main(int argc, char** argv)
     //     SAFTd has been properly configured to run autonomously at this point.
     // ... of course, then the user doesn't get the final error status message either
     while(true) {
+      std::cerr << "tick" << std::endl;
       saftlib::wait_for_signal();
     }
     

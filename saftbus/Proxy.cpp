@@ -8,7 +8,7 @@
 namespace saftbus
 {
 
-Glib::RefPtr<saftbus::ProxyConnection> Proxy::_connection;
+std::shared_ptr<saftbus::ProxyConnection> Proxy::_connection;
 
 int Proxy::_global_id_counter = 0;
 std::mutex Proxy::_id_counter_mutex;
@@ -17,17 +17,17 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
              const std::string&  name,
              const std::string&  object_path,
              const std::string&  interface_name,
-             const Glib::RefPtr< InterfaceInfo >& info,
+             const std::shared_ptr< InterfaceInfo >& info,
              //ProxyFlags            flags,
              saftlib::SignalGroup &signalGroup)
 	: _name(name)
 	, _object_path(object_path)
 	, _interface_name(interface_name)
 {
-	//std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
+	std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
-		_connection = Glib::RefPtr<saftbus::ProxyConnection>(new ProxyConnection);
+		_connection = std::shared_ptr<saftbus::ProxyConnection>(new ProxyConnection);
 	}
 
 	// generate unique proxy id (unique for all running saftlib programs)
@@ -47,6 +47,9 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 
 		// send the writing end of a pipe to saftd 
 		_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
+		char ping;
+		saftbus::read(_pipe_fd[0], ping);
+		std::cerr << "got ping after sending pipe: " << ping << std::endl;
 	} catch(...) {
 		std::cerr << "Proxy::~Proxy() threw" << std::endl;
 	}
@@ -86,6 +89,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 	// this method is called from the Glib::MainLoop whenever there is signal data in the pipe
 	try {
 
+		std::cerr << "Proxy::dispatch() called" << std::endl;
 		// read type and size of signal
 		saftbus::MessageTypeS2C type;
 		guint32                 size;
@@ -93,37 +97,50 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		saftbus::read(_pipe_fd[0], size);
 
 		// prepare buffer of the right size for the incoming data
-		std::vector<char> buffer(size);
-		saftbus::read_all(_pipe_fd[0], &buffer[0], size);
+		//std::vector<char> buffer(size);
+		//saftbus::read_all(_pipe_fd[0], &buffer[0], size);
 
-		// de-serialize the data using the Glib::Variant infrastructure
-		Glib::Variant<std::vector<Glib::VariantBase> > payload;
-		deserialize(payload, &buffer[0], buffer.size());
-		// read content from the variant type (this works because we know what saftd will send us)
-		Glib::Variant<std::string> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> > (payload.get_child(0));
-		Glib::Variant<std::string> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> > (payload.get_child(1));
-		Glib::Variant<std::string> signal_name    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> > (payload.get_child(2));
-		// the following two items are for signal flight time measurement (the time when the signal was sent)
-		Glib::Variant<gint64> sec                   = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(3));
-		Glib::Variant<gint64> nsec                  = Glib::VariantBase::cast_dynamic<Glib::Variant<gint64> >        (payload.get_child(4));
-		Glib::Variant<gint32> create_statistics     = Glib::VariantBase::cast_dynamic<Glib::Variant<gint32> >        (payload.get_child(5));
-		Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>    (payload.get_child(6));
+		// de-serialize using saftbus::Serial
+		std::cerr << "Proxy::dispatch() read payload" << std::endl;
+		Serial payload;
+		payload.data().resize(size);
+		saftbus::read_all(_pipe_fd[0], &payload.data()[0], size);
+		std::cerr << "Proxy::dispatch() payload size = " << payload.get_size() << std::endl;
+		std::string object_path;
+		std::string interface_name;
+		std::string signal_name;
+	    struct timespec start_time;
+		bool create_statistics;
+		Serial parameters;
+		payload.get_init();
+		payload.get(object_path);
+		payload.get(interface_name);
+		payload.get(signal_name);
+		payload.get(start_time.tv_sec);
+		payload.get(start_time.tv_nsec);
+		payload.get(create_statistics);
+		payload.get(parameters);
+
 
 		// if we don't get the expected _object path, saftd probably messed up the pipe lookup
-		if (_object_path != object_path.get()) {
+		if (_object_path != object_path) {
 			std::ostringstream msg;
 			msg << "Proxy::dispatch() : signal with wrong object_path: expecting " 
 			    << _object_path 
 			    << ",  got " 
-			    << object_path.get();
+			    << object_path;
 			throw std::runtime_error(msg.str());
 		}
 
 		double signal_flight_time;
 
 		// special treatment for property changes
-		if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
-		{	/*
+		//if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
+		if (interface_name == "org.freedesktop.DBus.Properties" && signal_name == "PropertiesChanged")
+		{	
+			std::cerr << "Proxy::dispatch() ignoring property changed signal" << std::endl;
+			/*
+
 			// in case of a property change, the interface name of the property 
 			// that was changed (here we call it derived_interface_name) is embedded in the data
 			Glib::Variant<std::string> derived_interface_name 
@@ -165,27 +182,31 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		}
 		else // all other signals
 		{
+			std::cerr << "Proxy::dispatch() a normal signal" << std::endl;
 			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
-			if (_interface_name != interface_name.get()) {
+			//if (_interface_name != interface_name.get()) {
+			if (_interface_name != interface_name) {
 				std::ostringstream msg;
 				msg << "Proxy::dispatch() : signal with wrong interface name: expected " 
 				    << _interface_name 
 				    << ",  got " 
-				    << interface_name.get();
+				    //<< interface_name.get();
+				    << interface_name;
 				throw std::runtime_error(msg.str());
 			}
 			// get the signal flight stop time right before we call the signal handler from the Proxy object
 		    struct timespec stop;
 		    clock_gettime( CLOCK_REALTIME, &stop);
-		    signal_flight_time = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-		                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
+		    signal_flight_time = (1.0e6*stop.tv_sec       + 1.0e-3*stop.tv_nsec) 
+		                       - (1.0e6*start_time.tv_sec + 1.0e-3*start_time.tv_nsec);
 			// report the measured signal flight time to saftd
 		    try {
-		    	if (create_statistics.get()) { // do this only if switched on
+		    	if (create_statistics) { // do this only if switched on
 			    	_connection->send_signal_flight_time(signal_flight_time);
 			    }
 			    // deliver the signal: call the signal handler of the derived class 
-				on_signal("de.gsi.saftlib", signal_name.get(), parameters);
+			    std::cerr << "Proxy::dispatch() call on_signal" << std::endl;
+				on_signal("de.gsi.saftlib", signal_name, parameters);
 			} catch(...) {
 				std::cerr << "Proxy::dispatch() : on_signal threw " << std::endl;
 			}
@@ -198,7 +219,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 	return true;
 }
 
-void Proxy::get_cached_property (Glib::VariantBase& property, const std::string& property_name) const 
+void Proxy::get_cached_property (Serial& property, const std::string& property_name) const 
 {
 	// this is not implemented yet and it is questionable if this is beneficial in case of saftlib
 	return; // empty response
@@ -208,11 +229,11 @@ void Proxy::on_properties_changed (const MapChangedProperties& changed_propertie
 {
 	// this will be overloaded by the derived Proxy class
 }
-void Proxy::on_signal (const std::string& sender_name, const std::string& signal_name, const Glib::VariantContainerBase& parameters)
+void Proxy::on_signal (const std::string& sender_name, const std::string& signal_name, const saftbus::Serial& parameters)
 {
 	// this will be overloaded by the derived Proxy class
 }
-Glib::RefPtr<saftbus::ProxyConnection> Proxy::get_connection() const
+std::shared_ptr<saftbus::ProxyConnection> Proxy::get_connection() const
 {
 	return _connection;
 }
@@ -226,17 +247,28 @@ std::string Proxy::get_name() const
 	return _name;
 }
 
-const Glib::VariantContainerBase& Proxy::call_sync(std::string function_name, const Glib::VariantContainerBase &query)
+const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 {
-	// call the Connection::call_sync in a special way that cast the result in a special way. 
-	//   Without this cast the generated Proxy code cannot handle the resulting variant type.
-	_result = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>(
-			  	Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector<Glib::VariantBase> > >(
-						_connection->call_sync(_object_path, 
-		                			          _interface_name,
-		                			          function_name,
-		                			          query)).get_child(0));
-	return _result;
+	//// please keep this code as a monument of insanity
+	//// call the Connection::call_sync in a special way that cast the result in a special way. 
+	////   Without this cast the generated Proxy code cannot handle the resulting variant type.
+	// _result = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>(
+	// 		  	Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector<Glib::VariantBase> > >(
+	// 	               _connection->call_sync(_object_path, 
+	// 	                                      _interface_name,
+	// 	                                      function_name,
+	// 	                                      query)).get_child(0));
+	// return _result;
+
+	const Serial &result = _connection->call_sync(_object_path, 
+		                          _interface_name,
+		                          function_name,
+		                          query);
+
+	std::cerr << "Proxy::call_sync(" << function_name << ") received Serial" << std::endl;
+	result.print();
+	std::cerr << "Proxy::call_sync(" << function_name << ") done " << std::endl;
+	return result;
 }
 
 

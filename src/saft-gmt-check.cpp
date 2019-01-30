@@ -235,11 +235,11 @@ int main(int argc, char** argv)
   try {
     // initialize required stuff
     Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // get a specific device
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
     switch (useFirstDev) {
     case true  :
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
@@ -255,12 +255,12 @@ int main(int argc, char** argv)
       return 1;
     } //switch useFirstDevice;
     
-    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     sink->OverflowCount.connect(sigc::ptr_fun(&on_overflow));
       
     // count
     if (count) {
-      Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
+      std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
       condition->setAcceptLate(true);
       condition->setAcceptEarly(true);

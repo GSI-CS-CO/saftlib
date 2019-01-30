@@ -91,6 +91,7 @@ struct IRQ_Handler : public etherbone::Handler
 
 eb_status_t IRQ_Handler::read(eb_address_t address, eb_width_t width, eb_data_t* data)
 {
+  std::cerr << "IRQ_Handler::read() " << std::endl;
   *data = 0;
   return EB_OK;
 }
@@ -189,6 +190,7 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
     Device::irqMap::iterator i = Device::irqs.find(msi.address);
     if (i != Device::irqs.end()) {
       try {
+        std::cerr  << "MSI_Source::dispatch() -> execute MSI " << msi.address << " " << msi.data << std::endl;
         i->second(msi.data);
       } catch (const etherbone::exception_t& ex) {
         std::cerr << "Unhandled etherbone exception in MSI handler for 0x" 

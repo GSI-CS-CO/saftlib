@@ -35,7 +35,7 @@
     <xsl:text>&#10;</xsl:text>
     <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
-    <xsl:text>Glib::RefPtr&lt;</xsl:text>
+    <xsl:text>std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt; </xsl:text>
     <xsl:value-of select="$name"/>
@@ -45,7 +45,7 @@
     <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
  -->    <!-- <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text> -->
     <xsl:text>   saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
-    <xsl:text>  return Glib::RefPtr&lt;</xsl:text>
+    <xsl:text>  return std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt;(new </xsl:text>
     <xsl:value-of select="$name"/>
@@ -221,6 +221,7 @@
       <xsl:text>#include &lt;giomm.h&gt;&#10;</xsl:text>
       <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text>
       <xsl:text>#include &lt;gio/gunixfdlist.h&gt;&#10;</xsl:text>
+      <xsl:text>#include &lt;cstdint&gt;&#10;</xsl:text>
       <xsl:text>#include "i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>.h"&#10;&#10;</xsl:text>
@@ -306,37 +307,38 @@
         <xsl:choose>
           <xsl:when test="count(arg[substring(@type,1,1)='A' or @type='h'])=0"> <!-- only if there are no vector-through-pipe requests ('A') -->
             <xsl:text>&#10;{&#10;</xsl:text>
-            <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
+            <xsl:text>  saftbus::Serial query;&#10;</xsl:text>
             <xsl:for-each select="arg[@direction='in']">
-              <xsl:text>  query_vector.push_back(</xsl:text>
-              <xsl:call-template name="variant-type"/>
-              <xsl:text>::create(</xsl:text>
+              <xsl:text>  query.put(</xsl:text>
+              <!-- <xsl:call-template name="raw-type"/> -->
+              <!-- <xsl:text>::create(</xsl:text> -->
               <xsl:value-of select="@name"/>
-              <xsl:text>));&#10;</xsl:text>
+              <xsl:text>);&#10;</xsl:text>
             </xsl:for-each>
-            <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;</xsl:text>
+            <!-- <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;</xsl:text> -->
             <xsl:text>  </xsl:text>
-            <xsl:if test="arg[@direction='out']">const Glib::VariantContainerBase&amp; response = </xsl:if>
+            <xsl:if test="arg[@direction='out']">const saftbus::Serial&amp; response = </xsl:if>
             <xsl:text>call_sync("</xsl:text>
             <xsl:value-of select="@name"/>
             <xsl:text>", query);&#10;</xsl:text>
+            <xsl:if test="arg[@direction='out']">  response.get_init();&#10;</xsl:if>
             <xsl:for-each select="arg[@direction='out']">
               <xsl:text>  </xsl:text>
-              <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
+              <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
               <xsl:text>;&#10;</xsl:text>
             </xsl:for-each>
             <xsl:for-each select="arg[@direction='out']">
-              <xsl:text>  response.get_child(ov_</xsl:text>
+              <xsl:text>  response.get(ov_</xsl:text>
               <xsl:value-of select="@name"/>
-              <xsl:text>, </xsl:text>
-              <xsl:value-of select="position()-1"/>
+              <!-- <xsl:text>, </xsl:text>
+              <xsl:value-of select="position()-1"/> -->
               <xsl:text>);&#10;</xsl:text>
             </xsl:for-each>
             <xsl:choose>
               <xsl:when test="count(arg[@direction='out']) = 1">
                 <xsl:text>  return ov_</xsl:text>
                 <xsl:value-of select="arg[@direction='out']/@name"/>
-                <xsl:text>.get();&#10;</xsl:text>
+                <xsl:text>;&#10;</xsl:text>
               </xsl:when>
               <xsl:otherwise>
                 <xsl:for-each select="arg[@direction='out']">
@@ -352,10 +354,10 @@
           </xsl:when>
           <xsl:otherwise> <!-- there are 'A' or 'h' types -->
             <xsl:text>&#10;{&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;IPC_METHOD::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
-            <xsl:text>  connection-&gt;reference();&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
-            <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
+            <xsl:text>  std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
+            <!-- <xsl:text>  connection-&gt;reference();&#10;</xsl:text> -->
+            <xsl:text>  std::shared_ptr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
+            <xsl:text>  std::shared_ptr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)"> <!-- in this case we only have 'h' and don't need to open a pipe -->
               <xsl:text>  gint _vector_pipe_fd[2];&#10;</xsl:text>
               <xsl:text>  if (pipe(_vector_pipe_fd) != 0) {&#10;</xsl:text>
@@ -364,8 +366,8 @@
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[0]);&#10;</xsl:text>
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[1]);&#10;</xsl:text>
             </xsl:if>
-            <xsl:text>  Glib::RefPtr&lt;Gio::UnixFDList&gt; out_fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
-            <!--<xsl:text>  Glib::RefPtr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>-->
+            <xsl:text>  std::shared_ptr&lt;Gio::UnixFDList&gt; out_fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
+            <!--<xsl:text>  std::shared_ptr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>-->
 
             <!--  same as without vector-through-pipe request -->
 
@@ -379,7 +381,7 @@
                 </xsl:when>
                 <xsl:otherwise>             <!-- all other argument types -->
                   <xsl:text>  query_vector.push_back(</xsl:text>
-                  <xsl:call-template name="variant-type"/>
+                  <xsl:call-template name="raw-type"/>
                   <xsl:text>::create(</xsl:text>
                   <xsl:value-of select="@name"/>
                   <xsl:text>));&#10;</xsl:text>
@@ -449,7 +451,7 @@
             </xsl:for-each>
             <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A' or @type='h')]">
               <xsl:text>  </xsl:text>
-              <xsl:call-template name="variant-type"/> ov_<xsl:value-of select="@name"/>
+              <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
               <xsl:text>;&#10;</xsl:text>
               <xsl:text>  response.get_child(ov_</xsl:text>
               <xsl:value-of select="@name"/>
@@ -498,22 +500,27 @@
       <!-- Boiler-plate to retrieve a property -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Proxy::fetch_property(const char* name, Glib::VariantBase&amp; val) const&#10;</xsl:text>
+      <xsl:text>_Proxy::fetch_property(const char* name, saftbus::Serial&amp; val) const&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
-      <xsl:text>  std::vector&lt; Glib::VariantBase &gt; params;&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
+<!--       <xsl:text>  std::vector&lt; Glib::VariantBase &gt; params;&#10;</xsl:text> -->
+      <xsl:text>  saftbus::Serial params;&#10;</xsl:text>
+<!--       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text> -->
+      <xsl:text>  params.put(std::string("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text>
-      <xsl:text>  Glib::RefPtr&lt;IPC_METHOD::ProxyConnection&gt; connection =&#10;</xsl:text>
-      <xsl:text>    Glib::RefPtr&lt;IPC_METHOD::ProxyConnection&gt;::cast_const(get_connection());&#10;</xsl:text>
-      <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
-      <xsl:text>  const Glib::VariantContainerBase&amp; result =&#10;</xsl:text>
+<!--       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text> -->
+      <xsl:text>  params.put(std::string(name));&#10;</xsl:text>
+      <xsl:text>  std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt; connection =&#10;</xsl:text>
+<!--       <xsl:text>    std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt;::cast_const(get_connection());&#10;</xsl:text> -->
+      <xsl:text>    std::const_pointer_cast&lt;IPC_METHOD::ProxyConnection&gt;(get_connection());&#10;</xsl:text>
+      <!-- <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text> -->
+      <xsl:text>  val =&#10;</xsl:text>
       <xsl:text>    connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", &#10;</xsl:text>
-      <xsl:text>      Glib::VariantContainerBase::create_tuple(params), get_name());&#10;</xsl:text>
-      <xsl:text>  Glib::Variant&lt;Glib::VariantBase&gt; variant;&#10;</xsl:text>
-      <xsl:text>  result.get_child(variant, 0);&#10;</xsl:text>
-      <xsl:text>  variant.get(val);&#10;</xsl:text>
+      <xsl:text>      params, get_name());&#10;</xsl:text>
+<!--       <xsl:text>  Glib::Variant&lt;Glib::VariantBase&gt; variant;&#10;</xsl:text>
+      <xsl:text>  result.get_child(variant, 0);&#10;</xsl:text> -->
+<!--       <xsl:text>  result.get_init();&#10;</xsl:text>
+      <xsl:text>  result.get(val);&#10;</xsl:text> -->
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- Property getters -->
@@ -522,34 +529,42 @@
           <xsl:with-param name="namespace">i<xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
         </xsl:call-template>
         <xsl:text>&#10;{&#10;  </xsl:text>
-        <xsl:call-template name="variant-type"/>
+        <xsl:call-template name="raw-type"/>
         <xsl:text> value;&#10;</xsl:text>
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
-          <xsl:text>  get_cached_property(value, "</xsl:text>
+        <xsl:text>  saftbus::Serial response;&#10;</xsl:text>
+<!--         <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
+          <xsl:text>  get_cached_property(response, "</xsl:text>
           <xsl:value-of select="@name"/>
           <xsl:text>");&#10;</xsl:text>
           <xsl:text>  if (value.gobj()) return value.get();&#10;</xsl:text>
-        </xsl:if>
+        </xsl:if> -->
         <xsl:text>  fetch_property("</xsl:text>
         <xsl:value-of select="@name"/>
-        <xsl:text>", value);&#10;</xsl:text>
-        <xsl:text>  return value.get();&#10;}&#10;&#10;</xsl:text>
+        <xsl:text>", response);&#10;</xsl:text>
+        <xsl:text>  response.get_init();&#10;</xsl:text>
+        <xsl:text>  response.get(value);&#10;</xsl:text>
+        <xsl:text>  return value;&#10;}&#10;&#10;</xsl:text>
       </xsl:for-each>
 
       <!-- Boiler-plate to set a property -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Proxy::update_property(const char* name, const Glib::VariantBase&amp; val)&#10;{&#10;</xsl:text>
-      <xsl:text>  std::vector&lt; Glib::VariantBase &gt; params;&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
+      <xsl:text>_Proxy::update_property(const char* name, const saftbus::Serial&amp; val)&#10;{&#10;</xsl:text>
+      <xsl:text>  saftbus::Serial params;&#10;</xsl:text>
+<!--       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));&#10;</xsl:text>
-      <xsl:text>  Glib::RefPtr&lt;IPC_METHOD::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
-      <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text>
+      <xsl:text>  params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));&#10;</xsl:text> -->
+      <xsl:text>  params.put(std::string("</xsl:text>
+      <xsl:value-of select="$iface_full"/>
+      <xsl:text>"));&#10;</xsl:text>
+      <xsl:text>  params.put(std::string(name));&#10;</xsl:text>
+      <xsl:text>  params.put(val);&#10;</xsl:text>
+      <xsl:text>  std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
+      <!-- <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text> -->
       <xsl:text>  connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set",&#10;</xsl:text>
-      <xsl:text>    Glib::VariantContainerBase::create_tuple(params), get_name());&#10;}&#10;&#10;</xsl:text>
+      <xsl:text>    params, get_name());&#10;}&#10;&#10;</xsl:text>
 
       <!-- Property setters -->
       <xsl:for-each select="property[@access='write' or @access='readwrite']">
@@ -557,11 +572,13 @@
           <xsl:with-param name="namespace">i<xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
         </xsl:call-template>
         <xsl:text>&#10;{&#10;</xsl:text>
+        <xsl:text>  saftbus::Serial parameter;&#10;</xsl:text>
+        <xsl:text>  parameter.put(val);&#10;</xsl:text>
         <xsl:text>  update_property("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>", </xsl:text>
-        <xsl:call-template name="variant-type"/>
-        <xsl:text>::create(val));&#10;}&#10;&#10;</xsl:text>
+        <!-- <xsl:call-template name="raw-type"/> -->
+        <xsl:text>parameter);&#10;}&#10;&#10;</xsl:text>
       </xsl:for-each>
 
       <!-- Receive changed properties -->
@@ -584,10 +601,13 @@
           </xsl:when>
           <xsl:otherwise>
             <xsl:text>      </xsl:text>
+            <xsl:call-template name="raw-type"/>
+            <xsl:text> property_value;&#10;</xsl:text>
+            <xsl:text>      i->second.get_init();&#10;</xsl:text>
+            <xsl:text>      i->second.get(property_value);&#10;</xsl:text>
+            <xsl:text>      </xsl:text>
             <xsl:value-of select="@name"/>
-            <xsl:text>(Glib::VariantBase::cast_dynamic&lt; </xsl:text>
-            <xsl:call-template name="variant-type"/>
-            <xsl:text> &gt;(i->second).get());&#10;</xsl:text>
+            <xsl:text>(property_value);&#10;</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
         <xsl:text>    } else </xsl:text>
@@ -600,7 +620,7 @@
       <xsl:text>_Proxy::on_signal(&#10;</xsl:text>
       <xsl:text>  const std::string&amp; sender_name,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; signal_name,&#10;</xsl:text>
-      <xsl:text>  const Glib::VariantContainerBase&amp; parameters)&#10;</xsl:text>
+      <xsl:text>  const saftbus::Serial&amp; parameters)&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::Proxy::on_signal(sender_name, signal_name, parameters);&#10;</xsl:text>
       <xsl:text>  </xsl:text>
@@ -610,16 +630,17 @@
         <xsl:text>") {&#10;</xsl:text>
         <xsl:for-each select="arg">
           <xsl:text>    </xsl:text>
-          <xsl:call-template name="variant-type"/>
+          <xsl:call-template name="raw-type"/>
           <xsl:text> </xsl:text>
           <xsl:value-of select="@name"/>
           <xsl:text>;&#10;</xsl:text>
         </xsl:for-each>
+        <xsl:text>    parameters.get_init();&#10;</xsl:text>
         <xsl:for-each select="arg">
-          <xsl:text>    parameters.get_child(</xsl:text>
+          <xsl:text>    parameters.get(</xsl:text>
           <xsl:value-of select="@name"/>
-          <xsl:text>, </xsl:text>
-          <xsl:value-of select="position()-1"/>
+          <!-- <xsl:text>, </xsl:text>
+          <xsl:value-of select="position()-1"/> -->
           <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>    </xsl:text>
@@ -628,7 +649,7 @@
         <xsl:for-each select="arg">
           <xsl:if test="position()>1">, </xsl:if>
           <xsl:value-of select="@name"/>
-          <xsl:text>.get()</xsl:text>
+          <!-- <xsl:text>.get()</xsl:text> -->
         </xsl:for-each>
         <xsl:text>);&#10;  } else </xsl:text>
       </xsl:for-each>
@@ -645,11 +666,11 @@
       <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; interface_name,&#10;</xsl:text>
       <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;</xsl:text>
-      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, Glib::RefPtr&lt;IPC_METHOD::InterfaceInfo&gt;(), signalGroup)&#10;</xsl:text>
+      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, std::shared_ptr&lt;IPC_METHOD::InterfaceInfo&gt;(), signalGroup)&#10;</xsl:text>
       <xsl:text>{&#10;}&#10;&#10;</xsl:text>
 
       <!-- Create -->
-      <xsl:text>Glib::RefPtr&lt;i</xsl:text>
+      <xsl:text>std::shared_ptr&lt;i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy&gt; i</xsl:text>
       <xsl:value-of select="$iface"/>
@@ -658,7 +679,7 @@
       <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
       <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
       <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
-      <xsl:text>  return Glib::RefPtr&lt;i</xsl:text>
+      <xsl:text>  return std::shared_ptr&lt;i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy&gt;(new i</xsl:text>
       <xsl:value-of select="$iface"/>
@@ -727,7 +748,7 @@
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const std::string&amp;  sender_, const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; /* interface_name */, const std::string&amp; method_name,&#10;</xsl:text>
-      <xsl:text>  const Glib::VariantContainerBase&amp; parameters,&#10;</xsl:text>
+      <xsl:text>  const saftbus::Serial&amp; parameters,&#10;</xsl:text>
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
@@ -767,7 +788,7 @@
               <xsl:call-template name="raw-type"/>  
             </xsl:when>
             <xsl:otherwise>
-              <xsl:call-template name="variant-type"/> 
+              <xsl:call-template name="raw-type"/> 
             </xsl:otherwise>
           </xsl:choose>
           <xsl:text> </xsl:text>
@@ -792,11 +813,12 @@
           <xsl:value-of select="@name"/>
           <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
+        <xsl:text>      parameters.get_init();&#10;</xsl:text>
         <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A' or @type='h')]">
-          <xsl:text>      parameters.get_child(</xsl:text>
+          <xsl:text>      parameters.get(</xsl:text>
           <xsl:value-of select="@name"/>
-          <xsl:text>, </xsl:text>
-          <xsl:value-of select="position()-1"/>
+<!--           <xsl:text>, </xsl:text>
+          <xsl:value-of select="position()-1"/> -->
           <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>      try {&#10;</xsl:text>
@@ -814,16 +836,16 @@
             <xsl:value-of select="@name"/>
             <xsl:if test="@direction='in'">
               <xsl:if test="not(substring(@type,1,1)='A' or @type='h')">
-                <xsl:text>.get()</xsl:text>
+                <!-- <xsl:text>.get()</xsl:text> -->
               </xsl:if>
             </xsl:if>
         </xsl:for-each>
         <xsl:text>);&#10;</xsl:text>
         <xsl:if test="not(@reset_connection='false')">
-          <xsl:text>        connection.reset();&#10;</xsl:text>
+          <!-- <xsl:text>        connection.reset();&#10;</xsl:text> -->
         </xsl:if>
         <xsl:text>      } catch (...) {&#10;</xsl:text>
-        <xsl:text>        connection.reset();&#10;</xsl:text>
+        <!-- <xsl:text>        connection.reset();&#10;</xsl:text> -->
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
           <xsl:text>        close(_vector_pipe_fd0);&#10;</xsl:text>
           <xsl:text>        close(_vector_pipe_fd1);&#10;</xsl:text>
@@ -833,17 +855,18 @@
         <xsl:text>");&#10;</xsl:text>
         <xsl:text>        throw;&#10;</xsl:text>
         <xsl:text>      }&#10;</xsl:text>
-        <xsl:text>      std::vector&lt;Glib::VariantBase&gt; response_vector;&#10;</xsl:text>
+        <xsl:text>      saftbus::Serial &amp;response = invocation->get_return_value();&#10;</xsl:text>
+        <xsl:text>      response.put_init();&#10;</xsl:text>
         <xsl:for-each select="arg[@direction='out']">
           <xsl:if test="not(substring(@type,1,1)='A' or @type='h')">
-            <xsl:text>      response_vector.push_back(</xsl:text>
-            <xsl:call-template name="variant-type"/>
-            <xsl:text>::create(</xsl:text>
+            <xsl:text>      response.put(</xsl:text>
+            <!-- <xsl:call-template name="raw-type"/>
+            <xsl:text>::create(</xsl:text> -->
             <xsl:value-of select="@name"/>
-            <xsl:text>));&#10;</xsl:text>
+            <xsl:text>);&#10;</xsl:text>
           </xsl:if>
         </xsl:for-each>
-        <xsl:text>      invocation->return_value(Glib::VariantContainerBase::create_tuple(response_vector));&#10;</xsl:text>
+        <!-- <xsl:text>      invocation->return_value(response);&#10;</xsl:text> -->
 
         <xsl:for-each select="arg[@direction='out']">
           <xsl:if test="substring(@type,1,1)='A'">
@@ -863,7 +886,7 @@
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
       <xsl:text>{&#10;</xsl:text>
-      <xsl:text>    connection.reset();&#10;</xsl:text>
+      <!-- <xsl:text>    connection.reset();&#10;</xsl:text> -->
       <xsl:text>    IPC_METHOD::Error error(IPC_METHOD::Error::UNKNOWN_METHOD, "No such method.");&#10;</xsl:text>
       <xsl:text>    invocation->return_error(error);&#10;</xsl:text>
       <xsl:text>  }&#10;}&#10;&#10;</xsl:text>
@@ -872,10 +895,11 @@
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_get_property(&#10;</xsl:text>
-      <xsl:text>  Glib::VariantBase&amp; property,&#10;</xsl:text>
+      <xsl:text>  saftbus::Serial&amp; property,&#10;</xsl:text>
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; sender_, const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; /*interface_name */, const std::string&amp; property_name)&#10;{&#10;</xsl:text>
+      <xsl:text>  property.put_init();&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
       <xsl:text>  connection = connection_;&#10;</xsl:text>
@@ -885,14 +909,12 @@
         <xsl:value-of select="@name"/>
         <xsl:text>") {&#10;</xsl:text>
         <xsl:text>    try {&#10;</xsl:text>
-        <xsl:text>      property = </xsl:text>
-        <xsl:call-template name="variant-type"/>
-        <xsl:text>::create(impl-&gt;get</xsl:text>
+        <xsl:text>      property.put(impl-&gt;get</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>());&#10;</xsl:text>
-        <xsl:text>      connection.reset();&#10;</xsl:text>
+        <!-- <xsl:text>      connection.reset();&#10;</xsl:text> -->
         <xsl:text>    } catch (...) {&#10;</xsl:text>
-        <xsl:text>      connection.reset();&#10;</xsl:text>
+        <!-- <xsl:text>      connection.reset();&#10;</xsl:text> -->
         <xsl:text>      rethrow("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>");&#10;</xsl:text>
@@ -900,7 +922,7 @@
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
-      <xsl:text>{&#10;    // no property found&#10;    connection.reset();&#10;  }&#10;}&#10;&#10;</xsl:text>
+      <xsl:text>{&#10;    // no property found&#10;    }&#10;}&#10;&#10;</xsl:text>
 
       <!-- Property setters -->
       <xsl:text>bool i</xsl:text>
@@ -909,7 +931,7 @@
       <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; sender_, const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; /* interface_name */, const std::string&amp; property_name,&#10;</xsl:text>
-      <xsl:text>  const Glib::VariantBase&amp; value)&#10;{&#10;</xsl:text>
+      <xsl:text>  const saftbus::Serial&amp; value)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
       <xsl:text>  connection = connection_;&#10;</xsl:text>
@@ -919,15 +941,18 @@
         <xsl:value-of select="@name"/>
         <xsl:text>") {&#10;</xsl:text>
         <xsl:text>    try {&#10;</xsl:text>
+        <xsl:text>      </xsl:text>
+        <xsl:call-template name="raw-type"/>
+        <xsl:text> val;&#10;</xsl:text>
+        <xsl:text>      value.get_init();&#10;</xsl:text>
+        <xsl:text>      value.get(val);&#10;</xsl:text>
         <xsl:text>      impl-&gt;set</xsl:text>
         <xsl:value-of select="@name"/>
-        <xsl:text>(Glib::VariantBase::cast_dynamic&lt; </xsl:text>
-        <xsl:call-template name="variant-type"/>
-        <xsl:text> &gt;(value).get());&#10;</xsl:text>
-        <xsl:text>      connection.reset();&#10;</xsl:text>
+        <xsl:text>(val);&#10;</xsl:text>
+        <!-- <xsl:text>      connection.reset();&#10;</xsl:text> -->
         <xsl:text>      return true;&#10;</xsl:text>
         <xsl:text>    } catch (...) {&#10;</xsl:text>
-        <xsl:text>      connection.reset();&#10;</xsl:text>
+        <!-- <xsl:text>      connection.reset();&#10;</xsl:text> -->
         <xsl:text>      rethrow("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>");&#10;</xsl:text>
@@ -935,7 +960,7 @@
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
-      <xsl:text>{&#10;    // no property found&#10;    connection.reset();&#10;    return false;&#10;  }&#10;}&#10;&#10;</xsl:text>
+      <xsl:text>{&#10;    // no property found&#10;    return false;&#10;  }&#10;}&#10;&#10;</xsl:text>
 
       <!-- Forward property changes -->
       <xsl:for-each select="property">
@@ -947,11 +972,11 @@
           <xsl:text>(</xsl:text>
           <xsl:call-template name="input-type"/>
           <xsl:text> val)&#10;{&#10;</xsl:text>
+          <xsl:text>  saftbus::Serial parameter;&#10;</xsl:text>
+          <xsl:text>  parameter.put(val);&#10;</xsl:text>
           <xsl:text>  report_property_change("</xsl:text>
           <xsl:value-of select="@name"/>
-          <xsl:text>", </xsl:text>
-          <xsl:call-template name="variant-type"/>
-          <xsl:text>::create(val));&#10;}&#10;&#10;</xsl:text>
+          <xsl:text>", parameter);&#10;}&#10;&#10;</xsl:text>
         </xsl:if>
       </xsl:for-each>
 
@@ -961,13 +986,13 @@
          <xsl:with-param name="namespace">i<xsl:value-of select="$iface"/>_Service::on_sig</xsl:with-param>
         </xsl:call-template>
         <xsl:text>&#10;{&#10;</xsl:text>
-        <xsl:text>  std::vector&lt;Glib::VariantBase&gt; data_vector;&#10;</xsl:text>
+        <xsl:text>  saftbus::Serial data_vector;&#10;</xsl:text>
         <xsl:for-each select="arg">
-         <xsl:text>  data_vector.push_back(</xsl:text>
-         <xsl:call-template name="variant-type"/>
-         <xsl:text>::create(</xsl:text>
+         <xsl:text>  data_vector.put(</xsl:text>
+<!--          <xsl:call-template name="raw-type"/>
+         <xsl:text>::create(</xsl:text> -->
          <xsl:value-of select="@name"/>
-         <xsl:text>));&#10;</xsl:text>
+         <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>  for (unsigned i = 0; i &lt; exports.size(); ++i) {&#10;</xsl:text>
         <xsl:text>    exports[i].connection->emit_signal(exports[i].object_path,&#10;</xsl:text>
@@ -976,7 +1001,7 @@
         <xsl:text>", "</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>", "", &#10;</xsl:text>
-        <xsl:text>      Glib::VariantContainerBase::create_tuple(data_vector));&#10;</xsl:text>
+        <xsl:text>      data_vector);&#10;</xsl:text>
         <xsl:text>  }&#10;}&#10;&#10;</xsl:text>
       </xsl:for-each>
 
@@ -1049,20 +1074,20 @@
       <!-- Property reporting boilerplate -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Service::report_property_change(const char* property, const Glib::VariantBase&amp; value)&#10;{&#10;</xsl:text>
-      <xsl:text>  std::map&lt; std::string, Glib::VariantBase &gt; updated;&#10;</xsl:text>
+      <xsl:text>_Service::report_property_change(const char* property, const saftbus::Serial&amp; value)&#10;{&#10;</xsl:text>
+      <xsl:text>  std::map&lt; std::string, saftbus::Serial &gt; updated;&#10;</xsl:text>
       <xsl:text>  std::vector&lt; std::string &gt; invalidated;&#10;</xsl:text>
-      <xsl:text>  std::vector&lt;Glib::VariantBase&gt; message_vector;&#10;</xsl:text>
+      <xsl:text>  saftbus::Serial message_vector;&#10;</xsl:text>
       <xsl:text>  updated[property] = value;&#10;</xsl:text>
-      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
+      <xsl:text>  message_vector.put(std::string("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
-      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::map&lt; std::string, Glib::VariantBase &gt; &gt;::create(updated));&#10;</xsl:text>
-      <xsl:text>  message_vector.push_back(Glib::Variant&lt; std::vector&lt; std::string &gt; &gt;::create(invalidated));&#10;</xsl:text>
+      <xsl:text>  message_vector.put(updated);&#10;</xsl:text>
+      <xsl:text>  message_vector.put(invalidated);&#10;</xsl:text>
       <xsl:text>  for (unsigned i = 0; i &lt; exports.size(); ++i) {&#10;</xsl:text>
       <xsl:text>    exports[i].connection->emit_signal(exports[i].object_path,&#10;</xsl:text>
       <xsl:text>      "org.freedesktop.DBus.Properties", "PropertiesChanged", "",&#10;</xsl:text>
-      <xsl:text>      Glib::VariantContainerBase::create_tuple(message_vector));&#10;</xsl:text>
+      <xsl:text>      message_vector);&#10;</xsl:text>
       <xsl:text>  }&#10;}&#10;&#10;</xsl:text>
 
       <xsl:text>}&#10;</xsl:text>

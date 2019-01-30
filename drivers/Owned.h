@@ -47,7 +47,7 @@ class Owned : public BaseObject, public iOwned
     static void owner_quit_handler(
       const std::shared_ptr<IPC_METHOD::Connection>&,
       const std::string&, const std::string&, const std::string&,
-      const std::string&, const Glib::VariantContainerBase&, Owned* self);
+      const std::string&, const saftbus::Serial&, Owned* self);
   
   private:
     sigc::slot<void> destroy;

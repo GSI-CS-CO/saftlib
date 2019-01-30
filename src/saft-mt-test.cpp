@@ -45,33 +45,33 @@
 
 #include <pthread.h>
 
-static guint32 pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
+// static guint32 pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
 
 
 
-int rt_event_pipe[2]; // read[0] write[1]
-Glib::RefPtr<saftlib::TimingReceiver_Proxy> receiver;
-Glib::RefPtr<saftlib::SoftwareActionSink_Proxy> sink;
-Glib::RefPtr<saftlib::SoftwareCondition_Proxy> condition;
+// int rt_event_pipe[2]; // read[0] write[1]
+// std::shared_ptr<saftlib::TimingReceiver_Proxy> receiver;
+// std::shared_ptr<saftlib::SoftwareActionSink_Proxy> sink;
+// std::shared_ptr<saftlib::SoftwareCondition_Proxy> condition;
 
 // this will be called, in case we are snooping for events
 static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
-  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
-  std::cout << tr_formatActionEvent(id, pmode);
-  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
-  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
-  std::cout << std::endl;
-  char ch = 'e';
-  write(rt_event_pipe[1], &ch, 1); // start th RT-Action
+  // std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
+  // std::cout << tr_formatActionEvent(id, pmode);
+  // std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
+  // std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
+  // std::cout << std::endl;
+  // char ch = 'e';
+  // write(rt_event_pipe[1], &ch, 1); // start th RT-Action
 } // on_action
 
 void *mainloop(void *data)
 {
   // snoop for events
-  while(true) {
-    saftlib::wait_for_signal();
-  }
+  // while(true) {
+  //   saftlib::wait_for_signal();
+  // }
   return nullptr;
 }
 
@@ -79,52 +79,52 @@ void *mainloop(void *data)
 
 bool rtAction(Glib::IOCondition condition)
 {
-  char ch;
-  read(rt_event_pipe[0], &ch, 1);
-  std::cerr << "rtAction called: ch = " << ch << std::endl;
+  // char ch;
+  // read(rt_event_pipe[0], &ch, 1);
+  // std::cerr << "rtAction called: ch = " << ch << std::endl;
   return true;
 }
 
 void *rtActionLoop(void *data)
 {
-  Glib::RefPtr<Glib::MainContext> context = Glib::MainContext::create();
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create(context);
+  // std::shared_ptr<Glib::MainContext> context = Glib::MainContext::create();
+  // std::shared_ptr<Glib::MainLoop> loop = Glib::MainLoop::create(context);
 
-  context->signal_io().connect(sigc::ptr_fun(rtAction), rt_event_pipe[0], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
-  loop->run();
+  // context->signal_io().connect(sigc::ptr_fun(rtAction), rt_event_pipe[0], Glib::IO_IN | Glib::IO_HUP, Glib::PRIORITY_HIGH);
+  // loop->run();
   return nullptr;
 }
 
 int main(int argc, char** argv)
 {
-  Glib::init();
+  // Glib::init();
 
-  if (pipe(rt_event_pipe) != 0) {
-    std::cerr << " couldn't open pipe " << std::endl;
-    return 1;
-  }
+  // if (pipe(rt_event_pipe) != 0) {
+  //   std::cerr << " couldn't open pipe " << std::endl;
+  //   return 1;
+  // }
 
-  Glib::RefPtr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
-  std::map<std::string, std::string> devices = saftd->getDevices();
+  // std::shared_ptr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
+  // std::map<std::string, std::string> devices = saftd->getDevices();
 
-  receiver  = saftlib::TimingReceiver_Proxy::create(devices["tr0"]);
-  sink      = saftlib::SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-  condition = saftlib::SoftwareCondition_Proxy::create(sink->NewCondition(false, 0, 0, 0));
-  condition->setAcceptLate(true);
-  condition->setAcceptEarly(true);
-  condition->setAcceptConflict(true);
-  condition->setAcceptDelayed(true);
-  condition->Action.connect(sigc::ptr_fun(&on_action));
-  condition->setActive(true);
+  // receiver  = saftlib::TimingReceiver_Proxy::create(devices["tr0"]);
+  // sink      = saftlib::SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+  // condition = saftlib::SoftwareCondition_Proxy::create(sink->NewCondition(false, 0, 0, 0));
+  // condition->setAcceptLate(true);
+  // condition->setAcceptEarly(true);
+  // condition->setAcceptConflict(true);
+  // condition->setAcceptDelayed(true);
+  // condition->Action.connect(sigc::ptr_fun(&on_action));
+  // condition->setActive(true);
 
-  pthread_t thread1, thread2;
+  // pthread_t thread1, thread2;
 
-  pthread_create(&thread1, nullptr, mainloop,     nullptr);
-  pthread_create(&thread2, nullptr, rtActionLoop, nullptr);
+  // pthread_create(&thread1, nullptr, mainloop,     nullptr);
+  // pthread_create(&thread2, nullptr, rtActionLoop, nullptr);
 
 
-  pthread_join(thread1, nullptr);
-  pthread_join(thread2, nullptr);
+  // pthread_join(thread1, nullptr);
+  // pthread_join(thread2, nullptr);
 
   return 0;
 }

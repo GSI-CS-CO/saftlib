@@ -49,7 +49,7 @@ struct ParamSet {
 };
 
 // Hand off the entire datafile to SAFTd
-static bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   return gen->AppendParameterSet(
     params.coeff_a,
@@ -62,7 +62,7 @@ static bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& para
 }
 
 // Refill the function generator if the buffer fill gets low
-static void on_refill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+static void on_refill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   std::cerr << "refill in thread " << pthread_self() << std::endl;
   while (fill(gen, params)) { }
@@ -82,7 +82,7 @@ static const char *format_time(guint64 time)
   return full;
 }
 
-static void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
+static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, guint64 tag)
 {
   if (armed) {
     std::cout << "Generating StartTag" << std::endl;
@@ -109,7 +109,7 @@ static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool 
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
 }
 
-static void help(Glib::RefPtr<SAFTd_Proxy> saftd)
+static void help(std::shared_ptr<SAFTd_Proxy> saftd)
 {
   std::cerr << "Usage: saft-fg-ctl [OPTION] < wavedata.txt\n";
   std::cerr << "\n";
@@ -134,7 +134,7 @@ static void slow_warning(int sig)
 
 struct FgThreadData
 {
-  Glib::RefPtr<SCUbusActionSink_Proxy> scu;
+  std::shared_ptr<SCUbusActionSink_Proxy> scu;
   std::string fg;
   map<std::string, std::string> fgs;
   ParamSet params;
@@ -142,7 +142,7 @@ struct FgThreadData
 
 void *serve_fg(void *data) {
   FgThreadData *fgData = (FgThreadData*)data;
-  Glib::RefPtr<SCUbusActionSink_Proxy> &scu = fgData->scu;
+  std::shared_ptr<SCUbusActionSink_Proxy> &scu = fgData->scu;
   std::string &fg = fgData->fg;
   map<std::string, std::string> &fgs = fgData->fgs;
   ParamSet &params = fgData->params;
@@ -152,7 +152,7 @@ void *serve_fg(void *data) {
   int error = 0;
   // Find the target FunctionGenerator (omit the check if it exists)
   // pass the saftlib::SignalGroup that is later used to do blocking wait 
-  Glib::RefPtr<FunctionGenerator_Proxy> gen = FunctionGenerator_Proxy::create(fgs[fg], fgSignalGroup);
+  std::shared_ptr<FunctionGenerator_Proxy> gen = FunctionGenerator_Proxy::create(fgs[fg], fgSignalGroup);
   
   
   // Claim the function generator for ourselves,
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 {
   try {
     Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
     std::string device;
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
       std::cerr << "No devices found" << std::endl;
       return 1;
     }
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices.begin()->second);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices.begin()->second);
     
     // Confirm this device is an SCU
     map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
@@ -282,7 +282,7 @@ int main(int argc, char** argv)
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+    std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
     // Get a list of function generators on the receiver
     map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];

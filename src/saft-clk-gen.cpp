@@ -49,7 +49,7 @@ static int clk_show_table (void)
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > outs;
     outs = receiver->getOutputs();
     
@@ -62,7 +62,7 @@ static int clk_show_table (void)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
-        Glib::RefPtr<Output_Proxy> output_proxy;
+        std::shared_ptr<Output_Proxy> output_proxy;
         output_proxy = Output_Proxy::create(it->second);
         if (output_proxy->getTypeOut() == "1ns (LVDS)")
         {
@@ -107,7 +107,7 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > outs;
     outs = receiver->getOutputs();
     
@@ -117,7 +117,7 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
       if ((ioNameGiven && (it->first == ioName)))
       {
         ioFound = true;
-        Glib::RefPtr<Output_Proxy> output_proxy;
+        std::shared_ptr<Output_Proxy> output_proxy;
         output_proxy = Output_Proxy::create(it->second);
         if   ((high_phase == 0.0) && (low_phase == 0.0) && (phase_offset == 0)) { ioClkStatus = output_proxy->StopClock(); }
         else                                                                    { ioClkStatus = output_proxy->StartClock(high_phase, low_phase, phase_offset); }

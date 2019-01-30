@@ -14,6 +14,7 @@
 
 #include "Interface.h"
 #include "saftbus.h"
+#include "core.h"
 
 
 namespace saftbus
@@ -30,15 +31,15 @@ namespace saftbus
 	public:
 		ProxyConnection(const std::string &base_name = "/tmp/saftbus_");
 
-		using SlotSignal = sigc::slot<void, const Glib::RefPtr<ProxyConnection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&>;
+		using SlotSignal = sigc::slot<void, const std::shared_ptr<ProxyConnection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&>;
 
 		// is used by Proxies to fetch properties
-		Glib::VariantContainerBase& call_sync(const std::string& object_path, 
-											const std::string& interface_name, 
-											const std::string& method_name, 
-											const Glib::VariantContainerBase& parameters, 
-											const std::string& bus_name=std::string(), 
-											int timeout_msec=-1);
+		Serial& call_sync(const std::string& object_path, 
+						  const std::string& interface_name, 
+						  const std::string& method_name, 
+						  const Serial& parameters, 
+						  const std::string& bus_name=std::string(), 
+						  int timeout_msec=-1);
 
 	// internal stuff (not part the DBus fake api)
 	public:
@@ -64,10 +65,10 @@ namespace saftbus
 		std::string _filename;
 
 
-		Glib::Variant<std::vector<Glib::VariantBase> > _call_sync_result;
-		std::vector<char> _call_sync_result_buffer;
+		Serial _call_sync_result;
+		//std::vector<char> _call_sync_result_buffer;
 
-		Glib::VariantContainerBase _result;
+		Serial _result;
 
 
 		std::string _saftbus_id; 

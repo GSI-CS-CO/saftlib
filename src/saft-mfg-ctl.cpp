@@ -103,11 +103,11 @@ struct ParamSet {
 };
 
   
-void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
+void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
 
 
 // Hand off the entire datafile to SAFTd
-static bool fill(Glib::RefPtr<FunctionGenerator_Proxy> gen, const ParamSet& params)
+static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   return gen->AppendParameterSet(
     params.coeff_a,
@@ -133,7 +133,7 @@ static const char *format_time(guint64 time)
   return full;
 }
 
-static void on_armed(bool armed, Glib::RefPtr<SCUbusActionSink_Proxy> scu, guint64 tag)
+static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, guint64 tag)
 {
   if (armed) {
   
@@ -254,7 +254,7 @@ static void* startFg(void *arg)
 
 
 
-static void help(Glib::RefPtr<SAFTd_Proxy> saftd)
+static void help(std::shared_ptr<SAFTd_Proxy> saftd)
 {
   std::cerr << "Usage: fg-ctl [OPTION] < wavedata.txt\n";
   std::cerr << "\n";
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
   std::cout << "******************** saft-mfg-ctl start ******************" << std::endl;
   try {
     Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
     std::string device;
@@ -376,7 +376,7 @@ int main(int argc, char** argv)
     map<std::string, std::string> devices = saftd->getDevices();
     
     // Find the requested device
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
     if (device.empty()) {
       if (devices.empty()) {
         std::cerr << "No devices found" << std::endl;
@@ -410,7 +410,7 @@ int main(int argc, char** argv)
       std::cerr << "Device '" << receiver->getName() << "' is not an SCU" << std::endl;
       return 1;
     }
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+    std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
 
     test_master_fg(scu, receiver, params, eventSet, event, repeat, generate, tag);
@@ -430,11 +430,11 @@ int main(int argc, char** argv)
 
 
 
-void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
+void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
 {
     map<std::string, std::string> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
     std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
-    Glib::RefPtr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
+    std::shared_ptr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
    
     // Claim the function generator for ourselves
     master_gen->Own();
@@ -467,7 +467,7 @@ void test_master_fg(Glib::RefPtr<SCUbusActionSink_Proxy> scu, Glib::RefPtr<Timin
     
     // Wait until not Enabled - test polling as alternative to Abort(true)
     
-    //Glib::RefPtr<Glib::MainContext> context  = loop->get_context();
+    //std::shared_ptr<Glib::MainContext> context  = loop->get_context();
 
     vector<int> enabled_gens = master_gen->ReadEnabled();
     while (std::find(enabled_gens.begin(), enabled_gens.end(), 1) != enabled_gens.end()) 

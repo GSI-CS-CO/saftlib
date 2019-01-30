@@ -8,24 +8,30 @@
 namespace saftbus
 {
 
-Glib::RefPtr<Message> Message::create(const std::vector<int> &fds)
+std::shared_ptr<Message> Message::create(const std::vector<int> &fds)
 {
-	return Glib::RefPtr<Message>(new Message(fds));;
+	return std::shared_ptr<Message>(new Message(fds));;
 }
 
 
 Message::Message(const std::vector<int> &fds)
 {
-	_fd_list = Gio::UnixFDList::create();
-	for(auto fd: fds) {
-		_fd_list->append(fd);
-	}
+	// _fd_list = Gio::UnixFDList::create();
+	// for(auto fd: fds) {
+	// 	_fd_list->append(fd);
+	// }
+	_fd_list = fds;
 }
 
-GUnixFDList* Message::gobj()
+std::vector<int> &Message::get_fd_list()
 {
-	return _fd_list->gobj();
+	return _fd_list;
 }
+
+// GUnixFDList* Message::gobj()
+// {
+// 	return _fd_list->gobj();
+// }
 
 InterfaceVTable::InterfaceVTable ( 	const SlotInterfaceMethodCall&  slot_method_call,
 									const SlotInterfaceGetProperty&  slot_get_property,
@@ -61,12 +67,12 @@ MethodInvocation::~MethodInvocation()
 }
 
 
-void MethodInvocation::return_value	(const Glib::VariantContainerBase& parameters)
+void MethodInvocation::return_value	(const Serial& parameters)
 {
 	if (_debug_level > 5) std::cerr << "MethodInvocation::return_value()" << std::endl;
-	if (_debug_level > 5) std::cerr << "   parameters  = " << parameters.print() << std::endl;
+	//if (_debug_level > 5) std::cerr << "   parameters  = " << parameters.print() << std::endl;
 	_parameters = parameters;
-	if (_debug_level > 5) std::cerr << "   _parameters = " << _parameters.print() << std::endl;
+	//if (_debug_level > 5) std::cerr << "   _parameters = " << _parameters.print() << std::endl;
 }
 void MethodInvocation::return_error	(const saftbus::Error& error)
 {
@@ -74,17 +80,17 @@ void MethodInvocation::return_error	(const saftbus::Error& error)
 	_error = error;
 }
 
-Glib::RefPtr<saftbus::Message>	MethodInvocation::get_message()
+std::shared_ptr<saftbus::Message>	MethodInvocation::get_message()
 {
-	Glib::RefPtr<Message> msg = Message::create(_fds);
+	std::shared_ptr<Message> msg = Message::create(_fds);
 	return msg;
 }
 
 
-Glib::VariantContainerBase& MethodInvocation::get_return_value()
+Serial& MethodInvocation::get_return_value()
 {
 	if (_debug_level > 5) std::cerr << "MethodInvocation::get_return_value()" << std::endl;
-	if (_debug_level > 5) std::cerr << "   _parameters = " << _parameters.print() << std::endl;
+//	if (_debug_level > 5) std::cerr << "   _parameters = " << _parameters.print() << std::endl;
 	return _parameters;
 }
 bool MethodInvocation::has_error() 

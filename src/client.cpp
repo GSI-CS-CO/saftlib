@@ -134,7 +134,7 @@ using namespace std;
 int main(int, char**)
 {
   Gio::init();
-  //Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+  //std::shared_ptr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   try {
     // Get a list of devices from the saftlib directory
@@ -147,7 +147,7 @@ int main(int, char**)
     // program with access to the remote object stored inside saftd. 
     // Returned is a smart pointer (with copy constructor).  Once the number
     // of references reaches zero, the proxy object is automatically freed.
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices["baseboard"]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices["baseboard"]);
     
     // Monitor the WR lock status
     receiver->Locked.connect(sigc::ptr_fun(&onLocked));
@@ -156,7 +156,7 @@ int main(int, char**)
     // The name is "", so one is chosen automatically that does not conflict.
     // The returned object (a SoftwareActionSink) implements these interfaces:
     //   iOwned, iActionSink, and iSoftwareActionSink
-    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
     // Read the Capacity property of the ActionSink
     guint16 capacity = sink->getCapacity();
@@ -185,7 +185,7 @@ int main(int, char**)
     // Create an active(true) condition, watching events 64-127 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
     // SoftwareConditions implement iOwned, iCondition, iSoftwareCondition.
-    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 0));
+    std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 0));
     
     // Call on_action whenever the condition above matches incoming events.
     condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));

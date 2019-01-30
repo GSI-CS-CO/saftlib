@@ -166,7 +166,7 @@ int main (int argc, char** argv)
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
       return (-1);
     }
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
     /* Search for embedded CPU channel */
     map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
@@ -177,13 +177,13 @@ int main (int argc, char** argv)
     }
     
     /* Get connection */
-    Glib::RefPtr<EmbeddedCPUActionSink_Proxy> e_cpu = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
+    std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
     
     /* Create the action sink now */
     if (create_sink)
     {
       /* Setup Condition */
-      Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition;
+      std::shared_ptr<EmbeddedCPUCondition_Proxy> condition;
       if (translate_mask) { condition = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
       else                { condition = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag)); }
       
@@ -216,7 +216,7 @@ int main (int argc, char** argv)
       /* Destroy conditions if possible */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
-        Glib::RefPtr<EmbeddedCPUCondition_Proxy> destroy_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<EmbeddedCPUCondition_Proxy> destroy_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
         e_sink = all_conditions[condition_it];
         if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
         { 
@@ -237,7 +237,7 @@ int main (int argc, char** argv)
       /* List conditions */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
-        Glib::RefPtr<EmbeddedCPUCondition_Proxy> info_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<EmbeddedCPUCondition_Proxy> info_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
         e_sink = all_conditions[condition_it];
         std::cout << e_sink << ":" << std::endl;
         std::cout << "  Event ID: 0x" << std::hex << info_condition->getID() << std::endl;

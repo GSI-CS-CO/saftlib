@@ -159,7 +159,7 @@ int main (int argc, char** argv)
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
       return (-1);
     }
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
     /* Search for embedded CPU channel */
     map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
@@ -170,13 +170,13 @@ int main (int argc, char** argv)
     }
     
     /* Get connection */
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+    std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
     /* Create the action sink now */
     if (create_sink)
     {
       /* Setup Condition */
-      Glib::RefPtr<SCUbusCondition_Proxy> condition;
+      std::shared_ptr<SCUbusCondition_Proxy> condition;
       if (translate_mask) { condition = SCUbusCondition_Proxy::create(scu->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
       else                { condition = SCUbusCondition_Proxy::create(scu->NewCondition(true, eventID, eventMask, offset, tag)); }
       
@@ -209,7 +209,7 @@ int main (int argc, char** argv)
       /* Destroy conditions if possible */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
-        Glib::RefPtr<SCUbusCondition_Proxy> destroy_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<SCUbusCondition_Proxy> destroy_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
         std::string cond_name = all_conditions[condition_it];
         if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
         { 
@@ -230,7 +230,7 @@ int main (int argc, char** argv)
       /* List conditions */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
-        Glib::RefPtr<SCUbusCondition_Proxy> info_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<SCUbusCondition_Proxy> info_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
         std::string cond_name = all_conditions[condition_it];
         std::cout << cond_name << ":" << std::endl;
         std::cout << "  Event ID: 0x" << std::hex << info_condition->getID() << std::endl;

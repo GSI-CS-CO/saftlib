@@ -116,7 +116,7 @@ void Owned::ownerQuit()
 void Owned::owner_quit_handler(
   const std::shared_ptr<IPC_METHOD::Connection>&,
   const std::string&, const std::string&, const std::string&,
-  const std::string&, const Glib::VariantContainerBase&,
+  const std::string&, const saftbus::Serial&,
   Owned* self)
 {
   try {

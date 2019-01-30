@@ -28,7 +28,7 @@ void show_help(const char *argv0) {
 }
 
 
-void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection) 
+void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection) 
 {
 	saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_GET_STATE);
 
@@ -51,7 +51,7 @@ void print_mutable_state(Glib::RefPtr<saftbus::ProxyConnection> connection)
 	saftbus::read(connection->get_fd(), socket_owner);
 
 	// 	     // handle    // signal
-	//std::map<guint, sigc::signal<void, const Glib::RefPtr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+	//std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
 	std::map<guint, int> handle_to_signal_map;
 	saftbus::read(connection->get_fd(), handle_to_signal_map);
 	// for (auto handle_signal: handle_to_signal_map) {
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		// connect to saft-daemon
-		auto connection = Glib::RefPtr<saftbus::ProxyConnection>(new saftbus::ProxyConnection);
+		auto connection = std::shared_ptr<saftbus::ProxyConnection>(new saftbus::ProxyConnection);
 
 		if (list_mutable_state) {
 			print_mutable_state(connection);

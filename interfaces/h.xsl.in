@@ -62,7 +62,7 @@
     <xsl:text>  public:&#10;</xsl:text>
 
     <!-- Constructor -->
-    <xsl:text>    static Glib::RefPtr&lt;</xsl:text>
+    <xsl:text>    static std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt; create(&#10;</xsl:text>
     <xsl:text>      const std::string&amp; object_path</xsl:text>
@@ -83,7 +83,7 @@
     <!-- Access to Proxy Objects -->
     <xsl:text>    // Access to Proxy objects&#10;</xsl:text>
     <xsl:for-each select="interface">
-      <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
+      <xsl:text>    std::shared_ptr&lt;i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>_Proxy&gt; get</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -174,7 +174,7 @@
 
     <!-- The proxy objects -->
     <xsl:for-each select="interface">
-      <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
+      <xsl:text>    std::shared_ptr&lt;i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>_Proxy&gt; </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -375,7 +375,7 @@
       <xsl:if test="not($proxy_abc)">*/</xsl:if>
       <xsl:text> public IPC_METHOD::Proxy {&#10;</xsl:text>
       <xsl:text>  public:</xsl:text>
-    static Glib::RefPtr&lt;i<xsl:value-of select="$iface"/>_Proxy&gt; create(
+    static std::shared_ptr&lt;i<xsl:value-of select="$iface"/>_Proxy&gt; create(
       const std::string&amp; object_path,
       const std::string&amp; name,
       IPC_METHOD::BusType bus_type, 
@@ -434,9 +434,9 @@
       <!-- Implementation -->
   protected:
     void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; std::string &gt;&amp; invalidated_properties);
-    void on_signal(const std::string&amp; sender_name, const std::string&amp; signal_name, const Glib::VariantContainerBase&amp; parameters);
-    void fetch_property(const char* name, Glib::VariantBase&amp; val) const;
-    void update_property(const char* name, const Glib::VariantBase&amp; val);
+    void on_signal(const std::string&amp; sender_name, const std::string&amp; signal_name, const saftbus::Serial&amp; parameters);
+    void fetch_property(const char* name, saftbus::Serial&amp; val) const;
+    void update_property(const char* name, const saftbus::Serial&amp; val);
 
     i<xsl:value-of select="$iface"/>_Proxy(
       IPC_METHOD::BusType bus_type,
@@ -486,7 +486,7 @@ class i<xsl:value-of select="$iface"/>_Service {
     };
     std::vector&lt;Export&gt; exports;
     static const std::string xml;
-    void report_property_change(const char* name, const Glib::VariantBase&amp; value);&#10;<xsl:text/>
+    void report_property_change(const char* name, const saftbus::Serial&amp; value);&#10;<xsl:text/>
     <xsl:for-each select="property">
       <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
         <xsl:text>    void on_prop</xsl:text>
@@ -507,10 +507,10 @@ class i<xsl:value-of select="$iface"/>_Service {
       const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection,
       const std::string&amp; sender, const std::string&amp; object_path,
       const std::string&amp; /* interface_name */, const std::string&amp; method_name,
-      const Glib::VariantContainerBase&amp; parameters,
+      const saftbus::Serial&amp; parameters,
       const std::shared_ptr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation);
     void on_get_property(
-      Glib::VariantBase&amp; property,
+      saftbus::Serial&amp; property,
       const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection,
       const std::string&amp; sender, const std::string&amp; object_path,
       const std::string&amp; /*interface_name */, const std::string&amp; property_name);
@@ -518,7 +518,7 @@ class i<xsl:value-of select="$iface"/>_Service {
       const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection,
       const std::string&amp; sender, const std::string&amp; object_path, 
       const std::string&amp; /* interface_name */, const std::string&amp; property_name, 
-      const Glib::VariantBase&amp; value);
+      const saftbus::Serial&amp; value);
 };
 <!-- Create functions that read/write vectors from/to pipe. 
 Use Template specialization to make that work for vectors of simple types, as well as nested vectors -->

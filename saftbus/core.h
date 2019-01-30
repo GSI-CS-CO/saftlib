@@ -9,6 +9,7 @@
 #include <string>
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <map>
@@ -194,6 +195,10 @@ namespace saftbus
 		{
 			_iter = _data.begin();
 		}
+		void put_init()
+		{
+			_data.clear();
+		}
 		// hast to be called before any call to get()
 		void get_init(const std::vector<char> &data) 
 		{
@@ -201,20 +206,20 @@ namespace saftbus
 			get_init();
 		}
 		// hast to be called before any call to get()
-		void get_init() 
+		void get_init() const
 		{
 			_iter = _data.begin();
 		}
 		// POD structs and build-in types
 		template<typename T>
 		void put(const T &val) {
-			char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
-			char* end   = begin + sizeof(val);
+			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
+			const char* end   = begin + sizeof(val);
 			_data.insert(_data.end(), begin, end);
 		}
 		template<typename T>
-		void get(T &val) {
-			val    = *reinterpret_cast<T*>(&(*_iter));
+		void get(T &val) const {
+			val    = *const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
 			_iter += sizeof(val);
 		}
 		// std::vector and nested std::vector
@@ -222,8 +227,8 @@ namespace saftbus
 		void put(const std::vector<T>& std_vector) {
 			size_t size = std_vector.size();
 			put(size);
-			char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_vector[0]));
-			char* end   = begin + size*sizeof(std_vector[0]);
+			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_vector[0]));
+			const char* end   = begin + size*sizeof(std_vector[0]);
 			_data.insert(_data.end(), begin, end);
 		}
 		template<typename T>
@@ -235,17 +240,17 @@ namespace saftbus
 			}
 		}
 		template<typename T>
-		void get(std::vector<T> &std_vector) {
+		void get(std::vector<T> &std_vector) const {
 			size_t size;
 			get(size);
-			T* begin = reinterpret_cast<T*>(&(*_iter));
-			T* end   = begin + size;
+			const T* begin = const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
+			const T* end   = begin + size;
 			std_vector.clear();
 			std_vector.insert(std_vector.end(), begin, end);
 			_iter += sizeof(T)*size;
 		}
 		template<typename T>
-		void get(std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
+		void get(std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) const {
 			size_t size;
 			get(size);
 			std_vector_vector.resize(size);
@@ -257,31 +262,60 @@ namespace saftbus
 		void put(const std::string& std_string) {
 			size_t size = std_string.size();
 			put(size);
-			char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
-			char* end   = begin + size*sizeof(std_string[0]);
+			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
+			const char* end   = begin + size*sizeof(std_string[0]);
 			_data.insert(_data.end(), begin, end);
 		}
-		void get(std::string &std_string) {
+		void get(std::string &std_string) const {
 			size_t size;
 			get(size);
-			char* begin = &(*_iter);
-			char* end   = begin + size;
+			const char* begin = &(*_iter);
+			const char* end   = begin + size;
 			std_string.clear();
 			std_string.insert(std_string.end(), begin, end);
 			_iter += size;
+		}
+		// std::map
+		template<typename K, typename V>
+		void put(const std::map<K,V> &std_map) {
+			size_t size = std_map.size();
+			put(size);
+			for (typename std::map<K,V>::const_iterator it = std_map.begin(); it != std_map.end(); ++it) {
+				put(it->first);
+				put(it->second);
+			}
+		}
+		template<typename K, typename V>
+		void get(std::map<K,V> &std_map) {
+			std_map.clear();
+			size_t size;
+			get(size);
+			for (size_t i = 0; i < size; ++i) {
+				K key;
+				V value;
+				get(key);
+				get(value);
+				std_map.insert(std::make_pair(key,value));
+			}
 		}
 		// nested Serials
 		void put(const Serial &ser) {
 			put(ser._data);
 		}
-		void get(Serial &ser) {
+		void get(Serial &ser) const {
 			get(ser._data);
 		}
 
-		std::vector<char>& data() {
+		std::vector<char>& data(){
 			return _data;
 		}
-		void print() {
+		const char* get_data() const {
+			return &_data[0];
+		}
+		unsigned get_size() const {
+			return _data.size();
+		}
+		void print() const {
 			std::cerr << _data.size() << std::endl;
 			for (auto ch: _data) {
 				std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)ch << std::dec << std::endl;
@@ -289,7 +323,7 @@ namespace saftbus
 		}
 	private:
 		std::vector<char> _data;
-		std::vector<char>::iterator _iter;
+		mutable std::vector<char>::const_iterator _iter;
 	};
 
 

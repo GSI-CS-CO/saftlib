@@ -105,13 +105,13 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
     std::map< std::string, std::string > outs;
     std::string io_path;
     outs = receiver->getOutputs();
-    Glib::RefPtr<Output_Proxy> output_proxy;
+    std::shared_ptr<Output_Proxy> output_proxy;
 
     /* Check flags */
     if (flags & (1 << ECA_LATE))     { io_AcceptLate = true; }
@@ -149,7 +149,7 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
     }
 
     /* Setup condition */
-    Glib::RefPtr<OutputCondition_Proxy> condition;
+    std::shared_ptr<OutputCondition_Proxy> condition;
     if (translate_mask) { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, tr_mask(eventMask), io_offset, io_edge)); }
     else                { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, eventMask, io_offset, io_edge)); }
     condition->setAcceptConflict(io_AcceptConflict);
@@ -182,19 +182,19 @@ static int io_destroy (bool verbose_mode)
 {
   /* Helper */
   std::string c_name = "Unknown";
-  std::vector <Glib::RefPtr<OutputCondition_Proxy> > prox;
+  std::vector <std::shared_ptr<OutputCondition_Proxy> > prox;
 
   /* Perform selected action(s) */
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
     std::map< std::string, std::string > outs;
     std::string io_path;
     outs = receiver->getOutputs();
-    Glib::RefPtr<Output_Proxy> output_proxy;
+    std::shared_ptr<Output_Proxy> output_proxy;
 
     /* Check if IO exists output */
     for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
@@ -205,7 +205,7 @@ static int io_destroy (bool verbose_mode)
       {
         if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
         {
-          Glib::RefPtr<OutputCondition_Proxy> destroy_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
+          std::shared_ptr<OutputCondition_Proxy> destroy_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
           c_name = all_conditions[condition_it];
           if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
           {
@@ -244,13 +244,13 @@ static int io_flip (bool verbose_mode)
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
     std::map< std::string, std::string > outs;
     std::string io_path;
     outs = receiver->getOutputs();
-    Glib::RefPtr<Output_Proxy> output_proxy;
+    std::shared_ptr<Output_Proxy> output_proxy;
     std::vector< std::string > conditions_to_destroy;
 
     /* Check if IO exists output */
@@ -262,7 +262,7 @@ static int io_flip (bool verbose_mode)
       {
         if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
         {
-          Glib::RefPtr<OutputCondition_Proxy> flip_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
+          std::shared_ptr<OutputCondition_Proxy> flip_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
           c_name = all_conditions[condition_it];
 
           /* Flip unowned conditions */
@@ -312,13 +312,13 @@ static int io_list (void)
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
     std::map< std::string, std::string > outs;
     std::string io_path;
     outs = receiver->getOutputs();
-    Glib::RefPtr<Output_Proxy> output_proxy;
+    std::shared_ptr<Output_Proxy> output_proxy;
 
     /* Check if IO exists output */
     for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
@@ -344,7 +344,7 @@ static int io_list (void)
           guint32  flags = 0x0;
 
           /* Get output conditions */
-          Glib::RefPtr<OutputCondition_Proxy> info_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
+          std::shared_ptr<OutputCondition_Proxy> info_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
           c_name = all_conditions[condition_it];
           std::string str_path_and_id = it->first;
           std::string str_path        = it->second;
@@ -471,7 +471,7 @@ static int io_list_i_to_e()
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > inputs = receiver->getInputs();
 
     /* Check inputs */
@@ -490,7 +490,7 @@ static int io_list_i_to_e()
         ioName =  it->first.c_str();
         guint64 prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
         map_PrefixName[ioName] = prefix;
-        Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+        std::shared_ptr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
 
         std::cout << std::left;
         std::cout << std::setw(12+2) << it->first << " ";
@@ -553,14 +553,14 @@ static void io_catch_input(guint64 event, guint64 param, guint64 deadline, guint
 static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 prefix_custom)
 {
   /* Helpers (connect proxies in a vector) */
-  std::vector <Glib::RefPtr<SoftwareCondition_Proxy> > proxies;
-  std::vector <Glib::RefPtr<SoftwareActionSink_Proxy> > sinks;
+  std::vector <std::shared_ptr<SoftwareCondition_Proxy> > proxies;
+  std::vector <std::shared_ptr<SoftwareActionSink_Proxy> > sinks;
 
   /* Get inputs and snoop */
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > inputs = receiver->getInputs();
 
     /* Check inputs */
@@ -588,7 +588,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
           }
 
           /* Setup the event */
-          Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+          std::shared_ptr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
           if (prefix_custom != 0x0) { prefix = prefix_custom; }
           if (disable_source)
           {
@@ -604,7 +604,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
         else
         {
           /* Disable the event */
-          Glib::RefPtr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+          std::shared_ptr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
           input->setEventEnable(false);
         }
       }
@@ -674,7 +674,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
     std::map< std::string, std::string > outs;
@@ -683,8 +683,8 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
     std::string io_partner;
     outs = receiver->getOutputs();
     ins = receiver->getInputs();
-    Glib::RefPtr<Output_Proxy> output_proxy;
-    Glib::RefPtr<Input_Proxy> input_proxy;
+    std::shared_ptr<Output_Proxy> output_proxy;
+    std::shared_ptr<Input_Proxy> input_proxy;
 
     /* Check if IO exists as input */
     for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
@@ -932,7 +932,7 @@ static int io_print_table(bool verbose_mode)
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > outs;
     std::map< std::string, std::string > ins;
     outs = receiver->getOutputs();
@@ -962,7 +962,7 @@ static int io_print_table(bool verbose_mode)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
-        Glib::RefPtr<Output_Proxy> output_proxy;
+        std::shared_ptr<Output_Proxy> output_proxy;
         output_proxy = Output_Proxy::create(it->second);
         std::cout << std::left;
         std::cout << std::setw(12+2) << it->first << " ";
@@ -989,7 +989,7 @@ static int io_print_table(bool verbose_mode)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
-        Glib::RefPtr<Input_Proxy> input_proxy;
+        std::shared_ptr<Input_Proxy> input_proxy;
         input_proxy = Input_Proxy::create(it->second);
         std::cout << std::left;
         std::cout << std::setw(12+2) << it->first << " ";
@@ -1182,7 +1182,7 @@ int main (int argc, char** argv)
   /* Check if given IO name exists */
   if (ioNameGiven)
   {
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > outs;
     std::map< std::string, std::string > ins;
     outs = receiver->getOutputs();

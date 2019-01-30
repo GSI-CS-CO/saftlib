@@ -96,8 +96,8 @@ static void help(void) {
 
 
 // display status
-static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
-						  Glib::RefPtr<SoftwareActionSink_Proxy> sink) {
+static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
+						  std::shared_ptr<SoftwareActionSink_Proxy> sink) {
   guint32       nFreeConditions;
   bool          wrLocked;
   guint64       wrTime;
@@ -105,7 +105,7 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
   string        fmt;
   
   map<std::string, std::string> allSinks;
-  Glib::RefPtr<SoftwareActionSink_Proxy> aSink;
+  std::shared_ptr<SoftwareActionSink_Proxy> aSink;
   
   map<std::string, std::string>::iterator i;
   vector<std::string>::iterator j;
@@ -151,7 +151,7 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
       vector< std::string > allConditions = aSink->getAllConditions();
       std::cout << "  -- conditions: " << allConditions.size() << std::endl;
       for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
-        Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
+        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
         if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
         else           {std::cout << std::hex; width = 16; fmt = "0x";}
         std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "  	<< fmt << std::setw(width) << std::setfill('0') << condition->getID()
@@ -168,7 +168,7 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
 
 
 // display information on the software environmet
-static void displayInfoSW(Glib::RefPtr<SAFTd_Proxy> saftd) {
+static void displayInfoSW(std::shared_ptr<SAFTd_Proxy> saftd) {
   std::string sourceVersion;
   std::string buildInfo;
   
@@ -181,14 +181,14 @@ static void displayInfoSW(Glib::RefPtr<SAFTd_Proxy> saftd) {
 
 
 // display information on the hardware environmet
-static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
+static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
   std::string sourceVersion;
   std::string buildInfo;
   std::string ebDevice;  
   std::string devName;
   map< std::string, std::string > allDevices;
   map<std::string, std::string>::iterator i;
-  Glib::RefPtr<TimingReceiver_Proxy> aDevice;
+  std::shared_ptr<TimingReceiver_Proxy> aDevice;
   
   map< std::string, std::string > gatewareInfo;
   map<std::string, std::string>::iterator j;
@@ -220,7 +220,7 @@ static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
 } // displayInfoHW
 
 
-static void displayInfoGW(Glib::RefPtr<TimingReceiver_Proxy> receiver)
+static void displayInfoGW(std::shared_ptr<TimingReceiver_Proxy> receiver)
 {
   std::cout << receiver->getGatewareVersion() << std::endl;
 } // displayInfoGW
@@ -417,7 +417,7 @@ int main(int argc, char** argv)
   try {
     // initialize required stuff
     Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // do display information that is INDEPENDANT of a specific device
     if (infoDispSW) displayInfoSW(saftd);
@@ -439,7 +439,7 @@ int main(int argc, char** argv)
     
     // get a specific device
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
     switch (useFirstDev) {
     case true  :
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
@@ -458,7 +458,7 @@ int main(int argc, char** argv)
     if (infoDispGW) displayInfoGW(receiver);
     
     
-    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
     // display status of software actions
     if (statusDisp) displayStatus(receiver, sink);
@@ -490,7 +490,7 @@ int main(int argc, char** argv)
     
     // snoop
     if (eventSnoop) {
-      Glib::RefPtr<SoftwareCondition_Proxy> condition 
+      std::shared_ptr<SoftwareCondition_Proxy> condition 
         = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
       condition->setAcceptLate(true);

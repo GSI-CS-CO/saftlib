@@ -38,27 +38,27 @@ namespace saftbus
 			const std::string&  	name,
 			const std::string&  	object_path,
 			const std::string&  	interface_name,
-			const Glib::RefPtr< InterfaceInfo >&  	info = Glib::RefPtr< InterfaceInfo >(),
+			const std::shared_ptr< InterfaceInfo >&  	info = std::shared_ptr< InterfaceInfo >(),
 			//ProxyFlags  	flags = PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL,
             saftlib::SignalGroup    &signalGroup = saftlib::globalSignalGroup 
 		);
 		~Proxy();
 
-		using MapChangedProperties = std::map<std::string, Glib::VariantBase>;
+		using MapChangedProperties = std::map<std::string, Serial>;
 
-		void get_cached_property (Glib::VariantBase& property, const std::string& property_name) const ;
+		void get_cached_property (Serial& property, const std::string& property_name) const ;
 
 		virtual void on_properties_changed(const MapChangedProperties& changed_properties, const std::vector< std::string >& invalidated_properties);
-		virtual void on_signal (const std::string& sender_name, const std::string& signal_name, const Glib::VariantContainerBase& parameters);
-		Glib::RefPtr<saftbus::ProxyConnection> get_connection() const;
+		virtual void on_signal (const std::string& sender_name, const std::string& signal_name, const Serial& parameters);
+		std::shared_ptr<saftbus::ProxyConnection> get_connection() const;
 
 		std::string get_object_path() const;
 		std::string get_name() const;
 
-		const Glib::VariantContainerBase& call_sync(std::string function_name, const Glib::VariantContainerBase &query);
+		const Serial& call_sync(std::string function_name, const Serial &query);
 
 
-		static void wait_for_signal(const std::vector<Glib::RefPtr<Proxy> > &proxy_band);
+		static void wait_for_signal(const std::vector<std::shared_ptr<Proxy> > &proxy_band);
 
 		int get_reading_end_of_signal_pipe();
 
@@ -67,7 +67,7 @@ namespace saftbus
 
 	private:
 
-		static Glib::RefPtr<saftbus::ProxyConnection> _connection;
+		static std::shared_ptr<saftbus::ProxyConnection> _connection;
 
 		static int _global_id_counter;
 		static std::mutex _id_counter_mutex;
@@ -78,10 +78,10 @@ namespace saftbus
 		std::string _interface_name;
 
 
-		Glib::Variant<std::vector<Glib::VariantBase> > _call_sync_result;
+		Serial            _call_sync_result;
 		std::vector<char> _call_sync_result_buffer;
 
-		Glib::VariantContainerBase _result;
+		Serial            _result;
 
 		// A Unix pipe that is private between a Saftlib device and a Saftlib Proxy object.
 		// It serves as independent fast channel for signals from the device to the Proxy.

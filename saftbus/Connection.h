@@ -47,7 +47,7 @@ namespace saftbus
 		guint 	register_object (const std::string& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
 		bool 	unregister_object (guint registration_id);
 
-		using SlotSignal = sigc::slot<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&>;
+		using SlotSignal = sigc::slot<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&>;
 
 		// signal_subscribe and signal_unsubscribe are ONLY used by the driver of Owned.
 		guint signal_subscribe 	( 	const SlotSignal&  	slot,
@@ -60,7 +60,11 @@ namespace saftbus
 			);
 		void signal_unsubscribe 	( 	guint  	subscription_id	) ;
 
-		void 	emit_signal (const std::string& object_path, const std::string& interface_name, const std::string& signal_name, const std::string& destination_bus_name=std::string(), const Glib::VariantContainerBase& parameters=Glib::VariantContainerBase());
+		void 	emit_signal (const std::string& object_path, 
+			                 const std::string& interface_name, 
+			                 const std::string& signal_name, 
+			                 const std::string& destination_bus_name=std::string(), 
+			                 const Serial& parameters=Serial());
 
 		bool dispatch(Slib::IOCondition condition, Socket *socket);
 
@@ -88,7 +92,7 @@ namespace saftbus
 
 
 		// 	     // handle    // signal
-		std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+		std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&> > _handle_to_signal_map;
 		std::map<std::string, std::set<guint> > _id_handles_map;
 		std::set<guint> _erased_handles;
 

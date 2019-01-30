@@ -105,23 +105,40 @@ void ProxyConnection::remove_proxy_signal_fd(std::string object_path,
 	saftbus::write(get_fd(), global_id);
 }
 
-Glib::VariantContainerBase& ProxyConnection::call_sync (const std::string& object_path, const std::string& interface_name, const std::string& name, const Glib::VariantContainerBase& parameters, const std::string& bus_name, int timeout_msec)
+Serial& ProxyConnection::call_sync (const std::string& object_path, 
+	                                const std::string& interface_name, 
+	                                const std::string& name, 
+	                                const Serial& parameters, 
+	                                const std::string& bus_name, 
+	                                int timeout_msec)
 {
 	try {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
 	// perform a remote function call
 	// first append message meta informations like: type of message, recipient, sender, interface name
-	std::vector<Glib::VariantBase> message;
-	message.push_back(Glib::Variant<std::string>::create(object_path));
-	message.push_back(Glib::Variant<std::string>::create(_saftbus_id));
-	message.push_back(Glib::Variant<std::string>::create(interface_name));
-	message.push_back(Glib::Variant<std::string>::create(name)); // name can be method_name or property_name
-	message.push_back(parameters);
-	// then convert into a variant vector type
-	Glib::Variant<std::vector<Glib::VariantBase> > var_message = Glib::Variant<std::vector<Glib::VariantBase> >::create(message);
+	// std::vector<Glib::VariantBase> message;
+	// message.push_back(Glib::Variant<std::string>::create(object_path));
+	// message.push_back(Glib::Variant<std::string>::create(_saftbus_id));
+	// message.push_back(Glib::Variant<std::string>::create(interface_name));
+	// message.push_back(Glib::Variant<std::string>::create(name)); // name can be method_name or property_name
+	// message.push_back(parameters);
+	// // then convert into a variant vector type
+	// Glib::Variant<std::vector<Glib::VariantBase> > var_message = Glib::Variant<std::vector<Glib::VariantBase> >::create(message);
+
+	std::cerr << "ProxyConnection::call_sync(" << object_path << ", " 
+	                                           << interface_name << ", "
+	                                           << name << ")" << std::endl;
+
+	Serial message;
+	message.put(object_path);
+	message.put(_saftbus_id);
+	message.put(interface_name);
+	message.put(name);
+	message.put(parameters);
+
 	// serialize into a byte stream
-	guint32 size = var_message.get_size();
-	const char *data_ptr =  static_cast<const char*>(var_message.get_data());
+	uint32_t size = message.get_size();
+	const char *data_ptr =  static_cast<const char*>(message.get_data());
 	// write the data into the socket
 	saftbus::write(get_fd(), saftbus::METHOD_CALL);
 	saftbus::write(get_fd(), size);
@@ -140,12 +157,19 @@ Glib::VariantContainerBase& ProxyConnection::call_sync (const std::string& objec
 	} else if (type == saftbus::METHOD_REPLY) {
 		// read regular function return value
 		saftbus::read(get_fd(), size);
-		_call_sync_result_buffer.resize(size);
-		saftbus::read_all(get_fd(), &_call_sync_result_buffer[0], size);
+		//_call_sync_result_buffer.resize(size);
+		_call_sync_result.data().resize(size);
+		if (size > 0) {
+			saftbus::read_all(get_fd(), &_call_sync_result.data()[0], size);
+		}
 
 		// deserialize the content into our buffer
-		deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
-		return _call_sync_result;					
+		//deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
+
+		std::cerr << "ProxyConnection::call_sync(" << name << ") received Serial" << std::endl;
+		//_call_sync_result.print();
+		std::cerr << "ProxyConnection::call_sync(" << name << ") done " << std::endl;
+		return _call_sync_result;
 	} else {
 		std::ostringstream msg;
 		msg << "ProxyConnection::call_sync() : unexpected type " << type << " instead of METHOD_REPLY or METHOD_ERROR";

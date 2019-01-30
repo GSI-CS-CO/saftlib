@@ -201,7 +201,7 @@ int main (int argc, char** argv)
         std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
         return (-1);
       }
-      Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+      std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
       
       /* Check if timing receiver is locked */
       wrLocked = receiver->getLocked();
@@ -233,7 +233,7 @@ int main (int argc, char** argv)
       {
         for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
         {
-          Glib::RefPtr<Output_Proxy> output_proxy = Output_Proxy::create(it->second);
+          std::shared_ptr<Output_Proxy> output_proxy = Output_Proxy::create(it->second);
           if (verbose_mode) { std::cout << "Info: Found " << it->first << std::endl; }
           total_ios++;
           
@@ -254,7 +254,7 @@ int main (int argc, char** argv)
             if (verbose_mode) { std::cout << "Found Partner Path: " << io_partner << std::endl; }
             if (setup_io)
             {
-              Glib::RefPtr<Input_Proxy> input_proxy = Input_Proxy::create(io_partner);
+              std::shared_ptr<Input_Proxy> input_proxy = Input_Proxy::create(io_partner);
               if (input_proxy->getInputTerminationAvailable())
               { 
                 if (verbose_mode) { std::cout << "Turning input termination off... " << std::endl; }
@@ -264,8 +264,8 @@ int main (int argc, char** argv)
           }
           
           /* Setup conditions */
-          Glib::RefPtr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
-          Glib::RefPtr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
+          std::shared_ptr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
+          std::shared_ptr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
           
           /* Accept all kinds of events */
           condition_high->setAcceptConflict(true);
@@ -294,8 +294,8 @@ int main (int argc, char** argv)
        }
        
        /* Get connection */
-       Glib::RefPtr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
-       Glib::RefPtr<SCUbusCondition_Proxy> scubus_condition;
+       std::shared_ptr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
+       std::shared_ptr<SCUbusCondition_Proxy> scubus_condition;
        scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
         
        /* Accept every kind of event */
@@ -340,8 +340,8 @@ int main (int argc, char** argv)
       {
         /* Setup SoftwareActionSink */
         std::cout << "Waiting for timing events..." << std::endl;
-        Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-        Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
+        std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
         condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Accept all kinds of events */
