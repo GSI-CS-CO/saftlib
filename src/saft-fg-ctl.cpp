@@ -341,7 +341,7 @@ int main(int argc, char** argv)
     //     SAFTd has been properly configured to run autonomously at this point.
     // ... of course, then the user doesn't get the final error status message either
     while(true) {
-      std::cerr << "tick" << std::endl;
+      //std::cerr << "tick" << std::endl;
       saftlib::wait_for_signal();
     }
     

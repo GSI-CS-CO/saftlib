@@ -59,7 +59,7 @@ namespace Slib
 				}
 			}
 			// calculate timeout from signal_timeout_intervals
-			for (int i = 0; i < signal_timeout_time_left.size(); ++i ) {
+			for (unsigned i = 0; i < signal_timeout_time_left.size(); ++i ) {
 				if (timeout_ms == -1 || signal_timeout_time_left[i] < timeout_ms) {
 					timeout_ms = signal_timeout_time_left[i];
 				}
@@ -98,7 +98,7 @@ namespace Slib
 				               + (stop.tv_nsec - start.tv_nsec)/1000000;
 
 				std::cerr << "poll done .... dt_ms = " << dt_ms << std::endl;				               
-				for (int i = 0; i < signal_timeout_time_left.size(); ++i) {
+				for (unsigned i = 0; i < signal_timeout_time_left.size(); ++i) {
 					if (signal_timeout_time_left[i] >= dt_ms) {
 						signal_timeout_time_left[i] -= dt_ms;
 					} else {
@@ -110,7 +110,7 @@ namespace Slib
 			} else if (poll_result == 0) { // poll timed out
 				std::cerr << "poll done timeout" << std::endl;
 				bool need_cleanup = false;
-				for (int i = 0; i < signal_timeout_time_left.size(); ++i) {
+				for (unsigned i = 0; i < signal_timeout_time_left.size(); ++i) {
 					// subtract the timeout_ms as used in the poll call
 					if (signal_timeout_time_left[i] >= timeout_ms) {
 						signal_timeout_time_left[i] -= timeout_ms;
@@ -136,7 +136,7 @@ namespace Slib
 					std::vector<unsigned> new_signal_timeout_intervals;
 					std::vector<sigc::slot<bool> > new_signal_timeout_slots;
 					// clean-up the signal timeouts (remove all the timeouts with time_left == 0)
-					for (int i = 0; i < signal_timeout_time_left.size(); ++i) {
+					for (unsigned i = 0; i < signal_timeout_time_left.size(); ++i) {
 						if (signal_timeout_time_left[i] > 0) {
 							new_signal_timeout_intervals.push_back(signal_timeout_intervals[i]);
 							new_signal_timeout_slots.push_back(signal_timeout_slots[i]);
@@ -165,7 +165,7 @@ namespace Slib
 			if (signal_io_removed_indices.size() > 0) {
 				std::vector<struct pollfd>                  new_signal_io_pfds;
 				std::vector<sigc::slot<bool, IOCondition> > new_signal_io_slots;
-				for (int i = 0; i < signal_io_pfds.size(); ++i) {
+				for (unsigned i = 0; i < signal_io_pfds.size(); ++i) {
 					bool found_in_removal_list = false;
 					for (int n = 0; n < signal_io_removed_indices.size(); ++n) {
 						if (i == signal_io_removed_indices[n]) {
@@ -184,7 +184,7 @@ namespace Slib
 
 			// add the newly created timeouts
 			if (added_signal_timeout_intervals.size() > 0) {
-				for (int i = 0; i < added_signal_timeout_intervals.size(); ++i) {
+				for (unsigned i = 0; i < added_signal_timeout_intervals.size(); ++i) {
 					signal_timeout_intervals.push_back(added_signal_timeout_intervals[i]);
 					signal_timeout_slots.push_back(added_signal_timeout_slots[i]);
 					signal_timeout_time_left.push_back(added_signal_timeout_intervals[i]);
@@ -193,7 +193,7 @@ namespace Slib
 
 			// add the newly created signal_ios
 			if (added_signal_io_pfds.size() > 0) {
-				for (int i = 0; i < added_signal_io_pfds.size(); ++i) {
+				for (unsigned i = 0; i < added_signal_io_pfds.size(); ++i) {
 					signal_io_pfds.push_back(added_signal_io_pfds[i]);
 					signal_io_slots.push_back(added_signal_io_slots[i]);
 				}

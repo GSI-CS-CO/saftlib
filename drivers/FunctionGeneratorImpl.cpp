@@ -84,6 +84,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
+  std::cerr << "FunctionGeneratorImpl::~FunctionGeneratorImpl() called" << std::endl;
   resetTimeout.disconnect(); // do not run ResetFailed
   dev->getDevice().release_irq(irq);
   
