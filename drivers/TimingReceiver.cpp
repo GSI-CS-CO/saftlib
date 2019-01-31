@@ -80,8 +80,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   getLocked();
 
   // poll every 1s some registers
-  // TODO: implement this in Slib
-  //pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
+  pollConnection = Slib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
   
   // Probe the configuration of the ECA
   eb_data_t raw_channels, raw_search, raw_walker, raw_type, raw_max_num, raw_capacity;

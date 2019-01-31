@@ -286,10 +286,9 @@ void ActionSink::receiveMSI(uint8_t code)
     } else {
       overflowPending.disconnect(); // just to be safe
       uint64_t exec = overflowUpdate + signalRate;
-      // TODO: implement this in Slib::
-      // overflowPending = Glib::signal_timeout().connect(
-      //   sigc::bind(sigc::mem_fun(*this, &ActionSink::updateOverflow), exec),
-      //   (exec - time) / 1000000);
+      overflowPending = Slib::signal_timeout().connect(
+        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateOverflow), exec),
+        (exec - time) / 1000000);
     }
     break;
   case ECA_VALID:
@@ -298,10 +297,9 @@ void ActionSink::receiveMSI(uint8_t code)
     } else {
       actionPending.disconnect(); // just to be safe
       uint64_t exec = actionUpdate + signalRate;
-      // TODO: implement this in Slib::
-      // actionPending = Glib::signal_timeout().connect(
-      //   sigc::bind(sigc::mem_fun(*this, &ActionSink::updateAction), exec),
-      //   (exec - time) / 1000000);
+      actionPending = Slib::signal_timeout().connect(
+        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateAction), exec),
+        (exec - time) / 1000000);
     }
     break;
   case ECA_LATE:
@@ -310,10 +308,9 @@ void ActionSink::receiveMSI(uint8_t code)
     } else {
       latePending.disconnect(); // just to be safe
       uint64_t exec = lateUpdate + signalRate;
-      // TODO: implement this in Slib::
-      // latePending = Glib::signal_timeout().connect(
-      //   sigc::bind(sigc::mem_fun(*this, &ActionSink::updateLate), exec),
-      //   (exec - time) / 1000000);
+      latePending = Slib::signal_timeout().connect(
+        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateLate), exec),
+        (exec - time) / 1000000);
     }
     break;
   case ECA_EARLY:
@@ -322,10 +319,9 @@ void ActionSink::receiveMSI(uint8_t code)
     } else {
       earlyPending.disconnect(); // just to be safe
       uint64_t exec = earlyUpdate + signalRate;
-      // TODO: implement this in Slib::
-      // earlyPending = Glib::signal_timeout().connect(
-      //   sigc::bind(sigc::mem_fun(*this, &ActionSink::updateEarly), exec),
-      //   (exec - time) / 1000000);
+      earlyPending = Slib::signal_timeout().connect(
+        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateEarly), exec),
+        (exec - time) / 1000000);
     }
     break;
   case ECA_CONFLICT:
@@ -334,10 +330,9 @@ void ActionSink::receiveMSI(uint8_t code)
     } else {
       conflictPending.disconnect(); // just to be safe
       uint64_t exec = conflictUpdate + signalRate;
-      // TODO: implement this in Slib::
-      // conflictPending = Glib::signal_timeout().connect(
-      //   sigc::bind(sigc::mem_fun(*this, &ActionSink::updateConflict), exec),
-      //   (exec - time) / 1000000);
+      conflictPending = Slib::signal_timeout().connect(
+        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateConflict), exec),
+        (exec - time) / 1000000);
     }
     break;
   case ECA_DELAYED:
@@ -346,10 +341,9 @@ void ActionSink::receiveMSI(uint8_t code)
     } else {
       delayedPending.disconnect(); // just to be safe
       uint64_t exec = delayedUpdate + signalRate;
-      // TODO: implement this in Slib::
-      // delayedPending = Glib::signal_timeout().connect(
-      //   sigc::bind(sigc::mem_fun(*this, &ActionSink::updateDelayed), exec),
-      //   (exec - time) / 1000000);
+      delayedPending = Slib::signal_timeout().connect(
+        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateDelayed), exec),
+        (exec - time) / 1000000);
     }
     break;
   default:

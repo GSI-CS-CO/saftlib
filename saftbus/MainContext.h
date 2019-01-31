@@ -61,6 +61,9 @@ namespace Slib
 		// can be used to attach file descriptors 
 		sigc::connection connect(sigc::slot<bool, IOCondition> slot, int fd, IOCondition condition, Priority priority=PRIORITY_DEFAULT);
 
+		// connect timeouts 
+		sigc::connection connect(sigc::slot<bool> slot, unsigned interval, Priority priority=PRIORITY_DEFAULT);
+
 		unsigned id_counter;
 	private:
 
@@ -69,16 +72,22 @@ namespace Slib
 
 		static std::shared_ptr< MainContext > default_context;
 		static bool default_created;
+		bool during_iteration;
 
 		std::vector<struct pollfd>                  signal_io_pfds;
 		std::vector<sigc::slot<bool, IOCondition> > signal_io_slots;
 		std::vector<struct pollfd>                  added_signal_io_pfds;
 		std::vector<sigc::slot<bool, IOCondition> > added_signal_io_slots;
 
-		bool during_iteration;
+		std::vector<unsigned>                       signal_timeout_intervals;
+		std::vector<unsigned>                       signal_timeout_time_left;
+		std::vector<sigc::slot<bool> >              signal_timeout_slots;
+		std::vector<unsigned>                       added_signal_timeout_intervals;
+		std::vector<sigc::slot<bool> >              added_signal_timeout_slots;
 	};
 
 	MainContext& signal_io();
+	MainContext& signal_timeout();
 
 
 

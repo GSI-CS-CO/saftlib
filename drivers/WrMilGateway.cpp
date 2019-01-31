@@ -157,8 +157,7 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   std::cerr << "lm32 slot configured to = " << slot << std::endl;
   
   // poll some registers periodically
-  // TODO: implement this in Slib::
-  //pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
+  pollConnection = Slib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
 }
 
 WrMilGateway::~WrMilGateway()
