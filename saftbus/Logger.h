@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
-#include <glibmm.h>
+#include <sigc++/sigc++.h>
 
 namespace saftbus 
 {

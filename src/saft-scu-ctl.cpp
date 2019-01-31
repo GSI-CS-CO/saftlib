@@ -11,7 +11,7 @@
 /* ==================================================================================================== */
 #include <stdio.h>
 #include <iostream>
-#include <giomm.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -74,10 +74,10 @@ int main (int argc, char** argv)
   bool show_help       = false;
   bool translate_mask  = false;
   bool list_conditions = false;
-  guint64 eventID      = 0x0;
-  guint64 eventMask    = 0x0;
-  gint64  offset       = 0x0;
-  gint32  tag          = 0x0;
+  uint64_t eventID      = 0x0;
+  uint64_t eventMask    = 0x0;
+  int64_t  offset       = 0x0;
+  int32_t  tag          = 0x0;
   std::string scu_name = "None";
   std::string scu_sink_name = "Unknown";
   
@@ -141,8 +141,6 @@ int main (int argc, char** argv)
   /* Get the device name */
   deviceName = argv[optind];
   
-  /* Initialize Glib stuff */
-  Gio::init();
   
   /* Try to connect to saftd */
   try 
@@ -248,7 +246,7 @@ int main (int argc, char** argv)
     }
     
   } 
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }

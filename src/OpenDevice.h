@@ -21,7 +21,7 @@
 #define SAFTLIB_OPEN_DEVICE_H
 
 #include "Device.h"
-#include <glibmm.h>
+#include "BaseObject.h"
 
 namespace saftlib {
 
@@ -30,7 +30,7 @@ struct OpenDevice {
   std::string name;
   std::string objectPath;
   std::string etherbonePath;
-  std::shared_ptr<Glib::Object> ref;
+  std::shared_ptr<BaseObject> ref;
   
   OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last);
 };

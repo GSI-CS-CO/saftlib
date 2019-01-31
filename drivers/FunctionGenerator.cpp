@@ -88,7 +88,7 @@ void FunctionGenerator::on_fg_refill()
 }
 
 
-void FunctionGenerator::on_fg_started(guint64 time)
+void FunctionGenerator::on_fg_started(uint64_t time)
 {
   if (!getOwner().empty())
   {
@@ -96,7 +96,7 @@ void FunctionGenerator::on_fg_started(guint64 time)
   }
 }
 
-void FunctionGenerator::on_fg_stopped(guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
+void FunctionGenerator::on_fg_stopped(uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
   if (!getOwner().empty())
   {
@@ -112,9 +112,9 @@ std::shared_ptr<FunctionGenerator> FunctionGenerator::create(const ConstructorTy
 
 
 bool FunctionGenerator::AppendParameterSet(
-  const std::vector< gint16 >& coeff_a,
-  const std::vector< gint16 >& coeff_b,
-  const std::vector< gint32 >& coeff_c,
+  const std::vector< int16_t >& coeff_a,
+  const std::vector< int16_t >& coeff_b,
+  const std::vector< int32_t >& coeff_c,
   const std::vector< unsigned char >& step,
   const std::vector< unsigned char >& freq,
   const std::vector< unsigned char >& shift_a,
@@ -130,7 +130,7 @@ void FunctionGenerator::Flush()
  	fgImpl->Flush();
 }
 
-guint32 FunctionGenerator::getVersion() const
+uint32_t FunctionGenerator::getVersion() const
 {
   return fgImpl->getVersion();
 }
@@ -165,17 +165,17 @@ bool FunctionGenerator::getRunning() const
   return fgImpl->getRunning();
 }
 
-guint32 FunctionGenerator::getStartTag() const
+uint32_t FunctionGenerator::getStartTag() const
 {
   return fgImpl->getStartTag();
 }
 
-guint64 FunctionGenerator::ReadFillLevel()
+uint64_t FunctionGenerator::ReadFillLevel()
 {
   return fgImpl->ReadFillLevel();
 }
 
-guint32 FunctionGenerator::ReadExecutedParameterCount()
+uint32_t FunctionGenerator::ReadExecutedParameterCount()
 {
 	return fgImpl->ReadExecutedParameterCount();
 }
@@ -205,7 +205,7 @@ void FunctionGenerator::ownerQuit()
   Reset();
 }
 
-void FunctionGenerator::setStartTag(guint32 val)
+void FunctionGenerator::setStartTag(uint32_t val)
 {
   ownerOnly();
   fgImpl->setStartTag(val);

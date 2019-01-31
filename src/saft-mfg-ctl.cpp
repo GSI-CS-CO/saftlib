@@ -23,8 +23,10 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <iostream>
-#include <giomm.h>
+#include <algorithm>
 #include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "interfaces/SAFTd.h"
@@ -93,9 +95,9 @@ static bool fg_all_armed=false;
 
 // The parsed contents of the datafile given to the demo program
 struct ParamSet {
-  std::vector< gint16 > coeff_a;
-  std::vector< gint16 > coeff_b;
-  std::vector< gint32 > coeff_c;
+  std::vector< int16_t > coeff_a;
+  std::vector< int16_t > coeff_b;
+  std::vector< int32_t > coeff_c;
   std::vector< unsigned char > step;
   std::vector< unsigned char > freq;
   std::vector< unsigned char > shift_a;
@@ -103,7 +105,7 @@ struct ParamSet {
 };
 
   
-void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag);
+void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, uint64_t event, bool repeat, bool generate, uint32_t tag);
 
 
 // Hand off the entire datafile to SAFTd
@@ -120,10 +122,10 @@ static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& p
 }
 
 // Pretty print timestamp
-static const char *format_time(guint64 time)
+static const char *format_time(uint64_t time)
 {
   static char full[80];
-  guint64 ns    = time % 1000000000;
+  uint64_t ns    = time % 1000000000;
   time_t  s     = time / 1000000000;
   struct tm *tm = gmtime(&s);
   char date[40];
@@ -133,7 +135,7 @@ static const char *format_time(guint64 time)
   return full;
 }
 
-static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, guint64 tag)
+static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, uint64_t tag)
 {
   if (armed) {
   
@@ -146,13 +148,13 @@ static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, gu
 
 
 // Report when the function generator starts
-static void on_start(guint64 time)
+static void on_start(uint64_t time)
 {
   std::cout << "Function generator started at " << format_time(time) << std::endl;
 }
 
 // Report when the function generator stops
-static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
+static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
   // was there an error?
@@ -165,7 +167,7 @@ static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool 
 }
 
 // Report on the individual function generators
-static void on_master_started(std::string fg_name, guint64 time)
+static void on_master_started(std::string fg_name, uint64_t time)
 {
   if (loglevel>0) std::cout << fg_name << " started at " << format_time(time) << std::endl;
 }
@@ -185,7 +187,7 @@ static void on_master_refill(std::string fg_name)
 {
   if (loglevel>0) std::cout << fg_name << " refill request" << std::endl;
 }
-static void on_master_stop(std::string fg_name, guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
+static void on_master_stop(std::string fg_name, uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   if (loglevel>0) std::cout << fg_name << " stopped at " << format_time(time) << std::endl;
   // was there an error?
@@ -209,7 +211,7 @@ static void on_all_armed()
 
 }
 
-static void on_all_stop(guint64 time)
+static void on_all_stop(uint64_t time)
 {
   std::cout << "All fgs stopped at " << format_time(time) << std::endl;
   {
@@ -280,14 +282,13 @@ int main(int argc, char** argv)
 {
   std::cout << "******************** saft-mfg-ctl start ******************" << std::endl;
   try {
-    Gio::init();
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
     std::string device;
     std::string fg;
-    guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
-    guint64 event = 0;
+    uint32_t tag = 0xdeadbeef; // !!! fix me; use a safe default
+    uint64_t event = 0;
     bool eventSet = false;
     bool repeat = false;
     bool generate = false;
@@ -345,7 +346,7 @@ int main(int argc, char** argv)
     
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
     ParamSet params;
-    gint32 a, la, b, lb, c, n, s, num;
+    int32_t a, la, b, lb, c, n, s, num;
     while((num = fscanf(stdin, "%d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n)) == 6) {
       // turn off warning
       if (params.coeff_a.empty()) alarm(0);
@@ -416,8 +417,8 @@ int main(int argc, char** argv)
     test_master_fg(scu, receiver, params, eventSet, event, repeat, generate, tag);
 //    test_multiple_fgs(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
 
-  } catch (const Glib::Error& error) {
-    std::cerr << "Glib error: " << error.what() << std::endl;
+  } catch (const saftbus::Error& error) {
+    std::cerr << "saftbus error: " << error.what() << std::endl;
   }
 
   std::cerr << "--------- main stopped" << std::endl;
@@ -430,7 +431,7 @@ int main(int argc, char** argv)
 
 
 
-void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, guint64 event, bool repeat, bool generate, guint32 tag)
+void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, uint64_t event, bool repeat, bool generate, uint32_t tag)
 {
     map<std::string, std::string> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
     std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
@@ -501,9 +502,9 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
  		if (loglevel>0) std::cout << "Tag set" << std::endl;
     
     // Load up the parameters
-		std::vector<std::vector<gint16>> coeff_a;
-		std::vector<std::vector<gint16>> coeff_b;
-		std::vector<std::vector<gint32>> coeff_c;
+		std::vector<std::vector<int16_t>> coeff_a;
+		std::vector<std::vector<int16_t>> coeff_b;
+		std::vector<std::vector<int32_t>> coeff_c;
     std::vector<std::vector<unsigned char>>step;
     std::vector<std::vector<unsigned char>>freq;
     std::vector<std::vector<unsigned char>>shift_a;

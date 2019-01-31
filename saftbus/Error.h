@@ -1,7 +1,7 @@
 #ifndef SAFTBUS_ERROR_H_
 #define SAFTBUS_ERROR_H_
 
-#include <giomm.h>
+#include <sigc++/sigc++.h>
 
 namespace saftbus
 {

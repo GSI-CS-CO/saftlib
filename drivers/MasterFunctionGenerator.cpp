@@ -23,6 +23,7 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <assert.h>
+#include <algorithm>
 
 #include "RegisteredObject.h"
 #include "MasterFunctionGenerator.h"
@@ -107,7 +108,7 @@ void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImp
   }
 }
 
-void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time)
+void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time)
 {
 
   if (generateIndividualSignals)
@@ -117,7 +118,7 @@ void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImp
 }
 
 // Forward Stopped signal 
-void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
+void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
   if (generateIndividualSignals)
   {
@@ -141,9 +142,9 @@ std::shared_ptr<MasterFunctionGenerator> MasterFunctionGenerator::create(const C
 }
 
 bool MasterFunctionGenerator::AppendParameterSets(
-	const std::vector< std::vector< gint16 > >& coeff_a, 
-	const std::vector< std::vector< gint16 > >& coeff_b, 
-	const std::vector< std::vector< gint32 > >& coeff_c, 
+	const std::vector< std::vector< int16_t > >& coeff_a, 
+	const std::vector< std::vector< int16_t > >& coeff_b, 
+	const std::vector< std::vector< int32_t > >& coeff_c, 
 	const std::vector< std::vector< unsigned char > >& step, 
 	const std::vector< std::vector< unsigned char > >& freq, 
 	const std::vector< std::vector< unsigned char > >& shift_a, 
@@ -211,7 +212,7 @@ void MasterFunctionGenerator::Flush()
 }
 
 
-guint32 MasterFunctionGenerator::getStartTag() const
+uint32_t MasterFunctionGenerator::getStartTag() const
 {
   return startTag;
 }
@@ -283,7 +284,7 @@ void MasterFunctionGenerator::ownerQuit()
   activeFunctionGenerators = allFunctionGenerators;
 }
 
-void MasterFunctionGenerator::setStartTag(guint32 val)
+void MasterFunctionGenerator::setStartTag(uint32_t val)
 {
   ownerOnly();
 
@@ -305,9 +306,9 @@ void MasterFunctionGenerator::setStartTag(guint32 val)
 }
 
 
-std::vector<guint32> MasterFunctionGenerator::ReadExecutedParameterCounts()
+std::vector<uint32_t> MasterFunctionGenerator::ReadExecutedParameterCounts()
 {
-	std::vector<guint32> counts;
+	std::vector<uint32_t> counts;
 	for (auto fg : activeFunctionGenerators)
 	{
 		counts.push_back(fg->executedParameterCount);
@@ -315,9 +316,9 @@ std::vector<guint32> MasterFunctionGenerator::ReadExecutedParameterCounts()
 	return counts;
 }
 
-std::vector<guint64> MasterFunctionGenerator::ReadFillLevels()
+std::vector<uint64_t> MasterFunctionGenerator::ReadFillLevels()
 {
-	std::vector<guint64> levels;
+	std::vector<uint64_t> levels;
 	for (auto fg : activeFunctionGenerators)
 	{
 		levels.push_back(fg->ReadFillLevel());

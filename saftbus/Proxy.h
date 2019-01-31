@@ -2,8 +2,9 @@
 #define G10_BDUS_PROXY_H_
 
 #include <map>
-#include <giomm.h>
+#include <sigc++/sigc++.h>
 #include <thread>
+#include <mutex>
 
 #include "saftbus.h"
 #include "MainContext.h"
@@ -31,7 +32,7 @@ namespace saftbus
 
 	// This class mimics the Gio::DBus::Proxy class interface. It is different from the Gio::DBus::Proxy 
 	// in that it depends on a dedicated saftbus::ProxyConnection class and not the saftbus::Connection class.
-	class Proxy : public Glib::Object//Base
+	class Proxy /*: public Glib::Object*///Base
 	{
 	public:
 		Proxy(saftbus::BusType  	bus_type,

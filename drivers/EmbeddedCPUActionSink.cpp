@@ -36,7 +36,7 @@ const char *EmbeddedCPUActionSink::getInterfaceName() const
   return "EmbeddedCPUActionSink";
 }
 
-std::string EmbeddedCPUActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag)
+std::string EmbeddedCPUActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag)
 {
   return NewConditionHelper(active, id, mask, offset, tag, false,
     sigc::ptr_fun(&EmbeddedCPUCondition::create));

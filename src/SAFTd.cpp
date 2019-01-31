@@ -22,9 +22,10 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include <glibmm.h>
+//#include <glibmm.h>
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #include "SAFTd.h"
 #include "Driver.h"
@@ -76,7 +77,7 @@ SAFTd::~SAFTd()
     eb_source.disconnect();
     msi_source.disconnect();
     socket.close();
-  } catch (const Glib::Error& ex) {
+  } catch (const saftbus::Error& ex) {
     clog << kLogErr << "Could not clean up: " << ex.what() << std::endl;
     exit(1);
   } catch(const etherbone::exception_t& ex) {

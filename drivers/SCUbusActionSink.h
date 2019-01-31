@@ -42,8 +42,8 @@ class SCUbusActionSink : public ActionSink, public iSCUbusActionSink
     const char *getInterfaceName() const;
     
     // iSCUbusAcitonSink
-    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag);
-    void InjectTag(guint32 tag);
+    std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
+    void InjectTag(uint32_t tag);
     
   protected:
     SCUbusActionSink(const ConstructorType& args);

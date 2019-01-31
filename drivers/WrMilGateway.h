@@ -59,27 +59,27 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void ResetGateway();
     void KillGateway();
 
-    std::vector< guint32 > getRegisterContent()  const;
-    std::vector< guint32 > getMilHistogram()     const;
-    guint32                getWrMilMagic()       const;
-    guint32                getFirmwareState()    const;
-    guint32                getEventSource()      const;
+    std::vector< uint32_t > getRegisterContent()  const;
+    std::vector< uint32_t > getMilHistogram()     const;
+    uint32_t                getWrMilMagic()       const;
+    uint32_t                getFirmwareState()    const;
+    uint32_t                getEventSource()      const;
     unsigned char          getUtcTrigger()       const;
-    guint32                getEventLatency()     const;
-    guint32                getUtcUtcDelay()      const;
-    guint32                getTriggerUtcDelay()  const;
-    guint64                getUtcOffset()        const;
-    guint64                getNumMilEvents()     const;
-    std::vector< guint32 > getLateHistogram()    const;
-    guint32                getNumLateMilEvents() const;
+    uint32_t                getEventLatency()     const;
+    uint32_t                getUtcUtcDelay()      const;
+    uint32_t                getTriggerUtcDelay()  const;
+    uint64_t                getUtcOffset()        const;
+    uint64_t                getNumMilEvents()     const;
+    std::vector< uint32_t > getLateHistogram()    const;
+    uint32_t                getNumLateMilEvents() const;
     bool                   getFirmwareRunning()  const;
     bool                   getInUse()            const;
 
     void setUtcTrigger(unsigned char val);
-    void setEventLatency(guint32 val);
-    void setUtcUtcDelay(guint32 val);
-    void setTriggerUtcDelay(guint32 val);
-    void setUtcOffset(guint64 val);
+    void setEventLatency(uint32_t val);
+    void setUtcUtcDelay(uint32_t val);
+    void setTriggerUtcDelay(uint32_t val);
+    void setUtcOffset(uint64_t val);
     
   protected:
     WrMilGateway(const ConstructorType& args);
@@ -92,20 +92,20 @@ class WrMilGateway : public Owned, public iWrMilGateway
     const int poll_period; // [ms]
 
 
-    guint32 readRegisterContent(guint32 reg_offset) const;
-    void    writeRegisterContent(guint32 reg_offset, guint32 value);
+    uint32_t readRegisterContent(uint32_t reg_offset) const;
+    void    writeRegisterContent(uint32_t reg_offset, uint32_t value);
     bool    firmwareRunning() const;
 
     void irq_handler(eb_data_t msg) const;
 
 
     mutable bool    firmware_running;
-    mutable guint32 firmware_state;
-    mutable guint32 event_source;
-    mutable guint32 num_late_events;
-    guint64 num_mil_events;
-    const guint32 max_time_without_mil_events; // if time_without_events exceeds this, we conclude the gateway isn't used
-    guint32 time_without_mil_events;
+    mutable uint32_t firmware_state;
+    mutable uint32_t event_source;
+    mutable uint32_t num_late_events;
+    uint64_t num_mil_events;
+    const uint32_t max_time_without_mil_events; // if time_without_events exceeds this, we conclude the gateway isn't used
+    uint32_t time_without_mil_events;
 
     sigc::connection pollConnection;
 

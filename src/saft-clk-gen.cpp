@@ -11,12 +11,12 @@
 /* ==================================================================================================== */
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -75,7 +75,7 @@ static int clk_show_table (void)
     }
     
   }
-  catch (const Glib::Error& error) 
+  catch (const saftbus::Error& error) 
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -126,7 +126,7 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
       } 
     }
   }
-  catch (const Glib::Error& error) 
+  catch (const saftbus::Error& error) 
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -242,7 +242,6 @@ int main (int argc, char** argv)
     std::cerr << "Missing device name!" << std::endl;
     return (-1);
   }
-  Gio::init();
   map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
   if (devices.find(deviceName) == devices.end())
   {

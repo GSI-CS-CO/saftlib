@@ -42,20 +42,20 @@ Connection::~Connection()
 // object_path and interface_name link to the vtable given to this function (a table with functions for 
 // "method_call" "set_property" and "get_property"). The interface_name is extracted from the 
 // interface_info object. 
-guint Connection::register_object (const std::string& object_path, 
+unsigned Connection::register_object (const std::string& object_path, 
 								   const std::shared_ptr< InterfaceInfo >& interface_info, 
 								   const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
 	logger.newMsg(0).add("Connection::register_object(").add(object_path).add(")\n");
-	guint registration_id = _saftbus_object_id_counter;
+	unsigned registration_id = _saftbus_object_id_counter;
 	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
 	std::string interface_name = interface_info->get_interface_name();
 	logger.add(" interface_name:").add(interface_name).add(" -> id:").add(registration_id).log();
 	_saftbus_indices[interface_name][object_path] = registration_id;
 	return registration_id;
 }
-bool Connection::unregister_object (guint registration_id)
+bool Connection::unregister_object (unsigned registration_id)
 {
 	logger.newMsg(0).add("Connection::unregister_object(").add(registration_id).add(")\n").log();
 
@@ -70,7 +70,7 @@ bool Connection::unregister_object (guint registration_id)
 // slot is the function that will be the disconnection handler of the saftlib object
 // sender, interface_name, member, and object_path are not used here
 // arg0 is the saftbus_id of the object that is also known to the proxies
-guint Connection::signal_subscribe(const SlotSignal& slot,
+unsigned Connection::signal_subscribe(const SlotSignal& slot,
 								   const std::string& sender,
 								   const std::string& interface_name,
 								   const std::string& member,
@@ -107,7 +107,7 @@ guint Connection::signal_subscribe(const SlotSignal& slot,
 	return 0xffffffff;
 }
 
-void Connection::signal_unsubscribe(guint subscription_id) 
+void Connection::signal_unsubscribe(unsigned subscription_id) 
 {
 	if (subscription_id == 0xffffffff) {
 		std::cerr << "Connection::signal_unsubscribe(-1) is invalid" << std::endl;
@@ -394,8 +394,8 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::write(socket->get_fd(), _socket_owner);
 
 					// 	     // handle    // signal
-					//std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
-					std::map<guint, int> handle_to_signal_map;
+					//std::map<unsigned, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+					std::map<unsigned, int> handle_to_signal_map;
 					for(auto handle: _handle_to_signal_map) {
 						int num_slots = 0;
 						for (auto slt: handle.second.slots()) {
@@ -405,11 +405,11 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					}
 					saftbus::write(socket->get_fd(), handle_to_signal_map);
 
-					//std::map<std::string, std::set<guint> > _id_handles_map;
+					//std::map<std::string, std::set<unsigned> > _id_handles_map;
 					saftbus::write(socket->get_fd(), _id_handles_map);
 
-					//std::set<guint> erased_handles;
-					std::vector<guint> erased_handles;
+					//std::set<unsigned> erased_handles;
+					std::vector<unsigned> erased_handles;
 					for(auto erased_handle: _erased_handles) {
 						erased_handles.push_back(erased_handle);
 					}
@@ -523,7 +523,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					logger.add("           METHOD_CALL received: ");
 					
 					// read the size of serialized data
-					guint32 size;
+					uint32_t size;
 					saftbus::read(socket->get_fd(), size);
 					logger.add(" message size=").add(size);
 
@@ -695,7 +695,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					logger.add("           METHOD_CALL_ASYNC received: ");
 					
 					// read the size of serialized data
-					guint32 size;
+					uint32_t size;
 					saftbus::read(socket->get_fd(), size);
 					logger.add(" message size=").add(size);
 
@@ -705,7 +705,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					//std::vector<char> buffer(size);
 					saftbus::read_all(socket->get_fd(), &payload.data()[0], size);
 
-					guint32 fd_size;
+					uint32_t fd_size;
 					saftbus::read(socket->get_fd(), fd_size);
 					std::vector<int> fd_list;
 					for (int i = 0; i < fd_size; ++i) {
@@ -846,7 +846,7 @@ void Connection::clean_all_fds_from_socket(Socket *socket)
 
 int Connection::socket_nr(Socket *socket)
 {
-	for (guint32 i = 0; i < _sockets.size(); ++i) {
+	for (uint32_t i = 0; i < _sockets.size(); ++i) {
 		if (_sockets[i].get() == socket)
 			return i;
 	}

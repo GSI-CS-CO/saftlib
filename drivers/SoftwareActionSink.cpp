@@ -48,7 +48,7 @@ const char *SoftwareActionSink::getInterfaceName() const
   return "SoftwareActionSink";
 }
 
-void SoftwareActionSink::receiveMSI(guint8 code)
+void SoftwareActionSink::receiveMSI(uint8_t code)
 {
   // Intercept valid action counter increase
   if (code == ECA_VALID) {
@@ -74,10 +74,10 @@ void SoftwareActionSink::receiveMSI(guint8 code)
     cycle.write(queue + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
     cycle.close();
     
-    guint64 id       = guint64(event_hi)    << 32 | event_lo;
-    guint64 param    = guint64(param_hi)    << 32 | param_lo;
-    guint64 deadline = guint64(deadline_hi) << 32 | deadline_lo;
-    guint64 executed = guint64(executed_hi) << 32 | executed_lo;
+    uint64_t id       = uint64_t(event_hi)    << 32 | event_lo;
+    uint64_t param    = uint64_t(param_hi)    << 32 | param_lo;
+    uint64_t deadline = uint64_t(deadline_hi) << 32 | deadline_lo;
+    uint64_t executed = uint64_t(executed_hi) << 32 | executed_lo;
     
     if ((flags & (1<<ECA_VALID)) == 0) {
       clog << kLogErr << "SoftwareActionSink: MSI for increase in VALID_COUNT did not correspond to a valid action in the queue" << std::endl;
@@ -115,7 +115,7 @@ void SoftwareActionSink::receiveMSI(guint8 code)
   }
 }
 
-std::string SoftwareActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset)
+std::string SoftwareActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset)
 {
   return NewConditionHelper(active, id, mask, offset, 0, true,
     sigc::ptr_fun(&SoftwareCondition::create));

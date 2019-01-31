@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <algorithm>
 #include "saftbus.h"
 #include "core.h"
 #include "Interface.h"
@@ -51,20 +52,20 @@ void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection)
 	saftbus::read(connection->get_fd(), socket_owner);
 
 	// 	     // handle    // signal
-	//std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
-	std::map<guint, int> handle_to_signal_map;
+	//std::map<unsigned, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+	std::map<unsigned, int> handle_to_signal_map;
 	saftbus::read(connection->get_fd(), handle_to_signal_map);
 	// for (auto handle_signal: handle_to_signal_map) {
 	// 	std::cout << handle_signal.first << " " << handle_signal.second << std::endl;
 	// }
 
 
-	std::map<std::string, std::set<guint> > id_handles_map;
+	std::map<std::string, std::set<unsigned> > id_handles_map;
 	saftbus::read(connection->get_fd(), id_handles_map);
 
 
-	//std::set<guint> erased_handles;
-	std::vector<guint> erased_handles;
+	//std::set<unsigned> erased_handles;
+	std::vector<unsigned> erased_handles;
 	saftbus::read(connection->get_fd(), erased_handles);
 
 
@@ -150,7 +151,7 @@ void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection)
 int main(int argc, char *argv[])
 {
 	try {
-		Glib::init();
+		//Glib::init();
 
 		bool list_mutable_state           = false;
 		bool enable_signal_stats          = false;

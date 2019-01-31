@@ -1,8 +1,8 @@
 #ifndef SAFTBUS_INTERFACE_H_
 #define SAFTBUS_INTERFACE_H_
 
-
-#include <giomm.h>
+#include <memory>
+#include <sigc++/sigc++.h>
 #include "Error.h"
 #include "core.h"
 
@@ -13,7 +13,7 @@ namespace saftbus
 
 	class Connection;
 
-	class Message : public Glib::Object {
+	class Message /*: public Glib::Object*/ {
 	public:
 		static std::shared_ptr<Message> create(const std::vector<int> &fds);
 		//GUnixFDList* gobj(); // this is a bit of a hack, but simplifies things by a lot
@@ -24,7 +24,7 @@ namespace saftbus
 		std::vector<int> _fd_list;
 	};
 
-	class MethodInvocation : public Glib::Object
+	class MethodInvocation /*: public Glib::Object*/
 	{
 	public:
 		MethodInvocation();
@@ -46,7 +46,7 @@ namespace saftbus
 		std::vector<int> _fds;
 	};
 
-	class InterfaceInfo : public Glib::Object//Base
+	class InterfaceInfo /*: public Glib::Object*/ //Base
 	{
 	public:
 		InterfaceInfo(const std::string &interface_name);
@@ -72,7 +72,7 @@ namespace saftbus
 		SlotInterfaceMethodCall  method_call;
 	};
 
-	class NodeInfo : public Glib::Object//Base
+	class NodeInfo /*: public Glib::Object*/ //Base
 	{
 	public:
 		NodeInfo(const std::string &interface_name);

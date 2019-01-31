@@ -42,7 +42,7 @@ class EmbeddedCPUActionSink : public ActionSink, public iEmbeddedCPUActionSink
     const char *getInterfaceName() const;
     
     // iEmbeddedCPUAcitonSink
-    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag);
+    std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
     
   protected:
     EmbeddedCPUActionSink(const ConstructorType& args);

@@ -103,19 +103,19 @@ void Input::setSpecialPurposeIn(bool val)
   return impl->setSpecialPurposeIn(val);
 }
 
-guint64 Input::getResolution() const
+uint64_t Input::getResolution() const
 {
   return impl->getResolution();
 }
 
 // TLU control methods  -------------------------------------------------------------
 
-guint32 Input::getEventBits() const
+uint32_t Input::getEventBits() const
 {
   return 1; // rising|falling comes from TLU
 }
 
-guint32 Input::getStableTime() const 
+uint32_t Input::getStableTime() const 
 {
   return stable;
 }
@@ -125,7 +125,7 @@ bool Input::getEventEnable() const
   return enable;
 }
 
-guint64 Input::getEventPrefix() const
+uint64_t Input::getEventPrefix() const
 {
   return event;
 }
@@ -141,7 +141,7 @@ void Input::setEventEnable(bool val)
   EventEnable(val);
 }
 
-void Input::setEventPrefix(guint64 val)
+void Input::setEventPrefix(uint64_t val)
 {
   ownerOnly();
   
@@ -155,7 +155,7 @@ void Input::setEventPrefix(guint64 val)
   EventPrefix(val);
 }
 
-void Input::setStableTime(guint32 val)
+void Input::setStableTime(uint32_t val)
 {
   ownerOnly();
   
@@ -179,7 +179,7 @@ void Input::configInput()
   cycle.write(tlu + ECA_TLU_ENABLE_RW,       EB_DATA32, enable?1:0);
   cycle.write(tlu + ECA_TLU_STABLE_RW,       EB_DATA32, stable/8 - 1);
   cycle.write(tlu + ECA_TLU_EVENT_HI_RW,     EB_DATA32, event >> 32);
-  cycle.write(tlu + ECA_TLU_EVENT_LO_RW,     EB_DATA32, (guint32)event);
+  cycle.write(tlu + ECA_TLU_EVENT_LO_RW,     EB_DATA32, (uint32_t)event);
   cycle.write(tlu + ECA_TLU_WRITE_OWR,       EB_DATA32, 1);
   cycle.close();
 }

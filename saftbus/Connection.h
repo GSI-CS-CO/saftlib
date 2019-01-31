@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include <giomm.h>
+#include <sigc++/sigc++.h>
 
 #include <map>
 #include <set>
@@ -36,7 +36,7 @@ namespace saftbus
 	// needed on the service side and all functionality for Proxy objects is removed.
 	// This class is used by Saftlib to manage object lifetime of devices, receive remote function calls
 	// and emit signals to Proxy objects.
-	class Connection : public Glib::Object//Base
+	class Connection /*: public Glib::Object*/ //Base
 	{
 
 	public:
@@ -44,13 +44,13 @@ namespace saftbus
 		Connection(int number_of_sockets = N_CONNECTIONS, const std::string& base_name = "/tmp/saftbus_");
 		~Connection();
 
-		guint 	register_object (const std::string& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
-		bool 	unregister_object (guint registration_id);
+		unsigned 	register_object (const std::string& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
+		bool 	unregister_object (unsigned registration_id);
 
 		using SlotSignal = sigc::slot<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&>;
 
 		// signal_subscribe and signal_unsubscribe are ONLY used by the driver of Owned.
-		guint signal_subscribe 	( 	const SlotSignal&  	slot,
+		unsigned signal_subscribe 	( 	const SlotSignal&  	slot,
 									const std::string&  	sender = std::string(),
 									const std::string&  	interface_name = std::string(),
 									const std::string&  	member = std::string(),
@@ -58,7 +58,7 @@ namespace saftbus
 									const std::string&  	arg0 = std::string()//,
 									//SignalFlags  	flags = SIGNAL_FLAGS_NONE 
 			);
-		void signal_unsubscribe 	( 	guint  	subscription_id	) ;
+		void signal_unsubscribe 	( 	unsigned  	subscription_id	) ;
 
 		void 	emit_signal (const std::string& object_path, 
 			                 const std::string& interface_name, 
@@ -92,9 +92,9 @@ namespace saftbus
 
 
 		// 	     // handle    // signal
-		std::map<guint, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&> > _handle_to_signal_map;
-		std::map<std::string, std::set<guint> > _id_handles_map;
-		std::set<guint> _erased_handles;
+		std::map<unsigned, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&> > _handle_to_signal_map;
+		std::map<std::string, std::set<unsigned> > _id_handles_map;
+		std::set<unsigned> _erased_handles;
 
 
 		// store the pipes that go directly to one or many Proxy objects

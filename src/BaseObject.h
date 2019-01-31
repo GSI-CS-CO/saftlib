@@ -20,13 +20,13 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <giomm.h>
+//#include <giomm.h>
 #include <memory>
 #include "interfaces/saftlib_ipc.h"
 
 namespace saftlib {
 
-class BaseObject //: public Glib::Object
+class BaseObject /*: public Glib::Object*/
 {
   public:
     BaseObject(const std::string& objectPath);

@@ -23,8 +23,6 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <iostream>
-#include <giomm.h>
-#include <glibmm.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -49,7 +47,7 @@ static void print_backtrace(std::ostream& stream, const char *where)
     throw;
   } catch (const std::exception &ex) {
     stream << "std::exception: " << ex.what() << "\n";
-  } catch(const Glib::Error& ex) {
+  } catch(const saftbus::Error& ex) {
     stream << "Glib::Error: " << ex.what() << "\n";
   } catch(const etherbone::exception_t& ex) {
     stream << "etherbone::exception_t: " << ex << "\n";
@@ -194,11 +192,9 @@ int main(int argc, char** argv)
 
   // initialize gio
   std::locale::global(std::locale(""));
-  Gio::init();
-  Glib::init();
   
   // Connect to the dbus system daemon
-  const guint id = IPC_METHOD::own_name(IPC_METHOD::BUS_TYPE_SYSTEM,
+  const unsigned id = IPC_METHOD::own_name(IPC_METHOD::BUS_TYPE_SYSTEM,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
     sigc::bind(sigc::bind(sigc::ptr_fun(&on_name_acquired), argv), argc),

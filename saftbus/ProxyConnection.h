@@ -6,10 +6,11 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include <giomm.h>
+#include <sigc++/sigc++.h>
 //#include <giomm/asyncresult.h>
 
 #include <thread>
+#include <mutex>
 #include <map>
 
 #include "Interface.h"
@@ -26,7 +27,7 @@ namespace saftbus
 	// on the Proxy side. The connection management on the Service side is done in the saftbus::Connection class.
 	// This is different from the DBus interface where there is only one single Gio::DBus::Connection class. 
 	// DBus is a many-to-many communication protocol, while saftbus is only a one-to-many protocoll. 
-	class ProxyConnection : public Glib::Object//Base
+	class ProxyConnection /*: public Glib::Object*///Base
 	{
 	public:
 		ProxyConnection(const std::string &base_name = "/tmp/saftbus_");

@@ -28,6 +28,8 @@
 
 #include <assert.h>
 
+#include <unistd.h>
+
 #include "RegisteredObject.h"
 #include "TimingReceiver.h"
 #include "WrMilGateway.h"
@@ -121,8 +123,8 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
   for (auto reset_device: devices) {
     // use the first reset device
-    guint32 set_bits = ~(1<<cpu_idx) & 0xff;
-    guint32 clr_bits =  (1<<cpu_idx);
+    uint32_t set_bits = ~(1<<cpu_idx) & 0xff;
+    uint32_t clr_bits =  (1<<cpu_idx);
     // reset register offsets
     //0x4 -> GET 
     //0x8 -> SET 
@@ -155,7 +157,8 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   std::cerr << "lm32 slot configured to = " << slot << std::endl;
   
   // poll some registers periodically
-  pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
+  // TODO: implement this in Slib::
+  //pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
 }
 
 WrMilGateway::~WrMilGateway()
@@ -191,14 +194,14 @@ bool WrMilGateway::getFirmwareRunning()  const
 }
 
 
-guint32 WrMilGateway::readRegisterContent(guint32 reg_offset) const
+uint32_t WrMilGateway::readRegisterContent(uint32_t reg_offset) const
 {
     eb_data_t value;
     receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, &value);
     return value;
 }
 
-void WrMilGateway::writeRegisterContent(guint32 reg_offset, guint32 value)
+void WrMilGateway::writeRegisterContent(uint32_t reg_offset, uint32_t value)
 {
     receiver->getDevice().write(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
 }
@@ -213,7 +216,7 @@ std::shared_ptr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
 //   std::cerr << "registerContentCallback called" << std::endl;
 //   int i = 0;
 //   std::cerr << "EB_NULL = " << EB_NULL << std::endl;
-//   guint32 *userdata = (guint32*)data;
+//   uint32_t *userdata = (uint32_t*)data;
 //   std::cerr << "userdata = " << *userdata << std::endl;
 //   //std::cerr << "vector->size() = " << vector->size() << std::endl;
 //   while (operation != EB_NULL) {
@@ -223,11 +226,11 @@ std::shared_ptr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
 //   }
 // }
 
-std::vector< guint32 > WrMilGateway::getRegisterContent() const
+std::vector< uint32_t > WrMilGateway::getRegisterContent() const
 {
   etherbone::Cycle cycle;
-  std::vector<guint32> registerContent((WR_MIL_GW_REG_LATE_HISTOGRAM-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 42);
-  // guint32 userdata = 1234;
+  std::vector<uint32_t> registerContent((WR_MIL_GW_REG_LATE_HISTOGRAM-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 42);
+  // uint32_t userdata = 1234;
   // cycle.open(receiver->getDevice(), &userdata, &registerContentCallback);
   // //cycle.open<eb_user_data_t>(receiver->getDevice(), nullptr, &registerContentCallback);
   // for (unsigned i = 0; i < registerContent.size(); ++i) {
@@ -239,9 +242,9 @@ std::vector< guint32 > WrMilGateway::getRegisterContent() const
   return registerContent;
 }
 
-std::vector< guint32 > WrMilGateway::getMilHistogram() const
+std::vector< uint32_t > WrMilGateway::getMilHistogram() const
 {
-  std::vector< guint32 > histogram(256,0);
+  std::vector< uint32_t > histogram(256,0);
   for (unsigned i = 0; i < histogram.size(); ++i) {
     histogram[i] = readRegisterContent(WR_MIL_GW_REG_MIL_HISTOGRAM + 4*i);
   }
@@ -268,7 +271,7 @@ bool WrMilGateway::poll()
   // getNumLateMilEvents();
 
   // check if the gateway is used (translates events)
-  guint64 new_num_mil_events = getNumMilEvents();
+  uint64_t new_num_mil_events = getNumMilEvents();
   if (num_mil_events != new_num_mil_events) {
     if (!getInUse()) {
       // in this case we change back to being "in use"
@@ -323,11 +326,11 @@ void WrMilGateway::KillGateway()
 }
 
 
-guint32 WrMilGateway::getWrMilMagic() const
+uint32_t WrMilGateway::getWrMilMagic() const
 {
   return readRegisterContent(WR_MIL_GW_REG_MAGIC_NUMBER);
 }
-guint32 WrMilGateway::getFirmwareState() const
+uint32_t WrMilGateway::getFirmwareState() const
 {
 
   auto new_firmware_state = readRegisterContent(WR_MIL_GW_REG_STATE);
@@ -340,7 +343,7 @@ guint32 WrMilGateway::getFirmwareState() const
   }
   return firmware_state;
 }
-guint32 WrMilGateway::getEventSource() const
+uint32_t WrMilGateway::getEventSource() const
 {
   auto new_event_source = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
   if (event_source != new_event_source) {
@@ -353,38 +356,38 @@ unsigned char WrMilGateway::getUtcTrigger() const
 {
   return readRegisterContent(WR_MIL_GW_REG_UTC_TRIGGER);
 }
-guint32 WrMilGateway::getEventLatency() const
+uint32_t WrMilGateway::getEventLatency() const
 {
   return readRegisterContent(WR_MIL_GW_REG_LATENCY);
 }
-guint32 WrMilGateway::getUtcUtcDelay() const
+uint32_t WrMilGateway::getUtcUtcDelay() const
 {
   return readRegisterContent(WR_MIL_GW_REG_UTC_DELAY);
 }
-guint32 WrMilGateway::getTriggerUtcDelay() const
+uint32_t WrMilGateway::getTriggerUtcDelay() const
 {
   return readRegisterContent(WR_MIL_GW_REG_TRIG_UTC_DELAY);
 }
-guint64 WrMilGateway::getUtcOffset() const
+uint64_t WrMilGateway::getUtcOffset() const
 {
-  guint64 result = readRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_HI);
+  uint64_t result = readRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_HI);
   result <<= 32;
   result |= readRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_LO);
   return result;
 }
-guint64 WrMilGateway::getNumMilEvents() const
+uint64_t WrMilGateway::getNumMilEvents() const
 {
-  guint64 result = readRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI);
+  uint64_t result = readRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI);
   result <<= 32;
   result |= readRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_LO);
   return result;
 }
-guint32 WrMilGateway::getNumLateMilEvents() const
+uint32_t WrMilGateway::getNumLateMilEvents() const
 {
-  guint32 new_num_late_events = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
+  uint32_t new_num_late_events = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
   if (num_late_events != new_num_late_events) {
     // send the current number and the ones since last signal
-    guint32 difference = 0;
+    uint32_t difference = 0;
     if (new_num_late_events >= num_late_events) {
       difference = new_num_late_events - num_late_events;
     }
@@ -393,9 +396,9 @@ guint32 WrMilGateway::getNumLateMilEvents() const
   }
   return num_late_events;
 }
-std::vector< guint32 > WrMilGateway::getLateHistogram() const
+std::vector< uint32_t > WrMilGateway::getLateHistogram() const
 {
-  std::vector<guint32> lateHistogram((WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_LATE_HISTOGRAM) / 4, 0);
+  std::vector<uint32_t> lateHistogram((WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_LATE_HISTOGRAM) / 4, 0);
   for (unsigned i = 0; i < lateHistogram.size(); ++i) {
     lateHistogram[i] = readRegisterContent(WR_MIL_GW_REG_LATE_HISTOGRAM + 4*i);
   }
@@ -408,19 +411,19 @@ void WrMilGateway::setUtcTrigger(unsigned char val)
 {
   writeRegisterContent(WR_MIL_GW_REG_UTC_TRIGGER, val);
 }
-void WrMilGateway::setEventLatency(guint32 val)
+void WrMilGateway::setEventLatency(uint32_t val)
 {
   writeRegisterContent(WR_MIL_GW_REG_LATENCY, val);
 }
-void WrMilGateway::setUtcUtcDelay(guint32 val)
+void WrMilGateway::setUtcUtcDelay(uint32_t val)
 {
   writeRegisterContent(WR_MIL_GW_REG_UTC_DELAY, val);
 }
-void WrMilGateway::setTriggerUtcDelay(guint32 val)
+void WrMilGateway::setTriggerUtcDelay(uint32_t val)
 {
   writeRegisterContent(WR_MIL_GW_REG_TRIG_UTC_DELAY, val);
 }
-void WrMilGateway::setUtcOffset(guint64 val)
+void WrMilGateway::setUtcOffset(uint64_t val)
 {
   writeRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_LO, val & 0x00000000ffffffff);
   val >>= 32;

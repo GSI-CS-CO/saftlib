@@ -14,7 +14,8 @@ pkg_DATA = saftlib.pc
 EXTRA_DIST = saftlib.pc.in
 
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus
+#AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus
+AM_CPPFLAGS = $(EB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus
 
 BUILT_SOURCES = version.h
 .PHONY: version.h debian # causes build.cpp to be rebuilt every run

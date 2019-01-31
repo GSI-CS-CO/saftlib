@@ -34,8 +34,8 @@ class MILbusCondition : public Condition, public iMILbusCondition
     static std::shared_ptr<MILbusCondition> create(const ConstructorType& args);
     
     // iMILbusCondition
-    guint16 getTag() const;
-    void setTag(guint16 val);
+    uint16_t getTag() const;
+    void setTag(uint16_t val);
     
   protected:
     MILbusCondition(const ConstructorType& args);

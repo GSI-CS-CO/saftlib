@@ -26,6 +26,7 @@
 #include <sstream>
 #include <algorithm>
 #include <map>
+#include <cstdint>
 
 #include "RegisteredObject.h"
 #include "Driver.h"
@@ -79,7 +80,8 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   getLocked();
 
   // poll every 1s some registers
-  pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
+  // TODO: implement this in Slib
+  //pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
   
   // Probe the configuration of the ECA
   eb_data_t raw_channels, raw_search, raw_walker, raw_type, raw_max_num, raw_capacity;
@@ -226,7 +228,7 @@ TimingReceiver::~TimingReceiver()
     
   } catch (const etherbone::exception_t& e) {
     clog << kLogErr << "TimingReceiver::~TimingReceiver: " << e << std::endl;
-  } catch (const Glib::Error& e) {
+  } catch (const saftbus::Error& e) {
     clog << kLogErr << "TimingReceiver::~TimingReceiver: " << e.what() << std::endl;
   } catch (...) {
     clog << kLogErr << "TimingReceiver::~TimingReceiver: unknown exception" << std::endl;
@@ -276,7 +278,7 @@ std::string TimingReceiver::getName() const
 #endif
 #define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
 
-void TimingReceiver::setupGatewareInfo(guint32 address)
+void TimingReceiver::setupGatewareInfo(uint32_t address)
 {
   eb_data_t buffer[256];
   
@@ -419,7 +421,7 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
   return path;
 }
 
-void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
 {
   etherbone::Cycle cycle;
   
@@ -435,7 +437,7 @@ void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
   cycle.close();
 }
 
-guint64 TimingReceiver::ReadRawCurrentTime()
+uint64_t TimingReceiver::ReadRawCurrentTime()
 {
   etherbone::Cycle cycle;
   eb_data_t time1, time0, time2;
@@ -448,10 +450,10 @@ guint64 TimingReceiver::ReadRawCurrentTime()
     cycle.close();
   } while (time1 != time2);
   
-  return guint64(time1) << 32 | time0;
+  return uint64_t(time1) << 32 | time0;
 }
 
-guint64 TimingReceiver::ReadCurrentTime()
+uint64_t TimingReceiver::ReadCurrentTime()
 {
   if (!locked)
     throw IPC_METHOD::Error(IPC_METHOD::Error::IO_ERROR, "TimingReceiver is not Locked");
@@ -528,7 +530,7 @@ std::map< std::string, std::map< std::string, std::string > > TimingReceiver::ge
   return out;
 }
 
-guint32 TimingReceiver::getFree() const
+uint32_t TimingReceiver::getFree() const
 {
   return max_conditions - used_conditions;
 }
@@ -558,7 +560,7 @@ void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
   }
 }
 
-guint16 TimingReceiver::updateMostFull(unsigned channel)
+uint16_t TimingReceiver::updateMostFull(unsigned channel)
 {
   if (channel >= most_full.size()) return 0;
   
@@ -570,8 +572,8 @@ guint16 TimingReceiver::updateMostFull(unsigned channel)
   cycle.read (base + ECA_CHANNEL_MOSTFULL_ACK_GET, EB_DATA32, &raw);
   cycle.close();
   
-  guint16 mostFull = raw & 0xFFFF;
-  guint16 used     = raw >> 16;
+  uint16_t mostFull = raw & 0xFFFF;
+  uint16_t used     = raw >> 16;
   
   if (most_full[channel] != mostFull) {
     most_full[channel] = mostFull;
@@ -620,12 +622,12 @@ void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
 }
 
 struct ECA_OpenClose {
-  guint64  key;    // open?first:last
+  uint64_t  key;    // open?first:last
   bool     open;
-  guint64  subkey; // open?last:first
-  gint64   offset;
-  guint32  tag;
-  guint8   flags;
+  uint64_t  subkey; // open?last:first
+  int64_t   offset;
+  uint32_t  tag;
+  uint8_t   flags;
   unsigned channel;
   unsigned num;
 };
@@ -644,19 +646,19 @@ static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
 }
 
 struct SearchEntry {
-  guint64 event;
-  gint16  index;
-  SearchEntry(guint64 e, gint16 i) : event(e), index(i) { }
+  uint64_t event;
+  int16_t  index;
+  SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
 };
 
 struct WalkEntry {
-  gint16   next;
-  gint64   offset;
-  guint32  tag;
-  guint8   flags;
+  int16_t   next;
+  int64_t   offset;
+  uint32_t  tag;
+  uint8_t   flags;
   unsigned channel;
   unsigned num;
-  WalkEntry(gint16 n, const ECA_OpenClose& oc) : next(n), 
+  WalkEntry(int16_t n, const ECA_OpenClose& oc) : next(n), 
     offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
 };
 
@@ -690,7 +692,7 @@ void TimingReceiver::compile()
       id_space.push_back(oc);
       
       // Push the close record (if any)
-      if (oc.subkey != G_MAXUINT64) {
+      if (oc.subkey != UINT64_MAX) {
         oc.open = false;
         std::swap(oc.key, oc.subkey);
         ++oc.key;
@@ -711,8 +713,8 @@ void TimingReceiver::compile()
   typedef std::vector<WalkEntry> Walk;
   Search search;
   Walk walk;
-  gint16 next = -1;
-  guint64 cursor = 0;
+  int16_t next = -1;
+  uint64_t cursor = 0;
   
   // Special-case at zero: always push a leading record
   if (id_space.empty() || id_space[0].key != 0)
@@ -756,9 +758,9 @@ void TimingReceiver::compile()
     
     cycle.open(device);
     cycle.write(base + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
-    cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (guint16)se.index);
+    cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
     cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
-    cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (guint32)se.event);
+    cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
     cycle.write(base + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
     cycle.close();
   }
@@ -768,9 +770,9 @@ void TimingReceiver::compile()
     
     cycle.open(device);
     cycle.write(base + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
-    cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (guint16)we.next);
-    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (guint64)we.offset >> 32); // don't sign-extend on shift
-    cycle.write(base + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (guint32)we.offset);
+    cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (uint16_t)we.next);
+    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (uint64_t)we.offset >> 32); // don't sign-extend on shift
+    cycle.write(base + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (uint32_t)we.offset);
     cycle.write(base + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
     cycle.write(base + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
     cycle.write(base + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
@@ -906,7 +908,7 @@ void TimingReceiver::probe(OpenDevice& od)
         spath << od.objectPath << "/fg_" << j;
         std::string path = spath.str();
         
-        FunctionGeneratorImpl::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, mbx_msi[0], mbx[0], (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
+        FunctionGeneratorImpl::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, mbx_msi[0], mbx[0], (unsigned)num_channels, (unsigned)buffer_size, j, (uint32_t)macros[j] };
 
 
         std::shared_ptr<FunctionGeneratorImpl> fgImpl(new FunctionGeneratorImpl(args));

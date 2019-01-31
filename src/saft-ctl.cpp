@@ -27,13 +27,13 @@
 
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -46,10 +46,10 @@
 using namespace std;
 
 static const char* program;
-static guint32 pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
+static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
 
 // this will be called, in case we are snooping for events
-static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void on_action(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
 {
   std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
   std::cout << tr_formatActionEvent(id, pmode);
@@ -98,9 +98,9 @@ static void help(void) {
 // display status
 static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
 						  std::shared_ptr<SoftwareActionSink_Proxy> sink) {
-  guint32       nFreeConditions;
+  uint32_t       nFreeConditions;
   bool          wrLocked;
-  guint64       wrTime;
+  uint64_t       wrTime;
   int           width;
   string        fmt;
   
@@ -244,18 +244,18 @@ int main(int argc, char** argv)
   char *value_end;
 
   // variables snoop event
-  guint64 snoopID     = 0x0;
-  guint64 snoopMask   = 0x0;
-  gint64  snoopOffset = 0x0;
+  uint64_t snoopID     = 0x0;
+  uint64_t snoopMask   = 0x0;
+  int64_t  snoopOffset = 0x0;
   
 
   // variables inject event 
-  guint64 eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  guint64 eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
-  guint64 eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
-  guint64 eventTime   = 0x0;     // time for next event in PTP time
-  guint64 ppsNext     = 0x0;     // time for next PPS 
-  guint64 wrTime      = 0x0;     // current WR time
+  uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
+  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
+  uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
+  uint64_t eventTime   = 0x0;     // time for next event in PTP time
+  uint64_t ppsNext     = 0x0;     // time for next PPS 
+  uint64_t wrTime      = 0x0;     // current WR time
 
   // variables attach, remove
   char    *deviceName = NULL;
@@ -416,7 +416,6 @@ int main(int argc, char** argv)
   
   try {
     // initialize required stuff
-    Gio::init();
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // do display information that is INDEPENDANT of a specific device
@@ -504,7 +503,7 @@ int main(int argc, char** argv)
       }
     } // eventSnoop
     
-  } catch (const Glib::Error& error) {
+  } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   

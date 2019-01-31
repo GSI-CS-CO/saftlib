@@ -44,10 +44,10 @@ class SoftwareActionSink : public ActionSink, public iSoftwareActionSink
     const char *getInterfaceName() const;
     
     // override receiveMSI to also pop the software queue
-    void receiveMSI(guint8 code);
+    void receiveMSI(uint8_t code);
     
     // iSoftwareAcitonSink
-    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
+    std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset);
     
   protected:
     SoftwareActionSink(const ConstructorType& args);

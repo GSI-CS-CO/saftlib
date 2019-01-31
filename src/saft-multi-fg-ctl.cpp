@@ -23,10 +23,11 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <iostream>
-#include <giomm.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -39,9 +40,9 @@ using namespace std;
 
 // The parsed contents of the datafile given to the demo program
 struct ParamSet {
-  std::vector< gint16 > coeff_a;
-  std::vector< gint16 > coeff_b;
-  std::vector< gint32 > coeff_c;
+  std::vector< int16_t > coeff_a;
+  std::vector< int16_t > coeff_b;
+  std::vector< int32_t > coeff_c;
   std::vector< unsigned char > step;
   std::vector< unsigned char > freq;
   std::vector< unsigned char > shift_a;
@@ -69,10 +70,10 @@ static void on_refill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamS
 }
 
 // Pretty print timestamp
-static const char *format_time(guint64 time)
+static const char *format_time(uint64_t time)
 {
   static char full[80];
-  guint64 ns    = time % 1000000000;
+  uint64_t ns    = time % 1000000000;
   time_t  s     = time / 1000000000;
   struct tm *tm = gmtime(&s);
   char date[40];
@@ -82,7 +83,7 @@ static const char *format_time(guint64 time)
   return full;
 }
 
-static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, guint64 tag)
+static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, uint64_t tag)
 {
   if (armed) {
     std::cout << "Generating StartTag" << std::endl;
@@ -91,13 +92,13 @@ static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, gu
 }
 
 // Report when the function generator starts
-static void on_start(guint64 time)
+static void on_start(uint64_t time)
 {
   std::cout << "Function generator started at " << format_time(time) << std::endl;
 }
 
 // Report when the function generator stops
-static void on_stop(guint64 time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
+static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
   // was there an error?
@@ -147,7 +148,7 @@ void *serve_fg(void *data) {
   map<std::string, std::string> &fgs = fgData->fgs;
   ParamSet &params = fgData->params;
 
-  guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
+  uint32_t tag = 0xdeadbeef; // !!! fix me; use a safe default
   saftlib::SignalGroup fgSignalGroup;
   int error = 0;
   // Find the target FunctionGenerator (omit the check if it exists)
@@ -198,14 +199,13 @@ void *serve_fg(void *data) {
 int main(int argc, char** argv)
 {
   try {
-    Gio::init();
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // Options
     std::string device;
     std::string fg;
-    guint32 tag = 0xdeadbeef; // !!! fix me; use a safe default
-    guint64 event = 0;
+    uint32_t tag = 0xdeadbeef; // !!! fix me; use a safe default
+    uint64_t event = 0;
     bool eventSet = false;
     bool repeat = true;
     bool generate = true;
@@ -244,7 +244,7 @@ int main(int argc, char** argv)
     
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
     ParamSet params;
-    gint32 a, la, b, lb, c, n, s, num;
+    int32_t a, la, b, lb, c, n, s, num;
     while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
       // turn off warning
       if (params.coeff_a.empty()) alarm(0);
@@ -306,7 +306,7 @@ int main(int argc, char** argv)
     pthread_join(p2,nullptr);
     //serve_fg(&fgData20);
 
-  } catch (const Glib::Error& error) {
+  } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   

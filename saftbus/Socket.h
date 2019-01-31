@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "giomm.h"
+//#include "giomm.h"
 #include "MainContext.h"
 
 namespace saftbus

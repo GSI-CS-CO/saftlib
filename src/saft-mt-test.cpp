@@ -27,13 +27,13 @@
 
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -55,7 +55,7 @@
 // std::shared_ptr<saftlib::SoftwareCondition_Proxy> condition;
 
 // this will be called, in case we are snooping for events
-static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void on_action(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
 {
   // std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
   // std::cout << tr_formatActionEvent(id, pmode);
@@ -77,7 +77,7 @@ void *mainloop(void *data)
 
 
 
-bool rtAction(Glib::IOCondition condition)
+bool rtAction(Slib::IOCondition condition)
 {
   // char ch;
   // read(rt_event_pipe[0], &ch, 1);

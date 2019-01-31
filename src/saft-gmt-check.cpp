@@ -28,13 +28,13 @@
 
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -49,33 +49,33 @@ using namespace saftlib;
 
 // global variables
 static const char* program;
-static guint32 pmode = PMODE_NONE;       // how data are printed (hex, dec, verbosity)
-static guint64 messageCounterAll = 0;    // counts all messages received from DM
-static guint64 messageCounterDiff = 0;   // counts all messages since last "counter info message" from DM
-static guint64 messageCounterStart = 0;  // counter value of first "counter info message" from DM
-static guint64 messageCounterLast = 0;   // counter value of last "counter info message" 
-static guint64 overflowCounterAll = 0;   // counter for all overflows
-static guint64 overflowCounterDiff = 0;  // counter for overflows since last "counter info message" 
-static guint64 overflowCounterStart = 0; // counter of overflows at first "counter info message"
-static guint64 overflowCounterLast = 0;  // counter of overflows at last "counter info message"
+static uint32_t pmode = PMODE_NONE;       // how data are printed (hex, dec, verbosity)
+static uint64_t messageCounterAll = 0;    // counts all messages received from DM
+static uint64_t messageCounterDiff = 0;   // counts all messages since last "counter info message" from DM
+static uint64_t messageCounterStart = 0;  // counter value of first "counter info message" from DM
+static uint64_t messageCounterLast = 0;   // counter value of last "counter info message" 
+static uint64_t overflowCounterAll = 0;   // counter for all overflows
+static uint64_t overflowCounterDiff = 0;  // counter for overflows since last "counter info message" 
+static uint64_t overflowCounterStart = 0; // counter of overflows at first "counter info message"
+static uint64_t overflowCounterLast = 0;  // counter of overflows at last "counter info message"
 
 
-static guint64 lostMessagesAll = 0;     // number of all lost messages since first "counter info message"
-static guint64 lostMessagesDiff = 0;    // number of last messages since last "counter info message"
-static guint64 messageCounterID = 0x0FA62F9000000000; //EvtID for "message counter info message"
+static uint64_t lostMessagesAll = 0;     // number of all lost messages since first "counter info message"
+static uint64_t lostMessagesDiff = 0;    // number of last messages since last "counter info message"
+static uint64_t messageCounterID = 0x0FA62F9000000000; //EvtID for "message counter info message"
 static bool    firstRun = true; 
 static bool    onlyPrintLoss = false;
-static guint64 overflow_cnt = 0;
+static uint64_t overflow_cnt = 0;
 
-static void on_overflow(guint64 count)
+static void on_overflow(uint64_t count)
 {
   overflow_cnt = count;
 }
 
 // this will be called, in case we are snooping for events
-static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void on_action(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
 {
-  guint64 tmp;
+  uint64_t tmp;
 
   if (id == messageCounterID) {
     // >>>>>>> fix me (requires new GW for DM)
@@ -163,9 +163,9 @@ int main(int argc, char** argv)
   bool useFirstDev     = false;
 
   // variables snoop event
-  guint64 snoopID     = 0x0;
-  guint64 snoopMask   = 0x0;
-  gint64  snoopOffset = 0x0;
+  uint64_t snoopID     = 0x0;
+  uint64_t snoopMask   = 0x0;
+  int64_t  snoopOffset = 0x0;
   
   // variables attach, remove
   char    *deviceName = NULL;
@@ -234,7 +234,6 @@ int main(int argc, char** argv)
   
   try {
     // initialize required stuff
-    Gio::init();
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // get a specific device
@@ -274,7 +273,7 @@ int main(int argc, char** argv)
       }
     } // count messages
     
-  } catch (const Glib::Error& error) {
+  } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   

@@ -51,7 +51,8 @@ AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [T
 
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])
-PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2 gio-unix-2.0])
+#PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2 gio-unix-2.0])
+PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
 if test "x$XSLTPROC" = "x"; then
   AC_MSG_ERROR([could not find xsltproc -- needed to processs interfaces])

@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <unistd.h>
+
 #include "saftbus.h"
 #include "core.h"
 
@@ -92,7 +94,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		//std::cerr << "Proxy::dispatch() called" << std::endl;
 		// read type and size of signal
 		saftbus::MessageTypeS2C type;
-		guint32                 size;
+		uint32_t                 size;
 		saftbus::read(_pipe_fd[0], type);
 		saftbus::read(_pipe_fd[0], size);
 

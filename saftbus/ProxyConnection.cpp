@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <algorithm>
 #include <ctime>
-#include <giomm/dbuserror.h>
+//#include <giomm/dbuserror.h>
 
 namespace saftbus
 {
@@ -153,7 +153,7 @@ Serial& ProxyConnection::call_sync (const std::string& object_path,
 		std::string what;
 		saftbus::read(get_fd(), type);
 		saftbus::read(get_fd(), what);
-		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, what);
+		throw saftbus::Error(saftbus::Error::FAILED, what);
 	} else if (type == saftbus::METHOD_REPLY) {
 		// read regular function return value
 		saftbus::read(get_fd(), size);
@@ -173,7 +173,7 @@ Serial& ProxyConnection::call_sync (const std::string& object_path,
 	} else {
 		std::ostringstream msg;
 		msg << "ProxyConnection::call_sync() : unexpected type " << type << " instead of METHOD_REPLY or METHOD_ERROR";
-		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, msg.str());
+		throw saftbus::Error(saftbus::Error::FAILED, msg.str());
 	}
 
 	} catch(std::exception &e) {
@@ -181,7 +181,7 @@ Serial& ProxyConnection::call_sync (const std::string& object_path,
 		std::cerr << object_path << std::endl;
 		std::cerr << interface_name << std::endl;
 		std::cerr << name << std::endl;
-		throw Gio::DBus::Error(Gio::DBus::Error::FAILED, e.what());
+		throw saftbus::Error(saftbus::Error::FAILED, e.what());
 	}
 
 }

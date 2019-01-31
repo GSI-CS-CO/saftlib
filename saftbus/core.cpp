@@ -106,8 +106,8 @@ namespace saftbus
 	// int write<std::string>(int fd, const std::string & std_vector) {
 	// 	if (_debug_level > 5) std::cerr << "ustring write \"" << std_vector << "\"" << std::endl;
 	// 	std::string strg(std_vector);
-	// 	guint32 size = strg.size();
-	// 	int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
+	// 	int32_t size = strg.size();
+	// 	int result = write_all(fd, static_cast<const void*>(&size), sizeof(int32_t));
 	// 	if (_debug_level > 5) std::cerr << "ustring write, result = " << result << std::endl;
 	// 	if (result == -1) return result;
 	// 	if (size > 0) result =  write_all(fd, static_cast<const void*>(&strg[0]), size*sizeof(decltype(strg.back())));
@@ -118,8 +118,8 @@ namespace saftbus
 	// int read<std::string>(int fd, std::string & std_vector) {
 	// 	if (_debug_level > 5) std::cerr << "ustring read" << std::endl;
 	// 	std::string strg(std_vector);
-	// 	guint32 size;
-	// 	int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
+	// 	int32_t size;
+	// 	int result = read_all(fd, static_cast<void*>(&size), sizeof(int32_t));
 	// 	if (result == -1) return result;
 	// 	strg.resize(size);
 	// 	if (size > 0) result = read_all(fd, static_cast<void*>(&strg[0]), size*sizeof(decltype(strg.back())));
@@ -131,8 +131,8 @@ namespace saftbus
 	int write<std::string>(int fd, const std::string & std_vector) {
 		if (_debug_level > 5) std::cerr << "std::string write " << std_vector << std::endl;
 		std::string strg(std_vector);
-		guint32 size = strg.size();
-		int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
+		int32_t size = strg.size();
+		int result = write_all(fd, static_cast<const void*>(&size), sizeof(int32_t));
 		if (result == -1) return result;
 		if (size > 0) return write_all(fd, static_cast<const void*>(&strg[0]), size*sizeof(decltype(strg.back())));
 		return 1;
@@ -141,8 +141,8 @@ namespace saftbus
 	int read<std::string>(int fd, std::string & std_vector) {
 		if (_debug_level > 5) std::cerr << "std::string read" << std::endl;
 		std::string strg(std_vector);
-		guint32 size;
-		int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
+		int32_t size;
+		int result = read_all(fd, static_cast<void*>(&size), sizeof(int32_t));
 		if (result == -1) return result;
 		strg.resize(size);
 		if (size > 0) result = read_all(fd, static_cast<void*>(&strg[0]), size*sizeof(decltype(strg.back())));

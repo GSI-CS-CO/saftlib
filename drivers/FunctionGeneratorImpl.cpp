@@ -23,10 +23,11 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <memory>
 #include <assert.h>
 
 #include <etherbone.h>
-#include <giomm.h>
+#include <sigc++/sigc++.h>
 #include "FunctionGeneratorImpl.h"
 #include "TimingReceiver.h"
 #include "fg_regs.h"
@@ -155,10 +156,10 @@ void FunctionGeneratorImpl::refill()
   cycle.open(dev->getDevice());
   for (unsigned i = 0; i < refill; ++i) {
     ParameterTuple& tuple = fifo[filled+i];
-    guint32 coeff_a, coeff_b, coeff_ab, coeff_c, control;
+    uint32_t coeff_a, coeff_b, coeff_ab, coeff_c, control;
     
-    coeff_a = (gint32)tuple.coeff_a; // sign extended
-    coeff_b = (gint32)tuple.coeff_b;
+    coeff_a = (int32_t)tuple.coeff_a; // sign extended
+    coeff_b = (int32_t)tuple.coeff_b;
     coeff_c = tuple.coeff_c;
     
     coeff_a <<= 16;
@@ -207,7 +208,7 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
   assert (enabled);
   
   // !!! imprecise; should be timestamped by the hardware
-  guint64 time = dev->ReadRawCurrentTime();
+  uint64_t time = dev->ReadRawCurrentTime();
   
   // make sure the evil microcontroller does not violate message sequencing
   if (msi == IRQ_DAT_REFILL) {
@@ -268,12 +269,12 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
   }
 }
 
-guint64 FunctionGeneratorImpl::ParameterTuple::duration() const
+uint64_t FunctionGeneratorImpl::ParameterTuple::duration() const
 {
-  static const guint64 samples[8] = { // fixed in HDL
+  static const uint64_t samples[8] = { // fixed in HDL
     250, 500, 1000, 2000, 4000, 8000, 16000, 32000
   };
-  static const guint64 sample_len[8] = { // fixed in HDL
+  static const uint64_t sample_len[8] = { // fixed in HDL
     62500, // 16kHz in ns
     31250, // 32kHz
     15625, // 64kHz
@@ -288,9 +289,9 @@ guint64 FunctionGeneratorImpl::ParameterTuple::duration() const
 
 
 bool FunctionGeneratorImpl::appendParameterSet(
-  const std::vector< gint16 >& coeff_a,
-  const std::vector< gint16 >& coeff_b,
-  const std::vector< gint32 >& coeff_c,
+  const std::vector< int16_t >& coeff_a,
+  const std::vector< int16_t >& coeff_b,
+  const std::vector< int32_t >& coeff_c,
   const std::vector< unsigned char >& step,
   const std::vector< unsigned char >& freq,
   const std::vector< unsigned char >& shift_a,
@@ -351,7 +352,7 @@ void FunctionGeneratorImpl::Flush()
  	flush();  	  
 }
 
-guint32 FunctionGeneratorImpl::getVersion() const
+uint32_t FunctionGeneratorImpl::getVersion() const
 {
   return version;
 }
@@ -386,17 +387,17 @@ bool FunctionGeneratorImpl::getRunning() const
   return running;
 }
 
-guint32 FunctionGeneratorImpl::getStartTag() const
+uint32_t FunctionGeneratorImpl::getStartTag() const
 {
   return startTag;
 }
 
-guint64 FunctionGeneratorImpl::ReadFillLevel()
+uint64_t FunctionGeneratorImpl::ReadFillLevel()
 {
   return fillLevel;
 }
 
-guint32 FunctionGeneratorImpl::ReadExecutedParameterCount()
+uint32_t FunctionGeneratorImpl::ReadExecutedParameterCount()
 {
   if (running) {
     eb_data_t count;
@@ -511,8 +512,9 @@ void FunctionGeneratorImpl::Reset()
   if (resetTimeout.connected()) return; // reset already in progress
   dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
   // expect disarm or started+stopped, but if not ... timeout:
-  resetTimeout = Glib::signal_timeout().connect(
-    sigc::mem_fun(*this, &FunctionGeneratorImpl::ResetFailed), 250); // 250ms
+  // TODO: implement this in Slib::
+  // resetTimeout = Glib::signal_timeout().connect(
+  //   sigc::mem_fun(*this, &FunctionGeneratorImpl::ResetFailed), 250); // 250ms
 }
 
 void FunctionGeneratorImpl::Abort()
@@ -526,7 +528,7 @@ void FunctionGeneratorImpl::ownerQuit()
   Reset();
 }
 
-void FunctionGeneratorImpl::setStartTag(guint32 val)
+void FunctionGeneratorImpl::setStartTag(uint32_t val)
 {
   if (enabled)
     throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Enabled, cannot set StartTag");

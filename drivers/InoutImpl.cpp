@@ -732,9 +732,9 @@ void InoutImpl::setPPSMultiplexer(bool val)
   PPSMultiplexer(val);
 }
 
-bool InoutImpl::StartClock(double high_phase, double low_phase, guint64 phase_offset) { return ConfigureClock(high_phase, low_phase, phase_offset); }
+bool InoutImpl::StartClock(double high_phase, double low_phase, uint64_t phase_offset) { return ConfigureClock(high_phase, low_phase, phase_offset); }
 bool InoutImpl::StopClock() { return ConfigureClock(0.0, 0.0, 0); }
-bool InoutImpl::ConfigureClock(double high_phase, double low_phase, guint64 phase_offset)
+bool InoutImpl::ConfigureClock(double high_phase, double low_phase, uint64_t phase_offset)
 {
   s_SerClkGenControl control;
   etherbone::Cycle cycle;
@@ -807,7 +807,7 @@ std::string InoutImpl::getType() const
   return IOType;
 }
 
-guint64 InoutImpl::getResolution() const
+uint64_t InoutImpl::getResolution() const
 {
   switch (io_channel) {
   case IO_CFG_CHANNEL_GPIO: return 8;

@@ -20,7 +20,6 @@
 #ifndef SAFTLIB_REGISTERED_OBJECT_H
 #define SAFTLIB_REGISTERED_OBJECT_H
 
-#include <giomm.h>
 #include <etherbone.h>
 #include "SAFTd.h"
 

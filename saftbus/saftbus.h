@@ -2,7 +2,9 @@
 #define SAFTBUS_H_
 
 
-#include <giomm.h>
+#include <sigc++/sigc++.h>
+#include <memory>
+#include <cstdint>
 #include <ctime>
 #include <map>
 
@@ -27,8 +29,8 @@ namespace saftbus
 	using SlotNameLost = sigc::slot<void, const std::shared_ptr<Connection>&, std::string>;
 	using SlotNameVanished = sigc::slot<void, const std::shared_ptr<Connection>&, std::string>;
 
-	guint own_name (BusType bus_type, const std::string& name, const SlotBusAcquired& bus_acquired_slot=SlotBusAcquired(), const SlotNameAcquired& name_acquired_slot=SlotNameAcquired(), const SlotNameLost& name_lost_slot=SlotNameLost());//, BusNameOwnerFlags flags=Gio::DBus::BUS_NAME_OWNER_FLAGS_NONE);
-	void unown_name(guint id);
+	unsigned own_name (BusType bus_type, const std::string& name, const SlotBusAcquired& bus_acquired_slot=SlotBusAcquired(), const SlotNameAcquired& name_acquired_slot=SlotNameAcquired(), const SlotNameLost& name_lost_slot=SlotNameLost());//, BusNameOwnerFlags flags=Gio::DBus::BUS_NAME_OWNER_FLAGS_NONE);
+	void unown_name(unsigned id);
 
 	extern SlotBusAcquired   bus_acquired;
 	extern SlotNameAcquired  name_acquired;

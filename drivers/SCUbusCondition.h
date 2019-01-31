@@ -34,8 +34,8 @@ class SCUbusCondition : public Condition, public iSCUbusCondition
     static std::shared_ptr<SCUbusCondition> create(const ConstructorType& args);
     
     // iSCUbusCondition
-    guint32 getTag() const;
-    void setTag(guint32 val);
+    uint32_t getTag() const;
+    void setTag(uint32_t val);
     
   protected:
     SCUbusCondition(const ConstructorType& args);

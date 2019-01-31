@@ -28,7 +28,8 @@ XSL = h.xsl cpp.xsl doc.xsl common.xsl fix-docbook.xsl
 EXTRA_DIST = $(XSL) $(NODES) $(INTERFACES)
 CLEANFILES = *.cpp *.h *.pdf *.doc-xml
 
-AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/saftbus
+AM_CPPFLAGS = $(SIGCPP_CFLAGS) -I $(top_srcdir)/saftbus
+#AM_CPPFLAGS = -I $(top_srcdir)/saftbus
 
 lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib
@@ -97,7 +98,7 @@ doc_DATA = 			\
 	WrMilGateway.pdf
 endif
 
-libsaftlib_la_LIBADD = $(GIOMM_LIBS)
+libsaftlib_la_LIBADD = $(SIGCPP_LIBS)
 libsaftlib_la_LDFLAGS = -version-info @SAFTLIB_API@:@SAFTLIB_REVISION@:@SAFTLIB_MINOR@ # @SAFTLIB_SONAME@
 
 

@@ -43,7 +43,7 @@ namespace saftlib
 			for (auto fd: _fds) {
 				if (fd.revents & POLLIN) {
 					if (_signal_group[idx] != nullptr) {
-						_signal_group[idx]->dispatch(Glib::IOCondition());
+						_signal_group[idx]->dispatch(Slib::IOCondition());
 					}
 				}
 				++idx;

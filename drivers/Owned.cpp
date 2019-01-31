@@ -28,7 +28,7 @@
 
 namespace saftlib {
 
-static void do_unsubscribe(std::shared_ptr<IPC_METHOD::Connection> connection, guint id) 
+static void do_unsubscribe(std::shared_ptr<IPC_METHOD::Connection> connection, unsigned id) 
 {
   connection->signal_unsubscribe(id);
 }
@@ -70,7 +70,7 @@ void Owned::initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection_
   if (owner.empty()) {
     owner = owner_;
     std::shared_ptr<IPC_METHOD::Connection> connection = connection_;
-    guint subscription_id = connection->signal_subscribe(
+    unsigned subscription_id = connection->signal_subscribe(
         sigc::bind(sigc::ptr_fun(&Owned::owner_quit_handler), this),
         "org.freedesktop.DBus",
         "org.freedesktop.DBus",
@@ -129,7 +129,7 @@ void Owned::owner_quit_handler(
     // do not use self beyond this point
   } catch (const etherbone::exception_t& e) {
     clog << kLogErr << "Owned::owner_quit_handler: " << e << std::endl; 
-  } catch (const Glib::Error& e) {           
+  } catch (const saftbus::Error& e) {           
     clog << kLogErr << "Owned::owner_quit_handler: " << e.what() << std::endl; 
   } catch (...) {
     clog << kLogErr << "Owned::owner_quit_handler: unknown exception" << std::endl;

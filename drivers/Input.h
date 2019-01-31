@@ -49,7 +49,7 @@ class Input : public EventSource, public iInputEventSource
     // Methods
     bool ReadInput();
     // Property getters
-    guint32 getStableTime() const ;
+    uint32_t getStableTime() const ;
     bool getInputTermination() const;
     bool getSpecialPurposeIn() const;
     bool getInputTerminationAvailable() const;
@@ -58,25 +58,25 @@ class Input : public EventSource, public iInputEventSource
     std::string getTypeIn() const;
     std::string getOutput() const;
     // Property setters
-    void setStableTime(guint32 val);
+    void setStableTime(uint32_t val);
     void setInputTermination(bool val);
     void setSpecialPurposeIn(bool val);
     
     // Property signals
-    //  sigc::signal< void, guint32 > StableTime;
+    //  sigc::signal< void, uint32_t > StableTime;
     //  sigc::signal< void, bool > InputTermination;
     //  sigc::signal< void, bool > SpecialPurposeIn;
     
     // From iEventSource
-    guint64 getResolution() const;
-    guint32 getEventBits() const;
+    uint64_t getResolution() const;
+    uint32_t getEventBits() const;
     bool getEventEnable() const;
-    guint64 getEventPrefix() const;
+    uint64_t getEventPrefix() const;
     
     void setEventEnable(bool val);
-    void setEventPrefix(guint64 val);
+    void setEventPrefix(uint64_t val);
     //  sigc::signal< void, bool > EventEnable;
-    //  sigc::signal< void, guint64 > EventPrefix;
+    //  sigc::signal< void, uint64_t > EventPrefix;
     
   protected:
     Input(const ConstructorType& args);
@@ -85,8 +85,8 @@ class Input : public EventSource, public iInputEventSource
     eb_address_t tlu;
     unsigned channel;
     bool enable;
-    guint64 event;
-    guint32 stable;
+    uint64_t event;
+    uint32_t stable;
     
     void configInput();
 };

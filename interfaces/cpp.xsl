@@ -27,8 +27,8 @@
 
   <xsl:document href="{$name}.cpp" method="text" encoding="utf-8" indent="no">
     <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
-    <xsl:text>#include &lt;giomm.h&gt;&#10;</xsl:text>
-    <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text>
+    <xsl:text>#include &lt;sigc++/sigc++.h&gt;&#10;</xsl:text>
+    <!-- <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text> -->
     <xsl:text>#include "</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>.h"&#10;</xsl:text>
@@ -218,9 +218,9 @@
 
       <!-- C++ boilerplate -->
       <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
-      <xsl:text>#include &lt;giomm.h&gt;&#10;</xsl:text>
-      <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text>
-      <xsl:text>#include &lt;gio/gunixfdlist.h&gt;&#10;</xsl:text>
+      <xsl:text>#include &lt;sigc++/sigc++.h&gt;&#10;</xsl:text>
+      <!-- <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text> -->
+      <!-- <xsl:text>#include &lt;gio/gunixfdlist.h&gt;&#10;</xsl:text> -->
       <xsl:text>#include &lt;cstdint&gt;&#10;</xsl:text>
       <xsl:text>#include "i</xsl:text>
       <xsl:value-of select="$iface"/>
@@ -695,7 +695,7 @@
       <xsl:text>  static std::shared_ptr&lt;IPC_METHOD::NodeInfo&gt; introspection;&#10;</xsl:text>
       <xsl:text>  if (!introspection)&#10;</xsl:text>
       <xsl:text>    introspection = IPC_METHOD::NodeInfo::create_for_xml(xml);&#10;</xsl:text>
-      <xsl:text>  guint id = connection->register_object(&#10;</xsl:text>
+      <xsl:text>  unsigned id = connection->register_object(&#10;</xsl:text>
       <xsl:text>    object_path, introspection->lookup_interface(), interface_vtable);&#10;</xsl:text>
       <xsl:text>  exports.push_back(Export(connection, object_path, id));&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>

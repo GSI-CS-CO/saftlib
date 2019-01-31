@@ -35,19 +35,19 @@ class Condition : public Owned, public iCondition
       std::string objectPath;
       ActionSink* sink;
       bool active;
-      guint64 id;
-      guint64 mask;
-      gint64 offset;
-      guint32 tag;
+      uint64_t id;
+      uint64_t mask;
+      int64_t offset;
+      uint32_t tag;
       sigc::slot<void> destroy;
     };
     Condition(const Condition_ConstructorType& args);
     // ~Condition(); // unnecessary; ActionSink::removeCondition executes compile()
     
     // iCondition
-    guint64 getID() const;
-    guint64 getMask() const;
-    gint64 getOffset() const;
+    uint64_t getID() const;
+    uint64_t getMask() const;
+    int64_t getOffset() const;
     
     bool getAcceptLate() const;
     bool getAcceptEarly() const;
@@ -55,9 +55,9 @@ class Condition : public Owned, public iCondition
     bool getAcceptDelayed() const;
     bool getActive() const;
     
-    void setID(guint64 val);
-    void setMask(guint64 val);
-    void setOffset(gint64 val);
+    void setID(uint64_t val);
+    void setMask(uint64_t val);
+    void setOffset(int64_t val);
     
     void setAcceptLate(bool val);
     void setAcceptEarly(bool val);
@@ -66,15 +66,15 @@ class Condition : public Owned, public iCondition
     void setActive(bool val);
     
     // used by TimingReceiver and ActionSink
-    guint32 getRawTag() const { return tag; }
+    uint32_t getRawTag() const { return tag; }
     void setRawActive(bool val) { active = val; }
     
   protected:
     ActionSink* sink;
-    guint64 id;
-    guint64 mask;
-    gint64 offset;
-    guint32 tag;
+    uint64_t id;
+    uint64_t mask;
+    int64_t offset;
+    uint32_t tag;
     bool acceptLate, acceptEarly, acceptConflict, acceptDelayed;
     bool active;
 };

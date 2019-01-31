@@ -41,8 +41,8 @@ class MILbusActionSink : public ActionSink, public iMILbusActionSink
     const char *getInterfaceName() const;
     
     // iMILbusAcitonSink
-    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint16 tag);
-    void InjectTag(guint16 tag);
+    std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint16_t tag);
+    void InjectTag(uint16_t tag);
     
   protected:
     MILbusActionSink(const ConstructorType& args);

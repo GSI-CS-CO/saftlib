@@ -14,7 +14,7 @@
 #include <string>
 #include <map>
 #include <set>
-#include <giomm.h>
+#include <sigc++/sigc++.h>
 
 namespace saftbus 
 {
@@ -48,7 +48,7 @@ namespace saftbus
 	// std::set (not nested) 
 	template<typename T>
 	int write(int fd, const std::set<T>& std_set) {
-		guint32 size = std_set.size();
+		uint32_t size = std_set.size();
 		int result = write(fd, size);
 		if (result == -1) return result;
 		for (auto content: std_set ) {
@@ -59,11 +59,11 @@ namespace saftbus
 	}
 	template<typename T>
 	int read(int fd, std::set<T>& std_set) {
-		guint32 size;
+		uint32_t size;
 		int result = read(fd, size);
 		if (result == -1) return result;
 		std_set.clear();
-		for (guint32 i = 0; i < size; ++i) {
+		for (uint32_t i = 0; i < size; ++i) {
 			T content;
 			result = read(fd, content);
 			if (result == -1) return result;
@@ -78,18 +78,18 @@ namespace saftbus
 	template<typename T>
 	int write(int fd, const std::vector<T>& std_vector) {
 		if (_debug_level > 5) std::cerr << "non-nested vector write" << std::endl;
-		guint32 size = std_vector.size();
-		int result = write_all(fd, static_cast<void*>(&size), sizeof(guint32));
+		uint32_t size = std_vector.size();
+		int result = write_all(fd, static_cast<void*>(&size), sizeof(uint32_t));
 		if (result == -1) return result;
 		if (size > 0) return write_all(fd, static_cast<const void*>(&std_vector[0]), size*sizeof(decltype(std_vector.back())));
 	}
 	template<typename T>
 	int write(int fd, const std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
 		if (_debug_level > 5) std::cerr << "nested vector write" << std::endl;
-		guint32 size = std_vector_vector.size();
-		int result = write_all(fd, static_cast<const void*>(&size), sizeof(guint32));
+		uint32_t size = std_vector_vector.size();
+		int result = write_all(fd, static_cast<const void*>(&size), sizeof(uint32_t));
 		if (result == -1) return result;
-		for (guint32 i = 0; i < size; ++i) {
+		for (uint32_t i = 0; i < size; ++i) {
 			result = write(fd, std_vector_vector[i]);
 			if (result == -1) return result;
 		}
@@ -98,8 +98,8 @@ namespace saftbus
 	template<typename T>
 	int read(int fd, std::vector<T> & std_vector) {
 		if (_debug_level > 5) std::cerr << "vector read" << std::endl;
-		guint32 size;
-		int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
+		uint32_t size;
+		int result = read_all(fd, static_cast<void*>(&size), sizeof(uint32_t));
 		if (result == -1) return result;
 		std_vector.resize(size);
 		if (size > 0) return read_all(fd, static_cast<void*>(&std_vector[0]), size*sizeof(decltype(std_vector.back())));
@@ -107,11 +107,11 @@ namespace saftbus
 	template<typename T>
 	int read(int fd, std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
 		if (_debug_level > 5) std::cerr << "nested vector read" << std::endl;
-		guint32 size;
-		int result = read_all(fd, static_cast<void*>(&size), sizeof(guint32));
+		uint32_t size;
+		int result = read_all(fd, static_cast<void*>(&size), sizeof(uint32_t));
 		if (result == -1) return result;
 		std_vector_vector.resize(size);
-		for (guint32 i = 0; i < size; ++i) {
+		for (uint32_t i = 0; i < size; ++i) {
 			result = read(fd, std_vector_vector[i]);
 			if (result == -1) return result;
 		}
@@ -131,7 +131,7 @@ namespace saftbus
 	template<class K, class V>
 	int write(int fd, const std::map<K,V> &map) {
 		if (_debug_level > 5) std::cerr << "map write" << std::endl;
-		guint32 size = map.size();
+		uint32_t size = map.size();
 		int result = write(fd, size);
 		if (result == -1) return result;
 		for (auto iter = map.begin(); iter != map.end(); ++iter) {
@@ -146,11 +146,11 @@ namespace saftbus
 	int read(int fd, std::map<K,V> &map) {
 		if (_debug_level > 5) std::cerr << "map read" << std::endl;
 		map.clear();
-		guint32 size;
+		uint32_t size;
 		int result = read(fd, size);
 		if (result == -1) return result;
 		K k;  V v;
-		for (guint32 i = 0; i < size; ++i) {
+		for (uint32_t i = 0; i < size; ++i) {
 			result = read(fd, k); 
 			if (result == -1) return result;
 			result = read(fd, v);
@@ -178,7 +178,7 @@ namespace saftbus
 	}
 
 
-	bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
+	//bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
 
 
 

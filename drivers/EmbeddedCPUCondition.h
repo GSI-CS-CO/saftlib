@@ -34,8 +34,8 @@ class EmbeddedCPUCondition : public Condition, public iEmbeddedCPUCondition
     static std::shared_ptr<EmbeddedCPUCondition> create(const ConstructorType& args);
     
     // iEmbeddedCPUCondition
-    guint32 getTag() const;
-    void setTag(guint32 val);
+    uint32_t getTag() const;
+    void setTag(uint32_t val);
     
   protected:
     EmbeddedCPUCondition(const ConstructorType& args);

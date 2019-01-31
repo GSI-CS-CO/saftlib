@@ -33,13 +33,13 @@
 /* ==================================================================================================== */
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 #include <string>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -67,7 +67,7 @@ static const char   *deviceName   = NULL;  /* Name of the device */
 static const char   *ioName       = NULL;  /* Name of the IO */
 static bool          ioNameGiven  = false; /* IO name given? */
 static bool          ioNameExists = false; /* IO name does exist? */
-std::map<std::string,guint64>     map_PrefixName; /* Translation table IO name <> prefix */
+std::map<std::string,uint64_t>     map_PrefixName; /* Translation table IO name <> prefix */
 
 /* Prototypes */
 /* ==================================================================================================== */
@@ -75,18 +75,18 @@ static void io_help        (void);
 static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_pps, int io_drive,
                             bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_pps, bool set_drive,
                             bool verbose_mode);
-static int  io_create      (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative, bool translate_mask);
+static int  io_create      (bool disown, uint64_t eventID, uint64_t eventMask, int64_t offset, uint64_t flags, int64_t level, bool offset_negative, bool translate_mask);
 static int  io_destroy     (bool verbose_mode);
 static int  io_flip        (bool verbose_mode);
 static int  io_list        (void);
 static int  io_list_i_to_e (void);
 static int  io_print_table (bool verbose_mode);
-static void io_catch_input (guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags);
-static int  io_snoop       (bool mode, bool setup_only, bool disable_source, guint64 prefix_custom);
+static void io_catch_input (uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags);
+static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
 /* Function io_create() */
 /* ==================================================================================================== */
-static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative, bool translate_mask)
+static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t offset, uint64_t flags, int64_t level, bool offset_negative, bool translate_mask)
 {
   /* Helpers */
   bool   io_found          = false;
@@ -95,7 +95,7 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
   bool   io_AcceptDelayed  = false;
   bool   io_AcceptEarly    = false;
   bool   io_AcceptLate     = false;
-  gint64 io_offset         = offset;
+  int64_t io_offset         = offset;
 
   /* Get level/edge */
   if (level > 0) { io_edge = true; }
@@ -165,7 +165,7 @@ static int io_create (bool disown, guint64 eventID, guint64 eventMask, gint64 of
       }
     }
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -222,7 +222,7 @@ static int io_destroy (bool verbose_mode)
     }
 
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -288,7 +288,7 @@ static int io_flip (bool verbose_mode)
       }
     }
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -341,7 +341,7 @@ static int io_list (void)
         if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
         {
           /* Helper for flag information field */
-          guint32  flags = 0x0;
+          uint32_t  flags = 0x0;
 
           /* Get output conditions */
           std::shared_ptr<OutputCondition_Proxy> info_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
@@ -394,7 +394,7 @@ static int io_list (void)
     }
 
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -488,7 +488,7 @@ static int io_list_i_to_e()
       {
         /* Set name */
         ioName =  it->first.c_str();
-        guint64 prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
+        uint64_t prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
         map_PrefixName[ioName] = prefix;
         std::shared_ptr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
 
@@ -506,7 +506,7 @@ static int io_list_i_to_e()
       }
     }
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
     return (__IO_RETURN_FAILURE);
@@ -518,15 +518,15 @@ static int io_list_i_to_e()
 
 /* Function io_catch_input() */
 /* ==================================================================================================== */
-static void io_catch_input(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void io_catch_input(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
 {
   /* Helpers */
-  guint64 time = deadline - IO_CONDITION_OFFSET;
+  uint64_t time = deadline - IO_CONDITION_OFFSET;
   std::string catched_io = "Unknown";
 
   /* !!! evaluate prefix<>name map */
-  for (std::map<std::string,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event == it->second) { catched_io = it->first; } } /* Rising */
-  for (std::map<std::string,guint64>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event-1 == it->second) { catched_io = it->first; } } /* Falling */
+  for (std::map<std::string,uint64_t>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event == it->second) { catched_io = it->first; } } /* Rising */
+  for (std::map<std::string,uint64_t>::iterator it=map_PrefixName.begin(); it!=map_PrefixName.end(); ++it) { if (event-1 == it->second) { catched_io = it->first; } } /* Falling */
 
   /* Format output */
   std::cout << std::left;
@@ -550,7 +550,7 @@ static void io_catch_input(guint64 event, guint64 param, guint64 deadline, guint
 
 /* Function io_snoop() */
 /* ==================================================================================================== */
-static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 prefix_custom)
+static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom)
 {
   /* Helpers (connect proxies in a vector) */
   std::vector <std::shared_ptr<SoftwareCondition_Proxy> > proxies;
@@ -570,7 +570,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
       {
         /* Set name */
         ioName =  it->first.c_str();
-        guint64 prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
+        uint64_t prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
         map_PrefixName[ioName] = prefix;
 
         /* Create sink and condition or turn off event source */
@@ -631,7 +631,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
     }
 
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
     return (__IO_RETURN_FAILURE);
@@ -911,7 +911,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       }
     }
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -1012,7 +1012,7 @@ static int io_print_table(bool verbose_mode)
     }
 
   }
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -1039,12 +1039,12 @@ int main (int argc, char** argv)
   int  io_drive       = 0;     /* Drive IO value */
   int  ioc_flip       = 0;     /* Flip active bit for all conditions */
   int  return_code    = 0;     /* Return code */
-  guint64 eventID     = 0x0;   /* Event ID (new condition) */
-  guint64 eventMask   = 0x0;   /* Event mask (new condition) */
-  gint64  offset      = 0x0;   /* Event offset (new condition) */
-  guint64 flags       = 0x0;   /* Accept flags (new condition) */
-  gint64  level       = 0x0;   /* Rising or falling edge (new condition) */
-  guint64 prefix      = 0x0;   /* IO input prefix */
+  uint64_t eventID     = 0x0;   /* Event ID (new condition) */
+  uint64_t eventMask   = 0x0;   /* Event mask (new condition) */
+  int64_t  offset      = 0x0;   /* Event offset (new condition) */
+  uint64_t flags       = 0x0;   /* Accept flags (new condition) */
+  int64_t  level       = 0x0;   /* Rising or falling edge (new condition) */
+  uint64_t prefix      = 0x0;   /* IO input prefix */
   bool translate_mask = false; /* Translate mask? */
   bool negative       = false; /* Offset negative? */
   bool ioc_valid      = false; /* Create arguments valid? */
@@ -1161,7 +1161,7 @@ int main (int argc, char** argv)
     std::cerr << "Missing device name!" << std::endl;
     return (__IO_RETURN_FAILURE);
   }
-  Gio::init();
+//  Gio::init();
   map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
   if (devices.find(deviceName) == devices.end())
   {

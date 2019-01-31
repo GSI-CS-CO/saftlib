@@ -38,13 +38,13 @@ const char *MILbusActionSink::getInterfaceName() const
   return "MILbusActionSink";
 }
 
-std::string MILbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint16 tag)
+std::string MILbusActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint16_t tag)
 {
   return NewConditionHelper(active, id, mask, offset, tag, false,
     sigc::ptr_fun(&MILbusCondition::create));
 }
 
-void MILbusActionSink::InjectTag(guint16 tag)
+void MILbusActionSink::InjectTag(uint16_t tag)
 {
   ownerOnly();
   throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Unimplemented"); // !!!

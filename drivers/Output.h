@@ -47,10 +47,10 @@ class Output : public ActionSink, public iOutputActionSink
     const char *getInterfaceName() const;
     
     // Methods
-    std::string NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on);
+    std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on);
     void WriteOutput(bool value);
     bool ReadOutput();
-    bool StartClock(double high_phase, double low_phase, guint64 phase_offset);
+    bool StartClock(double high_phase, double low_phase, uint64_t phase_offset);
     bool StopClock();
     
     // Property getters
