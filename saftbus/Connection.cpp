@@ -280,7 +280,7 @@ void Connection::emit_signal(const std::string& object_path,
 			} else {
 				logger.add("     Normal signal: ").add(interface_name).add("\n");
 				// directly send signal
-				std::cerr << "emit_signal() payload size() = " << signal_msg.get_size() << std::endl;
+				//std::cerr << "emit_signal() payload size() = " << signal_msg.get_size() << std::endl;
 				std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
 				for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
 					try {
@@ -293,7 +293,7 @@ void Connection::emit_signal(const std::string& object_path,
 					}
 				}
 			}
-			std::cerr << "Connection::emit_signal(" << object_path << ", " << interface_name << ", " << signal_name << ") done" << std::endl;
+			//std::cerr << "Connection::emit_signal(" << object_path << ", " << interface_name << ", " << signal_name << ") done" << std::endl;
 		} catch(std::exception &e) {
 			// just continue, if something fails with this proxy, we still have other ones to care about
 			logger.add("           exception in Connection::emit_signal() ").add(e.what()).log();
@@ -489,7 +489,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					pp.socket_nr = socket_nr(socket);
 					_proxy_pipes[interface_name][object_path].insert(pp);
 					char ch = 'x';
-					std::cerr << "writing ping: " << ch << std::endl;
+					//std::cerr << "writing ping: " << ch << std::endl;
 					saftbus::write(fd, ch);
 				}
 				break;
@@ -551,7 +551,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					      .add(" object_path=").add(object_path)
 					      .add(" interface_name=").add(interface_name)
 					      .add(" \n");
-					std::cerr << " ********* interface_name = " << interface_name << std::endl;      
+					//std::cerr << " ********* interface_name = " << interface_name << std::endl;      
 
 					if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
 
@@ -567,8 +567,8 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 						      .add(" property_name=").add(property_name)
 						      .add("\n");
 
-						std::cerr << " ******** derived_interface_name = " << derived_interface_name << std::endl;
-						std::cerr << " ******** property_name          = " << property_name << std::endl;      
+						//std::cerr << " ******** derived_interface_name = " << derived_interface_name << std::endl;
+						//std::cerr << " ******** property_name          = " << property_name << std::endl;      
 
 						// for (unsigned n = 0; n < parameters.get_n_children(); ++n)
 						// {
@@ -665,8 +665,8 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							// get the result and pack it in a way that 
 							//   can be digested by the auto-generated saftlib code
  							Serial &result = method_invocation_rptr->get_return_value();
- 							std::cerr << "++++++++++++++++++ result serial " << result.get_size() << std::endl;
- 							result.print();
+ 							//std::cerr << "++++++++++++++++++ result serial " << result.get_size() << std::endl;
+ 							//result.print();
 							// pack response data
 							// std::vector<Glib::VariantBase> response;
 							// response.push_back(result);

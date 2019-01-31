@@ -25,7 +25,7 @@ namespace Slib
 			// - Ergebnisse an sources zurueckliefern
 
 			during_iteration = true;
-			std::cerr << "MainContext::iteration()" << std::endl;
+			//std::cerr << "MainContext::iteration()" << std::endl;
 
 			// poll all fds from all sources
 			bool result = false;
@@ -55,10 +55,10 @@ namespace Slib
 					all_ids.push_back(source->get_id());
 				}
 			}
-			std::cerr << "MainContext::iteration   -> poll()" << std::endl;
+			//std::cerr << "MainContext::iteration   -> poll()" << std::endl;
 			std::vector<int> signal_io_removed_indices;
 			if ((result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
-				std::cerr << "MainContext::iteration   -> poll done" << std::endl;
+				//std::cerr << "MainContext::iteration   -> poll done" << std::endl;
 				int idx = 0;
 				for (auto fd: all_pfds) {
 					if (idx < signal_io_pfds.size()) {
@@ -68,7 +68,7 @@ namespace Slib
 							//execute  signal_io callback
 							bool result = signal_io_slots[idx](fd.revents);
 							if (result == false ) { // add this index to the removal list
-								std::cerr << "signal_io " << idx << " callback returned false" << std::endl;
+								//std::cerr << "signal_io " << idx << " callback returned false" << std::endl;
 								signal_io_removed_indices.push_back(idx);
 							}
 						}
@@ -84,9 +84,9 @@ namespace Slib
 			for (auto &id_source: sources) {
 				auto id     = id_source.first;
 				auto source = id_source.second;
-				std::cerr << "checking source id " << id << std::endl;
+				//std::cerr << "checking source id " << id << std::endl;
 				if (source->check()) {
-					std::cerr << "dispatching source id " << id << std::endl;
+					//std::cerr << "dispatching source id " << id << std::endl;
 					source->dispatch(&source->_slot);
 				}
 			}

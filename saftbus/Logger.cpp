@@ -13,22 +13,22 @@ namespace saftbus
 	}
 
 	Logger& Logger::newMsg(int severity) {
-		msg.str("");
-		msg << std::setw(2)  << severity << "  ";
-		msg << std::setw(25) << getTimeTag() << ": ";
+		// msg.str("");
+		// msg << std::setw(2)  << severity << "  ";
+		// msg << std::setw(25) << getTimeTag() << ": ";
 		return *this;
 	}
 	Logger& Logger::add(const std::string &content) {
-		std::cerr << content;
+		//std::cerr << content;
 		return add(content.c_str());
 	}	
 
 	void Logger::log() {
-		std::cerr << "\n";
-		file << msg.str() << "\n";
-		if (flush_after_log) {
-			file.flush();
-		}
+		//std::cerr << "\n";
+		//file << msg.str() << "\n";
+		//if (flush_after_log) {
+		//	file.flush();
+		//}
 	}
 
 	std::string Logger::getTimeTag()

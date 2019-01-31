@@ -19,7 +19,7 @@ namespace saftbus
 ProxyConnection::ProxyConnection(const std::string &base_name)
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
-	std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
+	//std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
 	for (;;) {
 		// create a local unix socket
 		_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
@@ -52,11 +52,11 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 		}
 
 		try {
-			std::cerr << "ProxyConnection ask for _saftbus_id" << std::endl;
+			//std::cerr << "ProxyConnection ask for _saftbus_id" << std::endl;
 			// see if we can really write and read on the socket...
 			saftbus::write(get_fd(), saftbus::SENDER_ID);  // ask the saftd for an ID on the saftbus
 			saftbus::read(get_fd(), _saftbus_id);  
-			std::cerr << "received _saftbus_id " << _saftbus_id << std::endl;
+			//std::cerr << "received _saftbus_id " << _saftbus_id << std::endl;
 			return;
 		}  catch (...) {
 			std::cerr << "ProxyConnection::ProxyConnection() threw" << std::endl;
@@ -125,9 +125,9 @@ Serial& ProxyConnection::call_sync (const std::string& object_path,
 	// // then convert into a variant vector type
 	// Glib::Variant<std::vector<Glib::VariantBase> > var_message = Glib::Variant<std::vector<Glib::VariantBase> >::create(message);
 
-	std::cerr << "ProxyConnection::call_sync(" << object_path << ", " 
-	                                           << interface_name << ", "
-	                                           << name << ")" << std::endl;
+	// std::cerr << "ProxyConnection::call_sync(" << object_path << ", " 
+	//                                            << interface_name << ", "
+	//                                            << name << ")" << std::endl;
 
 	Serial message;
 	message.put(object_path);
@@ -166,9 +166,9 @@ Serial& ProxyConnection::call_sync (const std::string& object_path,
 		// deserialize the content into our buffer
 		//deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
 
-		std::cerr << "ProxyConnection::call_sync(" << name << ") received Serial" << std::endl;
+		//std::cerr << "ProxyConnection::call_sync(" << name << ") received Serial" << std::endl;
 		//_call_sync_result.print();
-		std::cerr << "ProxyConnection::call_sync(" << name << ") done " << std::endl;
+		//std::cerr << "ProxyConnection::call_sync(" << name << ") done " << std::endl;
 		return _call_sync_result;
 	} else {
 		std::ostringstream msg;

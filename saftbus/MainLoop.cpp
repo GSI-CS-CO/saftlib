@@ -10,9 +10,9 @@ namespace Slib
  			std::cerr << "MainLoop::run()" << std::endl;
  			running = true;
  			while (running) {
-	 			std::cerr << "MainLoop: context->iteration(true)" << std::endl;
+	 			//std::cerr << "MainLoop: context->iteration(true)" << std::endl;
  				context->iteration(true);
-	 			std::cerr << "MainLoop: end if iteration" << std::endl;
+	 			//std::cerr << "MainLoop: end if iteration" << std::endl;
  			}
  		}
 

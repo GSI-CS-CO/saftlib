@@ -49,7 +49,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
 		char ping;
 		saftbus::read(_pipe_fd[0], ping);
-		std::cerr << "got ping after sending pipe: " << ping << std::endl;
+		//std::cerr << "got ping after sending pipe: " << ping << std::endl;
 	} catch(...) {
 		std::cerr << "Proxy::~Proxy() threw" << std::endl;
 	}
@@ -89,7 +89,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 	// this method is called from the Glib::MainLoop whenever there is signal data in the pipe
 	try {
 
-		std::cerr << "Proxy::dispatch() called" << std::endl;
+		//std::cerr << "Proxy::dispatch() called" << std::endl;
 		// read type and size of signal
 		saftbus::MessageTypeS2C type;
 		guint32                 size;
@@ -101,11 +101,11 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		//saftbus::read_all(_pipe_fd[0], &buffer[0], size);
 
 		// de-serialize using saftbus::Serial
-		std::cerr << "Proxy::dispatch() read payload" << std::endl;
+		//std::cerr << "Proxy::dispatch() read payload" << std::endl;
 		Serial payload;
 		payload.data().resize(size);
 		saftbus::read_all(_pipe_fd[0], &payload.data()[0], size);
-		std::cerr << "Proxy::dispatch() payload size = " << payload.get_size() << std::endl;
+		//std::cerr << "Proxy::dispatch() payload size = " << payload.get_size() << std::endl;
 		std::string object_path;
 		std::string interface_name;
 		std::string signal_name;
@@ -138,7 +138,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		//if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
 		if (interface_name == "org.freedesktop.DBus.Properties" && signal_name == "PropertiesChanged")
 		{	
-			std::cerr << "Proxy::dispatch() ignoring property changed signal" << std::endl;
+			//std::cerr << "Proxy::dispatch() ignoring property changed signal" << std::endl;
 			/*
 
 			// in case of a property change, the interface name of the property 
@@ -182,7 +182,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		}
 		else // all other signals
 		{
-			std::cerr << "Proxy::dispatch() a normal signal" << std::endl;
+			//std::cerr << "Proxy::dispatch() a normal signal" << std::endl;
 			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
 			//if (_interface_name != interface_name.get()) {
 			if (_interface_name != interface_name) {
@@ -205,7 +205,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			    	_connection->send_signal_flight_time(signal_flight_time);
 			    }
 			    // deliver the signal: call the signal handler of the derived class 
-			    std::cerr << "Proxy::dispatch() call on_signal" << std::endl;
+			    //std::cerr << "Proxy::dispatch() call on_signal" << std::endl;
 				on_signal("de.gsi.saftlib", signal_name, parameters);
 			} catch(...) {
 				std::cerr << "Proxy::dispatch() : on_signal threw " << std::endl;
@@ -265,9 +265,9 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 		                          function_name,
 		                          query);
 
-	std::cerr << "Proxy::call_sync(" << function_name << ") received Serial" << std::endl;
-	result.print();
-	std::cerr << "Proxy::call_sync(" << function_name << ") done " << std::endl;
+	// std::cerr << "Proxy::call_sync(" << function_name << ") received Serial" << std::endl;
+	// result.print();
+	// std::cerr << "Proxy::call_sync(" << function_name << ") done " << std::endl;
 	return result;
 }
 

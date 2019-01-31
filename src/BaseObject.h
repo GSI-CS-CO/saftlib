@@ -26,7 +26,7 @@
 
 namespace saftlib {
 
-class BaseObject : public Glib::Object
+class BaseObject //: public Glib::Object
 {
   public:
     BaseObject(const std::string& objectPath);

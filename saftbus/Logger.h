@@ -19,8 +19,8 @@ public:
 	Logger& newMsg(int severity);
 	template<class T> 
 	Logger& add(const T &content) {
-		std::cerr << content;
-		msg << content;
+		//std::cerr << content;
+		//msg << content;
 		return *this;
 	}
 	Logger& add(const std::string &content);

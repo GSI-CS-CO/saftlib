@@ -79,7 +79,7 @@ EB_Source::~EB_Source()
 
 int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
 {
-  std::cerr << "EB_Source::add_fd(" << fd << ")" << std::endl;
+  //std::cerr << "EB_Source::add_fd(" << fd << ")" << std::endl;
   EB_Source* self = (EB_Source*)data;
   
   std::pair<fd_map::iterator, bool> res = 
@@ -117,7 +117,7 @@ static int no_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
 
 bool EB_Source::prepare(int& timeout_ms)
 {
-  std::cerr << "EB_Source::prepare" << std::endl;
+  //std::cerr << "EB_Source::prepare" << std::endl;
   // Retrieve cached current time
   int64_t now_ms = get_time();
   
@@ -157,7 +157,7 @@ bool EB_Source::prepare(int& timeout_ms)
 
 bool EB_Source::check()
 {
-  std::cerr << "EB_Source::check" << std::endl;
+  //std::cerr << "EB_Source::check" << std::endl;
   bool ready = false;
   
   // Descriptors ready?
@@ -172,7 +172,7 @@ bool EB_Source::check()
 
 bool EB_Source::dispatch(sigc::slot_base* slot)
 {
-  std::cerr << "EB_Source::dispatch" << std::endl;
+ // std::cerr << "EB_Source::dispatch" << std::endl;
   // Process any pending packets
   socket.check(get_time()/1000, this, &EB_Source::get_fd);
   
