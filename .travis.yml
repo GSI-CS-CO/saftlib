@@ -26,7 +26,7 @@ before_install:
 - sudo apt-get update
 
 # install required packages
-#install:
+install:
 - sudo apt-get install build-essential --install-suggests -y
 - sudo apt-get install docbook-utils -y
 - sudo apt-get install libreadline-dev -y
