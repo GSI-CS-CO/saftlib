@@ -50,7 +50,21 @@
          receiver has a correct timestamp.
       -->
     <property name="Locked" type="b" access="read"/>
-  
+
+    <!-- TemperatureSensorAvail: Check if a temperature sensor is available
+         in a timing receiver.
+      -->
+    <property name="TemperatureSensorAvail" type="b" access="read"/>
+
+    <!-- CurrentTemperature: The current temperature in degree Celsius.
+         @result:         Temperature in degree Celsius.
+         The valid temperature range is from -70 to 127 degree Celsius.
+         The data type is 32-bit signed integer.
+      -->
+    <method name="CurrentTemperature">
+      <arg  direction="out" type="i" name="result"/>
+    </method>
+
     <!-- ReadCurrentTime: The current time in nanoseconds since 1970.
          @result:         Nanoseconds since 1970.
          Due to delays in software, the returned value is probably several

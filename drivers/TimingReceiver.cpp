@@ -45,6 +45,7 @@
 #include "InoutImpl.h"
 #include "Output.h"
 #include "Input.h"
+#include "ats_regs.h"
 
 namespace saftlib {
 
@@ -58,8 +59,10 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    stream(args.stream),
    watchdog(args.watchdog),
    pps(args.pps),
+   ats(args.ats),
    sas_count(0),
-   locked(false)
+   locked(false),
+   temperature(0)
 {
   // try to acquire watchdog
   eb_data_t retry;
@@ -352,6 +355,25 @@ bool TimingReceiver::getLocked() const
   }
   
   return newLocked;
+}
+
+bool TimingReceiver::getTemperatureSensorAvail() const
+{
+  return ats != 0;
+}
+
+gint32 TimingReceiver::CurrentTemperature()
+{
+  if (ats) {
+    eb_data_t data;
+    device.read(ats + ALTERA_TEMP_DEGREE, EB_DATA32, &data);
+
+    if (data != 0xDEADC0DE) {
+      temperature = (gint32) data;
+    }
+  }
+
+  return temperature;
 }
 
 void TimingReceiver::do_remove(SinkKey key)
@@ -783,13 +805,20 @@ void TimingReceiver::probe(OpenDevice& od)
   od.device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
   od.device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi);
   
-  std::vector<sdb_device> streams, infos, watchdogs, scubus, pps, mbx;
+  std::vector<sdb_device> streams, infos, watchdogs, scubus, pps, mbx, ats;
+
+  eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
+
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs);
   od.device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
+  od.device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats);
   od.device.sdb_find_by_identity(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx);
+
+  if (ats.size())
+    ats_addr = (eb_address_t)ats[0].sdb_component.addr_first;
   
   // only support super basic hardware for now
   if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || watchdogs.size() != 1 
@@ -807,6 +836,7 @@ void TimingReceiver::probe(OpenDevice& od)
     (eb_address_t)infos[0].sdb_component.addr_first,
     (eb_address_t)watchdogs[0].sdb_component.addr_first,
     (eb_address_t)pps[0].sdb_component.addr_first,
+    ats_addr,
   };
   Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;

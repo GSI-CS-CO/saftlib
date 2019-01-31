@@ -77,6 +77,7 @@ static void help(void) {
   std::cout << "  -j                   list all attached devices (hardware)" << std::endl;
   std::cout << "  -k                   display gateware version (hardware)" << std::endl;
   std::cout << "  -s                   display actual status of software actions" << std::endl;
+  std::cout << "  -t                   display the current temperature in Celsius (if sensor is available) " << std::endl;
   std::cout << std::endl;
   std::cout << "  inject <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
   std::cout << "  snoop  <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
@@ -221,6 +222,13 @@ static void displayInfoGW(Glib::RefPtr<TimingReceiver_Proxy> receiver)
   std::cout << receiver->getGatewareVersion() << std::endl;
 } // displayInfoGW
 
+static void displayCurrentTemperature(Glib::RefPtr<TimingReceiver_Proxy> receiver)
+{
+  if (receiver->getTemperatureSensorAvail())
+    std::cout << "current temperature (Celsius): " << receiver->CurrentTemperature() << std::endl;
+  else
+    std::cout << "no temperature sensor is available in this device!" << std::endl;
+}
 
 int main(int argc, char** argv)
 {
@@ -237,6 +245,7 @@ int main(int argc, char** argv)
   bool deviceRemove   = false;
   bool useFirstDev    = false;
   bool saftdQuit      = false;
+  bool currentTemp    = false;
   char *value_end;
 
   // variables snoop event
@@ -263,13 +272,16 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxsvapijkhf")) != -1) {
+  while ((opt = getopt(argc, argv, "dxsvapijkhft")) != -1) {
     switch (opt) {
     case 'f' :
       useFirstDev = true;
       break;
     case 's':
       statusDisp = true;
+      break;
+    case 't':
+      currentTemp = true;
       break;
     case 'i':
       infoDispSW = true;
@@ -455,7 +467,7 @@ int main(int argc, char** argv)
     } //switch useFirstDevice;
 
     if (infoDispGW) displayInfoGW(receiver);
-
+    if (currentTemp) displayCurrentTemperature(receiver);
 
     Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
 
