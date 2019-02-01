@@ -21,7 +21,7 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG(C++)
-AX_CXX_COMPILE_STDCXX(11,noext,optional)
+AX_CXX_COMPILE_STDCXX(11,noext,mandatory)
 
 dnl We need long long even before c++11 for UINT64_C, PRIx64, and friends
 AC_MSG_CHECKING(whether compiler understands -Wall)
@@ -51,7 +51,6 @@ AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [T
 
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])
-#PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2 gio-unix-2.0])
 PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
 if test "x$XSLTPROC" = "x"; then
@@ -59,26 +58,10 @@ if test "x$XSLTPROC" = "x"; then
 fi
 
 dnl Generate documentation, only if we can
-AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
 AC_PATH_PROGS([DOCBOOK2MAN], [docbook2man])
 AC_PATH_PROGS([GIT], [git])
 
-
-
-
-### offer the saftbus option as an alternative to DBus
-#AC_ARG_ENABLE([saftbus],
-#              [AS_HELP_STRING([--enable-saftbus], [use saftbus for inter process communication instead of DBus])],
-#              [],
-#              [enable_saftbus=yes]
-#             )
-#enable_saftbus=$(echo $enable_saftbus) # strip whitespace trick.
-#AM_CONDITIONAL([ENABLE_SAFTBUS], [test x$enable_saftbus = xyes])
-#AS_IF([test x$enable_saftbus = xyes], 
-#      [AC_CONFIG_COMMANDS([saftlib_saftbus], [cp interfaces/saftlib_saftbus.h.in interfaces/saftlib_ipc.h])],
-#      [AC_CONFIG_COMMANDS([saftlib_dbus], [cp interfaces/saftlib_dbus.h.in interfaces/saftlib_ipc.h])])
-### end of safbus stuff
 
 AM_CONDITIONAL([INTERFACE_DOCS], [test x$DOCBOOK2PDF != x -a x$GDBUS_CODEGEN != x])
 AM_CONDITIONAL([REBUILD_MAN_PAGES], [test x$DOCBOOK2MAN != x])
