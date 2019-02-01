@@ -28,7 +28,6 @@
   <xsl:document href="{$name}.cpp" method="text" encoding="utf-8" indent="no">
     <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
     <xsl:text>#include &lt;sigc++/sigc++.h&gt;&#10;</xsl:text>
-    <!-- <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text> -->
     <xsl:text>#include "</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>.h"&#10;</xsl:text>
@@ -41,9 +40,6 @@
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy::create(&#10;</xsl:text>
     <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
-<!--     <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
-    <xsl:text>  saftbus::BusType bus_type,&#10;</xsl:text>
- -->    <!-- <xsl:text>  saftbus::ProxyFlags flags)&#10;{&#10;</xsl:text> -->
     <xsl:text>   saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
     <xsl:text>  return std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
@@ -53,7 +49,6 @@
     <xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>
     <xsl:text>", </xsl:text>
     <xsl:text> saftbus::BUS_TYPE_SYSTEM, </xsl:text>
-     <!-- name, bus_type, -->
     <xsl:text> signalGroup));&#10;}&#10;&#10;</xsl:text>
 
     <!-- Proxy Constructor -->
@@ -219,8 +214,6 @@
       <!-- C++ boilerplate -->
       <xsl:text>// This is a generated file. Do not modify.&#10;&#10;</xsl:text>
       <xsl:text>#include &lt;sigc++/sigc++.h&gt;&#10;</xsl:text>
-      <!-- <xsl:text>#include &lt;glibmm.h&gt;&#10;</xsl:text> -->
-      <!-- <xsl:text>#include &lt;gio/gunixfdlist.h&gt;&#10;</xsl:text> -->
       <xsl:text>#include &lt;cstdint&gt;&#10;</xsl:text>
       <xsl:text>#include "i</xsl:text>
       <xsl:value-of select="$iface"/>
@@ -232,64 +225,8 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::xml =&#10;"&lt;node&gt;</xsl:text>
       <!-- unfortunately, the following line needs to be replaced by a bunch of code to copy all but the 'Ax' args; is there a simpler way of achieving the same ? -->
-<!--       <xsl:apply-templates select="." mode="escape"/> -->
+      <xsl:apply-templates select="." mode="escape"/>
       <xsl:text>"&#10;</xsl:text>
-      <xsl:text>"  &lt;interface name='</xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text>'&gt;"&#10;</xsl:text>
-      <!-- properties -->
-      <xsl:for-each select="property">
-        <xsl:text>"    &lt;property name='</xsl:text>
-        <xsl:value-of select="@name"/>
-        <xsl:text>' type='</xsl:text>
-        <xsl:value-of select="@type"/>
-        <xsl:text>' access='</xsl:text>
-        <xsl:value-of select="@access"/>
-        <xsl:text>'&gt;"&#10;</xsl:text>
-          <xsl:for-each select="annotation">
-            <xsl:text>"      &lt;annotation name='</xsl:text>
-            <xsl:value-of select="@name"/>
-            <xsl:text>' value='</xsl:text>
-            <xsl:value-of select="@value"/>
-            <xsl:text>'/&gt;"&#10;</xsl:text>
-          </xsl:for-each>
-        <xsl:text>"    &lt;/property&gt;"&#10;</xsl:text>
-      </xsl:for-each>
-      <!-- methods -->
-      <xsl:for-each select="method">
-        <xsl:text>"    &lt;method name='</xsl:text>
-        <xsl:value-of select="@name"/>
-        <xsl:text>'&gt;"&#10;</xsl:text>
-          <xsl:for-each select="arg">
-            <xsl:if test="not(substring(@type,1,1)='A' or @type='h')"> <!-- remove the array-through-pipe arguments from the d-bus interface -->
-              <xsl:text>"      &lt;arg direction='</xsl:text>
-              <xsl:value-of select="@direction"/>
-              <xsl:text>' type='</xsl:text>
-              <xsl:value-of select="@type"/>
-              <xsl:text>' name='</xsl:text>
-              <xsl:value-of select="@name"/>
-              <xsl:text>'/&gt;"&#10;</xsl:text>
-            </xsl:if>
-          </xsl:for-each>
-        <xsl:text>"    &lt;/method&gt;"&#10;</xsl:text>
-      </xsl:for-each>
-      <!-- signals -->
-      <xsl:for-each select="signal">
-        <xsl:text>"    &lt;signal name='</xsl:text>
-        <xsl:value-of select="@name"/>
-        <xsl:text>'&gt;"&#10;</xsl:text>
-          <xsl:for-each select="arg">
-            <xsl:if test="not(substring(@type,1,1)='A')"> <!-- remove the array-through-pipe arguments from the d-bus interface -->
-              <xsl:text>"      &lt;arg name='</xsl:text>
-              <xsl:value-of select="@name"/>
-              <xsl:text>' type='</xsl:text>
-              <xsl:value-of select="@type"/>
-              <xsl:text>'/&gt;"&#10;</xsl:text>
-            </xsl:if>
-          </xsl:for-each>
-        <xsl:text>"    &lt;/signal&gt;"&#10;</xsl:text>
-      </xsl:for-each>
-      <xsl:text>"  &lt;/interface&gt;"&#10;</xsl:text>
       <xsl:text>"&lt;/node&gt;";&#10;&#10;</xsl:text>
 
       <!-- Interface vtable -->
@@ -304,196 +241,46 @@
         <xsl:call-template name="method-type">
           <xsl:with-param name="namespace">i<xsl:value-of select="$iface"/>_Proxy::</xsl:with-param>
         </xsl:call-template>
+        <xsl:text>&#10;{&#10;</xsl:text>
+        <xsl:text>  saftbus::Serial query;&#10;</xsl:text>
+        <xsl:for-each select="arg[@direction='in']">
+          <xsl:text>  query.put(</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>);&#10;</xsl:text>
+        </xsl:for-each>
+        <xsl:text>  </xsl:text>
+        <xsl:if test="arg[@direction='out']">const saftbus::Serial&amp; response = </xsl:if>
+        <xsl:text>call_sync("</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>", query);&#10;</xsl:text>
+        <xsl:if test="arg[@direction='out']">  response.get_init();&#10;</xsl:if>
+        <xsl:for-each select="arg[@direction='out']">
+          <xsl:text>  </xsl:text>
+          <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
+          <xsl:text>;&#10;</xsl:text>
+        </xsl:for-each>
+        <xsl:for-each select="arg[@direction='out']">
+          <xsl:text>  response.get(ov_</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>);&#10;</xsl:text>
+        </xsl:for-each>
         <xsl:choose>
-          <xsl:when test="count(arg[substring(@type,1,1)='A' or @type='h'])=0"> <!-- only if there are no vector-through-pipe requests ('A') -->
-            <xsl:text>&#10;{&#10;</xsl:text>
-            <xsl:text>  saftbus::Serial query;&#10;</xsl:text>
-            <xsl:for-each select="arg[@direction='in']">
-              <xsl:text>  query.put(</xsl:text>
-              <!-- <xsl:call-template name="raw-type"/> -->
-              <!-- <xsl:text>::create(</xsl:text> -->
-              <xsl:value-of select="@name"/>
-              <xsl:text>);&#10;</xsl:text>
-            </xsl:for-each>
-            <!-- <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;</xsl:text> -->
-            <xsl:text>  </xsl:text>
-            <xsl:if test="arg[@direction='out']">const saftbus::Serial&amp; response = </xsl:if>
-            <xsl:text>call_sync("</xsl:text>
-            <xsl:value-of select="@name"/>
-            <xsl:text>", query);&#10;</xsl:text>
-            <xsl:if test="arg[@direction='out']">  response.get_init();&#10;</xsl:if>
-            <xsl:for-each select="arg[@direction='out']">
-              <xsl:text>  </xsl:text>
-              <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
-              <xsl:text>;&#10;</xsl:text>
-            </xsl:for-each>
-            <xsl:for-each select="arg[@direction='out']">
-              <xsl:text>  response.get(ov_</xsl:text>
-              <xsl:value-of select="@name"/>
-              <!-- <xsl:text>, </xsl:text>
-              <xsl:value-of select="position()-1"/> -->
-              <xsl:text>);&#10;</xsl:text>
-            </xsl:for-each>
-            <xsl:choose>
-              <xsl:when test="count(arg[@direction='out']) = 1">
-                <xsl:text>  return ov_</xsl:text>
-                <xsl:value-of select="arg[@direction='out']/@name"/>
-                <xsl:text>;&#10;</xsl:text>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:for-each select="arg[@direction='out']">
-                  <xsl:text>  </xsl:text>
-                  <xsl:value-of select="@name"/>
-                  <xsl:text> = ov_</xsl:text>
-                  <xsl:value-of select="@name"/>
-                  <xsl:text>.get();&#10;</xsl:text>
-                </xsl:for-each>
-              </xsl:otherwise>
-            </xsl:choose>
-            <xsl:text>}&#10;&#10;</xsl:text>
+          <xsl:when test="count(arg[@direction='out']) = 1">
+            <xsl:text>  return ov_</xsl:text>
+            <xsl:value-of select="arg[@direction='out']/@name"/>
+            <xsl:text>;&#10;</xsl:text>
           </xsl:when>
-          <xsl:otherwise> <!-- there are 'A' or 'h' types -->
-            <xsl:text>&#10;{&#10;</xsl:text>
-            <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
-            <!-- <xsl:text>  connection-&gt;reference();&#10;</xsl:text> -->
-            <xsl:text>  std::shared_ptr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
-            <xsl:text>  std::shared_ptr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
-            <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)"> <!-- in this case we only have 'h' and don't need to open a pipe -->
-              <xsl:text>  gint _vector_pipe_fd[2];&#10;</xsl:text>
-              <xsl:text>  if (pipe(_vector_pipe_fd) != 0) {&#10;</xsl:text>
-              <xsl:text>    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "cannot open pipe");&#10;</xsl:text>
-              <xsl:text>  }&#10;</xsl:text>
-              <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[0]);&#10;</xsl:text>
-              <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[1]);&#10;</xsl:text>
-            </xsl:if>
-            <xsl:text>  std::shared_ptr&lt;Gio::UnixFDList&gt; out_fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
-            <!--<xsl:text>  std::shared_ptr&lt;Glib::MainLoop&gt;    mainloop = Glib::MainLoop::create();&#10;</xsl:text>-->
-
-            <!--  same as without vector-through-pipe request -->
-
-            <xsl:text>  std::vector&lt;Glib::VariantBase&gt; query_vector;&#10;</xsl:text>
-            <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A')]"> <!-- for all non 'A' types -->
-              <xsl:choose>
-                <xsl:when test="@type='h'"> <!-- case of a file descriptor -->
-                  <xsl:text>  fd_list-&gt;append(</xsl:text>
-                  <xsl:value-of select="@name"/>
-                  <xsl:text>);&#10;</xsl:text>
-                </xsl:when>
-                <xsl:otherwise>             <!-- all other argument types -->
-                  <xsl:text>  query_vector.push_back(</xsl:text>
-                  <xsl:call-template name="raw-type"/>
-                  <xsl:text>::create(</xsl:text>
-                  <xsl:value-of select="@name"/>
-                  <xsl:text>));&#10;</xsl:text>
-                </xsl:otherwise>
-              </xsl:choose>
-            </xsl:for-each>
-            <xsl:text>  const Glib::VariantContainerBase&amp; query = Glib::VariantContainerBase::create_tuple(query_vector);&#10;&#10;</xsl:text>
-
-            <xsl:text>  Glib::VariantContainerBase response;&#10;</xsl:text>
-            <xsl:text>  GMainContext *context = g_main_context_new ();&#10;</xsl:text>
-            <xsl:text>  GMainLoop    *loop    = g_main_loop_new (context, FALSE);&#10;</xsl:text>
-            <xsl:text>  g_main_context_push_thread_default (context);&#10;</xsl:text>
-            <xsl:text>  std::string exceptionMsg;&#10;</xsl:text>
-            <!-- make asynchronous call -->
-            <xsl:text>  connection-&gt;call(&#10;</xsl:text>
-            <xsl:text>      get_object_path(), &#10;</xsl:text>
-            <xsl:text>      "de.gsi.saftlib.</xsl:text>
-            <xsl:value-of select="$iface"/>
-            <xsl:text>",&#10;</xsl:text> 
-            <xsl:text>      "</xsl:text>
-            <xsl:value-of select="@name"/>
-            <xsl:text>",&#10;</xsl:text>
-            <xsl:text>      query,&#10;</xsl:text>
-            <xsl:text>      sigc::bind(sigc::bind(sigc::mem_fun(this, &amp;i</xsl:text> 
-            <xsl:value-of select="$iface"/>
-            <xsl:text>_Proxy::AsyncCallReady), &amp;response, &amp;exceptionMsg), loop),&#10;</xsl:text>
-            <xsl:text>      cancellable,&#10;</xsl:text>
-            <xsl:text>      fd_list,&#10;</xsl:text>
-            <xsl:text>      "de.gsi.saftlib"</xsl:text>
-            <xsl:text>);&#10;&#10;</xsl:text>  
-
-            <!-- send vector data over pipe -->
-            <xsl:for-each select="arg[@direction='in' and substring(@type,1,1)='A']">
-              <xsl:text>  write_vector_to_pipe(_vector_pipe_fd[1], </xsl:text>
-              <xsl:value-of select="@name"/>
-              <xsl:text>);&#10;</xsl:text>
-            </xsl:for-each>
-            <xsl:text>&#10;</xsl:text>  
-
-            <!--<xsl:text>  mainloop-&gt;run(); // wait unitl the d-bus call was answered ("AsyncCallReady" was called)&#10;&#10;</xsl:text>-->
-            <xsl:text>  g_main_loop_run(loop);&#10;</xsl:text>
-            <xsl:text>  g_main_context_pop_thread_default (context);&#10;</xsl:text>
-            <xsl:text>  g_main_context_unref (context);&#10;</xsl:text>
-            <xsl:text>  g_main_loop_unref (loop);&#10;</xsl:text>
-
-
-            <xsl:text>  if (!exceptionMsg.empty()) {&#10;</xsl:text>
-            <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-              <xsl:text>    close(_vector_pipe_fd[0]);&#10;</xsl:text>
-              <xsl:text>    close(_vector_pipe_fd[1]);&#10;</xsl:text>
-            </xsl:if>
-            <xsl:text>    throw saftbus::Error(saftbus::Error::INVALID_ARGS, exceptionMsg);&#10;</xsl:text>
-            <xsl:text>  }&#10;</xsl:text>
-            
-            <xsl:for-each select="arg[@direction='out' and substring(@type,1,1)='A']">
-              <xsl:if test="count(../arg[@direction='out']) = 1">
-                <xsl:text>  </xsl:text>
-                <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
-                <xsl:text>;&#10;</xsl:text>
-              </xsl:if>
-              <xsl:text>  read_vector_from_pipe(_vector_pipe_fd[0], </xsl:text>
-              <xsl:if test="count(../arg[@direction='out']) = 1">
-                <xsl:text>ov_</xsl:text>
-              </xsl:if>
-              <xsl:value-of select="@name"/>
-              <xsl:text>);&#10;</xsl:text>                  
-            </xsl:for-each>
-            <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A' or @type='h')]">
+          <xsl:otherwise>
+            <xsl:for-each select="arg[@direction='out']">
               <xsl:text>  </xsl:text>
-              <xsl:call-template name="raw-type"/> ov_<xsl:value-of select="@name"/>
-              <xsl:text>;&#10;</xsl:text>
-              <xsl:text>  response.get_child(ov_</xsl:text>
               <xsl:value-of select="@name"/>
-              <xsl:text>, </xsl:text>
-              <xsl:value-of select="position()-1"/>
-              <xsl:text>);&#10;</xsl:text>
+              <xsl:text> = ov_</xsl:text>
+              <xsl:value-of select="@name"/>
+              <xsl:text>.get();&#10;</xsl:text>
             </xsl:for-each>
-            <xsl:if test="not(count(arg[@type='h' and @direction='out'])=0)">
-              <!-- do not support output file descriptors for now -->
-              <xsl:message terminate="yes">
-                Error: File descriptors are only supported as direction="in" arguments
-              </xsl:message>
-            </xsl:if>
-
-            <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-              <xsl:text>  close(_vector_pipe_fd[0]);&#10;</xsl:text>
-              <xsl:text>  close(_vector_pipe_fd[1]);&#10;</xsl:text>
-            </xsl:if>
-
-            <xsl:choose>
-              <xsl:when test="count(arg[@direction='out']) = 1">
-                <xsl:text>  return ov_</xsl:text>
-                <xsl:value-of select="arg[@direction='out']/@name"/>
-                <xsl:if test="not(substring(arg[@direction='out']/@type,1,1)='A')">
-                  <xsl:text>.get()</xsl:text>
-                </xsl:if>
-                <xsl:text>;&#10;</xsl:text>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:for-each select="arg[@direction='out' and not(substring(@type,1,1)='A' or @type='h')]">
-                  <xsl:text>  </xsl:text>
-                  <xsl:value-of select="@name"/>
-                  <xsl:text> = ov_</xsl:text>
-                  <xsl:value-of select="@name"/>
-                  <xsl:text>.get();&#10;</xsl:text>
-                </xsl:for-each>
-              </xsl:otherwise>
-            </xsl:choose>
-
-            <xsl:text>}&#10;&#10;</xsl:text>
           </xsl:otherwise>
         </xsl:choose>
+        <xsl:text>}&#10;&#10;</xsl:text>
       </xsl:for-each>
 
 
@@ -502,25 +289,16 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy::fetch_property(const char* name, saftbus::Serial&amp; val) const&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
-<!--       <xsl:text>  std::vector&lt; Glib::VariantBase &gt; params;&#10;</xsl:text> -->
       <xsl:text>  saftbus::Serial params;&#10;</xsl:text>
-<!--       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text> -->
       <xsl:text>  params.put(std::string("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
-<!--       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text> -->
       <xsl:text>  params.put(std::string(name));&#10;</xsl:text>
       <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection =&#10;</xsl:text>
-<!--       <xsl:text>    std::shared_ptr&lt;saftbus::ProxyConnection&gt;::cast_const(get_connection());&#10;</xsl:text> -->
       <xsl:text>    std::const_pointer_cast&lt;saftbus::ProxyConnection&gt;(get_connection());&#10;</xsl:text>
-      <!-- <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text> -->
       <xsl:text>  val =&#10;</xsl:text>
       <xsl:text>    connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", &#10;</xsl:text>
       <xsl:text>      params, get_name());&#10;</xsl:text>
-<!--       <xsl:text>  Glib::Variant&lt;Glib::VariantBase&gt; variant;&#10;</xsl:text>
-      <xsl:text>  result.get_child(variant, 0);&#10;</xsl:text> -->
-<!--       <xsl:text>  result.get_init();&#10;</xsl:text>
-      <xsl:text>  result.get(val);&#10;</xsl:text> -->
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- Property getters -->
@@ -532,12 +310,6 @@
         <xsl:call-template name="raw-type"/>
         <xsl:text> value;&#10;</xsl:text>
         <xsl:text>  saftbus::Serial response;&#10;</xsl:text>
-<!--         <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value = 'false'])">
-          <xsl:text>  get_cached_property(response, "</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>");&#10;</xsl:text>
-          <xsl:text>  if (value.gobj()) return value.get();&#10;</xsl:text>
-        </xsl:if> -->
         <xsl:text>  fetch_property("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>", response);&#10;</xsl:text>
@@ -551,18 +323,12 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy::update_property(const char* name, const saftbus::Serial&amp; val)&#10;{&#10;</xsl:text>
       <xsl:text>  saftbus::Serial params;&#10;</xsl:text>
-<!--       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create("</xsl:text>
-      <xsl:value-of select="$iface_full"/>
-      <xsl:text>"));&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text>
-      <xsl:text>  params.push_back(Glib::Variant&lt; Glib::VariantBase &gt;::create(val));&#10;</xsl:text> -->
       <xsl:text>  params.put(std::string("</xsl:text>
       <xsl:value-of select="$iface_full"/>
       <xsl:text>"));&#10;</xsl:text>
       <xsl:text>  params.put(std::string(name));&#10;</xsl:text>
       <xsl:text>  params.put(val);&#10;</xsl:text>
       <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
-      <!-- <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text> -->
       <xsl:text>  connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set",&#10;</xsl:text>
       <xsl:text>    params, get_name());&#10;}&#10;&#10;</xsl:text>
 
@@ -577,7 +343,6 @@
         <xsl:text>  update_property("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>", </xsl:text>
-        <!-- <xsl:call-template name="raw-type"/> -->
         <xsl:text>parameter);&#10;}&#10;&#10;</xsl:text>
       </xsl:for-each>
 
@@ -639,8 +404,6 @@
         <xsl:for-each select="arg">
           <xsl:text>    parameters.get(</xsl:text>
           <xsl:value-of select="@name"/>
-          <!-- <xsl:text>, </xsl:text>
-          <xsl:value-of select="position()-1"/> -->
           <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>    </xsl:text>
@@ -649,7 +412,6 @@
         <xsl:for-each select="arg">
           <xsl:if test="position()>1">, </xsl:if>
           <xsl:value-of select="@name"/>
-          <!-- <xsl:text>.get()</xsl:text> -->
         </xsl:for-each>
         <xsl:text>);&#10;  } else </xsl:text>
       </xsl:for-each>
@@ -759,43 +521,11 @@
         <xsl:value-of select="@name"/>
         <xsl:text>") {&#10;</xsl:text>
         <xsl:text>    try {&#10;</xsl:text>
-        <!-- take a fildescriptor pair from fd_list in case there is any type 'A' present -->
-        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0) or not(count(arg[@type='h'])=0)">
-          <xsl:text>      std::shared_ptr&lt;saftbus::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
-          <xsl:text>      GUnixFDList *fd_list  = g_dbus_message_get_unix_fd_list(message-&gt;gobj());&#10;</xsl:text>
-          <xsl:text>      if (!fd_list) { &#10;</xsl:text>
-          <xsl:text>        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
-          <xsl:text>      }&#10;</xsl:text>
-          <xsl:text>      int num_expected_fds = </xsl:text>
-          <xsl:value-of select="count(arg[@type='h'])"/>
-          <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-            <xsl:text> + 2</xsl:text>
-          </xsl:if>
-          <xsl:text>;&#10;</xsl:text>
-          <xsl:text>      if (g_unix_fd_list_get_length(fd_list) != num_expected_fds) { &#10;</xsl:text>
-          <xsl:text>        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Wrong number of file descriptors received");&#10;</xsl:text>
-          <xsl:text>      }&#10;</xsl:text>
-          <xsl:text>      int fd_index = 0;&#10;</xsl:text>
-          <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-            <xsl:text>      gint _vector_pipe_fd0 = g_unix_fd_list_get(fd_list, fd_index++, 0);&#10;</xsl:text>
-            <xsl:text>      gint _vector_pipe_fd1 = g_unix_fd_list_get(fd_list, fd_index++, 0);&#10;</xsl:text>
-          </xsl:if>
-        </xsl:if>
         <xsl:for-each select="arg[@direction='in']">
           <xsl:text>      </xsl:text>
-          <xsl:choose>
-            <xsl:when test="substring(@type,1,1)='A' or @type='h'">
-              <xsl:call-template name="raw-type"/>  
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:call-template name="raw-type"/> 
-            </xsl:otherwise>
-          </xsl:choose>
+            <xsl:call-template name="raw-type"/> 
           <xsl:text> </xsl:text>
           <xsl:value-of select="@name"/>
-          <xsl:if test="@type='h'">
-            <xsl:text> = g_unix_fd_list_get(fd_list, fd_index++, 0)</xsl:text>
-          </xsl:if>          
           <xsl:text>;&#10;</xsl:text>
         </xsl:for-each>
         <xsl:for-each select="arg[@direction='out']">
@@ -806,19 +536,10 @@
           <xsl:text>;&#10;</xsl:text>
         </xsl:for-each>
         <!-- get parameter values -->
-        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-        </xsl:if>
-        <xsl:for-each select="arg[@direction='in' and substring(@type,1,1)='A']">
-          <xsl:text>      read_vector_from_pipe(_vector_pipe_fd0, </xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>);&#10;</xsl:text>
-        </xsl:for-each>
         <xsl:text>      parameters.get_init();&#10;</xsl:text>
-        <xsl:for-each select="arg[@direction='in' and not(substring(@type,1,1)='A' or @type='h')]">
+        <xsl:for-each select="arg[@direction='in']">
           <xsl:text>      parameters.get(</xsl:text>
           <xsl:value-of select="@name"/>
-<!--           <xsl:text>, </xsl:text>
-          <xsl:value-of select="position()-1"/> -->
           <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>      try {&#10;</xsl:text>
@@ -833,23 +554,10 @@
         <xsl:text>(</xsl:text>
         <xsl:for-each select="arg[$void or @direction='in']">
           <xsl:if test="position()>1">, </xsl:if>
-            <xsl:value-of select="@name"/>
-            <xsl:if test="@direction='in'">
-              <xsl:if test="not(substring(@type,1,1)='A' or @type='h')">
-                <!-- <xsl:text>.get()</xsl:text> -->
-              </xsl:if>
-            </xsl:if>
+          <xsl:value-of select="@name"/>
         </xsl:for-each>
         <xsl:text>);&#10;</xsl:text>
-        <xsl:if test="not(@reset_connection='false')">
-          <!-- <xsl:text>        connection.reset();&#10;</xsl:text> -->
-        </xsl:if>
         <xsl:text>      } catch (...) {&#10;</xsl:text>
-        <!-- <xsl:text>        connection.reset();&#10;</xsl:text> -->
-        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-          <xsl:text>        close(_vector_pipe_fd0);&#10;</xsl:text>
-          <xsl:text>        close(_vector_pipe_fd1);&#10;</xsl:text>
-        </xsl:if>
         <xsl:text>        rethrow("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>");&#10;</xsl:text>
@@ -858,28 +566,11 @@
         <xsl:text>      saftbus::Serial &amp;response = invocation->get_return_value();&#10;</xsl:text>
         <xsl:text>      response.put_init();&#10;</xsl:text>
         <xsl:for-each select="arg[@direction='out']">
-          <xsl:if test="not(substring(@type,1,1)='A' or @type='h')">
-            <xsl:text>      response.put(</xsl:text>
-            <!-- <xsl:call-template name="raw-type"/>
-            <xsl:text>::create(</xsl:text> -->
-            <xsl:value-of select="@name"/>
-            <xsl:text>);&#10;</xsl:text>
-          </xsl:if>
-        </xsl:for-each>
-        <!-- <xsl:text>      invocation->return_value(response);&#10;</xsl:text> -->
-
-        <xsl:for-each select="arg[@direction='out']">
-          <xsl:if test="substring(@type,1,1)='A'">
-            <xsl:text>      write_vector_to_pipe(_vector_pipe_fd1, </xsl:text>
-            <xsl:value-of select="@name"/>
-            <xsl:text>);&#10;</xsl:text>
-          </xsl:if>
+          <xsl:text>      response.put(</xsl:text>
+          <xsl:value-of select="@name"/>
+          <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
 
-        <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
-          <xsl:text>      close(_vector_pipe_fd0);&#10;</xsl:text>
-          <xsl:text>      close(_vector_pipe_fd1);&#10;</xsl:text>
-        </xsl:if>
         <xsl:text>    } catch (const saftbus::Error&amp; error) {&#10;</xsl:text>
         <xsl:text>      invocation->return_error(error);&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>

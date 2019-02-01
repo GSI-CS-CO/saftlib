@@ -58,7 +58,7 @@
     <xsl:when test="$input='x'">int64_t</xsl:when>
     <xsl:when test="$input='t'">uint64_t</xsl:when>
     <xsl:when test="$input='d'">double</xsl:when>
-    <xsl:when test="$input='h'">gint</xsl:when>
+    <xsl:when test="$input='h'">int</xsl:when>
     <xsl:when test="$input='s'">std::string</xsl:when>
     <xsl:when test="$input='v'">Glib::VariantBase</xsl:when>
     <xsl:when test="substring($input,1,1)='(' and substring($input,string-length($input),1)=')'">
