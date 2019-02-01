@@ -28,7 +28,7 @@
 
 namespace saftlib {
 
-static void do_unsubscribe(std::shared_ptr<IPC_METHOD::Connection> connection, unsigned id) 
+static void do_unsubscribe(std::shared_ptr<saftbus::Connection> connection, unsigned id) 
 {
   connection->signal_unsubscribe(id);
 }
@@ -51,7 +51,7 @@ Owned::~Owned()
 void Owned::Disown()
 {
   if (owner.empty()) {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Do not have an Owner");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
   } else {
     ownerOnly();
     unsubscribe();
@@ -65,11 +65,11 @@ void Owned::Own()
   initOwner(getConnection(), getSender());
 }
 
-void Owned::initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection_, const std::string& owner_)
+void Owned::initOwner(const std::shared_ptr<saftbus::Connection>& connection_, const std::string& owner_)
 {
   if (owner.empty()) {
     owner = owner_;
-    std::shared_ptr<IPC_METHOD::Connection> connection = connection_;
+    std::shared_ptr<saftbus::Connection> connection = connection_;
     unsigned subscription_id = connection->signal_subscribe(
         sigc::bind(sigc::ptr_fun(&Owned::owner_quit_handler), this),
         "org.freedesktop.DBus",
@@ -80,14 +80,14 @@ void Owned::initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection_
     unsubscribe = sigc::bind(sigc::ptr_fun(&do_unsubscribe), connection, subscription_id);
     Owner(owner);
   } else {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Already have an Owner");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
   }
 }
 
 void Owned::Destroy()
 {
   if (!getDestructible())
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Attempt to Destroy non-Destructible Owned object");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Attempt to Destroy non-Destructible Owned object");
   
   ownerOnly();
   destroy();
@@ -106,7 +106,7 @@ bool Owned::getDestructible() const
 void Owned::ownerOnly() const
 {
   if (!owner.empty() && owner != getSender())
-    throw IPC_METHOD::Error(IPC_METHOD::Error::ACCESS_DENIED, "You are not my Owner");
+    throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "You are not my Owner");
 }
 
 void Owned::ownerQuit()
@@ -114,7 +114,7 @@ void Owned::ownerQuit()
 }
 
 void Owned::owner_quit_handler(
-  const std::shared_ptr<IPC_METHOD::Connection>&,
+  const std::shared_ptr<saftbus::Connection>&,
   const std::string&, const std::string&, const std::string&,
   const std::string&, const saftbus::Serial&,
   Owned* self)

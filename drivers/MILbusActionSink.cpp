@@ -47,7 +47,7 @@ std::string MILbusActionSink::NewCondition(bool active, uint64_t id, uint64_t ma
 void MILbusActionSink::InjectTag(uint16_t tag)
 {
   ownerOnly();
-  throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
 std::shared_ptr<MILbusActionSink> MILbusActionSink::create(const ConstructorType& args)

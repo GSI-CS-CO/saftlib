@@ -91,7 +91,7 @@ static void my_terminate()
   print_backtrace(am_daemon ? (clog << kLogErr) : std::cerr, "Unhandled exception ");
 }
 
-static void on_bus_acquired(const std::shared_ptr<IPC_METHOD::Connection>& connection, const std::string& /* name */)
+static void on_bus_acquired(const std::shared_ptr<saftbus::Connection>& connection, const std::string& /* name */)
 {
   try {
     SAFTd::get().setConnection(connection);
@@ -100,7 +100,7 @@ static void on_bus_acquired(const std::shared_ptr<IPC_METHOD::Connection>& conne
   }
 }
 
-static void on_name_acquired(const std::shared_ptr<IPC_METHOD::Connection>& /* connection */, const std::string& /* name */, int argc, char** argv)
+static void on_name_acquired(const std::shared_ptr<saftbus::Connection>& /* connection */, const std::string& /* name */, int argc, char** argv)
 {
   for (int i = 1; i < argc; ++i) {
     // parse the string
@@ -145,7 +145,7 @@ static void on_name_acquired(const std::shared_ptr<IPC_METHOD::Connection>& /* c
   // clog << kLogInfo << buildInfo << std::endl;
 }
 
-static void on_name_lost(const std::shared_ptr<IPC_METHOD::Connection>& connection, const std::string& /* name */)
+static void on_name_lost(const std::shared_ptr<saftbus::Connection>& connection, const std::string& /* name */)
 {
   // Something else claimed the saftlib name
   (am_daemon ? (clog << kLogErr) : std::cerr) << "Unable to acquire name---dbus saftlib.conf installed?" << std::endl;
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
   std::locale::global(std::locale(""));
   
   // Connect to the dbus system daemon
-  const unsigned id = IPC_METHOD::own_name(IPC_METHOD::BUS_TYPE_SYSTEM,
+  const unsigned id = saftbus::own_name(saftbus::BUS_TYPE_SYSTEM,
     "de.gsi.saftlib",
     sigc::ptr_fun(&on_bus_acquired),
     sigc::bind(sigc::bind(sigc::ptr_fun(&on_name_acquired), argv), argc),
@@ -205,7 +205,7 @@ int main(int argc, char** argv)
   SAFTd::get().loop()->run();
   
   // Cleanup
-  IPC_METHOD::unown_name(id);
+  saftbus::unown_name(id);
 
   return 0;
 }

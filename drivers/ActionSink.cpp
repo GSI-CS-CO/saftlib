@@ -216,7 +216,7 @@ void ActionSink::setMaxOffset(int64_t val)
 void ActionSink::setMostFull(uint16_t val)
 {
   ownerOnly();
-  if (val != 0) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "can only set MostFull to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set MostFull to 0");
   dev->resetMostFull(channel);
 }
 
@@ -230,7 +230,7 @@ void ActionSink::setSignalRate(uint64_t val)
 void ActionSink::setOverflowCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "can only set OverflowCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
   overflowCount = 0;
   OverflowCount(overflowCount);
 }
@@ -238,7 +238,7 @@ void ActionSink::setOverflowCount(uint64_t val)
 void ActionSink::setActionCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "can only set ActionCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ActionCount to 0");
   actionCount = 0;
   ActionCount(actionCount);
 }
@@ -246,7 +246,7 @@ void ActionSink::setActionCount(uint64_t val)
 void ActionSink::setLateCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "can only set LateCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set LateCount to 0");
   lateCount = 0;
   LateCount(lateCount);
 }
@@ -254,7 +254,7 @@ void ActionSink::setLateCount(uint64_t val)
 void ActionSink::setEarlyCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "can only set EarlyCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
   earlyCount = 0;
   EarlyCount(earlyCount);
 }
@@ -262,7 +262,7 @@ void ActionSink::setEarlyCount(uint64_t val)
 void ActionSink::setConflictCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "can only set ConflictCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
   conflictCount = 0;
   ConflictCount(conflictCount);
 }
@@ -270,7 +270,7 @@ void ActionSink::setConflictCount(uint64_t val)
 void ActionSink::setDelayedCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "can only set DelayedCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
   delayedCount = 0;
   DelayedCount(delayedCount);
 }
@@ -500,11 +500,11 @@ std::string ActionSink::NewConditionHelper(bool active, uint64_t id, uint64_t ma
 
   // sanity check arguments
   if (offset < minOffset || offset > maxOffset)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
   if ((~mask & (~mask+1)) != 0)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "mask is not a prefix");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
   if ((id & mask) != id)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "id has bits set that are not in the mask");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
 
   // Pick a random number
   std::pair<Conditions::iterator, bool> attempt;

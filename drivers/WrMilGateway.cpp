@@ -83,11 +83,11 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
 
   // just throw if there is no active firmware
   if (!have_wrmilgw) {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "No WR-MIL-Gateway found");
+    throw saftbus::Error(saftbus::Error::FAILED, "No WR-MIL-Gateway found");
   }
   // the firmware is not running if the command value was not overwritten
   if (!firmwareRunning()) {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "WR-MIL-Gateway not running");
+    throw saftbus::Error(saftbus::Error::FAILED, "WR-MIL-Gateway not running");
   }
 
 

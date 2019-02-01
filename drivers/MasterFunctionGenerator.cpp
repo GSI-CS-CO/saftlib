@@ -157,15 +157,15 @@ bool MasterFunctionGenerator::AppendParameterSets(
 
   // confirm equal number of FGs
   unsigned fgcount = coeff_a.size();
-  if (coeff_b.size() != fgcount) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "coeff_b fgcount mismatch");
-  if (coeff_c.size() != fgcount) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "coeff_c fgcount mismatch");
-  if (step.size()    != fgcount) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "step fgcount mismatch");
-  if (freq.size()    != fgcount) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "freq fgcount mismatch");
-  if (shift_a.size() != fgcount) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "shift_a fgcount mismatch");
-  if (shift_b.size() != fgcount) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "shift_b fgcount mismatch");
+  if (coeff_b.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_b fgcount mismatch");
+  if (coeff_c.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_c fgcount mismatch");
+  if (step.size()    != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "step fgcount mismatch");
+  if (freq.size()    != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "freq fgcount mismatch");
+  if (shift_a.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_a fgcount mismatch");
+  if (shift_b.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_b fgcount mismatch");
 
 
-	if (fgcount > activeFunctionGenerators.size()) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "More datasets than function generators");	
+	if (fgcount > activeFunctionGenerators.size()) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "More datasets than function generators");	
 
   bool lowFill=false;
 	for (std::size_t i=0;i<fgcount;++i)
@@ -200,14 +200,14 @@ void MasterFunctionGenerator::Flush()
     {
       fg->flush();      
 		}	
-		catch (IPC_METHOD::Error& ex)
+		catch (saftbus::Error& ex)
 		{
       error_msg += (fg->GetName() + ex.what());
 		}
 	}
   if (!error_msg.empty())
   {
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, error_msg);
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, error_msg);
   }
 }
 
@@ -240,14 +240,14 @@ void MasterFunctionGenerator::arm_all()
 			  fg->arm();
       }
 		}	
-		catch (IPC_METHOD::Error& ex)
+		catch (saftbus::Error& ex)
 		{
       error_msg += (fg->GetName() + ex.what());
 		}
 	}
   if (!error_msg.empty())
   {
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, error_msg);
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, error_msg);
   }
 }
 
@@ -291,7 +291,7 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
  	for (auto fg : activeFunctionGenerators)  
  	{
     if (fg->enabled)
-	    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "FG Enabled, cannot set StartTag");
+	    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "FG Enabled, cannot set StartTag");
 	}
   
   if (val != startTag) {
@@ -389,7 +389,7 @@ void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std:
   ownerOnly();
   if (names.size()==0)
   {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "No Function Generators Selected" );
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No Function Generators Selected" );
   }
 
 
@@ -398,7 +398,7 @@ void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std:
     if (std::any_of(allFunctionGenerators.begin(), allFunctionGenerators.end(),
           [name](std::shared_ptr<FunctionGeneratorImpl> fg){ return name==fg->GetName();}) == false)
     {
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Function Generator Not Found " + name);
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Function Generator Not Found " + name);
     }
   }
 
@@ -445,7 +445,7 @@ bool MasterFunctionGenerator::all_stopped()
 void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
 {
   // if (waitTimeout.connected()) {
-  //   throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
+  //   throw saftbus::Error(saftbus::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
   // }
   // waitTimeout = Glib::signal_timeout().connect(
   //     sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
@@ -456,7 +456,7 @@ void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, 
   // {
   //   context->iteration(false);
   //   if (!waitTimeout.connected()) {
-  //     throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
+  //     throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
   //   }
   // } while (condition() == false) ;
   // waitTimeout.disconnect();

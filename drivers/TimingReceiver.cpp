@@ -67,11 +67,11 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   eb_data_t retry;
   device.read(watchdog, EB_DATA32, &watchdog_value);
   if ((watchdog_value & 0xFFFF) != 0)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Timing Receiver already locked");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
   device.write(watchdog, EB_DATA32, watchdog_value);
   device.read(watchdog, EB_DATA32, &retry);
   if (((retry ^ watchdog_value) >> 16) != 0)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Timing Receiver already locked");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
   
   // parse eb-info data
   setupGatewareInfo(args.info);
@@ -378,7 +378,7 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
     if (!alloc->second) break;
   
   if (alloc == actionSinks.end())
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
   
   std::string seq, name;
   std::ostringstream str;
@@ -391,13 +391,13 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
   } else {
     name = name_;
     if (name[0] == '_')
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
     if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
     
     std::map< std::string, std::string > sinks = getSoftwareActionSinks();
     if (sinks.find(name) != sinks.end())
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Name already in use");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
   }
   
   // nest the object under our own name
@@ -455,7 +455,7 @@ uint64_t TimingReceiver::ReadRawCurrentTime()
 uint64_t TimingReceiver::ReadCurrentTime()
 {
   if (!locked)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::IO_ERROR, "TimingReceiver is not Locked");
+    throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
 
   return ReadRawCurrentTime();
 }
@@ -702,7 +702,7 @@ void TimingReceiver::compile()
   
   // Don't proceed if too many actions for the ECA
   if (id_space.size()/2 >= max_conditions)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Too many active conditions for hardware");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
   
   // Sort it by the open/close criteria
   std::sort(id_space.begin(), id_space.end());
@@ -727,7 +727,7 @@ void TimingReceiver::compile()
     // pop the walker stack for all closes
     while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
       if (next == -1)
-        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
       next = walk[next].next;
       ++i;
     }
@@ -832,7 +832,7 @@ void TimingReceiver::probe(OpenDevice& od)
     
     
     if (rom.size() != 1)
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
     
     eb_address_t rom_address = rom[0].sdb_component.addr_first;
     eb_data_t cpus, eps_per;
@@ -842,7 +842,7 @@ void TimingReceiver::probe(OpenDevice& od)
     cycle.close();
     
     if (cpus != fgs.size())
-      throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
     
     // Check them all for the function generator microcontroller
     unsigned i;
@@ -867,7 +867,7 @@ void TimingReceiver::probe(OpenDevice& od)
       cycle.close();	
 
       if (mb_slot < 0 && mb_slot > 127)
-        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
 
       // swi address of fg is to be found in mailbox slot mb_slot
       eb_address_t swi = mbx[0].sdb_component.addr_first + mb_slot * 4 * 2;
@@ -945,7 +945,7 @@ void TimingReceiver::probe(OpenDevice& od)
         wrmil_path << od.objectPath << "/" << wrmilgw_str;
         WrMilGateway::ConstructorType wrmil_args = { wrmil_path.str(), tr.operator->(), mbx_msi[0], mbx[0]  };
         tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
-      } catch (IPC_METHOD::Error &e) {
+      } catch (saftbus::Error &e) {
         clog << kLogDebug << "no WR-MIL-Gateway found" << std::endl;
       }
 

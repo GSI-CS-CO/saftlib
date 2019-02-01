@@ -33,10 +33,10 @@ class SAFTd : public iSAFTd
     static SAFTd& get() { return saftd; }
     ~SAFTd();
     
-    void setConnection(const std::shared_ptr<IPC_METHOD::Connection>& connection);
+    void setConnection(const std::shared_ptr<saftbus::Connection>& connection);
     
     const std::shared_ptr<Slib::MainLoop>&      loop()       { return m_loop; }
-    const std::shared_ptr<IPC_METHOD::Connection>& connection() { return m_connection; }
+    const std::shared_ptr<saftbus::Connection>& connection() { return m_connection; }
     
     std::string AttachDevice(const std::string& name, const std::string& path);
     void RemoveDevice(const std::string& name);
@@ -51,7 +51,7 @@ class SAFTd : public iSAFTd
     
     SAFTd_Service m_service;
     std::shared_ptr<Slib::MainLoop> m_loop;
-    std::shared_ptr<IPC_METHOD::Connection> m_connection;
+    std::shared_ptr<saftbus::Connection> m_connection;
     etherbone::Socket socket;
     sigc::connection eb_source;
     sigc::connection msi_source;

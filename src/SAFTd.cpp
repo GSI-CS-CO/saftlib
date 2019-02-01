@@ -102,7 +102,7 @@ std::map< std::string, std::string > SAFTd::getDevices() const
   return out;
 }
 
-void SAFTd::setConnection(const std::shared_ptr<IPC_METHOD::Connection>& c)
+void SAFTd::setConnection(const std::shared_ptr<saftbus::Connection>& c)
 {
   assert (!m_connection);
   m_connection = c;
@@ -117,9 +117,9 @@ static inline bool not_isalnum_(char c)
 std::string SAFTd::AttachDevice(const std::string& name, const std::string& path)
 {
   if (devs.find(name) != devs.end())
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "device already exists");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
   if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
   
   try {
     etherbone::Device edev;
@@ -134,10 +134,10 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
       eb_address_t size = last - first;
     
       if (((size + 1) & size) != 0)
-        throw IPC_METHOD::Error(IPC_METHOD::Error::IO_ERROR, "Device has strange sized MSI range");
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
     
       if ((first & size) != 0)
-        throw IPC_METHOD::Error(IPC_METHOD::Error::IO_ERROR, "Device has unaligned MSI first address");
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
     
       struct OpenDevice od(edev, first, last);
       od.name = name;
@@ -151,7 +151,7 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
         Devices(getDevices());
         return od.objectPath;
       } else {
-        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "no driver available for this device");
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no driver available for this device");
       }
     } catch (...) {
       edev.close();
@@ -160,7 +160,7 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;
     str << "AttachDevice: failed to open: " << e;
-    throw IPC_METHOD::Error(IPC_METHOD::Error::IO_ERROR, str.str().c_str());
+    throw saftbus::Error(saftbus::Error::IO_ERROR, str.str().c_str());
   }
 }
 
@@ -168,7 +168,7 @@ void SAFTd::RemoveDevice(const std::string& name)
 {
   std::map< std::string, OpenDevice >::iterator elem = devs.find(name);
   if (elem == devs.end())
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "no such device");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
   
   elem->second.ref.reset();
   elem->second.device.close();

@@ -303,19 +303,19 @@ bool FunctionGeneratorImpl::appendParameterSet(
   // confirm lengths match
   unsigned len = coeff_a.size();
   
-  if (coeff_b.size() != len) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "coeff_b length mismatch");
-  if (coeff_c.size() != len) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "coeff_c length mismatch");
-  if (step.size()    != len) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "step length mismatch");
-  if (freq.size()    != len) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "freq length mismatch");
-  if (shift_a.size() != len) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "shift_a length mismatch");
-  if (shift_b.size() != len) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "shift_b length mismatch");
+  if (coeff_b.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_b length mismatch");
+  if (coeff_c.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_c length mismatch");
+  if (step.size()    != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "step length mismatch");
+  if (freq.size()    != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "freq length mismatch");
+  if (shift_a.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_a length mismatch");
+  if (shift_b.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_b length mismatch");
   
   // validate data
   for (unsigned i = 0; i < len; ++i) {
-    if (step[i] >= 8) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "step must be < 8");
-    if (freq[i] >= 8) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "freq must be < 8");
-    if (shift_a[i] > 48) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "shift_a must be <= 48");
-    if (shift_b[i] > 48) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "shift_b must be <= 48");
+    if (step[i] >= 8) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "step must be < 8");
+    if (freq[i] >= 8) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "freq must be < 8");
+    if (shift_a[i] > 48) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_a must be <= 48");
+    if (shift_b[i] > 48) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_b must be <= 48");
   }
   
   // import the data
@@ -340,7 +340,7 @@ bool FunctionGeneratorImpl::appendParameterSet(
 void FunctionGeneratorImpl::flush()
 {
   if (enabled)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Enabled, cannot Flush");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot Flush");
     
   assert (channel == -1);
   
@@ -422,7 +422,7 @@ void FunctionGeneratorImpl::acquireChannel()
     std::ostringstream str;
     str.imbue(std::locale("C"));
     str << "All " << allocation->indexes.size() << " microcontroller channels are in use";
-    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, str.str());
+    throw saftbus::Error(saftbus::Error::FAILED, str.str());
   }
  
   // if this throws, it is not a problem
@@ -458,9 +458,9 @@ void FunctionGeneratorImpl::releaseChannel()
 void FunctionGeneratorImpl::arm()
 {
   if (enabled)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
   if (fillLevel == 0)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
   
   // !enabled, so:
   assert(!armed);
@@ -531,7 +531,7 @@ void FunctionGeneratorImpl::ownerQuit()
 void FunctionGeneratorImpl::setStartTag(uint32_t val)
 {
   if (enabled)
-    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Enabled, cannot set StartTag");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot set StartTag");
   
   if (val != startTag) {
     startTag = val;

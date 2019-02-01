@@ -22,7 +22,7 @@
 
 //#include <giomm.h>
 #include <memory>
-#include "interfaces/saftlib_ipc.h"
+#include <saftbus.h>
 
 namespace saftlib {
 
@@ -36,7 +36,7 @@ class BaseObject /*: public Glib::Object*/
     
     // provided by RegisteredObject
     virtual const std::string& getSender() const = 0;
-    virtual const std::shared_ptr<IPC_METHOD::Connection>& getConnection() const = 0;
+    virtual const std::shared_ptr<saftbus::Connection>& getConnection() const = 0;
     
   protected:
     std::string objectPath;

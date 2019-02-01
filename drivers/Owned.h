@@ -40,12 +40,12 @@ class Owned : public BaseObject, public iOwned
     // use this at the start of protected methods
     void ownerOnly() const;
     // only use this immediately after object creation
-    void initOwner(const std::shared_ptr<IPC_METHOD::Connection>& connection, const std::string& owner);
+    void initOwner(const std::shared_ptr<saftbus::Connection>& connection, const std::string& owner);
     
   protected:
     virtual void ownerQuit();
     static void owner_quit_handler(
-      const std::shared_ptr<IPC_METHOD::Connection>&,
+      const std::shared_ptr<saftbus::Connection>&,
       const std::string&, const std::string&, const std::string&,
       const std::string&, const saftbus::Serial&, Owned* self);
   

@@ -34,7 +34,7 @@ class RegisteredObject : public T
   public:
     static std::shared_ptr< RegisteredObject<T> > create(const std::string& object_path, const typename T::ConstructorType& args);
     
-    const std::shared_ptr<IPC_METHOD::Connection>& getConnection() const;
+    const std::shared_ptr<saftbus::Connection>& getConnection() const;
     const std::string& getSender() const;
     
   protected:
@@ -58,7 +58,7 @@ RegisteredObject<T>::RegisteredObject(const std::string& object_path, const type
 }
 
 template <typename T>
-const std::shared_ptr<IPC_METHOD::Connection>& RegisteredObject<T>::getConnection() const
+const std::shared_ptr<saftbus::Connection>& RegisteredObject<T>::getConnection() const
 {
   return service.getConnection();
 }
@@ -77,7 +77,7 @@ void RegisteredObject<T>::rethrow(const char *method) const
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;
     str << method << ": " << e;
-    throw IPC_METHOD::Error(IPC_METHOD::Error::IO_ERROR, str.str().c_str());
+    throw saftbus::Error(saftbus::Error::IO_ERROR, str.str().c_str());
   }
 }
 

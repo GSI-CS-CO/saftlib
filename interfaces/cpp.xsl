@@ -42,8 +42,8 @@
     <xsl:text>_Proxy::create(&#10;</xsl:text>
     <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
 <!--     <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
-    <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
- -->    <!-- <xsl:text>  IPC_METHOD::ProxyFlags flags)&#10;{&#10;</xsl:text> -->
+    <xsl:text>  saftbus::BusType bus_type,&#10;</xsl:text>
+ -->    <!-- <xsl:text>  saftbus::ProxyFlags flags)&#10;{&#10;</xsl:text> -->
     <xsl:text>   saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
     <xsl:text>  return std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
@@ -52,7 +52,7 @@
     <xsl:text>_Proxy(object_path, "</xsl:text>
     <xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>
     <xsl:text>", </xsl:text>
-    <xsl:text> IPC_METHOD::BUS_TYPE_SYSTEM, </xsl:text>
+    <xsl:text> saftbus::BUS_TYPE_SYSTEM, </xsl:text>
      <!-- name, bus_type, -->
     <xsl:text> signalGroup));&#10;}&#10;&#10;</xsl:text>
 
@@ -63,7 +63,7 @@
     <xsl:text>_Proxy(&#10;</xsl:text>
     <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
     <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
-    <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
+    <xsl:text>  saftbus::BusType bus_type,&#10;</xsl:text>
     <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;</xsl:text>
     <xsl:text>: </xsl:text>
     <xsl:for-each select="interface">
@@ -133,7 +133,7 @@
     <!-- Register all interfaces -->
     <xsl:text>void </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; con, const std::string&amp; path)&#10;{&#10;</xsl:text>
+    <xsl:text>_Service::register_self(const std::shared_ptr&lt;saftbus::Connection&gt;&amp; con, const std::string&amp; path)&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -175,7 +175,7 @@
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>.getSender();&#10;</xsl:text>
     </xsl:for-each>
-    <xsl:text>  throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <!-- getObjectPath method -->
@@ -189,11 +189,11 @@
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>.getObjectPath();&#10;</xsl:text>
     </xsl:for-each>
-    <xsl:text>  throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <!-- getConnection method -->
-    <xsl:text>const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; </xsl:text>
+    <xsl:text>const std::shared_ptr&lt;saftbus::Connection&gt;&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
@@ -203,7 +203,7 @@
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>.getConnection();&#10;</xsl:text>
     </xsl:for-each>
-    <xsl:text>  throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+    <xsl:text>  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
     <xsl:text>}&#10;&#10;</xsl:text>
 
     <xsl:text>}&#10;</xsl:text>
@@ -354,14 +354,14 @@
           </xsl:when>
           <xsl:otherwise> <!-- there are 'A' or 'h' types -->
             <xsl:text>&#10;{&#10;</xsl:text>
-            <xsl:text>  std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
+            <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
             <!-- <xsl:text>  connection-&gt;reference();&#10;</xsl:text> -->
             <xsl:text>  std::shared_ptr&lt;Gio::Cancellable&gt; cancellable;&#10;</xsl:text>
             <xsl:text>  std::shared_ptr&lt;Gio::UnixFDList&gt;  fd_list = Gio::UnixFDList::create();&#10;</xsl:text>
             <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)"> <!-- in this case we only have 'h' and don't need to open a pipe -->
               <xsl:text>  gint _vector_pipe_fd[2];&#10;</xsl:text>
               <xsl:text>  if (pipe(_vector_pipe_fd) != 0) {&#10;</xsl:text>
-              <xsl:text>    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "cannot open pipe");&#10;</xsl:text>
+              <xsl:text>    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "cannot open pipe");&#10;</xsl:text>
               <xsl:text>  }&#10;</xsl:text>
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[0]);&#10;</xsl:text>
               <xsl:text>  fd_list-&gt;append(_vector_pipe_fd[1]);&#10;</xsl:text>
@@ -433,7 +433,7 @@
               <xsl:text>    close(_vector_pipe_fd[0]);&#10;</xsl:text>
               <xsl:text>    close(_vector_pipe_fd[1]);&#10;</xsl:text>
             </xsl:if>
-            <xsl:text>    throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, exceptionMsg);&#10;</xsl:text>
+            <xsl:text>    throw saftbus::Error(saftbus::Error::INVALID_ARGS, exceptionMsg);&#10;</xsl:text>
             <xsl:text>  }&#10;</xsl:text>
             
             <xsl:for-each select="arg[@direction='out' and substring(@type,1,1)='A']">
@@ -510,9 +510,9 @@
       <xsl:text>"));&#10;</xsl:text>
 <!--       <xsl:text>  params.push_back(Glib::Variant&lt; std::string &gt;::create(name));&#10;</xsl:text> -->
       <xsl:text>  params.put(std::string(name));&#10;</xsl:text>
-      <xsl:text>  std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt; connection =&#10;</xsl:text>
-<!--       <xsl:text>    std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt;::cast_const(get_connection());&#10;</xsl:text> -->
-      <xsl:text>    std::const_pointer_cast&lt;IPC_METHOD::ProxyConnection&gt;(get_connection());&#10;</xsl:text>
+      <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection =&#10;</xsl:text>
+<!--       <xsl:text>    std::shared_ptr&lt;saftbus::ProxyConnection&gt;::cast_const(get_connection());&#10;</xsl:text> -->
+      <xsl:text>    std::const_pointer_cast&lt;saftbus::ProxyConnection&gt;(get_connection());&#10;</xsl:text>
       <!-- <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text> -->
       <xsl:text>  val =&#10;</xsl:text>
       <xsl:text>    connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", &#10;</xsl:text>
@@ -561,7 +561,7 @@
       <xsl:text>"));&#10;</xsl:text>
       <xsl:text>  params.put(std::string(name));&#10;</xsl:text>
       <xsl:text>  params.put(val);&#10;</xsl:text>
-      <xsl:text>  std::shared_ptr&lt;IPC_METHOD::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
+      <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
       <!-- <xsl:text>  connection->reference(); // work around get_connection does not increase reference bug&#10;</xsl:text> -->
       <xsl:text>  connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set",&#10;</xsl:text>
       <xsl:text>    params, get_name());&#10;}&#10;&#10;</xsl:text>
@@ -588,7 +588,7 @@
       <xsl:text>  const MapChangedProperties&amp; changed_properties,&#10;</xsl:text>
       <xsl:text>  const std::vector&lt; std::string &gt;&amp; invalidated_properties)&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
-      <xsl:text>  IPC_METHOD::Proxy::on_properties_changed(changed_properties, invalidated_properties);&#10;</xsl:text>
+      <xsl:text>  saftbus::Proxy::on_properties_changed(changed_properties, invalidated_properties);&#10;</xsl:text>
       <xsl:text>  for (MapChangedProperties::const_iterator i = changed_properties.begin(); i != changed_properties.end(); ++i) {&#10;</xsl:text>
       <xsl:text>    </xsl:text>
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
@@ -622,7 +622,7 @@
       <xsl:text>  const std::string&amp; signal_name,&#10;</xsl:text>
       <xsl:text>  const saftbus::Serial&amp; parameters)&#10;</xsl:text>
       <xsl:text>{&#10;</xsl:text>
-      <xsl:text>  IPC_METHOD::Proxy::on_signal(sender_name, signal_name, parameters);&#10;</xsl:text>
+      <xsl:text>  saftbus::Proxy::on_signal(sender_name, signal_name, parameters);&#10;</xsl:text>
       <xsl:text>  </xsl:text>
       <xsl:for-each select="signal">
         <xsl:text>if (signal_name == "</xsl:text>
@@ -661,12 +661,12 @@
       <xsl:text>_Proxy::i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy(&#10;</xsl:text>
-      <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
+      <xsl:text>  saftbus::BusType bus_type,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; interface_name,&#10;</xsl:text>
       <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;</xsl:text>
-      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, std::shared_ptr&lt;IPC_METHOD::InterfaceInfo&gt;(), signalGroup)&#10;</xsl:text>
+      <xsl:text>: Proxy(bus_type, name, object_path, interface_name, std::shared_ptr&lt;saftbus::InterfaceInfo&gt;(), signalGroup)&#10;</xsl:text>
       <xsl:text>{&#10;}&#10;&#10;</xsl:text>
 
       <!-- Create -->
@@ -677,7 +677,7 @@
       <xsl:text>_Proxy::create(&#10;</xsl:text>
       <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; name,&#10;</xsl:text>
-      <xsl:text>  IPC_METHOD::BusType bus_type,&#10;</xsl:text>
+      <xsl:text>  saftbus::BusType bus_type,&#10;</xsl:text>
       <xsl:text>  saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
       <xsl:text>  return std::shared_ptr&lt;i</xsl:text>
       <xsl:value-of select="$iface"/>
@@ -691,10 +691,10 @@
       <!-- Register method -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
-      <xsl:text>_Service::register_self(const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection, const std::string&amp; object_path)&#10;{&#10;</xsl:text>
-      <xsl:text>  static std::shared_ptr&lt;IPC_METHOD::NodeInfo&gt; introspection;&#10;</xsl:text>
+      <xsl:text>_Service::register_self(const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection, const std::string&amp; object_path)&#10;{&#10;</xsl:text>
+      <xsl:text>  static std::shared_ptr&lt;saftbus::NodeInfo&gt; introspection;&#10;</xsl:text>
       <xsl:text>  if (!introspection)&#10;</xsl:text>
-      <xsl:text>    introspection = IPC_METHOD::NodeInfo::create_for_xml(xml);&#10;</xsl:text>
+      <xsl:text>    introspection = saftbus::NodeInfo::create_for_xml(xml);&#10;</xsl:text>
       <xsl:text>  unsigned id = connection->register_object(&#10;</xsl:text>
       <xsl:text>    object_path, introspection->lookup_interface(), interface_vtable);&#10;</xsl:text>
       <xsl:text>  exports.push_back(Export(connection, object_path, id));&#10;</xsl:text>
@@ -721,7 +721,7 @@
       <xsl:text>const std::string&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getSender() const&#10;{&#10;</xsl:text>
-      <xsl:text>  if (!isActive()) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
       <xsl:text>  return *sender;&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
@@ -729,15 +729,15 @@
       <xsl:text>const std::string&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getObjectPath() const&#10;{&#10;</xsl:text>
-      <xsl:text>  if (!isActive()) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
       <xsl:text>  return *objectPath;&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
       <!-- getConnection method -->
-      <xsl:text>const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; i</xsl:text>
+      <xsl:text>const std::shared_ptr&lt;saftbus::Connection&gt;&amp; i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
-      <xsl:text>  if (!isActive()) throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
+      <xsl:text>  if (!isActive()) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Not inside DBus callback on this object");&#10;</xsl:text>
       <xsl:text>  return connection;&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
@@ -745,11 +745,11 @@
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_method_call(&#10;</xsl:text>
-      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const std::string&amp;  sender_, const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; /* interface_name */, const std::string&amp; method_name,&#10;</xsl:text>
       <xsl:text>  const saftbus::Serial&amp; parameters,&#10;</xsl:text>
-      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;saftbus::MethodInvocation&gt;&amp; invocation)&#10;{&#10;</xsl:text>
       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
       <xsl:text>  connection = connection_;&#10;</xsl:text>
@@ -761,10 +761,10 @@
         <xsl:text>    try {&#10;</xsl:text>
         <!-- take a fildescriptor pair from fd_list in case there is any type 'A' present -->
         <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0) or not(count(arg[@type='h'])=0)">
-          <xsl:text>      std::shared_ptr&lt;IPC_METHOD::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
+          <xsl:text>      std::shared_ptr&lt;saftbus::Message&gt; message = invocation-&gt;get_message();&#10;</xsl:text>
           <xsl:text>      GUnixFDList *fd_list  = g_dbus_message_get_unix_fd_list(message-&gt;gobj());&#10;</xsl:text>
           <xsl:text>      if (!fd_list) { &#10;</xsl:text>
-          <xsl:text>        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
+          <xsl:text>        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No filedescriptors received");&#10;</xsl:text>
           <xsl:text>      }&#10;</xsl:text>
           <xsl:text>      int num_expected_fds = </xsl:text>
           <xsl:value-of select="count(arg[@type='h'])"/>
@@ -773,7 +773,7 @@
           </xsl:if>
           <xsl:text>;&#10;</xsl:text>
           <xsl:text>      if (g_unix_fd_list_get_length(fd_list) != num_expected_fds) { &#10;</xsl:text>
-          <xsl:text>        throw IPC_METHOD::Error(IPC_METHOD::Error::INVALID_ARGS, "Wrong number of file descriptors received");&#10;</xsl:text>
+          <xsl:text>        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Wrong number of file descriptors received");&#10;</xsl:text>
           <xsl:text>      }&#10;</xsl:text>
           <xsl:text>      int fd_index = 0;&#10;</xsl:text>
           <xsl:if test="not(count(arg[substring(@type,1,1)='A'])=0)">
@@ -880,14 +880,14 @@
           <xsl:text>      close(_vector_pipe_fd0);&#10;</xsl:text>
           <xsl:text>      close(_vector_pipe_fd1);&#10;</xsl:text>
         </xsl:if>
-        <xsl:text>    } catch (const IPC_METHOD::Error&amp; error) {&#10;</xsl:text>
+        <xsl:text>    } catch (const saftbus::Error&amp; error) {&#10;</xsl:text>
         <xsl:text>      invocation->return_error(error);&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>  } else </xsl:text>
       </xsl:for-each>
       <xsl:text>{&#10;</xsl:text>
       <!-- <xsl:text>    connection.reset();&#10;</xsl:text> -->
-      <xsl:text>    IPC_METHOD::Error error(IPC_METHOD::Error::UNKNOWN_METHOD, "No such method.");&#10;</xsl:text>
+      <xsl:text>    saftbus::Error error(saftbus::Error::UNKNOWN_METHOD, "No such method.");&#10;</xsl:text>
       <xsl:text>    invocation->return_error(error);&#10;</xsl:text>
       <xsl:text>  }&#10;}&#10;&#10;</xsl:text>
 
@@ -896,7 +896,7 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_get_property(&#10;</xsl:text>
       <xsl:text>  saftbus::Serial&amp; property,&#10;</xsl:text>
-      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; sender_, const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; /*interface_name */, const std::string&amp; property_name)&#10;{&#10;</xsl:text>
       <xsl:text>  property.put_init();&#10;</xsl:text>
@@ -928,7 +928,7 @@
       <xsl:text>bool i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_set_property(&#10;</xsl:text>
-      <xsl:text>  const std::shared_ptr&lt;IPC_METHOD::Connection&gt;&amp; connection_,&#10;</xsl:text>
+      <xsl:text>  const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection_,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; sender_, const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; /* interface_name */, const std::string&amp; property_name,&#10;</xsl:text>
       <xsl:text>  const saftbus::Serial&amp; value)&#10;{&#10;</xsl:text>
