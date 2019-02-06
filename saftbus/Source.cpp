@@ -10,9 +10,9 @@ namespace Slib
 	// 	Adds a Source to a context so that it will be executed within that context.
 	unsigned int Source::attach (const std::shared_ptr< MainContext >& context, std::shared_ptr<Source> self) 
 	{
-		std::cerr << "Source::attach " << std::endl;
+		//std::cerr << "Source::attach " << std::endl;
 		_id      = ++context->id_counter;
-		std::cerr << "_id = " << _id << std::endl;
+		//std::cerr << "_id = " << _id << std::endl;
 		context->sources[_id] = self; // undefined behavior
 		_context = context;
 		return _id;

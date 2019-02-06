@@ -22,6 +22,8 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <iostream>
+
 #include <assert.h>
 
 #include "RegisteredObject.h"
@@ -37,6 +39,8 @@ FunctionGenerator::FunctionGenerator(const ConstructorType& args)
    dev(args.dev),
    fgImpl(args.functionGeneratorImpl)      
 {
+  std::cerr << "FunctionGenerator::FunctionGenerator() called" << std::endl;
+
 	fgImpl->signal_running.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_running));
 	fgImpl->signal_armed.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_armed));
 	fgImpl->signal_enabled.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_enabled));
@@ -48,6 +52,7 @@ FunctionGenerator::FunctionGenerator(const ConstructorType& args)
 
 FunctionGenerator::~FunctionGenerator()
 {
+  std::cerr << "FunctionGenerator::~FunctionGenerator() called" << std::endl;
 }
 
 // pass sigc signals from impl class to dbus

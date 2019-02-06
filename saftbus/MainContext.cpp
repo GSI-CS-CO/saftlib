@@ -109,7 +109,7 @@ namespace Slib
 
 			}
 			 else if (poll_result == 0) { // poll timed out
-				// std::cerr << "poll done timeout" << std::endl;
+				// std::cerr << "poll timeout" << std::endl;
 				bool need_cleanup = false;
 				for (unsigned i = 0; i < signal_timeout_time_left.size(); ++i) {
 					// subtract the timeout_ms as used in the poll call
@@ -119,9 +119,16 @@ namespace Slib
 						signal_timeout_time_left[i] = 0;
 					}
 
+					// std::cerr << "check timeout[" << i << "/" << signal_timeout_time_left.size() 
+					//           << "] time_left = " << signal_timeout_time_left[i] 
+					//           << "  slot.empty() = " << signal_timeout_connections[i].empty()
+					//           << std::endl;
 					if (signal_timeout_time_left[i] == 0) {
 						// execute the callback
-						bool callback_result = signal_timeout_slots[i]();
+						bool callback_result = false;
+						if (!signal_timeout_connections[i].empty()) {
+							callback_result = (*signal_timeout_slots[i])(); 
+						}
 						if (callback_result) {
 							// std::cerr << "refresh timeout" << std::endl;
 							signal_timeout_time_left[i] = signal_timeout_intervals[i];
@@ -135,18 +142,21 @@ namespace Slib
 					// std::cerr << "cleaning up: size = " << signal_timeout_slots.size() << std::endl;
 					std::vector<unsigned>          new_signal_timeout_time_left;
 					std::vector<unsigned>          new_signal_timeout_intervals;
-					std::vector<sigc::slot<bool> > new_signal_timeout_slots;
+					std::vector<std::shared_ptr<sigc::slot<bool> > > new_signal_timeout_slots;
+					std::vector<sigc::connection > new_signal_timeout_connections;
 					// clean-up the signal timeouts (remove all the timeouts with time_left == 0)
 					for (unsigned i = 0; i < signal_timeout_time_left.size(); ++i) {
 						if (signal_timeout_time_left[i] > 0) {
 							new_signal_timeout_intervals.push_back(signal_timeout_intervals[i]);
 							new_signal_timeout_slots.    push_back(signal_timeout_slots[i]);
 							new_signal_timeout_time_left.push_back(signal_timeout_time_left[i]);
+							new_signal_timeout_connections.push_back(signal_timeout_connections[i]);
 						}
 					}
 					signal_timeout_slots     = new_signal_timeout_slots;
 					signal_timeout_intervals = new_signal_timeout_intervals;
 					signal_timeout_time_left = new_signal_timeout_time_left;
+					signal_timeout_connections = new_signal_timeout_connections;
 					// std::cerr << "cleaning up done : size = " << signal_timeout_slots.size() << std::endl;
 				}
 
@@ -190,9 +200,11 @@ namespace Slib
 					signal_timeout_intervals.push_back(added_signal_timeout_intervals[i]);
 					signal_timeout_slots.push_back(added_signal_timeout_slots[i]);
 					signal_timeout_time_left.push_back(added_signal_timeout_intervals[i]);
+					signal_timeout_connections.push_back(added_signal_timeout_connections[i]);
 				}
 				added_signal_timeout_slots.clear();
 				added_signal_timeout_intervals.clear();
+				added_signal_timeout_connections.clear();
 			}
 
 			// add the newly created signal_ios
@@ -248,7 +260,7 @@ namespace Slib
 		// replaces signal_io::connect()
 		sigc::connection MainContext::connect(sigc::slot<bool, IOCondition> slot, int fd, IOCondition condition, Priority priority)
 		{
-			std::cerr << "MainContext::connect" << std::endl;
+			//std::cerr << "MainContext::connect IO" << std::endl;
 			struct pollfd pfd = {
 				.fd = fd,
 				.events = static_cast<short>(condition),
@@ -266,12 +278,23 @@ namespace Slib
 		sigc::connection MainContext::connect(sigc::slot<bool> slot, unsigned interval, Priority priority)
 		{
 			if (during_iteration) {
+				//std::cerr << "MainContext::connect timeout during_iteration" << std::endl;
 				added_signal_timeout_intervals.push_back(interval);
-				added_signal_timeout_slots.push_back(slot);
+				added_signal_timeout_slots.push_back(
+					std::shared_ptr<sigc::slot<bool> >( new sigc::slot<bool>(slot))
+					);
+				added_signal_timeout_connections.push_back(
+					sigc::connection(*added_signal_timeout_slots.back()));
+				return added_signal_timeout_connections.back();
 			} else {
+				//std::cerr << "MainContext::connect timeout not during_iteration" << std::endl;
 				signal_timeout_intervals.push_back(interval);
 				signal_timeout_time_left.push_back(interval);
-				signal_timeout_slots.push_back(slot);
+				signal_timeout_slots.push_back(
+					std::shared_ptr<sigc::slot<bool> >(new sigc::slot<bool>(slot)));
+				signal_timeout_connections.push_back(
+					sigc::connection(*signal_timeout_slots.back()));
+				return signal_timeout_connections.back();
 			}
 			return sigc::connection(slot);
 		}
