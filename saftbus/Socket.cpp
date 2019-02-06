@@ -45,7 +45,7 @@ void Socket::wait_for_client()
 	double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
 						- (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
 
-	if (_debug_level > 5) std::cerr << "wait_for_client dt = " << dt << " us" << std::endl;          
+	//if (_debug_level > 5) std::cerr << "wait_for_client dt = " << dt << " us" << std::endl;          
 
 }
 
@@ -77,7 +77,7 @@ Socket::Socket(const std::string &name, Connection *server_connection)
 
 bool Socket::accept_connection(Slib::IOCondition condition)
 {
-	std::cerr << "Socket::accept_connection() called" << std::endl;
+	//std::cerr << "Socket::accept_connection() called" << std::endl;
 	if (_active) {
 		return false;
 	}
@@ -89,7 +89,7 @@ bool Socket::accept_connection(Slib::IOCondition condition)
 	{
 		if (_debug_level > 5) std::cerr << "client connected " << std::endl;
 	}
-	std::cerr << "Socket::accept_connection() bind the dispatch function" << std::endl;
+	//std::cerr << "Socket::accept_connection() bind the dispatch function" << std::endl;
 	Slib::signal_io().connect(sigc::bind(sigc::mem_fun(_server_connection, &Connection::dispatch), this), _new_socket, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_HIGH);
 	_active = true;
 	return false; // MainLoop should stop watching _create_socket file descriptor

@@ -444,22 +444,21 @@ bool MasterFunctionGenerator::all_stopped()
 
 void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
 {
-  // if (waitTimeout.connected()) {
-  //   throw saftbus::Error(saftbus::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
-  // }
-  // waitTimeout = Glib::signal_timeout().connect(
-  //     sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
+  if (waitTimeout.connected()) {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
+  }
+  waitTimeout = Slib::signal_timeout().connect(
+      sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
 
-  // std::shared_ptr<Glib::MainLoop>    mainloop = Slib::MainLoop::create();
-  // std::shared_ptr<Glib::MainContext> context  = mainloop->get_context();
-  // do
-  // {
-  //   context->iteration(false);
-  //   if (!waitTimeout.connected()) {
-  //     throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
-  //   }
-  // } while (condition() == false) ;
-  // waitTimeout.disconnect();
+  std::shared_ptr<Slib::MainContext> context = Slib::MainContext::get_default();
+  do
+  {
+    context->iteration(false);
+    if (!waitTimeout.connected()) {
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
+    }
+  } while (condition() == false) ;
+  waitTimeout.disconnect();
 }
 
 

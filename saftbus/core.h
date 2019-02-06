@@ -258,7 +258,7 @@ namespace saftbus
 				get(std_vector_vector[i]);
 			}
 		}
-		// std::string and std::vector of std::string
+		// std::string 
 		void put(const std::string& std_string) {
 			size_t size = std_string.size();
 			put(size);
@@ -274,6 +274,22 @@ namespace saftbus
 			std_string.clear();
 			std_string.insert(std_string.end(), begin, end);
 			_iter += size;
+		}
+		// std::string 
+		void put(const std::vector<std::string>& vector_string) {
+			size_t size = vector_string.size();
+			put(size);
+			for (size_t i = 0; i < size; ++i) {
+				put(vector_string[i]);
+			}
+		}
+		void get(std::vector<std::string> &vector_string) const {
+			size_t size;
+			get(size);
+			vector_string.resize(size);
+			for (size_t i = 0; i < size; ++i) {
+				get(vector_string[i]);
+			}
 		}
 		// std::map
 		template<typename K, typename V>
