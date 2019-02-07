@@ -239,20 +239,15 @@ int main(int argc, char** argv)
     // get a specific device
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver;
-    switch (useFirstDev) {
-    case true  :
+    if (useFirstDev) {
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
-      break;
-    case false :
+    } else {
       if (devices.find(deviceName) == devices.end()) {
         std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
         return -1;
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-      break;
-    default :
-      return 1;
-    } //switch useFirstDevice;
+    } //if useFirstDevice;
     
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     sink->OverflowCount.connect(sigc::ptr_fun(&on_overflow));

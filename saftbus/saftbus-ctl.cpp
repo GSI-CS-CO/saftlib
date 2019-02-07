@@ -7,6 +7,9 @@
 #include "core.h"
 #include "Interface.h"
 
+void write_histogram(std::string filename, const std::map<int,int> &hist);
+void show_help(const char *argv0);
+void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection);
 
 void write_histogram(std::string filename, const std::map<int,int> &hist)
 {
@@ -18,7 +21,8 @@ void write_histogram(std::string filename, const std::map<int,int> &hist)
 
 }
 
-void show_help(const char *argv0) {
+void show_help(const char *argv0) 
+{
 	std::cout << "usage: " << argv0 << " [options]" << std::endl;
 	std::cout << "   options are:" << std::endl;
 	std::cout << "   -s     print status" << std::endl;

@@ -109,6 +109,7 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 
 
 // Hand off the entire datafile to SAFTd
+/*
 static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& params)
 {
   return gen->AppendParameterSet(
@@ -120,6 +121,7 @@ static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& p
     params.shift_a,
     params.shift_b);
 }
+*/
 
 // Pretty print timestamp
 static const char *format_time(uint64_t time)
@@ -135,6 +137,7 @@ static const char *format_time(uint64_t time)
   return full;
 }
 
+/*
 static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, uint64_t tag)
 {
   if (armed) {
@@ -145,15 +148,18 @@ static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, ui
     std::cout << "Generating StartTag" << std::endl;
   }
 }
-
+*/
 
 // Report when the function generator starts
+/*
 static void on_start(uint64_t time)
 {
   std::cout << "Function generator started at " << format_time(time) << std::endl;
 }
+*/
 
 // Report when the function generator stops
+/*
 static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
@@ -165,6 +171,7 @@ static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool
   if (microControllerUnderflow)
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
 }
+*/
 
 // Report on the individual function generators
 static void on_master_started(std::string fg_name, uint64_t time)
@@ -221,34 +228,19 @@ static void on_all_stop(uint64_t time)
   }
 }
 
-
-// When the function generator becomes disabled, stop the loop
-// static void on_enabled(bool value)
-// {
-//   if (value) return;
-//   // terminate the main event loop
-//   loop->quit();
-// }
-
 // for thread safety tests
 static void* startFg(void *arg) 
 {
   std::cerr << ">>>thread started" << std::endl;
     
-  //std::cout << "startFg Loop created" << std::endl;
-//  if (!loop->is_running()) {
-    std::ostringstream msg;
-    msg << __FILE__<< "::" << __FUNCTION__ << ":"  << __LINE__ << " start loop";
-    if (loglevel>1) std::cout << msg.str() << std::endl; msg.str("");
-    while(!fg_all_stopped) {
-      saftlib::wait_for_signal();
-    }
-    // try {
-    //   loop->run();
-    // } catch (...) {
-    //   std::cerr << "startFg() : loop->run() threw" << std::endl;
-    // }
-//  }
+  std::ostringstream msg;
+  msg << __FILE__<< "::" << __FUNCTION__ << ":"  << __LINE__ << " start loop";
+  if (loglevel>1) {
+    std::cout << msg.str() << std::endl; msg.str("");
+  }
+  while(!fg_all_stopped) {
+    saftlib::wait_for_signal();
+  }
   if (loglevel>1) std::cout << "startFg Loop ended" << std::endl;
   std::cerr << "<<<thread stopped" << std::endl;
   return NULL;

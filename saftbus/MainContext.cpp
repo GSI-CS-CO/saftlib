@@ -37,7 +37,7 @@ namespace Slib
 			int timeout_ms = -1;
 			// prepare sources and calculate timeout
 			for(auto &id_source: sources) {
-				auto id     = id_source.first;
+				//auto id     = id_source.first;
 				auto source = id_source.second;
 				int  source_timeout_ms = -1;
 
@@ -67,12 +67,10 @@ namespace Slib
 			struct timespec start, stop;
 			clock_gettime(CLOCK_MONOTONIC, &start);
 
-			//std::cerr << "MainContext::iteration   -> poll()" << std::endl;
-			std::vector<int> signal_io_removed_indices;
+			std::vector<unsigned> signal_io_removed_indices;
 			int poll_result;
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
-				//std::cerr << "MainContext::iteration   -> poll done" << std::endl;
-				int idx = 0;
+				unsigned idx = 0;
 				for (auto fd: all_pfds) {
 					if (idx < signal_io_pfds.size()) {
 						// copy back
@@ -81,7 +79,6 @@ namespace Slib
 							//execute  signal_io callback
 							bool result = signal_io_slots[idx](fd.revents);
 							if (result == false ) { // add this index to the removal list
-								//std::cerr << "signal_io " << idx << " callback returned false" << std::endl;
 								signal_io_removed_indices.push_back(idx);
 							}
 						}
@@ -94,7 +91,7 @@ namespace Slib
 				}
 				// update the timeouts
 				clock_gettime(CLOCK_MONOTONIC, &stop);
-				unsigned dt_ms = (stop.tv_sec - start.tv_sec)*1000 
+				int dt_ms = (stop.tv_sec - start.tv_sec)*1000 
 				               + (stop.tv_nsec - start.tv_nsec)/1000000;
 
 				// std::cerr << "poll done .... dt_ms = " << dt_ms << std::endl;				               
@@ -140,8 +137,8 @@ namespace Slib
 				}
 				if (need_cleanup) {
 					// std::cerr << "cleaning up: size = " << signal_timeout_slots.size() << std::endl;
-					std::vector<unsigned>          new_signal_timeout_time_left;
-					std::vector<unsigned>          new_signal_timeout_intervals;
+					std::vector<int>          new_signal_timeout_time_left;
+					std::vector<int>          new_signal_timeout_intervals;
 					std::vector<std::shared_ptr<sigc::slot<bool> > > new_signal_timeout_slots;
 					std::vector<sigc::connection > new_signal_timeout_connections;
 					// clean-up the signal timeouts (remove all the timeouts with time_left == 0)
@@ -153,9 +150,9 @@ namespace Slib
 							new_signal_timeout_connections.push_back(signal_timeout_connections[i]);
 						}
 					}
-					signal_timeout_slots     = new_signal_timeout_slots;
-					signal_timeout_intervals = new_signal_timeout_intervals;
-					signal_timeout_time_left = new_signal_timeout_time_left;
+					signal_timeout_slots       = new_signal_timeout_slots;
+					signal_timeout_intervals   = new_signal_timeout_intervals;
+					signal_timeout_time_left   = new_signal_timeout_time_left;
 					signal_timeout_connections = new_signal_timeout_connections;
 					// std::cerr << "cleaning up done : size = " << signal_timeout_slots.size() << std::endl;
 				}
@@ -163,15 +160,12 @@ namespace Slib
 			}
 
 			for (auto &id_source: sources) {
-				auto id     = id_source.first;
+				//auto id     = id_source.first;
 				auto source = id_source.second;
-				//std::cerr << "checking source id " << id << std::endl;
 				if (source->check()) {
-					//std::cerr << "dispatching source id " << id << std::endl;
 					source->dispatch(&source->_slot);
 				}
 			}
-
 
 			// remove all signal_ios whose callbacks returned false
 			if (signal_io_removed_indices.size() > 0) {
@@ -179,7 +173,7 @@ namespace Slib
 				std::vector<sigc::slot<bool, IOCondition> > new_signal_io_slots;
 				for (unsigned i = 0; i < signal_io_pfds.size(); ++i) {
 					bool found_in_removal_list = false;
-					for (int n = 0; n < signal_io_removed_indices.size(); ++n) {
+					for (unsigned n = 0; n < signal_io_removed_indices.size(); ++n) {
 						if (i == signal_io_removed_indices[n]) {
 							found_in_removal_list = true;
 							break;

@@ -79,11 +79,11 @@ namespace Slib
 		std::vector<struct pollfd>                  added_signal_io_pfds;
 		std::vector<sigc::slot<bool, IOCondition> > added_signal_io_slots;
 
-		std::vector<unsigned>                       signal_timeout_intervals;
-		std::vector<unsigned>                       signal_timeout_time_left;
+		std::vector<int>                            signal_timeout_intervals;
+		std::vector<int>                            signal_timeout_time_left;
 		std::vector<std::shared_ptr<sigc::slot<bool> > >  signal_timeout_slots;
 		std::vector<sigc::connection >              signal_timeout_connections;
-		std::vector<unsigned>                       added_signal_timeout_intervals;
+		std::vector<int>                            added_signal_timeout_intervals;
 		std::vector<std::shared_ptr<sigc::slot<bool> > >  added_signal_timeout_slots;
 		std::vector<sigc::connection >              added_signal_timeout_connections;
 	};

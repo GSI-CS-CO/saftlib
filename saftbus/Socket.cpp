@@ -16,8 +16,8 @@ namespace saftbus
 void Socket::wait_for_client()
 {
 	_active = false;
-	struct timespec start, stop;
-	clock_gettime( CLOCK_REALTIME, &start);
+	// struct timespec start, stop;
+	// clock_gettime( CLOCK_REALTIME, &start);
 	_create_socket = socket(AF_LOCAL, SOCK_SEQPACKET, 0);
 	if (_create_socket > 0) {
 		if (_debug_level > 5) std::cerr << "socket created" << std::endl;
@@ -41,9 +41,9 @@ void Socket::wait_for_client()
 		if (_debug_level > 5) std::cerr << "wait_for_client exception: " << e.what() << std::endl;
 		throw;
 	}
-	clock_gettime( CLOCK_REALTIME, &stop);
-	double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-						- (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
+	// clock_gettime( CLOCK_REALTIME, &stop);
+	// double dt = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
+	// 					- (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
 
 	//if (_debug_level > 5) std::cerr << "wait_for_client dt = " << dt << " us" << std::endl;          
 

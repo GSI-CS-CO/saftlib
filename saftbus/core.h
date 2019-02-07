@@ -24,6 +24,8 @@ namespace saftbus
 
 	void init();
 
+	void block_signal(int signal_to_block /* i.e. SIGPIPE */ );
+
 	int write_all(int fd, const void *buffer, int size);
 	int read_all(int fd, void *buffer, int size);
 
@@ -82,6 +84,7 @@ namespace saftbus
 		int result = write_all(fd, static_cast<void*>(&size), sizeof(uint32_t));
 		if (result == -1) return result;
 		if (size > 0) return write_all(fd, static_cast<const void*>(&std_vector[0]), size*sizeof(decltype(std_vector.back())));
+		return 1;
 	}
 	template<typename T>
 	int write(int fd, const std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
@@ -100,16 +103,23 @@ namespace saftbus
 		if (_debug_level > 5) std::cerr << "vector read" << std::endl;
 		uint32_t size;
 		int result = read_all(fd, static_cast<void*>(&size), sizeof(uint32_t));
-		if (result == -1) return result;
+		if (result == -1) {
+			return result;
+		}
 		std_vector.resize(size);
-		if (size > 0) return read_all(fd, static_cast<void*>(&std_vector[0]), size*sizeof(decltype(std_vector.back())));
+		if (size > 0) {
+			return read_all(fd, static_cast<void*>(&std_vector[0]), size*sizeof(decltype(std_vector.back())));
+		}
+		return 1;
 	}
 	template<typename T>
 	int read(int fd, std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
 		if (_debug_level > 5) std::cerr << "nested vector read" << std::endl;
 		uint32_t size;
 		int result = read_all(fd, static_cast<void*>(&size), sizeof(uint32_t));
-		if (result == -1) return result;
+		if (result == -1) {
+			return result;
+		}
 		std_vector_vector.resize(size);
 		for (uint32_t i = 0; i < size; ++i) {
 			result = read(fd, std_vector_vector[i]);
@@ -176,16 +186,6 @@ namespace saftbus
 		if (read(fd, other ...) == -1) return -1;
 		return 1;
 	}
-
-
-	//bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);
-
-
-
-
-
-
-
 
 
 	class Serial
@@ -275,7 +275,7 @@ namespace saftbus
 			std_string.insert(std_string.end(), begin, end);
 			_iter += size;
 		}
-		// std::string 
+		// std::vector<std::string>
 		void put(const std::vector<std::string>& vector_string) {
 			size_t size = vector_string.size();
 			put(size);

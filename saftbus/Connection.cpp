@@ -312,8 +312,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 	// handle a request coming from one of the sockets
 	try {
 		logger.newMsg(0).add("Connection::dispatch(condition, ").add(socket->get_fd()).add(")\n");
-		saftbus::Timer* f_time = new saftbus::Timer(_function_run_times["Connection::dispatch"]);
-		int path_indicator = 0;
+		//saftbus::Timer* f_time = new saftbus::Timer(_function_run_times["Connection::dispatch"]);
 
 		// determine the request type
 		MessageTypeC2S type;
@@ -344,14 +343,12 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				break;
 				case saftbus::SAFTBUS_CTL_HELLO:
 				{
-					path_indicator = 1;
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SAFTBUS_CTL_HELLO"]);
 					logger.add("   got ping from saftbus-ctl\n");
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_STATUS:
 				{
-					path_indicator = 2;
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SAFTBUS_CTL_STATUS"]);
 					logger.add("   got stats request from saftbus-ctl\n");
 					saftbus::write(socket->get_fd(), _saftbus_indices);
@@ -427,7 +424,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				break;
 				case saftbus::SENDER_ID:
 				{
-					path_indicator = 3;
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SENDER_ID"]);
 					logger.add("     SENDER_ID received\n");
 					std::string sender_id;
@@ -443,7 +439,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				}
 				case saftbus::REGISTER_CLIENT: 
 				{
-					path_indicator = 4;
 
 				}
 				break;
@@ -451,7 +446,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				{
 					// after receiving a signal, the ProxyConnection will report
 					// the signal flight time so that we can make a histogram
-					path_indicator = 5;
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_FLIGHT_TIME"]);
 					logger.add("     SIGNAL_FLIGHT_TIME received: ");
 					double dt;
@@ -465,7 +459,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				{
 					// each Proxy constructor will send the reading end of a pipe
 					// to us as a fast path for signals
-					path_indicator = 6;
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_FD"]);
 					logger.add("     SIGNAL_FD received: ");
 					int fd = saftbus::recvfd(socket->get_fd());
@@ -496,7 +489,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				case saftbus::SIGNAL_REMOVE_FD: 
 				{
 					// when a Proxy is destroyed it will send a signal remove request
-					path_indicator = 7;
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_REMOVE_FD"]);
 
 					logger.add("           SIGNAL_REMOVE_FD received: ");
@@ -580,7 +572,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 						int index = _saftbus_indices[derived_interface_name][object_path];
 						logger.add("    found saftbus object at index=").add(index).add("\n");
 						if (name == "Get") {
-							path_indicator = 8;
 							logger.add("      Get the property\n");
 							saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_GetProperty"]);
 
@@ -607,7 +598,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							logger.add("         property was sent\n");
 
 						} else if (name == "Set") {
-							path_indicator = 9;
 							logger.add("      Set the property\n");
 							std::ostringstream function_name;
 							function_name << "Connection::dispatch_METHOD_CALL_SetProperty_" << derived_interface_name << "_" << property_name;
@@ -640,7 +630,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					}
 					else // normal method calls 
 					{
-						path_indicator = 10;
 						logger.add("         a normal method call\n");
 						std::ostringstream function_name;
 						function_name << "Connection::dispatch_METHOD_CALL_" << name;
@@ -708,22 +697,15 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					uint32_t fd_size;
 					saftbus::read(socket->get_fd(), fd_size);
 					std::vector<int> fd_list;
-					for (int i = 0; i < fd_size; ++i) {
+					for (uint32_t i = 0; i < fd_size; ++i) {
 						int fd = saftbus::recvfd(socket->get_fd());
 						fd_list.push_back(fd);
 					}
-					// deserialize data and get content from the variant
-					//deserialize(payload, &buffer[0], buffer.size());
-					// Glib::Variant<std::string> object_path    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(0));
-					// Glib::Variant<std::string> sender         = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(1));
-					// Glib::Variant<std::string> interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(2));
-					// Glib::Variant<std::string> name           = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(3));
-					// Glib::VariantContainerBase parameters       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
-					std::string object_path;//    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(0));
-					std::string sender;//         = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(1));
-					std::string interface_name;// = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(2));
-					std::string name;//           = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(3));
-					Serial    parameters;//       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
+					std::string object_path;
+					std::string sender;
+					std::string interface_name;
+					std::string name;
+					Serial    parameters;
 					payload.get_init();
 					payload.get(object_path);
 					payload.get(sender);
@@ -766,13 +748,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							// get the result and pack it in a way that 
 							//   can be digested by the auto-generated saftlib code
  							Serial &result = method_invocation_rptr->get_return_value();
- 						// 	Glib::VariantContainerBase result;
-							// result = method_invocation_rptr->get_return_value();
-
-							// pack response data
-							// std::vector<Glib::VariantBase> response;
-							// response.push_back(result);
-							// Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
 
 							// serialize
 							size = result.get_size();
@@ -797,15 +772,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				break;				
 			}
 			logger.log();
-
-			// double dt = f_time->delta_t();
-			// delete f_time;
-			// if (dt > 1e5) {
-			// 	std::cerr << dt << " more than 100ms for dispatch. " << path_indicator << std::endl;
-			// }
-			// if (dt > 5e5) {
-			// 	std::cerr << dt << " more than 500ms for dispatch. " << path_indicator << std::endl;
-			// }
 
 			return true;
 		}

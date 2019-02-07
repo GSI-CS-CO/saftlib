@@ -140,7 +140,7 @@ struct FgThreadData
   map<std::string, std::string> fgs;
   ParamSet params;
 };
-
+void *serve_fg(void *data);
 void *serve_fg(void *data) {
   FgThreadData *fgData = (FgThreadData*)data;
   std::shared_ptr<SCUbusActionSink_Proxy> &scu = fgData->scu;
@@ -150,7 +150,6 @@ void *serve_fg(void *data) {
 
   uint32_t tag = 0xdeadbeef; // !!! fix me; use a safe default
   saftlib::SignalGroup fgSignalGroup;
-  int error = 0;
   // Find the target FunctionGenerator (omit the check if it exists)
   // pass the saftlib::SignalGroup that is later used to do blocking wait 
   std::shared_ptr<FunctionGenerator_Proxy> gen = FunctionGenerator_Proxy::create(fgs[fg], fgSignalGroup);
