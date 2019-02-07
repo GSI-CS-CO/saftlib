@@ -193,6 +193,8 @@ static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
   map< std::string, std::string > gatewareInfo;
   map<std::string, std::string>::iterator j;
   
+  allDevices      = saftd->getDevices();
+
   std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
   for (i = allDevices.begin(); i != allDevices.end(); i++ ) {
     aDevice =  TimingReceiver_Proxy::create(i->second);
@@ -459,7 +461,9 @@ int main(int argc, char** argv)
         eventTime = (ppsNext + eventTNext);
       } // ppsAlign
       else eventTime = wrTime + eventTNext;
-      
+
+      receiver->InjectEvent(eventID, eventParam, eventTime);
+
       if (pmode & PMODE_HEX)
       {
         std::cout << "Injected event (eventID/parameter/time): 0x" << std::hex << std::setw(16) << std::setfill('0') << eventID 
