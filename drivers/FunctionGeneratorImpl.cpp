@@ -79,16 +79,12 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
   //keep postal address to free later
   mailbox_slot_address = mb_base + slot * 4 * 2 + 4;
   dev->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
-  std::cerr << "FunctionGenerator: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
 }
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
-  std::cerr << "FunctionGeneratorImpl::~FunctionGeneratorImpl() called" << std::endl;
   resetTimeout.disconnect(); // do not run ResetFailed
   dev->getDevice().release_irq(irq);
-  
-  clog << "FunctionGenerator: freeing mailbox slot " << std::dec << mbx_slot << std::endl;
   dev->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
 }
 

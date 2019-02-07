@@ -871,8 +871,7 @@ void TimingReceiver::probe(OpenDevice& od)
 
       // swi address of fg is to be found in mailbox slot mb_slot
       eb_address_t swi = mbx[0].sdb_component.addr_first + mb_slot * 4 * 2;
-      //clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
-      std::cerr <<  "mailbox address for swi is 0x" << std::hex << swi << std::endl;
+      clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
       eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
       
       // Probe the configuration and hardware macros
