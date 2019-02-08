@@ -5,16 +5,12 @@ sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check
 noinst_PROGRAMS = client
 
-dbussystemdir = @sysconfdir@/dbus-1/system.d
-dist_dbussystem_DATA = saftlib.conf
-
 pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftlib.pc
 
 EXTRA_DIST = saftlib.pc.in
 
 ACLOCAL_AMFLAGS = -I m4
-#AM_CPPFLAGS = $(EB_CFLAGS) $(GIOMM_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus
 AM_CPPFLAGS = $(EB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus
 
 BUILT_SOURCES = version.h
