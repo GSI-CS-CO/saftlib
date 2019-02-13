@@ -1,0 +1,78 @@
+The saftbus library within saftlib
+
+1. Motivation
+	Saftlib was tightly designed around DBus as interprocess communication system. 
+	The C++ wrapper (Glibmm) around the C wrapper (glib/gio) around the low level C-API for DBus was used as API.
+		Consequence 1: inter process communication works over the dbus-daemon process and is relatively slow.
+		Consequence 2: all programs using saftlib inherit the Glibmm dependence.
+	Performance of saftlib turned out to be insufficient for the use cases in the control system.
+	The saftbus directory is an attempt to improve performance and reduce library dependences.
+
+2. General approach
+	In order to improve the latency of the inter-process communication, a socket/pipe based system called "saftbus" was written. 
+	It runs inside the saftd process and communicates directly with saftlib user processes through sockets and pipes.
+	The saftbus-API was written to mimic the DBus API provided in Glibmm to minimize changes in the saftlib codebase.
+	After replacing DBus with saftbus, the Glibmm dependence was not needed and the rest of the saftd code was changed to avoid use of Glibmm. 
+	The replacement code was called "Slib" and is a minimalistic re-implementation of Glibmm's MainContext and MainLoop functionality.
+	Slib has it's own namespace, but the files are all inside of the saftbus directory... for historical reasons. 
+	I didn't want to add yet another subdirectory into saftlib, and the saftbus subdirectory was first. 
+	Long story short: The saftbus subdirectory contains two namespaces.
+		* "namespace saftbus" is meant to replace  "namespace Gio::DBus" 
+		* "namespace Slib"    is meant to replace  "namespace Glib" 
+
+3. Concepts
+	Many of the concepts that saftlib inherited from DBus are still present in saftbus based saftlib. 
+	The functionality that was formerly done by the dbus-daemon is contained inside the saftbus::Connection class.
+	It handles registration of saftlib clients, dispatching of incoming function calls from client processes to saftlib services, and the distribution of events from hardware to clients.
+	Here are some definitions that are essential to understand the structure of the saftbus codebase:
+
+	* saftd
+	The daemon managing saftlib services. 
+	In former DBus based safblib versions, this process did the hardware access, but management of service objects and interprocess communication was done by the Dbus daemon (dbus-daemon).  
+	After introduction of saftbus, saftd additionally manages sockets and pipes for interprocess communication and also hosts the saftlib services. 
+	This is done by the saftbus::Connection class.
+
+	* saftbus object (DBus service in the DBus based saftlib)
+	In saftbus, this is an instance of the saftbus::Interface class.
+	saftbus manages many saftbus objects in a std::map container saftbus::Connection::_saftbus_objects, which are addressed by an integer key, the saftbus_object_id. 
+
+	* saftbus_object_id 
+	The saftbus_object_id for a new map entry is generated when the object is created, and is unique during the lifetime of the saftd (it comes from an ever increasing counter that initializes to 1 at saftbus startup: Connection::_saftbus_object_id_counter).
+	Clients of saftlib address a saftbus object not through the saftbus_object_id, but with two std::strings, the interface_name and the object_path.
+	The container Connection::_saftbus_indices is used to map (interface_name, object_path) tuples to saftbus_object_ids.
+
+	* interface_name  (e.g. "de.gsi.saftlib.EmbeddedCPUActionSink")
+	A string: one part of the identifier of a saftbus object 
+
+	* object_path (e.g. "/de/gsi/saftlib/tr0/embedded_cpu")
+	A string: the other part of the identifier of a saftbus object 
+
+	* socket (e.g. "/tmp/saftbus_05")
+	saftbus manages a finite amount of UNIX domain sockets, which can be used by saftlib clients to connect to saftd, one client per socket.
+	Only a finite amount of clients can connect to saftd at the same time (32 clients at the time of this writing).
+
+	* owner (e.g. ":45")
+	Each saftbus object may be owned by at most one client process that is connected to saftd via saftbus. 
+	Saftbus objects may also be unowned.
+	Client processes get a unique std::string identifier when they connect to a saftbus socket.
+	The identifier starts with a colon, followed by a number, e.g. ":45".
+	If a the owner of a saftlib services quits, the service is de-constructed automatically. 
+	This is done in the Connection::signal_subsribe(...), Connection::signal_unsubscribe(...), and Connection::handle_disconnect(...) methods.
+
+	* function call
+	A saftlib function call is initiated by a saftlib::Proxy object. It sends a request over the socket and blocks until saftd answers. The answer contains the(all) function return value(s).
+
+	* property
+	Saftlib Proxy objects have Properties. Getting/Setting a Property is similar to a function call
+
+	* signal
+	Saftlib Proxy objects can receive signals from saftd. These signals are transmitted using dedicated Pipes. The pipes are created whenever a Proxy object is created. There is one Pipe for each Interface of the Proxy object.
+	The reason for this second data path for signals is to allow multi threaded clients without needing to synchronize the socket access.
+	Example: /de/gsi/saftlib/tr0/embedded_cpu
+		this object path exists with three different interfaces, i.e. there are three distinct saftbus objects:
+		    (interface_name,                       object_path) <= saftbus_object
+			(de.gsi.saftlib.Owned,                 /de/gsi/saftlib/tr0/embedded_cpu)
+			(de.gsi.saftlib.EmbeddedCPUActionSink, /de/gsi/saftlib/tr0/embedded_cpu)
+			(de.gsi.saftlib.ActionSink,            /de/gsi/saftlib/tr0/embedded_cpu)
+		If a Proxy object is created by a saftlib client, there will be a UNIX pipe created from each of the saftbus objects (living inside saftd) to the Proxy object (living inside the client process).
+		Pipes are destroyed when the saftbus object is destroyed.
