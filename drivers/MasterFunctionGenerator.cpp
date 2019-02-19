@@ -141,6 +141,125 @@ std::shared_ptr<MasterFunctionGenerator> MasterFunctionGenerator::create(const C
   return RegisteredObject<MasterFunctionGenerator>::create(args.objectPath, args);
 }
 
+void MasterFunctionGenerator::InitializeSharedMemory(const std::string& shared_memory_name)
+{
+  try 
+  {
+    shm_params.reset( new boost::interprocess::managed_shared_memory(boost::interprocess::open_only, shared_memory_name.c_str()));
+  } 
+  catch (boost::interprocess::interprocess_exception& e)
+  {
+    std::ostringstream msg;
+    msg << "Error initializing shared memory: " << e.what();
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
+  }
+
+  if (!shm_params->check_sanity())
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Shared memory is insane");
+  }
+  
+  shm_mutex = (shm_params->find<boost::interprocess::interprocess_mutex>("mutex")).first;
+  
+  if (!shm_mutex)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No mutex in shared memory");
+  }
+
+  int* version = (shm_params->find<int32_t>("format-version")).first;
+  int format_version=0;
+  if (version) {
+    format_version = *version;
+    //std::cout << "Shared memory format version " << *version << std::endl;
+  } else {
+    //std::cout << "Shared memory format version not found" << std::endl;
+  }
+  if (format_version < 0 || format_version > 0)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Unsupported shared memory format version");
+  }
+}
+
+
+void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack)
+{
+
+  if (!shm_params)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Shared memory not initialized");
+  }
+
+  if (!shm_mutex)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No mutex in shared memory");
+  }
+
+  try {
+
+    if (!shm_params->check_sanity())
+    {
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Shared memory is insane");
+    }
+
+    {
+      boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*shm_mutex);
+      typedef std::pair<int,int> KeyType;
+      typedef ParameterVector ValueType;
+      typedef std::pair<const KeyType, ValueType> MapEntryType;
+      typedef boost::interprocess::allocator<MapEntryType,boost::interprocess::managed_shared_memory::segment_manager> MapAllocator;
+      typedef boost::interprocess::map<KeyType, ValueType, std::less<KeyType>, MapAllocator> IndexMap;
+
+      IndexMap* indexMap = shm_params->find<IndexMap>("IndexMap").first;
+//      std::cout << "map size " << indexMap->size() << std::endl;
+      KeyType key;
+      key.first=0;
+      key.second=beam_process;
+      for (auto fg : activeFunctionGenerators)
+      {
+        /* Layout V0.1
+        std::pair<ParameterVector *, std::size_t> fred = shm_params->find<ParameterVector> (activeFunctionGenerators[0]->GetName().c_str());
+        ParameterVector* paramVector = fred.first;
+
+        if ( paramVector)
+        {
+          std::cout << fg->GetName() << " found in shared memory" << std::endl;
+          std::cout << "Parameter Tuples: " <<  paramVector->size() << std::endl;
+          std::cout << (*paramVector)[0].coeff_a << std::endl;
+          std::cout << (*paramVector)[0].coeff_b << std::endl;
+          std::cout << (*paramVector)[0].coeff_c << std::endl;
+          fg->appendParameterTuples(paramVector->cbegin(), paramVector->cend());
+
+        } else {
+          throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No parameter vector in shared memory");
+        }
+        */
+
+        if (indexMap->find(key) != indexMap->end()) {
+          ParameterVector& v = indexMap->at(key);
+//          std::cout << key.first << "," << key.second <<  " found in shared memory ";
+//          std::cout << "Parameter Tuples: " <<  v.size() << std::endl;
+          fg->appendParameterTuples(v.cbegin(), v.cend());
+        }
+        key.first++;
+      } 
+    } // end mutex scope
+
+// if requested wait for all fgs to arm
+  	if (arm)
+    {
+      arm_all();
+      if (wait_for_arm_ack)
+      {
+        waitForCondition(std::bind(&MasterFunctionGenerator::all_armed, this), 2000);
+      }
+    }
+  } catch (boost::interprocess::interprocess_exception& e) {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, e.what());
+  }
+}
+
+
+	
 bool MasterFunctionGenerator::AppendParameterSets(
 	const std::vector< std::vector< int16_t > >& coeff_a, 
 	const std::vector< std::vector< int16_t > >& coeff_b, 

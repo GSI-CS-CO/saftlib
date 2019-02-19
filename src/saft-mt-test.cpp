@@ -45,7 +45,7 @@
 
 #include <pthread.h>
 
-// static guint32 pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
+// static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
 
 
 

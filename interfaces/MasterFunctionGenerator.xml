@@ -53,9 +53,27 @@
     <method name="Abort">
       <arg direction="in" type="b" name="wait_for_abort_ack"/>
     </method>
-   
-    
-    
+
+
+    <!-- Initialze a boost managed_shared_memory region
+         It should contain:
+         mutex
+         ParameterVector
+    -->
+    <method name="InitializeSharedMemory">
+      <arg direction="in" type="s" name="shared_memory_name"/>
+    </method>
+
+
+   <method name="AppendParameterTuplesForBeamProcess">
+      <arg direction="in" type="i" name="beam_process"/>
+      <arg direction="in" type="b" name="arm"/>
+      <arg direction="in" type="b" name="wait_for_arm_ack"/>
+    </method>
+
+
+
+
       <!-- AppendParameterSets: For each function generator, append parameter tuples describing
          the waveform to generate.
          Each parameter is sent as a vector of vectors: per FG then per tuple element
@@ -93,8 +111,7 @@
          where t ranges from 0 to numSteps-1. high_bits are the high OutputWindowSize
          bits of the resulting 64-bit signed value.
       -->
-
-    <method name="AppendParameterSets">
+   <method name="AppendParameterSets">
       <arg direction="in" type="aan" name="coeff_a"/>
       <arg direction="in" type="aan" name="coeff_b"/>
       <arg direction="in" type="aai" name="coeff_c"/>
@@ -106,7 +123,6 @@
       <arg direction="in" type="b" name="wait_for_arm_ack"/>
       <arg direction="out" type="b" name="low_fill"/>
     </method>
-        
     
     <!-- Flush: Empty the parameter tuple set of all function generators.
          Flush may only be called when not Enabled.
