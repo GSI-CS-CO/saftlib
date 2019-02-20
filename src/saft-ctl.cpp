@@ -49,6 +49,22 @@ static const char* program;
 static guint32 pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
 bool absoluteTime = false;            // inject absolute time?
 
+// GID
+#define QR       0x3e8                // 'PZ1, Quelle Rechts'
+#define QL       0x3e9                // 'PZ2, PQuelle Links'
+#define QN       0x3ea                // 'PZ3, Quelle Nord'
+#define HLI      0x3eb                // 'PZ4, Hochladungsinjektor UN'
+#define HSI      0x3ec                // 'PZ5, Hochstrominjektor UH'
+#define AT       0x3ed                // 'PZ6, Alvarez'
+#define TK       0x3ee                // 'PZ7, Transferkanal'
+
+// EVTNO
+#define NXTACC   0x10                 // EVT_PREP_NEXT_ACC
+#define NXTRF    0x12                 // EVT_RF_PREP_NXT_ACC
+
+#define NPZ      7                    // # of UNILAC 'Pulszentralen'
+#define FID      0x1
+
 // this will be called, in case we are snooping for events
 static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
 {
@@ -58,6 +74,86 @@ static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 execu
   std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
   std::cout << std::endl;
 } // on_action
+
+// this will be called, in case we are snooping for events
+static void on_action_uni(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+{
+  uint32_t gid;
+  uint32_t evtNo;
+  uint32_t vacc;
+  string   sVacc;
+  string   rf;
+  
+  static string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
+  static uint64_t prevDeadline = 0x0;
+  static uint32_t nCycle       = 0x0;
+
+  gid   = ((id & 0x0fff000000000000) >> 48);
+  evtNo = ((id & 0x0000fff000000000) >> 36);
+  vacc  = ((id & 0x00000000fff00000) >> 20);
+  
+  if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
+    switch (nCycle) {
+    case 0 :        // print header
+      std::cout << "   # cycle:   QR   QL   QN  HLI  HSI   AT   TK" << std::endl;
+      break;
+    case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
+      break;
+    default :       // default
+      std::cout << std::setw(10) << nCycle << ":"
+                << std::setw( 5) << pz1
+                << std::setw( 5) << pz2
+                << std::setw( 5) << pz3
+                << std::setw( 5) << pz4
+                << std::setw( 5) << pz5
+                << std::setw( 5) << pz6 
+                << std::setw( 5) << pz7 
+                << std::endl;
+      break;
+    } // switch nCycle
+    pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = "";
+    prevDeadline = deadline;
+    nCycle++;
+  } // if deadline
+
+  if (evtNo == NXTRF) rf = "RF";
+  else                rf = "";
+  sVacc = rf + std::to_string(vacc);
+
+  switch (gid) {
+  case QR : 
+    pz1 = sVacc;
+    break;
+  case QL :
+    pz2 = sVacc;
+    break;
+  case QN :
+    pz3 = sVacc;
+    break;
+  case HLI :
+    pz4 = sVacc;
+    break;
+  case HSI :
+    pz5 = sVacc;
+    break;
+  case AT :
+    pz6 = sVacc;
+    break;
+  case TK :
+    pz7 = sVacc;
+    break;
+  default :
+    break;
+  }
+
+/*  
+
+  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
+  std::cout << tr_formatActionEvent(id, pmode);
+  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
+  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
+  std::cout << std::endl; */
+} // on_action_uni
 
 using namespace saftlib;
 using namespace std;
@@ -78,8 +174,11 @@ static void help(void) {
   std::cout << "  -k                   display gateware version (hardware)" << std::endl;
   std::cout << "  -s                   display actual status of software actions" << std::endl;
   std::cout << std::endl;
-  std::cout << "  inject <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
-  std::cout << "  snoop  <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
+  std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
+  std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
+  std::cout << "  usnoop  <type>       (experimental feature) snoop events from DM @ UNILAC,  <type> may be one of the following" << std::endl;
+  std::cout << "            '0'        event display, but limited to GIDs of UNILAC and special event numbers" << std::endl;
+  std::cout << "            '1'        shows virt acc executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
   std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
@@ -227,6 +326,8 @@ int main(int argc, char** argv)
   // variables and flags for command line parsing
   int  opt;
   bool eventSnoop     = false;
+  bool uniSnoop       = false;
+  int  uniSnoopType   = 0;
   bool statusDisp     = false;
   bool infoDispSW     = false;
   bool infoDispHW     = false;
@@ -259,7 +360,7 @@ int main(int argc, char** argv)
 
   const char *command;
 
-  pmode = PMODE_NONE;
+  pmode       = PMODE_NONE;
 
   // parse for options
   program = argv[0];
@@ -348,7 +449,6 @@ int main(int argc, char** argv)
         std::cerr << program << ": expecting exactly three arguments: snoop <eventID> <mask> <offset>" << std::endl;
         return 1;
       }
-      eventSnoop = true;
       snoopID     = strtoull(argv[optind+2], &value_end, 0);
       //std::cout << std::hex << snoopID << std::endl;
       if (*value_end != 0) {
@@ -366,8 +466,29 @@ int main(int argc, char** argv)
       if (*value_end != 0) {
         std::cerr << program << ": invalid offset -- " << argv[optind+4] << std::endl;
         return 1;
-      } // mask
+      } // offset
+      
+      eventSnoop = true;
     } // "snoop"
+
+    else if (strcasecmp(command, "usnoop") == 0) {
+      if (optind+3  != argc) {
+        std::cerr << program << ": expecting exactly one argument: usnoop <type>" << std::endl;
+        return 1;
+      }
+      uniSnoopType = strtoull(argv[optind+2], &value_end, 0);
+      //std::cout << std::hex << snoopID << std::endl;
+      if (*value_end != 0) {
+        std::cerr << program << ": invalid type -- " << argv[optind+2] << std::endl;
+        return 1;
+      } // uniSnoopType
+      if ((uniSnoopType < 0) || (uniSnoopType > 1)) {
+        std::cerr << program << ": invalid value -- " << uniSnoopType << std::endl;
+        return 1;
+      } // range of uniSnoopType
+
+      uniSnoop = true;
+    } // "usnoop"
 
     else if (strcasecmp(command, "attach") == 0) {
       if (optind+3  != argc) {
@@ -495,7 +616,88 @@ int main(int argc, char** argv)
       condition->Action.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
       loop->run();
-    } // eventSnoop
+    } // eventSnoop (without UNILAC option)
+
+    // snoop for UNILAC
+    if (uniSnoop) {
+      Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+
+      snoopMask = 0xfffffff000000000;
+
+      Glib::RefPtr<SoftwareCondition_Proxy> condition[NPZ * 2];
+      int nPz = 0;
+
+      snoopID = ((guint64)FID << 60) | ((guint64)QR << 48) | ((guint64)NXTACC << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((guint64)FID << 60) | ((guint64)QR << 48) | ((guint64)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((guint64)FID << 60) | ((guint64)QL << 48) | ((guint64)NXTACC << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((guint64)FID << 60) | ((guint64)QL << 48) | ((guint64)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((guint64)FID << 60) | ((guint64)QN << 48) | ((guint64)NXTACC << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((guint64)FID << 60) | ((guint64)QN << 48) | ((guint64)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((guint64)FID << 60) | ((guint64)HLI << 48 | ((guint64)NXTACC << 36));
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((guint64)FID << 60) | ((guint64)HLI << 48) | ((guint64)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((guint64)FID << 60) | ((guint64)HSI << 48 | ((guint64)NXTACC << 36));
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((guint64)FID << 60) | ((guint64)HSI << 48) | ((guint64)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((guint64)FID << 60) | ((guint64)AT << 48 | ((guint64)NXTACC << 36));
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((guint64)FID << 60) | ((guint64)AT << 48) | ((guint64)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((guint64)FID << 60) | ((guint64)TK << 48 | ((guint64)NXTACC << 36));
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((guint64)FID << 60) | ((guint64)TK << 48) | ((guint64)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      //snoopID = ((guint64)FID << 60) | ((guint64)TK << 48 | ((guint64)NXTACC << 36));
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
+
+      for (int i=0; i<nPz; i++) {
+        condition[i]->setAcceptLate(true);
+        condition[i]->setAcceptEarly(true);
+        condition[i]->setAcceptConflict(true);
+        condition[i]->setAcceptDelayed(true);
+        switch (uniSnoopType) {
+        case 1:
+          condition[i]->Action.connect(sigc::ptr_fun(&on_action_uni));
+          break;
+        default : 
+          condition[i]->Action.connect(sigc::ptr_fun(&on_action));
+          break;
+        }
+        condition[i]->setActive(true);    
+      } // for i
+
+      loop->run();
+    } // eventSnoop (with UNILAC option)
 
   } catch (const Glib::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
