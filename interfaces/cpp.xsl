@@ -591,9 +591,9 @@
       <xsl:text>  const std::string&amp; sender_, const std::string&amp; object_path,&#10;</xsl:text>
       <xsl:text>  const std::string&amp; /*interface_name */, const std::string&amp; property_name)&#10;{&#10;</xsl:text>
       <xsl:text>  property.put_init();&#10;</xsl:text>
-      <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
+<!--       <xsl:text>  sender = &amp;sender_;&#10;</xsl:text>
       <xsl:text>  objectPath = &amp;object_path;&#10;</xsl:text>
-      <xsl:text>  connection = connection_;&#10;</xsl:text>
+      <xsl:text>  connection = connection_;&#10;</xsl:text> -->
       <xsl:text>  </xsl:text>
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
         <xsl:text>if (property_name == "</xsl:text>

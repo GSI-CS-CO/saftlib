@@ -82,6 +82,9 @@ void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection)
 	int _saftbus_id_counter;
 	saftbus::read(connection->get_fd(), _saftbus_id_counter);
 
+	std::map<std::string, std::string> owners;
+	saftbus::read(connection->get_fd(), owners);
+
 
 
 	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
@@ -108,7 +111,7 @@ void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection)
 	std::cout << std::endl;
 
 	std::cout << std::left << std::setw(40) << "interface name" 
-	          << std::left << std::setw(50) << "object path" 
+	          << std::left << std::setw(50) << "object path \"owner\"" 
 	          << std::right << std::setw(10) << "index" 
 	          << "   vtable" << std::endl;
 	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
@@ -122,14 +125,29 @@ void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection)
 				          << std::right << std::setw(10) << object_path.second;
 				first = false;
 			} else {
+				std::string obj_path = object_path.first;
+				if (saftbus_index.first == "de.gsi.saftlib.Owned") {
+					std::string owner = owners[object_path.first];
+					if (owner != "") {
+						obj_path.append(" \"");
+						obj_path.append(owner);
+						obj_path.append("\"");
+					}
+					//std::cerr << " \"" << owners[object_path.first] << "\"" << std::endl;
+				}
+
 				std::cout << std::left << std::setw(40) << " " 
-				          << std::left << std::setw(50) << object_path.first
+				          << std::left << std::setw(50) << obj_path
 				          << std::right << std::setw(10) << object_path.second;
 			}
 			if (find(indices.begin(), indices.end(), object_path.second) != indices.end()) {
 				std::cout << "   yes";
 				assigned_indices.push_back(object_path.second);
 			}
+			// if (saftbus_index.first == "de.gsi.saftlib.Owned") {
+			// 	std::cerr << " \"" << owners[object_path.first] << "\"" << std::endl;
+			// }
+
 			std::cout << std::endl;
 		}
 		std::cout << std::endl;

@@ -420,6 +420,25 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					//static int _saftbus_id_counter;
 					saftbus::write(socket->get_fd(), _saftbus_id_counter);
 
+					// list owners
+					// map object path to owner
+					std::map<std::string, std::string> owners;
+					auto owned_object_paths = _saftbus_indices["de.gsi.saftlib.Owned"];
+					for (auto object_path_index: owned_object_paths) {
+						std::string obj_path = object_path_index.first;
+						int idx              = object_path_index.second;
+						//std::cerr << obj_path << " " << idx << std::endl;
+						Serial result;
+						// const std::string &sender = _saftbus_objects[idx]->getSender();
+						// const std::string &op     = _saftbus_objects[idx]->getObjectPath();
+						_saftbus_objects[idx]->get_property(result, saftbus::connection, "", "", "", "Owner");
+						std::string owner;
+						result.get_init();
+						result.get(owner);
+						owners[obj_path] = owner;
+					}
+					saftbus::write(socket->get_fd(), owners);
+
 				}
 				break;
 				case saftbus::SENDER_ID:
@@ -781,6 +800,8 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 		//if (_debug_level > 5) print_all_fds();
 		handle_disconnect(socket);
 		//if (_debug_level > 5) print_all_fds();
+	} catch (saftbus::Error &e) {
+		std::cerr << "saftbus::Error " << e.what() << std::endl;
 	}
 	return false;
 }
