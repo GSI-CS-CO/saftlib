@@ -697,91 +697,91 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				}
 				break;
 
-				case saftbus::METHOD_CALL_ASYNC: 
-				{
-					saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_ASYNC"]);
-					logger.add("           METHOD_CALL_ASYNC received: ");
+				// case saftbus::METHOD_CALL_ASYNC: 
+				// {
+				// 	saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_ASYNC"]);
+				// 	logger.add("           METHOD_CALL_ASYNC received: ");
 					
-					// read the size of serialized data
-					uint32_t size;
-					saftbus::read(socket->get_fd(), size);
-					logger.add(" message size=").add(size);
+				// 	// read the size of serialized data
+				// 	uint32_t size;
+				// 	saftbus::read(socket->get_fd(), size);
+				// 	logger.add(" message size=").add(size);
 
-					// read the serialized data
-					Serial payload;
-					payload.data().resize(size);
-					//std::vector<char> buffer(size);
-					saftbus::read_all(socket->get_fd(), &payload.data()[0], size);
+				// 	// read the serialized data
+				// 	Serial payload;
+				// 	payload.data().resize(size);
+				// 	//std::vector<char> buffer(size);
+				// 	saftbus::read_all(socket->get_fd(), &payload.data()[0], size);
 
-					uint32_t fd_size;
-					saftbus::read(socket->get_fd(), fd_size);
-					std::vector<int> fd_list;
-					for (uint32_t i = 0; i < fd_size; ++i) {
-						int fd = saftbus::recvfd(socket->get_fd());
-						fd_list.push_back(fd);
-					}
-					std::string object_path;
-					std::string sender;
-					std::string interface_name;
-					std::string name;
-					Serial    parameters;
-					payload.get_init();
-					payload.get(object_path);
-					payload.get(sender);
-					payload.get(interface_name);
-					payload.get(name);
-					payload.get(parameters);
+				// 	uint32_t fd_size;
+				// 	saftbus::read(socket->get_fd(), fd_size);
+				// 	std::vector<int> fd_list;
+				// 	for (uint32_t i = 0; i < fd_size; ++i) {
+				// 		int fd = saftbus::recvfd(socket->get_fd());
+				// 		fd_list.push_back(fd);
+				// 	}
+				// 	std::string object_path;
+				// 	std::string sender;
+				// 	std::string interface_name;
+				// 	std::string name;
+				// 	Serial    parameters;
+				// 	payload.get_init();
+				// 	payload.get(object_path);
+				// 	payload.get(sender);
+				// 	payload.get(interface_name);
+				// 	payload.get(name);
+				// 	payload.get(parameters);
 
-					logger.add(" sender=").add(sender)
-					      .add(" name=").add(name)
-					      .add(" object_path=").add(object_path)
-					      .add(" interface_name=").add(interface_name)
-					      .add(" \n");
+				// 	logger.add(" sender=").add(sender)
+				// 	      .add(" name=").add(name)
+				// 	      .add(" object_path=").add(object_path)
+				// 	      .add(" interface_name=").add(interface_name)
+				// 	      .add(" \n");
 
-					if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
-						// async set/get is not allowed
-						std::cerr << "Connection: get/set is not allowed in async calls" << std::endl;
-					}
-					else // normal method calls 
-					{
-						logger.add("         a normal method async_call\n");
-						std::ostringstream function_name;
-						function_name << "Connection::dispatch_METHOD_CALL_" << name;
+				// 	if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
+				// 		// async set/get is not allowed
+				// 		std::cerr << "Connection: get/set is not allowed in async calls" << std::endl;
+				// 	}
+				// 	else // normal method calls 
+				// 	{
+				// 		logger.add("         a normal method async_call\n");
+				// 		std::ostringstream function_name;
+				// 		function_name << "Connection::dispatch_METHOD_CALL_" << name;
 
-						// saftbus object lookup
-						int index = _saftbus_indices[interface_name][object_path];
-						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation(fd_list));
+				// 		// saftbus object lookup
+				// 		int index = _saftbus_indices[interface_name][object_path];
+				// 		std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation(fd_list));
 
-						logger.add("     doing the function call ...\n");
-						_saftbus_objects[index]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
-						logger.add("     ... done \n");
+				// 		logger.add("     doing the function call ...\n");
+				// 		_saftbus_objects[index]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
+				// 		logger.add("     ... done \n");
 
-						if (method_invocation_rptr->has_error()) {
-							logger.add("     ... return an error \n");
-							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
-							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().type());
-							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().what());
-						} else {
-							logger.add("     ... return a normal return value \n");
+				// 		if (method_invocation_rptr->has_error()) {
+				// 			logger.add("     ... return an error \n");
+				// 			saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
+				// 			saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().type());
+				// 			saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().what());
+				// 		} else {
+				// 			logger.add("     ... return a normal return value \n");
 
-							// get the result and pack it in a way that 
-							//   can be digested by the auto-generated saftlib code
- 							Serial &result = method_invocation_rptr->get_return_value();
+				// 			// get the result and pack it in a way that 
+				// 			//   can be digested by the auto-generated saftlib code
+ 			// 				Serial &result = method_invocation_rptr->get_return_value();
 
-							// serialize
-							size = result.get_size();
-							const char *data_ptr = static_cast<const char*>(result.get_data());
-							logger.add("         size of response -> method resoponse: size=").add(size).add("\n");
+				// 			// serialize
+				// 			size = result.get_size();
+				// 			const char *data_ptr = static_cast<const char*>(result.get_data());
+				// 			logger.add("         size of response -> method resoponse: size=").add(size).add("\n");
 
-							//send 
-							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
-							saftbus::write(socket->get_fd(), size);
-							saftbus::write_all(socket->get_fd(), data_ptr, size);
-							logger.add("         response was sent\n");
-						}
-					}
-				}
-				break;
+				// 			//send 
+				// 			saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
+				// 			saftbus::write(socket->get_fd(), size);
+				// 			saftbus::write_all(socket->get_fd(), data_ptr, size);
+				// 			logger.add("         response was sent\n");
+				// 		}
+				// 	}
+				// }
+				// break;
 
 				default:
 					logger.add("      unknown message type\n");

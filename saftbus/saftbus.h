@@ -50,7 +50,7 @@ namespace saftbus
 	enum MessageTypeC2S {
 		REGISTER_CLIENT,
 		METHOD_CALL,
-		METHOD_CALL_ASYNC,
+		// METHOD_CALL_ASYNC,
 		PROPERTY_SET,
 		PROPERTY_GET,
 		SENDER_ID,

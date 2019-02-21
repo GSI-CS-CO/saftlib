@@ -56,7 +56,6 @@ std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_
 void Output::WriteOutput(bool value)
 {
   ownerOnly();
-  std::cerr << "Output::WriteOutput(" << value << ") called" << std::endl;
   return impl->WriteOutput(value);
 }
 
@@ -125,7 +124,6 @@ std::string Output::getInput() const
 void Output::setOutputEnable(bool val)
 {
   ownerOnly();
-  std::cerr << "Output::setOutputEnable(" << val << ") called" << std::endl;
   return impl->setOutputEnable(val);
 }
 

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <map>
 #include <algorithm>
 #include "saftbus.h"
 #include "core.h"
@@ -10,6 +11,7 @@
 void write_histogram(std::string filename, const std::map<int,int> &hist);
 void show_help(const char *argv0);
 void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection);
+void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connection) ;
 
 void write_histogram(std::string filename, const std::map<int,int> &hist)
 {
@@ -170,6 +172,133 @@ void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection)
 
 }
 
+
+void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connection) 
+{
+	saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_GET_STATE);
+
+
+	std::map<std::string, std::map<std::string, int> > saftbus_indices; 
+	saftbus::read(connection->get_fd(), saftbus_indices);
+	std::vector<int> indices;
+	std::vector<int> assigned_indices;
+	saftbus::read(connection->get_fd(), indices);
+
+	int saftbus_object_id_counter; // log saftbus object creation
+	saftbus::read(connection->get_fd(), saftbus_object_id_counter);
+	int saftbus_signal_handle_counter; // log signal subscriptions
+	saftbus::read(connection->get_fd(), saftbus_signal_handle_counter);
+
+	std::vector<int> sockets_active;
+	saftbus::read(connection->get_fd(), sockets_active);
+
+	std::map<int, std::string> socket_owner;
+	saftbus::read(connection->get_fd(), socket_owner);
+
+	// 	     // handle    // signal
+	//std::map<unsigned, sigc::signal<void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Glib::VariantContainerBase&> > _handle_to_signal_map;
+	std::map<unsigned, int> handle_to_signal_map;
+	saftbus::read(connection->get_fd(), handle_to_signal_map);
+	// for (auto handle_signal: handle_to_signal_map) {
+	// 	std::cout << handle_signal.first << " " << handle_signal.second << std::endl;
+	// }
+
+
+	std::map<std::string, std::set<unsigned> > id_handles_map;
+	saftbus::read(connection->get_fd(), id_handles_map);
+
+
+	//std::set<unsigned> erased_handles;
+	std::vector<unsigned> erased_handles;
+	saftbus::read(connection->get_fd(), erased_handles);
+
+
+
+	// store the pipes that go directly to one or many Proxy objects
+			// interface_name        // object path
+	std::map<std::string, std::map < std::string , std::set< saftbus::ProxyPipe > > > proxy_pipes;
+	saftbus::read(connection->get_fd(), proxy_pipes);
+
+	int _saftbus_id_counter;
+	saftbus::read(connection->get_fd(), _saftbus_id_counter);
+
+	std::map<std::string, std::string> owners;
+	saftbus::read(connection->get_fd(), owners);
+
+
+
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	std::cout << std::endl;
+	std::cout << "socket: ";
+	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
+		std::cout << std::setw(3) << i;
+	}
+	std::cout << std::endl;
+	std::cout << "busy:   ";
+	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
+		if (sockets_active[i]) {
+			std::cout << std::setw(3) << "*";
+		} else {
+			std::cout << std::setw(3) << " ";
+		}
+	}
+	std::cout << std::endl;
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	std::cout << std::endl;
+
+	std::cout << std::left << std::setw(50) << "object path" 
+	          << std::left << std::setw(50) << "interface name [owner]" 
+	          << std::endl;
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	std::cout << std::endl;
+
+	std::vector<std::pair<std::string, std::pair<std::string, std::string> > > table;
+
+	for (auto saftbus_index: saftbus_indices) {
+		for (auto object_path: saftbus_index.second) {
+			std::string interface_name = saftbus_index.first;
+			std::string obj_path = object_path.first;
+			std::string owner;
+			if (saftbus_index.first == "de.gsi.saftlib.Owned") {
+				owner = owners[object_path.first];
+				if (owner != "") {
+					interface_name.append(" [");
+					interface_name.append(owner);
+					interface_name.append("]");
+				}
+			}
+			table.push_back(std::make_pair(obj_path, std::make_pair(interface_name, owner)));
+		}
+	}
+	std::sort(table.begin(), table.end(), [](std::pair<std::string, std::pair<std::string, std::string> > a,
+		                                     std::pair<std::string, std::pair<std::string, std::string> > b) 
+	                                        { return a.first < b.first; });
+	std::string previous_object_path;
+	for (auto line: table) {
+		if (previous_object_path != line.first) {
+			if (!previous_object_path.empty()) std::cout << std::endl;
+			std::cout << std::left << std::setw(50) << line.first;
+		} else {
+			std::cout << std::left << std::setw(50) << "";
+		}
+		std::cout << std::left << std::setw(50) << line.second.first;
+		std::cout << std::endl;
+		previous_object_path = line.first;
+	}
+	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+
+
+	std::cout << std::endl;
+	std::cout << std::setw(7) << "socket" << std::setw(7) << " owner" << std::endl;
+	for (auto owner: socket_owner) {
+		std::cout << std::setw(7) << owner.first << std::setw(7) << owner.second << std::endl;
+	}
+	std::cout << std::endl;
+	//int _client_id;
+
+}
+
+
 int main(int argc, char *argv[])
 {
 	try {
@@ -208,7 +337,8 @@ int main(int argc, char *argv[])
 		auto connection = std::shared_ptr<saftbus::ProxyConnection>(new saftbus::ProxyConnection);
 
 		if (list_mutable_state) {
-			print_mutable_state(connection);
+			//print_mutable_state(connection);
+			print_saftbus_object_table(connection);
 		}
 
 		if (enable_signal_stats && disable_signal_stats) {
