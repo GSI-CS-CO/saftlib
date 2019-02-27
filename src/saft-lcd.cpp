@@ -1,5 +1,5 @@
 // @file saft-lcd.cpp
-// @brief Live Chain Dispaly. This tool uses saftlib for on-line snooping 
+// @brief Live Chain Display. This tool uses saftlib for on-line snooping 
 //        and display of beam production chains
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
@@ -7,7 +7,7 @@
 //
 // A CLI that allows to see what happens in the facility.
 //
-// version: 2018-Dec-11
+// version: 2019-Feb-18
 //
 //*****************************************************************************
 // This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
 //
-#define SAFT_LCD_VERSION "0.0.4"
+#define SAFT_LCD_VERSION "0.0.5"
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -116,7 +116,7 @@ static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 ex
   // machine names
   switch (gid) {
     // SIS, ESR, HEST
-  case GTK3MV4_TO_PLTKMH2   : gName = "UNILAC";     break;
+  case GTK3MV4_TO_PLTKMH2   : gName = "(from TK)";     break;
   case SIS18_RING           : gName = "SIS18";      break;
   case GTS1MU1_TO_GTS3MU1   : gName = "NE3";        break;
   case GTS3MU1_TO_GHFSMU1   : gName = "NE4";        break;
@@ -171,7 +171,7 @@ static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 ex
     } // if gid
     break; 
   case UNI_TCREQ :
-    if (source == GTK3MV4_TO_PLTKMH2) {
+    if ((source == GTK3MV4_TO_PLTKMH2) || (source == SIS18_RING)) {
       vaccAct = vacc;
       std::cout << " [" << vacc;
       if (dry) std::cout << "(dry)";
