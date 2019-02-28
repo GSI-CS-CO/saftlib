@@ -195,7 +195,7 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
       } catch (const etherbone::exception_t& ex) {
         std::cerr << "Unhandled etherbone exception in MSI handler for 0x" 
              << std::hex << msi.address << ": " << ex << std::endl;
-      // } catch (const Glib::Error& ex) {
+      // } catch (const saftbus::Error& ex) {
       //   std::cerr << "Unhandled Glib exception in MSI handler for 0x" 
       //        << std::hex << msi.address << ": " << ex.what() << std::endl;
       } catch (std::exception& ex) {

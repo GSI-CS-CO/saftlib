@@ -26,9 +26,18 @@
 #include "FunctionGeneratorImpl.h"
 #include "Owned.h"
 
+#include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/containers/vector.hpp>
+#include <boost/interprocess/containers/map.hpp>
+
+
 namespace saftlib {
 
 class TimingReceiver;
+
+typedef boost::interprocess::allocator<ParameterTuple, boost::interprocess::managed_shared_memory::segment_manager>  ShmemAllocator;
+typedef boost::interprocess::vector<ParameterTuple, ShmemAllocator> ParameterVector;
 
 
 class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
@@ -47,6 +56,11 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     // iMasterFunctionGenerator overrides
     void Arm();
     void Abort(bool);
+
+    void InitializeSharedMemory(const std::string& shared_memory_name);
+
+    void AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack);
+
 		bool AppendParameterSets(const std::vector< std::vector< int16_t > >& coeff_a, const std::vector< std::vector< int16_t > >& coeff_b, const std::vector< std::vector< int32_t > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm, bool wait_for_arm_ack);    
     std::vector<uint32_t> ReadExecutedParameterCounts();
     std::vector<uint64_t> ReadFillLevels();
@@ -94,18 +108,10 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     bool generateIndividualSignals;
     sigc::connection waitTimeout; 
 
-    struct ParameterTuple {
-      int16_t coeff_a;
-      int16_t coeff_b;
-      int32_t coeff_c;
-      uint8_t step;
-      uint8_t freq;
-      uint8_t shift_a;
-      uint8_t shift_b;
-      
-      uint64_t duration() const;
-    };
-
+    std::map <int,std::vector<ParameterTuple>> parametersForBeamProcess;
+    std::unique_ptr<boost::interprocess::managed_shared_memory> shm_params;
+    boost::interprocess::interprocess_mutex* shm_mutex;
+    std::map<std::string,ParameterVector*> paramVectors;
 };
 
 }

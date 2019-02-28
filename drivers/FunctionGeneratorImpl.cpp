@@ -266,7 +266,7 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
   }
 }
 
-uint64_t FunctionGeneratorImpl::ParameterTuple::duration() const
+uint64_t ParameterTuple::duration() const
 {
   static const uint64_t samples[8] = { // fixed in HDL
     250, 500, 1000, 2000, 4000, 8000, 16000, 32000
@@ -282,6 +282,19 @@ uint64_t FunctionGeneratorImpl::ParameterTuple::duration() const
       500  // 2GHz
   };
   return samples[step] * sample_len[freq];
+}
+
+
+bool FunctionGeneratorImpl::appendParameterTuples(std::vector<ParameterTuple> parameters)
+{
+  for (ParameterTuple p : parameters)
+  {
+    fifo.push_back(p);
+    fillLevel += p.duration();
+  }
+
+  if (channel != -1) refill();
+  return lowFill();
 }
 
 

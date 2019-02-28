@@ -32,6 +32,18 @@ class FunctionGeneratorChannelAllocation //: public Glib::Object
     std::vector<int> indexes;
 };
 
+  struct ParameterTuple {
+      int16_t coeff_a;
+      int16_t coeff_b;
+      int32_t coeff_c;
+      uint8_t step;
+      uint8_t freq;
+      uint8_t shift_a;
+      uint8_t shift_b;
+    
+      uint64_t duration() const;  
+    };
+
 class FunctionGeneratorImpl //: public Glib::Object
 {
 	friend class MasterFunctionGenerator;
@@ -56,6 +68,19 @@ class FunctionGeneratorImpl //: public Glib::Object
     
     //static std::shared_ptr<FunctionGenerator> create(const ConstructorType& args);
     
+    template<typename Iter> bool appendParameterTuples(Iter it, Iter end)
+    {
+      for (; it != end; ++it)
+      {
+        fifo.push_back(*it);
+        fillLevel += (*it).duration();
+      }
+
+      if (channel != -1) refill();
+      return lowFill();
+    }
+
+    bool appendParameterTuples(std::vector<ParameterTuple> parameters);
 
 
     void Arm();
@@ -126,18 +151,6 @@ class FunctionGeneratorImpl //: public Glib::Object
     sigc::connection resetTimeout;
     uint32_t startTag;
     unsigned executedParameterCount;
-    
-    struct ParameterTuple {
-      int16_t coeff_a;
-      int16_t coeff_b;
-      int32_t coeff_c;
-      uint8_t step;
-      uint8_t freq;
-      uint8_t shift_a;
-      uint8_t shift_b;
-      
-      uint64_t duration() const;
-    };
 
     unsigned mbx_slot;
     eb_address_t mailbox_slot_address;

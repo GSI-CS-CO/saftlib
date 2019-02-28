@@ -54,7 +54,7 @@ saftd_SOURCES = version.h \
 	src/globals.cpp			src/main.cpp
 
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) $(SAFTLIBS)
-saftd_LDFLAGS = -rdynamic # needed for stack trace
+saftd_LDFLAGS = -lpthread -lrt -rdynamic # needed for shared memory, stack trace
 
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
