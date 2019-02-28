@@ -119,8 +119,8 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
 
   // configure mailbox for MSI to Saftlib
   // get mailbox slot number for swi host=>lm32
-  eb_data_t mb_slot;
-  mb_slot = readRegisterContent(WR_MIL_GW_REG_MSI_SLOT);
+  // eb_data_t mb_slot;
+  // mb_slot = readRegisterContent(WR_MIL_GW_REG_MSI_SLOT);
   // std::cerr << "mb_slot = " << mb_slot << std::endl;
 
   // tell the LM32 which slot in mailbox is ours
@@ -138,7 +138,7 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   for (auto reset_device: devices) {
     // use the first reset device
     uint32_t set_bits = ~(1<<cpu_idx) & 0xff;
-    uint32_t clr_bits =  (1<<cpu_idx);
+    //uint32_t clr_bits =  (1<<cpu_idx);
     // reset register offsets
     //0x4 -> GET 
     //0x8 -> SET 
@@ -169,9 +169,10 @@ WrMilGateway::~WrMilGateway()
   writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, 0xffffffff);
 
   // std::cerr << "WrMilGateway::~WrMilGateway()" << std::endl;
+  // clean the mailbox
   receiver->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
   receiver->getDevice().write(mailbox_slot_address-4, EB_DATA32, 0xffffffff);
-  eb_data_t mailbox_value;
+  //eb_data_t mailbox_value;
   // receiver->getDevice().read(mailbox_slot_address, EB_DATA32, &mailbox_value);
   // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << mailbox_value 
   //           << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
@@ -321,12 +322,14 @@ void WrMilGateway::StartSIS18()
   // std::cerr << "WrMilGateway::StartSIS18()" << std::endl;
   // configure WR-MIL Gateway firmware to start operation as SIS18 Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_SIS);
+  clog << kLogInfo << "WR-MIL-Gateway: configured as SIS18 Pulszentrale" << std::endl;
 }
 void WrMilGateway::StartESR()
 {
   // std::cerr << "WrMilGateway::StartESR()" << std::endl;
   // configure WR-MIL Gateway firmware to start operation as ESR Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_ESR);
+  clog << kLogInfo << "WR-MIL-Gateway: configured as ESR Pulszentrale" << std::endl;
 }
 void WrMilGateway::ClearStatistics()
 {
@@ -502,12 +505,31 @@ void WrMilGateway::irq_handler(eb_data_t msg) const
 
   switch(msg) {
     case WR_MIL_GW_MSI_LATE_EVENT:
+      clog << kLogErr << "WR-MIL-Gateway: late MIL event " << std::endl;
+
         // std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_LATE_EVENT)" << std::endl;
       getNumLateMilEvents(); 
     break;
     case WR_MIL_GW_MSI_STATE_CHANGED:
+      //clog << kLogInfo << "WR-MIL-Gateway: firmware state changed" << std::endl;
         // std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_STATE_CHANGED)" << std::endl;
-      getFirmwareState();
+      switch(getFirmwareState()) {
+        case WR_MIL_GW_STATE_INIT:
+          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to INIT" << std::endl;
+        break;
+        case WR_MIL_GW_STATE_UNCONFIGURED:
+          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to UNCONFIGURED" << std::endl;
+        break;
+        case WR_MIL_GW_STATE_CONFIGURED:
+          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to CONFIGURED" << std::endl;
+        break;
+        case WR_MIL_GW_STATE_PAUSED:
+          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to PAUSED" << std::endl;
+        break;
+        default:
+          clog << kLogErr << "WR-MIL-Gateway: firmware state changed to UNKNOWN" << std::endl;
+        break;
+      }
     break;
     default:;
       // std::cerr << "WrMilGateway::irq_handler() unknown Interrupt: " << std::dec << msg << std::endl; 

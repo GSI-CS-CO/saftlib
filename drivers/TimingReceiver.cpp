@@ -944,8 +944,10 @@ void TimingReceiver::probe(OpenDevice& od)
         wrmil_path << od.objectPath << "/" << wrmilgw_str;
         WrMilGateway::ConstructorType wrmil_args = { wrmil_path.str(), tr.operator->(), mbx_msi[0], mbx[0]  };
         tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
+        clog << kLogDebug << "TimingReceiver: WR-MIL-Gateway found" << std::endl;
       } catch (saftbus::Error &e) {
-        clog << kLogDebug << "no WR-MIL-Gateway found" << std::endl;
+        // don't send log message if no Gateway was found
+        //clog << kLogDebug << "TimingReceiver: no WR-MIL-Gateway found" << std::endl;
       }
 
     }

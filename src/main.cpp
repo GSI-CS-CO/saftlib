@@ -201,7 +201,6 @@ int main(int argc, char** argv)
     sigc::ptr_fun(&on_name_lost));
   
   // Run the main event loop
-  std::cerr << "Saftd main loop running" << std::endl;
   SAFTd::get().loop()->run();
   
   // Cleanup
