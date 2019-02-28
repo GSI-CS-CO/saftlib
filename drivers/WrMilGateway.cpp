@@ -246,35 +246,15 @@ std::shared_ptr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
   return RegisteredObject<WrMilGateway>::create(args.objectPath, args);
 }
 
-// void registerContentCallback(eb_user_data_t data , eb_device_t device , eb_operation_t operation , eb_status_t status)
-// {
-//   std::cerr << "registerContentCallback called" << std::endl;
-//   int i = 0;
-//   std::cerr << "EB_NULL = " << EB_NULL << std::endl;
-//   uint32_t *userdata = (uint32_t*)data;
-//   std::cerr << "userdata = " << *userdata << std::endl;
-//   //std::cerr << "vector->size() = " << vector->size() << std::endl;
-//   while (operation != EB_NULL) {
-//     //reg[i++] = eb_operation_data(operation);
-//     std::cerr << "operation " << eb_operation_data(operation) << std::endl;
-//     operation = eb_operation_next(operation);
-//   }
-// }
-
 std::vector< uint32_t > WrMilGateway::getRegisterContent() const
 {
-  // std::cerr << "WrMilGateway::getRegisterContent()" << std::endl;
   etherbone::Cycle cycle;
   std::vector<uint32_t> registerContent((WR_MIL_GW_REG_LATE_HISTOGRAM-WR_MIL_GW_REG_MAGIC_NUMBER) / 4, 42);
-  // uint32_t userdata = 1234;
-  // cycle.open(receiver->getDevice(), &userdata, &registerContentCallback);
-  // //cycle.open<eb_user_data_t>(receiver->getDevice(), nullptr, &registerContentCallback);
-  // for (unsigned i = 0; i < registerContent.size(); ++i) {
-  //   std::cerr << "reading " << i << std::endl;
-  //   cycle.read(base_addr + WR_MIL_GW_SHARED_OFFSET + i*4);
-  // }
-  // cycle.close();
-  // std::cerr << "userdata = " << userdata << std::endl;
+  uint32_t reg_idx = 0;
+  for (auto &reg: registerContent) {
+    reg = readRegisterContent(reg_idx);
+    reg_idx += 4;
+  }
   return registerContent;
 }
 
