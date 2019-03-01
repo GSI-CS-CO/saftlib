@@ -936,18 +936,17 @@ void TimingReceiver::probe(OpenDevice& od)
       tr->otherStuff["MasterFunctionGenerator"]["masterfg"] = fg;
 
 
-      // check if there is an active WrMilGateway firmware running
+      // check if there is WrMilGateway firmware running
       try {
         const std::string wrmilgw_str("wrmilgateway");
-        std::ostringstream wrmil_path;
-        wrmil_path.imbue(std::locale("C"));
-        wrmil_path << od.objectPath << "/" << wrmilgw_str;
-        WrMilGateway::ConstructorType wrmil_args = { wrmil_path.str(), tr.operator->(), mbx_msi[0], mbx[0]  };
+        WrMilGateway::ConstructorType wrmil_args = { od.objectPath + "/" + wrmilgw_str, 
+                                                     tr.operator->(), // <- this is madness! 
+                                                     mbx_msi[0], 
+                                                     mbx[0]  };
         tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
         clog << kLogDebug << "TimingReceiver: WR-MIL-Gateway found" << std::endl;
       } catch (saftbus::Error &e) {
-        // don't send log message if no Gateway was found
-        //clog << kLogDebug << "TimingReceiver: no WR-MIL-Gateway found" << std::endl;
+        // send log message if no Gateway was found ?
       }
 
     }
