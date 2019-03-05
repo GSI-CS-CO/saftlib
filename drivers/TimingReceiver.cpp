@@ -940,7 +940,7 @@ void TimingReceiver::probe(OpenDevice& od)
       try {
         const std::string wrmilgw_str("wrmilgateway");
         WrMilGateway::ConstructorType wrmil_args = { od.objectPath + "/" + wrmilgw_str, 
-                                                     tr.operator->(), // <- this is madness! 
+                                                     tr, 
                                                      mbx_msi[0], 
                                                      mbx[0]  };
         tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
