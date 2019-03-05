@@ -2,7 +2,7 @@
 #AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/saftbus
 AM_CPPFLAGS = $(SIGCPP_CFLAGS) -I $(top_srcdir)/saftbus
 
-lib_LTLIBRARIES = libsaftbus.la
+lib_LTLIBRARIES = libsaftbus.la $(SIGCPP_LIBS)
 saftbusdir = $(includedir)/saftlib
 saftbus_HEADERS = \
 	Logger.h       \

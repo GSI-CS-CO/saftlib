@@ -1,5 +1,5 @@
 SUBDIRS = interfaces saftbus
-SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la
+SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la $(SIGCPP_LIBS)
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check
