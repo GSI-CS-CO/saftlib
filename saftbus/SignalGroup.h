@@ -21,13 +21,15 @@ namespace saftlib
 		std::vector<struct pollfd> _fds;
 	};
 
-	// block until a signal on a "non-Glib::MainLoop connected"
-	// saftbus::Proxy arrives, as created with the 
-	// saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL ProxyFlag
+	// Block until a signal of a connected saftbus::Proxy arrives.
+	// Connections between SignalGroup objects and proxies are established by
+	// passing the SignalGroup object to the Proxy_create() function.
+	// If no SignalGroup is connected explicitly, the globalSignalGroup is used.
+	//
 	// returns 0 if the timeout was hit
 	//         nonzero otherwise
-	// timeout of -1 mean: do not timeout
 	// timeout is given in units of milliseconds
+	// timeout of -1 means: no timeout
 	int wait_for_signal(int timeout_ms = -1);
 
 	extern SignalGroup globalSignalGroup;
