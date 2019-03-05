@@ -2,7 +2,7 @@
 #AM_CPPFLAGS = $(GIOMM_CFLAGS) -I $(top_srcdir)/saftbus
 AM_CPPFLAGS = $(SIGCPP_CFLAGS) -I $(top_srcdir)/saftbus
 
-lib_LTLIBRARIES = libsaftbus.la $(SIGCPP_LIBS)
+lib_LTLIBRARIES = libsaftbus.la 
 saftbusdir = $(includedir)/saftlib
 saftbus_HEADERS = \
 	Logger.h       \
@@ -41,8 +41,7 @@ nodist_libsaftbus_la_SOURCES = \
 bin_PROGRAMS = saftbus-ctl
 
 saftbus_ctl_SOURCES = saftbus-ctl.cpp
-#saftbus_ctl_LDADD   = $(GIOMM_LIBS) libsaftbus.la
-saftbus_ctl_LDADD   = $(SIGCPP_LIBS) libsaftbus.la
+saftbus_ctl_LDADD   = libsaftbus.la $(SIGCPP_LIBS)
 
 
 
