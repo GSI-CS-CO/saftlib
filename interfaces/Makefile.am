@@ -1,5 +1,6 @@
 NODES =				\
 	SAFTd.xml		\
+	FunctionGeneratorFirmware.xml \
 	FunctionGenerator.xml	\
 	MasterFunctionGenerator.xml	\
 	Input.xml		\
@@ -35,6 +36,7 @@ lib_LTLIBRARIES = libsaftlib.la
 saftlibdir = $(includedir)/saftlib
 nodist_saftlib_HEADERS = 	\
 	SAFTd.h			\
+	FunctionGeneratorFirmware.h	\
 	FunctionGenerator.h	\
 	MasterFunctionGenerator.h	\
 	iActionSink.h		\
@@ -46,6 +48,7 @@ nodist_saftlib_HEADERS = 	\
 	iMILbusActionSink.h	\
 	iMILbusCondition.h	\
 	Input.h			\
+	iFunctionGeneratorFirmware.h	\
 	iFunctionGenerator.h	\
 	iMasterFunctionGenerator.h	\
 	iOutputActionSink.h	\
@@ -104,6 +107,7 @@ libsaftlib_la_LDFLAGS = -version-info @SAFTLIB_API@:@SAFTLIB_REVISION@:@SAFTLIB_
 
 nodist_libsaftlib_la_SOURCES =	\
 	SAFTd.cpp		\
+	FunctionGeneratorFirmware.cpp	\
 	FunctionGenerator.cpp	\
 	MasterFunctionGenerator.cpp	\
 	iActionSink.cpp		\
@@ -111,6 +115,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	iDevice.cpp		\
 	iSAFTd.cpp		\
 	iEventSource.cpp	\
+	iFunctionGeneratorFirmware.cpp	\
 	iFunctionGenerator.cpp	\
 	iMasterFunctionGenerator.cpp	\
 	iInputEventSource.cpp	\

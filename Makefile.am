@@ -44,6 +44,7 @@ saftd_SOURCES = version.h \
 	drivers/SCUbusActionSink.cpp	drivers/SCUbusActionSink.h	\
 	drivers/EmbeddedCPUActionSink.cpp	drivers/EmbeddedCPUActionSink.h	\
 	drivers/MILbusActionSink.cpp	drivers/MILbusActionSink.h	\
+	drivers/FunctionGeneratorFirmware.cpp	drivers/FunctionGeneratorFirmware.h	\
 	drivers/FunctionGenerator.cpp	drivers/FunctionGenerator.h	\
 	drivers/MasterFunctionGenerator.cpp	drivers/MasterFunctionGenerator.h	\
 	drivers/FunctionGeneratorImpl.cpp	drivers/FunctionGeneratorImpl.h	\
