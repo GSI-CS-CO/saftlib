@@ -920,9 +920,8 @@ void TimingReceiver::probe(OpenDevice& od)
         tr->otherStuff["FunctionGenerator"][name.str()] = fg;
 
       }
-      
-      // Create a master object to control all channels
 
+      // Create a master object to control all channels
 //      give references to existing fg objects
 //      provide single d-bus interface to all fg objects
       std::ostringstream spath;
@@ -940,7 +939,7 @@ void TimingReceiver::probe(OpenDevice& od)
       try {
         const std::string wrmilgw_str("wrmilgateway");
         WrMilGateway::ConstructorType wrmil_args = { od.objectPath + "/" + wrmilgw_str, 
-                                                     tr, 
+                                                     tr->getDevice(), 
                                                      mbx_msi[0], 
                                                      mbx[0]  };
         tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);

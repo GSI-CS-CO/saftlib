@@ -44,10 +44,10 @@ class WrMilGateway : public Owned, public iWrMilGateway
   public:
     typedef WrMilGateway_Service ServiceType;
     struct ConstructorType {
-      std::string                     objectPath;
-      std::shared_ptr<TimingReceiver> receiver;
-      etherbone::sdb_msi_device       sdb_msi_base;
-      sdb_device                      mailbox;
+      std::string                objectPath;
+      Device &                   device;
+      etherbone::sdb_msi_device  sdb_msi_base;
+      sdb_device                 mailbox;
     };
     
     static std::shared_ptr<WrMilGateway> create(const ConstructorType& args);
@@ -110,7 +110,8 @@ class WrMilGateway : public Owned, public iWrMilGateway
     sigc::connection pollConnection;
 
 
-    std::shared_ptr<TimingReceiver> receiver;
+    //std::shared_ptr<TimingReceiver> receiver;
+    Device &                  device;
 
     struct sdb_device         wrmilgw_device; // store the LM32 device with WR-MIL-Gateway firmware running
     eb_address_t              base_addr;

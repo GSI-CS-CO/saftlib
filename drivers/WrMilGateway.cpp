@@ -55,21 +55,21 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
    poll_period(1000), // [ms]
    max_time_without_mil_events(10000), // 10 seconds
    time_without_mil_events(max_time_without_mil_events),
-   receiver(args.receiver),
+   device(args.device),
    sdb_msi_base(args.sdb_msi_base),
    mailbox(args.mailbox),
-   irq(args.receiver->getDevice().request_irq(args.sdb_msi_base, sigc::mem_fun(*this, &WrMilGateway::irq_handler))),
+   irq(args.device.request_irq(args.sdb_msi_base, sigc::mem_fun(*this, &WrMilGateway::irq_handler))),
    have_wrmilgw(false)
 {
 
 
   // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
   std::vector<struct sdb_device> devices;
-  receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), devices);
+  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), devices);
   int cpu_idx = 0;
   for(auto lm32_ram_user: devices) {
     eb_data_t wr_mil_gw_magic_number = 0;
-    receiver->getDevice().read(lm32_ram_user.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET, 
+    device.read(lm32_ram_user.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET, 
                           EB_DATA32, 
                           &wr_mil_gw_magic_number);
     if (wr_mil_gw_magic_number == WR_MIL_GW_MAGIC_NUMBER) {
@@ -96,9 +96,9 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   eb_data_t mailbox_value;
   unsigned slot = 0;
 
-  receiver->getDevice().read(mailbox_base, EB_DATA32, &mailbox_value);
+  device.read(mailbox_base, EB_DATA32, &mailbox_value);
   while((mailbox_value != 0xffffffff) && slot < 128) {
-    receiver->getDevice().read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
+    device.read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
     // std::cerr << "looking for free slot("<<slot<<"): mailbox_value = 0x" 
     //           << std::hex << std::setw(8) << std::setfill('0') << mailbox_value 
     //           << std::dec << std::endl;
@@ -113,7 +113,7 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   //save the irq address in the odd mailbox slot
   //keep postal address to free later
   mailbox_slot_address = mailbox_base + slot * 4 * 2 + 4;
-  receiver->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
+  device.write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
   // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
   // done with MSI configuration
 
@@ -131,11 +131,12 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   //  This prevents resetting the CPU in the middle of a WB cycle
   // reset all other LM32 CPUs to make sure that no other firmware disturbs our actions
   // (in particular the function generator firmware)
-  receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
+  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
   // std::cerr << "WrMilGateway: reset the CPUs" << std::endl;
   // writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
   // std::cerr << "WrMilGateway: put firmware in reset state" << std::endl;
-  for (auto reset_device: devices) {
+
+/*  for (auto reset_device: devices) {
     // use the first reset device
     uint32_t set_bits = ~(1<<cpu_idx) & 0xff;
     //uint32_t clr_bits =  (1<<cpu_idx);
@@ -146,11 +147,11 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
     const int SET = 0x8;
     //std::cerr << "set_bits = 0x" << std::hex << std::setfill('0') << std::setw(8) << set_bits << std::endl;
     //std::cerr << "clr_bits = 0x" << std::hex << std::setfill('0') << std::setw(8) << clr_bits << std::endl;
-    receiver->getDevice().write(reset_device.sdb_component.addr_first + SET, 
+    device.write(reset_device.sdb_component.addr_first + SET, 
                           EB_DATA32, 
                           set_bits);
     break;
-  }
+  } */
 
   //std::cerr << "WrMilGateway: check if firmware is running" << std::endl;
   firmware_running = firmwareRunning();
@@ -170,30 +171,30 @@ WrMilGateway::~WrMilGateway()
 
   // std::cerr << "WrMilGateway::~WrMilGateway()" << std::endl;
   // clean the mailbox
-  receiver->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
-  receiver->getDevice().write(mailbox_slot_address-4, EB_DATA32, 0xffffffff);
+  device.write(mailbox_slot_address, EB_DATA32, 0xffffffff);
+  device.write(mailbox_slot_address-4, EB_DATA32, 0xffffffff);
   //eb_data_t mailbox_value;
-  // receiver->getDevice().read(mailbox_slot_address, EB_DATA32, &mailbox_value);
+  // device.read(mailbox_slot_address, EB_DATA32, &mailbox_value);
   // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << mailbox_value 
   //           << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
-  // receiver->getDevice().read(mailbox_slot_address-4, EB_DATA32, &mailbox_value);
+  // device.read(mailbox_slot_address-4, EB_DATA32, &mailbox_value);
   // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << mailbox_value 
   //           << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address-4 << std::endl;
 
-  // clear all CPU reset bits (as they were before)
+/*  // clear all CPU reset bits (as they were before)
   std::vector<struct sdb_device> devices;
-  receiver->getDevice().sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
+  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
   for (auto reset_device: devices) {
     const int CLR = 0xc;
-    receiver->getDevice().write(reset_device.sdb_component.addr_first + CLR, 
+    device.write(reset_device.sdb_component.addr_first + CLR, 
                           EB_DATA32, 
                           0xffffffff);
     break;
-  }
+  }*/
 
   pollConnection.disconnect();
-  receiver->getDevice().release_irq(irq);
+  device.release_irq(irq);
 
 }
 
@@ -231,14 +232,14 @@ uint32_t WrMilGateway::readRegisterContent(uint32_t reg_offset) const
 {
   // std::cerr << "WrMilGateway::readRegisterContent()" << std::endl;
   eb_data_t value;
-  receiver->getDevice().read(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, &value);
+  device.read(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, &value);
   return value;
 }
 
 void WrMilGateway::writeRegisterContent(uint32_t reg_offset, uint32_t value)
 {
   // std::cerr << "WrMilGateway::writeRegisterContent()" << std::endl;
-  receiver->getDevice().write(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
+  device.write(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
 }
 
 std::shared_ptr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
