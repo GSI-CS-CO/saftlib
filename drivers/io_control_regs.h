@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -127,7 +127,7 @@ typedef enum
   eLVDS_Oe_Legacy_low        = 0x0004,
   eGPIO_Oe_Legacy_high       = 0x0008,
   eLVDS_Oe_Legacy_high       = 0x000c,
-  eIO_Config                 = 0x0010, 
+  eIO_Config                 = 0x0010,
   eIO_Version                = 0x0100,
   eGPIO_Info                 = 0x0104,
   eLVDS_Info                 = 0x0108,
@@ -180,6 +180,14 @@ typedef enum
   eLVDS_Sel_Set_high         = 0x0d04,
   eLVDS_Sel_Reset_low        = 0x0d08,
   eLVDS_Sel_Reset_high       = 0x0d0c,
+  eGPIO_In_Gate_Set_low      = 0x1000,
+  eGPIO_In_Gate_Set_high     = 0x1004,
+  eGPIO_In_Gate_Reset_low    = 0x1008,
+  eGPIO_In_Gate_Reset_high   = 0x100c,
+  eLVDS_In_Gate_Set_low      = 0x2000,
+  eLVDS_In_Gate_Set_high     = 0x2004,
+  eLVDS_In_Gate_Reset_low    = 0x2008,
+  eLVDS_In_Gate_Reset_high   = 0x200c,
   eSet_GPIO_Out_Begin        = 0xa000,
   eSet_LVDS_Out_Begin        = 0xb000,
   eGet_GPIO_In_Begin         = 0xc000,
