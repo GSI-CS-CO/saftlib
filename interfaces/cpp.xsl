@@ -249,7 +249,7 @@
           <xsl:text>);&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>  </xsl:text>
-        <xsl:if test="arg[@direction='out']">const saftbus::Serial&amp; response = </xsl:if>
+        <xsl:if test="arg[@direction='out']">saftbus::Serial response = </xsl:if>
         <xsl:text>call_sync("</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>", query);&#10;</xsl:text>
