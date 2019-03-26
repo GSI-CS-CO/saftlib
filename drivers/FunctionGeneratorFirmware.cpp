@@ -88,7 +88,7 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(const ConstructorType& args
     if (!have_fg_firmware) throw saftbus::Error(saftbus::Error::FAILED, "no FunctionGeneratorFirmware found");
     clog << kLogDebug << " WR-MIL-Gateway found" << std::endl;
 
-    Scan();
+    Scan(); // do the initial scan
 }
 
 FunctionGeneratorFirmware::~FunctionGeneratorFirmware()
@@ -117,71 +117,71 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
 
     etherbone::Cycle cycle;
 
-      // get mailbox slot number for swi host=>lm32
-      eb_data_t mb_slot;
-      cycle.open(device);
-      cycle.read(fgb + SHM_BASE + FG_MB_SLOT, EB_DATA32, &mb_slot);
-      cycle.close(); 
+    // get mailbox slot number for swi host=>lm32
+    eb_data_t mb_slot;
+    cycle.open(device);
+    cycle.read(fgb + SHM_BASE + FG_MB_SLOT, EB_DATA32, &mb_slot);
+    cycle.close(); 
 
-      if (mb_slot < 0 && mb_slot > 127)
-        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
+    if (mb_slot < 0 && mb_slot > 127)
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
 
-      // swi address of fg is to be found in mailbox slot mb_slot
-      eb_address_t swi = mailbox.sdb_component.addr_first + mb_slot * 4 * 2;
-      clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
-      eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
+    // swi address of fg is to be found in mailbox slot mb_slot
+    eb_address_t swi = mailbox.sdb_component.addr_first + mb_slot * 4 * 2;
+    clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
+    eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
+    
+    // Probe the configuration and hardware macros
+    cycle.open(device);
+    cycle.read(fgb + SHM_BASE + FG_NUM_CHANNELS, EB_DATA32, &num_channels);
+    cycle.read(fgb + SHM_BASE + FG_BUFFER_SIZE,  EB_DATA32, &buffer_size);
+    for (unsigned j = 0; j < FG_MACROS_SIZE; ++j)
+      cycle.read(fgb + SHM_BASE + FG_MACROS + j*4, EB_DATA32, &macros[j]);
+    cycle.close();
+    
+    // Create an allocation buffer
+    std::shared_ptr<std::vector<int>> allocation(
+      new std::vector<int>);
+    allocation->resize(num_channels, -1);
+    
+    // Disable all channels
+    cycle.open(device);
+    for (unsigned j = 0; j < num_channels; ++j)
+      cycle.write(swi, EB_DATA32, SWI_DISABLE | j);
+    cycle.close();
+
+    std::vector<std::shared_ptr<FunctionGeneratorImpl> > functionGeneratorImplementations;           
+    // Create the objects to control the channels
+    for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
+            if (!macros[j]) {
+              continue; // no hardware
+            }
       
-      // Probe the configuration and hardware macros
-      cycle.open(device);
-      cycle.read(fgb + SHM_BASE + FG_NUM_CHANNELS, EB_DATA32, &num_channels);
-      cycle.read(fgb + SHM_BASE + FG_BUFFER_SIZE,  EB_DATA32, &buffer_size);
-      for (unsigned j = 0; j < FG_MACROS_SIZE; ++j)
-        cycle.read(fgb + SHM_BASE + FG_MACROS + j*4, EB_DATA32, &macros[j]);
-      cycle.close();
+      std::ostringstream spath;
+      spath.imbue(std::locale("C"));
+      spath << objectPath << "/fg_" << j;
+      std::string path = spath.str();
       
-      // Create an allocation buffer
-      std::shared_ptr<std::vector<int>> allocation(
-        new std::vector<int>);
-      allocation->resize(num_channels, -1);
+      FunctionGeneratorImpl::ConstructorType args = { path, tr, allocation, fgb, swi, sdb_msi_base, mailbox, (unsigned)num_channels, (unsigned)buffer_size, j, (uint32_t)macros[j] };
+      std::shared_ptr<FunctionGeneratorImpl> fgImpl(new FunctionGeneratorImpl(args));
+      functionGeneratorImplementations.push_back(fgImpl);
       
-      // Disable all channels
-      cycle.open(device);
-      for (unsigned j = 0; j < num_channels; ++j)
-        cycle.write(swi, EB_DATA32, SWI_DISABLE | j);
-      cycle.close();
+      FunctionGenerator::ConstructorType fgargs = { path, tr, fgImpl };
+      std::shared_ptr<FunctionGenerator> fg = FunctionGenerator::create(fgargs);       
+      std::ostringstream name;
+      name.imbue(std::locale("C"));
+      name << "fg-" << (int)fgImpl->getSCUbusSlot() << "-" << (int)fgImpl->getDeviceNumber();
+      fgs_owned[name.str()] = fg;
+      result.insert(std::make_pair(name.str(), path));
 
-//     std::vector<std::shared_ptr<FunctionGenerator>> functionGenerators;      
-     std::vector<std::shared_ptr<FunctionGeneratorImpl> > functionGeneratorImplementations;           
-      // Create the objects to control the channels
-      for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
-              if (!macros[j]) continue; // no hardware
+    }
 
+    std::ostringstream mfg_spath;
+    mfg_spath.imbue(std::locale("C"));
+    mfg_spath << objectPath << "/masterfg";
+    std::string mfg_path = mfg_spath.str();
 
-        
-        std::ostringstream spath;
-        spath.imbue(std::locale("C"));
-        spath << objectPath << "/fg_" << j;
-        std::string path = spath.str();
-        
-        FunctionGeneratorImpl::ConstructorType args = { path, tr, allocation, fgb, swi, sdb_msi_base, mailbox, (unsigned)num_channels, (unsigned)buffer_size, j, (uint32_t)macros[j] };
-
-
-        std::shared_ptr<FunctionGeneratorImpl> fgImpl(new FunctionGeneratorImpl(args));
-        functionGeneratorImplementations.push_back(fgImpl);
-        
-        FunctionGenerator::ConstructorType fgargs = { path, tr, fgImpl };
-        std::shared_ptr<FunctionGenerator> fg = FunctionGenerator::create(fgargs);       
-        std::ostringstream name;
-        name.imbue(std::locale("C"));
-        name << "fg-" << (int)fgImpl->getSCUbusSlot() << "-" << (int)fgImpl->getDeviceNumber();
-        fgs_owned[name.str()] = fg;
-        //tr->otherStuff["FunctionGenerator"][name.str()] = fg;
-        result.insert(std::make_pair(name.str(), path));
-
-      }
-
-
-    MasterFunctionGenerator::ConstructorType mfg_args = { objectPath + "/masterfg", tr.operator->(), functionGeneratorImplementations};
+    MasterFunctionGenerator::ConstructorType mfg_args = { mfg_path, tr.operator->(), functionGeneratorImplementations};
     std::shared_ptr<MasterFunctionGenerator> mfg = MasterFunctionGenerator::create(mfg_args);
 
     master_fgs_owned["masterfg"] = mfg;
