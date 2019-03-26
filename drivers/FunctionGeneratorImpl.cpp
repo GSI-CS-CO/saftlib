@@ -43,7 +43,7 @@ namespace saftlib {
 
 FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
  : 
-   dev(args.dev),
+   tr(args.tr),
    allocation(args.allocation),
    shm(args.fgb + SHM_BASE),
    swi(args.swi),
@@ -56,7 +56,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
    deviceNumber    ((args.macro >> 16) & 0xFF),
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
-   irq(args.dev->getDevice().request_irq(args.base, sigc::mem_fun(*this, &FunctionGeneratorImpl::irq_handler))),
+   irq(args.tr->getDevice().request_irq(args.base, sigc::mem_fun(*this, &FunctionGeneratorImpl::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), executedParameterCount(0), fillLevel(0), filled(0)
 {
@@ -64,9 +64,9 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
   eb_data_t mb_value;
   unsigned slot = 0;
 
-  dev->getDevice().read(mb_base, EB_DATA32, &mb_value);
+  tr->getDevice().read(mb_base, EB_DATA32, &mb_value);
   while((mb_value != 0xffffffff) && slot < 128) {
-    dev->getDevice().read(mb_base + slot * 4 * 2, EB_DATA32, &mb_value);
+    tr->getDevice().read(mb_base + slot * 4 * 2, EB_DATA32, &mb_value);
     slot++;
   }
 
@@ -78,14 +78,14 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
   //save the irq address in the odd mailbox slot
   //keep postal address to free later
   mailbox_slot_address = mb_base + slot * 4 * 2 + 4;
-  dev->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
+  tr->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
 }
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
   resetTimeout.disconnect(); // do not run ResetFailed
-  dev->getDevice().release_irq(irq);
-  dev->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
+  tr->getDevice().release_irq(irq);
+  tr->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
 }
 
 static unsigned wrapping_sub(unsigned a, unsigned b, unsigned buffer_size)
@@ -121,7 +121,7 @@ void FunctionGeneratorImpl::refill()
   
   eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   cycle.read(regs + FG_WPTR, EB_DATA32, &write_offset_d);
   cycle.read(regs + FG_RPTR, EB_DATA32, &read_offset_d);
   cycle.close();
@@ -150,7 +150,7 @@ void FunctionGeneratorImpl::refill()
   unsigned space = buffer_size-1 - filled;  // free space on LM32
   unsigned refill = std::min(todo, space); // add this many records
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   for (unsigned i = 0; i < refill; ++i) {
     ParameterTuple& tuple = fifo[filled+i];
     uint32_t coeff_a, coeff_b, coeff_ab, coeff_c, control;
@@ -205,7 +205,7 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
   assert (enabled);
   
   // !!! imprecise; should be timestamped by the hardware
-  uint64_t time = dev->ReadRawCurrentTime();
+  uint64_t time = tr->ReadRawCurrentTime();
   
   // make sure the evil microcontroller does not violate message sequencing
   if (msi == IRQ_DAT_REFILL) {
@@ -412,7 +412,7 @@ uint32_t FunctionGeneratorImpl::ReadExecutedParameterCount()
   if (running) {
     eb_data_t count;
     eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
-    dev->getDevice().read(regs + FG_RAMP_COUNT, EB_DATA32, &count);
+    tr->getDevice().read(regs + FG_RAMP_COUNT, EB_DATA32, &count);
     return count;
   } else {
     return executedParameterCount;
@@ -424,20 +424,20 @@ void FunctionGeneratorImpl::acquireChannel()
   assert (channel == -1);
   
   unsigned i;
-  for (i = 0; i < allocation->indexes.size(); ++i)
-    if (allocation->indexes[i] == -1) break;
+  for (i = 0; i < allocation->size(); ++i)
+    if (allocation->operator[](i) == -1) break;
   
-  if (i == allocation->indexes.size()) {
+  if (i == allocation->size()) {
     std::ostringstream str;
     str.imbue(std::locale("C"));
-    str << "All " << allocation->indexes.size() << " microcontroller channels are in use";
+    str << "All " << allocation->size() << " microcontroller channels are in use";
     throw saftbus::Error(saftbus::Error::FAILED, str.str());
   }
  
   // if this throws, it is not a problem
   eb_address_t regs = shm + FG_REGS_BASE(i, num_channels);
   etherbone::Cycle cycle;
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   cycle.write(regs + FG_WPTR,       EB_DATA32, 0);
   cycle.write(regs + FG_RPTR,       EB_DATA32, 0);
   cycle.write(regs + FG_MBX_SLOT,   EB_DATA32, mbx_slot);
@@ -446,7 +446,7 @@ void FunctionGeneratorImpl::acquireChannel()
   cycle.write(regs + FG_TAG,        EB_DATA32, startTag);
   cycle.close();
  
-  allocation->indexes[i] = index;
+  allocation->operator[](i) = index;
   channel = i;
   enabled = true;
   signal_enabled.emit(enabled);
@@ -457,7 +457,7 @@ void FunctionGeneratorImpl::releaseChannel()
   assert (channel != -1);
   
   resetTimeout.disconnect();
-  allocation->indexes[channel] = -1;
+  allocation->operator[](channel) = -1;
   channel = -1;
   filled = 0;
   enabled = false;
@@ -481,10 +481,10 @@ void FunctionGeneratorImpl::arm()
   try {
 
     refill();
-    dev->getDevice().write(swi, EB_DATA32, SWI_ENABLE | channel);
+    tr->getDevice().write(swi, EB_DATA32, SWI_ENABLE | channel);
   } catch (...) {
     clog << kLogErr << "FunctionGenerator: failed to fill buffers and send enabled SWI on channel " << std::dec << channel << " for index " << index << std::endl;
-    dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
+    tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
     throw;
   }
 }
@@ -502,7 +502,7 @@ bool FunctionGeneratorImpl::ResetFailed()
   if (running) { // synthesize missing Stopped
     running = false;
     signal_running.emit(running);
-    signal_stopped.emit(dev->ReadRawCurrentTime(), true, false, false);
+    signal_stopped.emit(tr->ReadRawCurrentTime(), true, false, false);
   } else {
     // synthesize any missing Armed transitions
     if (!armed) {
@@ -520,7 +520,7 @@ void FunctionGeneratorImpl::Reset()
 {
   if (channel == -1) return; // nothing to abort
   if (resetTimeout.connected()) return; // reset already in progress
-  dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
+  tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
   // expect disarm or started+stopped, but if not ... timeout:
   resetTimeout = Slib::signal_timeout().connect(
     sigc::mem_fun(*this, &FunctionGeneratorImpl::ResetFailed), 250); // 250ms

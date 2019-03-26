@@ -45,19 +45,37 @@ class FunctionGeneratorFirmware : public Owned, public iFunctionGeneratorFirmwar
     typedef FunctionGeneratorFirmware_Service ServiceType;
     struct ConstructorType {
       std::string objectPath;
-      std::shared_ptr<TimingReceiver> receiver;
+      std::shared_ptr<TimingReceiver> tr;
+      Device &device;
+      etherbone::sdb_msi_device  sdb_msi_base;
+      sdb_device                 mailbox;
+      std::map< std::string, std::shared_ptr<Owned> > &fgs_owned;
+      std::map< std::string, std::shared_ptr<Owned> > &master_fgs_owned;
     };
     
     static std::shared_ptr<FunctionGeneratorFirmware> create(const ConstructorType& args);
     
     // iFunctionGenerator overrides
+    uint32_t getVersion() const;
     std::map<std::string, std::string> Scan();
     
   protected:
     FunctionGeneratorFirmware(const ConstructorType& args);
     ~FunctionGeneratorFirmware();
 
-    std::shared_ptr<TimingReceiver> receiver;
+    std::string                objectPath;
+    std::shared_ptr<TimingReceiver> tr;
+    Device&                    device;
+    etherbone::sdb_msi_device  sdb_msi_base;
+    sdb_device                 mailbox;
+
+    std::map< std::string, std::shared_ptr<Owned> > &fgs_owned;
+    std::map< std::string, std::shared_ptr<Owned> > &master_fgs_owned;
+
+    bool have_fg_firmware;
+    eb_data_t magic;
+    eb_data_t version;
+    eb_address_t fgb;
  
 };
 

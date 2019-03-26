@@ -21,6 +21,7 @@
 #define FUNCTION_GENERATOR_IMPL_H
 
 #include <deque>
+#include <memory>
 
 namespace saftlib {
 
@@ -52,8 +53,8 @@ class FunctionGeneratorImpl //: public Glib::Object
 //    typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
       std::string objectPath;
-      TimingReceiver* dev;
-      std::shared_ptr<FunctionGeneratorChannelAllocation> allocation;
+      std::shared_ptr<TimingReceiver> tr;
+      std::shared_ptr<std::vector<int> > allocation;
       eb_address_t fgb;
       eb_address_t swi;
       etherbone::sdb_msi_device base;
@@ -127,8 +128,8 @@ class FunctionGeneratorImpl //: public Glib::Object
             
             
             
-    TimingReceiver* dev;
-    std::shared_ptr<FunctionGeneratorChannelAllocation> allocation;
+    std::shared_ptr<TimingReceiver> tr;
+    std::shared_ptr<std::vector<int> > allocation;
     eb_address_t shm;
     eb_address_t swi;
     etherbone::sdb_msi_device base;

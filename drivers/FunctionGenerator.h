@@ -31,6 +31,7 @@
 
 #include <deque>
 
+
 #include "interfaces/FunctionGenerator.h"
 #include "FunctionGeneratorImpl.h"
 #include "Owned.h"
@@ -46,7 +47,7 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
       std::string objectPath;
-      TimingReceiver* dev;
+      std::shared_ptr<TimingReceiver> dev;
  			std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
     };
     
@@ -75,7 +76,7 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     void Reset();
     void ownerQuit();
             
-    TimingReceiver* dev;
+    std::shared_ptr<TimingReceiver> dev;
     
     void on_fg_running(bool);
     void on_fg_armed(bool);
