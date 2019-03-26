@@ -95,8 +95,9 @@ static void on_start(uint64_t time)
 }
 
 // Report when the function generator stops
-static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
+static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow, bool *continue_main_loop)
 {
+  *continue_main_loop = false;
   std::cout << "Function generator stopped at " << format_time(time) << std::endl;
   // was there an error?
   if (abort)
@@ -105,6 +106,7 @@ static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool
     std::cerr << "Fatal error: hardwareMacroUnderflow!" << std::endl;
   if (microControllerUnderflow)
     std::cerr << "Fatal error: microControllerUnderflow!" << std::endl;
+
 }
 
 static void help(std::shared_ptr<SAFTd_Proxy> saftd)
@@ -310,9 +312,10 @@ int main(int argc, char** argv)
     // Clear any old waveform data
     gen->Flush();
     
+    bool continue_main_loop = true;
     // Watch for events on the function generator
     gen->Started.connect(sigc::ptr_fun(&on_start));
-    gen->Stopped.connect(sigc::ptr_fun(&on_stop));
+    gen->Stopped.connect(sigc::bind(sigc::ptr_fun(&on_stop), &continue_main_loop));
     
     // Load up the parameters, possibly repeating until full
     while (fill(gen, params) && repeat) { }
@@ -340,9 +343,9 @@ int main(int argc, char** argv)
     // ... if we don't care to keep repeating the waveform, we could quit immediately;
     //     SAFTd has been properly configured to run autonomously at this point.
     // ... of course, then the user doesn't get the final error status message either
-    while(true) {
-      //std::cerr << "tick" << std::endl;
-      saftlib::wait_for_signal();
+    while(continue_main_loop) {
+      //std::cerr << "tick " << continue_main_loop << std::endl;
+      saftlib::wait_for_signal(100);
     }
     
     // Print summary
