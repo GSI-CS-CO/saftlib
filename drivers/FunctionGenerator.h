@@ -85,50 +85,6 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     void on_fg_started(uint64_t);
     void on_fg_stopped(uint64_t, bool, bool, bool);
 
-    /*
-    std::shared_ptr<FunctionGeneratorChannelAllocation> allocation;
-    eb_address_t shm;
-    eb_address_t swi;
-    etherbone::sdb_msi_device base;
-    sdb_device mbx;
-    unsigned num_channels;
-    unsigned buffer_size;
-    unsigned int index;
-    unsigned char scubusSlot;
-    unsigned char deviceNumber;
-    unsigned char version;
-    unsigned char outputWindowSize;
-    eb_address_t irq;
-
-    int channel; // -1 if no channel assigned
-    bool enabled;
-    bool armed;
-    bool running;
-    bool abort;
-    sigc::connection resetTimeout;
-    uint32_t startTag;
-    unsigned executedParameterCount;
-    */
-   /* 
-    struct ParameterTuple {
-      int16_t coeff_a;
-      int16_t coeff_b;
-      int32_t coeff_c;
-      uint8_t step;
-      uint8_t freq;
-      uint8_t shift_a;
-      uint8_t shift_b;
-      
-      uint64_t duration() const;
-    };
-
-    unsigned mbx_slot;
-    
-    // These 3 variables must be kept in sync:
-    uint64_t fillLevel;
-    unsigned filled; // # of fifo entries currently on LM32    
-    std::deque<ParameterTuple> fifo;
-    */
    	std::shared_ptr<FunctionGeneratorImpl> fgImpl;      
     
 };
