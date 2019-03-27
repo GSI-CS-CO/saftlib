@@ -181,7 +181,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
     mfg_spath << objectPath << "/masterfg";
     std::string mfg_path = mfg_spath.str();
 
-    MasterFunctionGenerator::ConstructorType mfg_args = { mfg_path, tr.operator->(), functionGeneratorImplementations};
+    MasterFunctionGenerator::ConstructorType mfg_args = { mfg_path, tr, functionGeneratorImplementations};
     std::shared_ptr<MasterFunctionGenerator> mfg = MasterFunctionGenerator::create(mfg_args);
 
     master_fgs_owned["masterfg"] = mfg;

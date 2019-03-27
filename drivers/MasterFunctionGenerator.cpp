@@ -37,7 +37,7 @@ namespace saftlib {
 
 MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
  : Owned(args.objectPath),
-   dev(args.dev),
+   tr(args.tr),
    allFunctionGenerators(args.functionGenerators),
    activeFunctionGenerators(args.functionGenerators),
    generateIndividualSignals(false)   

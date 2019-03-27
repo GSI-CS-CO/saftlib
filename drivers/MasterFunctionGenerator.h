@@ -46,7 +46,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     typedef MasterFunctionGenerator_Service ServiceType;
     struct ConstructorType {
       std::string objectPath;
-      TimingReceiver* dev;
+      std::shared_ptr<TimingReceiver> tr;
  			//std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;
  			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;            
     };
@@ -61,7 +61,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
 
     void AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack);
 
-		bool AppendParameterSets(const std::vector< std::vector< int16_t > >& coeff_a, const std::vector< std::vector< int16_t > >& coeff_b, const std::vector< std::vector< int32_t > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm, bool wait_for_arm_ack);    
+	bool AppendParameterSets(const std::vector< std::vector< int16_t > >& coeff_a, const std::vector< std::vector< int16_t > >& coeff_b, const std::vector< std::vector< int32_t > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm, bool wait_for_arm_ack);    
     std::vector<uint32_t> ReadExecutedParameterCounts();
     std::vector<uint64_t> ReadFillLevels();
     void Flush();
@@ -101,7 +101,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     bool WaitTimeout();
     void waitForCondition(std::function<bool()> condition, int timeout_ms);
 
-    TimingReceiver* dev;
+    std::shared_ptr<TimingReceiver> tr;
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> allFunctionGenerators;      
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> activeFunctionGenerators;      
     uint32_t startTag;
