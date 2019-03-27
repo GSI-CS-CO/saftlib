@@ -23,7 +23,6 @@ public:
 	template<class T> 
 	Logger& add(const T &content) {
 		if (enabled) {
-			std::cerr << content;
 			msg << content;
 		}
 		return *this;

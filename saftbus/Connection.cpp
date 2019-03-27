@@ -232,7 +232,7 @@ void Connection::emit_signal(const std::string& object_path,
 		                                                .add(destination_bus_name).add(",")
 		                                                .add("parameters)\n");
 
-		logger.add("    paramerters:\n");
+		//logger.add("    paramerters:\n"); // saftbus Serial doesn't know which types are contained, so they cannot be displayed here
 		// for (unsigned n = 0; n < parameters.get_n_children(); ++n)
 		// {
 		// 	Glib::VariantBase child;
@@ -278,7 +278,7 @@ void Connection::emit_signal(const std::string& object_path,
 				// }
 				
 			} else {
-				logger.add("     Normal signal: ").add(interface_name).add("\n");
+				//logger.add("     Normal signal: ").add(interface_name).add("\n");
 				// directly send signal
 				//std::cerr << "emit_signal() payload size() = " << signal_msg.get_size() << std::endl;
 				std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
@@ -622,7 +622,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							//result.print();
 
 							// write data to socket
-							logger.add("         size of response -> serialized property: size=").add(size).add("\n");
+							logger.add("         size of response (serialized property): ").add(size).add("\n");
 							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
 							saftbus::write(socket->get_fd(), size);
 							saftbus::write_all(socket->get_fd(), data_ptr, size);
@@ -651,7 +651,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							const char *data_ptr = static_cast<const char*>(response.get_data());
 
 							// send the data 
-							logger.add("         size of response -> empty resoponse: size=").add(size).add("\n");
+							logger.add("         size of response (empty resoponse): ").add(size).add("\n");
 							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
 							saftbus::write(socket->get_fd(), size);
 							saftbus::write_all(socket->get_fd(), data_ptr, size);
@@ -661,7 +661,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					}
 					else // normal method calls 
 					{
-						logger.add("         a normal method call\n");
+						logger.add("         regular method call\n");
 						std::ostringstream function_name;
 						function_name << "Connection::dispatch_METHOD_CALL_" << name;
 						saftbus::Timer f_time(_function_run_times[function_name.str().c_str()]);
@@ -670,17 +670,17 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 						int index = _saftbus_indices[interface_name][object_path];
 						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
 
-						logger.add("     doing the function call ...\n");
+						logger.add("         calling the driver function ...\n");
 						_saftbus_objects[index]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
-						logger.add("     ... done \n");
+						logger.add("         ... done \n");
 
 						if (method_invocation_rptr->has_error()) {
-							logger.add("     ... return an error \n");
+							logger.add("         return an error \n");
 							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
 							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().type());
 							saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().what());
 						} else {
-							logger.add("     ... return a normal return value \n");
+							logger.add("         regular return \n");
 
 							// get the result and pack it in a way that 
 							//   can be digested by the auto-generated saftlib code
@@ -695,7 +695,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							// serialize
 							size = result.get_size();
 							const char *data_ptr = static_cast<const char*>(result.get_data());
-							logger.add("         size of response -> method resoponse: size=").add(size).add("\n");
+							logger.add("         size of response (return value): ").add(size).add("\n");
 
 							//send 
 							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);

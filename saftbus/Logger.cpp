@@ -30,16 +30,14 @@ namespace saftbus
 		return *this;
 	}
 	Logger& Logger::add(const std::string &content) {
-		if (enabled) {
-			std::cerr << content;
-		}
 		return add(content.c_str());
 	}	
 
 	void Logger::log() {
 		if (enabled) {
-			std::cerr << "\n";
+			//std::cerr << "\n";
 			file << msg.str() << "\n";
+			msg.str("");
 			if (flush_after_log) {
 				file.flush();
 			}
