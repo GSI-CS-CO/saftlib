@@ -32,6 +32,7 @@
 #include "interfaces/SCUbusActionSink.h"
 #include "interfaces/SCUbusCondition.h"
 #include "interfaces/FunctionGenerator.h" 
+#include "interfaces/FunctionGeneratorFirmware.h" 
 
 using namespace saftlib;
 using namespace std;
@@ -119,6 +120,7 @@ static void help(std::shared_ptr<SAFTd_Proxy> saftd)
   std::cerr << "  -e <id>       generate tag when timing event id is received\n";
   std::cerr << "  -g            generate tag immediately\n";
   std::cerr << "  -r            repeat the waveform over and over forever\n";
+  std::cerr << "  -s            scan for connected fg channels\n";
   std::cerr << "  -h            print this message\n";
   std::cerr << "\n";
   std::cerr << "SAFTd version: " << std::flush;
@@ -144,10 +146,11 @@ int main(int argc, char** argv)
     bool eventSet = false;
     bool repeat = false;
     bool generate = false;
+    bool scan = false; 
     
     // Process command-line
     int opt, error = 0;
-    while ((opt = getopt(argc, argv, "d:f:rght:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "d:f:rght:e:s")) != -1) {
       switch (opt) {
         case 'd':
           device = optarg;
@@ -167,6 +170,9 @@ int main(int argc, char** argv)
         case 'e':
           event = strtoul(optarg, 0, 0);
           eventSet = true;
+          break;
+        case 's':
+          scan = true;
           break;
         case 'h':
           help(saftd);
@@ -192,6 +198,7 @@ int main(int argc, char** argv)
       return 1;
     }
     
+
     // Setup a warning on too slow data
     signal(SIGALRM, &slow_warning);
     alarm(2);
@@ -222,12 +229,7 @@ int main(int argc, char** argv)
     }
     
     // Get a list of devices from the saftlib directory
-    std::cerr << "saftd->getDevices()" << std::endl;
     map<std::string, std::string> devices = saftd->getDevices();
-    for(auto &dev: devices) {
-      std::cerr << dev.first << " " << dev.second << std::endl;
-    }
-    std::cerr << "saftd->getDevices() done" << std::endl;
     
     // Find the requested device
     std::shared_ptr<TimingReceiver_Proxy> receiver;
@@ -265,6 +267,25 @@ int main(int argc, char** argv)
       return 1;
     }
     std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+
+
+    // Scan for fg channels
+    if (scan) {
+      map<std::string, std::string> fg_fw = receiver->getInterfaces()["FunctionGeneratorFirmware"];
+      if (fg_fw.empty()) {
+        std::cerr << "No FunctionGenerator firmware found" << std::endl;
+        return 1;
+      }
+      std::shared_ptr<FunctionGeneratorFirmware_Proxy> fg_firmware = FunctionGeneratorFirmware_Proxy::create(fg_fw.begin()->second);
+      std::cout << "Scanning for fg-channels ... " << std::flush;
+      auto scanning_result = fg_firmware->Scan();
+      std::cout << "done, found " << std::endl;
+      for (auto &pair: scanning_result) {
+        std::cout << "  " << pair.first << " " << pair.second << std::endl;
+      }
+      return 0;
+    }
+
     
     // Get a list of function generators on the receiver
     map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];

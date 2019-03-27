@@ -112,6 +112,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
 {
 
 
+
   std::map<std::string, std::string> result;
   if (have_fg_firmware) {
 
@@ -131,6 +132,10 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
     clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
     eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
     
+    tr->getDevice().write(swi, EB_DATA32, SWI_SCAN);
+    sleep(1); // this is to make sure that scanning is done when we proceed.
+              //   -> should be replaced by an MSI from the LM32 in the future.
+
     // Probe the configuration and hardware macros
     cycle.open(device);
     cycle.read(fgb + SHM_BASE + FG_NUM_CHANNELS, EB_DATA32, &num_channels);
