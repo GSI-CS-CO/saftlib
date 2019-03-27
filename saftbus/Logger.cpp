@@ -6,29 +6,44 @@ namespace saftbus
 {
 
 	Logger::Logger(const std::string &filename, bool flush_often) 
-		: flush_after_log(flush_often)
+		: enabled(false)
+		, flush_after_log(flush_often)
 		, file(filename.c_str())
 	{
 		newMsg(0).add("logger up and running").log();
 	}
 
+	void Logger::disable() {
+		enabled = false;
+	}
+
+	void Logger::enable() {
+		enabled = true;
+	}
+
 	Logger& Logger::newMsg(int severity) {
-		// msg.str("");
-		// msg << std::setw(2)  << severity << "  ";
-		// msg << std::setw(25) << getTimeTag() << ": ";
+		if (enabled) {
+			msg.str("");
+			msg << std::setw(2)  << severity << "  ";
+			msg << std::setw(25) << getTimeTag() << ": ";
+		}
 		return *this;
 	}
 	Logger& Logger::add(const std::string &content) {
-		//std::cerr << content;
+		if (enabled) {
+			std::cerr << content;
+		}
 		return add(content.c_str());
 	}	
 
 	void Logger::log() {
-		//std::cerr << "\n";
-		//file << msg.str() << "\n";
-		//if (flush_after_log) {
-		//	file.flush();
-		//}
+		if (enabled) {
+			std::cerr << "\n";
+			file << msg.str() << "\n";
+			if (flush_after_log) {
+				file.flush();
+			}
+		}
 	}
 
 	std::string Logger::getTimeTag()

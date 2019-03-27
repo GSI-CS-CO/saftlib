@@ -323,6 +323,18 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 		} else {
 			switch(type)
 			{
+				case saftbus::SAFTBUS_CTL_ENABLE_LOGGING:
+				{
+					logger.enable();
+					logger.newMsg(0).add("saftbus logging enabled").log();
+				}
+				break;
+				case saftbus::SAFTBUS_CTL_DISABLE_LOGGING:
+				{
+					logger.newMsg(0).add("saftbus logging disabled").log();
+					logger.disable();
+				}
+				break;
 				case saftbus::SAFTBUS_CTL_ENABLE_STATS:
 				{
 					_create_signal_flight_time_statistics = true;

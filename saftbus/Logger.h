@@ -16,17 +16,24 @@ class Logger
 public: 
 	Logger(const std::string &filename, bool flush_often = true);
 
+	void enable();
+	void disable();
+
 	Logger& newMsg(int severity);
 	template<class T> 
 	Logger& add(const T &content) {
-		//std::cerr << content;
-		//msg << content;
+		if (enabled) {
+			std::cerr << content;
+			msg << content;
+		}
 		return *this;
 	}
 	Logger& add(const std::string &content);
 	void log();
 
 private:
+
+	bool enabled;
 
 	std::string getTimeTag();
 

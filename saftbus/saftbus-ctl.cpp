@@ -27,10 +27,12 @@ void show_help(const char *argv0)
 {
 	std::cout << "usage: " << argv0 << " [options]" << std::endl;
 	std::cout << "   options are:" << std::endl;
-	std::cout << "   -s     print status" << std::endl;
-	std::cout << "   -t     write signal flight time statistics to file" << std::endl;
-	std::cout << "   -e     enable signal flight time statistics" << std::endl;
-	std::cout << "   -d     disable signal flight time statistics" << std::endl;
+	std::cout << "   -s                                 print status" << std::endl;
+	std::cout << "   --download-signal-timing-stats     write signal flight time statistics to file" << std::endl;
+	std::cout << "   --enable-signal-timing-stats       enable signal flight time statistics" << std::endl;
+	std::cout << "   --disable-signal-timing-stats      disable signal flight time statistics" << std::endl;
+	std::cout << "   --enable-logging                   enable saftbus internal logging" << std::endl;
+	std::cout << "   --disable-logging                  disable saftbus internal logging" << std::endl;
 	std::cout << "   -h     show this help" << std::endl;
 }
 
@@ -308,6 +310,8 @@ int main(int argc, char *argv[])
 		bool enable_signal_stats          = false;
 		bool disable_signal_stats         = false;
 		bool save_signal_time_stats       = false;
+		bool enable_logging               = false;
+		bool disable_logging              = false;
 		std::string timing_stats_filename = "saftbus_timing.dat";
 
 		if (argc == 1) {
@@ -322,12 +326,16 @@ int main(int argc, char *argv[])
 				return 0;
 			} else if (argvi == "-s") {
 				list_mutable_state = true;
-			} else if (argvi == "-t") {
+			} else if (argvi == "--download-signal-timing-stats") {
 				save_signal_time_stats = true;
-			} else if (argvi == "-e") {
+			} else if (argvi == "--enable-signal-timing-stats") {
 				enable_signal_stats = true;
-			} else if (argvi == "-d") {
+			} else if (argvi == "--disable-signal-timing-stats") {
 				disable_signal_stats = true;
+			} else if (argvi == "--enable-logging") {
+				enable_logging = true;
+			} else if (argvi == "--disable-logging") {
+				disable_logging = true;
 			} else {
 				std::cerr << "unknown argument: " << argvi << std::endl;
 				return 1;
@@ -366,6 +374,15 @@ int main(int argc, char *argv[])
 				statfile << entry.first << " " << entry.second << std::endl;
 			}
 			statfile.close();
+		}
+
+		if (enable_logging) {
+			std::cout << "enable saftbus logging" << std::endl;
+			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_ENABLE_LOGGING);
+		}
+		if (disable_logging) {
+			std::cout << "disable saftbus logging" << std::endl;
+			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_DISABLE_LOGGING);
 		}
 
 		connection.reset();
