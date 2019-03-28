@@ -32,7 +32,7 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 
 Connection::~Connection()
 {
-	logger.newMsg(0).add("Connection::~Connection()\n").log();
+	logger.newMsg(1).add("Connection::~Connection()\n").log();
 }
 
 // Add an object to the set of saftbus controlled objects. Each registered object has a unique ID.
@@ -47,7 +47,7 @@ unsigned Connection::register_object (const std::string& object_path,
 								   const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
-	logger.newMsg(0).add("Connection::register_object(").add(object_path).add(")\n");
+	logger.newMsg(1).add("Connection::register_object(").add(object_path).add(")\n");
 	unsigned registration_id = _saftbus_object_id_counter;
 	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
 	std::string interface_name = interface_info->get_interface_name();
@@ -79,7 +79,7 @@ unsigned Connection::signal_subscribe(const SlotSignal& slot,
 {
 	try {
 		saftbus::Timer f_time(_function_run_times["Connection::signal_subscribe"]);
-		logger.newMsg(0).add("Connection::signal_subscribe(")
+		logger.newMsg(1).add("Connection::signal_subscribe(")
 		                .add(sender).add(",")
 		                .add(interface_name).add(",")
 		                .add(member).add(",")
@@ -114,7 +114,7 @@ void Connection::signal_unsubscribe(unsigned subscription_id)
 		return;
 	}
 	try {
-		logger.newMsg(0).add("signal_unsubscribe(").add(subscription_id).add(")\n");
+		logger.newMsg(1).add("signal_unsubscribe(").add(subscription_id).add(")\n");
 		saftbus::Timer f_time(_function_run_times["Connection::signal_unsubscribe"]);
 		for(auto it: _handle_to_signal_map) {
 			logger.add("       _owned_signals[").add(it.first).add("]\n");
@@ -130,7 +130,7 @@ void Connection::handle_disconnect(Socket *socket)
 {
 	try {
 		saftbus::Timer f_time(_function_run_times["Connection::handle_disconnect"]);
-		logger.newMsg(0).add("Connection::handle_disconnect()\n");
+		logger.newMsg(1).add("Connection::handle_disconnect()\n");
 		Serial dummy_arg;
 		std::string& saftbus_id = socket->saftbus_id();
 
@@ -157,13 +157,14 @@ void Connection::handle_disconnect(Socket *socket)
 				// A signal should only be sent if (subscription_id) is not in the list of _erased_handles. 
 				// I.e. don't emit signals to already erased saftlib services.
 				if (_erased_handles.find(id_handles) == _erased_handles.end()) {
-					logger.add("   sending signal to clean up: ").add(id_handles).add("\n");
+					logger.add("   sending signal to clean up: ").add(id_handles).add("\n").log();
 					_handle_to_signal_map[id_handles].emit(saftbus::connection, "", "", "", "" , dummy_arg);
 				}
 			}
 		}
 
-		logger.add("   delete unsubscription handles\n");
+
+		logger.newMsg(1).add("   delete unsubscription handles\n");
 		// go through the list of subscribtion_ids  that were marked as erased and actually erase them
 		//for (auto it = _erased_handles.begin(); it != _erased_handles.end(); ++it) {
 		for (auto erased_handle: _erased_handles) {

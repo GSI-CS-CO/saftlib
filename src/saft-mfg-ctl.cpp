@@ -238,7 +238,7 @@ static void* startFg(void *arg)
   if (loglevel>1) {
     std::cout << msg.str() << std::endl; msg.str("");
   }
-  while(!fg_all_stopped) {
+  while(true) {
     saftlib::wait_for_signal();
   }
   if (loglevel>1) std::cout << "startFg Loop ended" << std::endl;
