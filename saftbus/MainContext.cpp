@@ -64,6 +64,9 @@ namespace Slib
 					timeout_ms = signal_timeout_time_left[i];
 				}
 			}
+			if (may_block == false) {
+				timeout_ms = 0;
+			}			
 			struct timespec start, stop;
 			clock_gettime(CLOCK_MONOTONIC, &start);
 
