@@ -602,6 +602,17 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 						
 						// saftbus object lookup
 						int index = _saftbus_indices[derived_interface_name][object_path];
+						if (index == 0) {// == not found
+							// this causes an exception on the proxy side
+							std::string what("unknown object path: ");
+							what.append(object_path);
+							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
+							saftbus::write(socket->get_fd(), saftbus::Error::FAILED);
+							saftbus::write(socket->get_fd(), what);
+							logger.add(what);
+							logger.log();
+							break;
+						}
 						logger.add("    found saftbus object at index=").add(index).add("\n");
 						if (name == "Get") {
 							logger.add("      Get the property\n");
@@ -669,6 +680,18 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 
 						// saftbus object lookup
 						int index = _saftbus_indices[interface_name][object_path];
+						if (index == 0) {// == not found
+							// this causes an exception on the proxy side
+							std::string what("unknown object path: ");
+							what.append(object_path);
+							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
+							saftbus::write(socket->get_fd(), saftbus::Error::FAILED);
+							saftbus::write(socket->get_fd(), what);
+							logger.add(what);
+							logger.log();
+							break;
+						}
+
 						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
 
 						logger.add("         calling the driver function ...\n");
