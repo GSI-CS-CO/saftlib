@@ -26,6 +26,20 @@ namespace Slib
 			// - poll() aufrufen
 			// - Ergebnisse an sources zurueckliefern
 
+			if (may_block == false && during_iteration == true) {
+				for(auto &id_source: sources) {
+					//auto id     = id_source.first;
+					auto source = id_source.second;
+					int  source_timeout_ms = -1;
+
+					if (source->prepare(source_timeout_ms)) {
+						// nested calls to MainContext::iteration() may happen here!
+						// but here nothing evil will happen
+						source->dispatch(&source->_slot);
+					}
+				}
+				return false;
+			}
 
 			struct timespec start, stop;
 			clock_gettime(CLOCK_MONOTONIC, &start);
