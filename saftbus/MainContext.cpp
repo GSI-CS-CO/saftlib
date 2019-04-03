@@ -26,13 +26,16 @@ namespace Slib
 			// - poll() aufrufen
 			// - Ergebnisse an sources zurueckliefern
 
+
+			struct timespec start, stop;
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			during_iteration = true;
 			//std::cerr << "MainContext::iteration()" << std::endl;
 
 			// poll all fds from all sources
 			bool result = false;
 			std::vector<struct pollfd> all_pfds(signal_io_pfds.begin(), signal_io_pfds.end()); // copy all signal_io_pfds
-			std::vector<PollFD*>       all_pfds_ptr;
+			std::vector<PollFD*>  all_pfds_ptr;
 			std::vector<unsigned> all_ids;
 			int timeout_ms = -1;
 			// prepare sources and calculate timeout
@@ -42,6 +45,8 @@ namespace Slib
 				int  source_timeout_ms = -1;
 
 				if (source->prepare(source_timeout_ms)) {
+					// nested calls to MainContext::iteration() may happen here!
+					// but here nothing evil will happen
 					source->dispatch(&source->_slot);
 				}
 
@@ -66,30 +71,32 @@ namespace Slib
 			}
 			if (may_block == false) {
 				timeout_ms = 0;
-			}			
-			struct timespec start, stop;
-			clock_gettime(CLOCK_MONOTONIC, &start);
+			}
 
 			std::vector<unsigned> signal_io_removed_indices;
 			int poll_result;
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
+				// during check of results, signal_io_pfds and fds from sources
+				//  are distinguished using the index.
 				unsigned idx = 0;
 				for (auto fd: all_pfds) {
 					if (idx < signal_io_pfds.size()) {
+						// signal_io_pfds
 						// copy back
 						signal_io_pfds[idx] = fd;
 						if (fd.events & fd.revents) {
 							//execute  signal_io callback
+							// nested calls to MainContext::iteration() may happen here!
 							bool result = signal_io_slots[idx](fd.revents);
 							if (result == false ) { // add this index to the removal list
 								signal_io_removed_indices.push_back(idx);
 							}
 						}
 					} else {
+						// source pfds
 						// copy the results back into the PollFD 
 						all_pfds_ptr[idx-signal_io_pfds.size()]->pfd.revents = all_pfds[idx].revents;
 					}
-
 					++idx;
 				}
 				// update the timeouts
