@@ -24,6 +24,7 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <time.h>
 
 #include "RegisteredObject.h"
 #include "MasterFunctionGenerator.h"
@@ -563,21 +564,20 @@ bool MasterFunctionGenerator::all_stopped()
 
 void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
 {
-  if (waitTimeout.connected()) {
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
-  }
-  waitTimeout = Slib::signal_timeout().connect(
-      sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
+  struct timespec start, now;
+  clock_gettime(CLOCK_MONOTONIC, &start);
 
   std::shared_ptr<Slib::MainContext> context = Slib::MainContext::get_default();
   do
   {
     context->iteration(false);
-    if (!waitTimeout.connected()) {
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
-    }
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    int dt_ms = (now.tv_sec - start.tv_sec)*1000 
+              + (now.tv_nsec - start.tv_nsec)/1000000;
+    if (dt_ms > timeout_ms) {
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for condition");
+    }              
   } while (condition() == false) ;
-  waitTimeout.disconnect();
 }
 
 

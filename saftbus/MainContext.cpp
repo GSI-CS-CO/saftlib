@@ -26,6 +26,14 @@ namespace Slib
 			// - poll() aufrufen
 			// - Ergebnisse an sources zurueckliefern
 
+			// This if statement treats the special case when one of the dispatch calls has a nested call
+			// to MainContext::iteration(false), i.e. a recursive call to this function.
+			// This is typically done to implement a blocking wait until some hardware condition is triggered.
+			// To allow this use case, nested calls only test file descriptors from the source objects,
+			// not the ones that were added using signal_io(). 
+			// It also does not affect any timeouts, because this would confuse the outermost 
+			// call to MainContext::iteration(). As a result, no timeouts will ever be triggered while doing
+			// a recursive iteration() of a MainContext
 			if (may_block == false && during_iteration == true) {
 				for(auto &id_source: sources) {
 					//auto id     = id_source.first;
