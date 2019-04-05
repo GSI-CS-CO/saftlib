@@ -34,16 +34,12 @@ namespace saftbus
 
 	template<typename T>
 	int write(int fd, const T & scalar)	{
-		//if (_debug_level > 5) std::cerr << "scalar write: " << scalar << std::endl;
 		int result = write_all(fd, static_cast<const void*>(&scalar), sizeof(scalar));
-		//if (_debug_level > 5) std::cerr << "done " << std::endl;
 		return result;
 	}
 	template<typename T>
 	int read(int fd, T & scalar) {
-		//if (_debug_level > 5) std::cerr << "scalar read" << std::endl;
 		int result = read_all(fd, static_cast<void*>(&scalar), sizeof(scalar));
-		//if (_debug_level > 5) std::cerr << scalar << "  done " << std::endl;
 		return result;
 	}
 
@@ -73,8 +69,6 @@ namespace saftbus
 		}
 		return 1;
 	}
-
-
 
 	// std::vectors and nested std::vectors
 	template<typename T>
@@ -188,6 +182,10 @@ namespace saftbus
 	}
 
 
+	// Simple class for serialization and de-serialization 
+	// without storing type information, i.e. de-serialization 
+	// only works if the type composition is known (but this 
+	// is the case in all saftbus transfers)
 	class Serial
 	{
 	public:
@@ -199,18 +197,18 @@ namespace saftbus
 		{
 			_data.clear();
 		}
-		// hast to be called before any call to get()
+		// has to be called before any call to get()
 		void get_init(const std::vector<char> &data) 
 		{
 			_data = data;
 			get_init();
 		}
-		// hast to be called before any call to get()
+		// has to be called before any call to get()
 		void get_init() const
 		{
 			_iter = _data.begin();
 		}
-		// POD structs and build-in types
+		// POD struct and build-in types
 		template<typename T>
 		void put(const T &val) {
 			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
