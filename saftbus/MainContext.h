@@ -67,6 +67,8 @@ namespace Slib
 		unsigned id_counter;
 	private:
 
+		void iteration_recursive();
+
 		std::map<unsigned, std::shared_ptr<Source> > sources; // map source_id to source
 		friend class Source;
 

@@ -17,6 +17,37 @@ namespace Slib
 			return *this;
 		}
 
+		void MainContext::iteration_recursive() 
+		{
+			std::vector<struct pollfd> source_pfds;
+			std::vector<PollFD*>  source_pfds_ptr;
+			for(auto &id_source: sources) {
+				//auto id     = id_source.first;
+				auto source = id_source.second;
+				int  source_timeout_ms = -1;
+
+				if (source->prepare(source_timeout_ms)) {
+					// nested calls to MainContext::iteration() may happen here!
+					// but here nothing evil will happen 
+					source->dispatch(&source->_slot);
+				}
+				for (auto pfd: source->_pfds) {
+					source_pfds.push_back(pfd->pfd);
+					source_pfds_ptr.push_back(pfd);
+				}
+			}
+			poll(&source_pfds[0], source_pfds.size(), 0); // poll with timeout of 0
+			for (unsigned idx = 0; idx < source_pfds.size(); ++idx) {
+				source_pfds_ptr[idx]->pfd.revents = source_pfds[idx].revents;
+			}
+			for (auto &id_source: sources) {
+				//auto id     = id_source.first;
+				auto source = id_source.second;
+				if (source->check()) {
+					source->dispatch(&source->_slot);
+				}
+			}
+		}
 
 		 // 	Runs a single iteration for the given main loop.
 		bool MainContext::iteration (bool may_block)
@@ -26,26 +57,14 @@ namespace Slib
 			// - poll() aufrufen
 			// - Ergebnisse an sources zurueckliefern
 
-			// This if statement treats the special case when one of the dispatch calls has a nested call
-			// to MainContext::iteration(false), i.e. a recursive call to this function.
+			// This if statement treats the special case when any of the dispatch causes an indirect recursion
+			// of MainContext::iteration().
 			// This is typically done to implement a blocking wait until some hardware condition is triggered.
-			// To allow this use case, nested calls only test file descriptors from the source objects,
-			// not the ones that were added using signal_io(). 
-			// It also does not affect any timeouts, because this would confuse the outermost 
-			// call to MainContext::iteration(). As a result, no timeouts will ever be triggered while doing
-			// a recursive iteration() of a MainContext
-			if (may_block == false && during_iteration == true) {
-				for(auto &id_source: sources) {
-					//auto id     = id_source.first;
-					auto source = id_source.second;
-					int  source_timeout_ms = -1;
-
-					if (source->prepare(source_timeout_ms)) {
-						// nested calls to MainContext::iteration() may happen here!
-						// but here nothing evil will happen
-						source->dispatch(&source->_slot);
-					}
-				}
+			// To allow this use case, recursive calls have a special treatment, only testing Source objects,
+			// not any of signal_io or signal_timeout.
+			// No timeouts will ever be triggered while doing a recursive iteration() of a MainContext
+			if (during_iteration == true) {
+				iteration_recursive();
 				return false;
 			}
 
