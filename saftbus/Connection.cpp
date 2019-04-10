@@ -259,39 +259,15 @@ void Connection::emit_signal(const std::string& object_path,
 			// does not have a running MainLoop. In this case the pipe will become full
 			// at some point and the write function will throw. We have to catch that
 			// to prevent the saft daemon from crashing
-			if (signal_name == "PropertiesChanged") { // special case for property changed signals
-				
-				// Glib::VariantContainerBase* params = const_cast<Glib::VariantContainerBase*>(&parameters);
-				// Glib::Variant<std::string> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(params->get_child(0));
-				// logger.add("     PropertiesChaned: ").add(derived_interface_name).add("\n");
-
-				// // directly send signal
-				// std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[derived_interface_name.get()][object_path];
-				// for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-				// 	try {
-				// 		logger.add("            writing to pipe: fd=").add(i->fd).add("    ");
-				// 		saftbus::write(i->fd, saftbus::SIGNAL);
-				// 		saftbus::write(i->fd, size);
-				// 		saftbus::write_all(i->fd, data_ptr, size);
-				// 	} catch(std::exception &e) {
-				// 		logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
-				// 	}
-				// }
-				
-			} else {
-				//logger.add("     Normal signal: ").add(interface_name).add("\n");
-				// directly send signal
-				//std::cerr << "emit_signal() payload size() = " << signal_msg.get_size() << std::endl;
-				std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
-				for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
-					try {
-						logger.add("            writing to pipe: fd=").add(i->fd).add("    ");
-						saftbus::write(i->fd, saftbus::SIGNAL);
-						saftbus::write(i->fd, size);
-						saftbus::write_all(i->fd, data_ptr, size);
-					} catch(std::exception &e) {
-						logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
-					}
+			std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
+			for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+				try {
+					logger.add("            writing to pipe: fd=").add(i->fd).add("    ");
+					saftbus::write(i->fd, saftbus::SIGNAL);
+					saftbus::write(i->fd, size);
+					saftbus::write_all(i->fd, data_ptr, size);
+				} catch(std::exception &e) {
+					logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
 				}
 			}
 			//std::cerr << "Connection::emit_signal(" << object_path << ", " << interface_name << ", " << signal_name << ") done" << std::endl;

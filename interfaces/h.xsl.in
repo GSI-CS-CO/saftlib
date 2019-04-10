@@ -183,16 +183,6 @@
 
     <!-- Connections to the embedded signals -->
     <xsl:for-each select="interface">
-      <xsl:for-each select="property[@access='read' or @access='readwrite']">
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>    sigc::connection con_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>;&#10;</xsl:text>
-        </xsl:if>
-      </xsl:for-each>
-    </xsl:for-each>
-
-    <xsl:for-each select="interface">
       <xsl:for-each select="signal">
         <xsl:text>    sigc::connection con_sig</xsl:text>
         <xsl:value-of select="@name"/>
@@ -465,11 +455,6 @@ class i<xsl:value-of select="$iface"/>_Service {
   private:
     i<xsl:value-of select="$iface"/> *impl;
     sigc::slot&lt;void, const char*&gt; rethrow;<xsl:text/>
-    <xsl:for-each select="property">
-      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-    sigc::connection con_prop<xsl:value-of select="@name"/>;<xsl:text/>
-      </xsl:if>
-    </xsl:for-each>
     <xsl:for-each select="signal">
     sigc::connection con_sig<xsl:value-of select="@name"/>;<xsl:text/>
     </xsl:for-each>
@@ -485,8 +470,7 @@ class i<xsl:value-of select="$iface"/>_Service {
       unsigned id;
     };
     std::vector&lt;Export&gt; exports;
-    static const std::string xml;
-    void report_property_change(const char* name, const saftbus::Serial&amp; value);&#10;<xsl:text/>
+    static const std::string xml;&#10;<xsl:text/>
     <xsl:for-each select="property">
       <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
         <xsl:text>    void on_prop</xsl:text>

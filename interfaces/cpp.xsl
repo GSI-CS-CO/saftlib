@@ -70,19 +70,6 @@
     </xsl:for-each>
     <xsl:for-each select="interface">
       <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
-      <xsl:for-each select="property[@access='read' or @access='readwrite']">
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>,&#10;  con_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>(</xsl:text>
-          <xsl:value-of select="$iface"/>
-          <xsl:text>-&gt;</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>.connect(</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>.make_slot()))</xsl:text>
-        </xsl:if>
-      </xsl:for-each>
     </xsl:for-each>
     <xsl:for-each select="interface">
       <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
@@ -107,13 +94,6 @@
     <xsl:text>_Proxy()&#10;{&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
-      <xsl:for-each select="property[@access='read' or @access='readwrite']">
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>  con_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>.disconnect();&#10;</xsl:text>
-        </xsl:if>
-      </xsl:for-each>
     </xsl:for-each>
     <xsl:for-each select="interface">
       <xsl:variable name="iface"><xsl:apply-templates mode="iface-name" select="."/></xsl:variable>
@@ -653,24 +633,6 @@
       </xsl:for-each>
       <xsl:text>{&#10;    // no property found&#10;    return false;&#10;  }&#10;}&#10;&#10;</xsl:text>
 
-      <!-- Forward property changes -->
-      <xsl:for-each select="property">
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>void i</xsl:text>
-          <xsl:value-of select="$iface"/>
-          <xsl:text>_Service::on_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>(</xsl:text>
-          <xsl:call-template name="input-type"/>
-          <xsl:text> val)&#10;{&#10;</xsl:text>
-          <xsl:text>  saftbus::Serial parameter;&#10;</xsl:text>
-          <xsl:text>  parameter.put(val);&#10;</xsl:text>
-          <xsl:text>  report_property_change("</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>", parameter);&#10;}&#10;&#10;</xsl:text>
-        </xsl:if>
-      </xsl:for-each>
-
       <!-- Forward signals -->
       <xsl:for-each select="signal">
         <xsl:call-template name="signal-mtype">
@@ -705,19 +667,6 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>* impl_, sigc::slot&lt;void, const char*&gt; rethrow_)&#10;</xsl:text>
       <xsl:text>: impl(impl_), rethrow(rethrow_),&#10;</xsl:text>
-      <xsl:for-each select="property">
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>  con_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>(impl_-></xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>.connect(sigc::mem_fun(this, &amp;i</xsl:text>
-          <xsl:value-of select="$iface"/>
-          <xsl:text>_Service::on_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>))),&#10;</xsl:text>
-        </xsl:if>
-      </xsl:for-each>
       <xsl:for-each select="signal">
         <xsl:text>  con_sig</xsl:text>
         <xsl:value-of select="@name"/>
@@ -748,38 +697,12 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service()&#10;{&#10;</xsl:text>
       <xsl:text>  unregister_self();&#10;</xsl:text>
-      <xsl:for-each select="property">
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>  con_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>.disconnect();&#10;</xsl:text>
-        </xsl:if>
-      </xsl:for-each>
       <xsl:for-each select="signal">
         <xsl:text>  con_sig</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>.disconnect();&#10;</xsl:text>
       </xsl:for-each>
       <xsl:text>}&#10;&#10;</xsl:text>
-
-      <!-- Property reporting boilerplate -->
-      <xsl:text>void i</xsl:text>
-      <xsl:value-of select="$iface"/>
-      <xsl:text>_Service::report_property_change(const char* property, const saftbus::Serial&amp; value)&#10;{&#10;</xsl:text>
-      <xsl:text>  std::map&lt; std::string, saftbus::Serial &gt; updated;&#10;</xsl:text>
-      <xsl:text>  std::vector&lt; std::string &gt; invalidated;&#10;</xsl:text>
-      <xsl:text>  saftbus::Serial message_vector;&#10;</xsl:text>
-      <xsl:text>  updated[property] = value;&#10;</xsl:text>
-      <xsl:text>  message_vector.put(std::string("</xsl:text>
-      <xsl:value-of select="$iface_full"/>
-      <xsl:text>"));&#10;</xsl:text>
-      <xsl:text>  message_vector.put(updated);&#10;</xsl:text>
-      <xsl:text>  message_vector.put(invalidated);&#10;</xsl:text>
-      <xsl:text>  for (unsigned i = 0; i &lt; exports.size(); ++i) {&#10;</xsl:text>
-      <xsl:text>    exports[i].connection->emit_signal(exports[i].object_path,&#10;</xsl:text>
-      <xsl:text>      "org.freedesktop.DBus.Properties", "PropertiesChanged", "",&#10;</xsl:text>
-      <xsl:text>      message_vector);&#10;</xsl:text>
-      <xsl:text>  }&#10;}&#10;&#10;</xsl:text>
 
       <xsl:text>}&#10;</xsl:text>
 
