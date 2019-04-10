@@ -207,12 +207,6 @@ void Connection::handle_disconnect(Socket *socket)
 }
 
 
-// double delta_t(struct timespec start, struct timespec stop) 
-// {
-// 	return (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-//          - (1.0e6*start.tv_sec   + 1.0e-3*start.tv_nsec);
-// }
-
 // send a signal to all connected sockets
 // I think I would be possible to filter the signals and send them only to sockets where they are actually expected
 void Connection::emit_signal(const std::string& object_path, 
@@ -232,15 +226,6 @@ void Connection::emit_signal(const std::string& object_path,
 		                                                .add(signal_name).add(",")
 		                                                .add(destination_bus_name).add(",")
 		                                                .add("parameters)\n");
-
-		//logger.add("    paramerters:\n"); // saftbus Serial doesn't know which types are contained, so they cannot be displayed here
-		// for (unsigned n = 0; n < parameters.get_n_children(); ++n)
-		// {
-		// 	Glib::VariantBase child;
-		// 	parameters.get_child(child, n);
-		// 	logger.add("         ").add(n).add("   ").add(child.get_type_string()).add("   ").add(child.print()).add("\n");
-		// }
-		
 
 		// use saftbus::Serial to serialize the signal data
 		Serial signal_msg;
@@ -533,11 +518,11 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::read_all(socket->get_fd(), &payload.data()[0], size);
 
 					// saftbus::Serial to get content
-					std::string object_path;//    = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(0));
-					std::string sender;//         = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(1));
-					std::string interface_name;// = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(2));
-					std::string name;//           = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(payload.get_child(3));
-					Serial parameters;//       = Glib::VariantBase::cast_dynamic<Glib::VariantContainerBase>   (payload.get_child(4));
+					std::string object_path;
+					std::string sender;
+					std::string interface_name;
+					std::string name;
+					Serial parameters;
 
 					payload.get_init();
 					payload.get(object_path);
@@ -551,31 +536,19 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					      .add(" object_path=").add(object_path)
 					      .add(" interface_name=").add(interface_name)
 					      .add(" \n");
-					//std::cerr << " ********* interface_name = " << interface_name << std::endl;      
 
 					if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
 
 						logger.add("       Set/Get was called: ");
-						// Glib::Variant<std::string> derived_interface_name = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(0));
-						// Glib::Variant<std::string> property_name          = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(1));
-						std::string derived_interface_name;// = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(0));
-						std::string property_name;//          = Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(1));
+						std::string derived_interface_name;
+						std::string property_name;
 						parameters.get_init();
 						parameters.get(derived_interface_name);
 						parameters.get(property_name);
 						logger.add(" derived_interface_name=").add(derived_interface_name)
 						      .add(" property_name=").add(property_name)
 						      .add("\n");
-
-						//std::cerr << " ******** derived_interface_name = " << derived_interface_name << std::endl;
-						//std::cerr << " ******** property_name          = " << property_name << std::endl;      
-
-						// for (unsigned n = 0; n < parameters.get_n_children(); ++n)
-						// {
-						// 	Glib::VariantBase child;
-						// 	parameters.get_child(child, n);
-						// }					
-						
+				
 						// saftbus object lookup
 						int index = _saftbus_indices[derived_interface_name][object_path];
 						if (index == 0) {// == not found
@@ -599,16 +572,9 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							_saftbus_objects[index]->get_property(result, saftbus::connection, sender, object_path, derived_interface_name, property_name);
 
 							// prepare response data
-							//std::vector<Glib::VariantBase> response;
-							//response.push_back(result);
-							//Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
-
 							// serialize response data
 							size = result.get_size();
 							const char *data_ptr = static_cast<const char*>(result.get_data());
-
-							//result.print();
-
 							// write data to socket
 							logger.add("         size of response (serialized property): ").add(size).add("\n");
 							saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
@@ -623,7 +589,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							saftbus::Timer f_time(_function_run_times[function_name.str().c_str()]);
 							
 							// set the value using the set_property handler from auto-generated saftlib code
-							//Glib::Variant<Glib::VariantBase> par2 = Glib::VariantBase::cast_dynamic<Glib::Variant<Glib::VariantBase> >(parameters.get_child(2));
 							Serial par2;
 							parameters.get(par2);
 							bool result = _saftbus_objects[index]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
@@ -631,8 +596,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							// even the set property has a response ...
 							Serial response;
 							response.put(result);
-							//response.push_back(Glib::Variant<bool>::create(result));
-							//Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
 
 							// serialize the data
 							size = response.get_size();
@@ -685,12 +648,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 							// get the result and pack it in a way that 
 							//   can be digested by the auto-generated saftlib code
  							Serial &result = method_invocation_rptr->get_return_value();
- 							//std::cerr << "++++++++++++++++++ result serial " << result.get_size() << std::endl;
- 							//result.print();
-							// pack response data
-							// std::vector<Glib::VariantBase> response;
-							// response.push_back(result);
-							// Glib::Variant<std::vector<Glib::VariantBase> > var_response = Glib::Variant<std::vector<Glib::VariantBase> >::create(response);
 
 							// serialize
 							size = result.get_size();
@@ -708,93 +665,6 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					}
 				}
 				break;
-
-				// case saftbus::METHOD_CALL_ASYNC: 
-				// {
-				// 	saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_ASYNC"]);
-				// 	logger.add("           METHOD_CALL_ASYNC received: ");
-					
-				// 	// read the size of serialized data
-				// 	uint32_t size;
-				// 	saftbus::read(socket->get_fd(), size);
-				// 	logger.add(" message size=").add(size);
-
-				// 	// read the serialized data
-				// 	Serial payload;
-				// 	payload.data().resize(size);
-				// 	//std::vector<char> buffer(size);
-				// 	saftbus::read_all(socket->get_fd(), &payload.data()[0], size);
-
-				// 	uint32_t fd_size;
-				// 	saftbus::read(socket->get_fd(), fd_size);
-				// 	std::vector<int> fd_list;
-				// 	for (uint32_t i = 0; i < fd_size; ++i) {
-				// 		int fd = saftbus::recvfd(socket->get_fd());
-				// 		fd_list.push_back(fd);
-				// 	}
-				// 	std::string object_path;
-				// 	std::string sender;
-				// 	std::string interface_name;
-				// 	std::string name;
-				// 	Serial    parameters;
-				// 	payload.get_init();
-				// 	payload.get(object_path);
-				// 	payload.get(sender);
-				// 	payload.get(interface_name);
-				// 	payload.get(name);
-				// 	payload.get(parameters);
-
-				// 	logger.add(" sender=").add(sender)
-				// 	      .add(" name=").add(name)
-				// 	      .add(" object_path=").add(object_path)
-				// 	      .add(" interface_name=").add(interface_name)
-				// 	      .add(" \n");
-
-				// 	if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
-				// 		// async set/get is not allowed
-				// 		std::cerr << "Connection: get/set is not allowed in async calls" << std::endl;
-				// 	}
-				// 	else // normal method calls 
-				// 	{
-				// 		logger.add("         a normal method async_call\n");
-				// 		std::ostringstream function_name;
-				// 		function_name << "Connection::dispatch_METHOD_CALL_" << name;
-
-				// 		// saftbus object lookup
-				// 		int index = _saftbus_indices[interface_name][object_path];
-				// 		std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation(fd_list));
-
-				// 		logger.add("     doing the function call ...\n");
-				// 		_saftbus_objects[index]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
-				// 		logger.add("     ... done \n");
-
-				// 		if (method_invocation_rptr->has_error()) {
-				// 			logger.add("     ... return an error \n");
-				// 			saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
-				// 			saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().type());
-				// 			saftbus::write(socket->get_fd(), method_invocation_rptr->get_return_error().what());
-				// 		} else {
-				// 			logger.add("     ... return a normal return value \n");
-
-				// 			// get the result and pack it in a way that 
-				// 			//   can be digested by the auto-generated saftlib code
- 			// 				Serial &result = method_invocation_rptr->get_return_value();
-
-				// 			// serialize
-				// 			size = result.get_size();
-				// 			const char *data_ptr = static_cast<const char*>(result.get_data());
-				// 			logger.add("         size of response -> method resoponse: size=").add(size).add("\n");
-
-				// 			//send 
-				// 			saftbus::write(socket->get_fd(), saftbus::METHOD_REPLY);
-				// 			saftbus::write(socket->get_fd(), size);
-				// 			saftbus::write_all(socket->get_fd(), data_ptr, size);
-				// 			logger.add("         response was sent\n");
-				// 		}
-				// 	}
-				// }
-				// break;
-
 				default:
 					logger.add("      unknown message type\n");
 					logger.log();
