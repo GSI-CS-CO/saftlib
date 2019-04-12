@@ -125,7 +125,8 @@ namespace Slib
 						// signal_io_pfds
 						// copy back
 						signal_io_pfds[idx] = fd;
-						if (fd.revents & POLLNVAL) {
+						if (fd.revents & POLLNVAL || fd.revents & POLLERR) {
+							// throw out invalid fds from the poll list
 							signal_io_removed_indices.push_back(idx);
 						}
 						if (fd.events & fd.revents) {
@@ -177,8 +178,14 @@ namespace Slib
 					if (signal_timeout_time_left[i] == 0) {
 						// execute the callback
 						bool callback_result = false;
+
 						if (!signal_timeout_connections[i].empty()) {
-							callback_result = (*signal_timeout_slots[i])(); 
+							try {
+								callback_result = (*signal_timeout_slots[i])(); 
+							} catch (...) {
+								// if this threw any exception, it the source will be removed
+								callback_result = false; 
+							}
 						}
 						if (callback_result) {
 							// std::cerr << "refresh timeout" << std::endl;
