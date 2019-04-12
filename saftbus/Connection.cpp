@@ -253,6 +253,7 @@ void Connection::emit_signal(const std::string& object_path,
 					saftbus::write_all(i->fd, data_ptr, size);
 				} catch(std::exception &e) {
 					logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
+					logger.add("    setProxyPipe.size() = ").add(setProxyPipe.size()).add("\n");
 				}
 			}
 			//std::cerr << "Connection::emit_signal(" << object_path << ", " << interface_name << ", " << signal_name << ") done" << std::endl;

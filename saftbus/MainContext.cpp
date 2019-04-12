@@ -125,6 +125,9 @@ namespace Slib
 						// signal_io_pfds
 						// copy back
 						signal_io_pfds[idx] = fd;
+						if (fd.revents & POLLNVAL) {
+							signal_io_removed_indices.push_back(idx);
+						}
 						if (fd.events & fd.revents) {
 							//execute  signal_io callback
 							// nested calls to MainContext::iteration() may happen here!
