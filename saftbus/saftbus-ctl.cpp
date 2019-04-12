@@ -249,7 +249,7 @@ void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connec
 	std::cout << std::endl;
 
 	std::cout << std::left << std::setw(50) << "object path" 
-	          << std::left << std::setw(50) << "interface name [owner]" 
+	          << std::left << std::setw(50) << "interface name{,proxy signal pipe fds} [owner]" 
 	          << std::endl;
 	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 	std::cout << std::endl;
@@ -261,10 +261,16 @@ void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connec
 			std::string interface_name = saftbus_index.first;
 			std::string obj_path = object_path.first;
 			std::string owner;
+			for (auto pp: proxy_pipes[interface_name][obj_path]) {
+				interface_name.append(",");
+				std::ostringstream fdout;
+				fdout << pp.fd;
+				interface_name.append(fdout.str());
+			}
 			if (saftbus_index.first == "de.gsi.saftlib.Owned") {
 				owner = owners[object_path.first];
 				if (owner != "") {
-					interface_name.append(" [");
+					interface_name.append("[");
 					interface_name.append(owner);
 					interface_name.append("]");
 				}

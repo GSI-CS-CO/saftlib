@@ -70,6 +70,7 @@ namespace saftbus
 
 	private:
 		void handle_disconnect(Socket *socket);
+		void proxy_pipe_garbage_collection();
 
 		int socket_nr(Socket *socket);
 

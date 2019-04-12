@@ -501,6 +501,9 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					      .add(" proxy_id=").add(proxy_id)
 					      .add(" fd=").add(pp_done->fd).add("\n");
 					_proxy_pipes[interface_name][object_path].erase(pp_done);
+
+					proxy_pipe_garbage_collection();
+
 				}
 				break;
 				case saftbus::METHOD_CALL: 
@@ -708,6 +711,8 @@ void Connection::clean_all_fds_from_socket(Socket *socket)
 				}
 			}
 		}
+		// more complete garbage collection
+		proxy_pipe_garbage_collection();
 	} catch( std::exception & e) {
 		std::cerr << "Connection::clean_all_fds_from_socket() exception : " << e.what() << std::endl;
 	}
@@ -721,6 +726,19 @@ int Connection::socket_nr(Socket *socket)
 			return i;
 	}
 	return -1;
+}
+
+void Connection::proxy_pipe_garbage_collection()
+{
+	std::map<std::string, std::map < std::string , std::set< ProxyPipe > > > new_proxy_pipes;
+	for (auto iter1: _proxy_pipes) {
+		for (auto iter2: iter1.second) {
+			for(auto pp: iter2.second) {
+				new_proxy_pipes[iter1.first][iter2.first].insert(pp);
+			}
+		}
+	}
+	_proxy_pipes = new_proxy_pipes;
 }
 
 
