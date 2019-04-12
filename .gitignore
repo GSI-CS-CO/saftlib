@@ -11,6 +11,7 @@ saft-scu-ctl
 saft-clk-gen
 saft-dm
 saft-gmt-check
+saft-lcd
 # Automake junk dirs
 tools
 m4
