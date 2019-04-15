@@ -81,13 +81,24 @@ namespace Slib
 		std::vector<struct pollfd>                  added_signal_io_pfds;
 		std::vector<sigc::slot<bool, IOCondition> > added_signal_io_slots;
 
-		std::vector<int>                            signal_timeout_intervals;
-		std::vector<int>                            signal_timeout_time_left;
-		std::vector<std::shared_ptr<sigc::slot<bool> > >  signal_timeout_slots;
-		std::vector<sigc::connection >              signal_timeout_connections;
-		std::vector<int>                            added_signal_timeout_intervals;
-		std::vector<std::shared_ptr<sigc::slot<bool> > >  added_signal_timeout_slots;
-		std::vector<sigc::connection >              added_signal_timeout_connections;
+		struct Timeout {
+			int interval;
+			int time_left;
+			std::shared_ptr<sigc::slot<bool> > slot;
+			sigc::connection connection;
+			Timeout(int iv, std::shared_ptr<sigc::slot<bool> > sl) 
+				: interval(iv), time_left(iv), slot(sl), connection(*sl) {}
+		};
+		// std::vector<int>                            signal_timeout_intervals;
+		// std::vector<int>                            signal_timeout_time_left;
+		// std::vector<std::shared_ptr<sigc::slot<bool> > >  signal_timeout_slots;
+		// std::vector<sigc::connection >              signal_timeout_connections;
+		std::vector<Timeout> signal_timeouts;
+		std::vector<Timeout> added_signal_timeouts;
+
+		// std::vector<int>                            added_signal_timeout_intervals;
+		// std::vector<std::shared_ptr<sigc::slot<bool> > >  added_signal_timeout_slots;
+		// std::vector<sigc::connection >              added_signal_timeout_connections;
 	};
 
 	MainContext& signal_io();
