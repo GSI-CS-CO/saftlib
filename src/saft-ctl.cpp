@@ -427,7 +427,14 @@ int main(int argc, char** argv)
     if (deviceRemove) saftd->RemoveDevice(deviceName);
     
     // quit !!!
-    if (saftdQuit) saftd->Quit();
+    if (saftdQuit) {
+      // exit the program in a second thread, because the main 
+      // thread will be stuck waiting for the response from saftd
+      // which will never be sent after calling the quit() method
+      std::thread t( [](){sleep(1);exit(1);} );
+      saftd->Quit();
+      t.join();
+    }
     
     // get a specific device
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();

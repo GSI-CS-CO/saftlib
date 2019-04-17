@@ -61,7 +61,7 @@ client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_ctl_SOURCES = src/saft-ctl.cpp src/CommonFunctions.cpp
-saft_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
 saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
