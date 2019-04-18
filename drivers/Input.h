@@ -50,6 +50,7 @@ class Input : public EventSource, public iInputEventSource
     bool ReadInput();
     // Property getters
     guint32 getStableTime() const ;
+    guint32 getIndexIn() const;
     bool getInputTermination() const;
     bool getSpecialPurposeIn() const;
     bool getGateIn() const;

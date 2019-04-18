@@ -107,6 +107,12 @@
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
 
+  <!-- IndexOut: IO index.
+    -->
+  <property name="IndexOut" type="u" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+
   <!-- TypeOut: IO type (GPIO, LVDS, ...)
     -->
   <property name="TypeOut" type="s" access="read">

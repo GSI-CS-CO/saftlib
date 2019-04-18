@@ -41,6 +41,16 @@ InoutImpl::InoutImpl(const ConstructorType& args)
 {
 }
 
+guint32 InoutImpl::getIndexOut() const
+{
+  return io_index;
+}
+
+guint32 InoutImpl::getIndexIn() const
+{
+  return io_index;
+}
+
 void InoutImpl::WriteOutput(bool value)
 {
   etherbone::Cycle cycle;

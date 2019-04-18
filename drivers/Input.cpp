@@ -52,6 +52,11 @@ const char *Input::getInterfaceName() const
 
 // Proxy methods to the InoutImpl --------------------------------------------------
 
+guint32 Input::getIndexIn() const
+{
+  return impl->getIndexIn();
+}
+
 bool Input::ReadInput()
 {
   return impl->ReadInput();

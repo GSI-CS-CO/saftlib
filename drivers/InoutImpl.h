@@ -46,6 +46,8 @@ class InoutImpl : public Glib::Object
     static int probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks, TimingReceiver::EventSources& eventSources);
 
     // iOutputActionSink
+    guint32 getIndexOut() const;
+    guint32 getIndexIn() const;
     void WriteOutput(bool value);
     bool ReadOutput();
     bool getOutputEnable() const;

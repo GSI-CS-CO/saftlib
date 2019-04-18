@@ -55,6 +55,11 @@ Glib::ustring Output::NewCondition(bool active, guint64 id, guint64 mask, gint64
     sigc::ptr_fun(&OutputCondition::create));
 }
 
+guint32 Output::getIndexOut() const
+{
+  return impl->getIndexOut();
+}
+
 void Output::WriteOutput(bool value)
 {
   ownerOnly();

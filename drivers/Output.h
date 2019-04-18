@@ -54,6 +54,7 @@ class Output : public ActionSink, public iOutputActionSink
     bool StopClock();
 
     // Property getters
+    guint32 getIndexOut() const;
     bool getOutputEnable() const;
     bool getSpecialPurposeOut() const;
     bool getGateOut() const;

@@ -929,6 +929,10 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Display WR PPS multiplexer state */
         if (output_proxy->getPPSMultiplexer())      { std::cout << "  WR PPS:           On" << std::endl; }
         else                                        { std::cout << "  WR PPS:           Off" << std::endl; }
+
+        /* Display IO index */
+        std::cout << "  IndexOut:         " << output_proxy->getIndexOut() << std::endl;
+
       }
 
       if (io_type != IO_CFG_FIELD_DIR_OUTPUT)
@@ -958,6 +962,8 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Display stable time */
         std::cout << "  StableTime:       " << input_proxy->getStableTime() << " ns" << std::endl;
 
+        /* Display IO index */
+        std::cout << "  IndexIn:          " << input_proxy->getIndexIn() << std::endl;
       }
     }
   }
