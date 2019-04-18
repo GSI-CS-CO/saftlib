@@ -110,7 +110,8 @@ uint32_t FunctionGeneratorFirmware::getVersion() const
 // to reduce traffic only generate signals if we have an owner
 std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
 {
-
+  fgs_owned.clear();
+  master_fgs_owned.clear();
 
 
   std::map<std::string, std::string> result;
