@@ -53,7 +53,7 @@ class FunctionGeneratorImpl //: public Glib::Object
 //    typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
       std::string objectPath;
-      std::shared_ptr<TimingReceiver> tr;
+      TimingReceiver *tr;
       std::shared_ptr<std::vector<int> > allocation;
       eb_address_t fgb;
       eb_address_t swi;
@@ -128,7 +128,7 @@ class FunctionGeneratorImpl //: public Glib::Object
             
             
             
-    std::shared_ptr<TimingReceiver> tr;
+    TimingReceiver *tr;
     std::shared_ptr<std::vector<int> > allocation;
     eb_address_t shm;
     eb_address_t swi;

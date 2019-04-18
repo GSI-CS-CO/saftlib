@@ -45,7 +45,7 @@ class FunctionGeneratorFirmware : public Owned, public iFunctionGeneratorFirmwar
     typedef FunctionGeneratorFirmware_Service ServiceType;
     struct ConstructorType {
       std::string objectPath;
-      std::shared_ptr<TimingReceiver> tr;
+      TimingReceiver  *tr;
       Device &device;
       etherbone::sdb_msi_device  sdb_msi_base;
       sdb_device                 mailbox;
@@ -64,7 +64,7 @@ class FunctionGeneratorFirmware : public Owned, public iFunctionGeneratorFirmwar
     ~FunctionGeneratorFirmware();
 
     std::string                objectPath;
-    std::shared_ptr<TimingReceiver> tr;
+    TimingReceiver             *tr;
     Device&                    device;
     etherbone::sdb_msi_device  sdb_msi_base;
     sdb_device                 mailbox;

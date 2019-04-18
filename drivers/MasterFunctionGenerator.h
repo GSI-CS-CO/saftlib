@@ -46,9 +46,8 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     typedef MasterFunctionGenerator_Service ServiceType;
     struct ConstructorType {
       std::string objectPath;
-      std::shared_ptr<TimingReceiver> tr;
- 			//std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;
- 			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;            
+      TimingReceiver *tr;
+      std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;            
     };
     
     static std::shared_ptr<MasterFunctionGenerator> create(const ConstructorType& args);
@@ -101,7 +100,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     bool WaitTimeout();
     void waitForCondition(std::function<bool()> condition, int timeout_ms);
 
-    std::shared_ptr<TimingReceiver> tr;
+    TimingReceiver *tr;
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> allFunctionGenerators;      
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> activeFunctionGenerators;      
     uint32_t startTag;

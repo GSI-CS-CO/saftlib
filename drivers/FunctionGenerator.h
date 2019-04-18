@@ -46,9 +46,9 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      std::string objectPath;
-      std::shared_ptr<TimingReceiver> dev;
- 			std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
+        std::string objectPath;
+        TimingReceiver *dev;
+        std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
     };
     
     static std::shared_ptr<FunctionGenerator> create(const ConstructorType& args);
@@ -76,7 +76,7 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     void Reset();
     void ownerQuit();
             
-    std::shared_ptr<TimingReceiver> dev;
+    TimingReceiver *dev;
     
     void on_fg_running(bool);
     void on_fg_armed(bool);

@@ -824,11 +824,11 @@ void TimingReceiver::probe(OpenDevice& od)
   // Add special SCU hardware
   if (scubus.size() == 1) {
 
-    // check if ther is a Function Generator firmware running
+    // check if there is a Function Generator firmware running
     try {
       const std::string fg_fw_str("fg_firmware");
       FunctionGeneratorFirmware::ConstructorType fg_fw_args = { od.objectPath + "/" + fg_fw_str, 
-                                                                tr,
+                                                                tr.operator->(), // this is needed because passing a shared pointer to the children would prevent the destruction of the TimingReceiver object 
                                                                 tr->getDevice(),
                                                                 mbx_msi[0],
                                                                 mbx[0],
