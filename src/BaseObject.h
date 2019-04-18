@@ -30,6 +30,7 @@ class BaseObject /*: public Glib::Object*/
 {
   public:
     BaseObject(const std::string& objectPath);
+    virtual ~BaseObject(); // need a virtual destructor
     
     // Most classes need this to build paths recursively
     const std::string& getObjectPath() const { return objectPath; }

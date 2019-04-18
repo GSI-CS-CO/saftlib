@@ -32,4 +32,8 @@ BaseObject::BaseObject(const std::string& objectPath_)
 {
 }
 
+BaseObject::~BaseObject() 
+{
+}
+
 }
