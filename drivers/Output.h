@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -43,19 +43,20 @@ class Output : public ActionSink, public iOutputActionSink
     };
 
     static Glib::RefPtr<Output> create(const ConstructorType& args);
-    
+
     const char *getInterfaceName() const;
-    
+
     // Methods
     Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on);
     void WriteOutput(bool value);
     bool ReadOutput();
     bool StartClock(double high_phase, double low_phase, guint64 phase_offset);
     bool StopClock();
-    
+
     // Property getters
     bool getOutputEnable() const;
     bool getSpecialPurposeOut() const;
+    bool getGateOut() const;
     bool getBuTiSMultiplexer() const;
     bool getPPSMultiplexer() const;
     bool getOutputEnableAvailable() const;
@@ -63,18 +64,19 @@ class Output : public ActionSink, public iOutputActionSink
     Glib::ustring getLogicLevelOut() const;
     Glib::ustring getTypeOut() const;
     Glib::ustring getInput() const;
-    
+
     // Property setters
     void setOutputEnable(bool val);
     void setSpecialPurposeOut(bool val);
+    void setGateOut(bool val);
     void setBuTiSMultiplexer(bool val);
     void setPPSMultiplexer(bool val);
-    
+
     // Property signals
     //   sigc::signal< void, bool > OutputEnable;
     //   sigc::signal< void, bool > SpecialPurposeOut;
     //   sigc::signal< void, bool > BuTiSMultiplexer;
-  
+
   protected:
     Output(const ConstructorType& args);
     Glib::RefPtr<InoutImpl> impl;
