@@ -53,7 +53,7 @@ namespace saftlib
 						double signal_dispatch_time = (1.0e6*stop.tv_sec  + 1.0e-3*stop.tv_nsec) 
 		                                            - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
 
-		                if (signal_dispatch_time > 200) {
+		                if (signal_dispatch_time > 1000) { // more than 1ms will trigger message
 							std::cerr << "SignalGroup::wait_for_signal() signal dispatch time for [" << idx << "] = " << signal_dispatch_time << "us" << std::endl;		                                          
 						}
 					}
