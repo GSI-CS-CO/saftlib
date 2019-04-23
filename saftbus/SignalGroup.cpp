@@ -1,5 +1,6 @@
 #include "SignalGroup.h"
 #include <iostream>
+#include <time.h>
 
 namespace saftlib
 {
@@ -43,11 +44,41 @@ namespace saftlib
 			for (auto fd: _fds) {
 				if (fd.revents & POLLIN) {
 					if (_signal_group[idx] != nullptr) {
+				    	struct timespec start, stop;
+					    clock_gettime( CLOCK_REALTIME, &start);
+
 						_signal_group[idx]->dispatch(Slib::IOCondition());
+
+					    clock_gettime( CLOCK_REALTIME, &stop);
+						double signal_dispatch_time = (1.0e6*stop.tv_sec  + 1.0e-3*stop.tv_nsec) 
+		                                            - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
+
+		                if (signal_dispatch_time > 200) {
+							std::cerr << "SignalGroup::wait_for_signal() signal dispatch time for [" << idx << "] = " << signal_dispatch_time << "us" << std::endl;		                                          
+						}
 					}
 				}
 				++idx;
 			}
+		} else if (result < 0) {
+			// error 
+			int errno_ = errno;
+			switch(errno_) {
+				case EFAULT:
+					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EFAULT: " << strerror(errno_) << std::endl;
+				break;
+				case EINTR:
+					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EINTR: " << strerror(errno_) << std::endl;
+				break;
+				case EINVAL:
+					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EINVAL: " << strerror(errno_) << std::endl;
+				break;
+				case ENOMEM:
+					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error ENOMEM: " << strerror(errno_) << std::endl;
+				break;
+			}
+		} else {
+			// timeout was hit. do nothing
 		}
 		return result;
 	}

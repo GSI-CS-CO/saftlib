@@ -90,6 +90,8 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 {
 	// this method is called from the Glib::MainLoop whenever there is signal data in the pipe
 	try {
+	    struct timespec start_read_time;
+	    clock_gettime( CLOCK_REALTIME, &start_read_time);
 
 		//std::cerr << "Proxy::dispatch() called" << std::endl;
 		// read type and size of signal
@@ -135,6 +137,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		}
 
 		double signal_flight_time;
+		double signal_read_time;
 
 		// special treatment for property changes
 		//if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
@@ -201,6 +204,14 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		    clock_gettime( CLOCK_REALTIME, &stop);
 		    signal_flight_time = (1.0e6*stop.tv_sec       + 1.0e-3*stop.tv_nsec) 
 		                       - (1.0e6*start_time.tv_sec + 1.0e-3*start_time.tv_nsec);
+
+		    signal_read_time = (1.0e6*stop.tv_sec            + 1.0e-3*stop.tv_nsec) 
+		                     - (1.0e6*start_read_time.tv_sec + 1.0e-3*start_read_time.tv_nsec);
+
+		    if (signal_read_time > 200) { // if reading takes more than 200 us => Report!
+		    	std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;
+		    }
+
 			// report the measured signal flight time to saftd
 		    try {
 		    	if (create_statistics) { // do this only if switched on
