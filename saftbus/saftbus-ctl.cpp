@@ -12,6 +12,10 @@ void write_histogram(std::string filename, const std::map<int,int> &hist);
 void show_help(const char *argv0);
 void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection);
 void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connection) ;
+void saftbus_get_property(const std::string& interface_name,
+	                      const std::string& object_path,
+	                      const std::string& property_name,
+	                      const std::string& property_type_signature);
 
 void write_histogram(std::string filename, const std::map<int,int> &hist)
 {
@@ -33,6 +37,7 @@ void show_help(const char *argv0)
 	std::cout << "   --disable-signal-timing-stats      disable signal flight time statistics" << std::endl;
 	std::cout << "   --enable-logging                   enable saftbus internal logging" << std::endl;
 	std::cout << "   --disable-logging                  disable saftbus internal logging" << std::endl;
+	std::cout << "   --get-property                     interface-name object-path property type-signature" << std::endl;
 	std::cout << "   -h     show this help" << std::endl;
 }
 
@@ -249,7 +254,7 @@ void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connec
 	std::cout << std::endl;
 
 	std::cout << std::left << std::setw(50) << "object path" 
-	          << std::left << std::setw(50) << "interface name{,proxy signal pipe fds} [owner]" 
+	          << std::left << std::setw(50) << "interface name{,proxy signal pipe fds}[owner]" 
 	          << std::endl;
 	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 	std::cout << std::endl;
@@ -306,6 +311,91 @@ void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connec
 
 }
 
+template<typename T>
+void print_serial_value(saftbus::Serial &s) {
+	T value;
+	s.get(value);
+	std::cout << value << std::endl;
+}
+template<typename T>
+void print_serial_vector(saftbus::Serial &s) {
+	std::vector<T> values;
+	s.get(values);
+	for (auto value: values) {
+		std::cout << value << " ";
+	}
+	std::cout << std::endl;
+}
+template<typename K, typename V>
+void print_serial_map(saftbus::Serial &s) {
+	std::map<K,V> map;
+	s.get(map);
+	for (auto pair: map) {
+		std::cout << pair.first << ":" << pair.second  << " ";
+	}
+	std::cout << std::endl;
+}
+
+template<typename K1, typename K2, typename V>
+void print_serial_map_map(saftbus::Serial &s) {
+	std::map<K1, std::map<K2,V> > map;
+	s.get(map);
+	for (auto inner_map: map) {
+		std::cout << inner_map.first << " -> ";
+		for (auto pair: inner_map.second) {
+			std::cout << pair.first << ":" << pair.second  << " ";
+		}
+		std::cout << std::endl;
+	}
+}
+
+void saftbus_get_property(const std::string& interface_name,
+	                      const std::string& object_path,
+	                      const std::string& property_name,
+	                      const std::string& property_type_signature) 
+{
+  saftbus::ProxyConnection connection;
+  saftbus::Serial params;
+  params.put(interface_name);
+  params.put(property_name);
+
+  saftbus::Serial val = connection.call_sync(object_path, "org.freedesktop.DBus.Properties", "Get", 
+      params, "sender");
+
+  val.get_init();
+  if (property_type_signature == "y") { print_serial_value<unsigned char>(val); return;}
+  if (property_type_signature == "b") { print_serial_value<bool>(val); return;}
+  if (property_type_signature == "n") { print_serial_value<int16_t>(val); return;}
+  if (property_type_signature == "q") { print_serial_value<uint16_t>(val); return;}
+  if (property_type_signature == "i") { print_serial_value<int32_t>(val); return;}
+  if (property_type_signature == "u") { print_serial_value<uint32_t>(val); return;}
+  if (property_type_signature == "x") { print_serial_value<int64_t>(val); return;}
+  if (property_type_signature == "t") { print_serial_value<uint64_t>(val); return;}
+  if (property_type_signature == "d") { print_serial_value<double>(val); return;}
+  if (property_type_signature == "h") { print_serial_value<int>(val); return;}
+  if (property_type_signature == "s") { print_serial_value<std::string>(val); return;}
+
+  if (property_type_signature == "ay") { print_serial_vector<unsigned char>(val); return;}
+  if (property_type_signature == "ab") { print_serial_vector<bool>(val); return;}
+  if (property_type_signature == "an") { print_serial_vector<int16_t>(val); return;}
+  if (property_type_signature == "aq") { print_serial_vector<uint16_t>(val); return;}
+  if (property_type_signature == "ai") { print_serial_vector<int32_t>(val); return;}
+  if (property_type_signature == "au") { print_serial_vector<uint32_t>(val); return;}
+  if (property_type_signature == "ax") { print_serial_vector<int64_t>(val); return;}
+  if (property_type_signature == "at") { print_serial_vector<uint64_t>(val); return;}
+  if (property_type_signature == "ad") { print_serial_vector<double>(val); return;}
+  if (property_type_signature == "ah") { print_serial_vector<int>(val); return;}
+  if (property_type_signature == "as") { print_serial_vector<std::string>(val); return;}
+
+  if (property_type_signature == "a{ss}") { print_serial_map<std::string,std::string>(val); return;}
+
+  if (property_type_signature == "a{sa{ss}}") { print_serial_map_map<std::string,std::string,std::string>(val); return;}
+
+
+
+  std::cout << "unsupported type signature" << std::endl;
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -318,6 +408,13 @@ int main(int argc, char *argv[])
 		bool save_signal_time_stats       = false;
 		bool enable_logging               = false;
 		bool disable_logging              = false;
+		bool get_property                 = false;
+
+		std::string interface_name;
+		std::string object_path;
+		std::string property_name;
+		std::string property_type_signature;
+
 		std::string timing_stats_filename = "saftbus_timing.dat";
 
 		if (argc == 1) {
@@ -342,6 +439,20 @@ int main(int argc, char *argv[])
 				enable_logging = true;
 			} else if (argvi == "--disable-logging") {
 				disable_logging = true;
+			} else if (argvi == "--get-property") {
+				get_property = true;
+				if (argc - i < 4) {
+					std::cerr << "expect 4 arguments after --get-property" << std::endl;
+					std::cerr << "        interface_name" << std::endl;
+					std::cerr << "        object_path" << std::endl;
+					std::cerr << "        property_name" << std::endl;
+					std::cerr << "        property_type_signature" << std::endl;
+				} else {
+					interface_name          = argv[++i];
+					object_path             = argv[++i];
+					property_name           = argv[++i];
+					property_type_signature = argv[++i];
+				}
 			} else {
 				std::cerr << "unknown argument: " << argvi << std::endl;
 				return 1;
@@ -391,8 +502,11 @@ int main(int argc, char *argv[])
 			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_DISABLE_LOGGING);
 		}
 
+		if (get_property) {
+			saftbus_get_property(interface_name, object_path, property_name, property_type_signature);
+		}
+
 		connection.reset();
-		std::cerr << "saftbus-ctl done" << std::endl;
 	} catch (...) {
 		std::cout << "Error:" << std::endl;
 		std::cout << "   Failed to connect to saftd. " << std::endl;
