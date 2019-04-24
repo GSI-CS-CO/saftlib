@@ -1,6 +1,7 @@
 #include "Logger.h"
 
 #include <iostream>
+#include <time.h>
 
 namespace saftbus 
 {
@@ -46,6 +47,10 @@ namespace saftbus
 
 	std::string Logger::getTimeTag()
 	{
+		struct timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		std::ostringstream timestamp_out;
+		timestamp_out << now.tv_sec << "." << now.tv_nsec << " | ";
 		time_t rawtime;
 		struct tm * timeinfo;
 		time(&rawtime);
@@ -54,7 +59,7 @@ namespace saftbus
 		strftime(buffer,80,"%c",timeinfo);
 		std::string timestring(buffer);
 		for (char ch: timestring) if (ch == ':') ch = '.';
-		return timestring;
+		return timestamp_out.str() + timestring;
 	}
 
 
