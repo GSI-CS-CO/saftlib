@@ -33,6 +33,7 @@ namespace saftlib
 	int wait_for_signal(int timeout_ms = -1);
 
 	extern SignalGroup globalSignalGroup;
+	extern SignalGroup noSignals; // pass this to the Proxy if you don't want any signals
 
 } // namespace saftlib
 

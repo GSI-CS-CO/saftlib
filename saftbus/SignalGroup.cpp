@@ -5,6 +5,7 @@
 namespace saftlib
 {
 	SignalGroup globalSignalGroup;
+	SignalGroup noSignals;
 
 	int wait_for_signal(int timeout_ms) 
 	{

@@ -42,23 +42,25 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	}
 
 	// create a pipe through which we will receive signals from the saftd
-	try {
-		if (pipe(_pipe_fd) != 0) {
-			throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
+	if (&signalGroup != &saftlib::noSignals) {
+		try {
+			if (pipe(_pipe_fd) != 0) {
+				throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
+			}
+
+			// send the writing end of a pipe to saftd 
+			_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
+			char ping;
+			saftbus::read(_pipe_fd[0], ping);
+			//std::cerr << "got ping after sending pipe: " << ping << std::endl;
+		} catch(...) {
+			std::cerr << "Proxy::~Proxy() threw" << std::endl;
 		}
 
-		// send the writing end of a pipe to saftd 
-		_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
-		char ping;
-		saftbus::read(_pipe_fd[0], ping);
-		//std::cerr << "got ping after sending pipe: " << ping << std::endl;
-	} catch(...) {
-		std::cerr << "Proxy::~Proxy() threw" << std::endl;
+		// this Proxy will be part of the given SignalGroup.
+		// saftlib::globalSignalGroup is the default
+		signalGroup.add(this);
 	}
-
-	// this Proxy will be part of the given SignalGroup.
-	// saftlib::globalSignalGroup is the default
-	signalGroup.add(this);
 }
 
 Proxy::~Proxy() 

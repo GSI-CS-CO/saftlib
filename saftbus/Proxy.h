@@ -59,8 +59,6 @@ namespace saftbus
 		const Serial& call_sync(std::string function_name, const Serial &query);
 
 
-		static void wait_for_signal(const std::vector<std::shared_ptr<Proxy> > &proxy_band);
-
 		int get_reading_end_of_signal_pipe();
 
 	public:
