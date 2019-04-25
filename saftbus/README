@@ -63,16 +63,17 @@ The saftbus library within saftlib
 	A saftlib function call is initiated by a saftlib::Proxy object. It sends a request over the socket and blocks until saftd answers. The answer contains the(all) function return value(s).
 
 	* property
-	Saftlib Proxy objects have Properties. Getting/Setting a Property is similar to a function call
+	Saftlib Proxy objects have Properties. Getting/Setting a Property is similar to a function call.
+	The call addresses the special interface org.freedesktop.DBus.Properties (inherited from the DBus aera) and the property name, the type of operation (Get/Set), as well as the set value are part of the function call arguments.
 
 	* signal
-	Saftlib Proxy objects can receive signals from saftd. These signals are transmitted using dedicated Pipes. The pipes are created whenever a Proxy object is created. There is one Pipe for each Interface of the Proxy object.
+	Saftlib Proxy objects can receive signals from saftd. These signals are transmitted using dedicated UNIX Pipes. The pipes are created whenever a Proxy object is created. There is one Pipe for each Interface of a Proxy object. 
 	The reason for this second data path for signals is to allow multi threaded clients without needing to synchronize the socket access.
 	Example: /de/gsi/saftlib/tr0/embedded_cpu
-		this object path exists with three different interfaces, i.e. there are three distinct saftbus objects:
+		this object path is a service with three different interfaces, i.e. there are three distinct saftbus objects:
 		    (interface_name,                       object_path) <= saftbus_object
 			(de.gsi.saftlib.Owned,                 /de/gsi/saftlib/tr0/embedded_cpu)
 			(de.gsi.saftlib.EmbeddedCPUActionSink, /de/gsi/saftlib/tr0/embedded_cpu)
 			(de.gsi.saftlib.ActionSink,            /de/gsi/saftlib/tr0/embedded_cpu)
 		If a Proxy object is created by a saftlib client, there will be a UNIX pipe created from each of the saftbus objects (living inside saftd) to the Proxy object (living inside the client process).
-		Pipes are destroyed when the saftbus object is destroyed.
+		Pipes are destroyed when the saftbus object is destroyed on the saftd side, or if the Proxy destructor is called. 
