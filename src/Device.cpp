@@ -25,9 +25,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Device.h"
-#include "clog.h"
+#include <iostream>
+#include <memory>
+
+#include "Source.h"
 
 namespace saftlib {
+
+// Device::irqMap Device::irqs;   // this is in globals.cpp
+// Device::msiQueue Device::msis; // this is in globals.cpp
 
 Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last)
  : etherbone::Device(d), base(first), mask(last-first)
@@ -85,12 +91,14 @@ struct IRQ_Handler : public etherbone::Handler
 
 eb_status_t IRQ_Handler::read(eb_address_t address, eb_width_t width, eb_data_t* data)
 {
+  //std::cerr << "IRQ_Handler::read() " << std::endl;
   *data = 0;
   return EB_OK;
 }
 
 eb_status_t IRQ_Handler::write(eb_address_t address, eb_width_t width, eb_data_t data)
 {
+  //std::cerr << "IRQ_Handler::write() " << std::endl;
   Device::MSI msi;
   msi.address = address;
   msi.data = data;
@@ -118,10 +126,10 @@ void Device::hook_it_all(etherbone::Socket socket)
   socket.attach(&everything, &handler);
 }
 
-class MSI_Source : public Glib::Source
+class MSI_Source : public Slib::Source
 {
   public:
-    static Glib::RefPtr<MSI_Source> create();
+    static std::shared_ptr<MSI_Source> create();
     sigc::connection connect(const sigc::slot<bool>& slot);
     
   protected:
@@ -132,9 +140,9 @@ class MSI_Source : public Glib::Source
     virtual bool dispatch(sigc::slot_base* slot);
 };
 
-Glib::RefPtr<MSI_Source> MSI_Source::create()
+std::shared_ptr<MSI_Source> MSI_Source::create()
 {
-  return Glib::RefPtr<MSI_Source>(new MSI_Source());
+  return std::shared_ptr<MSI_Source>(new MSI_Source());
 }
 
 sigc::connection MSI_Source::connect(const sigc::slot<bool>& slot)
@@ -148,22 +156,29 @@ MSI_Source::MSI_Source()
 
 bool MSI_Source::prepare(int& timeout_ms)
 {
+  //std::cerr << "MSI_Source::prepare" << std::endl;
   // returning true means immediately ready
+  bool result;
   if (Device::msis.empty()) {
-    return false;
+    result = false;
   } else {
     timeout_ms = 0;
-    return true;
+    result = true;
   }
+  //std::cerr << "MSI_Source::prepare(" << timeout_ms << ") " << this << " " << result << std::endl;
+  return result;
 }
 
 bool MSI_Source::check()
 {
-  return !Device::msis.empty(); // true means ready after glib's poll
+  bool result = !Device::msis.empty(); // true means ready after glib's poll
+  //std::cerr << "MSI_Source::check()    "<< result << std::endl;
+  return result;
 }
 
 bool MSI_Source::dispatch(sigc::slot_base* slot)
 {
+  //std::cerr << "MSI_Source::dispatch() " << std::endl;
   // Don't process more than 10 MSIs in one go (must give dbus some service too)
   int limit = 10;
   
@@ -175,22 +190,23 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
     Device::irqMap::iterator i = Device::irqs.find(msi.address);
     if (i != Device::irqs.end()) {
       try {
+        //std::cerr  << "MSI_Source::dispatch() -> execute MSI " << msi.address << " " << msi.data << std::endl;
         i->second(msi.data);
       } catch (const etherbone::exception_t& ex) {
-        clog << kLogErr << "Unhandled etherbone exception in MSI handler for 0x" 
+        std::cerr << "Unhandled etherbone exception in MSI handler for 0x" 
              << std::hex << msi.address << ": " << ex << std::endl;
-      } catch (const Glib::Error& ex) {
-        clog << kLogErr << "Unhandled Glib exception in MSI handler for 0x" 
-             << std::hex << msi.address << ": " << ex.what() << std::endl;
+      // } catch (const saftbus::Error& ex) {
+      //   std::cerr << "Unhandled Glib exception in MSI handler for 0x" 
+      //        << std::hex << msi.address << ": " << ex.what() << std::endl;
       } catch (std::exception& ex) {
-        clog << kLogErr << "Unhandled std::exception exception in MSI handler for 0x" 
+        std::cerr << "Unhandled std::exception exception in MSI handler for 0x" 
              << std::hex << msi.address << ": " << ex.what() << std::endl;
       } catch (...) {
-        clog << kLogErr << "Unhandled unknown exception in MSI handler for 0x" 
+        std::cerr << "Unhandled unknown exception in MSI handler for 0x" 
              << std::hex << msi.address << std::endl;
       }
     } else {
-      clog << kLogErr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
+      std::cerr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
     }
   }
   
@@ -203,12 +219,12 @@ static bool my_noop()
   return true;
 }
 
-sigc::connection Device::attach(const Glib::RefPtr<Glib::MainLoop>& loop)
+sigc::connection Device::attach(const std::shared_ptr<Slib::MainLoop>& loop)
 {
-  Glib::RefPtr<MSI_Source> source = MSI_Source::create();
+  std::shared_ptr<MSI_Source> source = MSI_Source::create();
   sigc::connection out = source->connect(sigc::ptr_fun(&my_noop));
-  source->attach(loop->get_context());
+  source->attach(loop->get_context(), source);
   return out;
 }
 
-} // saftlib
+} // namespace saftlib

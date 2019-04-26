@@ -31,7 +31,7 @@ class SoftwareCondition : public Condition, public iSoftwareCondition
     typedef SoftwareCondition_Service ServiceType;
     typedef Condition_ConstructorType ConstructorType;
     
-    static Glib::RefPtr<SoftwareCondition> create(const ConstructorType& args);
+    static std::shared_ptr<SoftwareCondition> create(const ConstructorType& args);
     
     // iSoftwareCondition
     // -> Action

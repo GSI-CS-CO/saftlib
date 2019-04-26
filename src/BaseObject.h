@@ -20,24 +20,26 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <giomm.h>
+#include <memory>
+#include <saftbus.h>
 
 namespace saftlib {
 
-class BaseObject : public Glib::Object
+class BaseObject 
 {
   public:
-    BaseObject(const Glib::ustring& objectPath);
+    BaseObject(const std::string& objectPath);
+    virtual ~BaseObject(); // need a virtual destructor
     
     // Most classes need this to build paths recursively
-    const Glib::ustring& getObjectPath() const { return objectPath; }
+    const std::string& getObjectPath() const { return objectPath; }
     
     // provided by RegisteredObject
-    virtual const Glib::ustring& getSender() const = 0;
-    virtual const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const = 0;
+    virtual const std::string& getSender() const = 0;
+    virtual const std::shared_ptr<saftbus::Connection>& getConnection() const = 0;
     
   protected:
-    Glib::ustring objectPath;
+    std::string objectPath;
 };
 
 }

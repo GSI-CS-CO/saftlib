@@ -32,61 +32,61 @@ class Input : public EventSource, public iInputEventSource
   public:
     typedef Input_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring name;
-      Glib::ustring objectPath;
-      Glib::ustring partnerPath;
+      std::string name;
+      std::string objectPath;
+      std::string partnerPath;
       TimingReceiver* dev;
       eb_address_t tlu;
       unsigned channel;
-      Glib::RefPtr<InoutImpl> impl;
+      std::shared_ptr<InoutImpl> impl;
       sigc::slot<void> destroy;
     };
 
-    static Glib::RefPtr<Input> create(const ConstructorType& args);
+    static std::shared_ptr<Input> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
     // Methods
     bool ReadInput();
     // Property getters
-    guint32 getStableTime() const ;
+    uint32_t getStableTime() const ;
     bool getInputTermination() const;
     bool getSpecialPurposeIn() const;
     bool getInputTerminationAvailable() const;
     bool getSpecialPurposeInAvailable() const;
-    Glib::ustring getLogicLevelIn() const;
-    Glib::ustring getTypeIn() const;
-    Glib::ustring getOutput() const;
+    std::string getLogicLevelIn() const;
+    std::string getTypeIn() const;
+    std::string getOutput() const;
     // Property setters
-    void setStableTime(guint32 val);
+    void setStableTime(uint32_t val);
     void setInputTermination(bool val);
     void setSpecialPurposeIn(bool val);
     
     // Property signals
-    //  sigc::signal< void, guint32 > StableTime;
+    //  sigc::signal< void, uint32_t > StableTime;
     //  sigc::signal< void, bool > InputTermination;
     //  sigc::signal< void, bool > SpecialPurposeIn;
     
     // From iEventSource
-    guint64 getResolution() const;
-    guint32 getEventBits() const;
+    uint64_t getResolution() const;
+    uint32_t getEventBits() const;
     bool getEventEnable() const;
-    guint64 getEventPrefix() const;
+    uint64_t getEventPrefix() const;
     
     void setEventEnable(bool val);
-    void setEventPrefix(guint64 val);
+    void setEventPrefix(uint64_t val);
     //  sigc::signal< void, bool > EventEnable;
-    //  sigc::signal< void, guint64 > EventPrefix;
+    //  sigc::signal< void, uint64_t > EventPrefix;
     
   protected:
     Input(const ConstructorType& args);
-    Glib::RefPtr<InoutImpl> impl;
-    Glib::ustring partnerPath;
+    std::shared_ptr<InoutImpl> impl;
+    std::string partnerPath;
     eb_address_t tlu;
     unsigned channel;
     bool enable;
-    guint64 event;
-    guint32 stable;
+    uint64_t event;
+    uint32_t stable;
     
     void configInput();
 };

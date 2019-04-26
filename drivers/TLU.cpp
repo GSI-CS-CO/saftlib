@@ -38,11 +38,11 @@ class TLU : public RegisteredObject<TLU_Service>
     
     void setEnabled(bool val);
     void setLatchEdge(bool val);
-    void setStableTime(guint32 val);
+    void setStableTime(uint32_t val);
     
-    guint64 CurrentTime();
+    uint64_t CurrentTime();
     
-    static Glib::RefPtr<TLU> create(saftlib::Device& device, eb_address_t base, int channel);
+    static std::shared_ptr<TLU> create(saftlib::Device& device, eb_address_t base, int channel);
     static void probe();
     
   protected:
@@ -56,7 +56,7 @@ class TLU : public RegisteredObject<TLU_Service>
     eb_address_t irq;
 };
 
-static Glib::ustring path(Device& device_, eb_address_t base_, int channel_)
+static std::string path(Device& device_, eb_address_t base_, int channel_)
 {
   std::ostringstream stream;
   stream.imbue(std::locale("C"));
@@ -87,9 +87,9 @@ TLU::~TLU()
   }
 }
 
-Glib::RefPtr<TLU> TLU::create(Device& device, eb_address_t base, int channel)
+std::shared_ptr<TLU> TLU::create(Device& device, eb_address_t base, int channel)
 {
-  return Glib::RefPtr<TLU>(new TLU(device, base, channel));
+  return std::shared_ptr<TLU>(new TLU(device, base, channel));
 }
 
 void TLU::setHandler(bool enable, eb_data_t address, eb_data_t message)
@@ -129,7 +129,7 @@ void TLU::setLatchEdge(bool val)
   TLU_Service::setLatchEdge(val);
 }
 
-void TLU::setStableTime(guint32 val)
+void TLU::setStableTime(uint32_t val)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
@@ -139,7 +139,7 @@ void TLU::setStableTime(guint32 val)
   TLU_Service::setStableTime(val);
 }
 
-guint64 TLU::CurrentTime()
+uint64_t TLU::CurrentTime()
 {
   eb_data_t hi, lo;
   etherbone::Cycle cycle;
@@ -148,7 +148,7 @@ guint64 TLU::CurrentTime()
   cycle.read(base + SLAVE_TC_GET_1, EB_DATA32, &lo);
   cycle.close();
   
-  guint64 val;
+  uint64_t val;
   val = hi;
   val <<= 32;
   val |= lo;
@@ -169,7 +169,7 @@ void TLU::irq_handler(eb_data_t)
     cycle.write(base + SLAVE_TS_POP_OWR, EB_DATA32, 1);
     cycle.close();
     
-    guint64 time;
+    uint64_t time;
     time = hi;
     time <<= 32;
     time |= lo;
@@ -200,7 +200,7 @@ void TLU::probe()
       
       // Create all dbus channel objects
       for (eb_data_t channel = 0; channel < num_channels; ++channel) {
-        Glib::RefPtr<TLU> object = TLU::create(*device, address, channel);
+        std::shared_ptr<TLU> object = TLU::create(*device, address, channel);
         Directory::get()->add("TLU", object->getObjectPath(), object);
       }
       

@@ -23,10 +23,11 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <memory>
 #include <assert.h>
 
 #include <etherbone.h>
-#include <giomm.h>
+#include <sigc++/sigc++.h>
 #include "FunctionGeneratorImpl.h"
 #include "TimingReceiver.h"
 #include "fg_regs.h"
@@ -42,7 +43,7 @@ namespace saftlib {
 
 FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
  : 
-   dev(args.dev),
+   tr(args.tr),
    allocation(args.allocation),
    shm(args.fgb + SHM_BASE),
    swi(args.swi),
@@ -55,7 +56,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
    deviceNumber    ((args.macro >> 16) & 0xFF),
    version         ((args.macro >>  8) & 0xFF),
    outputWindowSize((args.macro >>  0) & 0xFF),
-   irq(args.dev->getDevice().request_irq(args.base, sigc::mem_fun(*this, &FunctionGeneratorImpl::irq_handler))),
+   irq(args.tr->getDevice().request_irq(args.base, sigc::mem_fun(*this, &FunctionGeneratorImpl::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), executedParameterCount(0), fillLevel(0), filled(0)
 {
@@ -63,9 +64,9 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
   eb_data_t mb_value;
   unsigned slot = 0;
 
-  dev->getDevice().read(mb_base, EB_DATA32, &mb_value);
+  tr->getDevice().read(mb_base, EB_DATA32, &mb_value);
   while((mb_value != 0xffffffff) && slot < 128) {
-    dev->getDevice().read(mb_base + slot * 4 * 2, EB_DATA32, &mb_value);
+    tr->getDevice().read(mb_base + slot * 4 * 2, EB_DATA32, &mb_value);
     slot++;
   }
 
@@ -77,17 +78,14 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
   //save the irq address in the odd mailbox slot
   //keep postal address to free later
   mailbox_slot_address = mb_base + slot * 4 * 2 + 4;
-  dev->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
-  clog << kLogDebug << "FunctionGenerator: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << std::endl;
+  tr->getDevice().write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
 }
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
   resetTimeout.disconnect(); // do not run ResetFailed
-  dev->getDevice().release_irq(irq);
-  
-  clog << "FunctionGenerator: freeing mailbox slot " << std::dec << mbx_slot << std::endl;
-  dev->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
+  tr->getDevice().release_irq(irq);
+  tr->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
 }
 
 static unsigned wrapping_sub(unsigned a, unsigned b, unsigned buffer_size)
@@ -123,7 +121,7 @@ void FunctionGeneratorImpl::refill()
   
   eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   cycle.read(regs + FG_WPTR, EB_DATA32, &write_offset_d);
   cycle.read(regs + FG_RPTR, EB_DATA32, &read_offset_d);
   cycle.close();
@@ -152,13 +150,13 @@ void FunctionGeneratorImpl::refill()
   unsigned space = buffer_size-1 - filled;  // free space on LM32
   unsigned refill = std::min(todo, space); // add this many records
   
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   for (unsigned i = 0; i < refill; ++i) {
     ParameterTuple& tuple = fifo[filled+i];
-    guint32 coeff_a, coeff_b, coeff_ab, coeff_c, control;
+    uint32_t coeff_a, coeff_b, coeff_ab, coeff_c, control;
     
-    coeff_a = (gint32)tuple.coeff_a; // sign extended
-    coeff_b = (gint32)tuple.coeff_b;
+    coeff_a = (int32_t)tuple.coeff_a; // sign extended
+    coeff_b = (int32_t)tuple.coeff_b;
     coeff_c = tuple.coeff_c;
     
     coeff_a <<= 16;
@@ -207,7 +205,7 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
   assert (enabled);
   
   // !!! imprecise; should be timestamped by the hardware
-  guint64 time = dev->ReadRawCurrentTime();
+  uint64_t time = tr->ReadRawCurrentTime();
   
   // make sure the evil microcontroller does not violate message sequencing
   if (msi == IRQ_DAT_REFILL) {
@@ -268,12 +266,12 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
   }
 }
 
-guint64 FunctionGeneratorImpl::ParameterTuple::duration() const
+uint64_t ParameterTuple::duration() const
 {
-  static const guint64 samples[8] = { // fixed in HDL
+  static const uint64_t samples[8] = { // fixed in HDL
     250, 500, 1000, 2000, 4000, 8000, 16000, 32000
   };
-  static const guint64 sample_len[8] = { // fixed in HDL
+  static const uint64_t sample_len[8] = { // fixed in HDL
     62500, // 16kHz in ns
     31250, // 32kHz
     15625, // 64kHz
@@ -287,10 +285,23 @@ guint64 FunctionGeneratorImpl::ParameterTuple::duration() const
 }
 
 
+bool FunctionGeneratorImpl::appendParameterTuples(std::vector<ParameterTuple> parameters)
+{
+  for (ParameterTuple p : parameters)
+  {
+    fifo.push_back(p);
+    fillLevel += p.duration();
+  }
+
+  if (channel != -1) refill();
+  return lowFill();
+}
+
+
 bool FunctionGeneratorImpl::appendParameterSet(
-  const std::vector< gint16 >& coeff_a,
-  const std::vector< gint16 >& coeff_b,
-  const std::vector< gint32 >& coeff_c,
+  const std::vector< int16_t >& coeff_a,
+  const std::vector< int16_t >& coeff_b,
+  const std::vector< int32_t >& coeff_c,
   const std::vector< unsigned char >& step,
   const std::vector< unsigned char >& freq,
   const std::vector< unsigned char >& shift_a,
@@ -301,19 +312,19 @@ bool FunctionGeneratorImpl::appendParameterSet(
   // confirm lengths match
   unsigned len = coeff_a.size();
   
-  if (coeff_b.size() != len) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "coeff_b length mismatch");
-  if (coeff_c.size() != len) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "coeff_c length mismatch");
-  if (step.size()    != len) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "step length mismatch");
-  if (freq.size()    != len) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "freq length mismatch");
-  if (shift_a.size() != len) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "shift_a length mismatch");
-  if (shift_b.size() != len) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "shift_b length mismatch");
+  if (coeff_b.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_b length mismatch");
+  if (coeff_c.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_c length mismatch");
+  if (step.size()    != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "step length mismatch");
+  if (freq.size()    != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "freq length mismatch");
+  if (shift_a.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_a length mismatch");
+  if (shift_b.size() != len) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_b length mismatch");
   
   // validate data
   for (unsigned i = 0; i < len; ++i) {
-    if (step[i] >= 8) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "step must be < 8");
-    if (freq[i] >= 8) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "freq must be < 8");
-    if (shift_a[i] > 48) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "shift_a must be <= 48");
-    if (shift_b[i] > 48) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "shift_b must be <= 48");
+    if (step[i] >= 8) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "step must be < 8");
+    if (freq[i] >= 8) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "freq must be < 8");
+    if (shift_a[i] > 48) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_a must be <= 48");
+    if (shift_b[i] > 48) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_b must be <= 48");
   }
   
   // import the data
@@ -338,7 +349,7 @@ bool FunctionGeneratorImpl::appendParameterSet(
 void FunctionGeneratorImpl::flush()
 {
   if (enabled)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot Flush");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot Flush");
     
   assert (channel == -1);
   
@@ -351,7 +362,7 @@ void FunctionGeneratorImpl::Flush()
  	flush();  	  
 }
 
-guint32 FunctionGeneratorImpl::getVersion() const
+uint32_t FunctionGeneratorImpl::getVersion() const
 {
   return version;
 }
@@ -386,22 +397,22 @@ bool FunctionGeneratorImpl::getRunning() const
   return running;
 }
 
-guint32 FunctionGeneratorImpl::getStartTag() const
+uint32_t FunctionGeneratorImpl::getStartTag() const
 {
   return startTag;
 }
 
-guint64 FunctionGeneratorImpl::ReadFillLevel()
+uint64_t FunctionGeneratorImpl::ReadFillLevel()
 {
   return fillLevel;
 }
 
-guint32 FunctionGeneratorImpl::ReadExecutedParameterCount()
+uint32_t FunctionGeneratorImpl::ReadExecutedParameterCount()
 {
   if (running) {
     eb_data_t count;
     eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
-    dev->getDevice().read(regs + FG_RAMP_COUNT, EB_DATA32, &count);
+    tr->getDevice().read(regs + FG_RAMP_COUNT, EB_DATA32, &count);
     return count;
   } else {
     return executedParameterCount;
@@ -413,20 +424,20 @@ void FunctionGeneratorImpl::acquireChannel()
   assert (channel == -1);
   
   unsigned i;
-  for (i = 0; i < allocation->indexes.size(); ++i)
-    if (allocation->indexes[i] == -1) break;
+  for (i = 0; i < allocation->size(); ++i)
+    if (allocation->operator[](i) == -1) break;
   
-  if (i == allocation->indexes.size()) {
+  if (i == allocation->size()) {
     std::ostringstream str;
     str.imbue(std::locale("C"));
-    str << "All " << allocation->indexes.size() << " microcontroller channels are in use";
-    throw Gio::DBus::Error(Gio::DBus::Error::FAILED, str.str());
+    str << "All " << allocation->size() << " microcontroller channels are in use";
+    throw saftbus::Error(saftbus::Error::FAILED, str.str());
   }
  
   // if this throws, it is not a problem
   eb_address_t regs = shm + FG_REGS_BASE(i, num_channels);
   etherbone::Cycle cycle;
-  cycle.open(dev->getDevice());
+  cycle.open(tr->getDevice());
   cycle.write(regs + FG_WPTR,       EB_DATA32, 0);
   cycle.write(regs + FG_RPTR,       EB_DATA32, 0);
   cycle.write(regs + FG_MBX_SLOT,   EB_DATA32, mbx_slot);
@@ -435,7 +446,7 @@ void FunctionGeneratorImpl::acquireChannel()
   cycle.write(regs + FG_TAG,        EB_DATA32, startTag);
   cycle.close();
  
-  allocation->indexes[i] = index;
+  allocation->operator[](i) = index;
   channel = i;
   enabled = true;
   signal_enabled.emit(enabled);
@@ -446,7 +457,7 @@ void FunctionGeneratorImpl::releaseChannel()
   assert (channel != -1);
   
   resetTimeout.disconnect();
-  allocation->indexes[channel] = -1;
+  allocation->operator[](channel) = -1;
   channel = -1;
   filled = 0;
   enabled = false;
@@ -456,9 +467,9 @@ void FunctionGeneratorImpl::releaseChannel()
 void FunctionGeneratorImpl::arm()
 {
   if (enabled)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
   if (fillLevel == 0)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
   
   // !enabled, so:
   assert(!armed);
@@ -470,10 +481,10 @@ void FunctionGeneratorImpl::arm()
   try {
 
     refill();
-    dev->getDevice().write(swi, EB_DATA32, SWI_ENABLE | channel);
+    tr->getDevice().write(swi, EB_DATA32, SWI_ENABLE | channel);
   } catch (...) {
     clog << kLogErr << "FunctionGenerator: failed to fill buffers and send enabled SWI on channel " << std::dec << channel << " for index " << index << std::endl;
-    dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
+    tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
     throw;
   }
 }
@@ -491,7 +502,7 @@ bool FunctionGeneratorImpl::ResetFailed()
   if (running) { // synthesize missing Stopped
     running = false;
     signal_running.emit(running);
-    signal_stopped.emit(dev->ReadRawCurrentTime(), true, false, false);
+    signal_stopped.emit(tr->ReadRawCurrentTime(), true, false, false);
   } else {
     // synthesize any missing Armed transitions
     if (!armed) {
@@ -509,9 +520,9 @@ void FunctionGeneratorImpl::Reset()
 {
   if (channel == -1) return; // nothing to abort
   if (resetTimeout.connected()) return; // reset already in progress
-  dev->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
+  tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
   // expect disarm or started+stopped, but if not ... timeout:
-  resetTimeout = Glib::signal_timeout().connect(
+  resetTimeout = Slib::signal_timeout().connect(
     sigc::mem_fun(*this, &FunctionGeneratorImpl::ResetFailed), 250); // 250ms
 }
 
@@ -526,17 +537,17 @@ void FunctionGeneratorImpl::ownerQuit()
   Reset();
 }
 
-void FunctionGeneratorImpl::setStartTag(guint32 val)
+void FunctionGeneratorImpl::setStartTag(uint32_t val)
 {
   if (enabled)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Enabled, cannot set StartTag");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot set StartTag");
   
   if (val != startTag) {
     startTag = val;
   }
 }
 
-Glib::ustring FunctionGeneratorImpl::GetName()
+std::string FunctionGeneratorImpl::GetName()
 {
     std::ostringstream ss;
     ss << "fg-" << (int)getSCUbusSlot() << "-" << (int)getDeviceNumber();

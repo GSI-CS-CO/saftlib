@@ -3,16 +3,16 @@ Saftlib - Simplified API for Timing
 GSI timing receivers include a large collection of slave devices. Saftlib
 provides a user-friendly software interface for controlling these slaves.
 The process saftd shares access to these hardware resources on behalf of
-multiple client programs. Clients connect to saftd via dbus using the
+multiple client programs. Clients connect to saftd using the
 saftlib library.
 
 A simple example:
 
   // Get a list of all devices managed by saftlib
-  map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+  map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
 
   // Create a proxy object for the first timing receiver
-  Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices.front().second);
+  std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices.front().second);
 
   // Print the value of the Locked property
   std::cout << "Locked: " << receiver->getLocked() << std::endl;
@@ -21,7 +21,9 @@ A simple example:
   receiver->Locked.connect(sigc::ptr_fun(&on_locked_callback));
 
   // Wait forever, running callbacks
-  Glib::MainLoop::create()->run();
+  while(true) {
+    saftlib::wait_for_signal();
+  }
 
 Documentation for available objects can be found in:
   /usr/share/doc/saftlib
@@ -30,5 +32,3 @@ Compilation flags available with:
   pkg-config --cflags saftlib
   pkg-config --libs saftlib
 
-A great way to interact with saftd is to run 'd-feet'.
-The service can be found in "System Bus", de.gsi.saftlib.

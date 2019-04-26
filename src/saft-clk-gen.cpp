@@ -11,12 +11,12 @@
 /* ==================================================================================================== */
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -44,14 +44,13 @@ static const char *deviceName  = NULL;  /* Name of the device */
 static int clk_show_table (void)
 {
   /* Initialize saftlib components */
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   /* Try to get the table */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > outs;
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::map< std::string, std::string > outs;
     outs = receiver->getOutputs();
     
     /* Print table header */
@@ -59,11 +58,11 @@ static int clk_show_table (void)
     std::cout << "--------------------------" << std::endl;
     
     /* Print Outputs */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
-        Glib::RefPtr<Output_Proxy> output_proxy;
+        std::shared_ptr<Output_Proxy> output_proxy;
         output_proxy = Output_Proxy::create(it->second);
         if (output_proxy->getTypeOut() == "1ns (LVDS)")
         {
@@ -76,7 +75,7 @@ static int clk_show_table (void)
     }
     
   }
-  catch (const Glib::Error& error) 
+  catch (const saftbus::Error& error) 
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -103,23 +102,22 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
   }
 
   /* Initialize saftlib components */
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   /* Try to get the table */
   try
   {
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< Glib::ustring, Glib::ustring > outs;
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::map< std::string, std::string > outs;
     outs = receiver->getOutputs();
     
     /* Configure clock */
-    for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
     {
       if ((ioNameGiven && (it->first == ioName)))
       {
         ioFound = true;
-        Glib::RefPtr<Output_Proxy> output_proxy;
+        std::shared_ptr<Output_Proxy> output_proxy;
         output_proxy = Output_Proxy::create(it->second);
         if   ((high_phase == 0.0) && (low_phase == 0.0) && (phase_offset == 0)) { ioClkStatus = output_proxy->StopClock(); }
         else                                                                    { ioClkStatus = output_proxy->StartClock(high_phase, low_phase, phase_offset); }
@@ -128,7 +126,7 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
       } 
     }
   }
-  catch (const Glib::Error& error) 
+  catch (const saftbus::Error& error) 
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
@@ -244,8 +242,7 @@ int main (int argc, char** argv)
     std::cerr << "Missing device name!" << std::endl;
     return (-1);
   }
-  Gio::init();
-  map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+  map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
   if (devices.find(deviceName) == devices.end())
   {
     std::cerr << "Device " << deviceName << " does not exist!" << std::endl;

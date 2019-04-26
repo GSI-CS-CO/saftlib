@@ -31,6 +31,7 @@
 
 #include <deque>
 
+
 #include "interfaces/FunctionGenerator.h"
 #include "FunctionGeneratorImpl.h"
 #include "Owned.h"
@@ -45,29 +46,29 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
   public:
     typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
-      TimingReceiver* dev;
- 			std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
+        std::string objectPath;
+        TimingReceiver *dev;
+        std::shared_ptr<FunctionGeneratorImpl> functionGeneratorImpl;            
     };
     
-    static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
+    static std::shared_ptr<FunctionGenerator> create(const ConstructorType& args);
     
     // iFunctionGenerator overrides
     void Arm();
     void Abort();
-    guint64 ReadFillLevel();
-    bool AppendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
+    uint64_t ReadFillLevel();
+    bool AppendParameterSet(const std::vector< int16_t >& coeff_a, const std::vector< int16_t >& coeff_b, const std::vector< int32_t >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
     void Flush();
-    guint32 getVersion() const;
+    uint32_t getVersion() const;
     unsigned char getSCUbusSlot() const;
     unsigned char getDeviceNumber() const;
     unsigned char getOutputWindowSize() const;
     bool getEnabled() const;
     bool getArmed() const;
     bool getRunning() const;
-    guint32 getStartTag() const;
-    guint32 ReadExecutedParameterCount();
-    void setStartTag(guint32 val);
+    uint32_t getStartTag() const;
+    uint32_t ReadExecutedParameterCount();
+    void setStartTag(uint32_t val);
     
   protected:
     FunctionGenerator(const ConstructorType& args);
@@ -75,59 +76,15 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     void Reset();
     void ownerQuit();
             
-    TimingReceiver* dev;
+    TimingReceiver *dev;
     
     void on_fg_running(bool);
     void on_fg_armed(bool);
     void on_fg_enabled(bool);
     void on_fg_refill();
-    void on_fg_started(guint64);
-    void on_fg_stopped(guint64, bool, bool, bool);
+    void on_fg_started(uint64_t);
+    void on_fg_stopped(uint64_t, bool, bool, bool);
 
-    /*
-    Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
-    eb_address_t shm;
-    eb_address_t swi;
-    etherbone::sdb_msi_device base;
-    sdb_device mbx;
-    unsigned num_channels;
-    unsigned buffer_size;
-    unsigned int index;
-    unsigned char scubusSlot;
-    unsigned char deviceNumber;
-    unsigned char version;
-    unsigned char outputWindowSize;
-    eb_address_t irq;
-
-    int channel; // -1 if no channel assigned
-    bool enabled;
-    bool armed;
-    bool running;
-    bool abort;
-    sigc::connection resetTimeout;
-    guint32 startTag;
-    unsigned executedParameterCount;
-    */
-   /* 
-    struct ParameterTuple {
-      gint16 coeff_a;
-      gint16 coeff_b;
-      gint32 coeff_c;
-      guint8 step;
-      guint8 freq;
-      guint8 shift_a;
-      guint8 shift_b;
-      
-      guint64 duration() const;
-    };
-
-    unsigned mbx_slot;
-    
-    // These 3 variables must be kept in sync:
-    guint64 fillLevel;
-    unsigned filled; // # of fifo entries currently on LM32    
-    std::deque<ParameterTuple> fifo;
-    */
    	std::shared_ptr<FunctionGeneratorImpl> fgImpl;      
     
 };

@@ -32,7 +32,7 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
-#include <giomm.h>
+#include <unistd.h>
 
 #include <time.h>
 #include <sys/time.h>
@@ -89,13 +89,13 @@ int main(int argc, char** argv)
   unsigned int nIter  = 1;
 
   // variables inject event
-  guint64 eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  guint64 eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
-  guint64 eventTime   = 0x0;     // time for event (this value is added to the current time or the next PPS, see option -p
-  guint64 startTime   = 0x0;     // time for start of schedule in PTP time
-  guint64 nextTimeWR  = 0x0;     // time for event (in units of WR time)
-  gint64  sleepTime   = 0x0;     // time interval for sleeping
-  guint64 wrTime      = 0x0;     // current WR time
+  uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
+  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
+  uint64_t eventTime   = 0x0;     // time for event (this value is added to the current time or the next PPS, see option -p
+  uint64_t startTime   = 0x0;     // time for start of schedule in PTP time
+  uint64_t nextTimeWR  = 0x0;     // time for event (in units of WR time)
+  int64_t  sleepTime   = 0x0;     // time interval for sleeping
+  uint64_t wrTime      = 0x0;     // current WR time
 
   // variables attach, remove
   char    *deviceName = NULL;
@@ -150,26 +150,20 @@ int main(int argc, char** argv)
   
   try {
     // initialize required stuff
-    Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
 	// get a specific device
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
-    switch (useFirstDev) {
-    case true  :
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
+    if (useFirstDev) {
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
-      break;
-    case false :
+    } else {
       if (devices.find(deviceName) == devices.end()) {
         std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
         return -1;
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-      break;
-    default :
-      return 1;
-    } //switch useFirstDevice;
+    } //if useFirstDevice;
 
 	for (i=0; i<nIter; i++) {
 	  wrTime    = receiver->ReadCurrentTime();
@@ -193,7 +187,7 @@ int main(int argc, char** argv)
 		  // lets sleep until event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
 		  wrTime    = receiver->ReadCurrentTime();
 		  if (nextTimeWR > (wrTime + 100000000)) {                       //only sleep if injected event "was" more than 100ms in the future
-			sleepTime = (gint64)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event			
+			sleepTime = (int64_t)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event			
 			usleep(sleepTime);
 		  } // if next time
 		} // while getline
@@ -202,7 +196,7 @@ int main(int argc, char** argv)
 	  else std::cerr << "Unable to open file" << std::endl; 
 	} //for i
       
-  } catch (const Glib::Error& error) {
+  } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   

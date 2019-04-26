@@ -51,6 +51,11 @@
       -->
     <property name="Locked" type="b" access="read"/>
 
+    <!-- This signal is sent when the Lock Property changes -->
+    <signal name="SigLocked">
+      <arg name="locked" type="b"/>
+    </signal>
+
     <!-- TemperatureSensorAvail: Check if a temperature sensor is available
          in a timing receiver.
       -->

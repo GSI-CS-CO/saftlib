@@ -32,25 +32,25 @@ class Output : public ActionSink, public iOutputActionSink
   public:
     typedef Output_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring name;
-      Glib::ustring objectPath;
-      Glib::ustring partnerPath;
+      std::string name;
+      std::string objectPath;
+      std::string partnerPath;
       TimingReceiver* dev;
       unsigned channel;
       unsigned num;
-      Glib::RefPtr<InoutImpl> impl;
+      std::shared_ptr<InoutImpl> impl;
       sigc::slot<void> destroy;
     };
 
-    static Glib::RefPtr<Output> create(const ConstructorType& args);
+    static std::shared_ptr<Output> create(const ConstructorType& args);
     
     const char *getInterfaceName() const;
     
     // Methods
-    Glib::ustring NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on);
+    std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on);
     void WriteOutput(bool value);
     bool ReadOutput();
-    bool StartClock(double high_phase, double low_phase, guint64 phase_offset);
+    bool StartClock(double high_phase, double low_phase, uint64_t phase_offset);
     bool StopClock();
     
     // Property getters
@@ -60,9 +60,9 @@ class Output : public ActionSink, public iOutputActionSink
     bool getPPSMultiplexer() const;
     bool getOutputEnableAvailable() const;
     bool getSpecialPurposeOutAvailable() const;
-    Glib::ustring getLogicLevelOut() const;
-    Glib::ustring getTypeOut() const;
-    Glib::ustring getInput() const;
+    std::string getLogicLevelOut() const;
+    std::string getTypeOut() const;
+    std::string getInput() const;
     
     // Property setters
     void setOutputEnable(bool val);
@@ -77,8 +77,8 @@ class Output : public ActionSink, public iOutputActionSink
   
   protected:
     Output(const ConstructorType& args);
-    Glib::RefPtr<InoutImpl> impl;
-    Glib::ustring partnerPath;
+    std::shared_ptr<InoutImpl> impl;
+    std::string partnerPath;
 };
 
 }

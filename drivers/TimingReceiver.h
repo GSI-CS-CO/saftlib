@@ -24,6 +24,7 @@
 #include "ActionSink.h"
 #include "EventSource.h"
 #include "interfaces/TimingReceiver.h"
+#include <memory>
 
 namespace saftlib {
 
@@ -31,9 +32,9 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
   public:
     struct ConstructorType {
       Device device;
-      Glib::ustring name;
-      Glib::ustring etherbonePath;
-      Glib::ustring objectPath;
+      std::string name;
+      std::string etherbonePath;
+      std::string objectPath;
       etherbone::sdb_msi_device base;
       eb_address_t stream;
       eb_address_t info;
@@ -49,23 +50,23 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
     // iDevice
     void Remove();
-    Glib::ustring getEtherbonePath() const;
-    Glib::ustring getName() const;
+    std::string getEtherbonePath() const;
+    std::string getName() const;
     
     // iTimingReceiver
-    Glib::ustring NewSoftwareActionSink(const Glib::ustring& name);
-    void InjectEvent(guint64 event, guint64 param, guint64 time);
-    guint64 ReadCurrentTime();
-    std::map< Glib::ustring, Glib::ustring > getGatewareInfo() const;
-    Glib::ustring getGatewareVersion() const;
+    std::string NewSoftwareActionSink(const std::string& name);
+    void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
+    uint64_t ReadCurrentTime();
+    std::map< std::string, std::string > getGatewareInfo() const;
+    std::string getGatewareVersion() const;
     bool getLocked() const;
     bool getTemperatureSensorAvail() const;
-    gint32 CurrentTemperature();
-    std::map< Glib::ustring, Glib::ustring > getSoftwareActionSinks() const;
-    std::map< Glib::ustring, Glib::ustring > getOutputs() const;
-    std::map< Glib::ustring, Glib::ustring > getInputs() const;
-    std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > getInterfaces() const;
-    guint32 getFree() const;
+    int32_t CurrentTemperature();
+    std::map< std::string, std::string > getSoftwareActionSinks() const;
+    std::map< std::string, std::string > getOutputs() const;
+    std::map< std::string, std::string > getInputs() const;
+    std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
+    uint32_t getFree() const;
     
     // Compile the condition table
     void compile();
@@ -73,29 +74,29 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     // Allow hardware access to the underlying device
     Device& getDevice() { return device; }
     eb_address_t getBase() { return base; }
-    guint64 ReadRawCurrentTime();
+    uint64_t ReadRawCurrentTime();
     
     // public type, even though the member is private
     typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
-    typedef std::map< SinkKey, Glib::RefPtr<ActionSink> >  ActionSinks;
-    typedef std::map< SinkKey, Glib::RefPtr<EventSource> > EventSources;
+    typedef std::map< SinkKey, std::shared_ptr<ActionSink> >  ActionSinks;
+    typedef std::map< SinkKey, std::shared_ptr<EventSource> > EventSources;
     
   protected:
     mutable saftlib::Device device;
-    Glib::ustring name;
-    Glib::ustring etherbonePath;
+    std::string name;
+    std::string etherbonePath;
     eb_address_t base;
     eb_address_t stream;
     eb_address_t watchdog;
     eb_address_t pps;
     eb_address_t ats;
-    guint64 sas_count;
+    uint64_t sas_count;
     eb_address_t arrival_irq;
     eb_address_t generator_irq;
     
-    std::map<Glib::ustring, Glib::ustring> info;
+    std::map<std::string, std::string> info;
     mutable bool locked;
-    mutable gint32 temperature;
+    mutable int32_t temperature;
     eb_data_t watchdog_value;
     
     sigc::connection pollConnection;
@@ -106,10 +107,10 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     unsigned used_conditions;
     std::vector<eb_address_t> channel_msis;
     std::vector<eb_address_t> queue_addresses;
-    std::vector<guint16> most_full;
+    std::vector<uint16_t> most_full;
         
-    typedef std::map< Glib::ustring, Glib::RefPtr<Owned> > Owneds;
-    typedef std::map< Glib::ustring, Owneds >              OtherStuff;
+    typedef std::map< std::string, std::shared_ptr<Owned> > Owneds;
+    typedef std::map< std::string, Owneds >              OtherStuff;
     
     ActionSinks  actionSinks;
     EventSources eventSources;
@@ -118,11 +119,11 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     // Polling method
     bool poll();
     
-    void setupGatewareInfo(guint32 address);
+    void setupGatewareInfo(uint32_t address);
     void do_remove(SinkKey key);
     void setHandler(unsigned channel, bool enable, eb_address_t address);
     void msiHandler(eb_data_t msi, unsigned channel);
-    guint16 updateMostFull(unsigned channel); // returns current fill
+    uint16_t updateMostFull(unsigned channel); // returns current fill
     void resetMostFull(unsigned channel);
     void popMissingQueue(unsigned channel, unsigned num);
   

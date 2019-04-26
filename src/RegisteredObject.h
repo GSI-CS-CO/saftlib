@@ -20,7 +20,6 @@
 #ifndef SAFTLIB_REGISTERED_OBJECT_H
 #define SAFTLIB_REGISTERED_OBJECT_H
 
-#include <giomm.h>
 #include <etherbone.h>
 #include "SAFTd.h"
 
@@ -33,39 +32,39 @@ template <typename T>
 class RegisteredObject : public T
 {
   public:
-    static Glib::RefPtr< RegisteredObject<T> > create(const Glib::ustring& object_path, const typename T::ConstructorType& args);
+    static std::shared_ptr< RegisteredObject<T> > create(const std::string& object_path, const typename T::ConstructorType& args);
     
-    const Glib::RefPtr<Gio::DBus::Connection>& getConnection() const;
-    const Glib::ustring& getSender() const;
+    const std::shared_ptr<saftbus::Connection>& getConnection() const;
+    const std::string& getSender() const;
     
   protected:
-    RegisteredObject(const Glib::ustring& object_path, const typename T::ConstructorType& args);
+    RegisteredObject(const std::string& object_path, const typename T::ConstructorType& args);
     virtual void rethrow(const char *method) const;
     
     typename T::ServiceType service;
 };
 
 template <typename T>
-Glib::RefPtr< RegisteredObject<T> > RegisteredObject<T>::create(const Glib::ustring& object_path, const typename T::ConstructorType& args)
+std::shared_ptr< RegisteredObject<T> > RegisteredObject<T>::create(const std::string& object_path, const typename T::ConstructorType& args)
 {
-  return Glib::RefPtr< RegisteredObject<T> >(new RegisteredObject<T>(object_path, args));
+  return std::shared_ptr< RegisteredObject<T> >(new RegisteredObject<T>(object_path, args));
 }
 
 template <typename T>
-RegisteredObject<T>::RegisteredObject(const Glib::ustring& object_path, const typename T::ConstructorType& args)
+RegisteredObject<T>::RegisteredObject(const std::string& object_path, const typename T::ConstructorType& args)
  : T(args), service(this, sigc::mem_fun(this, &RegisteredObject<T>::rethrow))
 {
   service.register_self(SAFTd::get().connection(), object_path);
 }
 
 template <typename T>
-const Glib::RefPtr<Gio::DBus::Connection>& RegisteredObject<T>::getConnection() const
+const std::shared_ptr<saftbus::Connection>& RegisteredObject<T>::getConnection() const
 {
   return service.getConnection();
 }
 
 template <typename T>
-const Glib::ustring& RegisteredObject<T>::getSender() const
+const std::string& RegisteredObject<T>::getSender() const
 {
   return service.getSender();
 }
@@ -78,7 +77,7 @@ void RegisteredObject<T>::rethrow(const char *method) const
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;
     str << method << ": " << e;
-    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
+    throw saftbus::Error(saftbus::Error::IO_ERROR, str.str().c_str());
   }
 }
 

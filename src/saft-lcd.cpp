@@ -31,13 +31,13 @@
 
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
+#include <cstdint>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -87,24 +87,24 @@
 using namespace std;
 
 static const char* program;
-static guint32  pmode = PMODE_NONE;  // how data are displayed
+static uint32_t  pmode = PMODE_NONE;  // how data are displayed
 static int      getVersion = 0;      // print version?
 
-static guint32  source;              // GID of source
-static guint32  idleSource;          // GID played when BPC idle
-static guint32  bpcAct;              // actual BPC 
-static guint32  vaccAct;             // actual vAcc from UNILAC
+static uint32_t  source;              // GID of source
+static uint32_t  idleSource;          // GID played when BPC idle
+static uint32_t  bpcAct;              // actual BPC 
+static uint32_t  vaccAct;             // actual vAcc from UNILAC
 static int      nCmd;                // counts command events for desired machine
 
 
 // this will be called while snooping
-static void on_action_op(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void on_action_op(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
 {
-  guint32 gid;
-  guint32 evtno;
-  guint32 bpcid;
-  guint32 vacc;
-  guint32 dry;
+  uint32_t gid;
+  uint32_t evtno;
+  uint32_t bpcid;
+  uint32_t vacc;
+  uint32_t dry;
   string  gName;
 
   gid     = ((id & 0x0fff000000000000) >> 48);
@@ -229,9 +229,9 @@ int main(int argc, char** argv)
   char *value_end;
 
   // variables snoop event
-  guint64 snoopID     = 0x0;
-  guint64 snoopMask   = 0x0;
-  guint32 dummy;
+  uint64_t snoopID     = 0x0;
+  uint64_t snoopMask   = 0x0;
+  uint32_t dummy;
 
   char *deviceName = NULL;
   
@@ -310,140 +310,130 @@ int main(int argc, char** argv)
   
   try {
     // initialize required stuff
-    Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
     
     // get a specific device
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
-    switch (useFirstDev) {
-    case true  :
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
+    if (useFirstDev) {
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
-      break;
-    case false :
+    } else {
       if (devices.find(deviceName) == devices.end()) {
         std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
         return -1;
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-      break;
-    default :
-      return 1;
-    } //switch useFirstDevice;
-
+    } // if (useFirstDev)
     
-    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
-
     // snoop
     if (snoop) {
-      Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-
       snoopMask = 0xfffffff000000000;
 
-      Glib::RefPtr<SoftwareCondition_Proxy> condition[32];
+      std::shared_ptr<SoftwareCondition_Proxy> condition[32];
       int nCon = 0;
 
       // GID, SIS, ESR, HEST     
-      snoopID   = ((guint64)FID << 60) | ((guint64)GTK3MV4_TO_PLTKMH2 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTK3MV4_TO_PLTKMH2 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)SIS18_RING << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 8));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)SIS18_RING << 48) | ((guint64)UNI_TCREQ << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)UNI_TCREQ << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 100000000));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)SIS18_RING << 48) | ((guint64)COMMAND << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)COMMAND << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 8));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)GTS1MU1_TO_GTS3MU1 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTS1MU1_TO_GTS3MU1 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 16));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)GTS1MU1_TO_GTE3MU1 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTS1MU1_TO_GTE3MU1 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 16));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)GTS3MU1_TO_GHFSMU1 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTS3MU1_TO_GHFSMU1 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 24));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)GHFSMU1_TO_GTS6MU1 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GHFSMU1_TO_GTS6MU1 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 32));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)GTS6MU1_TO_ESR << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTS6MU1_TO_ESR << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 36));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)ESR_RING << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 40));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)ESR_RING << 48) | ((guint64)COMMAND << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)COMMAND << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 40));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)ESR_TO_GTV2MU2 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)ESR_TO_GTV2MU2 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 48));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)GTH4MU2_TO_GTV1MU1 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTH4MU2_TO_GTV1MU1 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 48));
       nCon++;
 
       // CRYRING 
-      snoopID   = ((guint64)FID << 60) | ((guint64)YRT1IN_TO_YRT1LQ1 << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)YRT1IN_TO_YRT1LQ1 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)CRYRING_RING << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 56));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)CRYRING_RING << 48) | ((guint64)COMMAND << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)COMMAND << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 56));
       nCon++;
 
       // caves
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HHD << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HHD << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HFS << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HFS << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
 
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HHT << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HHT << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HADES << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HADES << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTM << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HTM << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTC << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HTC << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTD << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HTD << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTA << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HTA << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
-      snoopID   = ((guint64)FID << 60) | ((guint64)TO_HTP << 48) | ((guint64)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)TO_HTP << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
       nCon++;
       
@@ -456,10 +446,12 @@ int main(int argc, char** argv)
         condition[i]->setActive(true);    
       } // for i
 
-      loop->run();
+      while(true) {
+        saftlib::wait_for_signal();
+      }
     } // opSnoop
     
-  } catch (const Glib::Error& error) {
+  } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   

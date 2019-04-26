@@ -27,8 +27,12 @@
 namespace saftlib
 {
 
-BaseObject::BaseObject(const Glib::ustring& objectPath_)
+BaseObject::BaseObject(const std::string& objectPath_)
  : objectPath(objectPath_)
+{
+}
+
+BaseObject::~BaseObject() 
 {
 }
 

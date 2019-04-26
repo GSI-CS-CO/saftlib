@@ -38,19 +38,19 @@ const char *MILbusActionSink::getInterfaceName() const
   return "MILbusActionSink";
 }
 
-Glib::ustring MILbusActionSink::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, guint16 tag)
+std::string MILbusActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint16_t tag)
 {
   return NewConditionHelper(active, id, mask, offset, tag, false,
     sigc::ptr_fun(&MILbusCondition::create));
 }
 
-void MILbusActionSink::InjectTag(guint16 tag)
+void MILbusActionSink::InjectTag(uint16_t tag)
 {
   ownerOnly();
-  throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Unimplemented"); // !!!
+  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Unimplemented"); // !!!
 }
 
-Glib::RefPtr<MILbusActionSink> MILbusActionSink::create(const ConstructorType& args)
+std::shared_ptr<MILbusActionSink> MILbusActionSink::create(const ConstructorType& args)
 {
   return RegisteredObject<MILbusActionSink>::create(args.objectPath, args);
 }

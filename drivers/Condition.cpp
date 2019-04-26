@@ -36,17 +36,17 @@ Condition::Condition(const Condition_ConstructorType& args)
 {
 }
 
-guint64 Condition::getID() const
+uint64_t Condition::getID() const
 {
   return id;
 }
 
-guint64 Condition::getMask() const
+uint64_t Condition::getMask() const
 {
   return mask;
 }
 
-gint64 Condition::getOffset() const
+int64_t Condition::getOffset() const
 {
   return offset;
 }
@@ -76,11 +76,11 @@ bool Condition::getActive() const
   return active;
 }
 
-void Condition::setID(guint64 val)
+void Condition::setID(uint64_t val)
 {
   ownerOnly();
   if (val == id) return;
-  guint64 old = id;
+  uint64_t old = id;
   
   id = val;
   try {
@@ -92,11 +92,11 @@ void Condition::setID(guint64 val)
   }
 }
 
-void Condition::setMask(guint64 val)
+void Condition::setMask(uint64_t val)
 {
   ownerOnly();
   if (val == mask) return;
-  guint64 old = mask;
+  uint64_t old = mask;
   
   mask = val;
   try {
@@ -108,11 +108,11 @@ void Condition::setMask(guint64 val)
   }
 }
 
-void Condition::setOffset(gint64 val)
+void Condition::setOffset(int64_t val)
 {
   ownerOnly();
   if (val == offset) return;
-  gint64 old = offset;
+  int64_t old = offset;
   
   offset = val;
   try {

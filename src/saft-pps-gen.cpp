@@ -13,7 +13,6 @@
 /* ==================================================================================================== */
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -42,30 +41,30 @@ using namespace std;
 static const char *program    = NULL;  /* Name of the application */
 static const char *deviceName = NULL;  /* Name of the device */
 bool verbose_mode             = false; /* Print verbose output to output stream => -v */
-guint64 overflow_counter      = 0;
-guint64 action_counter        = 0;
-guint64 late_counter          = 0;
-guint64 early_counter         = 0;
-guint64 conflict_counter      = 0;
-guint64 delayed_counter       = 0;
+uint64_t overflow_counter      = 0;
+uint64_t action_counter        = 0;
+uint64_t late_counter          = 0;
+uint64_t early_counter         = 0;
+uint64_t conflict_counter      = 0;
+uint64_t delayed_counter       = 0;
 
 /* Prototypes */
 /* ==================================================================================================== */
-static std::string formatDate(guint64 time);
-void onAction(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags, int rule);
-void onOverflowCount(guint64 count);
-void onActionCount(guint64 count);
-void onLateCount(guint64 count);
-void onEarlyCount(guint64 count);
-void onConflictCount(guint64 count);
-void onDelayedCount(guint64 count);
+static std::string formatDate(uint64_t time);
+void onAction(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags, int rule);
+void onOverflowCount(uint64_t count);
+void onActionCount(uint64_t count);
+void onLateCount(uint64_t count);
+void onEarlyCount(uint64_t count);
+void onConflictCount(uint64_t count);
+void onDelayedCount(uint64_t count);
 static void pps_help (void);
 
 /* Function formatDate() */
 /* ==================================================================================================== */
-static std::string formatDate(guint64 time)
+static std::string formatDate(uint64_t time)
 {
-  guint64 ns    = time % 1000000000;
+  uint64_t ns    = time % 1000000000;
   time_t  s     = time / 1000000000;
   struct tm *tm = gmtime(&s);
   char date[40];
@@ -79,7 +78,7 @@ static std::string formatDate(guint64 time)
 
 /* Function onAction() */
 /* ==================================================================================================== */
-void onAction(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags, int rule)
+void onAction(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags, int rule)
 {
   std::cout << "Got event at: 0x" << std::hex << executed << " -> " << formatDate(executed) << std::endl;
   if (verbose_mode)
@@ -99,12 +98,12 @@ void onAction(guint64 event, guint64 param, guint64 deadline, guint64 executed, 
 
 /* Generic counter functions */
 /* ==================================================================================================== */
-void onActionCount(guint64 count)   { action_counter++; }
-void onOverflowCount(guint64 count) { overflow_counter++; }
-void onLateCount(guint64 count)     { late_counter++; }
-void onEarlyCount(guint64 count)    { early_counter++; }
-void onConflictCount(guint64 count) { conflict_counter++; }
-void onDelayedCount(guint64 count)  { delayed_counter++; }
+void onActionCount(uint64_t count)   { action_counter++; }
+void onOverflowCount(uint64_t count) { overflow_counter++; }
+void onLateCount(uint64_t count)     { late_counter++; }
+void onEarlyCount(uint64_t count)    { early_counter++; }
+void onConflictCount(uint64_t count) { conflict_counter++; }
+void onDelayedCount(uint64_t count)  { delayed_counter++; }
 
 /* Function pps_help() */
 /* ==================================================================================================== */
@@ -147,9 +146,9 @@ int main (int argc, char** argv)
   bool first_pps        = true;  /* Is this the first PPS output? */
   bool wrLocked         = false; /* Is the timing receiver locked? */
   bool setup_scu_bus    = false; /* Set up a new condition for the SCU bus? */
-  guint32 scu_bus_tag   = 0;     /* SCU Bus tag */
-  guint64 wrTime        = 0;     /* Current time */
-  guint64 wrNext        = 0;     /* Execution time for the next PPS */
+  uint32_t scu_bus_tag   = 0;     /* SCU Bus tag */
+  uint64_t wrTime        = 0;     /* Current time */
+  uint64_t wrNext        = 0;     /* Execution time for the next PPS */
 
   /* Get the application name */
   program = argv[0]; 
@@ -189,20 +188,17 @@ int main (int argc, char** argv)
   }
   else
   {
-    /* Initialize saftlib components */
-    Gio::init();
-    Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
     
     /* Try to setup all outputs */
     try
     {
-      map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+      map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
       if (devices.find(deviceName) == devices.end())
       {
         std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
         return (-1);
       }
-      Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+      std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
       
       /* Check if timing receiver is locked */
       wrLocked = receiver->getLocked();
@@ -222,21 +218,19 @@ int main (int argc, char** argv)
       }
       
       /* Search for outputs and inoutputs */
-      std::map< Glib::ustring, Glib::ustring > outs;
-      std::map< Glib::ustring, Glib::ustring > ins;
-      Glib::ustring io_path;
-      Glib::ustring io_partner;
+      std::map< std::string, std::string > outs;
+      std::map< std::string, std::string > ins;
+      std::string io_path;
+      std::string io_partner;
       outs = receiver->getOutputs();
       ins = receiver->getInputs();
-      Glib::RefPtr<Output_Proxy> output_proxy;
-      Glib::RefPtr<Input_Proxy> input_proxy;
       
       /* Check if IO exists output */
       if (!just_inject)
       {
-        for (std::map<Glib::ustring,Glib::ustring>::iterator it=outs.begin(); it!=outs.end(); ++it)
+        for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
         {
-          output_proxy = Output_Proxy::create(it->second);
+          std::shared_ptr<Output_Proxy> output_proxy = Output_Proxy::create(it->second);
           if (verbose_mode) { std::cout << "Info: Found " << it->first << std::endl; }
           total_ios++;
           
@@ -257,7 +251,7 @@ int main (int argc, char** argv)
             if (verbose_mode) { std::cout << "Found Partner Path: " << io_partner << std::endl; }
             if (setup_io)
             {
-              input_proxy = Input_Proxy::create(io_partner);
+              std::shared_ptr<Input_Proxy> input_proxy = Input_Proxy::create(io_partner);
               if (input_proxy->getInputTerminationAvailable())
               { 
                 if (verbose_mode) { std::cout << "Turning input termination off... " << std::endl; }
@@ -267,8 +261,8 @@ int main (int argc, char** argv)
           }
           
           /* Setup conditions */
-          Glib::RefPtr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
-          Glib::RefPtr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
+          std::shared_ptr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
+          std::shared_ptr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
           
           /* Accept all kinds of events */
           condition_high->setAcceptConflict(true);
@@ -289,7 +283,7 @@ int main (int argc, char** argv)
       if (setup_scu_bus)
       {
         /* Search for SCU bus channel */
-        map<Glib::ustring, Glib::ustring> e_scubusses = receiver->getInterfaces()["SCUbusActionSink"];
+        map<std::string, std::string> e_scubusses = receiver->getInterfaces()["SCUbusActionSink"];
         if (e_scubusses.size() != 1)
         {
           std::cerr << "Device '" << receiver->getName() << "' has no SCU bus!" << std::endl;
@@ -297,8 +291,8 @@ int main (int argc, char** argv)
        }
        
        /* Get connection */
-       Glib::RefPtr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
-       Glib::RefPtr<SCUbusCondition_Proxy> scubus_condition;
+       std::shared_ptr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
+       std::shared_ptr<SCUbusCondition_Proxy> scubus_condition;
        scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
         
        /* Accept every kind of event */
@@ -343,8 +337,8 @@ int main (int argc, char** argv)
       {
         /* Setup SoftwareActionSink */
         std::cout << "Waiting for timing events..." << std::endl;
-        Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-        Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
+        std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
         condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Accept all kinds of events */
@@ -362,10 +356,12 @@ int main (int argc, char** argv)
         sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
         
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
-        loop->run();
+        while (true) {
+          saftlib::wait_for_signal();
+        }
       }
     }
-    catch (const Glib::Error& error) 
+    catch (const saftbus::Error& error) 
     {
       /* Catch error(s) */
       std::cerr << "Failed to invoke method: " << error.what() << std::endl;

@@ -1,0 +1,9 @@
+/* Use saftbus for inter-process communication */
+#define IPC_METHOD saftbus
+
+/* Define if you have saftbus */
+#define HAVE_SAFTBUS 1
+
+/* Saftbus doesn't need this function. In places where the code generator puts it this macro will get rid of it */
+#define g_dbus_message_get_unix_fd_list /**/
+#include <saftbus.h>

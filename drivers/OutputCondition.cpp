@@ -40,11 +40,11 @@ bool OutputCondition::getOn() const
 
 void OutputCondition::setOn(bool v)
 {
-  guint32 val = v?2:1; // 2 = turn-on, 1 = turn-off
+  uint32_t val = v?2:1; // 2 = turn-on, 1 = turn-off
   
   ownerOnly();
   if (val == tag) return;
-  guint32 old = tag;
+  uint32_t old = tag;
   
   tag = val;
   try {
@@ -56,7 +56,7 @@ void OutputCondition::setOn(bool v)
   }
 }
 
-Glib::RefPtr<OutputCondition> OutputCondition::create(const ConstructorType& args)
+std::shared_ptr<OutputCondition> OutputCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<OutputCondition>::create(args.objectPath, args);
 }

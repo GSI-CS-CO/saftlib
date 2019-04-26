@@ -49,34 +49,48 @@
     <!-- Proxy class implements all interfaces -->
     <xsl:text>class </xsl:text>
     <xsl:value-of select="$name"/>
-    <xsl:text>_Proxy : </xsl:text>
+    <xsl:text>_Proxy /*: </xsl:text>
     <xsl:for-each select="interface">
-      <xsl:if test="not($proxy_abc)">/*</xsl:if>
+      <xsl:if test="not($proxy_abc)"></xsl:if>
       <xsl:text>public i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>,</xsl:text>
-      <xsl:if test="not($proxy_abc)">*/</xsl:if>
+      <xsl:if test="not($proxy_abc)"></xsl:if>
       <xsl:text> </xsl:text>
     </xsl:for-each>
-    <xsl:text>public Glib::Object {&#10;</xsl:text>
+    <xsl:text>public Glib::Object*/ {&#10;</xsl:text>
     <xsl:text>  public:&#10;</xsl:text>
 
     <!-- Constructor -->
-    <xsl:text>    static Glib::RefPtr&lt;</xsl:text>
+    <xsl:text>    static std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt; create(&#10;</xsl:text>
-    <xsl:text>      const Glib::ustring&amp; object_path</xsl:text>
+    <xsl:text>      const std::string&amp; object_path</xsl:text>
     <xsl:if test="annotation[@name='de.gsi.saftlib.path']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.path']/@value"/>"</xsl:if>
     <xsl:text>,&#10;</xsl:text>
-    <xsl:text>      const Glib::ustring&amp; name</xsl:text>
+<!--     <xsl:text>      const std::string&amp; name</xsl:text>
     <xsl:if test="annotation[@name='de.gsi.saftlib.name']"> = "<xsl:value-of select="annotation[@name='de.gsi.saftlib.name']/@value"/>"</xsl:if>
     <xsl:text>,&#10;</xsl:text>
-    <xsl:text>      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
-    <xsl:text>      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;</xsl:text>
+    <xsl:text>      saftbus::BusType bus_type = saftbus::BUS_TYPE_SYSTEM,&#10;</xsl:text> -->
+    <!-- <xsl:text>      saftbus::ProxyFlags flags = saftbus::PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL);&#10;</xsl:text> -->
+    <xsl:text>      saftlib::SignalGroup &amp;signalGroup = saftlib::globalSignalGroup);&#10;</xsl:text>
+
 
     <xsl:text>    ~</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy();&#10;&#10;</xsl:text>
+
+    <!-- Access to Proxy Objects -->
+    <xsl:text>    // Access to Proxy objects&#10;</xsl:text>
+    <xsl:for-each select="interface">
+      <xsl:text>    std::shared_ptr&lt;i</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>_Proxy&gt; get</xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>_Proxy() { return </xsl:text>
+      <xsl:apply-templates mode="iface-name" select="."/>
+      <xsl:text>; }&#10;</xsl:text>
+    </xsl:for-each>
 
     <!-- Methods -->
     <xsl:text>    // Proxy all methods to interfaces&#10;</xsl:text>
@@ -153,14 +167,14 @@
     <xsl:text>    </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy(&#10;</xsl:text>
-    <xsl:text>      const Glib::ustring&amp; object_path,&#10;</xsl:text>
-    <xsl:text>      const Glib::ustring&amp; name,&#10;</xsl:text>
-    <xsl:text>      Gio::DBus::BusType bus_type = Gio::DBus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
-    <xsl:text>      Gio::DBus::ProxyFlags flags = Gio::DBus::PROXY_FLAGS_NONE);&#10;</xsl:text>
+    <xsl:text>      const std::string&amp; object_path,&#10;</xsl:text>
+    <xsl:text>      const std::string&amp; name,&#10;</xsl:text>
+    <xsl:text>      saftbus::BusType bus_type = saftbus::BUS_TYPE_SYSTEM,&#10;</xsl:text>
+    <xsl:text>      saftlib::SignalGroup &amp;signalGroup = saftlib::globalSignalGroup);&#10;</xsl:text>
 
     <!-- The proxy objects -->
     <xsl:for-each select="interface">
-      <xsl:text>    Glib::RefPtr&lt;i</xsl:text>
+      <xsl:text>    std::shared_ptr&lt;i</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
       <xsl:text>_Proxy&gt; </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -168,16 +182,6 @@
     </xsl:for-each>
 
     <!-- Connections to the embedded signals -->
-    <xsl:for-each select="interface">
-      <xsl:for-each select="property[@access='read' or @access='readwrite']">
-        <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-          <xsl:text>    sigc::connection con_prop</xsl:text>
-          <xsl:value-of select="@name"/>
-          <xsl:text>;&#10;</xsl:text>
-        </xsl:if>
-      </xsl:for-each>
-    </xsl:for-each>
-
     <xsl:for-each select="interface">
       <xsl:for-each select="signal">
         <xsl:text>    sigc::connection con_sig</xsl:text>
@@ -212,12 +216,12 @@
     <xsl:text>    </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service(T* impl, sigc::slot&lt;void, const char*&gt; rethrow);&#10;&#10;</xsl:text>
-    <xsl:text>    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; con, const Glib::ustring&amp; path);&#10;</xsl:text>
+    <xsl:text>    void register_self(const std::shared_ptr&lt;saftbus::Connection&gt;&amp; con, const std::string&amp; path);&#10;</xsl:text>
     <xsl:text>    void unregister_self();&#10;</xsl:text>
     <xsl:text>    bool isActive() const;&#10;</xsl:text>
-    <xsl:text>    const Glib::ustring&amp; getSender() const;&#10;</xsl:text>
-    <xsl:text>    const Glib::ustring&amp; getObjectPath() const;&#10;</xsl:text>
-    <xsl:text>    const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const;&#10;</xsl:text>
+    <xsl:text>    const std::string&amp; getSender() const;&#10;</xsl:text>
+    <xsl:text>    const std::string&amp; getObjectPath() const;&#10;</xsl:text>
+    <xsl:text>    const std::shared_ptr&lt;saftbus::Connection&gt;&amp; getConnection() const;&#10;</xsl:text>
     <xsl:text>&#10;</xsl:text>
 
     <!-- The service objects -->
@@ -276,9 +280,12 @@
       <xsl:call-template name="caps-name"><xsl:with-param name="name" select="$iface"/></xsl:call-template>
       <xsl:text>_IFACE_H&#10;&#10;</xsl:text>
 
-      <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;</xsl:text>
-      <xsl:text>#include &lt;giomm/dbuserror.h&gt;&#10;&#10;</xsl:text>
-      <xsl:text>#include &lt;giomm.h&gt;&#10;&#10;</xsl:text>
+      <!-- <xsl:text>#include &lt;giomm/dbusproxy.h&gt;&#10;</xsl:text> -->
+      <!-- <xsl:text>#include &lt;giomm/dbuserror.h&gt;&#10;&#10;</xsl:text> -->
+      <xsl:text>#include &lt;sigc++/sigc++.h&gt;&#10;&#10;</xsl:text>
+
+      <xsl:text>#include &lt;saftbus.h&gt;&#10;</xsl:text>
+
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
 
       <!-- Forward definitions -->
@@ -356,13 +363,13 @@
       <xsl:value-of select="$iface"/>
       <xsl:text>,</xsl:text>
       <xsl:if test="not($proxy_abc)">*/</xsl:if>
-      <xsl:text> public Gio::DBus::Proxy {&#10;</xsl:text>
+      <xsl:text> public saftbus::Proxy {&#10;</xsl:text>
       <xsl:text>  public:</xsl:text>
-    static Glib::RefPtr&lt;i<xsl:value-of select="$iface"/>_Proxy&gt; create(
-      const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; name,
-      Gio::DBus::BusType bus_type, 
-      Gio::DBus::ProxyFlags flags);&#10;&#10;<xsl:text/>
+    static std::shared_ptr&lt;i<xsl:value-of select="$iface"/>_Proxy&gt; create(
+      const std::string&amp; object_path,
+      const std::string&amp; name,
+      saftbus::BusType bus_type, 
+      saftlib::SignalGroup &amp;signalGroup);&#10;&#10;<xsl:text/>
       
       <!-- Concrete implementations -->
       <xsl:text>    // Implement abstract base class methods&#10;</xsl:text>
@@ -413,38 +420,33 @@
       <xsl:value-of select="$iface"/>_Proxy&amp; operator=(const i<xsl:value-of select="$iface"/>_Proxy&amp;);&#10;<xsl:text/>
 
 
-      <!-- Create AsyncCallReady function declaration -->
-      <xsl:text>    void </xsl:text>
-      <xsl:text>AsyncCallReady(Glib::RefPtr&lt;Gio::AsyncResult&gt;&amp; async_result, GMainLoop *loop, Glib::VariantContainerBase *result, Glib::ustring *exceptionMsg);&#10;&#10;</xsl:text>
-
-      <xsl:text>    // notification if async DBus call is completed&#10;</xsl:text>
 
       <!-- Implementation -->
   protected:
-    void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; Glib::ustring &gt;&amp; invalidated_properties);
-    void on_signal(const Glib::ustring&amp; sender_name, const Glib::ustring&amp; signal_name, const Glib::VariantContainerBase&amp; parameters);
-    void fetch_property(const char* name, Glib::VariantBase&amp; val) const;
-    void update_property(const char* name, const Glib::VariantBase&amp; val);
+    void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; std::string &gt;&amp; invalidated_properties);
+    void on_signal(const std::string&amp; sender_name, const std::string&amp; signal_name, const saftbus::Serial&amp; parameters);
+    void fetch_property(const char* name, saftbus::Serial&amp; val) const;
+    void update_property(const char* name, const saftbus::Serial&amp; val);
 
     i<xsl:value-of select="$iface"/>_Proxy(
-      Gio::DBus::BusType bus_type,
-      const Glib::ustring&amp; name,
-      const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; interface_name,
-      Gio::DBus::ProxyFlags flags);
+      saftbus::BusType bus_type,
+      const std::string&amp; name,
+      const std::string&amp; object_path,
+      const std::string&amp; interface_name,
+      saftlib::SignalGroup &amp;signalGroup);
 };
 
 class i<xsl:value-of select="$iface"/>_Service {
   public:
     i<xsl:value-of select="$iface"/>_Service(i<xsl:value-of select="$iface"/>* impl, sigc::slot&lt;void, const char*&gt; rethrow);
     ~i<xsl:value-of select="$iface"/>_Service();
-    void register_self(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection, const Glib::ustring&amp; path);
+    void register_self(const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection, const std::string&amp; path);
     void unregister_self();
 
     bool isActive() const;
-    const Glib::ustring&amp; getSender() const;
-    const Glib::ustring&amp; getObjectPath() const;
-    const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; getConnection() const;
+    const std::string&amp; getSender() const;
+    const std::string&amp; getObjectPath() const;
+    const std::shared_ptr&lt;saftbus::Connection&gt;&amp; getConnection() const;
 
   private:
     // non-copyable
@@ -453,28 +455,22 @@ class i<xsl:value-of select="$iface"/>_Service {
   private:
     i<xsl:value-of select="$iface"/> *impl;
     sigc::slot&lt;void, const char*&gt; rethrow;<xsl:text/>
-    <xsl:for-each select="property">
-      <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
-    sigc::connection con_prop<xsl:value-of select="@name"/>;<xsl:text/>
-      </xsl:if>
-    </xsl:for-each>
     <xsl:for-each select="signal">
     sigc::connection con_sig<xsl:value-of select="@name"/>;<xsl:text/>
     </xsl:for-each>
-    const Gio::DBus::InterfaceVTable interface_vtable;
-    const Glib::ustring* sender;
-    const Glib::ustring* objectPath;
-    Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
+    const saftbus::InterfaceVTable interface_vtable;
+    const std::string* sender;
+    const std::string* objectPath;
+    std::shared_ptr&lt;saftbus::Connection&gt; connection;
     struct Export {
-      Export(const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; c, const Glib::ustring&amp; o, int i) :
+      Export(const std::shared_ptr&lt;saftbus::Connection&gt;&amp; c, const std::string&amp; o, int i) :
         connection(c), object_path(o), id(i) { }
-      Glib::RefPtr&lt;Gio::DBus::Connection&gt; connection;
-      Glib::ustring object_path;
-      guint id;
+      std::shared_ptr&lt;saftbus::Connection&gt; connection;
+      std::string object_path;
+      unsigned id;
     };
     std::vector&lt;Export&gt; exports;
-    static const Glib::ustring xml;
-    void report_property_change(const char* name, const Glib::VariantBase&amp; value);&#10;<xsl:text/>
+    static const std::string xml;&#10;<xsl:text/>
     <xsl:for-each select="property">
       <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
         <xsl:text>    void on_prop</xsl:text>
@@ -492,74 +488,26 @@ class i<xsl:value-of select="$iface"/>_Service {
       <xsl:text>;&#10;</xsl:text>
     </xsl:for-each>
     void on_method_call(
-      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
-      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; method_name,
-      const Glib::VariantContainerBase&amp; parameters,
-      const Glib::RefPtr&lt;Gio::DBus::MethodInvocation&gt;&amp; invocation);
+      const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection,
+      const std::string&amp; sender, const std::string&amp; object_path,
+      const std::string&amp; /* interface_name */, const std::string&amp; method_name,
+      const saftbus::Serial&amp; parameters,
+      const std::shared_ptr&lt;saftbus::MethodInvocation&gt;&amp; invocation);
     void on_get_property(
-      Glib::VariantBase&amp; property,
-      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
-      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path,
-      const Glib::ustring&amp; /*interface_name */, const Glib::ustring&amp; property_name);
+      saftbus::Serial&amp; property,
+      const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection,
+      const std::string&amp; sender, const std::string&amp; object_path,
+      const std::string&amp; /*interface_name */, const std::string&amp; property_name);
     bool on_set_property(
-      const Glib::RefPtr&lt;Gio::DBus::Connection&gt;&amp; connection,
-      const Glib::ustring&amp; sender, const Glib::ustring&amp; object_path, 
-      const Glib::ustring&amp; /* interface_name */, const Glib::ustring&amp; property_name, 
-      const Glib::VariantBase&amp; value);
+      const std::shared_ptr&lt;saftbus::Connection&gt;&amp; connection,
+      const std::string&amp; sender, const std::string&amp; object_path, 
+      const std::string&amp; /* interface_name */, const std::string&amp; property_name, 
+      const saftbus::Serial&amp; value);
 };
-<!-- Create functions that read/write vectors from/to pipe. 
-Use Template specialization to make that work for vectors of simple types, as well as nested vectors -->
-#ifndef VECTOR_FROM_TO_PIPE_
-#define VECTOR_FROM_TO_PIPE_
-// Read/write vectors from/to pipes. Works with nested vectors due to template specialization.
-template&lt;typename T&gt;
-void write_vector_to_pipe(int fd, const T &amp; std_vector) {
-  guint32 size = std_vector.size();
-  if (write(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
-  }
-  if (write(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back()))) == -1) {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
-  }
-}
-template&lt;typename T&gt;
-void write_vector_to_pipe(int fd, const std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
-  guint32 size = std_vector_vector.size();
-  if (write(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
-  }
-  for (guint32 i = 0; i &lt; size; ++i) {
-    write_vector_to_pipe(fd, std_vector_vector[i]);
-  }
-}
-template&lt;typename T&gt;
-void read_vector_from_pipe(int fd, T &amp; std_vector) {
-  guint32 size = std_vector.size();
-  if (read(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
-  }
-  std_vector.resize(size);
-  if (read(fd, &amp;std_vector[0], size*sizeof(decltype(std_vector.back()))) == -1) {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
-  }
-}
-template&lt;typename T&gt;
-void read_vector_from_pipe(int fd, std::vector&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt;, std::allocator&lt; std::vector&lt;T, std::allocator&lt;T&gt; &gt; &gt; &gt;&amp; std_vector_vector) {
-  guint32 size = std_vector_vector.size();
-  if (read(fd, &amp;size, sizeof(guint32)) == -1) {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "File descriptor data transfer failed");
-  }
-  std_vector_vector.resize(size);
-  for (guint32 i = 0; i &lt; size; ++i) {
-    read_vector_from_pipe(fd, std_vector_vector[i]);
-  }
-}
+
+} // namespace saftlib
+
 #endif 
-
-}
-
-#endif
 </xsl:document>
 </xsl:for-each>
 </xsl:template>

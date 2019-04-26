@@ -28,7 +28,7 @@
 
 namespace saftlib {
 
-Glib::RefPtr<Input> Input::create(const ConstructorType& args)
+std::shared_ptr<Input> Input::create(const ConstructorType& args)
 {
   return RegisteredObject<Input>::create(args.objectPath, args);
 }
@@ -76,17 +76,17 @@ bool Input::getSpecialPurposeInAvailable() const
   return impl->getSpecialPurposeInAvailable();
 }
 
-Glib::ustring Input::getLogicLevelIn() const
+std::string Input::getLogicLevelIn() const
 {
   return impl->getLogicLevelIn();
 }
 
-Glib::ustring Input::getTypeIn() const
+std::string Input::getTypeIn() const
 {
   return impl->getTypeIn();
 }
 
-Glib::ustring Input::getOutput() const
+std::string Input::getOutput() const
 {
   return partnerPath;
 }
@@ -103,19 +103,19 @@ void Input::setSpecialPurposeIn(bool val)
   return impl->setSpecialPurposeIn(val);
 }
 
-guint64 Input::getResolution() const
+uint64_t Input::getResolution() const
 {
   return impl->getResolution();
 }
 
 // TLU control methods  -------------------------------------------------------------
 
-guint32 Input::getEventBits() const
+uint32_t Input::getEventBits() const
 {
   return 1; // rising|falling comes from TLU
 }
 
-guint32 Input::getStableTime() const 
+uint32_t Input::getStableTime() const 
 {
   return stable;
 }
@@ -125,7 +125,7 @@ bool Input::getEventEnable() const
   return enable;
 }
 
-guint64 Input::getEventPrefix() const
+uint64_t Input::getEventPrefix() const
 {
   return event;
 }
@@ -141,12 +141,12 @@ void Input::setEventEnable(bool val)
   EventEnable(val);
 }
 
-void Input::setEventPrefix(guint64 val)
+void Input::setEventPrefix(uint64_t val)
 {
   ownerOnly();
   
   if (val % 2 != 0)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "EventPrefix cannot have lowest bit set (EventBits=1)");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "EventPrefix cannot have lowest bit set (EventBits=1)");
   
   if (event == val) return;
   event = val;
@@ -155,14 +155,14 @@ void Input::setEventPrefix(guint64 val)
   EventPrefix(val);
 }
 
-void Input::setStableTime(guint32 val)
+void Input::setStableTime(uint32_t val)
 {
   ownerOnly();
   
   if (val % 8 != 0)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "StableTime must be a multiple of 8ns");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "StableTime must be a multiple of 8ns");
   if (val < 16)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "StableTime must be at least 16ns");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "StableTime must be at least 16ns");
   
   if (stable == val) return;
   stable = val;
@@ -179,7 +179,7 @@ void Input::configInput()
   cycle.write(tlu + ECA_TLU_ENABLE_RW,       EB_DATA32, enable?1:0);
   cycle.write(tlu + ECA_TLU_STABLE_RW,       EB_DATA32, stable/8 - 1);
   cycle.write(tlu + ECA_TLU_EVENT_HI_RW,     EB_DATA32, event >> 32);
-  cycle.write(tlu + ECA_TLU_EVENT_LO_RW,     EB_DATA32, (guint32)event);
+  cycle.write(tlu + ECA_TLU_EVENT_LO_RW,     EB_DATA32, (uint32_t)event);
   cycle.write(tlu + ECA_TLU_WRITE_OWR,       EB_DATA32, 1);
   cycle.close();
 }

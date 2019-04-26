@@ -21,27 +21,40 @@
 #define FUNCTION_GENERATOR_IMPL_H
 
 #include <deque>
+#include <memory>
 
 namespace saftlib {
 
 class TimingReceiver;
 
-class FunctionGeneratorChannelAllocation : public Glib::Object
+class FunctionGeneratorChannelAllocation //: public Glib::Object
 {
   public:
     std::vector<int> indexes;
 };
 
-class FunctionGeneratorImpl : public Glib::Object
+  struct ParameterTuple {
+      int16_t coeff_a;
+      int16_t coeff_b;
+      int32_t coeff_c;
+      uint8_t step;
+      uint8_t freq;
+      uint8_t shift_a;
+      uint8_t shift_b;
+    
+      uint64_t duration() const;  
+    };
+
+class FunctionGeneratorImpl //: public Glib::Object
 {
 	friend class MasterFunctionGenerator;
 	
   public:
 //    typedef FunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
-      TimingReceiver* dev;
-      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
+      std::string objectPath;
+      TimingReceiver *tr;
+      std::shared_ptr<std::vector<int> > allocation;
       eb_address_t fgb;
       eb_address_t swi;
       etherbone::sdb_msi_device base;
@@ -49,39 +62,52 @@ class FunctionGeneratorImpl : public Glib::Object
       unsigned num_channels;
       unsigned buffer_size;
       unsigned int index;
-      guint32 macro;
+      uint32_t macro;
     };
     FunctionGeneratorImpl(const ConstructorType& args);
     ~FunctionGeneratorImpl();
     
-    //static Glib::RefPtr<FunctionGenerator> create(const ConstructorType& args);
+    //static std::shared_ptr<FunctionGenerator> create(const ConstructorType& args);
     
+    template<typename Iter> bool appendParameterTuples(Iter it, Iter end)
+    {
+      for (; it != end; ++it)
+      {
+        fifo.push_back(*it);
+        fillLevel += (*it).duration();
+      }
+
+      if (channel != -1) refill();
+      return lowFill();
+    }
+
+    bool appendParameterTuples(std::vector<ParameterTuple> parameters);
 
 
     void Arm();
     void Abort();
-    guint64 ReadFillLevel();
-    bool appendParameterSet(const std::vector< gint16 >& coeff_a, const std::vector< gint16 >& coeff_b, const std::vector< gint32 >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
+    uint64_t ReadFillLevel();
+    bool appendParameterSet(const std::vector< int16_t >& coeff_a, const std::vector< int16_t >& coeff_b, const std::vector< int32_t >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
     void Flush();
-    guint32 getVersion() const;
+    uint32_t getVersion() const;
     unsigned char getSCUbusSlot() const;
     unsigned char getDeviceNumber() const;
     unsigned char getOutputWindowSize() const;
     bool getEnabled() const;
     bool getArmed() const;
     bool getRunning() const;
-    guint32 getStartTag() const;
-    guint32 ReadExecutedParameterCount();
-    void setStartTag(guint32 val);
+    uint32_t getStartTag() const;
+    uint32_t ReadExecutedParameterCount();
+    void setStartTag(uint32_t val);
 
-    Glib::ustring GetName();
+    std::string GetName();
 
     sigc::signal<void, bool> signal_enabled;
     sigc::signal<void, bool> signal_running;
     sigc::signal<void, bool> signal_armed;
     sigc::signal<void> signal_refill;
-    sigc::signal<void, guint64> signal_started;
-    sigc::signal<void, guint64, bool, bool, bool> signal_stopped;
+    sigc::signal<void, uint64_t> signal_started;
+    sigc::signal<void, uint64_t, bool, bool, bool> signal_stopped;
 
     void flush();
     void arm();
@@ -102,8 +128,8 @@ class FunctionGeneratorImpl : public Glib::Object
             
             
             
-    TimingReceiver* dev;
-    Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation;
+    TimingReceiver *tr;
+    std::shared_ptr<std::vector<int> > allocation;
     eb_address_t shm;
     eb_address_t swi;
     etherbone::sdb_msi_device base;
@@ -124,26 +150,14 @@ class FunctionGeneratorImpl : public Glib::Object
     bool abort;
 
     sigc::connection resetTimeout;
-    guint32 startTag;
+    uint32_t startTag;
     unsigned executedParameterCount;
-    
-    struct ParameterTuple {
-      gint16 coeff_a;
-      gint16 coeff_b;
-      gint32 coeff_c;
-      guint8 step;
-      guint8 freq;
-      guint8 shift_a;
-      guint8 shift_b;
-      
-      guint64 duration() const;
-    };
 
     unsigned mbx_slot;
     eb_address_t mailbox_slot_address;
     
     // These 3 variables must be kept in sync:
-    guint64 fillLevel;
+    uint64_t fillLevel;
     unsigned filled; // # of fifo entries currently on LM32
     std::deque<ParameterTuple> fifo;
 };
