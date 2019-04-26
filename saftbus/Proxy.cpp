@@ -54,7 +54,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 			saftbus::read(_pipe_fd[0], ping);
 			//std::cerr << "got ping after sending pipe: " << ping << std::endl;
 		} catch(...) {
-			std::cerr << "Proxy::~Proxy() threw" << std::endl;
+			std::cerr << "Proxy::~Proxy() exception" << std::endl;
 		}
 
 		// this Proxy will be part of the given SignalGroup.
@@ -78,7 +78,7 @@ Proxy::~Proxy()
 		close(_pipe_fd[0]);
 		close(_pipe_fd[1]);
 	} catch(std::exception &e) {
-		std::cerr << "Proxy::~Proxy() threw: " << e.what() << std::endl;
+		std::cerr << "Proxy::~Proxy() exception: " << e.what() << std::endl;
 	}
 }
 
@@ -145,47 +145,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		//if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
 		if (interface_name == "org.freedesktop.DBus.Properties" && signal_name == "PropertiesChanged")
 		{	
-			//std::cerr << "Proxy::dispatch() ignoring property changed signal" << std::endl;
-			/*
-
-			// in case of a property change, the interface name of the property 
-			// that was changed (here we call it derived_interface_name) is embedded in the data
-			Glib::Variant<std::string> derived_interface_name 
-					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::string> >(parameters.get_child(0));
-			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
-			if (_interface_name != derived_interface_name.get()) {
-				std::ostringstream msg;
-				msg << "Proxy::dispatch() : signal with wrong interface name: expected " 
-				    << _interface_name 
-				    << ",  got " 
-				    << derived_interface_name.get();
-				throw std::runtime_error(msg.str());
-			}
-
-			// get the real data: which property has which value
-			Glib::Variant<std::map<std::string, Glib::VariantBase> > property_map 
-					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::map<std::string, Glib::VariantBase> > >
-							(parameters.get_child(1));
-			Glib::Variant<std::vector< std::string > > invalidated_properies 
-					= Glib::VariantBase::cast_dynamic<Glib::Variant<std::vector< std::string > > >
-							(parameters.get_child(2));
-
-			// get the signal flight stop time right before we call the signal handler from the Proxy object
-		    struct timespec stop;
-		    clock_gettime( CLOCK_REALTIME, &stop);
-		    signal_flight_time = (1.0e6*stop.tv_sec   + 1.0e-3*stop.tv_nsec) 
-		                       - (1.0e6*sec.get()     + 1.0e-3*nsec.get());
-			// report the measured signal flight time to saftd
-		    try {
-		    	if (create_statistics.get()) { // do this only if switched on
-		    		_connection->send_signal_flight_time(signal_flight_time);
-		    	}
-			    // deliver the signal: call the property changed handler of the derived class
-				on_properties_changed(property_map.get(), invalidated_properies.get());
-			} catch(...) {
-				std::cerr << "Proxy::dispatch() : on_properties_changed threw " << std::endl;
-			}
-			*/
+			// nothing ...
 		}
 		else // all other signals
 		{
@@ -210,7 +170,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		    signal_read_time = (1.0e6*stop.tv_sec            + 1.0e-3*stop.tv_nsec) 
 		                     - (1.0e6*start_read_time.tv_sec + 1.0e-3*start_read_time.tv_nsec);
 
-		    if (signal_read_time > 200) { // if reading takes more than 200 us => Report!
+		    if (create_statistics && signal_read_time > 200) { // if reading takes more than 200 us => Report!
 		    	std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;
 		    }
 

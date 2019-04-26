@@ -45,18 +45,21 @@ namespace saftlib
 			for (auto fd: _fds) {
 				if (fd.revents & POLLIN) {
 					if (_signal_group[idx] != nullptr) {
-				    	struct timespec start, stop;
-					    clock_gettime( CLOCK_REALTIME, &start);
+		                // The dispatch time measurement is ok for debugging, 
+		                //     but should not be in production
+		                
+				    	// struct timespec start, stop;
+					    // clock_gettime( CLOCK_REALTIME, &start);
 
 						_signal_group[idx]->dispatch(Slib::IOCondition());
 
-					    clock_gettime( CLOCK_REALTIME, &stop);
-						double signal_dispatch_time = (1.0e6*stop.tv_sec  + 1.0e-3*stop.tv_nsec) 
-		                                            - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
+					    // clock_gettime( CLOCK_REALTIME, &stop);
+						// double signal_dispatch_time = (1.0e6*stop.tv_sec  + 1.0e-3*stop.tv_nsec) 
+		                //                             - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
 
-		                if (signal_dispatch_time > 1000) { // more than 1ms will trigger message
-							std::cerr << "SignalGroup::wait_for_signal() signal dispatch time for [" << idx << "] = " << signal_dispatch_time << "us" << std::endl;		                                          
-						}
+		    			// if (signal_dispatch_time > 1000) { // more than 1ms will trigger message
+						// 	std::cerr << "saftlib::SignalGroup::wait_for_signal() too long signal dispatch time for [" << idx << "] = " << signal_dispatch_time << "us" << std::endl;
+						// }
 					}
 				}
 				++idx;
