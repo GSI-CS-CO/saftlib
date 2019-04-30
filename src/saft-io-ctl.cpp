@@ -655,7 +655,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   bool     io_set   = false; /* IO set or get configuration */
 
   /* Check if there is at least one parameter to set */
-  io_set = set_oe | set_term | set_spec_out | set_spec_in | set_mux | set_pps | set_drive | set_stime;
+  io_set = set_oe | set_term | set_spec_out | set_spec_in | set_mux | set_pps | set_drive | set_stime | set_gate_out | set_gate_in;
 
   /* Display information */
   if (verbose_mode)
