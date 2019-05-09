@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -41,11 +41,13 @@ class InoutImpl
       eb_address_t io_control_addr;
       eb_address_t io_ser_clk_gen_addr;
     };
-    
+
     InoutImpl(const ConstructorType& args);
     static int probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks, TimingReceiver::EventSources& eventSources);
-    
+
     // iOutputActionSink
+    uint32_t getIndexOut() const;
+    uint32_t getIndexIn() const;
     void WriteOutput(bool value);
     bool ReadOutput();
     bool getOutputEnable() const;
@@ -54,6 +56,8 @@ class InoutImpl
     bool getSpecialPurposeOut() const;
     void setSpecialPurposeOut(bool val);
     bool getSpecialPurposeOutAvailable() const;
+    bool getGateOut() const;
+    void setGateOut(bool val);
     bool getBuTiSMultiplexer() const;
     void setBuTiSMultiplexer(bool val);
     bool getPPSMultiplexer() const;
@@ -62,7 +66,7 @@ class InoutImpl
     bool StopClock();
     std::string getLogicLevelOut() const;
     std::string getTypeOut() const;
-    
+
     // iInputEventSource
     bool ReadInput(); // done
     bool getInputTermination() const;
@@ -71,19 +75,23 @@ class InoutImpl
     bool getSpecialPurposeIn() const;
     void setSpecialPurposeIn(bool val);
     bool getSpecialPurposeInAvailable() const;
+    bool getGateIn() const;
+    void setGateIn(bool val);
     std::string getLogicLevelIn() const;
     std::string getTypeIn() const;
-    
+
     // iInputEventSource
     uint64_t getResolution() const;
-    
+
     sigc::signal< void, bool > OutputEnable;
     sigc::signal< void, bool > SpecialPurposeOut;
+    sigc::signal< void, bool > GateOut;
     sigc::signal< void, bool > BuTiSMultiplexer;
-    sigc::signal< void, bool > PPSMultiplexer;    
+    sigc::signal< void, bool > PPSMultiplexer;
     sigc::signal< void, bool > InputTermination;
     sigc::signal< void, bool > SpecialPurposeIn;
-    
+    sigc::signal< void, bool > GateIn;
+
   protected:
     TimingReceiver* tr;
     unsigned io_channel;

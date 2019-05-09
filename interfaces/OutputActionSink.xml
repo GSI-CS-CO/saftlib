@@ -1,9 +1,9 @@
 <!-- de.gsi.saftlib.OutputActionSink:
     @short_description: An output through which on/off actions flow.
-    
+
     This inteface allows the generation of Output pulses.
     An OutputActionSink is also an ActionSink and Owned.
-    
+
     If two SoftwareConditions are created on the same SoftwareActionSink
     which require simultaneous delivery of two Actions, then they will be
     delivered in arbitrary order, both having the 'conflict' flag set.
@@ -20,7 +20,7 @@
        This method creates a new condition that matches events whose
        identifier lies in the range [id &amp; mask, id | ~mask].  The offset
        acts as a delay which is added to the event's execution timestamp to
-       determine the timestamp when the matching condition fires its action. 
+       determine the timestamp when the matching condition fires its action.
        The returned object path is a OutputCondition object.
     -->
   <method name="NewCondition">
@@ -31,7 +31,7 @@
     <arg direction="in" type="b" name="on"/>
     <arg direction="out" type="s" name="result"/>
   </method>
-  
+
   <!-- OutputEnable: Is the output driver enabled.
        When OutputEnable is false, the output is not driven.
        This defaults to off.
@@ -42,15 +42,19 @@
   <!-- SpecialPurposeOut: Is the special function enabled.
     -->
   <property name="SpecialPurposeOut" type="b" access="readwrite"/>
-  
+
+  <!-- GateOut: Set output gate or get gate status.
+    -->
+  <property name="GateOut" type="b" access="readwrite"/>
+
   <!-- BuTiSMultiplexer: Output BuTiS t0 with timestamp.
     -->
   <property name="BuTiSMultiplexer" type="b" access="readwrite"/>
-  
+
   <!-- PPSMultiplexer: Output PPS signal from White Rabbit core.
     -->
   <property name="PPSMultiplexer" type="b" access="readwrite"/>
-    
+
   <!-- WriteOutput: Directly manipulate the output value.
        Set the output to on/off. Overwrite the previous state,
        regardless of whether it came from WriteOutput or a matching
@@ -60,7 +64,7 @@
   <method name="WriteOutput">
     <arg direction="in" type="b" name="value"/>
   </method>
-  
+
   <!-- ReadOutput: Read the output state.
        This property reflects the current value which would be output when
        OutputEnable is true. This may differ from ReadInput on an inout.
@@ -68,7 +72,7 @@
   <method name="ReadOutput">
     <arg direction="out" type="b" name="value"/>
   </method>
-  
+
   <!-- StartClock: Starts the clock generator with given parameters.
        All parameters expect the value in nanoseconds.
     -->
@@ -78,41 +82,47 @@
     <arg direction="in" type="t" name="phase_offset"/>
     <arg direction="out" type="b" name="running"/>
   </method>
-  
+
   <!-- StopClock: Stops the clock generator.
     -->
   <method name="StopClock">
     <arg direction="out" type="b" name="running"/>
   </method>
-  
+
   <!-- OutputEnableAvailable: Can output enable be configured.
     -->
   <property name="OutputEnableAvailable" type="b" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
-  
+
   <!-- SpecialPurposeOutAvailable: Can special configuration be configured.
     -->
   <property name="SpecialPurposeOutAvailable" type="b" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
-  
+
   <!-- LogicLevelOut: Logic level of the output (LVDS, LVTTL, ...)
     -->
   <property name="LogicLevelOut" type="s" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
-  
+
+  <!-- IndexOut: IO index.
+    -->
+  <property name="IndexOut" type="u" access="read">
+    <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+  </property>
+
   <!-- TypeOut: IO type (GPIO, LVDS, ...)
     -->
   <property name="TypeOut" type="s" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
-  
-  
+
+
   <!-- Input: If non-empty, path of the Input object for the same physical IO -->
   <property name="Input" type="s" access="read">
     <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
   </property>
-  
+
 </interface>

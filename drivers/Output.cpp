@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -33,13 +33,15 @@ std::shared_ptr<Output> Output::create(const ConstructorType& args)
   return RegisteredObject<Output>::create(args.objectPath, args);
 }
 
-Output::Output(const ConstructorType& args) : 
+Output::Output(const ConstructorType& args) :
   ActionSink(args.objectPath, args.dev, args.name, args.channel, args.num, args.destroy),
   impl(args.impl), partnerPath(args.partnerPath)
 {
   impl->OutputEnable.connect(OutputEnable.make_slot());
   impl->SpecialPurposeOut.connect(SpecialPurposeOut.make_slot());
+  impl->GateOut.connect(GateOut.make_slot());
   impl->BuTiSMultiplexer.connect(BuTiSMultiplexer.make_slot());
+  impl->PPSMultiplexer.connect(PPSMultiplexer.make_slot());
 }
 
 const char *Output::getInterfaceName() const
@@ -51,6 +53,11 @@ std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_
 {
   return NewConditionHelper(active, id, mask, offset, on?2:1, false, // 2 is on, 1 is off
     sigc::ptr_fun(&OutputCondition::create));
+}
+
+uint32_t Output::getIndexOut() const
+{
+  return impl->getIndexOut();
 }
 
 void Output::WriteOutput(bool value)
@@ -72,6 +79,11 @@ bool Output::getOutputEnable() const
 bool Output::getSpecialPurposeOut() const
 {
   return impl->getSpecialPurposeOut();
+}
+
+bool Output::getGateOut() const
+{
+  return impl->getGateOut();
 }
 
 bool Output::getBuTiSMultiplexer() const
@@ -131,6 +143,12 @@ void Output::setSpecialPurposeOut(bool val)
 {
   ownerOnly();
   return impl->setSpecialPurposeOut(val);
+}
+
+void Output::setGateOut(bool val)
+{
+  ownerOnly();
+  return impl->setGateOut(val);
 }
 
 void Output::setBuTiSMultiplexer(bool val)

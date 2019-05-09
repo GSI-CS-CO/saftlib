@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -43,15 +43,17 @@ class Input : public EventSource, public iInputEventSource
     };
 
     static std::shared_ptr<Input> create(const ConstructorType& args);
-    
+
     const char *getInterfaceName() const;
-    
+
     // Methods
     bool ReadInput();
     // Property getters
-    uint32_t getStableTime() const ;
+    uint32_t getStableTime() const;
+    uint32_t getIndexIn() const;
     bool getInputTermination() const;
     bool getSpecialPurposeIn() const;
+    bool getGateIn() const;
     bool getInputTerminationAvailable() const;
     bool getSpecialPurposeInAvailable() const;
     std::string getLogicLevelIn() const;
@@ -61,23 +63,24 @@ class Input : public EventSource, public iInputEventSource
     void setStableTime(uint32_t val);
     void setInputTermination(bool val);
     void setSpecialPurposeIn(bool val);
-    
+    void setGateIn(bool val);
+
     // Property signals
     //  sigc::signal< void, uint32_t > StableTime;
     //  sigc::signal< void, bool > InputTermination;
     //  sigc::signal< void, bool > SpecialPurposeIn;
-    
+
     // From iEventSource
     uint64_t getResolution() const;
     uint32_t getEventBits() const;
     bool getEventEnable() const;
     uint64_t getEventPrefix() const;
-    
+
     void setEventEnable(bool val);
     void setEventPrefix(uint64_t val);
     //  sigc::signal< void, bool > EventEnable;
     //  sigc::signal< void, uint64_t > EventPrefix;
-    
+
   protected:
     Input(const ConstructorType& args);
     std::shared_ptr<InoutImpl> impl;
@@ -87,7 +90,7 @@ class Input : public EventSource, public iInputEventSource
     bool enable;
     uint64_t event;
     uint32_t stable;
-    
+
     void configInput();
 };
 
