@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -35,11 +35,12 @@ Glib::RefPtr<Input> Input::create(const ConstructorType& args)
 
 Input::Input(const ConstructorType& args)
  : EventSource(args.objectPath, args.dev, args.name, args.destroy),
-   impl(args.impl), partnerPath(args.partnerPath), 
+   impl(args.impl), partnerPath(args.partnerPath),
    tlu(args.tlu), channel(args.channel), enable(false), event(0), stable(80)
 {
   impl->InputTermination.connect(InputTermination.make_slot());
   impl->SpecialPurposeIn.connect(SpecialPurposeIn.make_slot());
+  impl->GateIn.connect(GateIn.make_slot());
   // initialize TLU to disabled state
   configInput();
 }
@@ -50,6 +51,11 @@ const char *Input::getInterfaceName() const
 }
 
 // Proxy methods to the InoutImpl --------------------------------------------------
+
+guint32 Input::getIndexIn() const
+{
+  return impl->getIndexIn();
+}
 
 bool Input::ReadInput()
 {
@@ -64,6 +70,11 @@ bool Input::getInputTermination() const
 bool Input::getSpecialPurposeIn() const
 {
   return impl->getSpecialPurposeIn();
+}
+
+bool Input::getGateIn() const
+{
+  return impl->getGateIn();
 }
 
 bool Input::getInputTerminationAvailable() const
@@ -103,6 +114,12 @@ void Input::setSpecialPurposeIn(bool val)
   return impl->setSpecialPurposeIn(val);
 }
 
+void Input::setGateIn(bool val)
+{
+  ownerOnly();
+  return impl->setGateIn(val);
+}
+
 guint64 Input::getResolution() const
 {
   return impl->getResolution();
@@ -115,7 +132,7 @@ guint32 Input::getEventBits() const
   return 1; // rising|falling comes from TLU
 }
 
-guint32 Input::getStableTime() const 
+guint32 Input::getStableTime() const
 {
   return stable;
 }
@@ -133,10 +150,10 @@ guint64 Input::getEventPrefix() const
 void Input::setEventEnable(bool val)
 {
   ownerOnly();
-  
+
   if (enable == val) return;
   enable = val;
-  
+
   configInput();
   EventEnable(val);
 }
@@ -144,13 +161,13 @@ void Input::setEventEnable(bool val)
 void Input::setEventPrefix(guint64 val)
 {
   ownerOnly();
-  
+
   if (val % 2 != 0)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "EventPrefix cannot have lowest bit set (EventBits=1)");
-  
+
   if (event == val) return;
   event = val;
-  
+
   configInput();
   EventPrefix(val);
 }
@@ -158,15 +175,15 @@ void Input::setEventPrefix(guint64 val)
 void Input::setStableTime(guint32 val)
 {
   ownerOnly();
-  
+
   if (val % 8 != 0)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "StableTime must be a multiple of 8ns");
   if (val < 16)
     throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "StableTime must be at least 16ns");
-  
+
   if (stable == val) return;
   stable = val;
-  
+
   configInput();
   StableTime(val);
 }

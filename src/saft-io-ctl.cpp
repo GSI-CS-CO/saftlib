@@ -72,8 +72,8 @@ std::map<Glib::ustring,guint64>     map_PrefixName; /* Translation table IO name
 /* Prototypes */
 /* ==================================================================================================== */
 static void io_help        (void);
-static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_pps, int io_drive, int stime,
-                            bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
+static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_gate_out, int io_gate_in, int io_mux, int io_pps, int io_drive, int stime,
+                            bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_gate_out, bool set_gate_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
                             bool verbose_mode);
 static int  io_create      (bool disown, guint64 eventID, guint64 eventMask, gint64 offset, guint64 flags, gint64 level, bool offset_negative, bool translate_mask);
 static int  io_destroy     (bool verbose_mode);
@@ -422,6 +422,8 @@ static void io_help (void)
   std::cout << "  -e 0/1:                                        Toggle special (input) functionality" << std::endl;
   std::cout << "  -m 0/1:                                        Toggle BuTiS t0 + TS gate/mux" << std::endl;
   std::cout << "  -p 0/1:                                        Toggle WR PPS gate/mux" << std::endl;
+  std::cout << "  -a 0/1:                                        Toggle gate (output)" << std::endl;
+  std::cout << "  -j 0/1:                                        Toggle gate (input)" << std::endl;
   std::cout << "  -d 0/1:                                        Drive output value" << std::endl;
   std::cout << "  -k <time [ns]>                                 Change stable time" << std::endl;
   std::cout << std::endl;
@@ -644,8 +646,8 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, guint64 pre
 
 /* Function io_setup() */
 /* ==================================================================================================== */
-static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_mux, int io_pps, int io_drive, int stime,
-                    bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
+static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_gate_out, int io_gate_in, int io_mux, int io_pps, int io_drive, int stime,
+                    bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_gate_out, bool set_gate_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
                     bool verbose_mode)
 {
   unsigned io_type  = 0;     /* Out, Inout or In? */
@@ -653,7 +655,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   bool     io_set   = false; /* IO set or get configuration */
 
   /* Check if there is at least one parameter to set */
-  io_set = set_oe | set_term | set_spec_out | set_spec_in | set_mux | set_pps | set_drive | set_stime;
+  io_set = set_oe | set_term | set_spec_out | set_spec_in | set_mux | set_pps | set_drive | set_stime | set_gate_out | set_gate_in;
 
   /* Display information */
   if (verbose_mode)
@@ -810,6 +812,26 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         }
       }
 
+      /* Check gate out configuration */
+      if (set_gate_out)
+      {
+        if (io_type == IO_CFG_FIELD_DIR_INPUT)
+        {
+          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          return (__IO_RETURN_FAILURE);
+        }
+      }
+
+      /* Check gate in configuration */
+      if (set_gate_in)
+      {
+        if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
+        {
+          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          return (__IO_RETURN_FAILURE);
+        }
+      }
+
       /* Check multiplexer (BuTiS support) */
       if (set_mux)
       {
@@ -859,6 +881,8 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       if (set_term)     { input_proxy->setInputTermination(io_term); }
       if (set_spec_out) { output_proxy->setSpecialPurposeOut(io_spec_out); }
       if (set_spec_in)  { input_proxy->setSpecialPurposeIn(io_spec_in); }
+      if (set_gate_out) { output_proxy->setGateOut(io_gate_out); }
+      if (set_gate_in)  { input_proxy->setGateIn(io_gate_in); }
       if (set_mux)      { output_proxy->setBuTiSMultiplexer(io_mux); }
       if (set_pps)      { output_proxy->setPPSMultiplexer(io_pps); }
       if (set_drive)    { output_proxy->WriteOutput(io_drive); }
@@ -894,6 +918,10 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
           else                                      { std::cout << "  SpecialOut:       Off" << std::endl; }
         }
 
+        /* Display gate out state */
+        if (output_proxy->getGateOut())             { std::cout << "  GateOut:          On" << std::endl; }
+        else                                        { std::cout << "  GateOut:          Off" << std::endl; }
+
         /* Display BuTiS multiplexer state */
         if (output_proxy->getBuTiSMultiplexer())    { std::cout << "  BuTiS t0 + TS:    On" << std::endl; }
         else                                        { std::cout << "  BuTiS t0 + TS:    Off" << std::endl; }
@@ -901,6 +929,10 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Display WR PPS multiplexer state */
         if (output_proxy->getPPSMultiplexer())      { std::cout << "  WR PPS:           On" << std::endl; }
         else                                        { std::cout << "  WR PPS:           Off" << std::endl; }
+
+        /* Display IO index */
+        std::cout << "  IndexOut:         " << output_proxy->getIndexOut() << std::endl;
+
       }
 
       if (io_type != IO_CFG_FIELD_DIR_OUTPUT)
@@ -923,9 +955,15 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
           else                                      { std::cout << "  SpecialIn:        Off" << std::endl; }
         }
 
+        /* Display gate in state */
+        if (input_proxy->getGateIn())               { std::cout << "  GateIn:           On" << std::endl; }
+        else                                        { std::cout << "  GateIn:           Off" << std::endl; }
+
         /* Display stable time */
         std::cout << "  StableTime:       " << input_proxy->getStableTime() << " ns" << std::endl;
 
+        /* Display IO index */
+        std::cout << "  IndexIn:          " << input_proxy->getIndexIn() << std::endl;
       }
     }
   }
@@ -1053,6 +1091,8 @@ int main (int argc, char** argv)
   int  io_term        = 0;     /* Input Termination */
   int  io_spec_out    = 0;     /* Special (output) function */
   int  io_spec_in     = 0;     /* Special (input) function */
+  int  io_gate_out    = 0;     /* Output gate */
+  int  io_gate_in     = 0;     /* Input gate */
   int  io_mux         = 0;     /* Gate (BuTiS) */
   int  io_pps         = 0;     /* Gate (PPS) */
   int  io_drive       = 0;     /* Drive IO value */
@@ -1072,6 +1112,8 @@ int main (int argc, char** argv)
   bool set_term       = false; /* Set? */
   bool set_spec_in    = false; /* Set? */
   bool set_spec_out   = false; /* Set? */
+  bool set_gate_in    = false; /* Set? */
+  bool set_gate_out   = false; /* Set? */
   bool set_mux        = false; /* Set? (BuTiS gate) */
   bool set_pps        = false; /* Set? (PPS gate) */
   bool set_drive      = false; /* Set? */
@@ -1094,7 +1136,7 @@ int main (int argc, char** argv)
   deviceName = "NoDeviceNameGiven";
 
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "n:o:t:q:e:m:p:d:k:swyb:rc:guxfzlivh")) != -1)
+  while ((opt = getopt(argc, argv, "a:j:n:o:t:q:e:m:p:d:k:swyb:rc:guxfzlivh")) != -1)
   {
     switch (opt)
     {
@@ -1103,6 +1145,8 @@ int main (int argc, char** argv)
       case 't': { io_term        = atoi(optarg);   set_term     = true; break; }
       case 'q': { io_spec_out    = atoi(optarg);   set_spec_out = true; break; }
       case 'e': { io_spec_in     = atoi(optarg);   set_spec_in  = true; break; }
+      case 'a': { io_gate_out    = atoi(optarg);   set_gate_out = true; break; }
+      case 'j': { io_gate_in     = atoi(optarg);   set_gate_in  = true; break; }
       case 'm': { io_mux         = atoi(optarg);   set_mux      = true; break; }
       case 'p': { io_pps         = atoi(optarg);   set_pps      = true; break; }
       case 'd': { io_drive       = atoi(optarg);   set_drive    = true; break; }
@@ -1160,7 +1204,7 @@ int main (int argc, char** argv)
   if (optind + 1 == argc)
   {
     deviceName = argv[optind]; /* Get the device name */
-    if ((io_oe || io_term || io_spec_out || io_spec_in || io_mux || io_pps || io_drive || show_help || show_table ||
+    if ((io_oe || io_term || io_spec_out || io_spec_in || io_gate_out || io_gate_in || io_mux || io_pps || io_drive || show_help || show_table ||
          ios_snoop || ioc_create || ioc_disown || ioc_destroy || ioc_flip || ioc_list || ioNameGiven || ioc_valid) == false)
     {
       std::cerr << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)(arg)!" << std::endl;
@@ -1197,6 +1241,8 @@ int main (int argc, char** argv)
   if (io_term > 1     || io_term < 0)     { std::cout << "Error: Input termination setting is invalid"          << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_spec_out > 1 || io_spec_out < 0) { std::cout << "Error: Special (output) function setting is invalid!" << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_spec_in > 1  || io_spec_in < 0)  { std::cout << "Error: Special (input) function setting is invalid!"  << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_gate_out > 1 || io_gate_out < 0) { std::cout << "Error: Gate (output) setting is invalid!"             << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_gate_in > 1  || io_gate_in < 0)  { std::cout << "Error: Gate (input) setting is invalid!"              << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 gate/mux setting is invalid!"         << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_pps > 1      || io_pps < 0)      { std::cout << "Error: WR PPS gate/mux setting is invalid!"           << std::endl; return (__IO_RETURN_FAILURE); }
   if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; return (__IO_RETURN_FAILURE); }
@@ -1249,7 +1295,7 @@ int main (int argc, char** argv)
     else if (ioc_destroy)    { return_code = io_destroy(verbose_mode); }
     else if (ioc_flip)       { return_code = io_flip(verbose_mode); }
     else if (ioc_list)       { return_code = io_list(); }
-    else                     { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_mux, io_pps, io_drive, stime, set_oe, set_term, set_spec_out, set_spec_in, set_mux, set_pps, set_drive, set_stime, verbose_mode); }
+    else                     { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_gate_out, io_gate_in, io_mux, io_pps, io_drive, stime, set_oe, set_term, set_spec_out, set_spec_in, set_gate_out, set_gate_in, set_mux, set_pps, set_drive, set_stime, verbose_mode); }
   }
 
   /* Done */
