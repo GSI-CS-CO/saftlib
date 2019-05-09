@@ -2,6 +2,7 @@
 #define SAFTBUS_ERROR_H_
 
 #include <sigc++/sigc++.h>
+#include <string>
 
 namespace saftbus
 {
