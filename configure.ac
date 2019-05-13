@@ -1,8 +1,8 @@
 dnl Set these variables before each release:
-m4_define(MAJOR,1)    dnl Increment if removed/changed properties/signals/methods since previous release
-m4_define(MINOR,4)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
-m4_define(REVISION,3) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
-m4_define(SONAME,3)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
+m4_define(MAJOR,2)    dnl Increment if removed/changed properties/signals/methods since previous release
+m4_define(MINOR,0)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
+m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
+m4_define(SONAME,4)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 AC_PREREQ(2.63)
 
@@ -21,7 +21,7 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG(C++)
-AX_CXX_COMPILE_STDCXX(11,noext,optional)
+AX_CXX_COMPILE_STDCXX(11,noext,mandatory)
 
 dnl We need long long even before c++11 for UINT64_C, PRIx64, and friends
 AC_MSG_CHECKING(whether compiler understands -Wall)
@@ -51,17 +51,18 @@ AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [T
 
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])
-PKG_CHECK_MODULES([GIOMM], [giomm-2.4 >= 2.28.2 gio-unix-2.0])
+PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
 AC_PATH_PROGS([XSLTPROC], [xsltproc])
 if test "x$XSLTPROC" = "x"; then
   AC_MSG_ERROR([could not find xsltproc -- needed to processs interfaces])
 fi
 
 dnl Generate documentation, only if we can
-AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
 AC_PATH_PROGS([DOCBOOK2MAN], [docbook2man])
 AC_PATH_PROGS([GIT], [git])
+
+
 AM_CONDITIONAL([INTERFACE_DOCS], [test x$DOCBOOK2PDF != x -a x$GDBUS_CODEGEN != x])
 AM_CONDITIONAL([REBUILD_MAN_PAGES], [test x$DOCBOOK2MAN != x])
 AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e .git])
@@ -75,5 +76,5 @@ AC_SUBST([SAFTLIB_REVISION], REVISION)
 AC_SUBST([SAFTLIB_API], [$((SONAME+MINOR))]) dnl API incremented on every change
 AC_SUBST([SAFTLIB_SONAME], SONAME)
 
-AC_CONFIG_FILES([Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
+AC_CONFIG_FILES([Makefile saftbus/Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
 AC_OUTPUT

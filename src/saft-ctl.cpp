@@ -2,7 +2,7 @@
 // @brief Command-line interface for saftlib. This tool focuses on the software part.
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
-// Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
+// Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 //
 // Have a chat with saftlib
 //
@@ -16,7 +16,7 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-//
+// 
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
@@ -27,13 +27,13 @@
 
 #include <iostream>
 #include <iomanip>
-#include <giomm.h>
 
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -46,8 +46,8 @@
 using namespace std;
 
 static const char* program;
-static guint32 pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
-bool absoluteTime = false;            // inject absolute time?
+static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
+bool absoluteTime   = false;
 
 // GID
 #define QR       0x3e8                // 'PZ1, Quelle Rechts'
@@ -66,7 +66,7 @@ bool absoluteTime = false;            // inject absolute time?
 #define FID      0x1
 
 // this will be called, in case we are snooping for events
-static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void on_action(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
 {
   std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
   std::cout << tr_formatActionEvent(id, pmode);
@@ -76,7 +76,7 @@ static void on_action(guint64 id, guint64 param, guint64 deadline, guint64 execu
 } // on_action
 
 // this will be called, in case we are snooping for events
-static void on_action_uni(guint64 id, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+static void on_action_uni(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
 {
   uint32_t gid;
   uint32_t evtNo;
@@ -84,7 +84,7 @@ static void on_action_uni(guint64 id, guint64 param, guint64 deadline, guint64 e
   string   sVacc;
   string   rf;
   
-  static string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
+  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
   static uint64_t prevDeadline = 0x0;
   static uint32_t nCycle       = 0x0;
 
@@ -198,19 +198,19 @@ static void help(void) {
 
 
 // display status
-static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
-						  Glib::RefPtr<SoftwareActionSink_Proxy> sink) {
-  guint32       nFreeConditions;
+static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
+						  std::shared_ptr<SoftwareActionSink_Proxy> sink) {
+  uint32_t       nFreeConditions;
   bool          wrLocked;
-  guint64       wrTime;
+  uint64_t       wrTime;
   int           width;
   string        fmt;
-
-  map<Glib::ustring, Glib::ustring> allSinks;
-  Glib::RefPtr<SoftwareActionSink_Proxy> aSink;
-
-  map<Glib::ustring, Glib::ustring>::iterator i;
-  vector<Glib::ustring>::iterator j;
+  
+  map<std::string, std::string> allSinks;
+  std::shared_ptr<SoftwareActionSink_Proxy> aSink;
+  
+  map<std::string, std::string>::iterator i;
+  vector<std::string>::iterator j;
 
   // display White Rabbit status
   wrLocked        = receiver->getLocked();
@@ -251,10 +251,10 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
                 << " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate() / 1000000000.0) << "Hz)"
                 << std::endl;
       // get all conditions for this sink
-      vector< Glib::ustring > allConditions = aSink->getAllConditions();
+      vector< std::string > allConditions = aSink->getAllConditions();
       std::cout << "  -- conditions: " << allConditions.size() << std::endl;
       for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
-        Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
+        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
         if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
         else           {std::cout << std::hex; width = 16; fmt = "0x";}
         std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "  	<< fmt << std::setw(width) << std::setfill('0') << condition->getID()
@@ -271,10 +271,10 @@ static void displayStatus(Glib::RefPtr<TimingReceiver_Proxy> receiver,
 
 
 // display information on the software environmet
-static void displayInfoSW(Glib::RefPtr<SAFTd_Proxy> saftd) {
-  Glib::ustring sourceVersion;
-  Glib::ustring buildInfo;
-
+static void displayInfoSW(std::shared_ptr<SAFTd_Proxy> saftd) {
+  std::string sourceVersion;
+  std::string buildInfo;
+  
   sourceVersion   = saftd->getSourceVersion();
   buildInfo       = saftd->getBuildInfo();
 
@@ -284,18 +284,18 @@ static void displayInfoSW(Glib::RefPtr<SAFTd_Proxy> saftd) {
 
 
 // display information on the hardware environmet
-static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
-  Glib::ustring sourceVersion;
-  Glib::ustring buildInfo;
-  Glib::ustring ebDevice;
-  Glib::ustring devName;
-  map< Glib::ustring, Glib::ustring > allDevices;
-  map<Glib::ustring, Glib::ustring>::iterator i;
-  Glib::RefPtr<TimingReceiver_Proxy> aDevice;
-
-  map< Glib::ustring, Glib::ustring > gatewareInfo;
-  map<Glib::ustring, Glib::ustring>::iterator j;
-
+static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
+  std::string sourceVersion;
+  std::string buildInfo;
+  std::string ebDevice;  
+  std::string devName;
+  map< std::string, std::string > allDevices;
+  map<std::string, std::string>::iterator i;
+  std::shared_ptr<TimingReceiver_Proxy> aDevice;
+  
+  map< std::string, std::string > gatewareInfo;
+  map<std::string, std::string>::iterator j;
+  
   allDevices      = saftd->getDevices();
 
   std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
@@ -316,12 +316,12 @@ static void displayInfoHW(Glib::RefPtr<SAFTd_Proxy> saftd) {
 } // displayInfoHW
 
 
-static void displayInfoGW(Glib::RefPtr<TimingReceiver_Proxy> receiver)
+static void displayInfoGW(std::shared_ptr<TimingReceiver_Proxy> receiver)
 {
   std::cout << receiver->getGatewareVersion() << std::endl;
 } // displayInfoGW
 
-static void displayCurrentTemperature(Glib::RefPtr<TimingReceiver_Proxy> receiver)
+static void displayCurrentTemperature(std::shared_ptr<TimingReceiver_Proxy> receiver)
 {
   if (receiver->getTemperatureSensorAvail())
     std::cout << "current temperature (Celsius): " << receiver->CurrentTemperature() << std::endl;
@@ -350,18 +350,18 @@ int main(int argc, char** argv)
   char *value_end;
 
   // variables snoop event
-  guint64 snoopID     = 0x0;
-  guint64 snoopMask   = 0x0;
-  gint64  snoopOffset = 0x0;
-
+  uint64_t snoopID     = 0x0;
+  uint64_t snoopMask   = 0x0;
+  int64_t  snoopOffset = 0x0;
+  
 
   // variables inject event
-  guint64 eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  guint64 eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
-  guint64 eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
-  guint64 eventTime   = 0x0;     // time for next event in PTP time
-  guint64 ppsNext     = 0x0;     // time for next PPS
-  guint64 wrTime      = 0x0;     // current WR time
+  uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
+  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
+  uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
+  uint64_t eventTime   = 0x0;     // time for next event in PTP time
+  uint64_t ppsNext     = 0x0;     // time for next PPS 
+  uint64_t wrTime      = 0x0;     // current WR time
 
   // variables attach, remove
   char    *deviceName = NULL;
@@ -428,8 +428,8 @@ int main(int argc, char** argv)
   // parse for commands
   if (optind + 1< argc) {
     command = argv[optind+1];
-
-    // "inject"
+    
+    // "inject" 
     if (strcasecmp(command, "inject") == 0) {
       if (optind+5  != argc) {
         std::cerr << program << ": expecting exactly three arguments: send <eventID> <param> <time>" << std::endl;
@@ -548,12 +548,15 @@ int main(int argc, char** argv)
 
   try {
     // initialize required stuff
-    Gio::init();
-    Glib::RefPtr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
 
     // do display information that is INDEPENDANT of a specific device
-    if (infoDispSW) displayInfoSW(saftd);
-    if (infoDispHW) displayInfoHW(saftd);
+    if (infoDispSW) {
+      displayInfoSW(saftd);
+    }
+    if (infoDispHW) {
+      displayInfoHW(saftd);
+    }
 
     // do things that DEPEND on a specific device
 
@@ -564,36 +567,47 @@ int main(int argc, char** argv)
     } // attach device
 
     // remove device
-    if (deviceRemove) saftd->RemoveDevice(deviceName);
+    if (deviceRemove) {
+      saftd->RemoveDevice(deviceName);
+    }
 
     // quit !!!
-    if (saftdQuit) saftd->Quit();
+    if (saftdQuit) {
+      // exit the program in a second thread, because the main 
+      // thread will be stuck waiting for the response from saftd
+      // which will never be sent after calling the quit() method
+      std::thread t( [](){sleep(1);exit(1);} );
+      saftd->Quit();
+      t.join();
+    }
 
     // get a specific device
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
-    Glib::RefPtr<TimingReceiver_Proxy> receiver;
-    switch (useFirstDev) {
-    case true  :
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
+    std::shared_ptr<TimingReceiver_Proxy> receiver;
+    if (useFirstDev) {
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
-      break;
-    case false :
+    } else {
       if (devices.find(deviceName) == devices.end()) {
         std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
         return -1;
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-      break;
-    default :
-      return 1;
-    } //switch useFirstDevice;
+    } //if(useFirstDevice);
 
-    if (infoDispGW) displayInfoGW(receiver);
-    if (currentTemp) displayCurrentTemperature(receiver);
+    if (infoDispGW) {
+      displayInfoGW(receiver);
+    }
 
-    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    if (currentTemp) {
+      displayCurrentTemperature(receiver);
+    }
+
+    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
 
     // display status of software actions
-    if (statusDisp) displayStatus(receiver, sink);
+    if (statusDisp) {
+      displayStatus(receiver, sink);
+    }
 
     // inject event
     if (eventInject) {
@@ -607,6 +621,7 @@ int main(int argc, char** argv)
       else eventTime = wrTime + eventTNext;
 
       receiver->InjectEvent(eventID, eventParam, eventTime);
+
       if (pmode & PMODE_HEX)
       {
         std::cout << "Injected event (eventID/parameter/time): 0x" << std::hex << std::setw(16) << std::setfill('0') << eventID
@@ -618,8 +633,8 @@ int main(int argc, char** argv)
 
     // snoop
     if (eventSnoop) {
-      Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-      Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
+      std::shared_ptr<SoftwareCondition_Proxy> condition 
+        = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
       condition->setAcceptLate(true);
       condition->setAcceptEarly(true);
@@ -627,68 +642,68 @@ int main(int argc, char** argv)
       condition->setAcceptDelayed(true);
       condition->Action.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
-      loop->run();
+      while(true) {
+        saftlib::wait_for_signal();
+      }
     } // eventSnoop (without UNILAC option)
 
     // snoop for UNILAC
     if (uniSnoop) {
-      Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-
       snoopMask = 0xfffffff000000000;
 
-      Glib::RefPtr<SoftwareCondition_Proxy> condition[NPZ * 2];
+      std::shared_ptr<SoftwareCondition_Proxy> condition[NPZ * 2];
       int nPz = 0;
 
-      snoopID = ((guint64)FID << 60) | ((guint64)QR << 48) | ((guint64)NXTACC << 36);
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTACC << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      snoopID = ((guint64)FID << 60) | ((guint64)QR << 48) | ((guint64)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((guint64)FID << 60) | ((guint64)QL << 48) | ((guint64)NXTACC << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((guint64)FID << 60) | ((guint64)QL << 48) | ((guint64)NXTRF << 36);
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
 
-      snoopID = ((guint64)FID << 60) | ((guint64)QN << 48) | ((guint64)NXTACC << 36);
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTACC << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      snoopID = ((guint64)FID << 60) | ((guint64)QN << 48) | ((guint64)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((guint64)FID << 60) | ((guint64)HLI << 48 | ((guint64)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((guint64)FID << 60) | ((guint64)HLI << 48) | ((guint64)NXTRF << 36);
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
 
-      snoopID = ((guint64)FID << 60) | ((guint64)HSI << 48 | ((guint64)NXTACC << 36));
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTACC << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      snoopID = ((guint64)FID << 60) | ((guint64)HSI << 48) | ((guint64)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((guint64)FID << 60) | ((guint64)AT << 48 | ((guint64)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((guint64)FID << 60) | ((guint64)AT << 48) | ((guint64)NXTRF << 36);
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
 
-      snoopID = ((guint64)FID << 60) | ((guint64)TK << 48 | ((guint64)NXTACC << 36));
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      snoopID = ((guint64)FID << 60) | ((guint64)TK << 48) | ((guint64)NXTRF << 36);
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
 
-      //snoopID = ((guint64)FID << 60) | ((guint64)TK << 48 | ((guint64)NXTACC << 36));
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48 | ((uint64_t)NXTACC << 36));
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48) | ((uint64_t)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48 | ((uint64_t)NXTACC << 36));
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48) | ((uint64_t)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+      snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48) | ((uint64_t)NXTRF << 36);
+      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nPz++;
+
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
       //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       //nPz++;
 
@@ -708,12 +723,15 @@ int main(int argc, char** argv)
         condition[i]->setActive(true);    
       } // for i
 
-      loop->run();
+      while(true) {
+        saftlib::wait_for_signal();
+      }
     } // eventSnoop (with UNILAC option)
 
-  } catch (const Glib::Error& error) {
+  } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
 
   return 0;
 }
+

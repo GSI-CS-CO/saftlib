@@ -25,7 +25,7 @@
 
 namespace saftlib {
 
-class InoutImpl : public Glib::Object
+class InoutImpl
 {
   public:
     struct ConstructorType {
@@ -46,8 +46,8 @@ class InoutImpl : public Glib::Object
     static int probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSinks, TimingReceiver::EventSources& eventSources);
 
     // iOutputActionSink
-    guint32 getIndexOut() const;
-    guint32 getIndexIn() const;
+    uint32_t getIndexOut() const;
+    uint32_t getIndexIn() const;
     void WriteOutput(bool value);
     bool ReadOutput();
     bool getOutputEnable() const;
@@ -62,10 +62,10 @@ class InoutImpl : public Glib::Object
     void setBuTiSMultiplexer(bool val);
     bool getPPSMultiplexer() const;
     void setPPSMultiplexer(bool val);
-    bool StartClock(double high_phase, double low_phase, guint64 phase_offset);
+    bool StartClock(double high_phase, double low_phase, uint64_t phase_offset);
     bool StopClock();
-    Glib::ustring getLogicLevelOut() const;
-    Glib::ustring getTypeOut() const;
+    std::string getLogicLevelOut() const;
+    std::string getTypeOut() const;
 
     // iInputEventSource
     bool ReadInput(); // done
@@ -77,11 +77,11 @@ class InoutImpl : public Glib::Object
     bool getSpecialPurposeInAvailable() const;
     bool getGateIn() const;
     void setGateIn(bool val);
-    Glib::ustring getLogicLevelIn() const;
-    Glib::ustring getTypeIn() const;
+    std::string getLogicLevelIn() const;
+    std::string getTypeIn() const;
 
     // iInputEventSource
-    guint64 getResolution() const;
+    uint64_t getResolution() const;
 
     sigc::signal< void, bool > OutputEnable;
     sigc::signal< void, bool > SpecialPurposeOut;
@@ -104,9 +104,9 @@ class InoutImpl : public Glib::Object
     bool io_spec_in_available;
     eb_address_t io_control_addr;
     eb_address_t io_ser_clk_gen_addr;
-    bool ConfigureClock(double high_phase, double low_phase, guint64 phase_offset);
-    Glib::ustring getLogicLevel() const;
-    Glib::ustring getType() const;
+    bool ConfigureClock(double high_phase, double low_phase, uint64_t phase_offset);
+    std::string getLogicLevel() const;
+    std::string getType() const;
 };
 
 }

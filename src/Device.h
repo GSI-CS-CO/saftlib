@@ -20,8 +20,11 @@
 #ifndef SAFTLIB_DEVICES_H
 #define SAFTLIB_DEVICES_H
 
+#include <deque>
+#include <memory>
 #include <etherbone.h>
-#include <giomm.h>
+#include <sigc++/sigc++.h>
+#include "saftbus/MainLoop.h"
 
 namespace saftlib {
 
@@ -34,7 +37,7 @@ class Device : public etherbone::Device {
     void release_irq(eb_address_t);
     
     static void hook_it_all(etherbone::Socket s);
-    static sigc::connection attach(const Glib::RefPtr<Glib::MainLoop>& loop);
+    static sigc::connection attach(const std::shared_ptr<Slib::MainLoop>& loop);
     
   private:
     eb_address_t base;
@@ -51,6 +54,6 @@ class Device : public etherbone::Device {
   friend class MSI_Source;
 };
 
-}
+} // namespace saftlib
 
 #endif

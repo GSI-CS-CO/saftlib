@@ -23,21 +23,22 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <giomm.h>
+#include <cstdint>
+
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
 #include "interfaces/SoftwareCondition.h"
 
-static guint64 mask(int i) {
-  return i ? (((guint64)-1) << (64-i)) : 0;
+static uint64_t mask(int i) {
+  return i ? (((uint64_t)-1) << (64-i)) : 0;
 }
 
 // format date string 
-static std::string formatDate(guint64 time)
+static std::string formatDate(uint64_t time)
 {
-  guint64 ns    = time % 1000000000;
+  uint64_t ns    = time % 1000000000;
   time_t  s     = time / 1000000000;
   struct tm *tm = gmtime(&s);
   char date[40];
@@ -58,70 +59,70 @@ static void onLocked(bool locked)
   }
 }
 
-static void onMostFull(guint16 full, guint16 capacity)
+static void onMostFull(uint16_t full, uint16_t capacity)
 {
   std::cout << "MostFull: " << full << "/" << capacity << std::endl;
 }
 
-static void onOverflowCount(guint64 count)
+static void onOverflowCount(uint64_t count)
 {
   std::cout << "OverflowCount: " << count << std::endl;
 }
 
-static void onActionCount(guint64 count)
+static void onActionCount(uint64_t count)
 {
   std::cout << "ActionCount: " << count << std::endl;
 }
 
-static void onLateCount(guint64 count)
+static void onLateCount(uint64_t count)
 {
   std::cout << "LateCount: " << count << std::endl;
 }
 
-static void onLate(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onLate(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
 {
   std::cout
    << "Late #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-static void onEarlyCount(guint64 count)
+static void onEarlyCount(uint64_t count)
 {
   std::cout << "EarlyCount: " << count << std::endl;
 }
 
-static void onEarly(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onEarly(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
 {
   std::cout
    << "Early #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-static void onConflictCount(guint64 count)
+static void onConflictCount(uint64_t count)
 {
   std::cout << "ConflictCount: " << count << std::endl;
 }
 
-static void onConflict(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onConflict(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
 {
   std::cout
    << "Conflict #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-static void onDelayedCount(guint64 count)
+static void onDelayedCount(uint64_t count)
 {
   std::cout << "DelayedCount: " << count << std::endl;
 }
 
-static void onDelayed(guint64 count, guint64 event, guint64 param, guint64 deadline, guint64 executed)
+static void onDelayed(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
 {
   std::cout
    << "Delayed #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-static void onAction(guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags, int rule)
+static void onAction(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags, int rule)
 {
   std::cout
     << "Condition #" << rule << ": 0x" << std::hex << event << " " << param << " at " 
@@ -133,13 +134,12 @@ using namespace std;
 
 int main(int, char**)
 {
-  Gio::init();
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
+  //std::shared_ptr<Glib::MainLoop> loop = Glib::MainLoop::create();
   
   try {
     // Get a list of devices from the saftlib directory
     // The dbus type 'a{ss}' means: map<string, string>
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     
     // Grab a handle to the timing receiver attached to an SCU
     // 
@@ -147,7 +147,7 @@ int main(int, char**)
     // program with access to the remote object stored inside saftd. 
     // Returned is a smart pointer (with copy constructor).  Once the number
     // of references reaches zero, the proxy object is automatically freed.
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices["baseboard"]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices["baseboard"]);
     
     // Monitor the WR lock status
     receiver->Locked.connect(sigc::ptr_fun(&onLocked));
@@ -156,10 +156,10 @@ int main(int, char**)
     // The name is "", so one is chosen automatically that does not conflict.
     // The returned object (a SoftwareActionSink) implements these interfaces:
     //   iOwned, iActionSink, and iSoftwareActionSink
-    Glib::RefPtr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     
     // Read the Capacity property of the ActionSink
-    guint16 capacity = sink->getCapacity();
+    uint16_t capacity = sink->getCapacity();
     
     // Watch changes to the MostFull property
     // Here, we provide the first function parameter via 'bind'.
@@ -185,7 +185,7 @@ int main(int, char**)
     // Create an active(true) condition, watching events 64-127 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
     // SoftwareConditions implement iOwned, iCondition, iSoftwareCondition.
-    Glib::RefPtr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 0));
+    std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 0));
     
     // Call on_action whenever the condition above matches incoming events.
     condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
@@ -196,9 +196,11 @@ int main(int, char**)
     // Run the Glib event loop
     // Inside callbacks you can still run all the methods like we did above
     std::cout << "Waiting for timing events" << std::endl;
-    loop->run();
+    while(true) {
+      saftlib::wait_for_signal();
+    }
 
-  } catch (const Glib::Error& error) {
+  } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   

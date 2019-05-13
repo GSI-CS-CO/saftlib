@@ -28,7 +28,7 @@
 
 namespace saftlib {
 
-Glib::RefPtr<Output> Output::create(const ConstructorType& args)
+std::shared_ptr<Output> Output::create(const ConstructorType& args)
 {
   return RegisteredObject<Output>::create(args.objectPath, args);
 }
@@ -49,13 +49,13 @@ const char *Output::getInterfaceName() const
   return "Output";
 }
 
-Glib::ustring Output::NewCondition(bool active, guint64 id, guint64 mask, gint64 offset, bool on)
+std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)
 {
   return NewConditionHelper(active, id, mask, offset, on?2:1, false, // 2 is on, 1 is off
     sigc::ptr_fun(&OutputCondition::create));
 }
 
-guint32 Output::getIndexOut() const
+uint32_t Output::getIndexOut() const
 {
   return impl->getIndexOut();
 }
@@ -106,7 +106,7 @@ bool Output::getSpecialPurposeOutAvailable() const
   return impl->getSpecialPurposeOutAvailable();
 }
 
-bool Output::StartClock(double high_phase, double low_phase, guint64 phase_offset)
+bool Output::StartClock(double high_phase, double low_phase, uint64_t phase_offset)
 {
   ownerOnly();
   return impl->StartClock(high_phase, low_phase, phase_offset);
@@ -118,17 +118,17 @@ bool Output::StopClock()
   return impl->StopClock();
 }
 
-Glib::ustring Output::getLogicLevelOut() const
+std::string Output::getLogicLevelOut() const
 {
   return impl->getLogicLevelOut();
 }
 
-Glib::ustring Output::getTypeOut() const
+std::string Output::getTypeOut() const
 {
   return impl->getTypeOut();
 }
 
-Glib::ustring Output::getInput() const
+std::string Output::getInput() const
 {
   return partnerPath;
 }

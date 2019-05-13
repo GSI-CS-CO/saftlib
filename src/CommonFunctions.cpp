@@ -3,15 +3,15 @@
 using namespace std;
 
 /* Format mask for action sink */
-guint64 tr_mask(int i)
+uint64_t tr_mask(int i)
 {
-  return i ? (((guint64)-1) << (64-i)) : 0;
+  return i ? (((uint64_t)-1) << (64-i)) : 0;
 } //tr_mask
 
 // 
-std::string tr_formatDate(guint64 time, guint32 pmode)
+std::string tr_formatDate(uint64_t time, uint32_t pmode)
 {
-  guint64 ns    = time % 1000000000;
+  uint64_t ns    = time % 1000000000;
   time_t  s     = time / 1000000000;
   struct tm *tm = gmtime(&s);
   char date[40];
@@ -33,7 +33,7 @@ std::string tr_formatDate(guint64 time, guint32 pmode)
 } //tr_formatDate
 
 /* format EvtID to a string */
-std::string tr_formatActionEvent(guint64 id, guint32 pmode)
+std::string tr_formatActionEvent(uint64_t id, uint32_t pmode)
 {
   std::stringstream full;
   string            fmt = "";
@@ -67,7 +67,7 @@ std::string tr_formatActionEvent(guint64 id, guint32 pmode)
   return full.str();
 } //tr_formatActionEvent
 
-std::string tr_formatActionParam(guint64 param, guint32 evtNo, guint32 pmode)
+std::string tr_formatActionParam(uint64_t param, uint32_t evtNo, uint32_t pmode)
 {
   std::stringstream full;
   string fmt = "";
@@ -90,7 +90,7 @@ std::string tr_formatActionParam(guint64 param, guint32 evtNo, guint32 pmode)
   return full.str();
 } // tr_formatActionParam
 
-std::string tr_formatActionFlags(guint16 flags, guint64 delay, guint32 pmode)
+std::string tr_formatActionFlags(uint16_t flags, uint64_t delay, uint32_t pmode)
 {
   std::stringstream full;
   

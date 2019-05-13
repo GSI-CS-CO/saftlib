@@ -11,7 +11,7 @@
 /* ==================================================================================================== */
 #include <stdio.h>
 #include <iostream>
-#include <giomm.h>
+#include <unistd.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -76,12 +76,12 @@ int main (int argc, char** argv)
   bool translate_mask  = false;
   bool list_conditions = false;
   bool negative_offset = false;
-  guint64 eventID      = 0x0;
-  guint64 eventMask    = 0x0;
-  gint64  offset       = 0x0;
-  gint32  tag          = 0x0;
-  Glib::ustring scu_name = "None";
-  Glib::ustring scu_sink_name = "Unknown";
+  uint64_t eventID      = 0x0;
+  uint64_t eventMask    = 0x0;
+  int64_t  offset       = 0x0;
+  int32_t  tag          = 0x0;
+  std::string scu_name = "None";
+  std::string scu_sink_name = "Unknown";
   
   /* Get the application name */
   program = argv[0]; 
@@ -146,10 +146,7 @@ int main (int argc, char** argv)
   /* Get the device name */
   deviceName = argv[optind];
   
-  /* Initialize Glib stuff */
-  Gio::init();
-  Glib::RefPtr<Glib::MainLoop> loop = Glib::MainLoop::create();
-  
+
   /* Try to connect to saftd */
   try 
   {
@@ -159,16 +156,16 @@ int main (int argc, char** argv)
       std::cerr << "Missing device name!" << std::endl;
       return (-1);
     }
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     if (devices.find(deviceName) == devices.end())
     {
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
       return (-1);
     }
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
     /* Search for embedded CPU channel */
-    map<Glib::ustring, Glib::ustring> scus = receiver->getInterfaces()["SCUbusActionSink"];
+    map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1)
     {
       std::cerr << "Device '" << receiver->getName() << "' has no SCU bus" << std::endl;
@@ -176,13 +173,13 @@ int main (int argc, char** argv)
     }
     
     /* Get connection */
-    Glib::RefPtr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
+    std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
     
     /* Create the action sink now */
     if (create_sink)
     {
       /* Setup Condition */
-      Glib::RefPtr<SCUbusCondition_Proxy> condition;
+      std::shared_ptr<SCUbusCondition_Proxy> condition;
       if (translate_mask) { condition = SCUbusCondition_Proxy::create(scu->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
       else                { condition = SCUbusCondition_Proxy::create(scu->NewCondition(true, eventID, eventMask, offset, tag)); }
       
@@ -192,7 +189,7 @@ int main (int argc, char** argv)
       condition->setAcceptEarly(true);
       condition->setAcceptLate(true);
       
-      /* Run the Glib event loop in case the sink should not be disowned */
+      /* Run the event loop in case the sink should not be disowned */
       if (disown_sink)
       {
         std::cout << "SCU bus Action sink configured and disowned..." << std::endl;
@@ -202,18 +199,20 @@ int main (int argc, char** argv)
       else
       {
         std::cout << "SCU bus Action sink configured..." << std::endl;
-        loop->run();
+        while (true) {
+          saftlib::wait_for_signal();
+        }
       }
     }
     else if (destroy_sink)
     {
       /* Get the conditions */
-      std::vector< Glib::ustring > all_conditions = scu->getAllConditions();
+      std::vector< std::string > all_conditions = scu->getAllConditions();
       
       /* Destroy conditions if possible */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
-        Glib::RefPtr<SCUbusCondition_Proxy> destroy_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<SCUbusCondition_Proxy> destroy_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
         std::string cond_name = all_conditions[condition_it];
         if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
         { 
@@ -229,12 +228,12 @@ int main (int argc, char** argv)
     else if (list_conditions)
     {
       /* Get the conditions */
-      std::vector< Glib::ustring > all_conditions = scu->getAllConditions();
+      std::vector< std::string > all_conditions = scu->getAllConditions();
       
       /* List conditions */
       for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
       {
-        Glib::RefPtr<SCUbusCondition_Proxy> info_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<SCUbusCondition_Proxy> info_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
         std::string cond_name = all_conditions[condition_it];
         std::cout << cond_name << ":" << std::endl;
         std::cout << "  Event ID: 0x" << std::hex << info_condition->getID() << std::endl;
@@ -252,7 +251,7 @@ int main (int argc, char** argv)
     }
     
   } 
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }

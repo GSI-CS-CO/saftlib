@@ -30,7 +30,7 @@
 
 namespace saftlib {
 
-ActionSink::ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev_, const Glib::ustring& name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
+ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, sigc::slot<void> destroy)
  : Owned(objectPath, destroy), dev(dev_), name(name_), channel(channel_), num(num_),
    minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(100000000L),
    overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
@@ -102,182 +102,182 @@ void ActionSink::ToggleActive()
   notify(true, true);
 }
 
-guint16 ActionSink::ReadFill()
+uint16_t ActionSink::ReadFill()
 {
   return dev->updateMostFull(channel);
 }
 
-std::vector< Glib::ustring > ActionSink::getAllConditions() const
+std::vector< std::string > ActionSink::getAllConditions() const
 {
-  std::vector< Glib::ustring > out;
+  std::vector< std::string > out;
   Conditions::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     out.push_back(i->second->getObjectPath());
   return out;
 }
 
-std::vector< Glib::ustring > ActionSink::getActiveConditions() const
+std::vector< std::string > ActionSink::getActiveConditions() const
 {
-  std::vector< Glib::ustring > out;
+  std::vector< std::string > out;
   Conditions::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     if (i->second->getActive()) out.push_back(i->second->getObjectPath());
   return out;
 }
 
-std::vector< Glib::ustring > ActionSink::getInactiveConditions() const
+std::vector< std::string > ActionSink::getInactiveConditions() const
 {
-  std::vector< Glib::ustring > out;
+  std::vector< std::string > out;
   Conditions::const_iterator i;
   for (i = conditions.begin(); i != conditions.end(); ++i)
     if (!i->second->getActive()) out.push_back(i->second->getObjectPath());
   return out;
 }
 
-gint64 ActionSink::getMinOffset() const
+int64_t ActionSink::getMinOffset() const
 {
   return minOffset;
 }
 
-gint64 ActionSink::getMaxOffset() const
+int64_t ActionSink::getMaxOffset() const
 {
   return maxOffset;
 }
 
-guint64 ActionSink::getEarlyThreshold() const
+uint64_t ActionSink::getEarlyThreshold() const
 {
   return earlyThreshold;
 }
 
-guint64 ActionSink::getLatency() const
+uint64_t ActionSink::getLatency() const
 {
   return latency;
 }
 
-guint16 ActionSink::getCapacity() const
+uint16_t ActionSink::getCapacity() const
 {
   return capacity;
 }
 
-guint16 ActionSink::getMostFull() const
+uint16_t ActionSink::getMostFull() const
 {
   return dev->most_full[channel];
 }
 
-guint64 ActionSink::getSignalRate() const
+uint64_t ActionSink::getSignalRate() const
 {
   return signalRate;
 }
 
-guint64 ActionSink::getOverflowCount() const
+uint64_t ActionSink::getOverflowCount() const
 {
   return overflowCount;
 }
 
-guint64 ActionSink::getActionCount() const
+uint64_t ActionSink::getActionCount() const
 {
   return actionCount;
 }
 
-guint64 ActionSink::getLateCount() const
+uint64_t ActionSink::getLateCount() const
 {
   return lateCount;
 }
 
-guint64 ActionSink::getEarlyCount() const
+uint64_t ActionSink::getEarlyCount() const
 {
   return earlyCount;
 }
 
-guint64 ActionSink::getConflictCount() const
+uint64_t ActionSink::getConflictCount() const
 {
   return conflictCount;
 }
 
-guint64 ActionSink::getDelayedCount() const
+uint64_t ActionSink::getDelayedCount() const
 {
   return delayedCount;
 }
 
-void ActionSink::setMinOffset(gint64 val)
+void ActionSink::setMinOffset(int64_t val)
 {
   ownerOnly();
   minOffset = val;
   MinOffset(minOffset);
 }
 
-void ActionSink::setMaxOffset(gint64 val)
+void ActionSink::setMaxOffset(int64_t val)
 {
   ownerOnly();
   maxOffset = val;
   MaxOffset(maxOffset);
 }
 
-void ActionSink::setMostFull(guint16 val)
+void ActionSink::setMostFull(uint16_t val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set MostFull to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set MostFull to 0");
   dev->resetMostFull(channel);
 }
 
-void ActionSink::setSignalRate(guint64 val)
+void ActionSink::setSignalRate(uint64_t val)
 {
   ownerOnly();
   signalRate = val;
   SignalRate(signalRate);
 }
 
-void ActionSink::setOverflowCount(guint64 val)
+void ActionSink::setOverflowCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
   overflowCount = 0;
   OverflowCount(overflowCount);
 }
 
-void ActionSink::setActionCount(guint64 val)
+void ActionSink::setActionCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set ActionCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ActionCount to 0");
   actionCount = 0;
   ActionCount(actionCount);
 }
 
-void ActionSink::setLateCount(guint64 val)
+void ActionSink::setLateCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set LateCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set LateCount to 0");
   lateCount = 0;
   LateCount(lateCount);
 }
 
-void ActionSink::setEarlyCount(guint64 val)
+void ActionSink::setEarlyCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
   earlyCount = 0;
   EarlyCount(earlyCount);
 }
 
-void ActionSink::setConflictCount(guint64 val)
+void ActionSink::setConflictCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
   conflictCount = 0;
   ConflictCount(conflictCount);
 }
 
-void ActionSink::setDelayedCount(guint64 val)
+void ActionSink::setDelayedCount(uint64_t val)
 {
   ownerOnly();
-  if (val != 0) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
+  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
   delayedCount = 0;
   DelayedCount(delayedCount);
 }
 
-void ActionSink::receiveMSI(guint8 code)
+void ActionSink::receiveMSI(uint8_t code)
 {
-  guint64 time = dev->ReadRawCurrentTime();
+  uint64_t time = dev->ReadRawCurrentTime();
 
   switch (code) {
   case ECA_OVERFLOW:
@@ -285,8 +285,8 @@ void ActionSink::receiveMSI(guint8 code)
       updateOverflow(time);
     } else {
       overflowPending.disconnect(); // just to be safe
-      guint64 exec = overflowUpdate + signalRate;
-      overflowPending = Glib::signal_timeout().connect(
+      uint64_t exec = overflowUpdate + signalRate;
+      overflowPending = Slib::signal_timeout().connect(
         sigc::bind(sigc::mem_fun(*this, &ActionSink::updateOverflow), exec),
         (exec - time) / 1000000);
     }
@@ -296,8 +296,8 @@ void ActionSink::receiveMSI(guint8 code)
       updateAction(time);
     } else {
       actionPending.disconnect(); // just to be safe
-      guint64 exec = actionUpdate + signalRate;
-      actionPending = Glib::signal_timeout().connect(
+      uint64_t exec = actionUpdate + signalRate;
+      actionPending = Slib::signal_timeout().connect(
         sigc::bind(sigc::mem_fun(*this, &ActionSink::updateAction), exec),
         (exec - time) / 1000000);
     }
@@ -307,8 +307,8 @@ void ActionSink::receiveMSI(guint8 code)
       updateLate(time);
     } else {
       latePending.disconnect(); // just to be safe
-      guint64 exec = lateUpdate + signalRate;
-      latePending = Glib::signal_timeout().connect(
+      uint64_t exec = lateUpdate + signalRate;
+      latePending = Slib::signal_timeout().connect(
         sigc::bind(sigc::mem_fun(*this, &ActionSink::updateLate), exec),
         (exec - time) / 1000000);
     }
@@ -318,8 +318,8 @@ void ActionSink::receiveMSI(guint8 code)
       updateEarly(time);
     } else {
       earlyPending.disconnect(); // just to be safe
-      guint64 exec = earlyUpdate + signalRate;
-      earlyPending = Glib::signal_timeout().connect(
+      uint64_t exec = earlyUpdate + signalRate;
+      earlyPending = Slib::signal_timeout().connect(
         sigc::bind(sigc::mem_fun(*this, &ActionSink::updateEarly), exec),
         (exec - time) / 1000000);
     }
@@ -329,8 +329,8 @@ void ActionSink::receiveMSI(guint8 code)
       updateConflict(time);
     } else {
       conflictPending.disconnect(); // just to be safe
-      guint64 exec = conflictUpdate + signalRate;
-      conflictPending = Glib::signal_timeout().connect(
+      uint64_t exec = conflictUpdate + signalRate;
+      conflictPending = Slib::signal_timeout().connect(
         sigc::bind(sigc::mem_fun(*this, &ActionSink::updateConflict), exec),
         (exec - time) / 1000000);
     }
@@ -340,8 +340,8 @@ void ActionSink::receiveMSI(guint8 code)
       updateDelayed(time);
     } else {
       delayedPending.disconnect(); // just to be safe
-      guint64 exec = delayedUpdate + signalRate;
-      delayedPending = Glib::signal_timeout().connect(
+      uint64_t exec = delayedUpdate + signalRate;
+      delayedPending = Slib::signal_timeout().connect(
         sigc::bind(sigc::mem_fun(*this, &ActionSink::updateDelayed), exec),
         (exec - time) / 1000000);
     }
@@ -352,7 +352,7 @@ void ActionSink::receiveMSI(guint8 code)
   }
 }
 
-bool ActionSink::updateOverflow(guint64 time)
+bool ActionSink::updateOverflow(uint64_t time)
 {
   eb_data_t overflow;
 
@@ -372,7 +372,7 @@ bool ActionSink::updateOverflow(guint64 time)
   return false;
 }
 
-bool ActionSink::updateAction(guint64 time)
+bool ActionSink::updateAction(uint64_t time)
 {
   eb_data_t valid;
 
@@ -392,7 +392,7 @@ bool ActionSink::updateAction(guint64 time)
   return false;
 }
 
-ActionSink::Record ActionSink::fetchError(guint8 code)
+ActionSink::Record ActionSink::fetchError(uint8_t code)
 {
   eb_data_t event_hi, event_lo, param_hi, param_lo, tag, tef,
             deadline_hi, deadline_lo, executed_hi, executed_lo, failed;
@@ -417,16 +417,16 @@ ActionSink::Record ActionSink::fetchError(guint8 code)
   cycle.close();
 
   ActionSink::Record out;
-  out.event    = guint64(event_hi)    << 32 | event_lo;
-  out.param    = guint64(param_hi)    << 32 | param_lo;
-  out.deadline = guint64(deadline_hi) << 32 | deadline_lo;
-  out.executed = guint64(executed_hi) << 32 | executed_lo;
+  out.event    = uint64_t(event_hi)    << 32 | event_lo;
+  out.param    = uint64_t(param_hi)    << 32 | param_lo;
+  out.deadline = uint64_t(deadline_hi) << 32 | deadline_lo;
+  out.executed = uint64_t(executed_hi) << 32 | executed_lo;
   out.count    = failed;
 
   return out;
 }
 
-bool ActionSink::updateLate(guint64 time)
+bool ActionSink::updateLate(uint64_t time)
 {
   Record r = fetchError(ECA_LATE);
   if (!r.count) clog << kLogErr << "Received LATE MSI, but FAILED_COUNT was 0" << std::endl;
@@ -437,7 +437,7 @@ bool ActionSink::updateLate(guint64 time)
   return false;
 }
 
-bool ActionSink::updateEarly(guint64 time)
+bool ActionSink::updateEarly(uint64_t time)
 {
   Record r = fetchError(ECA_EARLY);
   if (!r.count) clog << kLogErr << "Received EARLY MSI, but FAILED_COUNT was 0" << std::endl;
@@ -448,7 +448,7 @@ bool ActionSink::updateEarly(guint64 time)
   return false;
 }
 
-bool ActionSink::updateConflict(guint64 time)
+bool ActionSink::updateConflict(uint64_t time)
 {
   Record r = fetchError(ECA_CONFLICT);
   if (!r.count) clog << kLogErr << "Received CONFLICT MSI, but FAILED_COUNT was 0" << std::endl;
@@ -459,7 +459,7 @@ bool ActionSink::updateConflict(guint64 time)
   return false;
 }
 
-bool ActionSink::updateDelayed(guint64 time)
+bool ActionSink::updateDelayed(uint64_t time)
 {
   Record r = fetchError(ECA_DELAYED);
   if (!r.count) clog << kLogErr << "Received DELAYED MSI, but FAILED_COUNT was 0" << std::endl;
@@ -494,21 +494,21 @@ void ActionSink::compile()
   dev->compile();
 }
 
-Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor)
+std::string ActionSink::NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey, ConditionConstructor constructor)
 {
   ownerOnly();
 
   // sanity check arguments
   if (offset < minOffset || offset > maxOffset)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
   if ((~mask & (~mask+1)) != 0)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "mask is not a prefix");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
   if ((id & mask) != id)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
 
   // Pick a random number
   std::pair<Conditions::iterator, bool> attempt;
-  do attempt = conditions.insert(Conditions::value_type(random(), Glib::RefPtr<Condition>()));
+  do attempt = conditions.insert(Conditions::value_type(random(), std::shared_ptr<Condition>()));
   while (!attempt.second);
 
   // Setup a destruction callback
@@ -517,9 +517,9 @@ Glib::ustring ActionSink::NewConditionHelper(bool active, guint64 id, guint64 ma
   std::ostringstream str;
   str.imbue(std::locale("C"));
   str << getObjectPath() << "/_" << attempt.first->first;
-  Glib::ustring path = str.str();
+  std::string path = str.str();
 
-  Glib::RefPtr<Condition> condition;
+  std::shared_ptr<Condition> condition;
   try {
     Condition::Condition_ConstructorType args = {
       path, this, active, id, mask, offset, tagIsKey?attempt.first->first:tag, destroy

@@ -33,16 +33,16 @@ MILbusCondition::MILbusCondition(const ConstructorType& args)
 {
 }
 
-guint16 MILbusCondition::getTag() const
+uint16_t MILbusCondition::getTag() const
 {
   return tag;
 }
 
-void MILbusCondition::setTag(guint16 val)
+void MILbusCondition::setTag(uint16_t val)
 {
   ownerOnly();
   if (val == tag) return;
-  guint32 old = tag;
+  uint32_t old = tag;
   
   tag = val;
   try {
@@ -54,7 +54,7 @@ void MILbusCondition::setTag(guint16 val)
   }
 }
 
-Glib::RefPtr<MILbusCondition> MILbusCondition::create(const ConstructorType& args)
+std::shared_ptr<MILbusCondition> MILbusCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<MILbusCondition>::create(args.objectPath, args);
 }

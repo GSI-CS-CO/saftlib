@@ -31,63 +31,63 @@ class TimingReceiver;
 class ActionSink : public Owned, public iActionSink
 {
   public:
-    ActionSink(const Glib::ustring& objectPath, TimingReceiver* dev, const Glib::ustring& name, unsigned channel, unsigned num, sigc::slot<void> destroy = sigc::slot<void>());
+    ActionSink(const std::string& objectPath, TimingReceiver* dev, const std::string& name, unsigned channel, unsigned num, sigc::slot<void> destroy = sigc::slot<void>());
     ~ActionSink();
     
     void ToggleActive();
-    guint16 ReadFill();
+    uint16_t ReadFill();
     
-    std::vector< Glib::ustring > getAllConditions() const;
-    std::vector< Glib::ustring > getActiveConditions() const;
-    std::vector< Glib::ustring > getInactiveConditions() const;
-    gint64 getMinOffset() const;
-    gint64 getMaxOffset() const;
-    guint64 getLatency() const;
-    guint64 getEarlyThreshold() const;
-    guint16 getCapacity() const;
-    guint16 getMostFull() const;
-    guint64 getSignalRate() const;
-    guint64 getOverflowCount() const;
-    guint64 getActionCount() const;
-    guint64 getLateCount() const;
-    guint64 getEarlyCount() const;
-    guint64 getConflictCount() const;
-    guint64 getDelayedCount() const;
+    std::vector< std::string > getAllConditions() const;
+    std::vector< std::string > getActiveConditions() const;
+    std::vector< std::string > getInactiveConditions() const;
+    int64_t getMinOffset() const;
+    int64_t getMaxOffset() const;
+    uint64_t getLatency() const;
+    uint64_t getEarlyThreshold() const;
+    uint16_t getCapacity() const;
+    uint16_t getMostFull() const;
+    uint64_t getSignalRate() const;
+    uint64_t getOverflowCount() const;
+    uint64_t getActionCount() const;
+    uint64_t getLateCount() const;
+    uint64_t getEarlyCount() const;
+    uint64_t getConflictCount() const;
+    uint64_t getDelayedCount() const;
     
-    void setMinOffset(gint64 val);
-    void setMaxOffset(gint64 val);
-    void setMostFull(guint16 val);
-    void setSignalRate(guint64 val);
-    void setOverflowCount(guint64 val);
-    void setActionCount(guint64 val);
-    void setLateCount(guint64 val);
-    void setEarlyCount(guint64 val);
-    void setConflictCount(guint64 val);
-    void setDelayedCount(guint64 val);
+    void setMinOffset(int64_t val);
+    void setMaxOffset(int64_t val);
+    void setMostFull(uint16_t val);
+    void setSignalRate(uint64_t val);
+    void setOverflowCount(uint64_t val);
+    void setActionCount(uint64_t val);
+    void setLateCount(uint64_t val);
+    void setEarlyCount(uint64_t val);
+    void setConflictCount(uint64_t val);
+    void setDelayedCount(uint64_t val);
     
     // These property signals are available from base classes
-    //   sigc::signal< void, const std::vector< Glib::ustring >& > AllConditions;
-    //   sigc::signal< void, const std::vector< Glib::ustring >& > ActiveConditions;
-    //   sigc::signal< void, const std::vector< Glib::ustring >& > InactiveConditions;
-    //   sigc::signal< void, gint64 > MinOffset;
-    //   sigc::signal< void, gint64 > MaxOffset;
-    //   sigc::signal< void, guint16 > MostFull;
-    //   sigc::signal< void, guint64 > SignalRate;
-    //   sigc::signal< void, guint64 > OverflowCount;
-    //   sigc::signal< void, guint64 > ActionCount;
-    //   sigc::signal< void, guint64 > LateCount;
-    //   sigc::signal< void, guint64 > EarlyCount;
-    //   sigc::signal< void, guint64 > ConflictCount;
-    //   sigc::signal< void, guint64 > DelayedCount;
+    //   sigc::signal< void, const std::vector< std::string >& > AllConditions;
+    //   sigc::signal< void, const std::vector< std::string >& > ActiveConditions;
+    //   sigc::signal< void, const std::vector< std::string >& > InactiveConditions;
+    //   sigc::signal< void, int64_t > MinOffset;
+    //   sigc::signal< void, int64_t > MaxOffset;
+    //   sigc::signal< void, uint16_t > MostFull;
+    //   sigc::signal< void, uint64_t > SignalRate;
+    //   sigc::signal< void, uint64_t > OverflowCount;
+    //   sigc::signal< void, uint64_t > ActionCount;
+    //   sigc::signal< void, uint64_t > LateCount;
+    //   sigc::signal< void, uint64_t > EarlyCount;
+    //   sigc::signal< void, uint64_t > ConflictCount;
+    //   sigc::signal< void, uint64_t > DelayedCount;
     // These signals are available from base classes
-    //   sigc::signal< void , guint32 , guint64 , guint64 , guint64 , guint64 > Late;
-    //   sigc::signal< void , guint32 , guint64 , guint64 , guint64 , guint64 > Early;
-    //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 , guint64 > Conflict;
-    //   sigc::signal< void , guint64 , guint64 , guint64 , guint64 , guint64 > Delayed;
+    //   sigc::signal< void , uint32_t , uint64_t , uint64_t , uint64_t , uint64_t > Late;
+    //   sigc::signal< void , uint32_t , uint64_t , uint64_t , uint64_t , uint64_t > Early;
+    //   sigc::signal< void , uint64_t , uint64_t , uint64_t , uint64_t , uint64_t > Conflict;
+    //   sigc::signal< void , uint64_t , uint64_t , uint64_t , uint64_t , uint64_t > Delayed;
 
     // Do the grunt work to create a condition
-    typedef sigc::slot<Glib::RefPtr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
-    Glib::ustring NewConditionHelper(bool active, guint64 id, guint64 mask, gint64 offset, guint32 tag, bool tagIsKey, ConditionConstructor constructor);
+    typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
+    std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey, ConditionConstructor constructor);
 
     // Emit AllConditions, ActiveConditions, InactiveConditions
     void notify(bool active = true, bool inactive = true);
@@ -95,47 +95,47 @@ class ActionSink : public Owned, public iActionSink
     
     // The name under which this ActionSink is listed in TimingReceiver::Iterfaces
     virtual const char *getInterfaceName() const = 0;
-    const Glib::ustring &getObjectName() const { return name; }
+    const std::string &getObjectName() const { return name; }
 
     // Used by TimingReciever::compile
-    typedef std::map< guint32, Glib::RefPtr<Condition> > Conditions;
+    typedef std::map< uint32_t, std::shared_ptr<Condition> > Conditions;
     const Conditions& getConditions() const { return conditions; }
     unsigned getChannel() const { return channel; }
     unsigned getNum() const { return num; }
     
     // Receive MSI from TimingReceiver
-    virtual void receiveMSI(guint8 code);
+    virtual void receiveMSI(uint8_t code);
     
   protected:
     TimingReceiver* dev;
-    Glib::ustring name;
+    std::string name;
     unsigned channel;
     unsigned num;
     
     // User controlled values
-    gint64 minOffset, maxOffset;
-    guint64 signalRate;
+    int64_t minOffset, maxOffset;
+    uint64_t signalRate;
     
     // cached counters
-    guint64 overflowCount;
-    guint64 actionCount;
-    guint64 lateCount;
-    guint64 earlyCount;
-    guint64 conflictCount;
-    guint64 delayedCount;
+    uint64_t overflowCount;
+    uint64_t actionCount;
+    uint64_t lateCount;
+    uint64_t earlyCount;
+    uint64_t conflictCount;
+    uint64_t delayedCount;
     
     // last update of counters (for throttled)
-    guint64 overflowUpdate;
-    guint64 actionUpdate;
-    guint64 lateUpdate;
-    guint64 earlyUpdate;
-    guint64 conflictUpdate;
-    guint64 delayedUpdate;
+    uint64_t overflowUpdate;
+    uint64_t actionUpdate;
+    uint64_t lateUpdate;
+    uint64_t earlyUpdate;
+    uint64_t conflictUpdate;
+    uint64_t delayedUpdate;
     
     // constant hardware values
-    guint64 latency;
-    guint64 earlyThreshold;
-    guint16 capacity;
+    uint64_t latency;
+    uint64_t earlyThreshold;
+    uint16_t capacity;
     
     // pending timeouts to refresh counters
     sigc::connection overflowPending;
@@ -146,20 +146,20 @@ class ActionSink : public Owned, public iActionSink
     sigc::connection delayedPending;
     
     struct Record {
-      guint64 event;
-      guint64 param;
-      guint64 deadline;
-      guint64 executed;
-      guint64 count;
+      uint64_t event;
+      uint64_t param;
+      uint64_t deadline;
+      uint64_t executed;
+      uint64_t count;
     };
-    Record fetchError(guint8 code);
+    Record fetchError(uint8_t code);
     
-    bool updateOverflow(guint64 time);
-    bool updateAction(guint64 time);
-    bool updateLate(guint64 time);
-    bool updateEarly(guint64 time);
-    bool updateConflict(guint64 time);
-    bool updateDelayed(guint64 time);
+    bool updateOverflow(uint64_t time);
+    bool updateAction(uint64_t time);
+    bool updateLate(uint64_t time);
+    bool updateEarly(uint64_t time);
+    bool updateConflict(uint64_t time);
+    bool updateDelayed(uint64_t time);
     
     // conditions must come after dev to ensure safe cleanup on ~Condition
     Conditions conditions;

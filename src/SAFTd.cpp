@@ -22,9 +22,10 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include <glibmm.h>
+//#include <glibmm.h>
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #include "SAFTd.h"
 #include "Driver.h"
@@ -40,7 +41,7 @@ static void just_rethrow(const char*)
 }
 
 SAFTd::SAFTd()
- : m_service(this, sigc::ptr_fun(&just_rethrow)), m_loop(Glib::MainLoop::create())
+ : m_service(this, sigc::ptr_fun(&just_rethrow)), m_loop(Slib::MainLoop::create())
 {
   // Setup the global etherbone socket
   try {
@@ -62,8 +63,8 @@ SAFTd::~SAFTd()
 {
   bool daemon = false;
   try {
-    for (std::map< Glib::ustring, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
-      i->second.ref.clear(); // should destroy the driver
+    for (std::map< std::string, OpenDevice >::iterator i = devs.begin(); i != devs.end(); ++i) {
+      i->second.ref.reset(); // should destroy the driver
       i->second.device.close();
     }
     devs.clear();
@@ -76,7 +77,7 @@ SAFTd::~SAFTd()
     eb_source.disconnect();
     msi_source.disconnect();
     socket.close();
-  } catch (const Glib::Error& ex) {
+  } catch (const saftbus::Error& ex) {
     clog << kLogErr << "Could not clean up: " << ex.what() << std::endl;
     exit(1);
   } catch(const etherbone::exception_t& ex) {
@@ -92,16 +93,16 @@ void SAFTd::Quit()
   m_loop->quit();
 }
 
-std::map< Glib::ustring, Glib::ustring > SAFTd::getDevices() const
+std::map< std::string, std::string > SAFTd::getDevices() const
 {
-  std::map< Glib::ustring, Glib::ustring > out;
-  for (std::map< Glib::ustring, OpenDevice >::const_iterator i = devs.begin(); i != devs.end(); ++i) {
+  std::map< std::string, std::string > out;
+  for (std::map< std::string, OpenDevice >::const_iterator i = devs.begin(); i != devs.end(); ++i) {
     out[i->first] = i->second.objectPath;
   }
   return out;
 }
 
-void SAFTd::setConnection(const Glib::RefPtr<Gio::DBus::Connection>& c)
+void SAFTd::setConnection(const std::shared_ptr<saftbus::Connection>& c)
 {
   assert (!m_connection);
   m_connection = c;
@@ -113,12 +114,12 @@ static inline bool not_isalnum_(char c)
   return !(isalnum(c) || c == '_');
 }
 
-Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring& path)
+std::string SAFTd::AttachDevice(const std::string& name, const std::string& path)
 {
   if (devs.find(name) != devs.end())
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "device already exists");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
   if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
   
   try {
     etherbone::Device edev;
@@ -133,10 +134,10 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
       eb_address_t size = last - first;
     
       if (((size + 1) & size) != 0)
-        throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device has strange sized MSI range");
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
     
       if ((first & size) != 0)
-        throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "Device has unaligned MSI first address");
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
     
       struct OpenDevice od(edev, first, last);
       od.name = name;
@@ -150,7 +151,7 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
         Devices(getDevices());
         return od.objectPath;
       } else {
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no driver available for this device");
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no driver available for this device");
       }
     } catch (...) {
       edev.close();
@@ -159,17 +160,17 @@ Glib::ustring SAFTd::AttachDevice(const Glib::ustring& name, const Glib::ustring
   } catch (const etherbone::exception_t& e) {
     std::ostringstream str;
     str << "AttachDevice: failed to open: " << e;
-    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, str.str().c_str());
+    throw saftbus::Error(saftbus::Error::IO_ERROR, str.str().c_str());
   }
 }
 
-void SAFTd::RemoveDevice(const Glib::ustring& name)
+void SAFTd::RemoveDevice(const std::string& name)
 {
-  std::map< Glib::ustring, OpenDevice >::iterator elem = devs.find(name);
+  std::map< std::string, OpenDevice >::iterator elem = devs.find(name);
   if (elem == devs.end())
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "no such device");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
   
-  elem->second.ref.clear();
+  elem->second.ref.reset();
   elem->second.device.close();
   devs.erase(elem);
   
@@ -177,12 +178,12 @@ void SAFTd::RemoveDevice(const Glib::ustring& name)
   Devices(getDevices());
 }
 
-Glib::ustring SAFTd::getSourceVersion() const
+std::string SAFTd::getSourceVersion() const
 {
   return sourceVersion;
 }
 
-Glib::ustring SAFTd::getBuildInfo() const
+std::string SAFTd::getBuildInfo() const
 {
   return buildInfo;
 }

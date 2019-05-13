@@ -26,9 +26,18 @@
 #include "FunctionGeneratorImpl.h"
 #include "Owned.h"
 
+#include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/containers/vector.hpp>
+#include <boost/interprocess/containers/map.hpp>
+
+
 namespace saftlib {
 
 class TimingReceiver;
+
+typedef boost::interprocess::allocator<ParameterTuple, boost::interprocess::managed_shared_memory::segment_manager>  ShmemAllocator;
+typedef boost::interprocess::vector<ParameterTuple, ShmemAllocator> ParameterVector;
 
 
 class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
@@ -36,34 +45,38 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
   public:
     typedef MasterFunctionGenerator_Service ServiceType;
     struct ConstructorType {
-      Glib::ustring objectPath;
-      TimingReceiver* dev;
- 			//std::vector<Glib::RefPtr<FunctionGeneratorImpl>> functionGenerators;
- 			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;            
+      std::string objectPath;
+      TimingReceiver *tr;
+      std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGenerators;            
     };
     
-    static Glib::RefPtr<MasterFunctionGenerator> create(const ConstructorType& args);
+    static std::shared_ptr<MasterFunctionGenerator> create(const ConstructorType& args);
    
     // iMasterFunctionGenerator overrides
     void Arm();
     void Abort(bool);
-		bool AppendParameterSets(const std::vector< std::vector< gint16 > >& coeff_a, const std::vector< std::vector< gint16 > >& coeff_b, const std::vector< std::vector< gint32 > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm, bool wait_for_arm_ack);    
-    std::vector<guint32> ReadExecutedParameterCounts();
-    std::vector<guint64> ReadFillLevels();
+
+    void InitializeSharedMemory(const std::string& shared_memory_name);
+
+    void AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack);
+
+	bool AppendParameterSets(const std::vector< std::vector< int16_t > >& coeff_a, const std::vector< std::vector< int16_t > >& coeff_b, const std::vector< std::vector< int32_t > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm, bool wait_for_arm_ack);    
+    std::vector<uint32_t> ReadExecutedParameterCounts();
+    std::vector<uint64_t> ReadFillLevels();
     void Flush();
-    void setStartTag(guint32 val);
-    guint32 getStartTag() const;
+    void setStartTag(uint32_t val);
+    uint32_t getStartTag() const;
 
     void setGenerateIndividualSignals(bool);
     bool getGenerateIndividualSignals() const;
 
-    std::vector<Glib::ustring> ReadAllNames();
-    std::vector<Glib::ustring> ReadNames();
+    std::vector<std::string> ReadAllNames();
+    std::vector<std::string> ReadNames();
     std::vector<int> ReadArmed();
     std::vector<int> ReadEnabled();
     std::vector<int> ReadRunning();
     void ResetActiveFunctionGenerators();
-    void SetActiveFunctionGenerators(const std::vector<Glib::ustring>&);
+    void SetActiveFunctionGenerators(const std::vector<std::string>&);
 
   protected:
     MasterFunctionGenerator(const ConstructorType& args);
@@ -77,8 +90,8 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void on_fg_running(std::shared_ptr<FunctionGeneratorImpl>& fg, bool);
     void on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>& fg, bool);
     void on_fg_enabled(std::shared_ptr<FunctionGeneratorImpl>& fg, bool);
-    void on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64);
-    void on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow);
+    void on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t);
+    void on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow);
     void on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg);
 
 
@@ -87,25 +100,17 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     bool WaitTimeout();
     void waitForCondition(std::function<bool()> condition, int timeout_ms);
 
-    TimingReceiver* dev;
+    TimingReceiver *tr;
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> allFunctionGenerators;      
   	std::vector<std::shared_ptr<FunctionGeneratorImpl>> activeFunctionGenerators;      
-    guint32 startTag;
+    uint32_t startTag;
     bool generateIndividualSignals;
     sigc::connection waitTimeout; 
 
-    struct ParameterTuple {
-      gint16 coeff_a;
-      gint16 coeff_b;
-      gint32 coeff_c;
-      guint8 step;
-      guint8 freq;
-      guint8 shift_a;
-      guint8 shift_b;
-      
-      guint64 duration() const;
-    };
-
+    std::map <int,std::vector<ParameterTuple>> parametersForBeamProcess;
+    std::unique_ptr<boost::interprocess::managed_shared_memory> shm_params;
+    boost::interprocess::interprocess_mutex* shm_mutex;
+    std::map<std::string,ParameterVector*> paramVectors;
 };
 
 }

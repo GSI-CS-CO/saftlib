@@ -26,6 +26,7 @@
 #include <sstream>
 #include <algorithm>
 #include <map>
+#include <cstdint>
 
 #include "RegisteredObject.h"
 #include "Driver.h"
@@ -34,9 +35,11 @@
 #include "EmbeddedCPUActionSink.h"
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
+#include "FunctionGeneratorFirmware.h"
 #include "FunctionGenerator.h"
 #include "FunctionGeneratorImpl.h"
 #include "MasterFunctionGenerator.h"
+#include "WrMilGateway.h"
 #include "eca_regs.h"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
@@ -68,11 +71,11 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   eb_data_t retry;
   device.read(watchdog, EB_DATA32, &watchdog_value);
   if ((watchdog_value & 0xFFFF) != 0)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Timing Receiver already locked");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
   device.write(watchdog, EB_DATA32, watchdog_value);
   device.read(watchdog, EB_DATA32, &retry);
   if (((retry ^ watchdog_value) >> 16) != 0)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Timing Receiver already locked");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
   
   // parse eb-info data
   setupGatewareInfo(args.info);
@@ -81,7 +84,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   getLocked();
 
   // poll every 1s some registers
-  pollConnection = Glib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
+  pollConnection = Slib::signal_timeout().connect(sigc::mem_fun(*this, &TimingReceiver::poll), 1000);
   
   // Probe the configuration of the ECA
   eb_data_t raw_channels, raw_search, raw_walker, raw_type, raw_max_num, raw_capacity;
@@ -156,7 +159,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
           std::vector<sdb_device> scubus;
           device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
           if (scubus.size() == 1 && num == 0) {
-            Glib::ustring path = getObjectPath() + "/scubus";
+            std::string path = getObjectPath() + "/scubus";
             SCUbusActionSink::ConstructorType args = { path, this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
             actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(args);
           }
@@ -179,7 +182,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
 #if DEBUG_COMPILE
                 clog << kLogDebug << "ECA: Found embedded CPU channel!" << std::endl;
 #endif
-                Glib::ustring path = getObjectPath() + "/embedded_cpu";
+                std::string path = getObjectPath() + "/embedded_cpu";
                 EmbeddedCPUActionSink::ConstructorType args = { path, this, "embedded_cpu", i, queue_addresses[queue_id] };
                 actionSinks[SinkKey(i, num)] = EmbeddedCPUActionSink::create(args);
               }
@@ -228,7 +231,7 @@ TimingReceiver::~TimingReceiver()
     
   } catch (const etherbone::exception_t& e) {
     clog << kLogErr << "TimingReceiver::~TimingReceiver: " << e << std::endl;
-  } catch (const Glib::Error& e) {
+  } catch (const saftbus::Error& e) {
     clog << kLogErr << "TimingReceiver::~TimingReceiver: " << e.what() << std::endl;
   } catch (...) {
     clog << kLogErr << "TimingReceiver::~TimingReceiver: unknown exception" << std::endl;
@@ -259,12 +262,12 @@ void TimingReceiver::Remove()
   SAFTd::get().RemoveDevice(name);
 }
 
-Glib::ustring TimingReceiver::getEtherbonePath() const
+std::string TimingReceiver::getEtherbonePath() const
 {
   return etherbonePath;
 }
 
-Glib::ustring TimingReceiver::getName() const
+std::string TimingReceiver::getName() const
 {
   return name;
 }
@@ -278,7 +281,7 @@ Glib::ustring TimingReceiver::getName() const
 #endif
 #define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
 
-void TimingReceiver::setupGatewareInfo(guint32 address)
+void TimingReceiver::setupGatewareInfo(uint32_t address)
 {
   eb_data_t buffer[256];
   
@@ -316,17 +319,17 @@ void TimingReceiver::setupGatewareInfo(guint32 address)
   }
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getGatewareInfo() const
+std::map< std::string, std::string > TimingReceiver::getGatewareInfo() const
 {
   return info;
 }
 
-Glib::ustring TimingReceiver::getGatewareVersion() const
+std::string TimingReceiver::getGatewareVersion() const
 {
-  std::map< Glib::ustring, Glib::ustring >         gatewareInfo;
-  std::map<Glib::ustring, Glib::ustring>::iterator j;
-  Glib::ustring                                    rawVersion;
-  Glib::ustring                                    findString = "-v";
+  std::map< std::string, std::string >         gatewareInfo;
+  std::map<std::string, std::string>::iterator j;
+  std::string                                    rawVersion;
+  std::string                                    findString = "-v";
   int                                              pos = 0;
 
   gatewareInfo = getGatewareInfo();
@@ -351,6 +354,7 @@ bool TimingReceiver::getLocked() const
   /* Update signal */
   if (newLocked != locked) {
     locked = newLocked;
+    SigLocked(locked);
     Locked(locked);
   }
   
@@ -362,14 +366,14 @@ bool TimingReceiver::getTemperatureSensorAvail() const
   return ats != 0;
 }
 
-gint32 TimingReceiver::CurrentTemperature()
+int32_t TimingReceiver::CurrentTemperature()
 {
   if (ats) {
     eb_data_t data;
     device.read(ats + ALTERA_TEMP_DEGREE, EB_DATA32, &data);
 
     if (data != 0xDEADC0DE) {
-      temperature = (gint32) data;
+      temperature = (int32_t) data;
     }
   }
 
@@ -389,7 +393,7 @@ static inline bool not_isalnum_(char c)
   return !(isalnum(c) || c == '_');
 }
 
-Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
+std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 {
   // Is there an available software channel?
   ActionSinks::iterator alloc;
@@ -397,9 +401,9 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
     if (!alloc->second) break;
   
   if (alloc == actionSinks.end())
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
   
-  Glib::ustring seq, name;
+  std::string seq, name;
   std::ostringstream str;
   str.imbue(std::locale("C"));
   str << "_" << ++sas_count;
@@ -410,17 +414,17 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   } else {
     name = name_;
     if (name[0] == '_')
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
     if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
     
-    std::map< Glib::ustring, Glib::ustring > sinks = getSoftwareActionSinks();
+    std::map< std::string, std::string > sinks = getSoftwareActionSinks();
     if (sinks.find(name) != sinks.end())
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Name already in use");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
   }
   
   // nest the object under our own name
-  Glib::ustring path = getObjectPath() + "/software/" + seq;
+  std::string path = getObjectPath() + "/software/" + seq;
   
   unsigned channel = alloc->first.first;
   unsigned num     = alloc->first.second;
@@ -428,7 +432,7 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), alloc->first);
   
   SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
-  Glib::RefPtr<ActionSink> softwareActionSink = SoftwareActionSink::create(args);
+  std::shared_ptr<ActionSink> softwareActionSink = SoftwareActionSink::create(args);
   softwareActionSink->initOwner(getConnection(), getSender());
   
   // Own it and inform changes to properties
@@ -439,7 +443,7 @@ Glib::ustring TimingReceiver::NewSoftwareActionSink(const Glib::ustring& name_)
   return path;
 }
 
-void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
 {
   etherbone::Cycle cycle;
   
@@ -455,7 +459,7 @@ void TimingReceiver::InjectEvent(guint64 event, guint64 param, guint64 time)
   cycle.close();
 }
 
-guint64 TimingReceiver::ReadRawCurrentTime()
+uint64_t TimingReceiver::ReadRawCurrentTime()
 {
   etherbone::Cycle cycle;
   eb_data_t time1, time0, time2;
@@ -468,59 +472,65 @@ guint64 TimingReceiver::ReadRawCurrentTime()
     cycle.close();
   } while (time1 != time2);
   
-  return guint64(time1) << 32 | time0;
+  return uint64_t(time1) << 32 | time0;
 }
 
-guint64 TimingReceiver::ReadCurrentTime()
+uint64_t TimingReceiver::ReadCurrentTime()
 {
   if (!locked)
-    throw Gio::DBus::Error(Gio::DBus::Error::IO_ERROR, "TimingReceiver is not Locked");
+    throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
 
   return ReadRawCurrentTime();
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getSoftwareActionSinks() const
+std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const
 {
   typedef ActionSinks::const_iterator iterator;
-  std::map< Glib::ustring, Glib::ustring > out;
+  std::map< std::string, std::string > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    Glib::RefPtr<SoftwareActionSink> softwareActionSink =
-      Glib::RefPtr<SoftwareActionSink>::cast_dynamic(i->second);
+    std::shared_ptr<SoftwareActionSink> softwareActionSink =
+      std::dynamic_pointer_cast<SoftwareActionSink>(i->second);
+    // std::shared_ptr<SoftwareActionSink> softwareActionSink =
+    //   std::shared_ptr<SoftwareActionSink>::cast_dynamic(i->second);
     if (!softwareActionSink) continue;
     out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
   }
   return out;
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getOutputs() const
+std::map< std::string, std::string > TimingReceiver::getOutputs() const
 {
   typedef ActionSinks::const_iterator iterator;
-  std::map< Glib::ustring, Glib::ustring > out;
+  std::map< std::string, std::string > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    Glib::RefPtr<Output> output =
-      Glib::RefPtr<Output>::cast_dynamic(i->second);
+    std::shared_ptr<Output> output =
+      std::dynamic_pointer_cast<Output>(i->second);
+    // std::shared_ptr<Output> output =
+    //   std::shared_ptr<Output>::cast_dynamic(i->second);
     if (!output) continue;
     out[output->getObjectName()] = output->getObjectPath();
   }
   return out;
 }
 
-std::map< Glib::ustring, Glib::ustring > TimingReceiver::getInputs() const
+std::map< std::string, std::string > TimingReceiver::getInputs() const
 {
   typedef EventSources::const_iterator iterator;
-  std::map< Glib::ustring, Glib::ustring > out;
+  std::map< std::string, std::string > out;
   for (iterator i = eventSources.begin(); i != eventSources.end(); ++i) {
-    Glib::RefPtr<Input> input =
-      Glib::RefPtr<Input>::cast_dynamic(i->second);
+    std::shared_ptr<Input> input =
+      std::dynamic_pointer_cast<Input>(i->second);
+    // std::shared_ptr<Input> input =
+    //   std::shared_ptr<Input>::cast_dynamic(i->second);
     if (!input) continue;
     out[input->getObjectName()] = input->getObjectPath();
   }
   return out;
 }
 
-std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiver::getInterfaces() const
+std::map< std::string, std::map< std::string, std::string > > TimingReceiver::getInterfaces() const
 {
-  std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > out;
+  std::map< std::string, std::map< std::string, std::string > > out;
   
   typedef ActionSinks::const_iterator sink;
   for (sink i = actionSinks.begin(); i != actionSinks.end(); ++i) {
@@ -542,7 +552,7 @@ std::map< Glib::ustring, std::map< Glib::ustring, Glib::ustring > > TimingReceiv
   return out;
 }
 
-guint32 TimingReceiver::getFree() const
+uint32_t TimingReceiver::getFree() const
 {
   return max_conditions - used_conditions;
 }
@@ -572,7 +582,7 @@ void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
   }
 }
 
-guint16 TimingReceiver::updateMostFull(unsigned channel)
+uint16_t TimingReceiver::updateMostFull(unsigned channel)
 {
   if (channel >= most_full.size()) return 0;
   
@@ -584,8 +594,8 @@ guint16 TimingReceiver::updateMostFull(unsigned channel)
   cycle.read (base + ECA_CHANNEL_MOSTFULL_ACK_GET, EB_DATA32, &raw);
   cycle.close();
   
-  guint16 mostFull = raw & 0xFFFF;
-  guint16 used     = raw >> 16;
+  uint16_t mostFull = raw & 0xFFFF;
+  uint16_t used     = raw >> 16;
   
   if (most_full[channel] != mostFull) {
     most_full[channel] = mostFull;
@@ -634,12 +644,12 @@ void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
 }
 
 struct ECA_OpenClose {
-  guint64  key;    // open?first:last
+  uint64_t  key;    // open?first:last
   bool     open;
-  guint64  subkey; // open?last:first
-  gint64   offset;
-  guint32  tag;
-  guint8   flags;
+  uint64_t  subkey; // open?last:first
+  int64_t   offset;
+  uint32_t  tag;
+  uint8_t   flags;
   unsigned channel;
   unsigned num;
 };
@@ -658,19 +668,19 @@ static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
 }
 
 struct SearchEntry {
-  guint64 event;
-  gint16  index;
-  SearchEntry(guint64 e, gint16 i) : event(e), index(i) { }
+  uint64_t event;
+  int16_t  index;
+  SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
 };
 
 struct WalkEntry {
-  gint16   next;
-  gint64   offset;
-  guint32  tag;
-  guint8   flags;
+  int16_t   next;
+  int64_t   offset;
+  uint32_t  tag;
+  uint8_t   flags;
   unsigned channel;
   unsigned num;
-  WalkEntry(gint16 n, const ECA_OpenClose& oc) : next(n), 
+  WalkEntry(int16_t n, const ECA_OpenClose& oc) : next(n), 
     offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
 };
 
@@ -704,7 +714,7 @@ void TimingReceiver::compile()
       id_space.push_back(oc);
       
       // Push the close record (if any)
-      if (oc.subkey != G_MAXUINT64) {
+      if (oc.subkey != UINT64_MAX) {
         oc.open = false;
         std::swap(oc.key, oc.subkey);
         ++oc.key;
@@ -715,7 +725,7 @@ void TimingReceiver::compile()
   
   // Don't proceed if too many actions for the ECA
   if (id_space.size()/2 >= max_conditions)
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Too many active conditions for hardware");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
   
   // Sort it by the open/close criteria
   std::sort(id_space.begin(), id_space.end());
@@ -725,8 +735,8 @@ void TimingReceiver::compile()
   typedef std::vector<WalkEntry> Walk;
   Search search;
   Walk walk;
-  gint16 next = -1;
-  guint64 cursor = 0;
+  int16_t next = -1;
+  uint64_t cursor = 0;
   
   // Special-case at zero: always push a leading record
   if (id_space.empty() || id_space[0].key != 0)
@@ -740,7 +750,7 @@ void TimingReceiver::compile()
     // pop the walker stack for all closes
     while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
       if (next == -1)
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
       next = walk[next].next;
       ++i;
     }
@@ -770,9 +780,9 @@ void TimingReceiver::compile()
     
     cycle.open(device);
     cycle.write(base + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
-    cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (guint16)se.index);
+    cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
     cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
-    cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (guint32)se.event);
+    cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
     cycle.write(base + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
     cycle.close();
   }
@@ -782,9 +792,9 @@ void TimingReceiver::compile()
     
     cycle.open(device);
     cycle.write(base + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
-    cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (guint16)we.next);
-    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (guint64)we.offset >> 32); // don't sign-extend on shift
-    cycle.write(base + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (guint32)we.offset);
+    cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (uint16_t)we.next);
+    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (uint64_t)we.offset >> 32); // don't sign-extend on shift
+    cycle.write(base + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (uint32_t)we.offset);
     cycle.write(base + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
     cycle.write(base + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
     cycle.write(base + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
@@ -822,10 +832,10 @@ void TimingReceiver::probe(OpenDevice& od)
   
   // only support super basic hardware for now
   if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || watchdogs.size() != 1 
-	|| pps.size() != 1 || mbx.size() != 1 || mbx_msi.size() != 1)
+	|| pps.size() != 1 || mbx.size() != 1 || mbx_msi.size() != 1) {
     return;
- 
- 
+  }
+  
   TimingReceiver::ConstructorType args = { 
     od.device, 
     od.name,
@@ -838,124 +848,47 @@ void TimingReceiver::probe(OpenDevice& od)
     (eb_address_t)pps[0].sdb_component.addr_first,
     ats_addr,
   };
-  Glib::RefPtr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
+  std::shared_ptr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
     
   // Add special SCU hardware
   if (scubus.size() == 1) {
-    etherbone::Cycle cycle;
-    
-    // Probe for LM32 block memories
-    eb_address_t fgb = 0;
-    std::vector<sdb_device> fgs, rom;
-    od.device.sdb_find_by_identity(LM32_RAM_USER_VENDOR,    LM32_RAM_USER_PRODUCT,    fgs);
-    od.device.sdb_find_by_identity(LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT, rom);
-    
-    
-    if (rom.size() != 1)
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
-    
-    eb_address_t rom_address = rom[0].sdb_component.addr_first;
-    eb_data_t cpus, eps_per;
-    cycle.open(od.device);
-    cycle.read(rom_address + 0x0, EB_DATA32, &cpus);
-    cycle.read(rom_address + 0x4, EB_DATA32, &eps_per);
-    cycle.close();
-    
-    if (cpus != fgs.size())
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
-    
-    // Check them all for the function generator microcontroller
-    unsigned i;
-    for (i = 0; i < fgs.size(); ++i) {
-      eb_data_t magic, version;
-      fgb = fgs[i].sdb_component.addr_first;
-      
-      cycle.open(od.device);
-      cycle.read(fgb + SHM_BASE + FG_MAGIC_NUMBER, EB_DATA32, &magic);
-      cycle.read(fgb + SHM_BASE + FG_VERSION,      EB_DATA32, &version);
-      cycle.close();
-      if (magic == 0xdeadbeef && version == 3) break;
+
+    // check if there is a Function Generator firmware running
+    try {
+      const std::string fg_fw_str("fg_firmware");
+      FunctionGeneratorFirmware::ConstructorType fg_fw_args = { od.objectPath + "/" + fg_fw_str, 
+                                                                tr.operator->(), // this is needed because passing a shared pointer to the children would prevent the destruction of the TimingReceiver object 
+                                                                tr->getDevice(),
+                                                                mbx_msi[0],
+                                                                mbx[0],
+                                                                tr->otherStuff["FunctionGenerator"],
+                                                                tr->otherStuff["MasterFunctionGenerator"]};
+      auto fg_firmware = FunctionGeneratorFirmware::create(fg_fw_args);
+      tr->otherStuff["FunctionGeneratorFirmware"][fg_fw_str] = fg_firmware;
+
+      clog << kLogDebug << "TimingReceiver: FunctionGenerator firmware found" << std::endl;
+    } catch (saftbus::Error &e) {
+      // send log message if firmware was not found ?
+      clog << kLogDebug << "TimingReceiver: no FunctionGenerator firmware found" << std::endl;
     }
-    
-    // Did we find a function generator?
-    if (i != fgs.size()) {
-	
-      // get mailbox slot number for swi host=>lm32
-      eb_data_t mb_slot;
-      cycle.open(od.device);
-      cycle.read(fgb + SHM_BASE + FG_MB_SLOT, EB_DATA32, &mb_slot);
-      cycle.close();	
 
-      if (mb_slot < 0 && mb_slot > 127)
-        throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "mailbox slot number not in range 0 to 127");
-
-      // swi address of fg is to be found in mailbox slot mb_slot
-      eb_address_t swi = mbx[0].sdb_component.addr_first + mb_slot * 4 * 2;
-      clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
-      eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
-      
-      // Probe the configuration and hardware macros
-      cycle.open(od.device);
-      cycle.read(fgb + SHM_BASE + FG_NUM_CHANNELS, EB_DATA32, &num_channels);
-      cycle.read(fgb + SHM_BASE + FG_BUFFER_SIZE,  EB_DATA32, &buffer_size);
-      for (unsigned j = 0; j < FG_MACROS_SIZE; ++j)
-        cycle.read(fgb + SHM_BASE + FG_MACROS + j*4, EB_DATA32, &macros[j]);
-      cycle.close();
-      
-      // Create an allocation buffer
-      Glib::RefPtr<FunctionGeneratorChannelAllocation> allocation(
-        new FunctionGeneratorChannelAllocation);
-      allocation->indexes.resize(num_channels, -1);
-      
-      // Disable all channels
-      cycle.open(od.device);
-      for (unsigned j = 0; j < num_channels; ++j)
-        cycle.write(swi, EB_DATA32, SWI_DISABLE | j);
-      cycle.close();
-
-//			std::vector<Glib::RefPtr<FunctionGenerator>> functionGenerators;      
-			std::vector<std::shared_ptr<FunctionGeneratorImpl>> functionGeneratorImplementations;      			
-      // Create the objects to control the channels
-      for (unsigned j = 0; j < FG_MACROS_SIZE; ++j) {
-              if (!macros[j]) continue; // no hardware
-
-
-        
-        std::ostringstream spath;
-        spath.imbue(std::locale("C"));
-        spath << od.objectPath << "/fg_" << j;
-        Glib::ustring path = spath.str();
-        
-        FunctionGeneratorImpl::ConstructorType args = { path, tr.operator->(), allocation, fgb, swi, mbx_msi[0], mbx[0], (unsigned)num_channels, (unsigned)buffer_size, j, (guint32)macros[j] };
-
-
-        std::shared_ptr<FunctionGeneratorImpl> fgImpl(new FunctionGeneratorImpl(args));
-				functionGeneratorImplementations.push_back(fgImpl);
-				
-				FunctionGenerator::ConstructorType fgargs = { path, tr.operator->(), fgImpl };
-        Glib::RefPtr<FunctionGenerator> fg = FunctionGenerator::create(fgargs);				
-        std::ostringstream name;
-        name.imbue(std::locale("C"));
-        name << "fg-" << (int)fgImpl->getSCUbusSlot() << "-" << (int)fgImpl->getDeviceNumber();
-        tr->otherStuff["FunctionGenerator"][name.str()] = fg;
-
-      }
-      
-      // Create a master object to control all channels
-
-//      give references to existing fg objects
-//      provide single d-bus interface to all fg objects
-      std::ostringstream spath;
-      spath.imbue(std::locale("C"));
-      spath << od.objectPath << "/masterfg";
-      Glib::ustring path = spath.str();
-
-      MasterFunctionGenerator::ConstructorType args = { path, tr.operator->(), functionGeneratorImplementations };
-      Glib::RefPtr<MasterFunctionGenerator> fg = MasterFunctionGenerator::create(args);
-
-      tr->otherStuff["MasterFunctionGenerator"]["masterfg"] = fg;
+   
+    // check if there is WrMilGateway firmware running
+    try {
+      const std::string wrmilgw_str("wrmilgateway");
+      WrMilGateway::ConstructorType wrmil_args = { od.objectPath + "/" + wrmilgw_str, 
+                                                   tr->getDevice(), 
+                                                   mbx_msi[0], 
+                                                   mbx[0]  };
+      tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
+      clog << kLogDebug << "TimingReceiver: WR-MIL-Gateway firmware found" << std::endl;
+    } catch (saftbus::Error &e) {
+      // send log message if firmware was not found ?
+      clog << kLogDebug << "TimingReceiver: no WR-MIL-Gateway firmware found" << std::endl;
     }
+
+
   }
 }
 

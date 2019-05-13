@@ -22,6 +22,8 @@
 
 #include "interfaces/SAFTd.h"
 #include "OpenDevice.h"
+#include "MainLoop.h"
+#include <memory>
 
 namespace saftlib {
 
@@ -31,30 +33,30 @@ class SAFTd : public iSAFTd
     static SAFTd& get() { return saftd; }
     ~SAFTd();
     
-    void setConnection(const Glib::RefPtr<Gio::DBus::Connection>& connection);
+    void setConnection(const std::shared_ptr<saftbus::Connection>& connection);
     
-    const Glib::RefPtr<Glib::MainLoop>&        loop()       { return m_loop; }
-    const Glib::RefPtr<Gio::DBus::Connection>& connection() { return m_connection; }
+    const std::shared_ptr<Slib::MainLoop>&      loop()       { return m_loop; }
+    const std::shared_ptr<saftbus::Connection>& connection() { return m_connection; }
     
-    Glib::ustring AttachDevice(const Glib::ustring& name, const Glib::ustring& path);
-    void RemoveDevice(const Glib::ustring& name);
+    std::string AttachDevice(const std::string& name, const std::string& path);
+    void RemoveDevice(const std::string& name);
     void Quit();
-    std::map< Glib::ustring, Glib::ustring > getDevices() const;
+    std::map< std::string, std::string > getDevices() const;
     
-    Glib::ustring getSourceVersion() const;
-    Glib::ustring getBuildInfo() const;
+    std::string getSourceVersion() const;
+    std::string getBuildInfo() const;
     
   protected:
     SAFTd();
     
     SAFTd_Service m_service;
-    Glib::RefPtr<Glib::MainLoop> m_loop;
-    Glib::RefPtr<Gio::DBus::Connection> m_connection;
+    std::shared_ptr<Slib::MainLoop> m_loop;
+    std::shared_ptr<saftbus::Connection> m_connection;
     etherbone::Socket socket;
     sigc::connection eb_source;
     sigc::connection msi_source;
     
-    std::map< Glib::ustring, OpenDevice > devs;
+    std::map< std::string, OpenDevice > devs;
 
     static SAFTd saftd;
 };

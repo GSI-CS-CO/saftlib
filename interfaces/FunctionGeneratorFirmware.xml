@@ -1,0 +1,26 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="FunctionGeneratorFirmware">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  
+  <!-- Include base interfaces -->
+  <xi:include href="Owned.xml"/>
+  
+  <!-- de.gsi.saftlib.FunctionGeneratorFirmware:
+      @short_description: Representation of the FunctionGenerator Firmware
+
+      long description
+   -->
+  <interface name="de.gsi.saftlib.FunctionGeneratorFirmware">
+    
+    <!-- Version: Version of the hardware macro -->
+    <property name="Version"      type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
+    </property>
+    
+    <!-- Scan: Scan bus for fg channels.
+         @result:   fgs found.
+      -->
+    <method name="Scan">
+      <arg direction="out" type="a{ss}" name="fgs"/>
+    </method>
+  </interface>
+</node>

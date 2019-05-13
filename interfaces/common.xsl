@@ -51,15 +51,15 @@
   <xsl:choose>
     <xsl:when test="$input='y'">unsigned char</xsl:when>
     <xsl:when test="$input='b'">bool</xsl:when>
-    <xsl:when test="$input='n'">gint16</xsl:when>
-    <xsl:when test="$input='q'">guint16</xsl:when>
-    <xsl:when test="$input='i'">gint32</xsl:when>
-    <xsl:when test="$input='u'">guint32</xsl:when>
-    <xsl:when test="$input='x'">gint64</xsl:when>
-    <xsl:when test="$input='t'">guint64</xsl:when>
+    <xsl:when test="$input='n'">int16_t</xsl:when>
+    <xsl:when test="$input='q'">uint16_t</xsl:when>
+    <xsl:when test="$input='i'">int32_t</xsl:when>
+    <xsl:when test="$input='u'">uint32_t</xsl:when>
+    <xsl:when test="$input='x'">int64_t</xsl:when>
+    <xsl:when test="$input='t'">uint64_t</xsl:when>
     <xsl:when test="$input='d'">double</xsl:when>
-    <xsl:when test="$input='h'">gint</xsl:when>
-    <xsl:when test="$input='s'">Glib::ustring</xsl:when>
+    <xsl:when test="$input='h'">int</xsl:when>
+    <xsl:when test="$input='s'">std::string</xsl:when>
     <xsl:when test="$input='v'">Glib::VariantBase</xsl:when>
     <xsl:when test="substring($input,1,1)='(' and substring($input,string-length($input),1)=')'">
       <xsl:message terminate="yes">

@@ -20,9 +20,10 @@
 #ifndef EB_SOURCE_H
 #define EB_SOURCE_H
 
-#include <glibmm.h>
+#include <sigc++/sigc++.h>
 #include <etherbone.h>
+#include "saftbus/MainLoop.h"
 
-sigc::connection eb_attach_source(const Glib::RefPtr<Glib::MainLoop>& loop, etherbone::Socket socket);
+sigc::connection eb_attach_source(const std::shared_ptr<Slib::MainLoop>& loop, etherbone::Socket socket);
 
 #endif

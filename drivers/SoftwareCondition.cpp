@@ -32,7 +32,7 @@ SoftwareCondition::SoftwareCondition(const ConstructorType& args)
 {
 }
 
-Glib::RefPtr<SoftwareCondition> SoftwareCondition::create(const ConstructorType& args)
+std::shared_ptr<SoftwareCondition> SoftwareCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<SoftwareCondition>::create(args.objectPath, args);
 }

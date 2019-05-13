@@ -30,16 +30,16 @@ EmbeddedCPUCondition::EmbeddedCPUCondition(const ConstructorType& args)
 {
 }
 
-guint32 EmbeddedCPUCondition::getTag() const
+uint32_t EmbeddedCPUCondition::getTag() const
 {
   return tag;
 }
 
-void EmbeddedCPUCondition::setTag(guint32 val)
+void EmbeddedCPUCondition::setTag(uint32_t val)
 {
   ownerOnly();
   if (val == tag) return;
-  guint32 old = tag;
+  uint32_t old = tag;
   
   tag = val;
   try {
@@ -51,7 +51,7 @@ void EmbeddedCPUCondition::setTag(guint32 val)
   }
 }
 
-Glib::RefPtr<EmbeddedCPUCondition> EmbeddedCPUCondition::create(const ConstructorType& args)
+std::shared_ptr<EmbeddedCPUCondition> EmbeddedCPUCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<EmbeddedCPUCondition>::create(args.objectPath, args);
 }

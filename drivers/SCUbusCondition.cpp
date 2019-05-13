@@ -33,16 +33,16 @@ SCUbusCondition::SCUbusCondition(const ConstructorType& args)
 {
 }
 
-guint32 SCUbusCondition::getTag() const
+uint32_t SCUbusCondition::getTag() const
 {
   return tag;
 }
 
-void SCUbusCondition::setTag(guint32 val)
+void SCUbusCondition::setTag(uint32_t val)
 {
   ownerOnly();
   if (val == tag) return;
-  guint32 old = tag;
+  uint32_t old = tag;
   
   tag = val;
   try {
@@ -54,7 +54,7 @@ void SCUbusCondition::setTag(guint32 val)
   }
 }
 
-Glib::RefPtr<SCUbusCondition> SCUbusCondition::create(const ConstructorType& args)
+std::shared_ptr<SCUbusCondition> SCUbusCondition::create(const ConstructorType& args)
 {
   return RegisteredObject<SCUbusCondition>::create(args.objectPath, args);
 }

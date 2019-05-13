@@ -23,6 +23,8 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <assert.h>
+#include <algorithm>
+#include <time.h>
 
 #include "RegisteredObject.h"
 #include "MasterFunctionGenerator.h"
@@ -36,7 +38,7 @@ namespace saftlib {
 
 MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
  : Owned(args.objectPath),
-   dev(args.dev),
+   tr(args.tr),
    allFunctionGenerators(args.functionGenerators),
    activeFunctionGenerators(args.functionGenerators),
    generateIndividualSignals(false)   
@@ -107,7 +109,7 @@ void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImp
   }
 }
 
-void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time)
+void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time)
 {
 
   if (generateIndividualSignals)
@@ -117,7 +119,7 @@ void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImp
 }
 
 // Forward Stopped signal 
-void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, guint64 time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
+void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
   if (generateIndividualSignals)
   {
@@ -135,15 +137,134 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
   }
 }
 
-Glib::RefPtr<MasterFunctionGenerator> MasterFunctionGenerator::create(const ConstructorType& args)
+std::shared_ptr<MasterFunctionGenerator> MasterFunctionGenerator::create(const ConstructorType& args)
 {
   return RegisteredObject<MasterFunctionGenerator>::create(args.objectPath, args);
 }
 
+void MasterFunctionGenerator::InitializeSharedMemory(const std::string& shared_memory_name)
+{
+  try 
+  {
+    shm_params.reset( new boost::interprocess::managed_shared_memory(boost::interprocess::open_only, shared_memory_name.c_str()));
+  } 
+  catch (boost::interprocess::interprocess_exception& e)
+  {
+    std::ostringstream msg;
+    msg << "Error initializing shared memory: " << e.what();
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
+  }
+
+  if (!shm_params->check_sanity())
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Shared memory is insane");
+  }
+  
+  shm_mutex = (shm_params->find<boost::interprocess::interprocess_mutex>("mutex")).first;
+  
+  if (!shm_mutex)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No mutex in shared memory");
+  }
+
+  int* version = (shm_params->find<int32_t>("format-version")).first;
+  int format_version=0;
+  if (version) {
+    format_version = *version;
+    //std::cout << "Shared memory format version " << *version << std::endl;
+  } else {
+    //std::cout << "Shared memory format version not found" << std::endl;
+  }
+  if (format_version < 0 || format_version > 0)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Unsupported shared memory format version");
+  }
+}
+
+
+void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack)
+{
+
+  if (!shm_params)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Shared memory not initialized");
+  }
+
+  if (!shm_mutex)
+  {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No mutex in shared memory");
+  }
+
+  try {
+
+    if (!shm_params->check_sanity())
+    {
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Shared memory is insane");
+    }
+
+    {
+      boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*shm_mutex);
+      typedef std::pair<int,int> KeyType;
+      typedef ParameterVector ValueType;
+      typedef std::pair<const KeyType, ValueType> MapEntryType;
+      typedef boost::interprocess::allocator<MapEntryType,boost::interprocess::managed_shared_memory::segment_manager> MapAllocator;
+      typedef boost::interprocess::map<KeyType, ValueType, std::less<KeyType>, MapAllocator> IndexMap;
+
+      IndexMap* indexMap = shm_params->find<IndexMap>("IndexMap").first;
+//      std::cout << "map size " << indexMap->size() << std::endl;
+      KeyType key;
+      key.first=0;
+      key.second=beam_process;
+      for (auto fg : activeFunctionGenerators)
+      {
+        /* Layout V0.1
+        std::pair<ParameterVector *, std::size_t> fred = shm_params->find<ParameterVector> (activeFunctionGenerators[0]->GetName().c_str());
+        ParameterVector* paramVector = fred.first;
+
+        if ( paramVector)
+        {
+          std::cout << fg->GetName() << " found in shared memory" << std::endl;
+          std::cout << "Parameter Tuples: " <<  paramVector->size() << std::endl;
+          std::cout << (*paramVector)[0].coeff_a << std::endl;
+          std::cout << (*paramVector)[0].coeff_b << std::endl;
+          std::cout << (*paramVector)[0].coeff_c << std::endl;
+          fg->appendParameterTuples(paramVector->cbegin(), paramVector->cend());
+
+        } else {
+          throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No parameter vector in shared memory");
+        }
+        */
+
+        if (indexMap->find(key) != indexMap->end()) {
+          ParameterVector& v = indexMap->at(key);
+//          std::cout << key.first << "," << key.second <<  " found in shared memory ";
+//          std::cout << "Parameter Tuples: " <<  v.size() << std::endl;
+          fg->appendParameterTuples(v.cbegin(), v.cend());
+        }
+        key.first++;
+      } 
+    } // end mutex scope
+
+// if requested wait for all fgs to arm
+  	if (arm)
+    {
+      arm_all();
+      if (wait_for_arm_ack)
+      {
+        waitForCondition(std::bind(&MasterFunctionGenerator::all_armed, this), 2000);
+      }
+    }
+  } catch (boost::interprocess::interprocess_exception& e) {
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, e.what());
+  }
+}
+
+
+	
 bool MasterFunctionGenerator::AppendParameterSets(
-	const std::vector< std::vector< gint16 > >& coeff_a, 
-	const std::vector< std::vector< gint16 > >& coeff_b, 
-	const std::vector< std::vector< gint32 > >& coeff_c, 
+	const std::vector< std::vector< int16_t > >& coeff_a, 
+	const std::vector< std::vector< int16_t > >& coeff_b, 
+	const std::vector< std::vector< int32_t > >& coeff_c, 
 	const std::vector< std::vector< unsigned char > >& step, 
 	const std::vector< std::vector< unsigned char > >& freq, 
 	const std::vector< std::vector< unsigned char > >& shift_a, 
@@ -156,15 +277,15 @@ bool MasterFunctionGenerator::AppendParameterSets(
 
   // confirm equal number of FGs
   unsigned fgcount = coeff_a.size();
-  if (coeff_b.size() != fgcount) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "coeff_b fgcount mismatch");
-  if (coeff_c.size() != fgcount) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "coeff_c fgcount mismatch");
-  if (step.size()    != fgcount) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "step fgcount mismatch");
-  if (freq.size()    != fgcount) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "freq fgcount mismatch");
-  if (shift_a.size() != fgcount) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "shift_a fgcount mismatch");
-  if (shift_b.size() != fgcount) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "shift_b fgcount mismatch");
+  if (coeff_b.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_b fgcount mismatch");
+  if (coeff_c.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "coeff_c fgcount mismatch");
+  if (step.size()    != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "step fgcount mismatch");
+  if (freq.size()    != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "freq fgcount mismatch");
+  if (shift_a.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_a fgcount mismatch");
+  if (shift_b.size() != fgcount) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "shift_b fgcount mismatch");
 
 
-	if (fgcount > activeFunctionGenerators.size()) throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "More datasets than function generators");	
+	if (fgcount > activeFunctionGenerators.size()) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "More datasets than function generators");	
 
   bool lowFill=false;
 	for (std::size_t i=0;i<fgcount;++i)
@@ -199,19 +320,19 @@ void MasterFunctionGenerator::Flush()
     {
       fg->flush();      
 		}	
-		catch (Gio::DBus::Error& ex)
+		catch (saftbus::Error& ex)
 		{
       error_msg += (fg->GetName() + ex.what());
 		}
 	}
   if (!error_msg.empty())
   {
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, error_msg);
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, error_msg);
   }
 }
 
 
-guint32 MasterFunctionGenerator::getStartTag() const
+uint32_t MasterFunctionGenerator::getStartTag() const
 {
   return startTag;
 }
@@ -239,14 +360,14 @@ void MasterFunctionGenerator::arm_all()
 			  fg->arm();
       }
 		}	
-		catch (Gio::DBus::Error& ex)
+		catch (saftbus::Error& ex)
 		{
       error_msg += (fg->GetName() + ex.what());
 		}
 	}
   if (!error_msg.empty())
   {
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, error_msg);
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, error_msg);
   }
 }
 
@@ -283,14 +404,14 @@ void MasterFunctionGenerator::ownerQuit()
   activeFunctionGenerators = allFunctionGenerators;
 }
 
-void MasterFunctionGenerator::setStartTag(guint32 val)
+void MasterFunctionGenerator::setStartTag(uint32_t val)
 {
   ownerOnly();
 
  	for (auto fg : activeFunctionGenerators)  
  	{
     if (fg->enabled)
-	    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "FG Enabled, cannot set StartTag");
+	    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "FG Enabled, cannot set StartTag");
 	}
   
   if (val != startTag) {
@@ -305,9 +426,9 @@ void MasterFunctionGenerator::setStartTag(guint32 val)
 }
 
 
-std::vector<guint32> MasterFunctionGenerator::ReadExecutedParameterCounts()
+std::vector<uint32_t> MasterFunctionGenerator::ReadExecutedParameterCounts()
 {
-	std::vector<guint32> counts;
+	std::vector<uint32_t> counts;
 	for (auto fg : activeFunctionGenerators)
 	{
 		counts.push_back(fg->executedParameterCount);
@@ -315,9 +436,9 @@ std::vector<guint32> MasterFunctionGenerator::ReadExecutedParameterCounts()
 	return counts;
 }
 
-std::vector<guint64> MasterFunctionGenerator::ReadFillLevels()
+std::vector<uint64_t> MasterFunctionGenerator::ReadFillLevels()
 {
-	std::vector<guint64> levels;
+	std::vector<uint64_t> levels;
 	for (auto fg : activeFunctionGenerators)
 	{
 		levels.push_back(fg->ReadFillLevel());
@@ -325,9 +446,9 @@ std::vector<guint64> MasterFunctionGenerator::ReadFillLevels()
 	return levels;
 }
 
-std::vector<Glib::ustring> MasterFunctionGenerator::ReadAllNames()
+std::vector<std::string> MasterFunctionGenerator::ReadAllNames()
 {
-	std::vector<Glib::ustring> names;
+	std::vector<std::string> names;
 	for (auto fg : allFunctionGenerators)
 	{
 		names.push_back(fg->GetName());
@@ -335,9 +456,9 @@ std::vector<Glib::ustring> MasterFunctionGenerator::ReadAllNames()
 	return names;
 }
 
-std::vector<Glib::ustring> MasterFunctionGenerator::ReadNames()
+std::vector<std::string> MasterFunctionGenerator::ReadNames()
 {
-	std::vector<Glib::ustring> names;
+	std::vector<std::string> names;
 	for (auto fg : activeFunctionGenerators)
 	{
 		names.push_back(fg->GetName());
@@ -383,12 +504,12 @@ void MasterFunctionGenerator::ResetActiveFunctionGenerators()
   generateIndividualSignals=false;
 }
 
-void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<Glib::ustring>& names)
+void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std::string>& names)
 {
   ownerOnly();
   if (names.size()==0)
   {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "No Function Generators Selected" );
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "No Function Generators Selected" );
   }
 
 
@@ -397,7 +518,7 @@ void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<Glib
     if (std::any_of(allFunctionGenerators.begin(), allFunctionGenerators.end(),
           [name](std::shared_ptr<FunctionGeneratorImpl> fg){ return name==fg->GetName();}) == false)
     {
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Function Generator Not Found " + name);
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Function Generator Not Found " + name);
     }
   }
 
@@ -443,22 +564,20 @@ bool MasterFunctionGenerator::all_stopped()
 
 void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
 {
-  if (waitTimeout.connected()) {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS,"Waiting for armed: Timeout already active");
-  }
-  waitTimeout = Glib::signal_timeout().connect(
-      sigc::mem_fun(*this, &MasterFunctionGenerator::WaitTimeout),timeout_ms);
+  struct timespec start, now;
+  clock_gettime(CLOCK_MONOTONIC, &start);
 
-  Glib::RefPtr<Glib::MainLoop>    mainloop = Glib::MainLoop::create();
-  Glib::RefPtr<Glib::MainContext> context  = mainloop->get_context();
+  std::shared_ptr<Slib::MainContext> context = Slib::MainContext::get_default();
   do
   {
     context->iteration(false);
-    if (!waitTimeout.connected()) {
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for arm acknowledgements");
-    }
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    int dt_ms = (now.tv_sec - start.tv_sec)*1000 
+              + (now.tv_nsec - start.tv_nsec)/1000000;
+    if (dt_ms > timeout_ms) {
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for condition");
+    }              
   } while (condition() == false) ;
-  waitTimeout.disconnect();
 }
 
 

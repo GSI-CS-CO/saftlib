@@ -41,12 +41,12 @@ InoutImpl::InoutImpl(const ConstructorType& args)
 {
 }
 
-guint32 InoutImpl::getIndexOut() const
+uint32_t InoutImpl::getIndexOut() const
 {
   return io_index;
 }
 
-guint32 InoutImpl::getIndexIn() const
+uint32_t InoutImpl::getIndexIn() const
 {
   return io_index;
 }
@@ -71,7 +71,7 @@ void InoutImpl::WriteOutput(bool value)
   }
   else
   {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!");
   }
 
   cycle.close();
@@ -85,7 +85,7 @@ bool InoutImpl::ReadOutput()
   cycle.open(tr->getDevice());
   if      (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eSet_GPIO_Out_Begin+(io_index*4), EB_DATA32, &readOutput); }
   else if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eSet_LVDS_Out_Begin+(io_index*4), EB_DATA32, &readOutput); }
-  else                                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   if(readOutput) { return true; }
@@ -117,7 +117,7 @@ bool InoutImpl::getOutputEnable() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Oe_Set_low,  EB_DATA32, &readOutputEnable); }
     else                      { cycle.read(io_control_addr+eLVDS_Oe_Set_high, EB_DATA32, &readOutputEnable); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readOutputEnable = readOutputEnable&(1<<internal_id);
@@ -141,7 +141,7 @@ void InoutImpl::setOutputEnable(bool val)
   } else if (io_channel == IO_CFG_CHANNEL_LVDS) {
     reg = val?eLVDS_Oe_Set_low:eLVDS_Oe_Reset_low;
   } else {
-    throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!");
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!");
   }
 
   tr->getDevice().write(io_control_addr + reg + 4*id_high, EB_DATA32, id_mask);
@@ -156,7 +156,7 @@ bool InoutImpl::ReadInput()
   cycle.open(tr->getDevice());
   if      (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eGet_GPIO_In_Begin+(io_index*4), EB_DATA32, &readInput); }
   else if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eGet_LVDS_In_Begin+(io_index*4), EB_DATA32, &readInput); }
-  else                                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   if (readInput) { return true; }
@@ -188,7 +188,7 @@ bool InoutImpl::getInputTermination() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Term_Set_low,  EB_DATA32, &readInputTermination); }
     else                      { cycle.read(io_control_addr+eLVDS_Term_Set_high, EB_DATA32, &readInputTermination); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readInputTermination = readInputTermination&(1<<internal_id);
@@ -287,7 +287,7 @@ bool InoutImpl::getSpecialPurposeOut() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Spec_Out_Set_low,  EB_DATA32, &readSpecialPurposeOut); }
     else                      { cycle.read(io_control_addr+eLVDS_Spec_Out_Set_high, EB_DATA32, &readSpecialPurposeOut); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readSpecialPurposeOut = readSpecialPurposeOut&(1<<internal_id);
@@ -366,7 +366,7 @@ bool InoutImpl::getGateOut() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Gate_Out_Set_low,  EB_DATA32, &readGateOut); }
     else                      { cycle.read(io_control_addr+eLVDS_Gate_Out_Set_high, EB_DATA32, &readGateOut); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readGateOut = readGateOut&(1<<internal_id);
@@ -445,7 +445,7 @@ bool InoutImpl::getSpecialPurposeIn() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Spec_In_Set_low,  EB_DATA32, &readSpecialPurposeIn); }
     else                      { cycle.read(io_control_addr+eLVDS_Spec_In_Set_high, EB_DATA32, &readSpecialPurposeIn); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readSpecialPurposeIn = readSpecialPurposeIn&(1<<internal_id);
@@ -524,7 +524,7 @@ bool InoutImpl::getGateIn() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Gate_In_Set_low,  EB_DATA32, &readGateIn); }
     else                      { cycle.read(io_control_addr+eLVDS_Gate_In_Set_high, EB_DATA32, &readGateIn); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readGateIn = readGateIn&(1<<internal_id);
@@ -686,20 +686,20 @@ int InoutImpl::probe(TimingReceiver* tr, TimingReceiver::ActionSinks& actionSink
 
     /* Get IO name */
     cIOName = s_aIOCONTROL_SetupField[io_table_iterator].uName;
-    Glib::ustring IOName = cIOName;
+    std::string IOName = cIOName;
 
     /* Create the IO controller object */
     InoutImpl::ConstructorType impl_args = {
       tr, channel, internal_id, special, logic_level, oe_available,
       term_available, spec_out_available, spec_in_available, ioctl_address, clkgen_address };
-    Glib::RefPtr<InoutImpl> impl(new InoutImpl(impl_args));
+    std::shared_ptr<InoutImpl> impl(new InoutImpl(impl_args));
 
     unsigned eca_channel = 0; // ECA channel 0 is always for IO
     TimingReceiver::SinkKey key_in (eca_channel, eca_in);  // order: gpio_inout, gpio_in,  lvds_inout, lvds_in
     TimingReceiver::SinkKey key_out(eca_channel, eca_out); // order: gpio_inout, gpio_out, lvds_inout, lvds_out
 
-    Glib::ustring input_path  = tr->getObjectPath() + "/inputs/"  + IOName;
-    Glib::ustring output_path = tr->getObjectPath() + "/outputs/" + IOName;
+    std::string input_path  = tr->getObjectPath() + "/inputs/"  + IOName;
+    std::string output_path = tr->getObjectPath() + "/outputs/" + IOName;
     sigc::slot<void> nill;
 
     /* Add sinks depending on their direction */
@@ -767,7 +767,7 @@ bool InoutImpl::getBuTiSMultiplexer() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_Mux_Set_low,  EB_DATA32, &readBuTiSMultiplexer); }
     else                      { cycle.read(io_control_addr+eLVDS_Mux_Set_high, EB_DATA32, &readBuTiSMultiplexer); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readBuTiSMultiplexer = readBuTiSMultiplexer&(1<<internal_id);
@@ -846,7 +846,7 @@ bool InoutImpl::getPPSMultiplexer() const
     if (access_position == 0) { cycle.read(io_control_addr+eLVDS_PPS_Mux_Set_low,  EB_DATA32, &readPPSMultiplexer); }
     else                      { cycle.read(io_control_addr+eLVDS_PPS_Mux_Set_high, EB_DATA32, &readPPSMultiplexer); }
   }
-  else                        { throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  else                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
 
   readPPSMultiplexer = readPPSMultiplexer&(1<<internal_id);
@@ -900,9 +900,9 @@ void InoutImpl::setPPSMultiplexer(bool val)
   PPSMultiplexer(val);
 }
 
-bool InoutImpl::StartClock(double high_phase, double low_phase, guint64 phase_offset) { return ConfigureClock(high_phase, low_phase, phase_offset); }
+bool InoutImpl::StartClock(double high_phase, double low_phase, uint64_t phase_offset) { return ConfigureClock(high_phase, low_phase, phase_offset); }
 bool InoutImpl::StopClock() { return ConfigureClock(0.0, 0.0, 0); }
-bool InoutImpl::ConfigureClock(double high_phase, double low_phase, guint64 phase_offset)
+bool InoutImpl::ConfigureClock(double high_phase, double low_phase, uint64_t phase_offset)
 {
   s_SerClkGenControl control;
   etherbone::Cycle cycle;
@@ -916,7 +916,7 @@ bool InoutImpl::ConfigureClock(double high_phase, double low_phase, guint64 phas
     }
     default:
     {
-      throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "Clock generator is only available for LVDS outputs!");
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Clock generator is only available for LVDS outputs!");
       return false;
     }
   }
@@ -940,11 +940,11 @@ bool InoutImpl::ConfigureClock(double high_phase, double low_phase, guint64 phas
   else                                                                  { return true; }
 }
 
-Glib::ustring InoutImpl::getLogicLevelOut() const { return getLogicLevel(); }
-Glib::ustring InoutImpl::getLogicLevelIn() const { return getLogicLevel(); }
-Glib::ustring InoutImpl::getLogicLevel() const
+std::string InoutImpl::getLogicLevelOut() const { return getLogicLevel(); }
+std::string InoutImpl::getLogicLevelIn() const { return getLogicLevel(); }
+std::string InoutImpl::getLogicLevel() const
 {
-  Glib::ustring IOLogicLevel;
+  std::string IOLogicLevel;
 
   switch(io_logic_level)
   {
@@ -959,28 +959,28 @@ Glib::ustring InoutImpl::getLogicLevel() const
   return IOLogicLevel;
 }
 
-Glib::ustring InoutImpl::getTypeOut() const { return getType(); }
-Glib::ustring InoutImpl::getTypeIn() const { return getType(); }
-Glib::ustring InoutImpl::getType() const
+std::string InoutImpl::getTypeOut() const { return getType(); }
+std::string InoutImpl::getTypeIn() const { return getType(); }
+std::string InoutImpl::getType() const
 {
-  Glib::ustring IOType;
+  std::string IOType;
 
   switch(io_channel)
   {
     case IO_CFG_CHANNEL_GPIO: { IOType = "8ns (GPIO)"; break; }
     case IO_CFG_CHANNEL_LVDS: { IOType = "1ns (LVDS)"; break; }
-    default: throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel type unknown!");
+    default: throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel type unknown!");
   }
 
   return IOType;
 }
 
-guint64 InoutImpl::getResolution() const
+uint64_t InoutImpl::getResolution() const
 {
   switch (io_channel) {
   case IO_CFG_CHANNEL_GPIO: return 8;
   case IO_CFG_CHANNEL_LVDS: return 1;
-  default: throw Gio::DBus::Error(Gio::DBus::Error::INVALID_ARGS, "IO channel resolution unknown!");
+  default: throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel resolution unknown!");
   }
 }
 
