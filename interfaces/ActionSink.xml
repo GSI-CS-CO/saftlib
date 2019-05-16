@@ -352,8 +352,8 @@
     <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
-    <arg name="deadline" type="t"/>
-    <arg name="executed" type="t"/>
+    <arg name="deadline" type="T"/>
+    <arg name="executed" type="T"/>
   </signal>
   
 </interface>

@@ -471,8 +471,8 @@ void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time t
   cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
   cycle.write(stream, EB_DATA32, 0); // reserved
   cycle.write(stream, EB_DATA32, 0); // TEF
-  cycle.write(stream, EB_DATA32, time.getTimeTAI() >> 32);
-  cycle.write(stream, EB_DATA32, time.getTimeTAI() & 0xFFFFFFFFUL);
+  cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
+  cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
   cycle.close();
 }
 
@@ -494,11 +494,7 @@ uint64_t TimingReceiver::ReadRawCurrentTime()
 
 uint64_t TimingReceiver::ReadCurrentTime()
 {
-  // if (!locked)
-  //   throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
-
-  // return ReadRawCurrentTime();
-  return CurrentTime().getTimeTAI();
+  return CurrentTime().getTAI();
 }
 saftlib::Time TimingReceiver::CurrentTime()
 {

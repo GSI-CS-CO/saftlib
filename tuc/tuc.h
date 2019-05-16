@@ -126,19 +126,19 @@ namespace saftlib
 	{
 	public:
 		// implicit conversion to uint64_t (do we really want this?)
-		operator uint64_t() {
-			return TAI;
-		}
+		// operator uint64_t() {
+		// 	return TAI;
+		// }
 		
 	public:
 		Time() : TAI(0) {
 		}
 		Time(const Time& t) : TAI(t.TAI) {
 		}
-		uint64_t getTimeUTC() {
+		uint64_t getUTC() {
 			return TAI_to_UTC(TAI);
 		}
-		uint64_t getTimeTAI() {
+		uint64_t getTAI() {
 			return TAI;
 		}
 		Time& operator=(const Time& t) {

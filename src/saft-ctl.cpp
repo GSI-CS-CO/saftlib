@@ -48,6 +48,7 @@ using namespace std;
 static const char* program;
 static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
 bool absoluteTime   = false;
+bool UTC            = false; // show UTC instead of TAI
 
 // GID
 #define QR       0x3e8                // 'PZ1, Quelle Rechts'
@@ -66,9 +67,9 @@ bool absoluteTime   = false;
 #define FID      0x1
 
 // this will be called, in case we are snooping for events
-static void on_action(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
+  std::cout << "tDeadline: " << tr_formatDate(UTC?deadline.getUTC():deadline.getTAI(), pmode);
   std::cout << tr_formatActionEvent(id, pmode);
   std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
   std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
@@ -76,7 +77,7 @@ static void on_action(uint64_t id, uint64_t param, uint64_t deadline, uint64_t e
 } // on_action
 
 // this will be called, in case we are snooping for events
-static void on_action_uni(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   uint32_t gid;
   uint32_t evtNo;
@@ -85,7 +86,7 @@ static void on_action_uni(uint64_t id, uint64_t param, uint64_t deadline, uint64
   string   rf;
   
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
-  static uint64_t prevDeadline = 0x0;
+  static saftlib::Time prevDeadline = saftlib::makeTimeTAI(0x0);
   static uint32_t nCycle       = 0x0;
 
   gid   = ((id & 0x0fff000000000000) >> 48);
@@ -174,6 +175,7 @@ static void help(void) {
   std::cout << "  -k                   display gateware version (hardware)" << std::endl;
   std::cout << "  -s                   display actual status of software actions" << std::endl;
   std::cout << "  -t                   display the current temperature in Celsius (if sensor is available) " << std::endl;
+  std::cout << "  -U                   display/interpret all absolute time values in UTC instead of TAI" << std::endl;
   std::cout << std::endl;
   std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
   std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
@@ -359,9 +361,9 @@ int main(int argc, char** argv)
   uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
   uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
   uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
-  uint64_t eventTime   = 0x0;     // time for next event in PTP time
-  uint64_t ppsNext     = 0x0;     // time for next PPS 
-  uint64_t wrTime      = 0x0;     // current WR time
+  saftlib::Time eventTime;     // time for next event in PTP time
+  saftlib::Time ppsNext;     // time for next PPS 
+  saftlib::Time wrTime;     // current WR time
 
   // variables attach, remove
   char    *deviceName = NULL;
@@ -373,7 +375,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxsvapijkhft")) != -1) {
+  while ((opt = getopt(argc, argv, "dxsvapijkhftU")) != -1) {
     switch (opt) {
     case 'f' :
       useFirstDev = true;
@@ -398,6 +400,9 @@ int main(int argc, char** argv)
       break;
     case 'p':
       ppsAlign = true;
+      break;
+    case 'U':
+      UTC = true;
       break;
     case 'd':
       pmode = pmode + PMODE_DEC;
@@ -611,12 +616,16 @@ int main(int argc, char** argv)
 
     // inject event
     if (eventInject) {
-      wrTime    = receiver->ReadCurrentTime();
+      wrTime    = receiver->CurrentTime();
       if (ppsAlign) {
-        ppsNext   = (wrTime - (wrTime % 1000000000)) + 1000000000;
+        ppsNext   = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;
         eventTime = (ppsNext + eventTNext); }
       else if (absoluteTime) {
-        eventTime = eventTNext;
+        if (UTC) {
+          eventTime = saftlib::makeTimeUTC(eventTNext);
+        } else {
+          eventTime = saftlib::makeTimeTAI(eventTNext);
+        }
       } // ppsAlign
       else eventTime = wrTime + eventTNext;
 
@@ -626,7 +635,7 @@ int main(int argc, char** argv)
       {
         std::cout << "Injected event (eventID/parameter/time): 0x" << std::hex << std::setw(16) << std::setfill('0') << eventID
                                                                       << " 0x" << std::setw(16) << std::setfill('0') << eventParam
-                                                                      << " 0x" << std::setw(16) << std::setfill('0') << eventTime << std::dec << std::endl;
+                                                                      << " 0x" << std::setw(16) << std::setfill('0') << (UTC?eventTime.getUTC():eventTime.getTAI()) << std::dec << std::endl;
       }
 
     } //inject event
@@ -640,7 +649,7 @@ int main(int argc, char** argv)
       condition->setAcceptEarly(true);
       condition->setAcceptConflict(true);
       condition->setAcceptDelayed(true);
-      condition->Action.connect(sigc::ptr_fun(&on_action));
+      condition->SigAction.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
       while(true) {
         saftlib::wait_for_signal();
@@ -714,10 +723,10 @@ int main(int argc, char** argv)
         condition[i]->setAcceptDelayed(true);
         switch (uniSnoopType) {
         case 1:
-          condition[i]->Action.connect(sigc::ptr_fun(&on_action_uni));
+          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni));
           break;
         default : 
-          condition[i]->Action.connect(sigc::ptr_fun(&on_action));
+          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
           break;
         }
         condition[i]->setActive(true);    
