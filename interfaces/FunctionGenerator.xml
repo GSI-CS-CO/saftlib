@@ -98,6 +98,9 @@
     <signal name="Started">
       <arg name="time" type="t"/>
     </signal>
+    <signal name="SigStarted">
+      <arg name="time" type="T"/>
+    </signal>
 
     <!-- Stopped:                   Function generation has ended.
          @time:                     Time when function generation ended in nanoseconds since 1970
@@ -125,6 +128,12 @@
       -->
     <signal name="Stopped">
       <arg name="time"                     type="t"/>
+      <arg name="aborted"                  type="b"/>
+      <arg name="hardwareMacroUnderflow"   type="b"/>
+      <arg name="microControllerUnderflow" type="b"/>
+    </signal>
+    <signal name="SigStopped">
+      <arg name="time"                     type="T"/>
       <arg name="aborted"                  type="b"/>
       <arg name="hardwareMacroUnderflow"   type="b"/>
       <arg name="microControllerUnderflow" type="b"/>

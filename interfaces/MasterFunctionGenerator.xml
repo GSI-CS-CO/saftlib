@@ -163,6 +163,13 @@
       <arg name="hardwareMacroUnderflow"   type="b"/>
       <arg name="microControllerUnderflow" type="b"/>
     </signal>
+    <signal name="SigStopped">
+      <arg name="name"                     type="s"/>
+      <arg name="time"                     type="T"/>
+      <arg name="aborted"                  type="b"/>
+      <arg name="hardwareMacroUnderflow"   type="b"/>
+      <arg name="microControllerUnderflow" type="b"/>
+    </signal>
 
 
     <!-- Armed: Armed signal forwarded from a single Function Generator
@@ -192,6 +199,10 @@
       <arg name="name"                     type="s"/>
       <arg name="time"                     type="t"/>
     </signal>
+    <signal name="SigStarted">
+      <arg name="name"                     type="s"/>
+      <arg name="time"                     type="T"/>
+    </signal>
 
     <!-- Refill: Refill signal forwarded from a single Function Generator
          -->
@@ -208,6 +219,9 @@
 
     <signal name="AllStopped">
       <arg name="time" type="t"/>
+    </signal>
+    <signal name="SigAllStopped">
+      <arg name="time" type="T"/>
     </signal>
 
     <!-- AllArmed:                All Function generators that have a FillLevel>0 are armed.

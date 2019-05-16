@@ -108,6 +108,7 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
     
     // Inform clients
     softwareCondition->Action(id, param, deadline, executed, flags & 0xF);
+    softwareCondition->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);
     
   } else {
     // deal with the MSI the normal way

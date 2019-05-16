@@ -38,5 +38,12 @@
       <arg name="executed" type="t"/>
       <arg name="flags"    type="q"/>
     </signal>
+    <signal name="SigAction">
+      <arg name="event"    type="t"/>
+      <arg name="param"    type="t"/>
+      <arg name="deadline" type="T"/>
+      <arg name="executed" type="T"/>
+      <arg name="flags"    type="q"/>
+    </signal>
   </interface>
 </node>
