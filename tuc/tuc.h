@@ -159,6 +159,21 @@ namespace saftlib
 		int64_t getOffset() {
 			return TAI_to_UTC_offset(TAI);
 		}
+		bool operator>(const Time& rhs) {
+			return TAI > rhs.TAI;
+		}
+		bool operator<(const Time& rhs) {
+			return TAI < rhs.TAI;
+		}
+		bool operator>=(const Time& rhs) {
+			return TAI >= rhs.TAI;
+		}
+		bool operator<=(const Time& rhs) {
+			return TAI <= rhs.TAI;
+		}
+		bool operator==(const Time& rhs) {
+			return TAI == rhs.TAI;
+		}
 		int isLeapUTC() {
 			return TAI_is_UTCleap(TAI);
 		}
