@@ -57,6 +57,7 @@
     <xsl:when test="$input='u'">uint32_t</xsl:when>
     <xsl:when test="$input='x'">int64_t</xsl:when>
     <xsl:when test="$input='t'">uint64_t</xsl:when>
+    <xsl:when test="$input='T'">saftlib::Time</xsl:when>
     <xsl:when test="$input='d'">double</xsl:when>
     <xsl:when test="$input='h'">int</xsl:when>
     <xsl:when test="$input='s'">std::string</xsl:when>
@@ -111,6 +112,7 @@
     <xsl:when test="$input='u'">true</xsl:when>
     <xsl:when test="$input='x'">true</xsl:when>
     <xsl:when test="$input='t'">true</xsl:when>
+    <xsl:when test="$input='T'">true</xsl:when>
     <xsl:when test="$input='d'">true</xsl:when>
     <xsl:when test="$input='h'">true</xsl:when>
     <xsl:when test="$input='s'">false</xsl:when>

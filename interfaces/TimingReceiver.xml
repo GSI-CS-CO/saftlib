@@ -78,6 +78,9 @@
     <method name="ReadCurrentTime">
       <arg direction="out" type="t" name="result"/>
     </method>
+    <method name="CurrentTime">
+      <arg direction="out" type="T" name="result"/>
+    </method>
     
     <!-- NewSoftwareActionSink: Create a new SoftwareActionSink.
          @name:   A name for the SoftwareActionSink. Can be left blank.
@@ -138,6 +141,11 @@
       <arg direction="in" type="t" name="event"/>
       <arg direction="in" type="t" name="param"/>
       <arg direction="in" type="t" name="time"/>
+    </method>
+    <method name="InjectEvent">
+      <arg direction="in" type="t" name="event"/>
+      <arg direction="in" type="t" name="param"/>
+      <arg direction="in" type="T" name="time"/>
     </method>
     
     <!-- Free: The number of additional conditions that may be activated.

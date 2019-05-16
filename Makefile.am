@@ -1,5 +1,5 @@
-SUBDIRS = interfaces saftbus
-SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la $(SIGCPP_LIBS)
+SUBDIRS = interfaces saftbus tuc
+SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la tuc/libtuc.la $(SIGCPP_LIBS)
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd
@@ -11,7 +11,7 @@ pkg_DATA = saftlib.pc
 EXTRA_DIST = saftlib.pc.in
 
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = $(EB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus
+AM_CPPFLAGS = $(EB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus -I $(top_builddir)/tuc
 
 BUILT_SOURCES = version.h
 .PHONY: version.h debian # causes build.cpp to be rebuilt every run
