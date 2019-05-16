@@ -37,6 +37,9 @@
 using namespace saftlib;
 using namespace std;
 
+// global flag to switch between UTC and TAI representation
+bool UTC = false;
+
 // The parsed contents of the datafile given to the demo program
 struct ParamSet {
   std::vector< int16_t > coeff_a;
@@ -90,16 +93,16 @@ static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, ui
 }
 
 // Report when the function generator starts
-static void on_start(uint64_t time)
+static void on_start(saftlib::Time time)
 {
-  std::cout << "Function generator started at " << format_time(time) << std::endl;
+  std::cout << "Function generator started at " << format_time(UTC?time.getUTC():time.getTAI()) << std::endl;
 }
 
 // Report when the function generator stops
-static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow, bool *continue_main_loop)
+static void on_stop(saftlib::Time time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow, bool *continue_main_loop)
 {
   *continue_main_loop = false;
-  std::cout << "Function generator stopped at " << format_time(time) << std::endl;
+  std::cout << "Function generator stopped at " << format_time(UTC?time.getUTC():time.getTAI()) << std::endl;
   // was there an error?
   if (abort)
     std::cerr << "Fatal error: Abort was called!" << std::endl;
@@ -121,6 +124,7 @@ static void help(std::shared_ptr<SAFTd_Proxy> saftd)
   std::cerr << "  -g            generate tag immediately\n";
   std::cerr << "  -r            repeat the waveform over and over forever\n";
   std::cerr << "  -s            scan for connected fg channels\n";
+  std::cerr << "  -U            print time values in UTC instead of TAI\n";
   std::cerr << "  -h            print this message\n";
   std::cerr << "\n";
   std::cerr << "SAFTd version: " << std::flush;
@@ -150,7 +154,7 @@ int main(int argc, char** argv)
     
     // Process command-line
     int opt, error = 0;
-    while ((opt = getopt(argc, argv, "d:f:rght:e:s")) != -1) {
+    while ((opt = getopt(argc, argv, "d:f:rght:e:sU")) != -1) {
       switch (opt) {
         case 'd':
           device = optarg;
@@ -173,6 +177,9 @@ int main(int argc, char** argv)
           break;
         case 's':
           scan = true;
+          break;
+        case 'U':
+          UTC = true;
           break;
         case 'h':
           help(saftd);
@@ -335,8 +342,8 @@ int main(int argc, char** argv)
     
     bool continue_main_loop = true;
     // Watch for events on the function generator
-    gen->Started.connect(sigc::ptr_fun(&on_start));
-    gen->Stopped.connect(sigc::bind(sigc::ptr_fun(&on_stop), &continue_main_loop));
+    gen->SigStarted.connect(sigc::ptr_fun(&on_start));
+    gen->SigStopped.connect(sigc::bind(sigc::ptr_fun(&on_stop), &continue_main_loop));
     
     // Load up the parameters, possibly repeating until full
     while (fill(gen, params) && repeat) { }
