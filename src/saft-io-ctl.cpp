@@ -67,6 +67,7 @@ static const char   *deviceName   = NULL;  /* Name of the device */
 static const char   *ioName       = NULL;  /* Name of the IO */
 static bool          ioNameGiven  = false; /* IO name given? */
 static bool          ioNameExists = false; /* IO name does exist? */
+static bool          UTC          = false; /* use UTC instead of TAI */
 std::map<std::string,uint64_t>     map_PrefixName; /* Translation table IO name <> prefix */
 
 /* Prototypes */
@@ -81,7 +82,7 @@ static int  io_flip        (bool verbose_mode);
 static int  io_list        (void);
 static int  io_list_i_to_e (void);
 static int  io_print_table (bool verbose_mode);
-static void io_catch_input (uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags);
+static void io_catch_input (uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags);
 static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
 /* Function io_create() */
@@ -95,7 +96,7 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
   bool   io_AcceptDelayed  = false;
   bool   io_AcceptEarly    = false;
   bool   io_AcceptLate     = false;
-  int64_t io_offset         = offset;
+  int64_t io_offset        = offset;
 
   /* Get level/edge */
   if (level > 0) { io_edge = true; }
@@ -444,6 +445,7 @@ static void io_help (void)
   std::cout << "  -l:                                            List all conditions" << std::endl;
   std::cout << std::endl;
   std::cout << "  -v:                                            Switch to verbose mode" << std::endl;
+  std::cout << "  -U:                                            use UTC instead of TAI" << std::endl;
   std::cout << "  -h:                                            Print help (this message)" << std::endl;
   std::cout << std::endl;
   std::cout << "Condition <flags> parameter:" << std::endl;
@@ -521,10 +523,10 @@ static int io_list_i_to_e()
 
 /* Function io_catch_input() */
 /* ==================================================================================================== */
-static void io_catch_input(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+static void io_catch_input(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   /* Helpers */
-  uint64_t time = deadline - IO_CONDITION_OFFSET;
+  saftlib::Time time = deadline - IO_CONDITION_OFFSET;
   std::string catched_io = "Unknown";
 
   /* !!! evaluate prefix<>name map */
@@ -547,7 +549,7 @@ static void io_catch_input(uint64_t event, uint64_t param, uint64_t deadline, ui
   std::cout << " (0x";
   std::cout << std::setw(1) << std::hex << flags << ")  ";
   std::cout << "0x" << std::hex << setw(16+1) << event << std::dec << " ";
-  std::cout << "0x" << std::hex << setw(16+1) << time << std::dec << " " << tr_formatDate(time,PMODE_VERBOSE);
+  std::cout << "0x" << std::hex << setw(16+1) << (UTC?time.getUTC():time.getTAI()) << std::dec << " " << tr_formatDate((UTC?time.getUTC():time.getTAI()),PMODE_VERBOSE);
   std::cout << std::endl;
 }
 
@@ -583,7 +585,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
           {
             sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
             proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
-            proxies.back()->Action.connect(sigc::ptr_fun(&io_catch_input));
+            proxies.back()->SigAction.connect(sigc::ptr_fun(&io_catch_input));
             proxies.back()->setAcceptConflict(true);
             proxies.back()->setAcceptDelayed(true);
             proxies.back()->setAcceptEarly(true);
@@ -1134,7 +1136,7 @@ int main (int argc, char** argv)
   deviceName = "NoDeviceNameGiven";
 
   /* Parse for options */
-  while ((opt = getopt(argc, argv, "a:j:n:o:t:q:e:m:p:d:k:swyb:rc:guxfzlivh")) != -1)
+  while ((opt = getopt(argc, argv, "a:j:n:o:t:q:e:m:p:d:k:swyb:rc:guxfzliUvh")) != -1)
   {
     switch (opt)
     {
@@ -1178,6 +1180,7 @@ int main (int argc, char** argv)
       case 'z': { translate_mask = true; break; }
       case 'l': { ioc_list       = true; break; }
       case 'i': { show_table     = true; break; }
+      case 'U': { UTC            = true; break; }
       case 'v': { verbose_mode   = true; break; }
       case 'h': { show_help      = true; break; }
       default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
