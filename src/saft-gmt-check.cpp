@@ -73,7 +73,7 @@ static void on_overflow(uint64_t count)
 }
 
 // this will be called, in case we are snooping for events
-static void on_action(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   uint64_t tmp;
 
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
       condition->setAcceptEarly(true);
       condition->setAcceptConflict(true);
       condition->setAcceptDelayed(true);
-      condition->Action.connect(sigc::ptr_fun(&on_action));
+      condition->SigAction.connect(sigc::ptr_fun(&on_action));
 
       condition->setActive(true);
       while(true) {
