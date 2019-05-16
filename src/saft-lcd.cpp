@@ -98,7 +98,7 @@ static int      nCmd;                // counts command events for desired machin
 
 
 // this will be called while snooping
-static void on_action_op(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   uint32_t gid;
   uint32_t evtno;
@@ -442,7 +442,7 @@ int main(int argc, char** argv)
         condition[i]->setAcceptEarly(true);
         condition[i]->setAcceptConflict(true);
         condition[i]->setAcceptDelayed(true);
-        condition[i]->Action.connect(sigc::ptr_fun(&on_action_op));
+        condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_op));
         condition[i]->setActive(true);    
       } // for i
 
