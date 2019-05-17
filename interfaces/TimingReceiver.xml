@@ -137,7 +137,7 @@
          This allows software to test that configured conditions lead to the
          desired behaviour without needing the data master to send anything.
       -->
-    <method name="InjectEvent">
+    <method name="InjectEvent" deprecated="yes">
       <arg direction="in" type="t" name="event"/>
       <arg direction="in" type="t" name="param"/>
       <arg direction="in" type="t" name="time"/>

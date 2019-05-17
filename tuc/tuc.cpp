@@ -70,7 +70,7 @@ int64_t TAI_to_UTC_offset(uint64_t TAI)
 {
 	uint64_t TAIsec = TAI/UINT64_C(1000000000);
 	for (int i = 0; ; ++i) { 
-		if (TAIsec >= leap_second_epoch(i) || leap_second_epoch(i+1) == -1) {
+		if ((int64_t)TAIsec >= leap_second_epoch(i) || leap_second_epoch(i+1) == -1) {
 			return leap_second_offset(i)*UINT64_C(1000000000);
 		}
 	}
@@ -85,8 +85,8 @@ int TAI_is_UTCleap(uint64_t TAI)
 {
 	uint64_t TAIsec = TAI/UINT64_C(1000000000);
 	for (int i = 0; ; ++i) { 
-		if (TAIsec >= leap_second_epoch(i)) {
-			if (TAIsec == leap_second_epoch(i)) {
+		if ((int64_t)TAIsec >= leap_second_epoch(i)) {
+			if ((int64_t)TAIsec == leap_second_epoch(i)) {
 				return leap_second_offset(i)-leap_second_offset(i+1);
 			}
 			return 0;
@@ -103,8 +103,8 @@ int UTC_to_TAI_offset(uint64_t UTC, int leap, int64_t *offset)
 	uint64_t UTCsec = UTC/UINT64_C(1000000000);
 	for (int i = 0; ; ++i) {
 		uint64_t TAIsec = UTCsec + leap_second_offset(i);
-		if (TAIsec >= leap_second_epoch(i) || leap_second_epoch(i+1) == -1) {
-			if (TAIsec == leap_second_epoch(i) && 
+		if ((int64_t)TAIsec >= leap_second_epoch(i) || leap_second_epoch(i+1) == -1) {
+			if ((int64_t)TAIsec == leap_second_epoch(i) && 
 				leap_second_offset(i+1) < leap_second_offset(i)) { 
 				// If the resulting TAI is on the leap_second_list, the conversion is ambiguous 
 				// In this case the 'leap' argument is used to distinguish the two possible TAI values
@@ -159,7 +159,7 @@ void test_UTC_offset()
 		uint64_t UTC = TAI_to_UTC(TAI);
 		int64_t offset;
 		UTC_to_TAI_offset(UTC, TAI_is_UTCleap(TAI), &offset);
-		assert(offset == leap_second_offset(i)*UINT64_C(1000000000));
+		assert(offset == leap_second_offset(i)*INT64_C(1000000000));
 	}
 }
 

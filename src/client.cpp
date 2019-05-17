@@ -191,7 +191,7 @@ int main(int, char**)
     condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
     
     // Generate an event that matches
-    receiver->InjectEvent(88, 0xdeadbeef, receiver->ReadCurrentTime() + 1000000000L);
+    receiver->InjectEvent(88, 0xdeadbeef, receiver->CurrentTime() + 1000000000L);
     
     // Run the Glib event loop
     // Inside callbacks you can still run all the methods like we did above

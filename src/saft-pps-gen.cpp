@@ -20,6 +20,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include "CommonFunctions.h"
+
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
@@ -41,6 +43,7 @@ using namespace std;
 static const char *program    = NULL;  /* Name of the application */
 static const char *deviceName = NULL;  /* Name of the device */
 bool verbose_mode             = false; /* Print verbose output to output stream => -v */
+bool UTC                      = false; /* Print absolute time in UTC instead of TAI */
 uint64_t overflow_counter      = 0;
 uint64_t action_counter        = 0;
 uint64_t late_counter          = 0;
@@ -50,8 +53,7 @@ uint64_t delayed_counter       = 0;
 
 /* Prototypes */
 /* ==================================================================================================== */
-static std::string formatDate(uint64_t time);
-void onAction(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags, int rule);
+void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule);
 void onOverflowCount(uint64_t count);
 void onActionCount(uint64_t count);
 void onLateCount(uint64_t count);
@@ -60,30 +62,15 @@ void onConflictCount(uint64_t count);
 void onDelayedCount(uint64_t count);
 static void pps_help (void);
 
-/* Function formatDate() */
-/* ==================================================================================================== */
-static std::string formatDate(uint64_t time)
-{
-  uint64_t ns    = time % 1000000000;
-  time_t  s     = time / 1000000000;
-  struct tm *tm = gmtime(&s);
-  char date[40];
-  static char full[80];
-  
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
-
-  return full;
-}
 
 /* Function onAction() */
 /* ==================================================================================================== */
-void onAction(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags, int rule)
+void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule)
 {
-  std::cout << "Got event at: 0x" << std::hex << executed << " -> " << formatDate(executed) << std::endl;
+  std::cout << "Got event at: 0x" << std::hex << (UTC?executed.getUTC():executed.getTAI()) << " -> " << tr_formatDate(executed, (verbose_mode?PMODE_VERBOSE:PMODE_NONE) | (UTC?PMODE_UTC:PMODE_NONE) ) << std::endl;
   if (verbose_mode)
   {
-    std::cout << "  Deadline (Diff.): 0x" << deadline << " (0x" << (deadline-executed) << ")" << std::endl;
+    std::cout << "  Deadline (Diff.): 0x" << (UTC?deadline.getUTC():deadline.getTAI()) << " (0x" << (deadline-executed) << ")" << std::endl;
     std::cout << "  Flags:            0x" << flags << std::endl;
     std::cout << "  Rule:             0x" << rule << std::endl;
     std::cout << std::dec;
@@ -118,6 +105,7 @@ static void pps_help (void)
   std::cout << "  -e        : External event mode (ECA configuration only)" << std::endl;
   std::cout << "  -t <tag>  : Set up a new condition on the SCU bus (uint32 tag injection)" << std::endl;
   std::cout << "  -i        : Inject PPS event(s) without creating conditions" << std::endl;
+  std::cout << "  -U        : display time in UTC instead of TAI" << std::endl;
   std::cout << "  -h        : Print help (this message)" << std::endl;
   std::cout << "  -v        : Switch to verbose mode" << std::endl;
   std::cout << std::endl;
@@ -146,21 +134,22 @@ int main (int argc, char** argv)
   bool first_pps        = true;  /* Is this the first PPS output? */
   bool wrLocked         = false; /* Is the timing receiver locked? */
   bool setup_scu_bus    = false; /* Set up a new condition for the SCU bus? */
-  uint32_t scu_bus_tag   = 0;     /* SCU Bus tag */
-  uint64_t wrTime        = 0;     /* Current time */
-  uint64_t wrNext        = 0;     /* Execution time for the next PPS */
+  uint32_t scu_bus_tag  = 0;     /* SCU Bus tag */
+  saftlib::Time wrTime;          /* Current time */
+  saftlib::Time wrNext;          /* Execution time for the next PPS */
 
   /* Get the application name */
   program = argv[0]; 
   
   /* Parse for options */
-  while ((opt = getopt(argc, argv, ":seivht:")) != -1)
+  while ((opt = getopt(argc, argv, ":seiUvht:")) != -1)
   {
     switch (opt)
     {
       case 's': { setup_io         = true; break; }
       case 'e': { external_trigger = true; break; }
       case 'i': { just_inject      = true; break; }
+      case 'U': { UTC              = true; break; }
       case 'v': { verbose_mode     = true; break; }
       case 'h': { show_help        = true; break; }
       case 't': { setup_scu_bus    = true; scu_bus_tag = strtoul(optarg, NULL, 0); break; }
@@ -204,11 +193,11 @@ int main (int argc, char** argv)
       wrLocked = receiver->getLocked();
       if (wrLocked)
       {
-        wrTime  = receiver->ReadCurrentTime();
+        wrTime  = receiver->CurrentTime();
         if (verbose_mode)
         {
           std::cout << "Timing Receiver is locked!" << std::endl;
-          std::cout << "Current time is " << formatDate(wrTime) <<std::endl; 
+          std::cout << "Current time is " << tr_formatDate(wrTime, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) <<std::endl; 
         }
       } 
       else
@@ -309,27 +298,31 @@ int main (int argc, char** argv)
         while(1)
         {
           /* Get time and align next PPS */
-          wrTime = receiver->ReadCurrentTime();
-          if (verbose_mode) { std::cout << "Time (base):   0x" << std::hex << wrTime << std::dec << " -> " << formatDate(wrTime) << std::endl; }
+          wrTime = receiver->CurrentTime();
+          if (verbose_mode) { std::cout << "Time (base):   0x" << std::hex << (UTC?wrTime.getUTC():wrTime.getTAI()) << std::dec << " -> " << tr_formatDate(wrTime, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl; }
   
           /* Avoid late event and add one additional second */
-          wrNext = wrTime % 1000000000;
-          if (first_pps) { wrNext = (wrTime - wrNext) + 2000000000; first_pps = false; }
-          else           { wrNext = (wrTime - wrNext) + 1000000000; }
+          uint64_t nsec_fraction = wrTime.getTAI() % 1000000000;
+          if (first_pps) { wrNext = (wrTime - nsec_fraction) + 2000000000; first_pps = false; }
+          else           { wrNext = (wrTime - nsec_fraction) + 1000000000; }
           
           /* Print next pulse and inject event */
-          std::cout << "Next pulse at: 0x" << std::hex << wrNext << std::dec << " -> " << formatDate(wrNext) << std::endl;
+          std::cout << "Next pulse at: 0x" << std::hex << (UTC?wrNext.getUTC():wrNext.getTAI()) << std::dec << " -> " << tr_formatDate(wrNext, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
           receiver->InjectEvent(ECA_EVENT_ID, 0x00000000, wrNext);
           
           /* Wait for the next pulse */
-          while(wrNext>receiver->ReadCurrentTime())
+          while(wrNext>receiver->CurrentTime())
           { 
             /* Sleep 100ms to prevent too much Etherbone traffic */
             usleep(100000);
             
             /* Print time */
-            if (verbose_mode) { std::cout << "Time (wait):   0x" << std::hex << receiver->ReadCurrentTime() << 
-                                std::dec << " -> " << formatDate(receiver->ReadCurrentTime()) << std::endl; }
+            if (verbose_mode) { 
+              saftlib::Time time = receiver->CurrentTime();
+              std::cout << "Time (wait):   0x" << std::hex << (UTC?time.getUTC():time.getTAI()) 
+                        << std::dec << " -> " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) 
+                        << std::endl; 
+            }
           }
         }
       }
@@ -339,7 +332,7 @@ int main (int argc, char** argv)
         std::cout << "Waiting for timing events..." << std::endl;
         std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
-        condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
+        condition->SigAction.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Accept all kinds of events */
         condition->setAcceptConflict(true);

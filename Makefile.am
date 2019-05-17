@@ -78,7 +78,7 @@ saft_mfg_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp src/CommonFunctions.cpp
 saft_io_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_pps_gen_SOURCES = src/saft-pps-gen.cpp
+saft_pps_gen_SOURCES = src/saft-pps-gen.cpp src/CommonFunctions.cpp
 saft_pps_gen_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_clk_gen_SOURCES = src/saft-clk-gen.cpp src/CommonFunctions.cpp
