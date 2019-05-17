@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <tuc.h>
 
 #include <time.h>
 #include <sys/time.h>
@@ -16,13 +17,14 @@ const uint32_t PMODE_NONE     = 0x0;
 const uint32_t PMODE_DEC      = 0x1;
 const uint32_t PMODE_HEX      = 0x2;
 const uint32_t PMODE_VERBOSE  = 0x4;
+const uint32_t PMODE_UTC      = 0x8;
 
 // formatting of mask for action sink
 uint64_t     tr_mask(int i                    	  // number of bits
                     );
 
 // formatting of date for output
-std::string tr_formatDate(uint64_t time,      	  // time [ns]
+std::string tr_formatDate(saftlib::Time time,     // time [ns]
                           uint32_t pmode      	  // mode for printing
                           );
 

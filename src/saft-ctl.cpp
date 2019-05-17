@@ -49,6 +49,7 @@ static const char* program;
 static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
 bool absoluteTime   = false;
 bool UTC            = false; // show UTC instead of TAI
+bool UTCleap        = false;
 
 // GID
 #define QR       0x3e8                // 'PZ1, Quelle Rechts'
@@ -69,7 +70,7 @@ bool UTC            = false; // show UTC instead of TAI
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-  std::cout << "tDeadline: " << tr_formatDate(UTC?deadline.getUTC():deadline.getTAI(), pmode);
+  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
   std::cout << tr_formatActionEvent(id, pmode);
   std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
   std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
@@ -86,7 +87,7 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   string   rf;
   
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
-  static saftlib::Time prevDeadline = saftlib::makeTimeTAI(0x0);
+  static saftlib::Time prevDeadline;
   static uint32_t nCycle       = 0x0;
 
   gid   = ((id & 0x0fff000000000000) >> 48);
@@ -175,7 +176,8 @@ static void help(void) {
   std::cout << "  -k                   display gateware version (hardware)" << std::endl;
   std::cout << "  -s                   display actual status of software actions" << std::endl;
   std::cout << "  -t                   display the current temperature in Celsius (if sensor is available) " << std::endl;
-  std::cout << "  -U                   display/interpret all absolute time values in UTC instead of TAI" << std::endl;
+  std::cout << "  -U                   display/inject absolute time in UTC instead of TAI" << std::endl;
+  std::cout << "  -L                   used with command 'inject' and -U: if injected UTC second is ambiguous choose the later one" << std::endl;
   std::cout << std::endl;
   std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
   std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
@@ -204,7 +206,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
 						  std::shared_ptr<SoftwareActionSink_Proxy> sink) {
   uint32_t       nFreeConditions;
   bool          wrLocked;
-  uint64_t       wrTime;
+  saftlib::Time   wrTime;
   int           width;
   string        fmt;
   
@@ -217,8 +219,8 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
   // display White Rabbit status
   wrLocked        = receiver->getLocked();
   if (wrLocked) {
-    wrTime        = receiver->ReadCurrentTime();
-    if (absoluteTime) std::cout << "WR locked, time: " << wrTime <<std::endl;
+    wrTime        = receiver->CurrentTime();
+    if (absoluteTime) std::cout << "WR locked, time: " << tr_formatDate(wrTime, UTC?PMODE_UTC:PMODE_NONE) <<std::endl;
     else std::cout << "WR locked, time: " << tr_formatDate(wrTime, pmode) <<std::endl;
   }
   else std::cout << "no WR lock!!!" << std::endl;
@@ -375,7 +377,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxsvapijkhftU")) != -1) {
+  while ((opt = getopt(argc, argv, "dxsvapijkhftUL")) != -1) {
     switch (opt) {
     case 'f' :
       useFirstDev = true;
@@ -403,6 +405,15 @@ int main(int argc, char** argv)
       break;
     case 'U':
       UTC = true;
+      pmode = pmode + PMODE_UTC;
+      break;
+    case 'L':
+      if (UTC) {
+        UTCleap = true;
+      } else {
+        std::cerr << "-L only works with -U" << std::endl;
+        return -1;
+      }
       break;
     case 'd':
       pmode = pmode + PMODE_DEC;

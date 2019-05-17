@@ -549,7 +549,7 @@ static void io_catch_input(uint64_t event, uint64_t param, saftlib::Time deadlin
   std::cout << " (0x";
   std::cout << std::setw(1) << std::hex << flags << ")  ";
   std::cout << "0x" << std::hex << setw(16+1) << event << std::dec << " ";
-  std::cout << "0x" << std::hex << setw(16+1) << (UTC?time.getUTC():time.getTAI()) << std::dec << " " << tr_formatDate((UTC?time.getUTC():time.getTAI()),PMODE_VERBOSE);
+  std::cout << "0x" << std::hex << setw(16+1) << (UTC?time.getUTC():time.getTAI()) << std::dec << " " << tr_formatDate(time,PMODE_VERBOSE|(UTC?PMODE_UTC:PMODE_NONE));
   std::cout << std::endl;
 }
 
