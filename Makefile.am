@@ -69,7 +69,7 @@ saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp src/CommonFunctions.cpp
 saft_scu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp
+saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp src/CommonFunctions.cpp
 saft_fg_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp

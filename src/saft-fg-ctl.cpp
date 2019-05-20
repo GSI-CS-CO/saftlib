@@ -33,6 +33,7 @@
 #include "interfaces/SCUbusCondition.h"
 #include "interfaces/FunctionGenerator.h" 
 #include "interfaces/FunctionGeneratorFirmware.h" 
+#include "src/CommonFunctions.h"
 
 using namespace saftlib;
 using namespace std;
@@ -70,20 +71,6 @@ static void on_refill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamS
   while (fill(gen, params)) { }
 }
 
-// Pretty print timestamp
-static const char *format_time(uint64_t time)
-{
-  static char full[80];
-  uint64_t ns    = time % 1000000000;
-  time_t  s     = time / 1000000000;
-  struct tm *tm = gmtime(&s);
-  char date[40];
-  
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
-  return full;
-}
-
 static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, uint64_t tag)
 {
   if (armed) {
@@ -95,14 +82,14 @@ static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, ui
 // Report when the function generator starts
 static void on_start(saftlib::Time time)
 {
-  std::cout << "Function generator started at " << format_time(UTC?time.getUTC():time.getTAI()) << std::endl;
+  std::cout << "Function generator started at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
 }
 
 // Report when the function generator stops
 static void on_stop(saftlib::Time time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow, bool *continue_main_loop)
 {
   *continue_main_loop = false;
-  std::cout << "Function generator stopped at " << format_time(UTC?time.getUTC():time.getTAI()) << std::endl;
+  std::cout << "Function generator stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
   // was there an error?
   if (abort)
     std::cerr << "Fatal error: Abort was called!" << std::endl;
