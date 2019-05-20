@@ -35,6 +35,7 @@
 #include "interfaces/SCUbusCondition.h"
 #include "interfaces/FunctionGenerator.h" 
 #include "interfaces/MasterFunctionGenerator.h" 
+#include "src/CommonFunctions.h"
 
 using namespace saftlib;
 using namespace std;
@@ -54,6 +55,7 @@ using namespace std;
 #define MAX_CHANNELS 12
 // 0 = silent, 1 = info, 2+ = debug
 static const int loglevel=2;
+static bool UTC = false; // use UTC instead of TAI for absolute time values
 
 static timespec diff(timespec start, timespec end)
 {
@@ -123,20 +125,6 @@ static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& p
 }
 */
 
-// Pretty print timestamp
-static const char *format_time(uint64_t time)
-{
-  static char full[80];
-  uint64_t ns    = time % 1000000000;
-  time_t  s     = time / 1000000000;
-  struct tm *tm = gmtime(&s);
-  char date[40];
-  
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-  snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
-  return full;
-}
-
 /*
 static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, uint64_t tag)
 {
@@ -174,9 +162,9 @@ static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool
 */
 
 // Report on the individual function generators
-static void on_master_started(std::string fg_name, uint64_t time)
+static void on_master_started(std::string fg_name, saftlib::Time time)
 {
-  if (loglevel>0) std::cout << fg_name << " started at " << format_time(time) << std::endl;
+  if (loglevel>0) std::cout << fg_name << " started at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
 }
 static void on_master_armed(std::string fg_name, bool armed)
 {
@@ -194,9 +182,9 @@ static void on_master_refill(std::string fg_name)
 {
   if (loglevel>0) std::cout << fg_name << " refill request" << std::endl;
 }
-static void on_master_stop(std::string fg_name, uint64_t time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
+static void on_master_stop(std::string fg_name, saftlib::Time time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
-  if (loglevel>0) std::cout << fg_name << " stopped at " << format_time(time) << std::endl;
+  if (loglevel>0) std::cout << fg_name << " stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
   // was there an error?
   if (abort)
     std::cerr << "Fatal error: Abort was called!" << std::endl;
@@ -218,9 +206,9 @@ static void on_all_armed()
 
 }
 
-static void on_all_stop(uint64_t time)
+static void on_all_stop(saftlib::Time time)
 {
-  std::cout << "All fgs stopped at " << format_time(time) << std::endl;
+  std::cout << "All fgs stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
   {
     std::lock_guard<std::mutex> lock(fg_all_stopped_mutex);
     fg_all_stopped=true;
@@ -287,7 +275,7 @@ int main(int argc, char** argv)
     
     // Process command-line
     int opt, error = 0;
-    while ((opt = getopt(argc, argv, "d:f:rght:e:")) != -1) {
+    while ((opt = getopt(argc, argv, "d:f:rgUht:e:")) != -1) {
       switch (opt) {
         case 'd':
           device = optarg;
@@ -300,6 +288,9 @@ int main(int argc, char** argv)
           break;
         case 'g':
           generate = true;
+          break;
+        case 'U':
+          UTC = true;
           break;
         case 't':
           tag = strtoul(optarg, 0, 0);
@@ -443,15 +434,15 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 
     // signals about the individual FGs for info
     master_gen->setGenerateIndividualSignals(true);
-    master_gen->Started.connect(sigc::ptr_fun(&on_master_started));
-    master_gen->Stopped.connect(sigc::ptr_fun(&on_master_stop));
+    master_gen->SigStarted.connect(sigc::ptr_fun(&on_master_started));
+    master_gen->SigStopped.connect(sigc::ptr_fun(&on_master_stop));
     master_gen->Enabled.connect(sigc::ptr_fun(&on_master_enabled));
     master_gen->Armed.connect(sigc::ptr_fun(&on_master_armed));
     master_gen->Running.connect(sigc::ptr_fun(&on_master_running));
     master_gen->Refill.connect(sigc::ptr_fun(&on_master_refill));
 
     // master signals for control
-    master_gen->AllStopped.connect(sigc::ptr_fun(&on_all_stop));
+    master_gen->SigAllStopped.connect(sigc::ptr_fun(&on_all_stop));
     master_gen->AllArmed.connect(&on_all_armed);
 
     // Stop whatever the function generator was doing
