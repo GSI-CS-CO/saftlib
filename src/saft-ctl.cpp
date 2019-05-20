@@ -78,7 +78,7 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 } // on_action
 
 // this will be called, in case we are snooping for events
-static void on_action_uni(uint64_t id, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   uint32_t gid;
   uint32_t evtNo;
@@ -87,8 +87,8 @@ static void on_action_uni(uint64_t id, uint64_t param, uint64_t deadline, uint64
   string   rf;
   
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
-  static uint64_t prevDeadline;
-  static uint32_t nCycle       = 0x0;
+  static saftlib::Time prevDeadline = deadline;
+  static uint32_t nCycle            = 0x0;
 
   gid   = ((id & 0x0fff000000000000) >> 48);
   evtNo = ((id & 0x0000fff000000000) >> 36);
@@ -734,7 +734,7 @@ int main(int argc, char** argv)
         condition[i]->setAcceptDelayed(true);
         switch (uniSnoopType) {
         case 1:
-          condition[i]->Action.connect(sigc::ptr_fun(&on_action_uni));
+          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni));
           break;
         default : 
           condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
