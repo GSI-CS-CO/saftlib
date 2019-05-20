@@ -633,7 +633,7 @@ int main(int argc, char** argv)
         eventTime = (ppsNext + eventTNext); }
       else if (absoluteTime) {
         if (UTC) {
-          eventTime = saftlib::makeTimeUTC(eventTNext);
+          eventTime = saftlib::makeTimeUTC(eventTNext, UTCleap);
         } else {
           eventTime = saftlib::makeTimeTAI(eventTNext);
         }
