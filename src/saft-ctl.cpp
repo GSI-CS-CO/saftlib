@@ -50,13 +50,13 @@ static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbos
 bool absoluteTime   = false;
 
 // GID
-#define QR       0x3e8                // 'PZ1, Quelle Rechts'
-#define QL       0x3e9                // 'PZ2, PQuelle Links'
-#define QN       0x3ea                // 'PZ3, Quelle Nord'
-#define HLI      0x3eb                // 'PZ4, Hochladungsinjektor UN'
-#define HSI      0x3ec                // 'PZ5, Hochstrominjektor UH'
-#define AT       0x3ed                // 'PZ6, Alvarez'
-#define TK       0x3ee                // 'PZ7, Transferkanal'
+#define QR       0x1c0                // 'PZ1, Quelle Rechts'
+#define QL       0x1c1                // 'PZ2, PQuelle Links'
+#define QN       0x1c2                // 'PZ3, Quelle Hochladungsinjektor UN (HLI)'
+#define HLI      0x1c3                // 'PZ4, Hochladungsinjektor UN (HLI)'
+#define HSI      0x1c4                // 'PZ5, Hochstrominjektor UH (HSI)'
+#define AT       0x1c5                // 'PZ6, Alvarez'
+#define TK       0x1c6                // 'PZ7, Transferkanal'
 
 // EVTNO
 #define NXTACC   0x10                 // EVT_PREP_NEXT_ACC
