@@ -20,7 +20,7 @@
 #include "interfaces/EmbeddedCPUActionSink.h"
 #include "interfaces/EmbeddedCPUCondition.h"
 
-#include "src/CommonFunctions.h"
+#include "CommonFunctions.h"
 
 /* Namespaces */
 /* ==================================================================================================== */

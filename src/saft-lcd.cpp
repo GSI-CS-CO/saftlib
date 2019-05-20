@@ -45,7 +45,7 @@
 #include "interfaces/SoftwareCondition.h"
 #include "interfaces/iDevice.h"
 #include "interfaces/iOwned.h"
-#include "src/CommonFunctions.h"
+#include "CommonFunctions.h"
 
 // FID
 #define FID          0x1

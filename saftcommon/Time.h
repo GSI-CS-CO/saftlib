@@ -6,8 +6,8 @@
 //   (in case they will be introduced in the future)
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef TUC_H_
-#define TUC_H_
+#ifndef SAFTLIB_TIME_H_
+#define SAFTLIB_TIME_H_
 
 #include <stdint.h>
 

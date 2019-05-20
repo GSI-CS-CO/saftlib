@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
-#include <tuc.h>
+#include "Time.h"
 
 #include <time.h>
 #include <sys/time.h>

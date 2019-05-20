@@ -50,7 +50,7 @@
 #include "interfaces/Input.h"
 #include "interfaces/OutputCondition.h"
 
-#include "src/CommonFunctions.h"
+#include "CommonFunctions.h"
 
 #include "drivers/eca_flags.h"
 #include "drivers/io_control_regs.h"

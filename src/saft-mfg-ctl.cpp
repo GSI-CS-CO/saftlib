@@ -35,7 +35,7 @@
 #include "interfaces/SCUbusCondition.h"
 #include "interfaces/FunctionGenerator.h" 
 #include "interfaces/MasterFunctionGenerator.h" 
-#include "src/CommonFunctions.h"
+#include "CommonFunctions.h"
 
 using namespace saftlib;
 using namespace std;

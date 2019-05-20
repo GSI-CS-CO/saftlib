@@ -284,7 +284,7 @@
       <!-- <xsl:text>#include &lt;giomm/dbuserror.h&gt;&#10;&#10;</xsl:text> -->
       <xsl:text>#include &lt;sigc++/sigc++.h&gt;&#10;&#10;</xsl:text>
 
-      <xsl:text>#include &lt;tuc.h&gt;&#10;</xsl:text>
+      <xsl:text>#include &lt;Time.h&gt;&#10;</xsl:text>
       <xsl:text>#include &lt;saftbus.h&gt;&#10;</xsl:text>
 
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
