@@ -31,7 +31,7 @@
          delivered to this signal if the Condition which generated them
          specified that the respective error should be accepted.
       -->
-    <signal name="Action">
+    <signal name="Action" deprecated="yes">
       <arg name="event"    type="t"/>
       <arg name="param"    type="t"/>
       <arg name="deadline" type="t"/>

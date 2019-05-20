@@ -95,7 +95,7 @@
          This signal notifies software when function generation has begun,
          possibly to update a GUI or other user-facing status information.
       -->
-    <signal name="Started">
+    <signal name="Started" deprecated="yes">
       <arg name="time" type="t"/>
     </signal>
     <signal name="SigStarted">
@@ -126,7 +126,7 @@
          next time the function generator starts. After stopping, regardless of if the generation
          was successful or not, the parameter FIFO is cleared, Enabled is false, and this signal emitted.
       -->
-    <signal name="Stopped">
+    <signal name="Stopped" deprecated="yes">
       <arg name="time"                     type="t"/>
       <arg name="aborted"                  type="b"/>
       <arg name="hardwareMacroUnderflow"   type="b"/>

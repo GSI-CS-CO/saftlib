@@ -234,7 +234,7 @@
        after its deadline, due to a slow consumer, is a delayed (not late)
        action.
     -->
-  <signal name="Late">
+  <signal name="Late" deprecated="yes">
     <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
@@ -271,7 +271,7 @@
        @deadline: The desired execution timestamp (event time + offset).
        @executed: The actual execution timestamp.
     -->
-  <signal name="Early">
+  <signal name="Early" deprecated="yes">
     <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
@@ -305,7 +305,7 @@
        @deadline: The scheduled action execution timestamp (event time + offset).
        @executed: The timestamp when the action was actually executed.
     -->
-  <signal name="Conflict">
+  <signal name="Conflict" deprecated="yes">
     <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
@@ -341,7 +341,7 @@
        @deadline: The desired execution timestamp (event time + offset).
        @executed: The timestamp when the action was actually executed.
     -->
-  <signal name="Delayed">
+  <signal name="Delayed" deprecated="yes">
     <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>

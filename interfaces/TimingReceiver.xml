@@ -75,7 +75,7 @@
          Due to delays in software, the returned value is probably several
          milliseconds behind the true time.
       -->
-    <method name="ReadCurrentTime">
+    <method name="ReadCurrentTime" deprecated="yes">
       <arg direction="out" type="t" name="result"/>
     </method>
     <method name="CurrentTime">
