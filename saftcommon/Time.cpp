@@ -1,6 +1,11 @@
 #include <Time.h>
 
 #include <assert.h>
+#include <vector>
+#include <array>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
 
 const int64_t offset_epoch_01_01_1900 = 2208988800; // obtained with 'date --date='UTC 01/01/1900' +%s'
 
@@ -41,28 +46,70 @@ const int64_t leap_second_list[][2] = {
 	        // The offset value is identical tor the first 'real' offset
 };
 
+std::vector<std::array<int64_t, 2> > leap_second_vector;
+
+void init(const char* leap_second_list_filename)
+{
+	// parse the leap seconds list file
+	std::ifstream lsin(leap_second_list_filename);
+	for (;;) {
+		std::string line;
+		std::getline(lsin, line);
+		if (!lsin) {
+			break;
+		}
+		std::istringstream lin(line);
+
+		char comment;
+		lin >> comment;
+		if (comment == '#') {
+			continue;
+		} 
+
+		lin.putback(comment);
+		std::array<int64_t, 2> timestamp_offset;
+		lin >> timestamp_offset[0] >> timestamp_offset[1];
+		if (!lin) {
+			break;
+		}
+		leap_second_vector.push_back(timestamp_offset);
+	}
+	std::reverse(leap_second_vector.begin(),
+		         leap_second_vector.end());
+	// add end-of-vector indicator
+	leap_second_vector.push_back(leap_second_vector.back());
+	leap_second_vector.back()[0] = -1;
+}
+
+
 int64_t leap_second_epoch(int n)
 {
-	if (leap_second_list[n][0] == -1) {
+	if (leap_second_vector.empty()) {
+		init();
+	}
+	if (leap_second_vector[n][0] == -1) {
 		return -1;
 	}
 
 	// distinguish negative and positive leap seconds to achieve the correct behavior:
-	if (leap_second_list[n+1][1] < leap_second_list[n][1]) {
+	if (leap_second_vector[n+1][1] < leap_second_vector[n][1]) {
 		// positive leap second, the last UTC-second of the day is repeated
-		return leap_second_list[n][0] - offset_epoch_01_01_1900 + leap_second_list[n][1] - 1;
+		return leap_second_vector[n][0] - offset_epoch_01_01_1900 + leap_second_vector[n][1] - 1;
 	}
 
 	// negative leap second, the last UTC-second of the day is skipped
 	// remark: Under this treatment, the positive leap second would appear at the first second of the new day.
 	//         If this is the desired behavior for positive leap seconds, remove the special treatment for
 	//         positive leap seconds (remove the if statement above)
-	return leap_second_list[n][0] - offset_epoch_01_01_1900 + leap_second_list[n][1] ; 
+	return leap_second_vector[n][0] - offset_epoch_01_01_1900 + leap_second_vector[n][1] ; 
 
 }
 int64_t leap_second_offset(int n) 
 {
-	return leap_second_list[n][1];
+	if (leap_second_vector.empty()) {
+		init();
+	}
+	return leap_second_vector[n][1];
 }
 
 int64_t UTC_offset_TAI(uint64_t TAI)
