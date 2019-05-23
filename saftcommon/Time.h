@@ -23,7 +23,7 @@ int64_t leap_second_offset(int n);
 // returns:    UTC value that corresponds to the given TAI value. Result is
 //             ambiguous when it happens to be in a leap second interval. In 
 //             that case, use the function TAI_is_UTCleap() to disambiguate. 
-int64_t TAI_to_UTC_offset(uint64_t TAI);
+int64_t UTC_offset_TAI(uint64_t TAI);
 uint64_t TAI_to_UTC(uint64_t TAI);
 
 //////////////////////////////////////////////////////////////////////////////
@@ -57,7 +57,7 @@ int TAI_is_UTCleap(uint64_t TAI);
 //                         (nonexistent UTC values will only appear if we get
 //                         negative leap seconds, which didn't happen yet 
 //                         (year 2019))
-int UTC_to_TAI_offset(uint64_t UTC, int leap, int64_t *offset);
+int UTC_offset_UTC(uint64_t UTC, int leap, int64_t *offset);
 
 //////////////////////////////////////////////////////////////////////////////
 // convert UTC value to TAI value
@@ -156,8 +156,8 @@ namespace saftlib
 		int64_t operator-(const Time& rhs) {
 			return TAI - rhs.TAI;
 		}
-		int64_t getOffset() {
-			return TAI_to_UTC_offset(TAI);
+		int64_t getUTCOffset() {
+			return UTC_offset_TAI(TAI);
 		}
 		bool operator>(const Time& rhs) {
 			return TAI > rhs.TAI;
