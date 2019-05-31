@@ -15,6 +15,7 @@ NODES =				\
 	SoftwareActionSink.xml	\
 	SoftwareCondition.xml	\
 	TimingReceiver.xml      \
+	BurstGenerator.xml \
 	WrMilGateway.xml
 INTERFACES =			\
 	ActionSink.xml		\
@@ -61,6 +62,7 @@ nodist_saftlib_HEADERS = 	\
 	iSoftwareActionSink.h	\
 	iSoftwareCondition.h	\
 	iTimingReceiver.h	\
+	iBurstGenerator.h \
 	iWrMilGateway.h     \
 	MILbusActionSink.h	\
 	MILbusCondition.h	\
@@ -73,6 +75,7 @@ nodist_saftlib_HEADERS = 	\
 	SoftwareActionSink.h	\
 	SoftwareCondition.h	    \
 	TimingReceiver.h        \
+	BurstGenerator.h \
 	WrMilGateway.h
 
 
@@ -97,6 +100,7 @@ doc_DATA = 			\
 	SoftwareActionSink.pdf	\
 	SoftwareCondition.pdf	\
 	TimingReceiver.pdf     \
+	BurstGenerator.pdf \
 	WrMilGateway.pdf
 endif
 
@@ -132,6 +136,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	iSoftwareActionSink.cpp	\
 	iSoftwareCondition.cpp	\
 	iTimingReceiver.cpp	\
+	iBurstGenerator.cpp \
 	iWrMilGateway.cpp   \
 	MILbusActionSink.cpp	\
 	MILbusCondition.cpp	\
@@ -144,6 +149,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	SoftwareActionSink.cpp	\
 	SoftwareCondition.cpp	\
 	TimingReceiver.cpp     \
+	BurstGenerator.cpp \
 	WrMilGateway.cpp
 
 

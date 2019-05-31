@@ -52,6 +52,7 @@ saftd_SOURCES = version.h \
 	drivers/Input.cpp		drivers/Input.h			\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
 	drivers/WrMilGateway.cpp drivers/WrMilGateway.h \
+	drivers/BurstGenerator.cpp drivers/BurstGenerator.h \
 	src/globals.cpp			src/main.cpp
 
 saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) $(SAFTLIBS)

@@ -1,0 +1,65 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="BurstGenerator">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+
+  <!-- Include base interfaces -->
+  <xi:include href="Owned.xml"/>
+
+  <!-- de.gsi.saftlib.BurstGenerator:
+      @short_description: Burst generation service
+
+      A dedicated firmware must be loaded and running in the embedded LM32 core
+      prior to the burst generation. The methods and signals of this interface
+      are responsible to inform about the underlying hardware, firmware and
+      load the firmware binary if necessary.
+   -->
+  <interface name="de.gsi.saftlib.BurstGenerator">
+
+    <!-- readFirmwareId: Read the burst generator firmware ID -->
+    <method name="readFirmwareId">
+      <arg direction="out" type="u" name="id"/>
+    </method>
+
+    <!-- sendPulseParams: Send a set of pulse parameters to the burst generator.
+
+         @eventHi:    Event ID for the output action channel.
+         @delay:      Delay in nanoseconds.
+         @conditions: The number of conditions for the output action channel.
+         @offset:     Condition offset in nanosecond.
+         @result:     Return result. 0 on success.
+      -->
+    <method name="sendPulseParams">
+      <arg direction="in" type="u" name="eventHi"/>
+      <arg direction="in" type="u" name="delay"/>
+      <arg direction="in" type="u" name="conditions"/>
+      <arg direction="in" type="u" name="offset"/>
+      <arg direction="out" type="i" name="result"/>
+    </method>
+
+    <!-- sendProdCycles: Send production cycle to the burst generator.
+
+         @eventHi:    Event ID for the output action channel.
+         @cycles:     The number of cycles to be done. 64-bit
+         @result:     Return result. 0 on success.
+      -->
+    <method name="sendProdCycles">
+      <arg direction="in" type="u" name="eventHi"/>
+      <arg direction="in" type="t" name="cycles"/>
+      <arg direction="out" type="i" name="result"/>
+    </method>
+
+    <!-- instruct: Instruction to the burst generator.
+         It is a common method to communicate with the burst generator.
+         The method contains an instruction code and corresponding arguments.
+
+         @code:   User instruction code for LM32
+         @args:   Instruction arguments (vector of u32 integers)
+         @result: Return result. 0 on success.
+      -->
+    <method name="instruct">
+      <arg direction="in" type="u" name="code"/>
+      <arg direction="in" type="au" name="args"/>
+      <arg direction="out" type="i" name="result"/>
+    </method>
+
+  </interface>
+</node>
