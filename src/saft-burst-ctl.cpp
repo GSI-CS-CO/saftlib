@@ -97,7 +97,7 @@ static int  bg_read_fw_id       (void);
 static int  bg_send_pulse_params(uint32_t event_hi, uint32_t delay, uint32_t conditions, uint32_t offset);
 static int  bg_send_prod_cycles (uint32_t event_hi, uint64_t cycles);
 static int  bg_instruct         (std::vector<std::string> instr);
-static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32_t t_period, int64_t t_burst, bool verbose_mode);
+static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32_t t_period, int64_t t_burst, uint64_t b_delay, uint32_t b_flag, bool verbose_mode);
 static int  bg_config_ecpu      (uint64_t e_id, uint64_t e_mask, uint64_t offset, int32_t tag, int toggle);
 
 /* Get firmware id of the burst generator */
@@ -268,7 +268,7 @@ static int bg_send_prod_cycles(uint32_t event_hi, uint64_t cycles)
 
 /* Configure ECA with the IO event conditions for generating pulse at the chosen output */
 /* ==================================================================================================== */
-static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32_t t_period, int64_t t_burst, bool verbose_mode)
+static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32_t t_period, int64_t t_burst, uint64_t b_delay, uint32_t b_flag, bool verbose_mode)
 {
   int result = 0;
 
@@ -306,7 +306,11 @@ static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32
   uint32_t conditions = 2;
   uint32_t block_period = t_period;
 
-  if (t_period < BG_MIN_BLOCK_PERIOD)
+  if (t_high == 0 || t_high == t_period)
+  {
+    conditions = 1;
+  }
+  else if (t_period < BG_MIN_BLOCK_PERIOD)
   {
 
     while(block_period < BG_MIN_BLOCK_PERIOD)
@@ -358,11 +362,17 @@ static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32
     return result;
   }
 
-  uint64_t offset = 0;
+  uint64_t offset = b_delay;
   uint64_t t_low = t_period - t_high;
-  for (uint32_t i = 1; i <= conditions; i+=2)
+
+  if (conditions == 1)
   {
-    result = io_create(disown, e_id, e_mask, offset, flags, level, false, false);
+    if (t_high == t_period)
+      level = 1;
+    else
+      level = 0;
+
+   result = io_create(disown, e_id, e_mask, offset, flags, level, false, false);
 
     if (result != 0)
     {
@@ -372,25 +382,41 @@ static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32
     }
     else if (verbose_mode)
       std::cout << "e_id = " << std::hex << e_id << " e_msk = " << e_mask << std::dec << " offset = " << offset << " level = " << level << std::endl;
-
-    offset += t_high;
-
-    level ^=1;
-
-    result = io_create(disown, e_id, e_mask, offset, flags, level, false, false);
-
-    if (result != 0)
+  }
+  else
+  {
+    for (uint32_t i = 1; i <= conditions; i+=2)
     {
-      std::cerr << "Failed to create conditions for IO action" << std::endl;
-      io_destroy(true); // destroy conditions that were created
-      return result;
+      result = io_create(disown, e_id, e_mask, offset, flags, level, false, false);
+
+      if (result != 0)
+      {
+        std::cerr << "Failed to create conditions for IO action" << std::endl;
+        io_destroy(true); // destroy conditions that were created
+        return result;
+      }
+      else if (verbose_mode)
+        std::cout << "e_id = " << std::hex << e_id << " e_msk = " << e_mask << std::dec << " offset = " << offset << " level = " << level << std::endl;
+
+      offset += t_high;
+
+      level ^=1;
+
+      result = io_create(disown, e_id, e_mask, offset, flags, level, false, false);
+
+      if (result != 0)
+      {
+        std::cerr << "Failed to create conditions for IO action" << std::endl;
+        io_destroy(true); // destroy conditions that were created
+        return result;
+      }
+      else if (verbose_mode)
+        std::cout << "e_id = " << std::hex << e_id << " e_msk = " << e_mask << std::dec <<" offset = " << offset << " level = " << level << std::endl;
+
+      offset += t_low;
+
+      level ^=1;
     }
-    else if (verbose_mode)
-      std::cout << "e_id = " << std::hex << e_id << " e_msk = " << e_mask << std::dec <<" offset = " << offset << " level = " << level << std::endl;
-
-    offset += t_low;
-
-    level ^=1;
   }
 
   try
@@ -411,11 +437,12 @@ static int  bg_config_io(uint64_t e_id, uint64_t e_mask, uint32_t t_high, uint32
     if (bg_firmware)
     {
       std::vector<uint32_t> args;
-      // pack pulse parameters (e_id hi, delay, conditions, offset)
+      // pack pulse parameters (e_id hi, conditions, block period, burst flag)
       args.push_back(e_id >> 32);
       args.push_back(0);
       args.push_back(conditions);
       args.push_back(block_period);
+      args.push_back(b_flag);
 
       std::cout << "Pulse params: ";
       for ( std::vector<uint32_t>::iterator it = args.begin(); it != args.end(); ++it)
@@ -946,7 +973,11 @@ static void io_help (void)
   std::cout << "  -n <name>:                                     Specify IO name or leave blank (to see all IOs/conditions)" << std::endl;
   std::cout << std::endl;
   std::cout << "  -A:                                            Get the firmware id of the burst generator" << std::endl;
-  std::cout << "  -B <e_id_io> <e_mask> <t_hi> <t_p> <b_p>:      Create and unown conditions for IO actions (offset, delay are not used)" << std::endl;
+  std::cout << "  -B <e_id_io> <e_mask> <t_hi> <t_p> <b_p> <b_d> <b_f>:  Create and unown conditions for IO actions, where" << std::endl;
+  std::cout << "      e_id_io, e_mask                                    Event ID and mask in the condition" << std::endl;
+  std::cout << "      t_hi, t_p                                          Signal high width (ns), signal period (ns)" << std::endl;
+  std::cout << "      b_p, b_d, b_f                                      Burst period (=0 endless), burst delay (ns), burst flag (=0 new/overwrite, 1=append)" << std::endl;
+  std::cout << std::endl;
   std::cout << "  -C <e_id_ecpu> <e_mask> <offset> <tag>:        Create and unown conditions for eCPU actions" << std::endl;
   std::cout << "  -D:                                            Destroy all unowned conditions for eCPU actions" << std::endl;
   std::cout << "  -E <instr_code> [u32 u32 ...]:                 Instruction to the burst generator, allowed instructions are listed below:" << std::endl;
@@ -1683,7 +1714,9 @@ int main (int argc, char** argv)
   uint64_t bg_cycles  = 0x00;  /* The number of pulse cycles */
   uint32_t bg_t_high  = 0x00;  /* Signal active state length, t_high */
   uint32_t bg_t_p     = 0x00;  /* Signal period, t_p */
-  int64_t  bg_t_b     = 0x00;     /* Burst period, t_b */
+  int64_t  bg_t_b     = 0x00;  /* Burst period, t_b (=0 endless) */
+  uint64_t bg_b_delay = 0x00;  /* Burst delay, b_d, nanoseconds */
+  uint32_t bg_b_flag  = 0x00;  /* Burst flag, b_f, (=0 new/overwrite, =1 append) */
   uint64_t bg_ecpu_offset = 0x00; /* eCPU event offset */
   uint32_t bg_ecpu_tag    = 0x00; /* eCPU event tag */
   int      bg_ecpu_toggle = 0x00; /* toggle burst */
@@ -1717,8 +1750,12 @@ int main (int argc, char** argv)
                   else                        { std::cerr << "Error::Missing signal period (u32)!" << std::endl; return -1; }
                   if (argv[optind+3] != NULL) { bg_t_b = strtoll(argv[optind+3], &pEnd, 0); }
                   else                        { std::cerr << "Error::Missing burst period (i64)!" << std::endl; return -1; }
-                  if (bg_t_high >= bg_t_p)    { std::cerr << "Invalid signal parameters, t_high >= t_p" << std::endl; return -1; }
+                  if (bg_t_high > bg_t_p)    { std::cerr << "Invalid signal parameters, t_high > t_p" << std::endl; return -1; }
                   if (bg_t_b > 0 && bg_t_p > bg_t_b) { std::cerr << "Invalid burst parameters, t_p > t_b" << std::endl; return -1; }
+                  if (argv[optind+4] != NULL) { bg_b_delay = strtoull(argv[optind+4], &pEnd, 0); }
+                  else                        { std::cerr << "Error::Missing burst delay!" << std::endl; return -1; }
+                  if (argv[optind+5] != NULL) { bg_b_flag = strtoul(argv[optind+5], &pEnd, 0); }
+                  else                        { std::cerr << "Error::Missing burst flag!" << std::endl; return -1; }
                   bg_cfg_io      = true;
                   break; }
       case 'C': { bg_cfg_ecpu    = true;
@@ -1916,7 +1953,7 @@ int main (int argc, char** argv)
     else if (bg_send_pp)     { return_code = bg_send_pulse_params(bg_event_hi, bg_delay, bg_conds, bg_offset); }
     else if (bg_send_pc)     { return_code = bg_send_prod_cycles(bg_event_hi, bg_cycles); }
     else if (bg_instr)       { return_code = bg_instruct(bg_instr_args); }
-    else if (bg_cfg_io)      { return_code = bg_config_io(bg_e_id, bg_e_mask, bg_t_high, bg_t_p, bg_t_b, verbose_mode); }
+    else if (bg_cfg_io)      { return_code = bg_config_io(bg_e_id, bg_e_mask, bg_t_high, bg_t_p, bg_t_b, bg_b_delay, bg_b_flag, verbose_mode); }
     else if (bg_cfg_ecpu)    { return_code = bg_config_ecpu(bg_e_id, bg_e_mask, bg_ecpu_offset, bg_ecpu_tag, bg_ecpu_toggle); }
     else if (bg_destroy_ecpu){ return_code = ecpu_destroy(verbose_mode); }
     else if (show_table)     { return_code = io_print_table(verbose_mode); }
