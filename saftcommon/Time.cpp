@@ -1,3 +1,4 @@
+#include <config.h>
 #include <Time.h>
 
 #include <assert.h>
@@ -50,6 +51,9 @@ std::vector<std::array<int64_t, 2> > leap_second_vector;
 
 void init(const char* leap_second_list_filename)
 {
+	if (leap_second_list_filename == nullptr) {
+		leap_second_list_filename = LEAPSECONDSLIST;
+	}
 	// parse the leap seconds list file
 	std::ifstream lsin(leap_second_list_filename);
 	for (;;) {

@@ -15,7 +15,7 @@
 int64_t leap_second_epoch(int n);
 int64_t leap_second_offset(int n);
 
-void init(const char* leap_second_list_filename = "/tmp/leap-seconds.list");
+void init(const char* leap_second_list_filename = nullptr);
 
 //////////////////////////////////////////////////////////////////////////////
 // convert TAI value to UTC value
