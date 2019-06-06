@@ -136,7 +136,6 @@ namespace saftlib
 		//         If this is the desired behavior for positive leap seconds, remove the special treatment for
 		//         positive leap seconds (remove the if statement above)
 		return leap_second_vector[n][0] - offset_epoch_01_01_1900 + leap_second_vector[n][1] ; 
-
 	}
 	int64_t leap_second_offset(int n) 
 	{
@@ -245,7 +244,6 @@ namespace saftlib
 
 	void test_UTC_difference()
 	{
-
 		for (int i = 0; ;++i) {
 			if (leap_second_epoch(i) == -1) {
 				break;
