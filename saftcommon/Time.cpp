@@ -7,6 +7,12 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cstdlib>
+#include <exception>
+
+
+namespace saftlib
+{
 
 const int64_t offset_epoch_01_01_1900 = 2208988800; // obtained with 'date --date='UTC 01/01/1900' +%s'
 
@@ -51,38 +57,62 @@ std::vector<std::array<int64_t, 2> > leap_second_vector;
 
 void init(const char* leap_second_list_filename)
 {
-	if (leap_second_list_filename == nullptr) {
-		leap_second_list_filename = LEAPSECONDSLIST;
+	if (!leap_second_vector.empty()) {
+		return;
 	}
+	if (leap_second_list_filename == nullptr) {
+		// no filename given
+		// first: look environment variable
+		leap_second_list_filename = getenv("SAFTLIB_LEAPSECONDSLIST");
+		std::ifstream testifstream(leap_second_list_filename);
+		if (!testifstream.good()) {
+			// second: look at standard location
+			leap_second_list_filename = LEAPSECONDSLIST;
+		}
+	}
+	bool invalid_leap_second_list = false;
 	// parse the leap seconds list file
 	std::ifstream lsin(leap_second_list_filename);
-	for (;;) {
-		std::string line;
-		std::getline(lsin, line);
-		if (!lsin) {
-			break;
-		}
-		std::istringstream lin(line);
+	if (lsin.good()) {
+		for (;;) {
+			std::string line;
+			std::getline(lsin, line);
+			if (!lsin) {
+				break;
+			}
+			std::istringstream lin(line);
 
-		char comment;
-		lin >> comment;
-		if (comment == '#') {
-			continue;
-		} 
+			char comment;
+			lin >> comment;
+			if (comment == '#') {
+				continue;
+			} 
 
-		lin.putback(comment);
-		std::array<int64_t, 2> timestamp_offset;
-		lin >> timestamp_offset[0] >> timestamp_offset[1];
-		if (!lin) {
-			break;
+			lin.putback(comment);
+			std::array<int64_t, 2> timestamp_offset;
+			lin >> timestamp_offset[0] >> timestamp_offset[1];
+			if (!lin) {
+				break;
+			}
+			leap_second_vector.push_back(timestamp_offset);
 		}
-		leap_second_vector.push_back(timestamp_offset);
+		std::reverse(leap_second_vector.begin(),
+			         leap_second_vector.end());
+		// add end-of-vector indicator
+		leap_second_vector.push_back(leap_second_vector.back());
+		leap_second_vector.back()[0] = -1;
+	} else { // file couldn't be read... use hard coded list
+		invalid_leap_second_list = true;
 	}
-	std::reverse(leap_second_vector.begin(),
-		         leap_second_vector.end());
-	// add end-of-vector indicator
-	leap_second_vector.push_back(leap_second_vector.back());
-	leap_second_vector.back()[0] = -1;
+
+	if (leap_second_vector.empty()) {
+		invalid_leap_second_list = true;
+	}
+	if (invalid_leap_second_list) {
+		std::ostringstream msg;
+		msg << "ERROR: saftlib didn't find leap-second.list file at location: \"" << leap_second_list_filename << "\"" << std::endl;
+		throw std::runtime_error(msg.str());
+	}
 }
 
 
@@ -309,8 +339,6 @@ void test_special_cases()
 
 
 
-namespace saftlib
-{
 	
 	Time operator+(const Time& lhs, const int64_t& rhs) {
 		Time result(lhs);

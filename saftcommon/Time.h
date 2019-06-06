@@ -11,113 +11,115 @@
 
 #include <stdint.h>
 
-//extern const int64_t leap_second_list[][2];
-int64_t leap_second_epoch(int n);
-int64_t leap_second_offset(int n);
-
-void init(const char* leap_second_list_filename = nullptr);
-
-//////////////////////////////////////////////////////////////////////////////
-// convert TAI value to UTC value
-//////////////////////////////////////////////////////////////////////////////
-// parameters: TAI         nanosecond TAI value (nanoseconds since 01/01/1970)
-// returns:    UTC value that corresponds to the given TAI value. Result is
-//             ambiguous when it happens to be in a leap second interval. In 
-//             that case, use the function TAI_is_UTCleap() to disambiguate. 
-int64_t UTC_offset_TAI(uint64_t TAI);
-uint64_t TAI_to_UTC(uint64_t TAI);
-
-//////////////////////////////////////////////////////////////////////////////
-// check if this TAI value falls into a UTC leap second interval
-//////////////////////////////////////////////////////////////////////////////
-// parameters: TAI         nanosecond TAI value (nanoseconds since 01/01/1970)
-// returns:    1 if this is a positive leap second interval (the UTC second 
-//               part was repeated)
-//             0 if this was outside a leap second interval
-//            -1 if the previous second was skipped (only happens if we get 
-//               negative leap seconds, which didn't happen yet (year 2019))
-int TAI_is_UTCleap(uint64_t TAI);
-
-
-//////////////////////////////////////////////////////////////////////////////
-// get UTC offset (in seconds) for given UTC value
-//    UTC_offset = TAI - UTC 
-//////////////////////////////////////////////////////////////////////////////
-// parameters: UTC         nanosecond UTC value
-//             leap        1 if UTC1 is inside a leap second interval, 
-//                         0 otherwise
-//                         (This parameter is only ever looked at, when the 
-//                         UTC value is actually in a leap second interval. 
-//                         For non leap second intervals, this parameter is 
-//                         ignored.)
-//             offset      a pointer to where the resulting offset is copied
-//                         after successful computation (return value 1)
-//                         the offset is given in nanoseconds
-// returns:    1           if the conversion could be done, 
-//             0           if the UTC value value was invalid 
-//                         (nonexistent UTC values will only appear if we get
-//                         negative leap seconds, which didn't happen yet 
-//                         (year 2019))
-int UTC_offset_UTC(uint64_t UTC, int leap, int64_t *offset);
-
-//////////////////////////////////////////////////////////////////////////////
-// convert UTC value to TAI value
-//////////////////////////////////////////////////////////////////////////////
-// parameters: UTC         nanosecond UTC value
-//             leap        1 if UTC1 is inside a leap second interval, 
-//                         0 otherwise
-//                         (This parameter is only ever looked at, when the 
-//                         UTC value is actually in a leap second interval. 
-//                         For non leap second intervals, this parameter is 
-//                         ignored.)
-//             TAI         a pointer to where the result of the conversion is 
-//                         copied after successful computation
-// returns:    1           if the conversion could be done, 
-//             0           if the UTC value value was invalid 
-//                         (nonexistent UTC values will only appear if we get
-//                         negative leap seconds, which didn't happen yet 
-//                         (year 2019))
-int UTC_to_TAI(uint64_t UTC, int leap, uint64_t *TAI);
-
-//////////////////////////////////////////////////////////////////////////////
-// calculate UTC time difference
-//////////////////////////////////////////////////////////////////////////////
-// parameters: UTC1        nanosecond UTC value
-//             leap1       1 if UTC1 is inside a leap second interval,
-//                         0 otherwise
-//                         (This parameter is only ever looked at, when the 
-//                         UTC value is actually in a leap second interval. 
-//                         For non leap second intervals, this parameter is 
-//                         ignored.)
-//             UTC2        see UTC1
-//             leap2       see leap1
-//             difference  a pointer to where the number of nanoseconds 
-//                         UTC1-UTC2 is stored (in case of return value 1)
-// returns:    1           if the difference could be calculated, 
-//             0           if one of the UTC values was invalid 
-//                         (nonexistent UTC values will only appear if we get
-//                         negative leap seconds, which didn't happen yet 
-//                         (year 2019))
-int UTC_difference(uint64_t UTC1, int leap1, 
-	               uint64_t UTC2, int leap2, 
-	               int64_t *difference);
-
-
-
-
-
-
-
-
-// some test functions for the library function implementations
-void test_UTC_offset();
-void test_UTC_difference();
-void test_conversion_forth_and_back();
-void test_special_cases();
-
 
 namespace saftlib
 {
+		
+	//extern const int64_t leap_second_list[][2];
+	int64_t leap_second_epoch(int n);
+	int64_t leap_second_offset(int n);
+
+	void init(const char* leap_second_list_filename = nullptr);
+
+	//////////////////////////////////////////////////////////////////////////////
+	// convert TAI value to UTC value
+	//////////////////////////////////////////////////////////////////////////////
+	// parameters: TAI         nanosecond TAI value (nanoseconds since 01/01/1970)
+	// returns:    UTC value that corresponds to the given TAI value. Result is
+	//             ambiguous when it happens to be in a leap second interval. In 
+	//             that case, use the function TAI_is_UTCleap() to disambiguate. 
+	int64_t UTC_offset_TAI(uint64_t TAI);
+	uint64_t TAI_to_UTC(uint64_t TAI);
+
+	//////////////////////////////////////////////////////////////////////////////
+	// check if this TAI value falls into a UTC leap second interval
+	//////////////////////////////////////////////////////////////////////////////
+	// parameters: TAI         nanosecond TAI value (nanoseconds since 01/01/1970)
+	// returns:    1 if this is a positive leap second interval (the UTC second 
+	//               part was repeated)
+	//             0 if this was outside a leap second interval
+	//            -1 if the previous second was skipped (only happens if we get 
+	//               negative leap seconds, which didn't happen yet (year 2019))
+	int TAI_is_UTCleap(uint64_t TAI);
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// get UTC offset (in seconds) for given UTC value
+	//    UTC_offset = TAI - UTC 
+	//////////////////////////////////////////////////////////////////////////////
+	// parameters: UTC         nanosecond UTC value
+	//             leap        1 if UTC1 is inside a leap second interval, 
+	//                         0 otherwise
+	//                         (This parameter is only ever looked at, when the 
+	//                         UTC value is actually in a leap second interval. 
+	//                         For non leap second intervals, this parameter is 
+	//                         ignored.)
+	//             offset      a pointer to where the resulting offset is copied
+	//                         after successful computation (return value 1)
+	//                         the offset is given in nanoseconds
+	// returns:    1           if the conversion could be done, 
+	//             0           if the UTC value value was invalid 
+	//                         (nonexistent UTC values will only appear if we get
+	//                         negative leap seconds, which didn't happen yet 
+	//                         (year 2019))
+	int UTC_offset_UTC(uint64_t UTC, int leap, int64_t *offset);
+
+	//////////////////////////////////////////////////////////////////////////////
+	// convert UTC value to TAI value
+	//////////////////////////////////////////////////////////////////////////////
+	// parameters: UTC         nanosecond UTC value
+	//             leap        1 if UTC1 is inside a leap second interval, 
+	//                         0 otherwise
+	//                         (This parameter is only ever looked at, when the 
+	//                         UTC value is actually in a leap second interval. 
+	//                         For non leap second intervals, this parameter is 
+	//                         ignored.)
+	//             TAI         a pointer to where the result of the conversion is 
+	//                         copied after successful computation
+	// returns:    1           if the conversion could be done, 
+	//             0           if the UTC value value was invalid 
+	//                         (nonexistent UTC values will only appear if we get
+	//                         negative leap seconds, which didn't happen yet 
+	//                         (year 2019))
+	int UTC_to_TAI(uint64_t UTC, int leap, uint64_t *TAI);
+
+	//////////////////////////////////////////////////////////////////////////////
+	// calculate UTC time difference
+	//////////////////////////////////////////////////////////////////////////////
+	// parameters: UTC1        nanosecond UTC value
+	//             leap1       1 if UTC1 is inside a leap second interval,
+	//                         0 otherwise
+	//                         (This parameter is only ever looked at, when the 
+	//                         UTC value is actually in a leap second interval. 
+	//                         For non leap second intervals, this parameter is 
+	//                         ignored.)
+	//             UTC2        see UTC1
+	//             leap2       see leap1
+	//             difference  a pointer to where the number of nanoseconds 
+	//                         UTC1-UTC2 is stored (in case of return value 1)
+	// returns:    1           if the difference could be calculated, 
+	//             0           if one of the UTC values was invalid 
+	//                         (nonexistent UTC values will only appear if we get
+	//                         negative leap seconds, which didn't happen yet 
+	//                         (year 2019))
+	int UTC_difference(uint64_t UTC1, int leap1, 
+		               uint64_t UTC2, int leap2, 
+		               int64_t *difference);
+
+
+
+
+
+
+
+
+	// some test functions for the library function implementations
+	void test_UTC_offset();
+	void test_UTC_difference();
+	void test_conversion_forth_and_back();
+	void test_special_cases();
+
+
 	const int64_t sec = INT64_C(1000000000);
 	const int64_t msec = INT64_C(1000000);
 	const int64_t usec = INT64_C(1000);
