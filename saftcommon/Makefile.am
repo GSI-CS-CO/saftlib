@@ -7,9 +7,9 @@ saftcommon_HEADERS =         \
 	Time.h             \
 	CommonFunctions.h
 
-leapseconddir = $(datadir)
+leapseconddir = $(datadir)/saftlib
 leapsecond_DATA = leap-seconds.list
-
+EXTRA_DIST = leap-seconds.list
 
 # saftcommondir = $(includedir)/saftlib
 # saftcommon_DATA = leap-seconds.list
@@ -17,6 +17,6 @@ leapsecond_DATA = leap-seconds.list
 libsaftcommon_la_LIBADD = 
 libsaftcommon_la_LDFLAGS = -version-info @SAFTLIB_API@:@SAFTLIB_REVISION@:@SAFTLIB_MINOR@ # @SAFTLIB_SONAME@
 
-nodist_libsaftcommon_la_SOURCES = \
+libsaftcommon_la_SOURCES = \
 	Time.cpp                \
 	CommonFunctions.cpp
