@@ -156,9 +156,16 @@
          next time the function generator starts. After stopping, regardless of if the generation
          was successful or not, the parameter FIFO is cleared, Enabled is false, and this signal emitted.
       -->
-    <signal name="Stopped">
+    <signal name="Stopped" deprecated="yes">
       <arg name="name"                     type="s"/>
       <arg name="time"                     type="t"/>
+      <arg name="aborted"                  type="b"/>
+      <arg name="hardwareMacroUnderflow"   type="b"/>
+      <arg name="microControllerUnderflow" type="b"/>
+    </signal>
+    <signal name="SigStopped">
+      <arg name="name"                     type="s"/>
+      <arg name="time"                     type="T"/>
       <arg name="aborted"                  type="b"/>
       <arg name="hardwareMacroUnderflow"   type="b"/>
       <arg name="microControllerUnderflow" type="b"/>
@@ -188,9 +195,13 @@
 
     <!-- Started: Started signal forwarded from a single Function Generator
          -->
-    <signal name="Started">
+    <signal name="Started" deprecated="yes">
       <arg name="name"                     type="s"/>
       <arg name="time"                     type="t"/>
+    </signal>
+    <signal name="SigStarted">
+      <arg name="name"                     type="s"/>
+      <arg name="time"                     type="T"/>
     </signal>
 
     <!-- Refill: Refill signal forwarded from a single Function Generator
@@ -206,8 +217,11 @@
          controlled by this master have then stopped. 
     -->
 
-    <signal name="AllStopped">
+    <signal name="AllStopped" deprecated="yes">
       <arg name="time" type="t"/>
+    </signal>
+    <signal name="SigAllStopped">
+      <arg name="time" type="T"/>
     </signal>
 
     <!-- AllArmed:                All Function generators that have a FillLevel>0 are armed.

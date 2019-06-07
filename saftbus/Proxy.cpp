@@ -7,6 +7,7 @@
 #include "saftbus.h"
 #include "core.h"
 
+
 namespace saftbus
 {
 
@@ -182,10 +183,14 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			    // deliver the signal: call the signal handler of the derived class 
 			    //std::cerr << "Proxy::dispatch() call on_signal" << std::endl;
 				on_signal("de.gsi.saftlib", signal_name, parameters);
+			} catch (std::runtime_error &e) {
+				throw e;
 			} catch(...) {
 				std::cerr << "Proxy::dispatch() : on_signal threw " << std::endl;
 			}
 		}
+	} catch(std::runtime_error &e) {
+		throw e;		
 	} catch (std::exception &e) {
 		std::cerr << "Proxy::dispatch() : exception : " << e.what() << std::endl;
 	}

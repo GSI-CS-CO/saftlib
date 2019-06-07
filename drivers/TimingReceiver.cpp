@@ -445,6 +445,23 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
 {
+  // etherbone::Cycle cycle;
+  
+  // cycle.open(device);
+  // cycle.write(stream, EB_DATA32, event >> 32);
+  // cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+  // cycle.write(stream, EB_DATA32, param >> 32);
+  // cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+  // cycle.write(stream, EB_DATA32, 0); // reserved
+  // cycle.write(stream, EB_DATA32, 0); // TEF
+  // cycle.write(stream, EB_DATA32, time >> 32);
+  // cycle.write(stream, EB_DATA32, time & 0xFFFFFFFFUL);
+  // cycle.close();
+  InjectEvent(event,param,makeTimeTAI(time));
+}
+
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time)
+{
   etherbone::Cycle cycle;
   
   cycle.open(device);
@@ -454,8 +471,8 @@ void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
   cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
   cycle.write(stream, EB_DATA32, 0); // reserved
   cycle.write(stream, EB_DATA32, 0); // TEF
-  cycle.write(stream, EB_DATA32, time >> 32);
-  cycle.write(stream, EB_DATA32, time & 0xFFFFFFFFUL);
+  cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
+  cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
   cycle.close();
 }
 
@@ -477,10 +494,14 @@ uint64_t TimingReceiver::ReadRawCurrentTime()
 
 uint64_t TimingReceiver::ReadCurrentTime()
 {
+  return CurrentTime().getTAI();
+}
+saftlib::Time TimingReceiver::CurrentTime()
+{
   if (!locked)
     throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
 
-  return ReadRawCurrentTime();
+  return saftlib::makeTimeTAI(ReadRawCurrentTime());
 }
 
 std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const

@@ -75,8 +75,11 @@
          Due to delays in software, the returned value is probably several
          milliseconds behind the true time.
       -->
-    <method name="ReadCurrentTime">
+    <method name="ReadCurrentTime" deprecated="yes">
       <arg direction="out" type="t" name="result"/>
+    </method>
+    <method name="CurrentTime">
+      <arg direction="out" type="T" name="result"/>
     </method>
     
     <!-- NewSoftwareActionSink: Create a new SoftwareActionSink.
@@ -134,10 +137,15 @@
          This allows software to test that configured conditions lead to the
          desired behaviour without needing the data master to send anything.
       -->
-    <method name="InjectEvent">
+    <method name="InjectEvent" deprecated="yes">
       <arg direction="in" type="t" name="event"/>
       <arg direction="in" type="t" name="param"/>
       <arg direction="in" type="t" name="time"/>
+    </method>
+    <method name="InjectEvent">
+      <arg direction="in" type="t" name="event"/>
+      <arg direction="in" type="t" name="param"/>
+      <arg direction="in" type="T" name="time"/>
     </method>
     
     <!-- Free: The number of additional conditions that may be activated.

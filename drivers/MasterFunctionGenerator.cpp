@@ -115,6 +115,7 @@ void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImp
   if (generateIndividualSignals)
   {
     Started(fg->GetName(), time);
+    SigStarted(fg->GetName(), saftlib::makeTimeTAI(time));
   }
 }
 
@@ -124,6 +125,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
   if (generateIndividualSignals)
   {
     Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
+    SigStopped(fg->GetName(), saftlib::makeTimeTAI(time), abort, hardwareUnderflow, microcontrollerUnderflow);
   }
 
 	bool all_stopped=true;
@@ -134,6 +136,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
   if (all_stopped)
   {
     AllStopped(time);
+    SigAllStopped(saftlib::makeTimeTAI(time));
   }
 }
 

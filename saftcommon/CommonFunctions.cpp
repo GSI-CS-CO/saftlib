@@ -9,23 +9,36 @@ uint64_t tr_mask(int i)
 } //tr_mask
 
 // 
-std::string tr_formatDate(uint64_t time, uint32_t pmode)
+std::string tr_formatDate(saftlib::Time time, uint32_t pmode)
 {
-  uint64_t ns    = time % 1000000000;
-  time_t  s     = time / 1000000000;
+  uint64_t t     = time.getTAI();
+  if (pmode & PMODE_UTC) {
+    t = time.getUTC();
+  }
+  uint64_t ns    = t % 1000000000;
+  time_t   s     = t / 1000000000;
   struct tm *tm = gmtime(&s);
   char date[40];
   char full[80];
+  char utc[10] = "";
   string temp;
+
+  if (pmode & PMODE_UTC) {
+    if (time.isLeapUTC()) {
+      snprintf(utc, sizeof(utc), "*");
+    } else {
+      snprintf(utc, sizeof(utc), " ");
+    }
+  }
 
   if (pmode & PMODE_VERBOSE) {
     strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
-    snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns); 
+    snprintf(full, sizeof(full), "%s.%09ld%s", date, (long)ns, utc); 
   }
   else if (pmode & PMODE_DEC)
-    snprintf(full, sizeof(full), "0d%lu.%09ld",s,(long)ns);
+    snprintf(full, sizeof(full), "0d%lu.%09ld%s",s,(long)ns, utc);
   else 
-    snprintf(full, sizeof(full), "0x%016llx", (unsigned long long)time); 
+    snprintf(full, sizeof(full), "0x%016llx%s", (unsigned long long)t, utc); 
   
   temp = full;
   

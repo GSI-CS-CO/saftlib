@@ -18,7 +18,7 @@
 #include "interfaces/SCUbusActionSink.h"
 #include "interfaces/SCUbusCondition.h"
 
-#include "src/CommonFunctions.h"
+#include "CommonFunctions.h"
 
 /* Namespaces */
 /* ==================================================================================================== */

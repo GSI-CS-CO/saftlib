@@ -22,7 +22,7 @@ saftbus_HEADERS = \
 libsaftbus_la_LIBADD = 
 libsaftbus_la_LDFLAGS = -version-info @SAFTLIB_API@:@SAFTLIB_REVISION@:@SAFTLIB_MINOR@ # @SAFTLIB_SONAME@
 
-nodist_libsaftbus_la_SOURCES = \
+libsaftbus_la_SOURCES = \
 	Logger.cpp                 \
 	core.cpp                   \
 	Proxy.cpp                  \

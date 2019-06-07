@@ -96,6 +96,9 @@
     <xsl:text>    // Proxy all methods to interfaces&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:for-each select="method">
+        <xsl:if test="@deprecated='yes'">
+          <xsl:text>__attribute__((deprecated))</xsl:text>
+        </xsl:if>
         <xsl:text>    </xsl:text>
         <xsl:call-template name="method-type"/>
         <xsl:text> { return </xsl:text>
@@ -110,6 +113,9 @@
     <xsl:text>    // Proxy all property gets to interfaces&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="@deprecated='yes'">
+          <xsl:text>__attribute__((deprecated))</xsl:text>
+        </xsl:if>
         <xsl:text>    </xsl:text>
         <xsl:call-template name="prop-gettype"/>
         <xsl:text> { return </xsl:text>
@@ -124,6 +130,9 @@
     <xsl:text>    // Proxy all property sets to interfaces&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:for-each select="property[@access='write' or @access='readwrite']">
+        <xsl:if test="@deprecated='yes'">
+          <xsl:text>__attribute__((deprecated))</xsl:text>
+        </xsl:if>
         <xsl:text>    </xsl:text>
         <xsl:call-template name="prop-settype"/>
         <xsl:text> { return </xsl:text>
@@ -140,6 +149,9 @@
     <xsl:text>&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
+        <xsl:if test="@deprecated='yes'">
+          <xsl:text>__attribute__((deprecated))</xsl:text>
+        </xsl:if>
         <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
           <xsl:text>    </xsl:text>
           <xsl:call-template name="prop-sigtype"/>
@@ -155,6 +167,9 @@
     <xsl:text>&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:for-each select="signal">
+        <xsl:if test="@deprecated='yes'">
+          <xsl:text>__attribute__((deprecated))</xsl:text>
+        </xsl:if>
         <xsl:text>    </xsl:text>
         <xsl:call-template name="signal-type"/>
         <xsl:text>;&#10;</xsl:text>
@@ -284,6 +299,7 @@
       <!-- <xsl:text>#include &lt;giomm/dbuserror.h&gt;&#10;&#10;</xsl:text> -->
       <xsl:text>#include &lt;sigc++/sigc++.h&gt;&#10;&#10;</xsl:text>
 
+      <xsl:text>#include &lt;Time.h&gt;&#10;</xsl:text>
       <xsl:text>#include &lt;saftbus.h&gt;&#10;</xsl:text>
 
       <xsl:text>namespace saftlib {&#10;&#10;</xsl:text>
