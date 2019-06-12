@@ -4,123 +4,149 @@
   <!-- Include base interfaces -->
   <xi:include href="Owned.xml"/>
   
+  <!-- de.gsi.saftlib.WrMilGateway:
+       @short_description: A converter for WhiteRabbit timing events to MIL.
+     
+       The WhiteRabbit-MIL-Gateway receives WhiteRabbit timing events, translates
+       them into MIL timing events and outputs them with few microsecond accuracy.
+       This device is needed to run SIS18 and ESR.
+    -->  
   <interface name="de.gsi.saftlib.WrMilGateway">
     
-    <!-- Access all registers of the WrMilGateway -->
+    <!-- RegisterContent: Access all registers of the WrMilGateway -->
     <property name="RegisterContent"   type="au" access="read">
     </property>
 
-    <!-- Access MIL event histogram WrMilGateway -->
+    <!-- MilHistogram: Access MIL event histogram WrMilGateway -->
     <property name="MilHistogram"   type="au" access="read">
     </property>
 
-    <!-- WR-MIL magic number -->
+    <!-- WrMilMagic: WR-MIL magic number -->
     <property name="WrMilMagic"   type="u" access="read">
     </property>
 
-    <!-- WR-MIL firmware state -->
+    <!-- FirmwareState: WR-MIL firmware state -->
     <property name="FirmwareState"   type="u" access="read">
     </property>
-    <!-- signal emitted if firmware state changes -->
+    <!-- SigFirmwareState: signal emitted if firmware state changes -->
     <signal name="SigFirmwareState">
       <arg name="state" type="u"/>
     </signal>
 
-    <!-- WR-MIL firmware is active (not stalled) -->
+    <!-- FirmwareRunning: WR-MIL firmware is active (not stalled) -->
     <property name="FirmwareRunning"   type="b" access="read">
     </property>
 
-    <!-- signal emitted if starts/stops running -->
+    <!-- SigFirmwareRunning: signal emitted if starts/stops running -->
     <signal name="SigFirmwareRunning">
       <arg name="running" type="b"/>
     </signal>
 
-    <!-- WR-MIL event source. This can be either 
+    <!-- EventSource: WR-MIL event source. 
+
+         This can be: 
+
          0 -> not configured (default)
+
          1 -> SIS18 (work as SIS18 "Pulszentrale")
+
          2 -> ESR   (work as ESR "Pulszentrale")   -->
     <property name="EventSource"   type="u" access="read">
     </property>
-    <!-- signal emitted if event source changes -->
+    <!-- SigEventSource: signal emitted if event source changes -->
     <signal name="SigEventSource">
       <arg name="source" type="u"/>
     </signal>
 
 
-    <!-- The event number that triggers generation of UTC events -->
+    <!-- UtcTrigger: The event number that triggers generation of UTC events -->
     <property name="UtcTrigger"   type="y" access="readwrite">
     </property>
 
-    <!-- event latency in microseconds. This is the time between the 
-         WR-event deadline and the rising edge at the TIF module caused
-         by the translated MIL event -->
+    <!-- EventLatency: Event latency in microseconds. 
+
+         This is the time between the WR-event deadline and the 
+         rising edge at the TIF module caused by the translated 
+         MIL event -->
     <property name="EventLatency"   type="u" access="readwrite">
     </property>
 
-    <!-- Time between the generated UTC MIL events -->
+    <!-- UtcUtcDelay: Time between the generated UTC MIL events -->
     <property name="UtcUtcDelay"   type="u" access="readwrite">
     </property>
 
-    <!-- Time between the UTC trigger event and the first UTC MIL event -->
+    <!-- TriggerUtcDelay: Time between the UTC trigger event and the first UTC MIL event -->
     <property name="TriggerUtcDelay"   type="u" access="readwrite">
     </property>
 
-    <!-- The number of seconds that is added to the WR-TAI 
+    <!-- UtcOffset: seconds between 01.01.2008 and 01.01.1970
+
+         The number of seconds that is added to the WR-TAI 
          (which starts at 1970) to create a UTC time that  
          starts at 2008 (64bit value) -->
     <property name="UtcOffset"   type="t" access="readwrite">
     </property>
 
 
-    <!-- The number of translated events (as 64bit value) -->
+    <!-- NumMilEvents: The number of translated events (as 64bit value) -->
     <property name="NumMilEvents"   type="t" access="read">
     </property>
 
-    <!-- read a histogram of event delays 
-          [0]: delay < 2^10 ns
-          [1]: delay < 2^11 ns
-          [2]: delay < 2^12 ns
+    <!-- LateHistogram: read a histogram of event delays 
+
+        Bin content:
+
+          [0]: delay less than 2^10 ns
+
+          [1]: delay less than 2^11 ns
+
+          [2]: delay less than 2^12 ns
+
          ...
-         [14]: delay < 2^24 ns
-         [15]: delay < 2^25 ns
+
+         [14]: delay less than 2^24 ns
+
+         [15]: delay less than 2^25 ns
+
     -->
     <property name="LateHistogram"   type="au" access="read">
     </property>
 
 
-    <!-- The number of translated events that were submitted later  
+    <!-- NumLateMilEvents: The number of translated events that were submitted later  
          than the anticipated WR event deadline -->
     <property name="NumLateMilEvents"   type="u" access="read">
     </property>
-    <!-- signal emitted if number of late events increases -->
+    <!-- SigNumLateMilEvents: signal emitted if number of late events increases -->
     <signal name="SigNumLateMilEvents">
       <arg name="total" type="u"/>
       <arg name="since_last_signal" type="u"/>
     </signal>
 
 
+    <!-- InUse: indicates if the gateway is translating any events -->
     <property name="InUse"   type="b" access="read">
     </property>
-    <!-- signal emitted if number of late events increases -->
+    <!-- SigInUse: signal emitted if number of events increases -->
     <signal name="SigInUse">
       <arg name="inUse" type="b"/>
     </signal>
 
 
 
-    <!-- Configure Gateway as SIS18 "Pulszentrale" and start -->
+    <!-- StartSIS18: Configure Gateway as SIS18 "Pulszentrale" and start -->
     <method name="StartSIS18"/>
 
-    <!-- Configure Gateway as ESR "Pulszentrale" and start -->
+    <!-- StartESR: Configure Gateway as ESR "Pulszentrale" and start -->
     <method name="StartESR"/>
 
-    <!-- Reset all event counters and histograms -->
+    <!-- ClearStatistics: Reset all event counters and histograms -->
     <method name="ClearStatistics"/>
 
-    <!-- Stop WR-MIL Gateway and restart after 1 second pause -->
+    <!-- ResetGateway: Stop WR-MIL Gateway and restart after 1 second pause -->
     <method name="ResetGateway"/>
 
-    <!-- Kill WR-MIL Gateway. Only MCU reset can recover (useful to 
+    <!-- KillGateway: Kill WR-MIL Gateway. Only MCU reset can recover (useful to 
          do before loading new firmware)-->
     <method name="KillGateway"/>
 

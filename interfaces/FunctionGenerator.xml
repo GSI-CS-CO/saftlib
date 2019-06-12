@@ -90,7 +90,7 @@
       <arg name="running" type="b"/>
     </signal>
 
-    <!-- Started: Function generation has begun.
+    <!-- Started: Deprecated! use SigStarted instead.
          @time:   Time when function generation began in nanoseconds since 1970
          This signal notifies software when function generation has begun,
          possibly to update a GUI or other user-facing status information.
@@ -98,11 +98,29 @@
     <signal name="Started" deprecated="yes">
       <arg name="time" type="t"/>
     </signal>
+    <!-- SigStarted: Function generation has begun.
+         @time:   Time when function generation began in nanoseconds since 1970
+         This signal notifies software when function generation has begun,
+         possibly to update a GUI or other user-facing status information.
+      -->
     <signal name="SigStarted">
       <arg name="time" type="T"/>
     </signal>
 
-    <!-- Stopped:                   Function generation has ended.
+    <!-- Stopped:                   Deprecated! Use SigStopped instead.
+         @time:                     Time when function generation ended in nanoseconds since 1970
+         @abort:                    stopped due to a call to Abort
+         @hardwareMacroUnderflow:   A fatal error, indicating the SCUbus is congested
+         @microControllerUnderflow: A fatal error, indicating the host CPU is overloaded
+      -->
+    <signal name="Stopped" deprecated="yes">
+      <arg name="time"                     type="t"/>
+      <arg name="aborted"                  type="b"/>
+      <arg name="hardwareMacroUnderflow"   type="b"/>
+      <arg name="microControllerUnderflow" type="b"/>
+    </signal>
+
+    <!-- SigStopped:                   Function generation has ended.
          @time:                     Time when function generation ended in nanoseconds since 1970
          @abort:                    stopped due to a call to Abort
          @hardwareMacroUnderflow:   A fatal error, indicating the SCUbus is congested
@@ -126,13 +144,7 @@
          next time the function generator starts. After stopping, regardless of if the generation
          was successful or not, the parameter FIFO is cleared, Enabled is false, and this signal emitted.
       -->
-    <signal name="Stopped" deprecated="yes">
-      <arg name="time"                     type="t"/>
-      <arg name="aborted"                  type="b"/>
-      <arg name="hardwareMacroUnderflow"   type="b"/>
-      <arg name="microControllerUnderflow" type="b"/>
-    </signal>
-    <signal name="SigStopped">
+      <signal name="SigStopped">
       <arg name="time"                     type="T"/>
       <arg name="aborted"                  type="b"/>
       <arg name="hardwareMacroUnderflow"   type="b"/>
