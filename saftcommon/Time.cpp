@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include <exception>
 
-
 namespace saftlib
 {
 
@@ -67,7 +66,7 @@ namespace saftlib
 			std::ifstream testifstream(leap_second_list_filename);
 			if (!testifstream.good()) {
 				// second: look at standard location
-				leap_second_list_filename = LEAPSECONDSLIST;
+				leap_second_list_filename = DATADIR "/saftlib/leap-seconds.list";
 			}
 		}
 		bool invalid_leap_second_list = false;

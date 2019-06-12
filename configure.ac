@@ -48,7 +48,6 @@ AC_CACHE_CHECK([for operating system], [ac_cv_OS], [AS_CASE([`${UNAME} -s`],
 AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OS"], [The operating system of the build system])
 AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the build system])
 AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
-AC_DEFINE_UNQUOTED([LEAPSECONDSLIST], ["${prefix}/share/saftlib/leap-seconds.list"], [location of leap-seconds.list file])
 
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])

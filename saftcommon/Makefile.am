@@ -1,5 +1,5 @@
 
-AM_CPPFLAGS = $(SIGCPP_CFLAGS) -I $(top_srcdir)/saftcommon
+AM_CPPFLAGS = $(SIGCPP_CFLAGS) -I $(top_srcdir)/saftcommon -DDATADIR='"$(datadir)"'
 
 lib_LTLIBRARIES = libsaftcommon.la 
 saftcommondir = $(includedir)/saftlib
