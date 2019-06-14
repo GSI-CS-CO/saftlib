@@ -198,5 +198,64 @@ namespace saftlib {
       return e.status;
     }
   }
+
+  std::vector< uint32_t > BurstGenerator::readBurstInfo(uint32_t id)
+  {
+    std::vector<uint32_t> info;
+
+    if (ram_base == 0)
+      return info;
+
+    try
+    {
+      eb_data_t data;
+      device.read(ram_base + SHM_CMD, EB_DATA32, &data);
+      if (static_cast<uint32_t>(data) != CMD_LS_BURST)
+      {
+        clog << kLogDebug << "More waits might be needed until LM32 uploads the burst info: " << static_cast<uint32_t>(data) << ' ' << CMD_LS_BURST << std::endl;
+        return info;
+      }
+
+      // read burst info from the shared memory
+      /*TODO: cycle read failed! Find out the reason!
+      Cycle cycle;
+      cycle.open(device);
+
+      for (int i = 0; i < N_BURST_INFO; ++i)
+      {
+        cycle.read(ram_base + SHM_INPUT + (i << 2), EB_DATA32, &data);
+        clog << kLogDebug << ' ' << static_cast<uint32_t>(data) << std::endl;
+        info.push_back(static_cast<uint32_t>(data));
+      }
+
+      cycle.close();
+
+      info.clear();*/
+
+      if (id == 0)
+      {
+        device.read(ram_base + SHM_INPUT, EB_DATA32, &data); // created bursts
+        info.push_back(static_cast<uint32_t>(data));
+        device.read(ram_base + SHM_INPUT + 4, EB_DATA32, &data); // cycled bursts
+        info.push_back(static_cast<uint32_t>(data));
+      }
+      else if (id <= N_BURSTS)
+      {
+        for (int i = 0; i < N_BURST_INFO; ++i)
+        {
+          device.read(ram_base + SHM_INPUT + (i << 2), EB_DATA32, &data);
+          info.push_back(static_cast<uint32_t>(data));
+        }
+      }
+
+      clog << kLogDebug << "method call BurstGenerator::readBurstInfo succeeded: " << info.size() << std::endl;
+      return info;
+    }
+    catch (etherbone::exception_t e)
+    {
+      clog << kLogDebug << "method call" << e.method << "failed with status" << e.status << std::endl;
+      return info;
+    }
+  }
 }
 

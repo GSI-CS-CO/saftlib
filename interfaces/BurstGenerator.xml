@@ -61,5 +61,16 @@
       <arg direction="out" type="i" name="result"/>
     </method>
 
+    <!-- readBurstInfo: Get burst info.
+         The info includes the type and index of IO port, IDs of trigger and toggling events.
+
+         @id:     The burst ID
+         @info:   The burst info (vector of u32 integers)
+      -->
+    <method name="readBurstInfo">
+      <arg direction="in" type="u" name="id"/>
+      <arg direction="out" type="au" name="info"/>
+    </method>
+
   </interface>
 </node>

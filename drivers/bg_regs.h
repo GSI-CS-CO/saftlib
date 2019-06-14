@@ -44,13 +44,26 @@
 #define SHM_CMD                   SHM_BASE + 0x08UL
 #define SHM_INPUT                 SHM_BASE + 0x10UL
 
+#define EVT_ID_IO_H32             0x0000FCA0UL  // event id of timing message for IO actions (hi32)
+#define EVT_ID_IO_L32             0x00000000UL  // event id of timing message for IO actions (lo32)
+#define EVT_MASK_IO               0xFFFFFFFF00000000ULL
 
 // user commands for the burst generator
 #define CMD_SHOW_ALL              0x1UL         // show pulse parameters, pulse cycles
 #define CMD_GET_PARAM             0x2UL         // get pulse parameters
 #define CMD_GET_CYCLE             0x3UL         // get pulse cycles
+#define CMD_LS_BURST              0x4UL         // list burst (burst ids or burst info)
+#define CMD_MK_BURST              0x5UL         // declare new burst
+#define CMD_RM_BURST              0x6UL         // remove burst
+#define CMD_DE_BURST              0x7UL         // dis/enable burst
 #define CMD_RD_MSI_ECPU           0x10UL        // read and show the content of ECA MSI registers (MSI enable, MSI destination address)
 #define CMD_RD_ECPU_CHAN          0x11UL        // read and show the content of ECA counters for the eCPU action channel
 #define CMD_RD_ECPU_QUEUE         0x12UL        // read and show the content of ECA queue connected to the eCPU action channel
 
+#define CTL_DIS                   0x0000UL
+#define CTL_EN                    0x0001UL
+#define CTL_VALID                 0x8000UL
+
+#define N_BURSTS                  16            // maximum number of bursts
+#define N_BURST_INFO              8             // the length of burst info (id, io_type, io_idx, trigger_h32/l32, toggle_h32/l32, flag)
 #endif
