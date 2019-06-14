@@ -76,7 +76,6 @@ static const char   *ioName       = NULL;  /* Name of the IO */
 static bool          ioNameGiven  = false; /* IO name given? */
 static bool          ioNameExists = false; /* IO name does exist? */
 std::map<std::string,uint64_t>     map_PrefixName; /* Translation table IO name <> prefix */
-std::multimap<std::string,std::string>  map_IoEcpu; /* IO name <> eCPU action sink mapping */
 static int           burstId      = 0;     /* burst ID */
 static bool          burstIdGiven = false; /* is burst ID given? */
 
@@ -957,8 +956,6 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
         ecpu_sink = ecpu->NewCondition(true, e_id_toggle, e_mask, offset, tag);
         condition = EmbeddedCPUCondition_Proxy::create(ecpu_sink);
 
-        map_IoEcpu.insert({ioName, ecpu_sink});
-
         condition->setAcceptConflict(true);
         condition->setAcceptDelayed(true);
         condition->setAcceptEarly(true);
@@ -966,9 +963,6 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
         condition->Disown();
         e_id_toggle ^= 0x0000001000000000;
       }
-
-      for (std::map<std::string, std::string>::iterator it = map_IoEcpu.begin(); it != map_IoEcpu.end(); ++it)
-        cout << (*it).first << " - " << (*it).second << endl;
 
     }
     else
