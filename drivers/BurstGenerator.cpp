@@ -179,6 +179,8 @@ namespace saftlib {
       Cycle cycle;
       cycle.open(device);
 
+      cycle.write(ram_base + SHM_CMD, EB_DATA32, 0); // clear cmd register
+
       for (uint32_t i = 0; i < args.size(); ++i)
         cycle.write(ram_base + SHM_INPUT + (i << 2), EB_DATA32, args.at(i));
 
@@ -187,7 +189,7 @@ namespace saftlib {
       // send the instruction code to LM32
       device.write(mb_slot, EB_DATA32, code);
 
-      clog << kLogDebug << "method call BurstGenerator::instruct succeeded" << std::endl;
+      clog << kLogDebug << "method call BurstGenerator::instruct succeeded: " << code << std::endl;
       return EB_OK;
     }
     catch (etherbone::exception_t e)
