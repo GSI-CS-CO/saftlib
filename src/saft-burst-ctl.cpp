@@ -667,9 +667,38 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
     }
   }
 
-  if (conditions > BG_MAX_RULES_PER_IO)
+  try
   {
-    std::cerr << "Number of conditions exceeds the allowed limit (" << BG_MAX_RULES_PER_IO << ") :" << conditions << std::endl;
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
+    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
+
+    /* Check if timing receiver has dedicated interfaces */
+    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
+    if (bg_iface.empty())
+    {
+      std::cerr << "No BurstGenerator firmware found" << std::endl;
+      return -1;
+    }
+
+    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+
+    if (bg_firmware == NULL)
+    {
+      std::cerr << "Could not connect to the burst generator driver" << std::endl;
+      return -1;
+    }
+
+    uint32_t eca_entries = tr->getFree();
+    if (conditions > eca_entries)
+    {
+      std::cerr << "Not enough space is available for the desired conditions! Needs: " << conditions << ", available: " << eca_entries << std::endl;
+      return -1;
+    }
+  }
+  catch (const saftbus::Error& error)
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
     return -1;
   }
 
@@ -950,6 +979,13 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
       int n_conditions = 1;
       if (toggle)
         n_conditions++;
+
+      int eca_entries = tr->getFree();
+      if (n_conditions > eca_entries)
+      {
+        std::cerr << "Not enough space is available for the desired conditions! Needs: " << n_conditions << ", available: " << eca_entries << std::endl;
+        return -1;
+      }
 
       for (int i = 0; i < n_conditions; ++i)
       {
