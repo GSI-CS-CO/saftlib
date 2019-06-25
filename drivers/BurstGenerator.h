@@ -45,7 +45,7 @@ namespace saftlib {
       sdb_device                 mailbox;
 
       bool                       found_bg_fw;
-      eb_data_t                  mb_slot;
+      eb_address_t               mb_slot;
       eb_address_t               ram_base;
 
   };

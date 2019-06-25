@@ -48,7 +48,7 @@ namespace saftlib {
       device.read(ram_base + SHM_MB_SLOT, EB_DATA32, &mb_slot_num);
       if (mb_slot_num < 0 || mb_slot_num >= MB_SLOT_RANGE)
         throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mailbox slot number is not in valid range");
-      mb_slot = mailbox.sdb_component.addr_first + mb_slot * 8;
+      mb_slot = mailbox.sdb_component.addr_first + mb_slot_num * 8;
     }
     else
     {
