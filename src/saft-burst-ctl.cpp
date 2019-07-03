@@ -1518,17 +1518,17 @@ static void io_help (void)
   std::cout << "  -n <name>:                                     Specify IO name or leave blank (to see all IOs/conditions)" << std::endl;
   std::cout << std::endl;
   std::cout << "  -A:                                            Get the firmware id of the burst generator" << std::endl;
-  std::cout << "  -N <id>                                        Specify burst ID" << std::endl;
+  std::cout << "  -N <id>:                                       Specify burst ID" << std::endl;
   std::cout << "      id                                           Burst id, 1..32" << std::endl;
-  std::cout << "  -S <trigger> <mask>                            Create new burst. Requires -n and -N options!" << std::endl;
+  std::cout << "  -S <trigger> <mask>:                           Create new burst. Requires -n and -N options!" << std::endl;
 //  std::cout << "  -T <trigger> <toggle> <mask>                   Create new toggling burst. Requires -n and -N options!" << std::endl;
   std::cout << "      trigger, toggle, mask                        IDs and mask for triggering and toggling events" << std::endl;
   std::cout << "  -B <t_hi> <t_p> <b_p> <b_d> <b_f>:             Define signal parameters to a new/existing burst. Requires -N option!" << std::endl;
   std::cout << "      t_hi, t_p                                    Signal high width (ns), signal period (ns)" << std::endl;
   std::cout << "      b_p, b_d, b_f                                Burst period (=0 endless), burst delay (ns), burst flag (=0 new/overwrite, 1=append)" << std::endl;
-  std::cout << "  -L <0 | id>                                    List burst(s): 0 for burst IDs, otherwise burst info" << std::endl;
-  std::cout << "  -E <id> <disen>                                Dis/enable burst(s): disable if disen = 0, otherwise enable" << std::endl;
-  std::cout << "  -R <id>                                        Remove burst(s)" << std::endl;
+  std::cout << "  -L <0 | id>:                                   List burst(s): 0 for burst IDs, otherwise burst info" << std::endl;
+  std::cout << "  -E <id> <disen>:                               Dis/enable burst(s): disable if disen = 0, otherwise enable" << std::endl;
+  std::cout << "  -R <id>:                                       Remove burst(s)" << std::endl;
   std::cout << std::endl;
 /*  std::cout << "  -I <instr_code> [u32 u32 ...]:                 Instruction to the burst generator, allowed instructions are listed below:" << std::endl;
   std::cout << std::endl;
@@ -1539,7 +1539,7 @@ static void io_help (void)
   std::cout << "      0x11                                       Print ECA channel counters" << std::endl;
   std::cout << "      0x12                                       Print ECA queue content" << std::endl;
   std::cout << "  All print instructions require the eb-console tool to be run to see the output" << std::endl;*/
-  std::cout << "  -X                                             Clear all unowned conditions for the IO and eCPU actions." << std::endl;
+  std::cout << "  -X:                                            Clear all unowned conditions for the IO and eCPU actions." << std::endl;
   std::cout << std::endl;
   std::cout << "Examples:" << std::endl << std::endl;
   std::cout << program << " tr0" << " -L 0" << std::endl;
@@ -2358,7 +2358,7 @@ int main (int argc, char** argv)
       case 'X': { bg_clr_all    = true;
                   break; }
       case 'n': { ioName         = argv[optind-1]; ioNameGiven  = true; break; }
-      case 'o': { io_oe          = atoi(optarg);   set_oe       = true; break; }
+      /*case 'o': { io_oe          = atoi(optarg);   set_oe       = true; break; }
       case 't': { io_term        = atoi(optarg);   set_term     = true; break; }
       case 'q': { io_spec_out    = atoi(optarg);   set_spec_out = true; break; }
       case 'e': { io_spec_in     = atoi(optarg);   set_spec_in  = true; break; }
@@ -2396,7 +2396,7 @@ int main (int argc, char** argv)
       case 'f': { ioc_flip       = true; break; }
       case 'z': { translate_mask = true; break; }
       case 'l': { ioc_list       = true; break; }
-      case 'i': { show_table     = true; break; }
+      case 'i': { show_table     = true; break; }*/
       case 'v': { verbose_mode   = true; break; }
       case 'h': { show_help      = true; break; }
       case ':': { std::cout << "Option -" << (char)optopt << " requires argument(s)!" << std::endl; show_help = true; break; }
