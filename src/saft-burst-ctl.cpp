@@ -107,6 +107,20 @@ static int  ecpu_update         (uint64_t e_id, uint64_t e_mask, int64_t offset,
 static int  ecpu_check          (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, uint32_t toggle);
 static int  ecpu_destroy        (bool verbose_mode);
 static int  bg_clear_all        (bool verbose);
+static void bg_help             (char option);
+
+/* Print help message to check created bursts */
+static void bg_help(char option)
+{
+  switch (option)
+  {
+    case 'L' :
+      std::cout << "Use the command option -" << option << " to print a list of created bursts." << std::endl;
+      break;
+    default :
+      break;
+  }
+}
 
 /* Get firmware id of the burst generator */
 /* ==================================================================================================== */
@@ -478,11 +492,38 @@ static int bg_disenable_burst(int burst_id, int disen, bool verbose)
     }
 
     std::vector<uint32_t> args;
+    args.push_back(0);
+
+    int res = bg_firmware->instruct(CMD_LS_BURST, args);
+    if (res)
+      std::cerr << "Failed method call bg_instruct()!" << std::endl;
+
+    sleep(1); // let LM32 complete the previous command
+
+    args.clear();
+    args = bg_firmware->readBurstInfo(0);
+    if (args.size() > 0)
+    {
+      uint32_t burstIdMask = 0x1 << (burst_id - 1);
+      if ((args.at(0) & burstIdMask) == 0)
+      {
+        std::cerr << "Could not find a burst with id: " << burst_id << std::endl;
+        bg_help('L');
+        return -1;
+      }
+    }
+    else
+    {
+      std::cerr << "Could not get required burst info." << std::endl;
+      return -1;
+    }
+
+    args.clear();
     args.push_back(burst_id);
     args.push_back(disen);
     args.push_back(static_cast<uint32_t>(verbose));
 
-    int res = bg_firmware->instruct(CMD_DE_BURST, args);
+    res = bg_firmware->instruct(CMD_DE_BURST, args);
     if (res)
     {
       std::cerr << "Failed to disable burst" << std::endl;
@@ -692,6 +733,33 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
     if (conditions > eca_entries)
     {
       std::cerr << "Not enough space is available for the desired conditions! Needs: " << conditions << ", available: " << eca_entries << std::endl;
+      return -1;
+    }
+
+    std::vector<uint32_t> args;
+    args.push_back(0);
+
+    int res = bg_firmware->instruct(CMD_LS_BURST, args);
+    if (res)
+      std::cerr << "Failed method call bg_instruct()!" << std::endl;
+
+    sleep(1); // let LM32 complete the previous command
+
+    args.clear();
+    args = bg_firmware->readBurstInfo(0);
+    if (args.size() > 0)
+    {
+      uint32_t burstIdMask = 0x1 << (burstId - 1);
+      if ((args.at(0) & burstIdMask) == 0)
+      {
+        std::cerr << "Could not find a burst with id: " << burstId << std::endl;
+        bg_help('L');
+        return -1;
+      }
+    }
+    else
+    {
+      std::cerr << "Could not get required burst info." << std::endl;
       return -1;
     }
   }
