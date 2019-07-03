@@ -234,12 +234,20 @@
        after its deadline, due to a slow consumer, is a delayed (not late)
        action.
     -->
-  <signal name="Late">
+  <signal name="Late" deprecated="yes">
     <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
+  </signal>
+
+  <signal name="SigLate">
+    <arg name="count"    type="u"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="deadline" type="T"/>
+    <arg name="executed" type="T"/>
   </signal>
   
   <!-- EarlyCount: The number of actions delivered early.
@@ -263,12 +271,19 @@
        @deadline: The desired execution timestamp (event time + offset).
        @executed: The actual execution timestamp.
     -->
-  <signal name="Early">
+  <signal name="Early" deprecated="yes">
     <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
+  </signal>
+  <signal name="SigEarly">
+    <arg name="count"    type="u"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="deadline" type="T"/>
+    <arg name="executed" type="T"/>
   </signal>
   
   <!-- ConflictCount: The number of actions which conflicted. 
@@ -290,12 +305,19 @@
        @deadline: The scheduled action execution timestamp (event time + offset).
        @executed: The timestamp when the action was actually executed.
     -->
-  <signal name="Conflict">
+  <signal name="Conflict" deprecated="yes">
     <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
+  </signal>
+  <signal name="SigConflict">
+    <arg name="count"    type="t"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="deadline" type="T"/>
+    <arg name="executed" type="T"/>
   </signal>
   
   <!-- DelayedCount: The number of actions which have been delayed.
@@ -319,12 +341,19 @@
        @deadline: The desired execution timestamp (event time + offset).
        @executed: The timestamp when the action was actually executed.
     -->
-  <signal name="Delayed">
+  <signal name="Delayed" deprecated="yes">
     <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
+  </signal>
+  <signal name="SigDelayed">
+    <arg name="count"    type="t"/>
+    <arg name="event"    type="t"/>
+    <arg name="param"    type="t"/>
+    <arg name="deadline" type="T"/>
+    <arg name="executed" type="T"/>
   </signal>
   
 </interface>

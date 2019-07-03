@@ -46,7 +46,7 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 			// check if we failed to connect even on the last socket filename
 			if (i == N_CONNECTIONS-1) {
 				// no success on all socket files
-				throw std::runtime_error("all sockets busy");
+				throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
 			}
 			// if there are more attempts left just continue with the next socket filename
 		}

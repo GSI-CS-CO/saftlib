@@ -41,6 +41,7 @@
     <xsl:text>_Proxy::create(&#10;</xsl:text>
     <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
     <xsl:text>   saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
+    <xsl:text>  saftlib::init();&#10;</xsl:text>
     <xsl:text>  return std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Proxy&gt;(new </xsl:text>

@@ -434,6 +434,7 @@ bool ActionSink::updateLate(uint64_t time)
   lateUpdate = time;
   LateCount(lateCount);
   Late(lateCount, r.event, r.param, r.deadline, r.executed);
+  SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
 
@@ -445,6 +446,7 @@ bool ActionSink::updateEarly(uint64_t time)
   earlyUpdate = time;
   EarlyCount(earlyCount);
   Early(earlyCount, r.event, r.param, r.deadline, r.executed);
+  SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
 
@@ -456,6 +458,7 @@ bool ActionSink::updateConflict(uint64_t time)
   conflictUpdate = time;
   ConflictCount(conflictCount);
   Conflict(conflictCount, r.event, r.param, r.deadline, r.executed);
+  SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
 
@@ -467,6 +470,7 @@ bool ActionSink::updateDelayed(uint64_t time)
   delayedUpdate = time;
   DelayedCount(delayedCount);
   Delayed(delayedCount, r.event, r.param, r.deadline, r.executed);
+  SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
 

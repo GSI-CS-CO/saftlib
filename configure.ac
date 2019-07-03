@@ -26,7 +26,7 @@ AX_CXX_COMPILE_STDCXX(11,noext,mandatory)
 dnl We need long long even before c++11 for UINT64_C, PRIx64, and friends
 AC_MSG_CHECKING(whether compiler understands -Wall)
 old_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -Wall -Wmissing-declarations -Wno-long-long"
+CXXFLAGS="$CXXFLAGS -Wall -Wno-deprecated-declarations -Wmissing-declarations -Wno-long-long"
 AC_TRY_COMPILE([],[],
   AC_MSG_RESULT(yes),
   AC_MSG_RESULT(no)
@@ -76,5 +76,5 @@ AC_SUBST([SAFTLIB_REVISION], REVISION)
 AC_SUBST([SAFTLIB_API], [$((SONAME+MINOR))]) dnl API incremented on every change
 AC_SUBST([SAFTLIB_SONAME], SONAME)
 
-AC_CONFIG_FILES([Makefile saftbus/Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
+AC_CONFIG_FILES([Makefile saftcommon/Makefile saftbus/Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
 AC_OUTPUT

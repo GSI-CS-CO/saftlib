@@ -47,7 +47,7 @@
 #include "interfaces/SoftwareCondition.h"
 #include "interfaces/iDevice.h"
 #include "interfaces/iOwned.h"
-#include "src/CommonFunctions.h"
+#include "CommonFunctions.h"
 
 using namespace std;
 
@@ -92,10 +92,10 @@ int main(int argc, char** argv)
   uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
   uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
   uint64_t eventTime   = 0x0;     // time for event (this value is added to the current time or the next PPS, see option -p
-  uint64_t startTime   = 0x0;     // time for start of schedule in PTP time
-  uint64_t nextTimeWR  = 0x0;     // time for event (in units of WR time)
+  saftlib::Time startTime;        // time for start of schedule in PTP time
+  saftlib::Time nextTimeWR;       // time for event (in units of WR time)
   int64_t  sleepTime   = 0x0;     // time interval for sleeping
-  uint64_t wrTime      = 0x0;     // current WR time
+  saftlib::Time wrTime;           // current WR time
 
   // variables attach, remove
   char    *deviceName = NULL;
@@ -166,8 +166,8 @@ int main(int argc, char** argv)
     } //if useFirstDevice;
 
 	for (i=0; i<nIter; i++) {
-	  wrTime    = receiver->ReadCurrentTime();
-	  if (ppsAlign) startTime = (wrTime - (wrTime % 1000000000)) + 1000000000;  //align schedule to next PPS
+	  wrTime    = receiver->CurrentTime();
+	  if (ppsAlign) startTime = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;  //align schedule to next PPS
 	  else          startTime = wrTime;                                         //align schedule to current WR time
 	
 	  ifstream myfile (filename);
@@ -185,7 +185,7 @@ int main(int argc, char** argv)
 		  receiver->InjectEvent(eventID, eventParam, nextTimeWR);
 
 		  // lets sleep until event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
-		  wrTime    = receiver->ReadCurrentTime();
+		  wrTime    = receiver->CurrentTime();
 		  if (nextTimeWR > (wrTime + 100000000)) {                       //only sleep if injected event "was" more than 100ms in the future
 			sleepTime = (int64_t)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event			
 			usleep(sleepTime);

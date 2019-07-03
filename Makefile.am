@@ -1,5 +1,5 @@
-SUBDIRS = interfaces saftbus
-SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la $(SIGCPP_LIBS)
+SUBDIRS = interfaces saftbus saftcommon
+SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS)
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-burst-ctl
@@ -11,7 +11,7 @@ pkg_DATA = saftlib.pc
 EXTRA_DIST = saftlib.pc.in
 
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = $(EB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus
+AM_CPPFLAGS = $(EB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus -I $(top_builddir)/saftcommon
 
 BUILT_SOURCES = version.h
 .PHONY: version.h debian # causes build.cpp to be rebuilt every run
@@ -30,6 +30,7 @@ saftd_SOURCES = version.h \
 	drivers/eca_regs.h		drivers/eca_flags.h		\
 	drivers/eca_queue_regs.h	drivers/eca_tlu_regs.h		\
 	drivers/io_control_regs.h	drivers/fg_regs.h		\
+	drivers/ats_regs.h      drivers/wr_mil_gw_regs.h    \
 	drivers/Owned.cpp		drivers/Owned.h			\
 	drivers/Condition.cpp		drivers/Condition.h		\
 	drivers/SoftwareCondition.cpp	drivers/SoftwareCondition.h	\
@@ -61,13 +62,13 @@ saftd_LDFLAGS = -lpthread -lrt -rdynamic # needed for shared memory, stack trace
 client_SOURCES = src/client.cpp
 client_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_ctl_SOURCES = src/saft-ctl.cpp src/CommonFunctions.cpp
+saft_ctl_SOURCES = src/saft-ctl.cpp
 saft_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
-saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
+saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp
 saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp src/CommonFunctions.cpp
+saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp
 saft_scu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp
@@ -76,22 +77,22 @@ saft_fg_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp
 saft_mfg_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
-saft_io_ctl_SOURCES = src/saft-io-ctl.cpp src/CommonFunctions.cpp
+saft_io_ctl_SOURCES = src/saft-io-ctl.cpp
 saft_io_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_pps_gen_SOURCES = src/saft-pps-gen.cpp
 saft_pps_gen_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_clk_gen_SOURCES = src/saft-clk-gen.cpp src/CommonFunctions.cpp
+saft_clk_gen_SOURCES = src/saft-clk-gen.cpp
 saft_clk_gen_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_dm_SOURCES = src/saft-dm.cpp src/CommonFunctions.cpp
+saft_dm_SOURCES = src/saft-dm.cpp
 saft_dm_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_gmt_check_SOURCES = src/saft-gmt-check.cpp src/CommonFunctions.cpp
+saft_gmt_check_SOURCES = src/saft-gmt-check.cpp
 saft_gmt_check_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_lcd_SOURCES = src/saft-lcd.cpp src/CommonFunctions.cpp
+saft_lcd_SOURCES = src/saft-lcd.cpp
 saft_lcd_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp src/CommonFunctions.cpp
