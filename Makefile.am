@@ -95,7 +95,7 @@ saft_gmt_check_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 saft_lcd_SOURCES = src/saft-lcd.cpp
 saft_lcd_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
-saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp src/CommonFunctions.cpp
+saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp
 saft_burst_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
 if GIT_TREE

@@ -57,7 +57,7 @@
 #include "interfaces/EmbeddedCPUCondition.h"
 #include "interfaces/BurstGenerator.h"
 
-#include "src/CommonFunctions.h"
+#include "CommonFunctions.h"
 
 #include "drivers/eca_flags.h"
 #include "drivers/io_control_regs.h"
@@ -75,6 +75,7 @@ static const char   *deviceName   = NULL;  /* Name of the device */
 static const char   *ioName       = NULL;  /* Name of the IO */
 static bool          ioNameGiven  = false; /* IO name given? */
 static bool          ioNameExists = false; /* IO name does exist? */
+static bool          UTC          = false; /* use UTC instead of TAI */
 std::map<std::string,uint64_t>     map_PrefixName; /* Translation table IO name <> prefix */
 static int           burstId      = 0;     /* burst ID */
 static bool          burstIdGiven = false; /* is burst ID given? */
@@ -91,7 +92,7 @@ static int  io_flip        (bool verbose_mode);
 static int  io_list        (void);
 static int  io_list_i_to_e (void);
 static int  io_print_table (bool verbose_mode);
-static void io_catch_input (uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags);
+static void io_catch_input (uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags);
 static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
 static int  bg_read_fw_id       (void);
@@ -1660,10 +1661,10 @@ static int io_list_i_to_e()
 
 /* Function io_catch_input() */
 /* ==================================================================================================== */
-static void io_catch_input(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+static void io_catch_input(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   /* Helpers */
-  uint64_t time = deadline - IO_CONDITION_OFFSET;
+  saftlib::Time time = deadline - IO_CONDITION_OFFSET;
   std::string catched_io = "Unknown";
 
   /* !!! evaluate prefix<>name map */
@@ -1686,7 +1687,7 @@ static void io_catch_input(uint64_t event, uint64_t param, uint64_t deadline, ui
   std::cout << " (0x";
   std::cout << std::setw(1) << std::hex << flags << ")  ";
   std::cout << "0x" << std::hex << setw(16+1) << event << std::dec << " ";
-  std::cout << "0x" << std::hex << setw(16+1) << time << std::dec << " " << tr_formatDate(time,PMODE_VERBOSE);
+  std::cout << "0x" << std::hex << setw(16+1) << (UTC?time.getUTC():time.getTAI()) << std::dec << " " << tr_formatDate(time,PMODE_VERBOSE|(UTC?PMODE_UTC:PMODE_NONE));
   std::cout << std::endl;
 }
 
@@ -1722,7 +1723,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
           {
             sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
             proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
-            proxies.back()->Action.connect(sigc::ptr_fun(&io_catch_input));
+            proxies.back()->SigAction.connect(sigc::ptr_fun(&io_catch_input));
             proxies.back()->setAcceptConflict(true);
             proxies.back()->setAcceptDelayed(true);
             proxies.back()->setAcceptEarly(true);
