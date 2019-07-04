@@ -142,6 +142,8 @@ static int bg_read_fw_id(void)
 
     std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
+    std::cout << std::showbase;
+
     if (bg_firmware)
       std::cout << "Firmware ID: " << std::hex << bg_firmware->readFirmwareId() << std::endl;
     else
@@ -346,7 +348,7 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
 
     if (burst_id)
     {
-      std::cout << "Burst info (hex):";
+      std::cout << "Burst info: " << std::showbase;
       for (unsigned int i = 0; i < args.size(); ++i)
         std::cout << ' ' << std::hex << args.at(i);
       std::cout << std::endl;
@@ -362,7 +364,8 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
     }
     else
     {
-      std::cout << "Created " << args.at(0) << " : ";
+      std::cout << "Created (" << std::showbase << std::hex << args.at(0) << ") : ";
+      std::cout << std::noshowbase << std::dec;
       uint32_t mask = 1;
       int id = 1;
 
@@ -375,7 +378,8 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
       }
       std::cout << std::endl;
 
-      std::cout << "Cycled " << args.at(1) << " : ";
+      std::cout << "Cycled (" << std::showbase << std::hex << args.at(1) << ") : ";
+      std::cout << std::noshowbase << std::dec;
       mask = 1; id = 1;
       while (mask != 0)
       {
@@ -799,6 +803,8 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
   ioName = name.c_str();
   ioNameGiven = true;
 
+  std::cout << std::showbase;
+
   if (verbose_mode)
   {
     std::cout << "conds (dec) = " << conditions << ", block period = " << block_period << ", cycles = " << cycles << std::endl;
@@ -1017,7 +1023,7 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
 
   if (tag == 0)
   {
-    std::cerr << "Bad arguments: tag = " << std::hex << tag << std::endl;
+    std::cerr << "Bad arguments: tag = " << std::showbase << std::hex << tag << std::endl;
     return -1;
   }
 
@@ -1110,7 +1116,7 @@ static int  ecpu_check(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t 
 
   if (tag == 0)
   {
-    std::cerr << "Bad arguments: tag = " << std::hex << tag << std::endl;
+    std::cerr << "Bad arguments: tag = " << std::showbase << std::hex << tag << std::endl;
     return -1;
   }
 
