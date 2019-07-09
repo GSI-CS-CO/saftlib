@@ -10,7 +10,7 @@
 @top Saftlib
 @chapheading Types
 
-The saftlib interfaces documentation uses a number of types which are character encoded. Because Saftlib used DBus in the past, the encoding is similar but not identical to the DBus type encoding. Here is a list of types and its representation in C++ API:
+The saftlib interfaces documentation uses a number of types which are character encoded. Because Saftlib used DBus in the past, the encoding is similar but not identical to the DBus type encoding. The following table lists all types and their representation in the C++ API:
 
 @example 
 y        uint8_t

@@ -103,7 +103,7 @@ doc_DATA = 			\
 	Types.pdf
 
 Types.pdf: Types.texi
-	$(TEXI2PDF) Types.texi
+	$(TEXI2PDF) Types.texi; rm Types.aux Types.log Types.toc
 endif
 
 libsaftlib_la_LIBADD = $(SIGCPP_LIBS)
