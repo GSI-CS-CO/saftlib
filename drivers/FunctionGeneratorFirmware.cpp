@@ -106,10 +106,36 @@ uint32_t FunctionGeneratorFirmware::getVersion() const
   return static_cast<uint32_t>(version);
 }
 
+bool FunctionGeneratorFirmware::nothing_runs()
+{
+  for (auto fgs: fgs_owned) {
+    auto fg = std::dynamic_pointer_cast<FunctionGenerator>(fgs.second);
+    if (fg->getRunning()) {
+      return false;
+    }
+  }
+
+  for (auto mfgs: master_fgs_owned) {
+    auto mfg = std::dynamic_pointer_cast<MasterFunctionGenerator>(mfgs.second);
+    for (auto running: mfg->ReadRunning()) {
+      if (running) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+
 // pass sigc signals from impl class to dbus
 // to reduce traffic only generate signals if we have an owner
 std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
 {
+  if (!nothing_runs()) {
+    throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "FunctionGeneratorFirmware::Scan is not allowed if any channel is active");
+  }
+
   fgs_owned.clear();
   master_fgs_owned.clear();
 

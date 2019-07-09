@@ -63,6 +63,8 @@ class FunctionGeneratorFirmware : public Owned, public iFunctionGeneratorFirmwar
     FunctionGeneratorFirmware(const ConstructorType& args);
     ~FunctionGeneratorFirmware();
 
+    bool nothing_runs();
+
     std::string                objectPath;
     TimingReceiver             *tr;
     Device&                    device;

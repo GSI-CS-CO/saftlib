@@ -198,30 +198,6 @@ int main(int argc, char** argv)
     alarm(2);
     
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
-    ParamSet params;
-    int32_t a, la, b, lb, c, n, s, num;
-    while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
-      // turn off warning
-      if (params.coeff_a.empty()) alarm(0);
-      
-      params.coeff_a.push_back(a);
-      params.coeff_b.push_back(b);
-      params.coeff_c.push_back(c);
-      params.step.push_back(n);
-      params.freq.push_back(s);
-      params.shift_a.push_back(la);
-      params.shift_b.push_back(lb);
-    }
-    
-    if (num != EOF || !feof(stdin)) {
-      std::cerr << "warning: junk data at end of input file" << std::endl;
-    }
-    
-    if (params.shift_b.empty()) {
-      std::cerr << "Provided data file was empty" << std::endl;
-      return 1;
-    }
-    
     // Get a list of devices from the saftlib directory
     map<std::string, std::string> devices = saftd->getDevices();
     
@@ -272,10 +248,14 @@ int main(int argc, char** argv)
       }
       std::shared_ptr<FunctionGeneratorFirmware_Proxy> fg_firmware = FunctionGeneratorFirmware_Proxy::create(fg_fw.begin()->second);
       std::cout << "Scanning for fg-channels ... " << std::flush;
-      auto scanning_result = fg_firmware->Scan();
-      std::cout << "done, found " << std::endl;
-      for (auto &pair: scanning_result) {
-        std::cout << "  " << pair.first << " " << pair.second << std::endl;
+      try {
+        auto scanning_result = fg_firmware->Scan();
+        std::cout << "done, found " << std::endl;
+        for (auto &pair: scanning_result) {
+          std::cout << "  " << pair.first << " " << pair.second << std::endl;
+        }
+      } catch (saftbus::Error &e) {
+        std::cerr << "could not scan: " << e.what() << std::endl;
       }
       return 0;
     }
@@ -314,6 +294,32 @@ int main(int argc, char** argv)
     }
     
     // Ok! Find all the devices is now out of the way. Let's get some work done.
+
+    ParamSet params;
+    int32_t a, la, b, lb, c, n, s, num;
+    while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
+      // turn off warning
+      if (params.coeff_a.empty()) alarm(0);
+      
+      params.coeff_a.push_back(a);
+      params.coeff_b.push_back(b);
+      params.coeff_c.push_back(c);
+      params.step.push_back(n);
+      params.freq.push_back(s);
+      params.shift_a.push_back(la);
+      params.shift_b.push_back(lb);
+    }
+    
+    if (num != EOF || !feof(stdin)) {
+      std::cerr << "warning: junk data at end of input file" << std::endl;
+    }
+    
+    if (params.shift_b.empty()) {
+      std::cerr << "Provided data file was empty" << std::endl;
+      return 1;
+    }
+    
+
     
     // Claim the function generator for ourselves
     gen->Own();
