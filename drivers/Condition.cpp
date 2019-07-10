@@ -85,7 +85,7 @@ void Condition::setID(uint64_t val)
   id = val;
   try {
     if (active) sink->compile();
-    ID(id);
+    //ID(id);
   } catch (...) {
     id = old;
     throw;
@@ -101,7 +101,7 @@ void Condition::setMask(uint64_t val)
   mask = val;
   try {
     if (active) sink->compile();
-    Mask(mask);
+    //Mask(mask);
   } catch (...) {
     mask = old;
     throw;
@@ -117,7 +117,7 @@ void Condition::setOffset(int64_t val)
   offset = val;
   try {
     if (active) sink->compile();
-    Offset(offset);
+    //Offset(offset);
   } catch (...) {
     offset = old;
     throw;
@@ -132,7 +132,7 @@ void Condition::setAcceptLate(bool val)
   acceptLate = val;
   try {
     if (active) sink->compile();
-    AcceptLate(val);
+    //AcceptLate(val);
   } catch (...) {
     acceptLate = !val;
     throw;
@@ -148,7 +148,7 @@ void Condition::setAcceptEarly(bool val)
   acceptEarly = val;
   try {
     if (active) sink->compile();
-    AcceptEarly(val);
+    //AcceptEarly(val);
   } catch (...) {
     acceptEarly = !val;
     throw;
@@ -163,7 +163,7 @@ void Condition::setAcceptConflict(bool val)
   acceptConflict = val;
   try {
     if (active) sink->compile();
-    AcceptConflict(val);
+    //AcceptConflict(val);
   } catch (...) {
     acceptConflict = !val;
     throw;
@@ -178,7 +178,7 @@ void Condition::setAcceptDelayed(bool val)
   acceptDelayed = val;
   try {
     if (active) sink->compile();
-    AcceptDelayed(val);
+    //AcceptDelayed(val);
   } catch (...) {
     acceptDelayed = !val;
     throw;
@@ -193,7 +193,7 @@ void Condition::setActive(bool val)
   active = val;
   try {
     sink->compile();
-    Active(active);
+    //Active(active);
     sink->notify(true, true);
   } catch (...) {
     active = !val;

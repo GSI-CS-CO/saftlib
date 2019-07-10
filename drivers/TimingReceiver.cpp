@@ -355,7 +355,7 @@ bool TimingReceiver::getLocked() const
   if (newLocked != locked) {
     locked = newLocked;
     SigLocked(locked);
-    Locked(locked);
+    //Locked(locked);
   }
   
   return newLocked;
@@ -383,8 +383,8 @@ int32_t TimingReceiver::CurrentTemperature()
 void TimingReceiver::do_remove(SinkKey key)
 {
   actionSinks[key].reset();
-  SoftwareActionSinks(getSoftwareActionSinks());
-  Interfaces(getInterfaces());
+  //SoftwareActionSinks(getSoftwareActionSinks());
+  //Interfaces(getInterfaces());
   compile();
 }
 
@@ -437,8 +437,8 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
   
   // Own it and inform changes to properties
   alloc->second = softwareActionSink;
-  SoftwareActionSinks(getSoftwareActionSinks());
-  Interfaces(getInterfaces());
+  //SoftwareActionSinks(getSoftwareActionSinks());
+  //Interfaces(getInterfaces());
   
   return path;
 }
@@ -627,10 +627,10 @@ uint16_t TimingReceiver::updateMostFull(unsigned channel)
     ActionSinks::iterator first = actionSinks.lower_bound(low);
     ActionSinks::iterator last  = actionSinks.lower_bound(high);
     
-    for (; first != last; ++first) {
-      if (!first->second) continue; // skip unused SoftwareActionSinks
-      first->second->MostFull(mostFull);
-    }
+    // for (; first != last; ++first) {
+    //   if (!first->second) continue; // skip unused SoftwareActionSinks
+    //   first->second->MostFull(mostFull);
+    // }
   }
   
   return used;

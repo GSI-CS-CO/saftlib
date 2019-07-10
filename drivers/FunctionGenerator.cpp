@@ -58,7 +58,7 @@ void FunctionGenerator::on_fg_running(bool b)
 {
   if (!getOwner().empty())
   {
-    Running(b);
+    //Running(b);
     SigRunning(b);
   }
 }
@@ -67,7 +67,7 @@ void FunctionGenerator::on_fg_armed(bool b)
 {
   if (!getOwner().empty())
   {  
-    Armed(b);
+    //Armed(b);
  	  SigArmed(b);
   }
 }
@@ -76,7 +76,7 @@ void FunctionGenerator::on_fg_enabled(bool b)
 {
   if (!getOwner().empty())
   {
-    Enabled(b);
+    //Enabled(b);
   	SigEnabled(b);
   }
 }
@@ -213,7 +213,7 @@ void FunctionGenerator::setStartTag(uint32_t val)
 {
   ownerOnly();
   fgImpl->setStartTag(val);
-  StartTag(val);  
+  //StartTag(val);  
 }
 
 

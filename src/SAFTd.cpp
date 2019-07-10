@@ -148,7 +148,7 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
       if (od.ref) {
         devs.insert(std::make_pair(name, od));
         // inform clients of updated property
-        Devices(getDevices());
+        //Devices(getDevices());
         return od.objectPath;
       } else {
         throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no driver available for this device");
@@ -175,7 +175,7 @@ void SAFTd::RemoveDevice(const std::string& name)
   devs.erase(elem);
   
   // inform clients of updated property 
-  Devices(getDevices());
+  //Devices(getDevices());
 }
 
 std::string SAFTd::getSourceVersion() const

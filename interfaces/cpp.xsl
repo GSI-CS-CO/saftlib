@@ -328,7 +328,7 @@
       </xsl:for-each>
 
       <!-- Receive changed properties -->
-      <xsl:text>void i</xsl:text>
+<!--       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Proxy::on_properties_changed(&#10;</xsl:text>
       <xsl:text>  const MapChangedProperties&amp; changed_properties,&#10;</xsl:text>
@@ -359,7 +359,7 @@
         <xsl:text>    } else </xsl:text>
       </xsl:for-each>
       <xsl:text> {&#10;      // noop&#10;    }&#10;  }&#10;}&#10;&#10;</xsl:text>
-
+ -->
       <!-- Receive signals -->
       <xsl:text>void i</xsl:text>
       <xsl:value-of select="$iface"/>

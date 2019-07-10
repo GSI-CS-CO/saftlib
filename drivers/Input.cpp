@@ -38,9 +38,9 @@ Input::Input(const ConstructorType& args)
    impl(args.impl), partnerPath(args.partnerPath),
    tlu(args.tlu), channel(args.channel), enable(false), event(0), stable(80)
 {
-  impl->InputTermination.connect(InputTermination.make_slot());
-  impl->SpecialPurposeIn.connect(SpecialPurposeIn.make_slot());
-  impl->GateIn.connect(GateIn.make_slot());
+  //impl->InputTermination.connect(InputTermination.make_slot());
+  //impl->SpecialPurposeIn.connect(SpecialPurposeIn.make_slot());
+  //impl->GateIn.connect(GateIn.make_slot());
   // initialize TLU to disabled state
   configInput();
 }
@@ -155,7 +155,7 @@ void Input::setEventEnable(bool val)
   enable = val;
 
   configInput();
-  EventEnable(val);
+  //EventEnable(val);
 }
 
 void Input::setEventPrefix(uint64_t val)
@@ -169,7 +169,7 @@ void Input::setEventPrefix(uint64_t val)
   event = val;
 
   configInput();
-  EventPrefix(val);
+  //EventPrefix(val);
 }
 
 void Input::setStableTime(uint32_t val)
@@ -185,7 +185,7 @@ void Input::setStableTime(uint32_t val)
   stable = val;
 
   configInput();
-  StableTime(val);
+  //StableTime(val);
 }
 
 void Input::configInput()
