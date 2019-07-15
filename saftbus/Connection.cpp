@@ -567,7 +567,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				
 						// saftbus object lookup
 						int index = _saftbus_indices[derived_interface_name][object_path];
-						if (index == 0) {// == not found
+						if (index == 0 || index != saftbus_index) {// == not found or wrong check index
 							// this causes an exception on the proxy side
 							std::string what("unknown object path: ");
 							what.append(object_path);
@@ -635,7 +635,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 
 						// saftbus object lookup
 						int index = _saftbus_indices[interface_name][object_path];
-						if (index == 0) {// == not found
+						if (index == 0 || index != saftbus_index) {// == not found
 							// this causes an exception on the proxy side
 							std::string what("unknown object path: ");
 							what.append(object_path);
