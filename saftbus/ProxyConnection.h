@@ -56,6 +56,8 @@ namespace saftbus
 		std::string get_saftbus_id() { return _saftbus_id; }
 		int get_connection_id();
 
+		int get_saftbus_index(const std::string &object_path, const std::string &interface_name);
+
 		// returned fd should only be used with a lock or in single threaded environments
 		int get_fd() const {return _create_socket; }
 	private:

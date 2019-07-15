@@ -449,6 +449,16 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					logger.add(dt).add(" us\n");
 				}
 				break;
+				case saftbus::GET_SAFTBUS_INDEX: 
+				{
+					saftbus::Timer f_time(_function_run_times["Connection::GET_SAFTBUS_INDEX"]);
+					logger.add("     GET_SAFTBUS_INDEX received: ");
+					std::string object_path, interface_name;
+					saftbus::read(socket->get_fd(), object_path);
+					saftbus::read(socket->get_fd(), interface_name);
+					saftbus::write(socket->get_fd(), _saftbus_indices[interface_name][object_path]);
+				}
+				break;
 				case saftbus::SIGNAL_FD: 
 				{
 					// each Proxy constructor will send the reading end of a pipe

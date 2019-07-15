@@ -68,6 +68,18 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 	}
 }
 
+int ProxyConnection::get_saftbus_index(const std::string &object_path, const std::string &interface_name)
+{
+	std::unique_lock<std::mutex> lock(_socket_mutex);
+	saftbus::write(get_fd(), saftbus::GET_SAFTBUS_INDEX);
+	saftbus::write(get_fd(), object_path);
+	saftbus::write(get_fd(), interface_name);
+	int saftbus_index = -1;
+	saftbus::read(get_fd(), saftbus_index);
+	return saftbus_index;
+}
+
+
 int ProxyConnection::get_connection_id()
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
