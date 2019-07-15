@@ -278,7 +278,7 @@
       <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection =&#10;</xsl:text>
       <xsl:text>    std::const_pointer_cast&lt;saftbus::ProxyConnection&gt;(get_connection());&#10;</xsl:text>
       <xsl:text>  val =&#10;</xsl:text>
-      <xsl:text>    connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Get", &#10;</xsl:text>
+      <xsl:text>    connection->call_sync(get_saftbus_index(), get_object_path(), "org.freedesktop.DBus.Properties", "Get", &#10;</xsl:text>
       <xsl:text>      params, get_name());&#10;</xsl:text>
       <xsl:text>}&#10;&#10;</xsl:text>
 
@@ -310,7 +310,7 @@
       <xsl:text>  params.put(std::string(name));&#10;</xsl:text>
       <xsl:text>  params.put(val);&#10;</xsl:text>
       <xsl:text>  std::shared_ptr&lt;saftbus::ProxyConnection&gt; connection = get_connection();&#10;</xsl:text>
-      <xsl:text>  connection->call_sync(get_object_path(), "org.freedesktop.DBus.Properties", "Set",&#10;</xsl:text>
+      <xsl:text>  connection->call_sync(get_saftbus_index(), get_object_path(), "org.freedesktop.DBus.Properties", "Set",&#10;</xsl:text>
       <xsl:text>    params, get_name());&#10;}&#10;&#10;</xsl:text>
 
       <!-- Property setters -->

@@ -532,6 +532,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::read_all(socket->get_fd(), &payload.data()[0], size);
 
 					// saftbus::Serial to get content
+					int saftbus_index;
 					std::string object_path;
 					std::string sender;
 					std::string interface_name;
@@ -539,6 +540,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					Serial parameters;
 
 					payload.get_init();
+					payload.get(saftbus_index);
 					payload.get(object_path);
 					payload.get(sender);
 					payload.get(interface_name);

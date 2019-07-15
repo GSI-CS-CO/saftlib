@@ -374,7 +374,8 @@ void saftbus_get_property(const std::string& interface_name,
 	params.put(interface_name);
 	params.put(property_name);
 
-	saftbus::Serial val = connection.call_sync(object_path, "org.freedesktop.DBus.Properties", "Get", 
+	int saftbus_index = connection.get_saftbus_index(object_path, interface_name);
+	saftbus::Serial val = connection.call_sync(saftbus_index, object_path, "org.freedesktop.DBus.Properties", "Get", 
 	  params, "sender");
 
 	val.get_init();
@@ -439,7 +440,8 @@ void saftbus_set_property(const std::string& interface_name,
 	params.put(property_value);
 
 
-	saftbus::Serial val = connection.call_sync(object_path, "org.freedesktop.DBus.Properties", "Set", 
+	int saftbus_index = connection.get_saftbus_index(object_path, interface_name);
+	saftbus::Serial val = connection.call_sync(saftbus_index, object_path, "org.freedesktop.DBus.Properties", "Set", 
 	  params, "sender");
 } 
 
@@ -468,7 +470,8 @@ void saftbus_method_call (const std::string& interface_name,
 		else if (type_signature[i] == 's') { std::string   value; value_in >> value; args.put(value); }
 		else {std::cerr << "unknow type signature for method call " ; return; }
 	}
-	saftbus::Serial val = connection.call_sync(object_path, interface_name, method_name, args, "sender");
+	int saftbus_index = connection.get_saftbus_index(object_path, interface_name);
+	saftbus::Serial val = connection.call_sync(saftbus_index, object_path, interface_name, method_name, args, "sender");
 
 	val.get_init();
 	if (return_type_signature == "a{sa{ss}}") { print_serial_map_map<std::string,std::string,std::string>(val); }

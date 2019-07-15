@@ -253,7 +253,9 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 	// 	                                      query)).get_child(0));
 	// return _result;
 
-	const Serial &result = _connection->call_sync(_object_path, 
+	const Serial &result = _connection->call_sync(
+		                          _saftbus_index, 
+		                          _object_path, 
 		                          _interface_name,
 		                          function_name,
 		                          query);

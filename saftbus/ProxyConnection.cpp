@@ -117,7 +117,8 @@ void ProxyConnection::remove_proxy_signal_fd(std::string object_path,
 	saftbus::write(get_fd(), global_id);
 }
 
-Serial& ProxyConnection::call_sync (const std::string& object_path, 
+Serial& ProxyConnection::call_sync (int saftbus_index,
+	                                const std::string& object_path, 
 	                                const std::string& interface_name, 
 	                                const std::string& name, 
 	                                const Serial& parameters, 
@@ -142,6 +143,7 @@ Serial& ProxyConnection::call_sync (const std::string& object_path,
 	//                                            << name << ")" << std::endl;
 
 	Serial message;
+	message.put(saftbus_index);
 	message.put(object_path);
 	message.put(_saftbus_id);
 	message.put(interface_name);
