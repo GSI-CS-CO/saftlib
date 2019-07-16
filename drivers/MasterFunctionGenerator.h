@@ -94,7 +94,6 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow);
     void on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg);
 
-
     bool all_armed();
     bool all_stopped();
     bool WaitTimeout();

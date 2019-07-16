@@ -24,5 +24,11 @@
     <method name="Scan">
       <arg direction="out" type="a{ss}" name="fgs"/>
     </method>
+    <method name="ScanMasterFg">
+      <arg direction="out" type="a{ss}" name="fgs"/>
+    </method>
+    <method name="ScanFgChannels">
+      <arg direction="out" type="a{ss}" name="fgs"/>
+    </method>
   </interface>
 </node>
