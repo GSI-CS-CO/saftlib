@@ -496,24 +496,29 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_REMOVE_FD"]);
 
 					logger.add("           SIGNAL_REMOVE_FD received: ");
+					int saftbus_index;
 					std::string name, object_path, interface_name;
 					int proxy_id;
+					saftbus::read(socket->get_fd(), saftbus_index);
 					saftbus::read(socket->get_fd(), object_path);
 					saftbus::read(socket->get_fd(), interface_name);
 					saftbus::read(socket->get_fd(), proxy_id);
 
 					ProxyPipe pp;
 					pp.id = proxy_id;
-					auto pp_done = _proxy_pipes[interface_name][object_path].find(pp);
-					close(pp_done->fd);
 					logger.add("for object_path=").add(object_path)
 					      .add(" interface_name=").add(interface_name)
-					      .add(" proxy_id=").add(proxy_id)
-					      .add(" fd=").add(pp_done->fd).add("\n");
-					_proxy_pipes[interface_name][object_path].erase(pp_done);
+					      .add(" proxy_id=").add(proxy_id);
 
-					proxy_pipe_garbage_collection();
-
+					if (saftbus_index == _saftbus_indices[interface_name][object_path]) {
+						auto pp_done = _proxy_pipes[interface_name][object_path].find(pp);
+						close(pp_done->fd);
+					    logger.add(" fd=").add(pp_done->fd).add("\n");
+						_proxy_pipes[interface_name][object_path].erase(pp_done);
+						proxy_pipe_garbage_collection();
+					} else {
+						logger.add(" ==> NOT removing signal pipe because saftbus object under this object_path changed since proxy creation!\n");
+					}
 				}
 				break;
 				case saftbus::METHOD_CALL: 
@@ -569,7 +574,12 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 						int index = _saftbus_indices[derived_interface_name][object_path];
 						if (index == 0 || index != saftbus_index) {// == not found or wrong check index
 							// this causes an exception on the proxy side
-							std::string what("unknown object path: ");
+							std::string what;
+							if (index == 0) {
+								what.append("unknown object path: ");
+							} else {
+								what.append("saftbus object under this object path has changed since Proxy creation: ");
+							}
 							what.append(object_path);
 							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
 							saftbus::write(socket->get_fd(), saftbus::Error::FAILED);
@@ -637,7 +647,12 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 						int index = _saftbus_indices[interface_name][object_path];
 						if (index == 0 || index != saftbus_index) {// == not found
 							// this causes an exception on the proxy side
-							std::string what("unknown object path: ");
+							std::string what;
+							if (index == 0) {
+								what.append("unknown object path: ");
+							} else {
+								what.append("saftbus object under this object path has changed since Proxy creation: ");
+							}
 							what.append(object_path);
 							saftbus::write(socket->get_fd(), saftbus::METHOD_ERROR);
 							saftbus::write(socket->get_fd(), saftbus::Error::FAILED);

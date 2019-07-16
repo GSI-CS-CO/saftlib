@@ -50,7 +50,8 @@ namespace saftbus
                                   std::string object_path,
                                   std::string interface_name,
                                   int global_id);
-		void remove_proxy_signal_fd(std::string object_path,
+		void remove_proxy_signal_fd(int saftbus_index,
+			                        std::string object_path,
                                     std::string interface_name,
                                     int global_id) ;
 

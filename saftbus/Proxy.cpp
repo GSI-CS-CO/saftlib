@@ -44,7 +44,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	}
 
 	_saftbus_index = _connection->get_saftbus_index(object_path, interface_name);
-	std::cerr << "saftbus index of objec: " << _saftbus_index << std::endl;
+	// std::cerr << "saftbus index of objec: " << _saftbus_index << std::endl;
 
 	// create a pipe through which we will receive signals from the saftd
 	if (&signalGroup != &saftlib::noSignals) {
@@ -83,7 +83,7 @@ Proxy::~Proxy()
 
 	// free all resources ...
 	try {
-		_connection->remove_proxy_signal_fd(_object_path, _interface_name, _global_id);
+		_connection->remove_proxy_signal_fd(_saftbus_index, _object_path, _interface_name, _global_id);
 		close(_pipe_fd[0]);
 		close(_pipe_fd[1]);
 	} catch(std::exception &e) {
