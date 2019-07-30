@@ -37,11 +37,6 @@ Output::Output(const ConstructorType& args) :
   ActionSink(args.objectPath, args.dev, args.name, args.channel, args.num, args.destroy),
   impl(args.impl), partnerPath(args.partnerPath)
 {
-  // impl->OutputEnable.connect(OutputEnable.make_slot());
-  // impl->SpecialPurposeOut.connect(SpecialPurposeOut.make_slot());
-  // impl->GateOut.connect(GateOut.make_slot());
-  // impl->BuTiSMultiplexer.connect(BuTiSMultiplexer.make_slot());
-  // impl->PPSMultiplexer.connect(PPSMultiplexer.make_slot());
 }
 
 const char *Output::getInterfaceName() const

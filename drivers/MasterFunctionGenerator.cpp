@@ -432,8 +432,6 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
 		{
 			fg->startTag=startTag;
 		}
-
-    //StartTag(startTag);
   }
 }
 

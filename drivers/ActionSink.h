@@ -65,32 +65,10 @@ class ActionSink : public Owned, public iActionSink
     void setConflictCount(uint64_t val);
     void setDelayedCount(uint64_t val);
     
-    // These property signals are available from base classes
-    //   sigc::signal< void, const std::vector< std::string >& > AllConditions;
-    //   sigc::signal< void, const std::vector< std::string >& > ActiveConditions;
-    //   sigc::signal< void, const std::vector< std::string >& > InactiveConditions;
-    //   sigc::signal< void, int64_t > MinOffset;
-    //   sigc::signal< void, int64_t > MaxOffset;
-    //   sigc::signal< void, uint16_t > MostFull;
-    //   sigc::signal< void, uint64_t > SignalRate;
-    //   sigc::signal< void, uint64_t > OverflowCount;
-    //   sigc::signal< void, uint64_t > ActionCount;
-    //   sigc::signal< void, uint64_t > LateCount;
-    //   sigc::signal< void, uint64_t > EarlyCount;
-    //   sigc::signal< void, uint64_t > ConflictCount;
-    //   sigc::signal< void, uint64_t > DelayedCount;
-    // These signals are available from base classes
-    //   sigc::signal< void , uint32_t , uint64_t , uint64_t , uint64_t , uint64_t > Late;
-    //   sigc::signal< void , uint32_t , uint64_t , uint64_t , uint64_t , uint64_t > Early;
-    //   sigc::signal< void , uint64_t , uint64_t , uint64_t , uint64_t , uint64_t > Conflict;
-    //   sigc::signal< void , uint64_t , uint64_t , uint64_t , uint64_t , uint64_t > Delayed;
-
     // Do the grunt work to create a condition
     typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
     std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey, ConditionConstructor constructor);
 
-    // Emit AllConditions, ActiveConditions, InactiveConditions
-    void notify(bool active = true, bool inactive = true);
     void compile();
     
     // The name under which this ActionSink is listed in TimingReceiver::Iterfaces

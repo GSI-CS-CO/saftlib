@@ -44,7 +44,6 @@ void EmbeddedCPUCondition::setTag(uint32_t val)
   tag = val;
   try {
     if (active) sink->compile();
-    //Tag(tag);
   } catch (...) {
     tag = old;
     throw;
