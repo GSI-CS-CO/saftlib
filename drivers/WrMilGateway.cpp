@@ -64,10 +64,10 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
 
 
   // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
-  std::vector<struct sdb_device> devices;
-  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), devices);
+  std::vector<struct sdb_device> lm32_devices;
+  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), lm32_devices);
   int cpu_idx = 0;
-  for(auto lm32_ram_user: devices) {
+  for(auto lm32_ram_user: lm32_devices) {
     eb_data_t wr_mil_gw_magic_number = 0;
     device.read(lm32_ram_user.sdb_component.addr_first + WR_MIL_GW_SHARED_OFFSET, 
                           EB_DATA32, 
@@ -131,27 +131,26 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   //  This prevents resetting the CPU in the middle of a WB cycle
   // reset all other LM32 CPUs to make sure that no other firmware disturbs our actions
   // (in particular the function generator firmware)
-  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
+  std::vector<struct sdb_device> reset_devices;
+  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), reset_devices);
   // std::cerr << "WrMilGateway: reset the CPUs" << std::endl;
   // writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
   // std::cerr << "WrMilGateway: put firmware in reset state" << std::endl;
 
-/*  for (auto reset_device: devices) {
+  for (auto reset_device: reset_devices) {
     // use the first reset device
-    uint32_t set_bits = ~(1<<cpu_idx) & 0xff;
-    //uint32_t clr_bits =  (1<<cpu_idx);
+    uint32_t all_cpus = (1<<lm32_devices.size())-1;
+    uint32_t set_bits = ~(1<<cpu_idx) & all_cpus;
     // reset register offsets
     //0x4 -> GET 
     //0x8 -> SET 
     //0xc -> CLR
     const int SET = 0x8;
-    //std::cerr << "set_bits = 0x" << std::hex << std::setfill('0') << std::setw(8) << set_bits << std::endl;
-    //std::cerr << "clr_bits = 0x" << std::hex << std::setfill('0') << std::setw(8) << clr_bits << std::endl;
     device.write(reset_device.sdb_component.addr_first + SET, 
                           EB_DATA32, 
                           set_bits);
     break;
-  } */
+  } 
 
   //std::cerr << "WrMilGateway: check if firmware is running" << std::endl;
   firmware_running = firmwareRunning();
