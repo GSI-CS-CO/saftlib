@@ -351,6 +351,10 @@ void WrMilGateway::KillGateway()
   ClearStatistics();
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_KILL);
 }
+void WrMilGateway::UpdateOLED()
+{
+  writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_UPDATE_OLED);
+}
 
 
 uint32_t WrMilGateway::getWrMilMagic() const
@@ -485,7 +489,10 @@ void WrMilGateway::setUtcOffset(uint64_t val)
   val >>= 32;
   writeRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_HI, val & 0x00000000ffffffff);
 }
-
+void WrMilGateway::setOpReady(bool val)
+{
+  writeRegisterContent(WR_MIL_GW_REG_SET_OP_READY, val);
+}
 
 
 void WrMilGateway::Reset() 

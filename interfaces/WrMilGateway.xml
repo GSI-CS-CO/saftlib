@@ -92,6 +92,10 @@
     <property name="NumMilEvents"   type="t" access="read">
     </property>
 
+    <property name="OpReady"   type="b" access="write">
+    </property>
+
+
     <!-- LateHistogram: read a histogram of event delays 
 
         Bin content:
@@ -149,6 +153,10 @@
     <!-- KillGateway: Kill WR-MIL Gateway. Only MCU reset can recover (useful to 
          do before loading new firmware)-->
     <method name="KillGateway"/>
+
+    <!-- UpdateOLED: causes the OLED screen to be redrawn. only useful if 
+         OP-READY was changed -->
+    <method name="UpdateOLED"/>
 
   </interface>
 </node>
