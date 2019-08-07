@@ -1070,7 +1070,7 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
         condition->setAcceptConflict(true);
         condition->setAcceptDelayed(true);
         condition->setAcceptEarly(true);
-        condition->setAcceptLate(false);  // TODO: find out why late action cannot be popped from the eCPU queue
+        condition->setAcceptLate(true);
         condition->Disown();
         e_id_toggle ^= 0x0000001000000000;
       }
