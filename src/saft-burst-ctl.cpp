@@ -103,7 +103,7 @@ static int  bg_list_bursts      (int burst_id, bool verbose);
 static int  bg_remove_burst     (int burst_id, bool verbose);
 static int  bg_disenable_burst  (int burst_id, int disen, bool verbose);
 static int  bg_create_burst     (int burst_id, uint64_t e_id, uint64_t e_mask, bool verbose);
-static std::string find_io_name (std::shared_ptr<TimingReceiver_Proxy> tr, std::string type, std::vector<uint32_t> info);
+static std::string find_io_name (std::shared_ptr<TimingReceiver_Proxy> tr, std::vector<uint32_t> info);
 static int  ecpu_update         (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, uint32_t toggle, bool verbose);
 static int  ecpu_check          (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, uint32_t toggle);
 static int  ecpu_destroy        (bool verbose_mode);
@@ -215,11 +215,18 @@ static int bg_instruct(std::vector<std::string> instr)
   return 0;
 }
 
-/* Find the IO port name based on the given burst info and port type */
-static std::string find_io_name(std::shared_ptr<TimingReceiver_Proxy> tr, std::string type, std::vector<uint32_t> info)
+/* Find the IO port name based on the given burst info */
+static std::string find_io_name(std::shared_ptr<TimingReceiver_Proxy> tr, std::vector<uint32_t> info)
 {
   std::map<std::string, std::string> outs = tr->getOutputs();
   std::shared_ptr<Output_Proxy> out_proxy;
+
+  std::string out_type_name = "undefined";
+  switch (info.at(1)) {
+    case IO_CFG_CHANNEL_GPIO: out_type_name = "8ns"; break;
+    case IO_CFG_CHANNEL_LVDS: out_type_name = "1ns"; break;
+    default: break;
+  }
 
   for (std::map<std::string,std::string>::iterator it = outs.begin(); it != outs.end(); ++it)
   {
@@ -227,7 +234,7 @@ static std::string find_io_name(std::shared_ptr<TimingReceiver_Proxy> tr, std::s
 
     if (out_proxy != NULL)
     {
-      std::size_t found = out_proxy->getTypeOut().find(type);
+      std::size_t found = out_proxy->getTypeOut().find(out_type_name);
       if (found != std::string::npos)
       {
         if (out_proxy->getIndexOut() == info.at(2))
@@ -285,7 +292,7 @@ static int bg_get_io_name(int burst_id, std::string &name)
       return -1;
     }
 
-    name = find_io_name(tr, "8ns", info); // TODO: replace literals with a constant!
+    name = find_io_name(tr, info);
     return 0;
   }
   catch (const saftbus::Error& error)
@@ -355,7 +362,7 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
       if (verbose_mode && args.size() == N_BURST_INFO)
       {
         std::cout << "Burst info (text):";
-        std::string name = find_io_name(tr, "8ns", args);
+        std::string name = find_io_name(tr, args);
         std::cout << " id = " << args.at(0) << ", IO = " << name <<
           ", trig = " << std::hex << args.at(3) << ':' << args.at(4) <<
           ", togg = " << args.at(5) << ':' << args.at(6) <<
@@ -634,9 +641,16 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, bool ve
       return result;
     }
 
+    uint32_t out_type = IO_CFG_CHANNEL_FIXED;            // io_control_regs.h
+    std::string out_type_name = out_proxy->getTypeOut(); // missing a member function to get integer type in Inoutimpl
+    if (out_type_name.find("8ns") != std::string::npos)
+      out_type = IO_CFG_CHANNEL_GPIO;
+    else if (out_type_name.find("1ns") != std::string::npos)
+      out_type = IO_CFG_CHANNEL_LVDS;
+
     std::vector<uint32_t> args;
     args.push_back(burst_id);
-    args.push_back(out_proxy->getIndexOut()); // TODO: add io type (missing a proper member function in InoutImpl)
+    args.push_back((out_type << 16) | (out_proxy->getIndexOut() && 0xFFFF));
     args.push_back((uint32_t)(e_id >> 32));
     args.push_back((uint32_t)e_id);
     uint64_t toggle_id = e_id ^ 0x0000001000000000; // TODO: eliminate fixed toggle event id
