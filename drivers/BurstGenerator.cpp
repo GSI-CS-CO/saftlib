@@ -257,5 +257,34 @@ namespace saftlib {
       return info;
     }
   }
+
+  std::vector< uint32_t > BurstGenerator::readSharedBuffer(uint32_t size)
+  {
+    std::vector<uint32_t> content;
+
+    if (ram_base == 0)
+      return std::vector<uint32_t>();
+
+    try
+    {
+      eb_data_t data;
+
+      // read the shared memory
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        device.read(ram_base + SHM_INPUT + (i << 2), EB_DATA32, &data);
+        content.push_back(static_cast<uint32_t>(data));
+      }
+
+      clog << kLogDebug << "method call BurstGenerator::readSharedBuffer succeeded: " << content.size() << std::endl;
+
+      return content;
+    }
+    catch (etherbone::exception_t e)
+    {
+      clog << kLogDebug << "method call" << e.method << "failed with status" << e.status << std::endl;
+      return content;
+    }
+  }
 }
 

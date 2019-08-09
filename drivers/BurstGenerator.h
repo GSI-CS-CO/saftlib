@@ -32,6 +32,7 @@ namespace saftlib {
       int32_t sendProdCycles(uint32_t eventHi, uint64_t cycles);
       int32_t instruct(uint32_t code, const std::vector< uint32_t >& args);
       std::vector< uint32_t > readBurstInfo(uint32_t id);
+      std::vector< uint32_t > readSharedBuffer(uint32_t size);
 
     protected:
       BurstGenerator(const ConstructorType& args);

@@ -72,5 +72,15 @@
       <arg direction="out" type="au" name="info"/>
     </method>
 
+    <!-- readSharedBuffer: Read the shared memory.
+
+         @size:   The amount of data to be read
+         @data:   The read data
+      -->
+    <method name="readSharedBuffer">
+      <arg direction="in" type="u" name="size"/>
+      <arg direction="out" type="au" name="data"/>
+    </method>
+
   </interface>
 </node>
