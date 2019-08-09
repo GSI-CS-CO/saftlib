@@ -38,6 +38,7 @@ saftd_SOURCES = version.h \
 	drivers/SCUbusCondition.cpp	drivers/SCUbusCondition.h	\
 	drivers/EmbeddedCPUCondition.cpp	drivers/EmbeddedCPUCondition.h	\
 	drivers/MILbusCondition.cpp	drivers/MILbusCondition.h	\
+	drivers/WbmCondition.cpp	drivers/WbmCondition.h	\
 	drivers/ActionSink.cpp		drivers/ActionSink.h		\
 	drivers/EventSource.cpp		drivers/EventSource.h		\
 	drivers/InoutImpl.cpp           drivers/InoutImpl.h		\
@@ -45,6 +46,7 @@ saftd_SOURCES = version.h \
 	drivers/SCUbusActionSink.cpp	drivers/SCUbusActionSink.h	\
 	drivers/EmbeddedCPUActionSink.cpp	drivers/EmbeddedCPUActionSink.h	\
 	drivers/MILbusActionSink.cpp	drivers/MILbusActionSink.h	\
+	drivers/WbmActionSink.cpp	drivers/WbmActionSink.h	\
 	drivers/FunctionGeneratorFirmware.cpp	drivers/FunctionGeneratorFirmware.h	\
 	drivers/FunctionGenerator.cpp	drivers/FunctionGenerator.h	\
 	drivers/MasterFunctionGenerator.cpp	drivers/MasterFunctionGenerator.h	\
