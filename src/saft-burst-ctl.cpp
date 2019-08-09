@@ -96,6 +96,7 @@ static void io_catch_input (uint64_t event, uint64_t param, saftlib::Time deadli
 static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
 static int  bg_read_fw_id       (void);
+static int  bg_get_fw_id        (void);
 static int  bg_instruct         (std::vector<std::string> instr);
 static int  bg_config_io        (uint32_t t_high, uint32_t t_period, int64_t t_burst, uint64_t b_delay, uint32_t b_flag, bool verbose_mode);
 static int  bg_get_io_name      (int burst_id, std::string &name);
@@ -123,7 +124,7 @@ static void bg_help(char option)
   }
 }
 
-/* Get firmware id of the burst generator */
+/* Read the firmware id of the burst generator */
 /* ==================================================================================================== */
 static int bg_read_fw_id(void)
 {
@@ -148,6 +149,62 @@ static int bg_read_fw_id(void)
       std::cout << "Firmware ID: " << std::hex << bg_firmware->readFirmwareId() << std::endl;
     else
       std::cerr << "Failed to get firmware ID of burst generator" << std::endl;
+  }
+  catch (const saftbus::Error& error)
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return -1;
+  }
+
+  return 0;
+}
+
+/* Get the firmware id of the burst generator */
+/* ==================================================================================================== */
+static int bg_get_fw_id(void)
+{
+  try
+  {
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
+    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
+
+    /* Check if timing receiver has dedicated interfaces */
+    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
+    if (bg_iface.empty())
+    {
+      std::cerr << "No BurstGenerator firmware found" << std::endl;
+      return -1;
+    }
+
+    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+
+    if (bg_firmware == NULL)
+    {
+      std::cerr << "Could not connect to the burst generator driver" << std::endl;
+      return -1;
+    }
+
+    std::vector<uint32_t> args;
+    args.push_back(0);
+
+    int res = bg_firmware->instruct(CMD_LS_FW_ID, args);
+    if (res)
+      std::cerr << "Failed method call bg_instruct()!" << std::endl;
+
+    sleep(1); // let LM32 complete the previous command
+
+    args.clear();
+    args = bg_firmware->readSharedBuffer(1);
+    if (args.size() > 0)
+    {
+      std::cout << "Got firmware id: 0x" << std::hex << args.at(0) << std::endl;
+    }
+    else
+    {
+      std::cerr << "Could not get the firmware id." << std::endl;
+      return -1;
+    }
   }
   catch (const saftbus::Error& error)
   {
@@ -2525,7 +2582,7 @@ int main (int argc, char** argv)
   else
   {
     /* Proceed with program */
-    if      (bg_fw_id)       { return_code = bg_read_fw_id(); }
+    if      (bg_fw_id)       { return_code = bg_get_fw_id(); }
     else if (bg_instr)       { return_code = bg_instruct(bg_instr_args); }
     else if (bg_cfg_io)      { return_code = bg_config_io(bg_t_high, bg_t_p, bg_t_b, bg_b_delay, bg_b_flag, verbose_mode); }
     else if (bg_clr_all)     { return_code = bg_clear_all(verbose_mode); }

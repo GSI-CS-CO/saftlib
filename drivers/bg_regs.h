@@ -59,6 +59,7 @@
 #define CMD_RD_MSI_ECPU           0x10UL        // read and show the content of ECA MSI registers (MSI enable, MSI destination address)
 #define CMD_RD_ECPU_CHAN          0x11UL        // read and show the content of ECA counters for the eCPU action channel
 #define CMD_RD_ECPU_QUEUE         0x12UL        // read and show the content of ECA queue connected to the eCPU action channel
+#define CMD_LS_FW_ID              0x13UL        // list the firmware id (the value is written to the shared input buffer)
 
 #define CTL_DIS                   0x0000UL
 #define CTL_EN                    0x0001UL
