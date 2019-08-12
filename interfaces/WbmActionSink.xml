@@ -38,15 +38,48 @@
       <arg direction="in" type="u" name="tag"/>
       <arg direction="out" type="s" name="result"/>
     </method>
-    
-    <!-- InjectTag: Directly generate a Wbm timing event.
-         @tag: The 32-bit value to push to the Wbm.
-         
-         For debugging, it can be helpful to simply create Wbm events
-         without a matching timing event.
-      -->
-<!--     <method name="InjectTag">
-      <arg direction="in" type="u" name="tag"/>
+
+    <!-- Status: Shows if the device is rdy/busy -->
+    <property name="Status"       type="y" access="read"/>
+    <!-- MaxMacros: Shows maximum number of macros -->
+    <property name="MaxMacros" type="u" access="read"/> 
+    <!-- MaxSpace: Shows maximum memory space -->
+    <property name="MaxSpace" type="u" access="read"/> 
+    <!-- Enable: Macro execution on/off -->
+    <property name="Enable" type="b" access="readwrite"/> 
+
+    <!-- ExecuteMacro: Executes macro at idx 
+        @idx: index of macro that should be executed
+    -->
+    <method name="ExecuteMacro"> 
+      <arg direction="in" type="u" name="idx"/>
     </method>
- -->  </interface>
+
+    <!-- LastExecutedIdx: Shows idx of last executed macro -->
+    <property name="LastExecutedIdx" type="u" access="read"/>
+
+    <!-- RecordMacro: Records a macro at idx 
+         @idx: index at which the macro is recorded
+         @commans: an array of commands where each command is an array of three uint_32 values 
+    -->
+    <method name="RecordMacro"> 
+      <arg direction="in" type="u" name="idx"/>
+      <arg direction="in" type="aau" name="commands"/>
+    </method>
+
+    <!-- LastRecordedIdx: Shows idx of last recorded macro -->
+    <property name="LastRecordedIdx" type="u" access="read"/>
+
+    <!-- ClearMacro: Clear macro at idx 
+        @idx: index of macro that should be cleared
+    -->
+    <method name="ClearMacro"> 
+      <arg direction="in" type="u" name="idx"/>
+    </method>
+
+    <!-- ClearAllMacros: Clears all macros -->
+    <method name="ClearAllMacros"> 
+    </method>
+    
+  </interface>
 </node>

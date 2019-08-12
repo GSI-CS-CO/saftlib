@@ -27,11 +27,15 @@
 #include "WbmCondition.h"
 #include "TimingReceiver.h"
 
+#include "eca_ac_wbm_regs.h"
+#include <iomanip>
+
 namespace saftlib {
 
 WbmActionSink::WbmActionSink(const ConstructorType& args)
- : ActionSink(args.objectPath, args.dev, args.name, args.channel, 0), scubus(args.scubus)
+ : ActionSink(args.objectPath, args.dev, args.name, args.channel, 0), acwbm(args.acwbm)
 {
+
 }
 
 const char *WbmActionSink::getInterfaceName() const
@@ -60,6 +64,77 @@ std::string WbmActionSink::NewCondition(bool active, uint64_t id, uint64_t mask,
 std::shared_ptr<WbmActionSink> WbmActionSink::create(const ConstructorType& args)
 {
   return RegisteredObject<WbmActionSink>::create(args.objectPath, args);
+}
+
+
+void WbmActionSink::ExecuteMacro(uint32_t idx) {
+  eb_data_t data = idx;
+  dev->getDevice().write(acwbm + SLAVE_EXEC_OWR, EB_DATA32, data);
+}
+void WbmActionSink::RecordMacro(uint32_t idx, const std::vector< std::vector< uint32_t > >& commands) {
+  etherbone::Cycle cycle;
+  cycle.open(dev->getDevice());
+  for(unsigned cmd_idx = 0; cmd_idx < commands.size(); ++cmd_idx) {
+    if (commands[cmd_idx].size() != 3) {
+      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "each command must consist of exactly three words");
+    }
+    eb_data_t data = idx;
+    cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, data); // start recording
+    for (unsigned elm_idx = 0; elm_idx < 3; ++elm_idx) {
+      data = commands[cmd_idx][elm_idx];
+      cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, data);
+      std::cerr << "macro recording (" << idx << ") " << std::hex << (acwbm + SLAVE_REC_FIFO_OWR) << "    " << commands[cmd_idx][elm_idx] << std::dec << std::endl;
+    }
+    cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, data); // stop recording
+  }
+  cycle.close();
+}
+void WbmActionSink::ClearMacro(uint32_t idx) {
+  eb_data_t data = idx;
+  std::cerr << std::hex << acwbm << std::dec << std::endl;
+  dev->getDevice().write(acwbm + SLAVE_CLEAR_IDX_OWR, EB_DATA32, data);
+}
+void WbmActionSink::ClearAllMacros() {
+  eb_data_t data = 1;
+  dev->getDevice().write(acwbm + SLAVE_CLEAR_ALL_OWR, EB_DATA32, data);
+}
+unsigned char WbmActionSink::getStatus() const {
+  eb_data_t data;
+  dev->getDevice().read(acwbm + SLAVE_STATUS_GET, EB_DATA32, &data);
+  return data;
+}
+uint32_t WbmActionSink::getMaxMacros() const {
+  eb_data_t data;
+  dev->getDevice().read(acwbm + SLAVE_MAX_MACROS_GET, EB_DATA32, &data);
+  return data;
+}
+uint32_t WbmActionSink::getMaxSpace() const {
+  eb_data_t data;
+  dev->getDevice().read(acwbm + SLAVE_MAX_SPACE_GET, EB_DATA32, &data);
+  return data;
+}
+bool WbmActionSink::getEnable() const {
+  eb_data_t data;
+  dev->getDevice().read(acwbm + SLAVE_ENABLE_GET, EB_DATA32, &data);
+  return data;
+}
+uint32_t WbmActionSink::getLastExecutedIdx() const {
+  eb_data_t data;
+  dev->getDevice().read(acwbm + SLAVE_LAST_EXEC_GET, EB_DATA32, &data);
+  return data;
+}
+uint32_t WbmActionSink::getLastRecordedIdx() const {
+  eb_data_t data;
+  dev->getDevice().read(acwbm + SLAVE_LAST_REC_GET, EB_DATA32, &data);
+  return data;
+}
+void WbmActionSink::setEnable(bool val) {
+  eb_data_t data = val;
+  if (val) {
+    dev->getDevice().write(acwbm + SLAVE_ENABLE_SET, EB_DATA32, data);
+  } else {
+    dev->getDevice().write(acwbm + SLAVE_ENABLE_CLR, EB_DATA32, data);
+  }
 }
 
 }

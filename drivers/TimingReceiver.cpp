@@ -69,6 +69,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    locked(false),
    temperature(0)
 {
+  std::cerr << "TimingReceiver constructor called. stream = " << std::hex<< stream<< std::dec << std::endl;
   // try to acquire watchdog
   eb_data_t retry;
   device.read(watchdog, EB_DATA32, &watchdog_value);
@@ -159,11 +160,11 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
         case ECA_WBM: {
           // !!! under development !!!
           std::vector<sdb_device> acwbms;
-          device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb2afc251, acwbms);
+          device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x18415778, acwbms);
           std::cerr << "TimingReceiver has " << acwbms.size() << " wishbone master action channels" << std::endl;
           if (acwbms.size() == 1) {
-            std::string path = getObjectPath() + "/acwbms";
-            WbmActionSink::ConstructorType args = { path, this, "acwbms", i, (eb_address_t)acwbms[0].sdb_component.addr_first };
+            std::string path = getObjectPath() + "/acwbm";
+            WbmActionSink::ConstructorType args = { path, this, "acwbm", i, (eb_address_t)acwbms[0].sdb_component.addr_first };
             actionSinks[SinkKey(i, num)] = WbmActionSink::create(args);
           }
           break;

@@ -122,22 +122,22 @@ static void on_name_acquired(const std::shared_ptr<saftbus::Connection>& /* conn
     }
   }
   
-  // // startup complete; detach from terminal
-  // int devnull_w = open("/dev/null", O_WRONLY);
-  // int devnull_r = open("/dev/null", O_RDONLY);
-  // if (devnull_w == -1 || devnull_r == -1) {
-  //   std::cerr << "failed to open /dev/null" << std::endl;
-  //   exit (1);
-  // }
-  // if (dup2(devnull_r, 0) == -1 || 
-  //     dup2(devnull_w, 1) == -1 ||
-  //     dup2(devnull_w, 2) == -1) {
-  //   std::cerr << "failed to close stdin/stdout/stderr" << std::endl;
-  // }
-  // close(devnull_r);
-  // close(devnull_w);
+  // startup complete; detach from terminal
+  int devnull_w = open("/dev/null", O_WRONLY);
+  int devnull_r = open("/dev/null", O_RDONLY);
+  if (devnull_w == -1 || devnull_r == -1) {
+    std::cerr << "failed to open /dev/null" << std::endl;
+    exit (1);
+  }
+  if (dup2(devnull_r, 0) == -1 || 
+      dup2(devnull_w, 1) == -1 ||
+      dup2(devnull_w, 2) == -1) {
+    std::cerr << "failed to close stdin/stdout/stderr" << std::endl;
+  }
+  close(devnull_r);
+  close(devnull_w);
   
-  // am_daemon = true;
+  am_daemon = true;
   
   // log success
   clog << kLogNotice << "started" << std::endl;
@@ -173,22 +173,22 @@ int main(int argc, char** argv)
     return 1;
   }
   
-  // // turn into a daemon
-  // switch (fork()) {
-  // case -1: std::cerr << "failed to fork" << std::endl; exit(1);
-  // case 0:  break;
-  // default: exit(0);
-  // }
+  // turn into a daemon
+  switch (fork()) {
+  case -1: std::cerr << "failed to fork" << std::endl; exit(1);
+  case 0:  break;
+  default: exit(0);
+  }
   
-  // // leave current session once we fork again
-  // setsid();
+  // leave current session once we fork again
+  setsid();
   
-  // // second fork ensures we are an orphan
-  // switch (fork()) {
-  // case -1: std::cerr << "failed to fork" << std::endl; exit(1);
-  // case 0:  break;
-  // default: exit(0);
-  // }
+  // second fork ensures we are an orphan
+  switch (fork()) {
+  case -1: std::cerr << "failed to fork" << std::endl; exit(1);
+  case 0:  break;
+  default: exit(0);
+  }
 
   // initialize gio
   std::locale::global(std::locale(""));

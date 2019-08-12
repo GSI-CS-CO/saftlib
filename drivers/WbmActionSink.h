@@ -34,7 +34,7 @@ class WbmActionSink : public ActionSink, public iWbmActionSink
       TimingReceiver* dev;
       std::string name;
       unsigned channel;
-      eb_address_t scubus;
+      eb_address_t acwbm;
     };
     
     static std::shared_ptr<WbmActionSink> create(const ConstructorType& args);
@@ -44,10 +44,24 @@ class WbmActionSink : public ActionSink, public iWbmActionSink
     // iWbmAcitonSink
     std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
     //void InjectTag(uint32_t tag);
-    
+
+    void ExecuteMacro(uint32_t idx);
+    void RecordMacro(uint32_t idx, const std::vector< std::vector< uint32_t > >& commands);
+    void ClearMacro(uint32_t idx);
+    void ClearAllMacros();
+    // Property getters
+    unsigned char getStatus() const;
+    uint32_t getMaxMacros() const;
+    uint32_t getMaxSpace() const;
+    bool getEnable() const;
+    uint32_t getLastExecutedIdx() const;
+    uint32_t getLastRecordedIdx() const;
+    // Property setters
+    void setEnable(bool val);
+
   protected:
     WbmActionSink(const ConstructorType& args);
-    eb_address_t scubus;
+    eb_address_t acwbm;
 };
 
 }

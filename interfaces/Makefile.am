@@ -60,6 +60,8 @@ nodist_saftlib_HEADERS = 	\
 	iSCUbusCondition.h	\
 	iEmbeddedCPUActionSink.h	\
 	iEmbeddedCPUCondition.h	\
+	iWbmActionSink.h	\
+	iWbmCondition.h	\
 	iSoftwareActionSink.h	\
 	iSoftwareCondition.h	\
 	iTimingReceiver.h	\
