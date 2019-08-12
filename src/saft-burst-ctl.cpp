@@ -103,10 +103,10 @@ static int  bg_get_io_name      (int burst_id, std::string &name);
 static int  bg_list_bursts      (int burst_id, bool verbose);
 static int  bg_remove_burst     (int burst_id, bool verbose);
 static int  bg_disenable_burst  (int burst_id, int disen, bool verbose);
-static int  bg_create_burst     (int burst_id, uint64_t e_id, uint64_t e_mask, bool verbose);
+static int  bg_create_burst     (int burst_id, uint64_t e_id, uint64_t e_mask, uint64_t stop_e_id, uint64_t stop_e_mask, bool verbose);
 static std::string find_io_name (std::shared_ptr<TimingReceiver_Proxy> tr, std::vector<uint32_t> info);
-static int  ecpu_update         (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, uint32_t toggle, bool verbose);
-static int  ecpu_check          (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, uint32_t toggle);
+static int  ecpu_update         (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, bool verbose);
+static int  ecpu_check          (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag);
 static int  ecpu_destroy        (bool verbose_mode);
 static int  bg_clear_all        (bool verbose);
 static void bg_help             (char option);
@@ -610,7 +610,7 @@ static int bg_disenable_burst(int burst_id, int disen, bool verbose)
 }
 
 /* Create new burst */
-static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, bool verbose)
+static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_t stop_e_id, uint64_t stop_e_mask, bool verbose)
 {
   int result = 0;
 
@@ -666,7 +666,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, bool ve
     }
 
     /* Check if the same conditions for eCPU actions exist already */
-    int check = ecpu_check(e_id, e_mask, 0, BG_FW_ID, 1);
+    int check = ecpu_check(e_id, e_mask, 0, BG_FW_ID);
 
     if (check < 0)
     {
@@ -676,10 +676,31 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, bool ve
     else if (check == 0) // conditions were not set
     {
       /* Configure ECA with the conditions for eCPU actions */
-      if (ecpu_update(e_id, e_mask, 0, BG_FW_ID, 1, verbose))  // TODO: apply offset? evaluate toggle flag
+      if (ecpu_update(e_id, e_mask, 0, BG_FW_ID, verbose))  // TODO: apply offset?
       {
         std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
         return -1;
+      }
+    }
+
+    /* Set condition only if the stop event ID is non-zero. Otherwise all existing eCPU conditions will be erased! */
+    if (stop_e_id)
+    {
+      check = ecpu_check(stop_e_id, stop_e_mask, 0, BG_FW_ID);
+
+      if (check < 0)
+      {
+        std::cerr << "Failed to check conditions for eCPU actions" << std::endl;
+        return -1;
+      }
+      else if (check == 0) // conditions were not set
+      {
+        /* Configure ECA with the conditions for eCPU actions */
+        if (ecpu_update(stop_e_id, stop_e_mask, 0, BG_FW_ID, verbose))  // TODO: apply offset?
+        {
+          std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
+          return -1;
+        }
       }
     }
 
@@ -710,9 +731,8 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, bool ve
     args.push_back((out_type << 16) | (out_proxy->getIndexOut() && 0xFFFF));
     args.push_back((uint32_t)(e_id >> 32));
     args.push_back((uint32_t)e_id);
-    uint64_t toggle_id = e_id ^ 0x0000001000000000; // TODO: eliminate fixed toggle event id
-    args.push_back((uint32_t)(toggle_id >> 32));
-    args.push_back((uint32_t)toggle_id);
+    args.push_back((uint32_t)(stop_e_id >> 32));
+    args.push_back((uint32_t)stop_e_id);
     args.push_back(static_cast<uint32_t>(verbose));
 
     int res = bg_firmware->instruct(CMD_MK_BURST, args);
@@ -1078,7 +1098,7 @@ static int ecpu_destroy(bool verbose_mode)
 }
 
 /* Configure ECA with the event conditions for eCPU actions */
-static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, uint32_t toggle, bool verbose)
+static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, bool verbose)
 {
   int result = 0;
 
@@ -1103,6 +1123,13 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
 
+    /* Check space in the condition table */
+    if (tr->getFree() == 0)
+    {
+      std::cerr << "Error: Cannot set the given condition! Condition table is full." << std::endl;
+      return -1;
+    }
+
     /* Check if timing receiver has dedicated interfaces */
     map<std::string, std::string> ecpus = tr->getInterfaces()["EmbeddedCPUActionSink"];
     if (ecpus.empty())
@@ -1121,31 +1148,14 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
       std::shared_ptr<EmbeddedCPUCondition_Proxy> condition;
       std::string ecpu_sink;
 
-      uint64_t e_id_toggle = e_id;
-      int n_conditions = 1;
-      if (toggle)
-        n_conditions++;
+      ecpu_sink = ecpu->NewCondition(true, e_id, e_mask, offset, tag);
+      condition = EmbeddedCPUCondition_Proxy::create(ecpu_sink);
 
-      int eca_entries = tr->getFree();
-      if (n_conditions > eca_entries)
-      {
-        std::cerr << "Not enough space is available for the desired conditions! Needs: " << n_conditions << ", available: " << eca_entries << std::endl;
-        return -1;
-      }
-
-      for (int i = 0; i < n_conditions; ++i)
-      {
-        ecpu_sink = ecpu->NewCondition(true, e_id_toggle, e_mask, offset, tag);
-        condition = EmbeddedCPUCondition_Proxy::create(ecpu_sink);
-
-        condition->setAcceptConflict(true);
-        condition->setAcceptDelayed(true);
-        condition->setAcceptEarly(true);
-        condition->setAcceptLate(true);
-        condition->Disown();
-        e_id_toggle ^= 0x0000001000000000;
-      }
-
+      condition->setAcceptConflict(true);
+      condition->setAcceptDelayed(true);
+      condition->setAcceptEarly(true);
+      condition->setAcceptLate(true);
+      condition->Disown();
     }
     else
     {
@@ -1164,7 +1174,7 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
 }
 
 /* Check if the given conditions for eCPU actions is already set */
-static int  ecpu_check(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, uint32_t toggle)
+static int  ecpu_check(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag)
 {
   int result = 0;
 
@@ -1222,21 +1232,10 @@ static int  ecpu_check(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t 
           if (c_proxy->getID() == e_id && c_proxy->getMask() == e_mask &&
               c_proxy->getTag() == tag && c_proxy->getOffset() == offset)
           {
-            std::cerr << "Trigger condition for eCPU already exists!" << std::endl;
+            std::cerr << "The given condition for eCPU already exists!" << std::endl;
             return 1;
           }
-
-          if (toggle) // TODO: eliminate hard coded toggle event id
-          {
-            uint64_t toggled_id = e_id ^ 0x0000001000000000;
-            if (c_proxy->getID() == toggled_id && c_proxy->getMask() == e_mask &&
-              c_proxy->getTag() == tag && c_proxy->getOffset() == offset)
-            {
-              std::cerr << "Toggle condition for eCPU already exists!" << std::endl;
-              return 2;
-            }
-          }
-        }
+       }
       }
     }
     else
@@ -1258,7 +1257,7 @@ static int  ecpu_check(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t 
 /* Clear all unowned conditions for the IO and eCPU actions */
 static int bg_clear_all(bool verbose)
 {
-  int result = ecpu_update(0, 0, 0, 0, 0, verbose);
+  int result = ecpu_update(0, 0, 0, 0, verbose);
   result |= io_destroy(verbose);
   return result;
 }
@@ -1598,9 +1597,9 @@ static void io_help (void)
   std::cout << "  -A:                                            Get the firmware id of the burst generator" << std::endl;
   std::cout << "  -N <id>:                                       Specify burst ID" << std::endl;
   std::cout << "      id                                           Burst id, 1..32" << std::endl;
-  std::cout << "  -S <trigger> <mask>:                           Create new burst. Requires -n and -N options!" << std::endl;
-//  std::cout << "  -T <trigger> <toggle> <mask>                   Create new toggling burst. Requires -n and -N options!" << std::endl;
-  std::cout << "      trigger, toggle, mask                        IDs and mask for triggering and toggling events" << std::endl;
+  std::cout << "  -S <start> <mask>:                             Specify ID and mask of the start event. Requires -n and -N options!" << std::endl;
+  std::cout << "  -T <stop> <mask>:                              Specify ID and mask of the stop event. Can be used with the -S option" << std::endl;
+  std::cout << "      start, stop, mask                          IDs, masks of the start and stop events" << std::endl;
   std::cout << "  -B <t_hi> <t_p> <b_p> <b_d> <b_f>:             Define signal parameters to a new/existing burst. Requires -N option!" << std::endl;
   std::cout << "      t_hi, t_p                                    Signal high width (ns), signal period (ns)" << std::endl;
   std::cout << "      b_p, b_d, b_f                                Burst period (=0 endless), burst delay (ns), burst flag (=0 new/overwrite, 1=append)" << std::endl;
@@ -1623,9 +1622,9 @@ static void io_help (void)
   std::cout << program << " tr0" << " -L 0" << std::endl;
   std::cout << "   List the IDs of all bursts." << std::endl << std::endl;
   std::cout << program << " tr0" << " -L 1 -v" << std::endl;
-  std::cout << "   Show the info of a burst with ID 1. It includes IO port name, IDs of trigger and toggle events, enable state." << std::endl << std::endl;
-  std::cout << program << " tr0" << " -n B1" << " -N 1" << " -S 0x0000991000000000 0xffffffff00000000" << std::endl;
-  std::cout << "   Create new burst at the output port B1. The burst ID is 1 and it is triggered by a timing message with the given event ID." << std::endl << std::endl;
+  std::cout << "   Show the info of a burst with ID 1. It includes the IO port name, IDs of the start and stop events, enable state." << std::endl << std::endl;
+  std::cout << program << " tr0" << " -n B1" << " -N 1" << " -S 0x1234567800000000 0xffffffff00000000" << std::endl;
+  std::cout << "   Create new burst at the output port B1. The burst's ID is 1, the burst is started by a timing message with the event ID of 0x1234567800000000." << std::endl << std::endl;
   std::cout << program << " tr0" << " -N 1" << " -B 1000000 2000000 4000000 0 0" << std::endl;
   std::cout << "   Define signal for the burst with ID 1. The given burst must have already been created! Signal high width is 1 ms, signal period is 2 ms, burst length is 4 ms, no delay." << std::endl << std::endl;
   std::cout << program << " tr0" << " -E 1 1" << std::endl;
@@ -2346,8 +2345,10 @@ int main (int argc, char** argv)
   bool show_help      = false; /* Print help => -h */
   bool show_table     = false; /* Print io mapping table => -i */
 
-  uint64_t bg_e_id    = 0x00;  /* Event ID */
-  uint64_t bg_e_mask  = 0x00;  /* Event mask */
+  uint64_t bg_start_e_id   = 0x00;  /* Start event ID */
+  uint64_t bg_start_e_mask = 0x00;  /* Start event mask */
+  uint64_t bg_stop_e_id    = 0x00;  /* Stop event ID */
+  uint64_t bg_stop_e_mask  = 0x00;  /* Stop event mask */
   uint32_t bg_t_high  = 0x00;  /* Signal active state length, t_high */
   uint32_t bg_t_p     = 0x00;  /* Signal period, t_p */
   int64_t  bg_t_b     = 0x00;  /* Burst period, t_b (=0 endless) */
@@ -2362,7 +2363,7 @@ int main (int argc, char** argv)
   bool bg_clr_all     = false; /* Clear all unowned conditions for the IO and eCPU actions */
   bool bg_ls_bursts   = false; /* List enabled bursts */
   bool bg_disen_burst = false; /* Disable or enable burst, id */
-  bool bg_mk_burst    = false; /* Create new burst, id, trigger e_id, toggle e_id, e_mask */
+  bool bg_mk_burst    = false; /* Create new burst */
   bool bg_rm_burst    = false; /* Remove burst */
 
   /* Get the application name */
@@ -2427,11 +2428,16 @@ int main (int argc, char** argv)
                   if (bg_id <= 0 || bg_id > N_BURSTS) { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
                   bg_rm_burst   = true;
                   break; }
-      case 'S': { if (argv[optind-1] != NULL) { bg_e_id = strtoull(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing trigger event id!" << std::endl; return -1; }
-                  if (argv[optind+0] != NULL) { bg_e_mask = strtoull(argv[optind+0], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing trigger event mask!" << std::endl; return -1; }
+      case 'S': { if (argv[optind-1] != NULL) { bg_start_e_id = strtoull(argv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing an ID for the start event!" << std::endl; return -1; }
+                  if (argv[optind+0] != NULL) { bg_start_e_mask = strtoull(argv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing a mask for the start event!" << std::endl; return -1; }
                   bg_mk_burst   = true;
+                  break; }
+      case 'T': { if (argv[optind-1] != NULL) { bg_stop_e_id = strtoull(argv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing an ID for the stop event!" << std::endl; return -1; }
+                  if (argv[optind+0] != NULL) { bg_stop_e_mask = strtoull(argv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing a mask for the stop event!" << std::endl; return -1; }
                   break; }
       case 'X': { bg_clr_all    = true;
                   break; }
@@ -2577,6 +2583,12 @@ int main (int argc, char** argv)
     }
   }
 
+  if (bg_mk_burst)
+  {
+    if (bg_start_e_id == 0)             { std::cout << "Error: Invalid ID for the start event!" << std::endl; return (__IO_RETURN_FAILURE); }
+    if (bg_start_e_id == bg_stop_e_id)  { std::cout << "Error: IDs of the start and stop events must be different!" << std::endl; return (__IO_RETURN_FAILURE); }
+  }
+
   /* Check if help is needed, otherwise evaluate given arguments */
   if (show_help) { io_help(); }
   else
@@ -2589,7 +2601,7 @@ int main (int argc, char** argv)
     else if (bg_ls_bursts)   { return_code = bg_list_bursts(bg_id, verbose_mode); }
     else if (bg_rm_burst)    { return_code = bg_remove_burst(bg_id, verbose_mode); }
     else if (bg_disen_burst) { return_code = bg_disenable_burst(bg_id, bg_disen, verbose_mode); }
-    else if (bg_mk_burst)    { return_code = bg_create_burst(burstId, bg_e_id, bg_e_mask, verbose_mode); }
+    else if (bg_mk_burst)    { return_code = bg_create_burst(burstId, bg_start_e_id, bg_start_e_mask, bg_stop_e_id, bg_stop_e_mask, verbose_mode); }
     else if (show_table)     { return_code = io_print_table(verbose_mode); }
     else if (ios_wipe)       { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
     else if (ios_snoop)      { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
