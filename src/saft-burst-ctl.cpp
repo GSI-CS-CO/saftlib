@@ -116,7 +116,7 @@ static void bg_help(char option)
 {
   switch (option)
   {
-    case 'L' :
+    case 'l' :
       std::cout << "Use the command option -" << option << " to print a list of created bursts." << std::endl;
       break;
     default :
@@ -577,7 +577,7 @@ static int bg_disenable_burst(int burst_id, int disen, bool verbose)
       if ((args.at(0) & burstIdMask) == 0)
       {
         std::cerr << "Could not find a burst with id: " << burst_id << std::endl;
-        bg_help('L');
+        bg_help('l');
         return -1;
       }
     }
@@ -867,7 +867,7 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
       if ((args.at(0) & burstIdMask) == 0)
       {
         std::cerr << "Could not find a burst with id: " << burstId << std::endl;
-        bg_help('L');
+        bg_help('l');
         return -1;
       }
     }
@@ -1610,22 +1610,22 @@ static void io_help (void)
   std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
-  std::cout << "  -n <name>:                                     Specify IO name or leave blank (to see all IOs/conditions)" << std::endl;
+  std::cout << "  -n <name>:                                     Specify IO name" << std::endl;
   std::cout << std::endl;
-  std::cout << "  -A:                                            Get the firmware id of the burst generator" << std::endl;
-  std::cout << "  -N <id>:                                       Specify burst ID" << std::endl;
+  std::cout << "  -f:                                            Get the firmware id of the burst generator" << std::endl;
+  std::cout << "  -b <id>:                                       Specify burst ID" << std::endl;
   std::cout << "      id                                           Burst id, 1..32" << std::endl;
-  std::cout << "  -S <start> <mask>:                             Specify ID and mask of the start event. Requires -n and -N options!" << std::endl;
-  std::cout << "  -T <stop> <mask>:                              Specify ID and mask of the stop event. Can be used with the -S option" << std::endl;
+  std::cout << "  -s <start> <mask>:                             Specify ID and mask of the start event. Requires -n and -b options!" << std::endl;
+  std::cout << "  -t <stop> <mask>:                              Specify ID and mask of the stop event. Can be used with the -s option" << std::endl;
   std::cout << "      start, stop, mask                          IDs, masks of the start and stop events" << std::endl;
-  std::cout << "  -B <t_hi> <t_p> <b_p> <b_d> <b_f>:             Define signal parameters to a new/existing burst. Requires -N option!" << std::endl;
+  std::cout << "  -p <t_hi> <t_p> <b_p> <b_d> <b_f>:             Define signal parameters to a new/existing burst. Requires -b option!" << std::endl;
   std::cout << "      t_hi, t_p                                    Signal high width (ns), signal period (ns)" << std::endl;
   std::cout << "      b_p, b_d, b_f                                Burst period (=0 endless), burst delay (ns), burst flag (=0 new/overwrite, 1=append)" << std::endl;
-  std::cout << "  -L <0 | id>:                                   List burst(s): 0 for burst IDs, otherwise burst info" << std::endl;
-  std::cout << "  -E <id> <disen>:                               Dis/enable burst(s): disable if disen = 0, otherwise enable" << std::endl;
-  std::cout << "  -R <id>:                                       Remove burst(s)" << std::endl;
+  std::cout << "  -l <0 | id>:                                   List burst(s): 0 for burst IDs, otherwise burst info" << std::endl;
+  std::cout << "  -e <id> <disen>:                               Dis/enable burst(s): disable if disen = 0, otherwise enable" << std::endl;
+  std::cout << "  -r <id>:                                       Remove burst(s)" << std::endl;
   std::cout << std::endl;
-/*  std::cout << "  -I <instr_code> [u32 u32 ...]:                 Instruction to the burst generator, allowed instructions are listed below:" << std::endl;
+/*  std::cout << "  -i <instr_code> [u32 u32 ...]:                 Instruction to the burst generator, allowed instructions are listed below:" << std::endl;
   std::cout << std::endl;
   std::cout << "      0x1                                        Print the burst parameters. Arguments: burst_id" << std::endl;
   std::cout << "      0x2                                        Obtain the burst parameters. Arguments: burst_id, delay, conditions, block period, flag, verbose" << std::endl;
@@ -1634,64 +1634,22 @@ static void io_help (void)
   std::cout << "      0x11                                       Print ECA channel counters" << std::endl;
   std::cout << "      0x12                                       Print ECA queue content" << std::endl;
   std::cout << "  All print instructions require the eb-console tool to be run to see the output" << std::endl;*/
-  std::cout << "  -X:                                            Clear all unowned conditions for the IO and eCPU actions." << std::endl;
+  std::cout << "  -x:                                            Clear all unowned conditions for the IO and eCPU actions." << std::endl;
   std::cout << std::endl;
   std::cout << "Examples:" << std::endl << std::endl;
-  std::cout << program << " tr0" << " -L 0" << std::endl;
+  std::cout << program << " tr0" << " -l 0" << std::endl;
   std::cout << "   List the IDs of all bursts." << std::endl << std::endl;
-  std::cout << program << " tr0" << " -L 1 -v" << std::endl;
+  std::cout << program << " tr0" << " -l 1 -v" << std::endl;
   std::cout << "   Show the info of a burst with ID 1. It includes the IO port name, IDs of the start and stop events, enable state." << std::endl << std::endl;
-  std::cout << program << " tr0" << " -n B1" << " -N 1" << " -S 0x1234567800000000 0xffffffff00000000" << std::endl;
+  std::cout << program << " tr0" << " -n B1" << " -b 1" << " -s 0x1234567800000000 0xffffffff00000000" << std::endl;
   std::cout << "   Create new burst at the output port B1. The burst's ID is 1, the burst is started by a timing message with the event ID of 0x1234567800000000." << std::endl << std::endl;
-  std::cout << program << " tr0" << " -N 1" << " -B 1000000 2000000 4000000 0 0" << std::endl;
+  std::cout << program << " tr0" << " -b 1" << " -p 1000000 2000000 4000000 0 0" << std::endl;
   std::cout << "   Define signal for the burst with ID 1. The given burst must have already been created! Signal high width is 1 ms, signal period is 2 ms, burst length is 4 ms, no delay." << std::endl << std::endl;
-  std::cout << program << " tr0" << " -E 1 1" << std::endl;
+  std::cout << program << " tr0" << " -e 1 1" << std::endl;
   std::cout << "   Enable the burst with ID 1." << std::endl << std::endl;
-  std::cout << program << " tr0" << " -R 1" << std::endl;
+  std::cout << program << " tr0" << " -r 1" << std::endl;
   std::cout << "   Remove the burst with ID 1." << std::endl;
   std::cout << std::endl;
-/*  std::cout << "  -o 0/1:                                        Toggle output enable" << std::endl;
-  std::cout << "  -t 0/1:                                        Toggle termination/resistor" << std::endl;
-  std::cout << "  -q 0/1:                                        Toggle special (output) functionality" << std::endl;
-  std::cout << "  -e 0/1:                                        Toggle special (input) functionality" << std::endl;
-  std::cout << "  -m 0/1:                                        Toggle BuTiS t0 + TS gate/mux" << std::endl;
-  std::cout << "  -p 0/1:                                        Toggle WR PPS gate/mux" << std::endl;
-  std::cout << "  -a 0/1:                                        Toggle gate (output)" << std::endl;
-  std::cout << "  -j 0/1:                                        Toggle gate (input)" << std::endl;
-  std::cout << "  -d 0/1:                                        Drive output value" << std::endl;
-  std::cout << "  -k <time [ns]>                                 Change stable time" << std::endl;
-  std::cout << std::endl;
-  std::cout << "  -i:                                            List every IO and it's capability" << std::endl;
-  std::cout << std::endl;
-  std::cout << "  -s:                                            Snoop on input(s)" << std::endl;
-  std::cout << "  -w:                                            Disable all events from input(s)" << std::endl;
-  std::cout << "  -y:                                            Display IO input to event table" << std::endl;
-  std::cout << "  -b <prefix>:                                   Enable event source(s) and set prefix" << std::endl;
-  std::cout << "  -r:                                            Disable event source(s)" << std::endl;
-  std::cout << std::endl;
-  std::cout << "  -c <event id> <mask> <offset> <flags> <level>: Create a new condition (active)" << std::endl;
-  std::cout << "  -g:                                            Negative offset (new condition)" << std::endl;
-  std::cout << "  -u:                                            Disown the created condition" << std::endl;
-  std::cout << "  -x:                                            Destroy all unowned conditions" << std::endl;
-  std::cout << "  -f:                                            Flip active/inactive conditions" << std::endl;
-  std::cout << "  -z:                                            Translate mask" << std::endl;
-  std::cout << "  -l:                                            List all conditions" << std::endl;
-  std::cout << std::endl;
-  std::cout << "  -v:                                            Switch to verbose mode" << std::endl;
-  std::cout << "  -h:                                            Print help (this message)" << std::endl;
-  std::cout << std::endl;
-  std::cout << "Condition <flags> parameter:" << std::endl;
-  std::cout << "  Accept Late:                                   0x1 (l)" << std::endl;
-  std::cout << "  Accept Early:                                  0x2 (e)" << std::endl;
-  std::cout << "  Accept Conflict:                               0x4 (c)" << std::endl;
-  std::cout << "  Accept Delayed:                                0x8 (d)" << std::endl;
-  std::cout << std::endl;
-  std::cout << "  These flags can be used in combination (e.g. flag 0x3 will accept late and early events)" << std::endl;
-  std::cout << std::endl;
-  std::cout << "Example:" << std::endl;
-  std::cout << program << " exploder5a_123t " << "-n IO1 " << "-o 1 -t 0 -d 1" << std::endl;
-  std::cout << "  This will enable the output and disable the input termination and drive the output high" << std::endl;
-  std::cout << std::endl;*/
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
   std::cout << "Licensed under the GPLv3" << std::endl;
   std::cout << std::endl;
@@ -2389,12 +2347,12 @@ int main (int argc, char** argv)
   deviceName = "NoDeviceNameGiven";
 
   /* Parse for options */
-  while ((opt = getopt(argc, argv, ":AB:E:I:L:N:R:S:T:X!:%:n:o:t:q:e:m:p:d:k:swyb:rc:guxfzlivh")) != -1)
+  while ((opt = getopt(argc, argv, ":fp:e:i:l:b:r:s:t:xn:vh")) != -1)
   {
     switch (opt)
     {
-      case 'A': { bg_fw_id       = true; break; }
-      case 'B': {
+      case 'f': { bg_fw_id       = true; break; }
+      case 'p': {
                   if (argv[optind-1] != NULL) { bg_t_high = strtoul(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error::Missing active state length of a pulse (u32)!" << std::endl; return -1; }
                   if (argv[optind+0] != NULL) { bg_t_p = strtoul(argv[optind+0], &pEnd, 0); }
@@ -2409,14 +2367,14 @@ int main (int argc, char** argv)
                   else                        { std::cerr << "Error::Missing burst flag!" << std::endl; return -1; }
                   bg_cfg_io      = true;
                   break; }
-      case 'E': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
+      case 'e': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
                   if (bg_id < 0 || bg_id > N_BURSTS) { std::cerr << "Error: invalid burst id, must be 0 <= id <= " << N_BURSTS << std::endl; return -1; }
                   if (argv[optind+0] != NULL) { bg_disen = strtol(argv[optind+0], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing dis/enable setting!" << std::endl; return -1; }
                   bg_disen_burst = true;
                   break; }
-      case 'I': { bg_instr       = true;
+      case 'i': { bg_instr       = true;
                   int index      = optind - 1;
                   while (index < argc)
                   {
@@ -2431,74 +2389,35 @@ int main (int argc, char** argv)
                     std::cout << std::endl;
                   }
                   break; }
-      case 'L': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
+      case 'l': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
                   if (bg_id < 0 || bg_id > N_BURSTS)  { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
                   bg_ls_bursts   = true;
                   break; }
-      case 'N': { if (argv[optind-1] != NULL) { burstId = strtol(argv[optind-1], &pEnd, 0); }
+      case 'b': { if (argv[optind-1] != NULL) { burstId = strtol(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
                   if (burstId <= 0 || burstId > N_BURSTS)  { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
                   burstIdGiven  = true;
                   break; }
-      case 'R': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
+      case 'r': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
                   if (bg_id <= 0 || bg_id > N_BURSTS) { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
                   bg_rm_burst   = true;
                   break; }
-      case 'S': { if (argv[optind-1] != NULL) { bg_start_e_id = strtoull(argv[optind-1], &pEnd, 0); }
+      case 's': { if (argv[optind-1] != NULL) { bg_start_e_id = strtoull(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing an ID for the start event!" << std::endl; return -1; }
                   if (argv[optind+0] != NULL) { bg_start_e_mask = strtoull(argv[optind+0], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing a mask for the start event!" << std::endl; return -1; }
                   bg_mk_burst   = true;
                   break; }
-      case 'T': { if (argv[optind-1] != NULL) { bg_stop_e_id = strtoull(argv[optind-1], &pEnd, 0); }
+      case 't': { if (argv[optind-1] != NULL) { bg_stop_e_id = strtoull(argv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing an ID for the stop event!" << std::endl; return -1; }
                   if (argv[optind+0] != NULL) { bg_stop_e_mask = strtoull(argv[optind+0], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing a mask for the stop event!" << std::endl; return -1; }
                   break; }
-      case 'X': { bg_clr_all    = true;
+      case 'x': { bg_clr_all    = true;
                   break; }
       case 'n': { ioName         = argv[optind-1]; ioNameGiven  = true; break; }
-      /*case 'o': { io_oe          = atoi(optarg);   set_oe       = true; break; }
-      case 't': { io_term        = atoi(optarg);   set_term     = true; break; }
-      case 'q': { io_spec_out    = atoi(optarg);   set_spec_out = true; break; }
-      case 'e': { io_spec_in     = atoi(optarg);   set_spec_in  = true; break; }
-      case 'a': { io_gate_out    = atoi(optarg);   set_gate_out = true; break; }
-      case 'j': { io_gate_in     = atoi(optarg);   set_gate_in  = true; break; }
-      case 'm': { io_mux         = atoi(optarg);   set_mux      = true; break; }
-      case 'p': { io_pps         = atoi(optarg);   set_pps      = true; break; }
-      case 'd': { io_drive       = atoi(optarg);   set_drive    = true; break; }
-      case 'k': { stime          = atoi(optarg);   set_stime    = true; break; }
-      case 's': { ios_snoop      = true; break; }
-      case 'w': { ios_wipe       = true; break; }
-      case 'y': { ios_i_to_e     = true; break; }
-      case 'b': { ios_setup_only = true;
-                  if (argv[optind-1] != NULL) { prefix = strtoull(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing prefix!" << std::endl; return (__IO_RETURN_FAILURE); }
-                  break; }
-      case 'r': { ioc_dis_ios    = true;
-                  ios_setup_only = true;
-                  break; }
-      case 'c': { ioc_create     = true;
-                  if (argv[optind-1] != NULL) { eventID = strtoull(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing event id!" << std::endl; return (__IO_RETURN_FAILURE); }
-                  if (argv[optind+0] != NULL) { eventMask = strtoull(argv[optind+0], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing event mask!" << std::endl; return (__IO_RETURN_FAILURE); }
-                  if (argv[optind+1] != NULL) { offset = strtoull(argv[optind+1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing offset!" << std::endl; return (__IO_RETURN_FAILURE); }
-                  if (argv[optind+2] != NULL) { flags = strtoull(argv[optind+2], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing flags!" << std::endl; return (__IO_RETURN_FAILURE); }
-                  if (argv[optind+3] != NULL) { level = strtoull(argv[optind+3], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing level!" << std::endl; return (__IO_RETURN_FAILURE); }
-                  break; }
-      case 'g': { negative       = true; break; }
-      case 'u': { ioc_disown     = true; break; }
-      case 'x': { ioc_destroy    = true; break; }
-      case 'f': { ioc_flip       = true; break; }
-      case 'z': { translate_mask = true; break; }
-      case 'l': { ioc_list       = true; break; }
-      case 'i': { show_table     = true; break; }*/
       case 'v': { verbose_mode   = true; break; }
       case 'h': { show_help      = true; break; }
       case ':': { std::cout << "Option -" << (char)optopt << " requires argument(s)!" << std::endl; show_help = true; break; }
