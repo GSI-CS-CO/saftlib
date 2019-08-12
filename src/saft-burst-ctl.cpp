@@ -665,8 +665,26 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
       return -1;
     }
 
+    /* firmware ID is used as a tag */
+    uint32_t tag = 0;
+    std::vector<uint32_t> args;
+    args.push_back(0);
+
+    if (bg_firmware->instruct(CMD_LS_FW_ID, args))
+    {
+      std::cerr << "Failed to get the firmware ID. Try again!" << std::endl;
+    }
+    else
+    {
+      sleep(1); // let LM32 respond to the previous command
+      args.clear();
+      args = bg_firmware->readSharedBuffer(1);
+      if (args.size())
+        tag = args.at(0);
+    }
+
     /* Check if the same conditions for eCPU actions exist already */
-    int check = ecpu_check(e_id, e_mask, 0, BG_FW_ID);
+    int check = ecpu_check(e_id, e_mask, 0, tag);
 
     if (check < 0)
     {
@@ -676,7 +694,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     else if (check == 0) // conditions were not set
     {
       /* Configure ECA with the conditions for eCPU actions */
-      if (ecpu_update(e_id, e_mask, 0, BG_FW_ID, verbose))  // TODO: apply offset?
+      if (ecpu_update(e_id, e_mask, 0, tag, verbose))  // TODO: apply offset?
       {
         std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
         return -1;
@@ -686,7 +704,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     /* Set condition only if the stop event ID is non-zero. Otherwise all existing eCPU conditions will be erased! */
     if (stop_e_id)
     {
-      check = ecpu_check(stop_e_id, stop_e_mask, 0, BG_FW_ID);
+      check = ecpu_check(stop_e_id, stop_e_mask, 0, tag);
 
       if (check < 0)
       {
@@ -696,7 +714,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
       else if (check == 0) // conditions were not set
       {
         /* Configure ECA with the conditions for eCPU actions */
-        if (ecpu_update(stop_e_id, stop_e_mask, 0, BG_FW_ID, verbose))  // TODO: apply offset?
+        if (ecpu_update(stop_e_id, stop_e_mask, 0, tag, verbose))  // TODO: apply offset?
         {
           std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
           return -1;
@@ -726,7 +744,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     else if (out_type_name.find("1ns") != std::string::npos)
       out_type = IO_CFG_CHANNEL_LVDS;
 
-    std::vector<uint32_t> args;
+    args.clear();
     args.push_back(burst_id);
     args.push_back((out_type << 16) | (out_proxy->getIndexOut() && 0xFFFF));
     args.push_back((uint32_t)(e_id >> 32));
