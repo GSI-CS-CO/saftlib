@@ -56,7 +56,6 @@ void Owned::Disown()
     ownerOnly();
     unsubscribe();
     owner.clear();
-    Owner(owner);
   }
 }
 
@@ -78,7 +77,6 @@ void Owned::initOwner(const std::shared_ptr<saftbus::Connection>& connection_, c
         "/org/freedesktop/DBus",
         owner);
     unsubscribe = sigc::bind(sigc::ptr_fun(&do_unsubscribe), connection, subscription_id);
-    Owner(owner);
   } else {
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
   }
@@ -122,7 +120,6 @@ void Owned::owner_quit_handler(
   try {
     self->unsubscribe();
     self->owner.clear();
-    self->Owner(self->owner);
     self->ownerQuit(); // inform base classes, in case they have clean-up code
     
     if (self->getDestructible()) self->destroy();

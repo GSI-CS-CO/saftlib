@@ -13,7 +13,21 @@
        that the object also implements the general Condition interface.
     -->
   <interface name="de.gsi.saftlib.SoftwareCondition">
-    <!-- Action:    Emitted whenever the condition matches a timing event.
+    <!-- Action:    Deprecated! Use SigAction instead.
+         @event:    The event identifier that matched this rule.
+         @param:    The parameter field, whose meaning depends on the event ID.
+         @deadline: The scheduled execution timestamp of the action (event time + offset).
+         @executed: The actual execution timestamp of the action.
+         @flags:    Whether the action was (ok=0,late=1,early=2,conflict=4,delayed=8)
+      -->
+    <signal name="Action" deprecated="yes">
+      <arg name="event"    type="t"/>
+      <arg name="param"    type="t"/>
+      <arg name="deadline" type="t"/>
+      <arg name="executed" type="t"/>
+      <arg name="flags"    type="q"/>
+    </signal>
+    <!-- SigAction:    Emitted whenever the condition matches a timing event.
          @event:    The event identifier that matched this rule.
          @param:    The parameter field, whose meaning depends on the event ID.
          @deadline: The scheduled execution timestamp of the action (event time + offset).
@@ -30,14 +44,7 @@
          Actions with error flags (late, early, conflict, delayed) are only
          delivered to this signal if the Condition which generated them
          specified that the respective error should be accepted.
-      -->
-    <signal name="Action" deprecated="yes">
-      <arg name="event"    type="t"/>
-      <arg name="param"    type="t"/>
-      <arg name="deadline" type="t"/>
-      <arg name="executed" type="t"/>
-      <arg name="flags"    type="q"/>
-    </signal>
+      -->    
     <signal name="SigAction">
       <arg name="event"    type="t"/>
       <arg name="param"    type="t"/>

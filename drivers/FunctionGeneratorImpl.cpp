@@ -70,10 +70,14 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
     slot++;
   }
 
-  if (slot < 128)
+  if (slot < 128) {
     mbx_slot = --slot;
-  else
+  }
+  else {
     clog << kLogErr << "FunctionGenerator: no free slot in mailbox left"  << std::endl;
+  }
+
+
 
   //save the irq address in the odd mailbox slot
   //keep postal address to free later

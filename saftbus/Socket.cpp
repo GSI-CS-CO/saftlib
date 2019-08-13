@@ -4,11 +4,10 @@
 #include <iostream>
 #include <utility>
 #include <time.h>
+#include <sys/stat.h>
 
 //#include "giomm.h"
 #include "core.h"
-
-
 
 namespace saftbus
 {
@@ -31,6 +30,9 @@ void Socket::wait_for_client()
 		if (_debug_level > 5) std::cerr << "port busy" << std::endl;
 		throw std::runtime_error("port busy");
 	}
+	chmod(_filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | 
+		                     S_IRGRP | S_IWGRP | S_IXGRP | 
+		                     S_IROTH | S_IWOTH | S_IXOTH);
 	listen(_create_socket, 1);
 	//_addrlen = sizeof(struct sockaddr_in);
 	// the connection will wait for incoming calls

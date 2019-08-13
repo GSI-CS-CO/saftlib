@@ -222,7 +222,7 @@
     -->
   <property name="LateCount" type="t" access="readwrite"/>
   
-  <!-- Late:      An example of a late action since last LateCount change.
+  <!-- Late:      Deprecated! Use SigLate instead.
        @count:    The new value of LateCount when this signal was raised.
        @event:    The event identifier of the late action.
        @param:    The parameter field, whose meaning depends on the event ID.
@@ -241,7 +241,18 @@
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
   </signal>
+  <!-- Late:      An example of a late action since last LateCount change.
+       @count:    The new value of LateCount when this signal was raised.
+       @event:    The event identifier of the late action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @deadline: The desired execution timestamp (event time + offset).
+       @executed: The actual execution timestamp.
 
+       Keep in mind that an action is only counted as late if it is
+       scheduled for the past.  An action which leaves the timing receiver
+       after its deadline, due to a slow consumer, is a delayed (not late)
+       action.
+    -->
   <signal name="SigLate">
     <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
@@ -264,7 +275,7 @@
     -->
   <property name="EarlyCount" type="t" access="readwrite"/>
   
-  <!-- Early:     An example of an early action since last EarlyCount change.
+  <!-- Early:     Deprecated! Use SigEarly instead.
        @count:    The new value of LateCount when this signal was raised.
        @event:    The event identifier of the early action.
        @param:    The parameter field, whose meaning depends on the event ID.
@@ -278,7 +289,14 @@
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
   </signal>
-  <signal name="SigEarly">
+  <!-- Early:     An example of an early action since last EarlyCount change.
+       @count:    The new value of LateCount when this signal was raised.
+       @event:    The event identifier of the early action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @deadline: The desired execution timestamp (event time + offset).
+       @executed: The actual execution timestamp.
+    -->
+    <signal name="SigEarly">
     <arg name="count"    type="u"/>
     <arg name="event"    type="t"/>
     <arg name="param"    type="t"/>
@@ -298,7 +316,7 @@
     -->
   <property name="ConflictCount" type="t" access="readwrite"/>
   
-  <!-- Conflict:  An example of a conflict since last ConflictCount change.
+  <!-- Conflict:  Deprecated! use SigConflict instead.
        @count:    The new value of ConflictCount when this signal was raised.
        @event:    The event identifier of a conflicting action.
        @param:    The parameter field, whose meaning depends on the event ID.
@@ -312,6 +330,13 @@
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
   </signal>
+  <!-- Conflict:  An example of a conflict since last ConflictCount change.
+       @count:    The new value of ConflictCount when this signal was raised.
+       @event:    The event identifier of a conflicting action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @deadline: The scheduled action execution timestamp (event time + offset).
+       @executed: The timestamp when the action was actually executed.
+    -->  
   <signal name="SigConflict">
     <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>
@@ -334,7 +359,7 @@
     -->
   <property name="DelayedCount" type="t" access="readwrite"/>
   
-  <!-- Delayed:   An example of a delayed action the last DelayedCount change.
+  <!-- Delayed:   Deprecated! Use SigDelayed instead.
        @count:    The value of DelayedCount when this signal was raised.
        @event:    The event identifier of the delayed action.
        @param:    The parameter field, whose meaning depends on the event ID.
@@ -348,6 +373,13 @@
     <arg name="deadline" type="t"/>
     <arg name="executed" type="t"/>
   </signal>
+  <!-- Delayed:   An example of a delayed action the last DelayedCount change.
+       @count:    The value of DelayedCount when this signal was raised.
+       @event:    The event identifier of the delayed action.
+       @param:    The parameter field, whose meaning depends on the event ID.
+       @deadline: The desired execution timestamp (event time + offset).
+       @executed: The timestamp when the action was actually executed.
+    -->
   <signal name="SigDelayed">
     <arg name="count"    type="t"/>
     <arg name="event"    type="t"/>

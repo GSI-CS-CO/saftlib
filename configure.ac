@@ -1,6 +1,6 @@
 dnl Set these variables before each release:
 m4_define(MAJOR,2)    dnl Increment if removed/changed properties/signals/methods since previous release
-m4_define(MINOR,0)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
+m4_define(MINOR,1)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
 m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
 m4_define(SONAME,4)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
@@ -58,12 +58,19 @@ if test "x$XSLTPROC" = "x"; then
 fi
 
 dnl Generate documentation, only if we can
-AC_PATH_PROGS([DOCBOOK2PDF], [docbook2pdf])
+AC_PATH_PROGS([DOCBOOK2TEXI], [docbook2texi])
+AC_PATH_PROGS([TEXI2PDF], [texi2pdf])
+AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2MAN], [docbook2man])
 AC_PATH_PROGS([GIT], [git])
 
+AC_ARG_ENABLE([pdf-doc], 
+              [AS_HELP_STRING([--enable-pdf-doc], [generate pdf documentation of interfaces])], 
+              [ENABLE_PDF_DOC=yes], 
+              []
+             )
 
-AM_CONDITIONAL([INTERFACE_DOCS], [test x$DOCBOOK2PDF != x -a x$GDBUS_CODEGEN != x])
+AM_CONDITIONAL([INTERFACE_DOCS], [test x$ENABLE_PDF_DOC != x -a x$DOCBOOK2TEXI != x -a x$TEXI2PDF != x -a x$GDBUS_CODEGEN != x])
 AM_CONDITIONAL([REBUILD_MAN_PAGES], [test x$DOCBOOK2MAN != x])
 AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e .git])
 if test -e .git -a "x$DOCBOOK2MAN" = "x"; then

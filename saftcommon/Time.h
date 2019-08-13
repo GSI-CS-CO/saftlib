@@ -181,7 +181,7 @@ namespace saftlib
 			return TAI_is_UTCleap(TAI);
 		}
 
-		friend Time makeTimeUTC(uint64_t UTC, bool isLeap = false);
+		friend Time makeTimeUTC(uint64_t UTC, bool isLeap);
 		friend Time makeTimeTAI(uint64_t TAI);
 	private:
 		explicit Time(const uint64_t& value) : TAI(value) {
@@ -194,7 +194,7 @@ namespace saftlib
 	Time operator-(const Time& lhs, const int64_t& rhs);
 	Time operator+(const int64_t& lhs, const Time& rhs);
 	Time operator-(const int64_t& lhs, const Time& rhs);
-	Time makeTimeUTC(uint64_t UTC, bool isLeap);
+	Time makeTimeUTC(uint64_t UTC, bool isLeap = false);
 	Time makeTimeTAI(uint64_t TAI);
 
 

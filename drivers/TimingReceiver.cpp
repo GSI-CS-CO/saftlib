@@ -355,7 +355,6 @@ bool TimingReceiver::getLocked() const
   if (newLocked != locked) {
     locked = newLocked;
     SigLocked(locked);
-    Locked(locked);
   }
   
   return newLocked;
@@ -383,8 +382,6 @@ int32_t TimingReceiver::CurrentTemperature()
 void TimingReceiver::do_remove(SinkKey key)
 {
   actionSinks[key].reset();
-  SoftwareActionSinks(getSoftwareActionSinks());
-  Interfaces(getInterfaces());
   compile();
 }
 
@@ -437,26 +434,12 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
   
   // Own it and inform changes to properties
   alloc->second = softwareActionSink;
-  SoftwareActionSinks(getSoftwareActionSinks());
-  Interfaces(getInterfaces());
   
   return path;
 }
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
 {
-  // etherbone::Cycle cycle;
-  
-  // cycle.open(device);
-  // cycle.write(stream, EB_DATA32, event >> 32);
-  // cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
-  // cycle.write(stream, EB_DATA32, param >> 32);
-  // cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
-  // cycle.write(stream, EB_DATA32, 0); // reserved
-  // cycle.write(stream, EB_DATA32, 0); // TEF
-  // cycle.write(stream, EB_DATA32, time >> 32);
-  // cycle.write(stream, EB_DATA32, time & 0xFFFFFFFFUL);
-  // cycle.close();
   InjectEvent(event,param,makeTimeTAI(time));
 }
 
@@ -511,8 +494,6 @@ std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() co
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     std::shared_ptr<SoftwareActionSink> softwareActionSink =
       std::dynamic_pointer_cast<SoftwareActionSink>(i->second);
-    // std::shared_ptr<SoftwareActionSink> softwareActionSink =
-    //   std::shared_ptr<SoftwareActionSink>::cast_dynamic(i->second);
     if (!softwareActionSink) continue;
     out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
   }
@@ -526,8 +507,6 @@ std::map< std::string, std::string > TimingReceiver::getOutputs() const
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
     std::shared_ptr<Output> output =
       std::dynamic_pointer_cast<Output>(i->second);
-    // std::shared_ptr<Output> output =
-    //   std::shared_ptr<Output>::cast_dynamic(i->second);
     if (!output) continue;
     out[output->getObjectName()] = output->getObjectPath();
   }
@@ -541,8 +520,6 @@ std::map< std::string, std::string > TimingReceiver::getInputs() const
   for (iterator i = eventSources.begin(); i != eventSources.end(); ++i) {
     std::shared_ptr<Input> input =
       std::dynamic_pointer_cast<Input>(i->second);
-    // std::shared_ptr<Input> input =
-    //   std::shared_ptr<Input>::cast_dynamic(i->second);
     if (!input) continue;
     out[input->getObjectName()] = input->getObjectPath();
   }
@@ -621,16 +598,12 @@ uint16_t TimingReceiver::updateMostFull(unsigned channel)
   if (most_full[channel] != mostFull) {
     most_full[channel] = mostFull;
     
-    // Broadcast new value to all subchannels
-    SinkKey low(channel, 0);
-    SinkKey high(channel+1, 0);
-    ActionSinks::iterator first = actionSinks.lower_bound(low);
-    ActionSinks::iterator last  = actionSinks.lower_bound(high);
-    
-    for (; first != last; ++first) {
-      if (!first->second) continue; // skip unused SoftwareActionSinks
-      first->second->MostFull(mostFull);
-    }
+    // // Broadcast new value to all subchannels
+    // maybe introduce a signal for this (is anyone using this?)
+    // SinkKey low(channel, 0);
+    // SinkKey high(channel+1, 0);
+    // ActionSinks::iterator first = actionSinks.lower_bound(low);
+    // ActionSinks::iterator last  = actionSinks.lower_bound(high);
   }
   
   return used;

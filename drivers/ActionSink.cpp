@@ -95,11 +95,6 @@ void ActionSink::ToggleActive()
       i->second->setRawActive(!i->second->getActive());
     throw;
   }
-
-  // notify changes
-  for (i = conditions.begin(); i != conditions.end(); ++i)
-    i->second->Active(i->second->getActive());
-  notify(true, true);
 }
 
 uint16_t ActionSink::ReadFill()
@@ -203,14 +198,12 @@ void ActionSink::setMinOffset(int64_t val)
 {
   ownerOnly();
   minOffset = val;
-  MinOffset(minOffset);
 }
 
 void ActionSink::setMaxOffset(int64_t val)
 {
   ownerOnly();
   maxOffset = val;
-  MaxOffset(maxOffset);
 }
 
 void ActionSink::setMostFull(uint16_t val)
@@ -224,7 +217,6 @@ void ActionSink::setSignalRate(uint64_t val)
 {
   ownerOnly();
   signalRate = val;
-  SignalRate(signalRate);
 }
 
 void ActionSink::setOverflowCount(uint64_t val)
@@ -232,7 +224,6 @@ void ActionSink::setOverflowCount(uint64_t val)
   ownerOnly();
   if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
   overflowCount = 0;
-  OverflowCount(overflowCount);
 }
 
 void ActionSink::setActionCount(uint64_t val)
@@ -240,7 +231,6 @@ void ActionSink::setActionCount(uint64_t val)
   ownerOnly();
   if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ActionCount to 0");
   actionCount = 0;
-  ActionCount(actionCount);
 }
 
 void ActionSink::setLateCount(uint64_t val)
@@ -248,7 +238,6 @@ void ActionSink::setLateCount(uint64_t val)
   ownerOnly();
   if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set LateCount to 0");
   lateCount = 0;
-  LateCount(lateCount);
 }
 
 void ActionSink::setEarlyCount(uint64_t val)
@@ -256,7 +245,6 @@ void ActionSink::setEarlyCount(uint64_t val)
   ownerOnly();
   if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
   earlyCount = 0;
-  EarlyCount(earlyCount);
 }
 
 void ActionSink::setConflictCount(uint64_t val)
@@ -264,7 +252,6 @@ void ActionSink::setConflictCount(uint64_t val)
   ownerOnly();
   if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
   conflictCount = 0;
-  ConflictCount(conflictCount);
 }
 
 void ActionSink::setDelayedCount(uint64_t val)
@@ -272,7 +259,6 @@ void ActionSink::setDelayedCount(uint64_t val)
   ownerOnly();
   if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
   delayedCount = 0;
-  DelayedCount(delayedCount);
 }
 
 void ActionSink::receiveMSI(uint8_t code)
@@ -368,7 +354,6 @@ bool ActionSink::updateOverflow(uint64_t time)
 
   overflowCount += overflow;
   overflowUpdate = time;
-  OverflowCount(overflowCount);
   return false;
 }
 
@@ -388,7 +373,6 @@ bool ActionSink::updateAction(uint64_t time)
 
   actionCount += valid;
   actionUpdate = time;
-  ActionCount(actionCount);
   return false;
 }
 
@@ -432,7 +416,6 @@ bool ActionSink::updateLate(uint64_t time)
   if (!r.count) clog << kLogErr << "Received LATE MSI, but FAILED_COUNT was 0" << std::endl;
   lateCount += r.count;
   lateUpdate = time;
-  LateCount(lateCount);
   Late(lateCount, r.event, r.param, r.deadline, r.executed);
   SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
@@ -444,7 +427,6 @@ bool ActionSink::updateEarly(uint64_t time)
   if (!r.count) clog << kLogErr << "Received EARLY MSI, but FAILED_COUNT was 0" << std::endl;
   earlyCount += r.count;
   earlyUpdate = time;
-  EarlyCount(earlyCount);
   Early(earlyCount, r.event, r.param, r.deadline, r.executed);
   SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
@@ -456,7 +438,6 @@ bool ActionSink::updateConflict(uint64_t time)
   if (!r.count) clog << kLogErr << "Received CONFLICT MSI, but FAILED_COUNT was 0" << std::endl;
   conflictCount += r.count;
   conflictUpdate = time;
-  ConflictCount(conflictCount);
   Conflict(conflictCount, r.event, r.param, r.deadline, r.executed);
   SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
@@ -468,7 +449,6 @@ bool ActionSink::updateDelayed(uint64_t time)
   if (!r.count) clog << kLogErr << "Received DELAYED MSI, but FAILED_COUNT was 0" << std::endl;
   delayedCount += r.count;
   delayedUpdate = time;
-  DelayedCount(delayedCount);
   Delayed(delayedCount, r.event, r.param, r.deadline, r.executed);
   SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
@@ -479,18 +459,10 @@ void ActionSink::removeCondition(Conditions::iterator i)
   bool active = i->second->getActive();
   conditions.erase(i);
   try {
-    notify(active, !active);
     if (active) dev->compile();
   } catch (...) {
     clog << kLogErr << "Failed to recompile after removing condition (should be impossible)" << std::endl;
   }
-}
-
-void ActionSink::notify(bool active, bool inactive)
-{
-  AllConditions(getAllConditions());
-  if (active)   ActiveConditions(getActiveConditions());
-  if (inactive) InactiveConditions(getInactiveConditions());
 }
 
 void ActionSink::compile()
@@ -537,7 +509,6 @@ std::string ActionSink::NewConditionHelper(bool active, uint64_t id, uint64_t ma
     throw;
   }
 
-  notify(active, !active);
   return condition->getObjectPath();
 }
 

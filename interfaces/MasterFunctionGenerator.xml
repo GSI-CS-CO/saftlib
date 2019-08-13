@@ -80,7 +80,7 @@
 
          Parameters are sent as a vector of vectors. 
          The outside vectors contain a coefficient vector for each FG and must be of the same size
-         and <= the number of active FGs.
+         and less or equal the number of active FGs.
          The coefficient vectors for each FG's parameter set must be the same size
          but different FGs may have different parameter set sizes. 
          If there is no data for an individual function generator an empty vector 
@@ -131,7 +131,21 @@
     <method name="Flush"/>
 
 
-    <!-- Stopped: Stopped signal forwarded from a single Function Generator
+    <!-- Stopped: Deprecated! Use SigStopped instead.
+         @name:                     Name of the FG that generated the signal.
+         @time:                     Time when function generation ended in nanoseconds since 1970
+         @abort:                    stopped due to a call to Abort
+         @hardwareMacroUnderflow:   A fatal error, indicating the SCUbus is congested
+         @microControllerUnderflow: A fatal error, indicating the host CPU is overloaded
+      -->
+    <signal name="Stopped" deprecated="yes">
+      <arg name="name"                     type="s"/>
+      <arg name="time"                     type="t"/>
+      <arg name="aborted"                  type="b"/>
+      <arg name="hardwareMacroUnderflow"   type="b"/>
+      <arg name="microControllerUnderflow" type="b"/>
+    </signal>
+    <!-- SigStopped: Stopped signal forwarded from a single Function Generator
          @name:                     Name of the FG that generated the signal.
          @time:                     Time when function generation ended in nanoseconds since 1970
          @abort:                    stopped due to a call to Abort
@@ -156,13 +170,6 @@
          next time the function generator starts. After stopping, regardless of if the generation
          was successful or not, the parameter FIFO is cleared, Enabled is false, and this signal emitted.
       -->
-    <signal name="Stopped" deprecated="yes">
-      <arg name="name"                     type="s"/>
-      <arg name="time"                     type="t"/>
-      <arg name="aborted"                  type="b"/>
-      <arg name="hardwareMacroUnderflow"   type="b"/>
-      <arg name="microControllerUnderflow" type="b"/>
-    </signal>
     <signal name="SigStopped">
       <arg name="name"                     type="s"/>
       <arg name="time"                     type="T"/>
@@ -193,12 +200,14 @@
       <arg name="running"                  type="b"/>
     </signal>
 
-    <!-- Started: Started signal forwarded from a single Function Generator
+    <!-- Started: Deprecated! Use SigStarted instead.
          -->
     <signal name="Started" deprecated="yes">
       <arg name="name"                     type="s"/>
       <arg name="time"                     type="t"/>
     </signal>
+    <!-- SigStarted: Started signal forwarded from a single Function Generator
+         -->
     <signal name="SigStarted">
       <arg name="name"                     type="s"/>
       <arg name="time"                     type="T"/>
@@ -210,16 +219,21 @@
       <arg name="name"                     type="s"/>
     </signal>
 
-    <!-- AllStopped:                All Function generators have stopped.
+    <!-- AllStopped:                Deprecated! Use SigAllStopped instead.
          @time:                     Time when last function generation ended in nanoseconds since 1970
 
          This signal is generated when a function generator stops and all function generators
          controlled by this master have then stopped. 
     -->
-
     <signal name="AllStopped" deprecated="yes">
       <arg name="time" type="t"/>
     </signal>
+    <!-- SigAllStopped:                All Function generators have stopped.
+         @time:                     Time when last function generation ended
+
+         This signal is generated when a function generator stops and all function generators
+         controlled by this master have then stopped. 
+    -->
     <signal name="SigAllStopped">
       <arg name="time" type="T"/>
     </signal>

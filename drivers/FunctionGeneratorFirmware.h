@@ -32,6 +32,8 @@
 #include <deque>
 
 #include "interfaces/FunctionGeneratorFirmware.h"
+#include "FunctionGenerator.h"
+#include "MasterFunctionGenerator.h"
 #include "Owned.h"
 
 namespace saftlib {
@@ -58,10 +60,16 @@ class FunctionGeneratorFirmware : public Owned, public iFunctionGeneratorFirmwar
     // iFunctionGenerator overrides
     uint32_t getVersion() const;
     std::map<std::string, std::string> Scan();
+    std::map<std::string, std::string> ScanMasterFg();
+    std::map<std::string, std::string> ScanFgChannels();
+
+    void removeMasterFunctionGenerator();
     
   protected:
     FunctionGeneratorFirmware(const ConstructorType& args);
     ~FunctionGeneratorFirmware();
+
+    bool nothing_runs();
 
     std::string                objectPath;
     TimingReceiver             *tr;

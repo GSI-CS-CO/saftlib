@@ -16,10 +16,18 @@
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"/>
     </property>
     
-    <!-- Scan: Scan bus for fg channels.
+    <!-- Scan: Scan bus for fg channels. 
+               This function should only be called if no fg-channel is active.
+               If any channel is active and this function is called a saftbus::Error will be thrown!
          @result:   fgs found.
       -->
     <method name="Scan">
+      <arg direction="out" type="a{ss}" name="fgs"/>
+    </method>
+    <method name="ScanMasterFg">
+      <arg direction="out" type="a{ss}" name="fgs"/>
+    </method>
+    <method name="ScanFgChannels">
       <arg direction="out" type="a{ss}" name="fgs"/>
     </method>
   </interface>

@@ -68,6 +68,18 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 	}
 }
 
+int ProxyConnection::get_saftbus_index(const std::string &object_path, const std::string &interface_name)
+{
+	std::unique_lock<std::mutex> lock(_socket_mutex);
+	saftbus::write(get_fd(), saftbus::GET_SAFTBUS_INDEX);
+	saftbus::write(get_fd(), object_path);
+	saftbus::write(get_fd(), interface_name);
+	int saftbus_index = -1;
+	saftbus::read(get_fd(), saftbus_index);
+	return saftbus_index;
+}
+
+
 int ProxyConnection::get_connection_id()
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
@@ -94,18 +106,21 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 	saftbus::write(get_fd(), global_id);
 }
 
-void ProxyConnection::remove_proxy_signal_fd(std::string object_path,
+void ProxyConnection::remove_proxy_signal_fd(int saftbus_index,
+			                                 std::string object_path,
 	                                         std::string interface_name,
 	                                         int global_id) 
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
 	saftbus::write(get_fd(), saftbus::SIGNAL_REMOVE_FD);
+	saftbus::write(get_fd(), saftbus_index);
 	saftbus::write(get_fd(), object_path);
 	saftbus::write(get_fd(), interface_name);
 	saftbus::write(get_fd(), global_id);
 }
 
-Serial& ProxyConnection::call_sync (const std::string& object_path, 
+Serial& ProxyConnection::call_sync (int saftbus_index,
+	                                const std::string& object_path, 
 	                                const std::string& interface_name, 
 	                                const std::string& name, 
 	                                const Serial& parameters, 
@@ -130,6 +145,7 @@ Serial& ProxyConnection::call_sync (const std::string& object_path,
 	//                                            << name << ")" << std::endl;
 
 	Serial message;
+	message.put(saftbus_index);
 	message.put(object_path);
 	message.put(_saftbus_id);
 	message.put(interface_name);

@@ -58,6 +58,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void ClearStatistics();
     void ResetGateway();
     void KillGateway();
+    void UpdateOLED();
 
     std::vector< uint32_t > getRegisterContent()  const;
     std::vector< uint32_t > getMilHistogram()     const;
@@ -80,6 +81,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void setUtcUtcDelay(uint32_t val);
     void setTriggerUtcDelay(uint32_t val);
     void setUtcOffset(uint64_t val);
+    void setOpReady(bool val);
     
   protected:
     WrMilGateway(const ConstructorType& args);

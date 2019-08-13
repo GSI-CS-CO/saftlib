@@ -56,7 +56,16 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
 
 MasterFunctionGenerator::~MasterFunctionGenerator()
 {
-      
+  for (auto fg : allFunctionGenerators) {
+    fg->signal_running.clear();
+    fg->signal_armed.clear();
+    fg->signal_enabled.clear();
+    fg->signal_started.clear();
+    fg->signal_stopped.clear();
+    fg->signal_refill.clear();
+  }
+  allFunctionGenerators.clear();
+  activeFunctionGenerators.clear();
 }
 
 // aggregate sigc signals from impl and forward via dbus where necessary
@@ -423,8 +432,6 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
 		{
 			fg->startTag=startTag;
 		}
-
-    StartTag(startTag);
   }
 }
 
