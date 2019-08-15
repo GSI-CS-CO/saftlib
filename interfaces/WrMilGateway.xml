@@ -158,5 +158,8 @@
          OP-READY was changed -->
     <method name="UpdateOLED"/>
 
+    <!-- RequestFillEvent: The gatway is instructed to send a MIL fill event if possible -->
+    <method name="RequestFillEvent"/>
+
   </interface>
 </node>

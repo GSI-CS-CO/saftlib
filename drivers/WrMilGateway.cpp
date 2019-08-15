@@ -52,13 +52,13 @@ namespace saftlib {
 
 WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
-   poll_period(1000), // [ms]
-   max_time_without_mil_events(10000), // 10 seconds
+   poll_period(100), // [ms]
+   max_time_without_mil_events(16000), // 14 seconds
    time_without_mil_events(max_time_without_mil_events),
    device(args.device),
    sdb_msi_base(args.sdb_msi_base),
    mailbox(args.mailbox),
-   irq(args.device.request_irq(args.sdb_msi_base, sigc::mem_fun(*this, &WrMilGateway::irq_handler))),
+   //irq(args.device.request_irq(args.sdb_msi_base, sigc::mem_fun(*this, &WrMilGateway::irq_handler))),
    have_wrmilgw(false)
 {
 
@@ -91,41 +91,41 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   }
 
 
-  // configure MSI that triggers our irq_handler
-  eb_address_t mailbox_base = args.mailbox.sdb_component.addr_first;
-  eb_data_t mailbox_value;
-  unsigned slot = 0;
+  // // configure MSI that triggers our irq_handler
+  // eb_address_t mailbox_base = args.mailbox.sdb_component.addr_first;
+  // eb_data_t mailbox_value;
+  // unsigned slot = 0;
 
-  device.read(mailbox_base, EB_DATA32, &mailbox_value);
-  while((mailbox_value != 0xffffffff) && slot < 128) {
-    device.read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
-    // std::cerr << "looking for free slot("<<slot<<"): mailbox_value = 0x" 
-    //           << std::hex << std::setw(8) << std::setfill('0') << mailbox_value 
-    //           << std::dec << std::endl;
-    slot++;
-  }
+  // device.read(mailbox_base, EB_DATA32, &mailbox_value);
+  // while((mailbox_value != 0xffffffff) && slot < 128) {
+  //   device.read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
+  //   // std::cerr << "looking for free slot("<<slot<<"): mailbox_value = 0x" 
+  //   //           << std::hex << std::setw(8) << std::setfill('0') << mailbox_value 
+  //   //           << std::dec << std::endl;
+  //   slot++;
+  // }
 
-  if (slot < 128)
-    mbx_slot = --slot;
-  else
-    clog << kLogErr << "WrMilGateway: no free slot in mailbox left"  << std::endl;
+  // if (slot < 128)
+  //   mbx_slot = --slot;
+  // else
+  //   clog << kLogErr << "WrMilGateway: no free slot in mailbox left"  << std::endl;
 
-  //save the irq address in the odd mailbox slot
-  //keep postal address to free later
-  mailbox_slot_address = mailbox_base + slot * 4 * 2 + 4;
-  device.write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
-  // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
-  // done with MSI configuration
+  // //save the irq address in the odd mailbox slot
+  // //keep postal address to free later
+  // mailbox_slot_address = mailbox_base + slot * 4 * 2 + 4;
+  // device.write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
+  // // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
+  // // done with MSI configuration
 
-  // configure mailbox for MSI to Saftlib
-  // get mailbox slot number for swi host=>lm32
-  // eb_data_t mb_slot;
-  // mb_slot = readRegisterContent(WR_MIL_GW_REG_MSI_SLOT);
-  // std::cerr << "mb_slot = " << mb_slot << std::endl;
+  // // configure mailbox for MSI to Saftlib
+  // // get mailbox slot number for swi host=>lm32
+  // // eb_data_t mb_slot;
+  // // mb_slot = readRegisterContent(WR_MIL_GW_REG_MSI_SLOT);
+  // // std::cerr << "mb_slot = " << mb_slot << std::endl;
 
-  // tell the LM32 which slot in mailbox is ours
-  writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, slot);
-  // std::cerr << "lm32 slot configured to = " << slot << std::endl;
+  // // tell the LM32 which slot in mailbox is ours
+  // writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, slot);
+  // // std::cerr << "lm32 slot configured to = " << slot << std::endl;
 
   // reset WR-MIL Gateway in case the firmware is already running. 
   //  This prevents resetting the CPU in the middle of a WB cycle
@@ -161,17 +161,101 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   
   // poll some registers periodically
   pollConnection = Slib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
+
+  // find oled device
+  uint64_t OLED_SDB_VENDOR_ID = UINT64_C(0x651);
+  uint32_t OLED_SDB_DEVICE_ID = UINT32_C(0x93a6f3c4);
+
+  // OLED_RESET_OWR    0x0   //wo,  1 b, Resets the OLED display
+  // OLED_COL_OFFS_RW  0x4   //rw,  8 b, first visible pixel column. 0x23 for old, 0x30 for new controllers. default is 0x30
+  // OLED_UART_OWR     0x8   //wo,  8 b, UART input FIFO. Ascii b7..0
+  // OLED_CHAR_OWR     0xc   //wo, 20 b, Char input FIFO. Row b14..12, Col b11..8, Ascii b7..0
+  // OLED_RAW_OWR      0x10  //wo, 20 b, Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0
+  std::vector<struct sdb_device> oled_devices;
+  device.sdb_find_by_identity(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID, oled_devices);
+  if (!oled_devices.empty()) {
+    oled_reset = oled_devices.front().sdb_component.addr_first + 0x0;
+    oled_char = oled_devices.front().sdb_component.addr_first + 0xc;
+  }
+  device.write(oled_reset, EB_DATA32, (eb_data_t)1); // reset the oled
+  idle = false;
+  oledUpdate();
+}
+
+void WrMilGateway::oledUpdate()
+{
+  std::ostringstream lines[6];
+
+  lines[0] << "WRMIL ";
+  switch(event_source) {
+    case WR_MIL_GW_EVENT_SOURCE_SIS:
+      lines[0] << "SIS18";
+    break;
+    case WR_MIL_GW_EVENT_SOURCE_ESR:
+      lines[0] << "ESR";
+    break;
+    default:
+      lines[0] << "???";
+  }
+
+  if (firmware_running && firmware_state == WR_MIL_GW_STATE_CONFIGURED) {
+    lines[1] << "OP_READY";
+  } else {
+    lines[1] << "not ready";
+  }
+
+  lines[2] << "#"     << std::setw(9) << num_mil_events;
+  lines[3] << "#late" << std::setw(5)  << num_late_events;
+
+  
+  if (idle) {
+    lines[5] << "IDLE";
+  }
+
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  for (unsigned row = 0; row < 6; ++row) {
+    std::string line = lines[row].str();
+    for (unsigned col = 0; col < 11; ++col) {
+      char ch = ' ';
+      if (col < line.size()) {
+        ch = line[col];
+      }
+      cycle.write(oled_char, EB_DATA32, (eb_data_t)((row<<12) | (col<<8) | ch));
+      //device.write(oled_char, EB_DATA32, (eb_data_t)((row<<12)|(col<<8)|ch));
+    }
+  }
+  cycle.close();
+
+
+// void oled_numbers(uint32_t *six_numbers, volatile uint32_t *oled) {
+//   for (int row = 0; row < 6; ++row) {
+//     for (int col = 0; col < 11; ++col) {
+//       char ch = ' ';
+//       if (col == 0) {
+//         ch = '0';
+//       } else if (col == 1) {
+//         ch = 'x';
+//       } else if (col < 10) {
+//         int digit = ((six_numbers[row]) >> (((9-col)*4))&0xf);
+//         if (digit < 10) ch = digit + '0'; else ch = digit-10+'a';
+//       }
+//       oled[3] = (row<<12) | (col<<8) | ch;
+//     }
+//   }
+// }
+
 }
 
 WrMilGateway::~WrMilGateway()
 {
 
-  writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, 0xffffffff);
+  //writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, 0xffffffff);
 
   // std::cerr << "WrMilGateway::~WrMilGateway()" << std::endl;
   // clean the mailbox
-  device.write(mailbox_slot_address, EB_DATA32, 0xffffffff);
-  device.write(mailbox_slot_address-4, EB_DATA32, 0xffffffff);
+  //device.write(mailbox_slot_address, EB_DATA32, 0xffffffff);
+  //device.write(mailbox_slot_address-4, EB_DATA32, 0xffffffff);
   //eb_data_t mailbox_value;
   // device.read(mailbox_slot_address, EB_DATA32, &mailbox_value);
   // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << mailbox_value 
@@ -193,7 +277,7 @@ WrMilGateway::~WrMilGateway()
   }*/
 
   pollConnection.disconnect();
-  device.release_irq(irq);
+  //device.release_irq(irq);
 
 }
 
@@ -272,7 +356,7 @@ std::vector< uint32_t > WrMilGateway::getMilHistogram() const
 bool WrMilGateway::getInUse() const
 {
   // std::cerr << "WrMilGateway::getInUse()" << std::endl;
-  return time_without_mil_events <= max_time_without_mil_events;
+  return !idle;
 }
 
 
@@ -286,15 +370,16 @@ bool WrMilGateway::poll()
   getFirmwareRunning();
 
   // these three checks are done on MSI base now (no polling needed)
-  // getFirmwareState();
-  // getEventSource();
-  // getNumLateMilEvents();
+  firmware_state   = readRegisterContent(WR_MIL_GW_REG_STATE);
+  event_source     = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
+  num_late_events  = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
 
   // check if the gateway is used (translates events)
   uint64_t new_num_mil_events = getNumMilEvents();
   if (num_mil_events != new_num_mil_events) {
     if (!getInUse()) {
       // in this case we change back to being "in use"
+      idle = false;
       SigInUse(true);
     }
     time_without_mil_events = 0;
@@ -313,6 +398,13 @@ bool WrMilGateway::poll()
       SigInUse(false);
     }
   }
+  if (time_without_mil_events >= max_time_without_mil_events/2) {
+    RequestFillEvent();
+    time_without_mil_events = 0;
+    idle = true;
+  } 
+
+  oledUpdate();
 
   return true; // return true to continue polling
 }
@@ -354,6 +446,11 @@ void WrMilGateway::KillGateway()
 void WrMilGateway::UpdateOLED()
 {
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_UPDATE_OLED);
+}
+
+void WrMilGateway::RequestFillEvent()
+{
+  writeRegisterContent(WR_MIL_GW_REG_REQUEST_FILL_EVT, 1);
 }
 
 
@@ -505,7 +602,6 @@ void WrMilGateway::ownerQuit()
       // std::cerr << "WrMilGateway::ownerQuit()" << std::endl;
 }
 
-
 void WrMilGateway::irq_handler(eb_data_t msg) const 
 {
    // std::cerr << "WrMilGateway::irq_handler(" << msg << ") called" << std::endl;
@@ -514,12 +610,12 @@ void WrMilGateway::irq_handler(eb_data_t msg) const
     case WR_MIL_GW_MSI_LATE_EVENT:
       clog << kLogErr << "WR-MIL-Gateway: late MIL event " << std::endl;
 
-        // std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_LATE_EVENT)" << std::endl;
+         std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_LATE_EVENT)" << std::endl;
       getNumLateMilEvents(); 
     break;
     case WR_MIL_GW_MSI_STATE_CHANGED:
       //clog << kLogInfo << "WR-MIL-Gateway: firmware state changed" << std::endl;
-        // std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_STATE_CHANGED)" << std::endl;
+         std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_STATE_CHANGED)" << std::endl;
       switch(getFirmwareState()) {
         case WR_MIL_GW_STATE_INIT:
           clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to INIT" << std::endl;
@@ -539,7 +635,7 @@ void WrMilGateway::irq_handler(eb_data_t msg) const
       }
     break;
     default:;
-      // std::cerr << "WrMilGateway::irq_handler() unknown Interrupt: " << std::dec << msg << std::endl; 
+       std::cerr << "WrMilGateway::irq_handler() unknown Interrupt: " << std::dec << msg << std::endl; 
   }
   // std::cerr << "WrMilGateway::irq_handler() done" << std::endl;
 }

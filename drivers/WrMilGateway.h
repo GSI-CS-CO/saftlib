@@ -59,6 +59,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void ResetGateway();
     void KillGateway();
     void UpdateOLED();
+    void RequestFillEvent();
 
     std::vector< uint32_t > getRegisterContent()  const;
     std::vector< uint32_t > getMilHistogram()     const;
@@ -89,6 +90,8 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void Reset();
     void ownerQuit();
 
+    void oledUpdate();
+
     // Polling method
     bool poll();
     const int poll_period; // [ms]
@@ -108,8 +111,12 @@ class WrMilGateway : public Owned, public iWrMilGateway
     uint64_t num_mil_events;
     const uint32_t max_time_without_mil_events; // if time_without_events exceeds this, we conclude the gateway isn't used
     uint32_t time_without_mil_events;
+    bool idle;
 
     sigc::connection pollConnection;
+
+    eb_address_t  oled_reset;
+    eb_address_t  oled_char;
 
 
     //std::shared_ptr<TimingReceiver> receiver;
