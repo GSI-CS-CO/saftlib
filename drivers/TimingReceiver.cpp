@@ -886,9 +886,7 @@ void TimingReceiver::probe(OpenDevice& od)
     try {
       const std::string wrmilgw_str("wrmilgateway");
       WrMilGateway::ConstructorType wrmil_args = { od.objectPath + "/" + wrmilgw_str, 
-                                                   tr->getDevice(), 
-                                                   mbx_msi[0], 
-                                                   mbx[0]  };
+                                                   tr->getDevice()};
       tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
       clog << kLogDebug << "TimingReceiver: WR-MIL-Gateway firmware found" << std::endl;
     } catch (saftbus::Error &e) {

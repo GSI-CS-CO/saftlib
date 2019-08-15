@@ -46,8 +46,6 @@ class WrMilGateway : public Owned, public iWrMilGateway
     struct ConstructorType {
       std::string                objectPath;
       Device &                   device;
-      etherbone::sdb_msi_device  sdb_msi_base;
-      sdb_device                 mailbox;
     };
     
     static std::shared_ptr<WrMilGateway> create(const ConstructorType& args);
@@ -111,7 +109,6 @@ class WrMilGateway : public Owned, public iWrMilGateway
     uint64_t num_mil_events;
     const uint32_t max_time_without_mil_events; // if time_without_events exceeds this, we conclude the gateway isn't used
     uint32_t time_without_mil_events;
-    bool idle;
 
     sigc::connection pollConnection;
 
@@ -128,6 +125,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     sdb_device                mailbox;
     eb_address_t              irq;
     bool                      have_wrmilgw;
+    bool                      idle;
 
     eb_address_t              mailbox_slot_address;
     unsigned mbx_slot;
