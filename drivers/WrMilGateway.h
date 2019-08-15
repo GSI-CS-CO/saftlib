@@ -101,7 +101,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void    writeRegisterContent(uint32_t reg_offset, uint32_t value);
     bool    firmwareRunning() const;
 
-    void irq_handler(eb_data_t msg) const;
+    // void irq_handler(eb_data_t msg) const;
 
 
     mutable bool    firmware_running;

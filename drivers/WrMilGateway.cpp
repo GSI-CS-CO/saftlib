@@ -355,7 +355,6 @@ std::vector< uint32_t > WrMilGateway::getMilHistogram() const
 
 bool WrMilGateway::getInUse() const
 {
-  // std::cerr << "WrMilGateway::getInUse()" << std::endl;
   return !idle;
 }
 
@@ -377,7 +376,7 @@ bool WrMilGateway::poll()
   // check if the gateway is used (translates events)
   uint64_t new_num_mil_events = getNumMilEvents();
   if (num_mil_events != new_num_mil_events) {
-    if (!getInUse()) {
+    if (idle) {
       // in this case we change back to being "in use"
       idle = false;
       SigInUse(true);
@@ -385,47 +384,36 @@ bool WrMilGateway::poll()
     time_without_mil_events = 0;
     num_mil_events = new_num_mil_events;
   } else {
-    bool inUse = getInUse();
     time_without_mil_events += poll_period;
-    bool new_inUse = getInUse();
-    if (inUse && !new_inUse) {
-      // Not seen a MIL event for too long... 
-      //  ... that counts as not being used because
-      //  we expect event 255 (EVT_COMMAND) 
-      //  every second in normal operation.
-      // This signal is only produced only once
-      //  if the status changes.
-      SigInUse(false);
-    }
   }
+
   if (time_without_mil_events >= max_time_without_mil_events/2) {
     RequestFillEvent();
     time_without_mil_events = 0;
-    idle = true;
+    if (!idle) {
+      SigInUse(false);
+      idle = true;
+    }
   } 
 
   oledUpdate();
-
   return true; // return true to continue polling
 }
 
 void WrMilGateway::StartSIS18()
 {
-  // std::cerr << "WrMilGateway::StartSIS18()" << std::endl;
   // configure WR-MIL Gateway firmware to start operation as SIS18 Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_SIS);
   clog << kLogInfo << "WR-MIL-Gateway: configured as SIS18 Pulszentrale" << std::endl;
 }
 void WrMilGateway::StartESR()
 {
-  // std::cerr << "WrMilGateway::StartESR()" << std::endl;
   // configure WR-MIL Gateway firmware to start operation as ESR Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_ESR);
   clog << kLogInfo << "WR-MIL-Gateway: configured as ESR Pulszentrale" << std::endl;
 }
 void WrMilGateway::ClearStatistics()
 {
-  // std::cerr << "WrMilGateway::ClearStatistics()" << std::endl;
   for (int i = 0; i < (WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_NUM_EVENTS_HI)/4+256; ++i) {
     writeRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI + i*4, 0x0);
   }
@@ -433,13 +421,11 @@ void WrMilGateway::ClearStatistics()
 
 void WrMilGateway::ResetGateway()
 {
-  // std::cerr << "WrMilGateway::ResetGateway()" << std::endl;
   ClearStatistics();
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
 }
 void WrMilGateway::KillGateway()
 {
-  // std::cerr << "WrMilGateway::KillGateway()" << std::endl;
   ClearStatistics();
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_KILL);
 }
@@ -456,14 +442,10 @@ void WrMilGateway::RequestFillEvent()
 
 uint32_t WrMilGateway::getWrMilMagic() const
 {
-  // std::cerr << "WrMilGateway::getWrMilMagic()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_MAGIC_NUMBER);
 }
 uint32_t WrMilGateway::getFirmwareState() const
 {
-  // std::cerr << "WrMilGateway::getFirmwareState()" << std::endl;
-
   auto new_firmware_state = readRegisterContent(WR_MIL_GW_REG_STATE);
   if (firmware_state != new_firmware_state) {
     firmware_state = new_firmware_state;
@@ -476,8 +458,6 @@ uint32_t WrMilGateway::getFirmwareState() const
 }
 uint32_t WrMilGateway::getEventSource() const
 {
-  // std::cerr << "WrMilGateway::getEventSource()" << std::endl;
-
   auto new_event_source = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
   if (event_source != new_event_source) {
     event_source = new_event_source;
@@ -487,31 +467,22 @@ uint32_t WrMilGateway::getEventSource() const
 }
 unsigned char WrMilGateway::getUtcTrigger() const
 {
-  // std::cerr << "WrMilGateway::getUtcTrigger()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_UTC_TRIGGER);
 }
 uint32_t WrMilGateway::getEventLatency() const
 {
-  // std::cerr << "WrMilGateway::getEventLatency()" << std::endl;
   return readRegisterContent(WR_MIL_GW_REG_LATENCY);
 }
 uint32_t WrMilGateway::getUtcUtcDelay() const
 {
-  // std::cerr << "WrMilGateway::getUtcUtcDelay()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_UTC_DELAY);
 }
 uint32_t WrMilGateway::getTriggerUtcDelay() const
 {
-  // std::cerr << "WrMilGateway::getTriggerUtcDelay()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_TRIG_UTC_DELAY);
 }
 uint64_t WrMilGateway::getUtcOffset() const
 {
-    // std::cerr << "WrMilGateway::getUtcOffset()" << std::endl;
-
   uint64_t result = readRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_HI);
   result <<= 32;
   result |= readRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_LO);
@@ -519,8 +490,6 @@ uint64_t WrMilGateway::getUtcOffset() const
 }
 uint64_t WrMilGateway::getNumMilEvents() const
 {
-    // std::cerr << "WrMilGateway::getNumMilEvents()" << std::endl;
-
   uint64_t result = readRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI);
   result <<= 32;
   result |= readRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_LO);
@@ -528,8 +497,6 @@ uint64_t WrMilGateway::getNumMilEvents() const
 }
 uint32_t WrMilGateway::getNumLateMilEvents() const
 {
-    // std::cerr << "WrMilGateway::getNumMilEvents()" << std::endl;
-
   uint32_t new_num_late_events = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
   if (num_late_events != new_num_late_events) {
     // send the current number and the ones since last signal
@@ -544,44 +511,32 @@ uint32_t WrMilGateway::getNumLateMilEvents() const
 }
 std::vector< uint32_t > WrMilGateway::getLateHistogram() const
 {
-    // std::cerr << "WrMilGateway::getLateHistogram()" << std::endl;
-
   std::vector<uint32_t> lateHistogram((WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_LATE_HISTOGRAM) / 4, 0);
   for (unsigned i = 0; i < lateHistogram.size(); ++i) {
     lateHistogram[i] = readRegisterContent(WR_MIL_GW_REG_LATE_HISTOGRAM + 4*i);
   }
   return lateHistogram;
-
 }
 
 
 void WrMilGateway::setUtcTrigger(unsigned char val)
 {
-    // std::cerr << "WrMilGateway::setUtcTrigger()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_UTC_TRIGGER, val);
 }
 void WrMilGateway::setEventLatency(uint32_t val)
 {
-    // std::cerr << "WrMilGateway::setEventLatency()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_LATENCY, val);
 }
 void WrMilGateway::setUtcUtcDelay(uint32_t val)
 {
-    // std::cerr << "WrMilGateway::setUtcUtcDelay()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_UTC_DELAY, val);
 }
 void WrMilGateway::setTriggerUtcDelay(uint32_t val)
 {
-    // std::cerr << "WrMilGateway::setTriggerUtcDelay()" << std::endl;
   writeRegisterContent(WR_MIL_GW_REG_TRIG_UTC_DELAY, val);
 }
 void WrMilGateway::setUtcOffset(uint64_t val)
 {
-    // std::cerr << "WrMilGateway::setUtcOffset()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_LO, val & 0x00000000ffffffff);
   val >>= 32;
   writeRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_HI, val & 0x00000000ffffffff);
@@ -602,43 +557,43 @@ void WrMilGateway::ownerQuit()
       // std::cerr << "WrMilGateway::ownerQuit()" << std::endl;
 }
 
-void WrMilGateway::irq_handler(eb_data_t msg) const 
-{
-   // std::cerr << "WrMilGateway::irq_handler(" << msg << ") called" << std::endl;
+// void WrMilGateway::irq_handler(eb_data_t msg) const 
+// {
+//    // std::cerr << "WrMilGateway::irq_handler(" << msg << ") called" << std::endl;
 
-  switch(msg) {
-    case WR_MIL_GW_MSI_LATE_EVENT:
-      clog << kLogErr << "WR-MIL-Gateway: late MIL event " << std::endl;
+//   switch(msg) {
+//     case WR_MIL_GW_MSI_LATE_EVENT:
+//       clog << kLogErr << "WR-MIL-Gateway: late MIL event " << std::endl;
 
-         std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_LATE_EVENT)" << std::endl;
-      getNumLateMilEvents(); 
-    break;
-    case WR_MIL_GW_MSI_STATE_CHANGED:
-      //clog << kLogInfo << "WR-MIL-Gateway: firmware state changed" << std::endl;
-         std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_STATE_CHANGED)" << std::endl;
-      switch(getFirmwareState()) {
-        case WR_MIL_GW_STATE_INIT:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to INIT" << std::endl;
-        break;
-        case WR_MIL_GW_STATE_UNCONFIGURED:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to UNCONFIGURED" << std::endl;
-        break;
-        case WR_MIL_GW_STATE_CONFIGURED:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to CONFIGURED" << std::endl;
-        break;
-        case WR_MIL_GW_STATE_PAUSED:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to PAUSED" << std::endl;
-        break;
-        default:
-          clog << kLogErr << "WR-MIL-Gateway: firmware state changed to UNKNOWN" << std::endl;
-        break;
-      }
-    break;
-    default:;
-       std::cerr << "WrMilGateway::irq_handler() unknown Interrupt: " << std::dec << msg << std::endl; 
-  }
-  // std::cerr << "WrMilGateway::irq_handler() done" << std::endl;
-}
+//          std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_LATE_EVENT)" << std::endl;
+//       getNumLateMilEvents(); 
+//     break;
+//     case WR_MIL_GW_MSI_STATE_CHANGED:
+//       //clog << kLogInfo << "WR-MIL-Gateway: firmware state changed" << std::endl;
+//          std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_STATE_CHANGED)" << std::endl;
+//       switch(getFirmwareState()) {
+//         case WR_MIL_GW_STATE_INIT:
+//           clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to INIT" << std::endl;
+//         break;
+//         case WR_MIL_GW_STATE_UNCONFIGURED:
+//           clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to UNCONFIGURED" << std::endl;
+//         break;
+//         case WR_MIL_GW_STATE_CONFIGURED:
+//           clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to CONFIGURED" << std::endl;
+//         break;
+//         case WR_MIL_GW_STATE_PAUSED:
+//           clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to PAUSED" << std::endl;
+//         break;
+//         default:
+//           clog << kLogErr << "WR-MIL-Gateway: firmware state changed to UNKNOWN" << std::endl;
+//         break;
+//       }
+//     break;
+//     default:;
+//        std::cerr << "WrMilGateway::irq_handler() unknown Interrupt: " << std::dec << msg << std::endl; 
+//   }
+//   // std::cerr << "WrMilGateway::irq_handler() done" << std::endl;
+// }
 
 
 
