@@ -66,5 +66,5 @@
 #define CTL_VALID                 0x8000UL
 
 #define N_BURSTS                  16            // maximum number of bursts
-#define N_BURST_INFO              8             // the length of burst info (id, io_type, io_idx, trigger_h32/l32, toggle_h32/l32, flag)
+#define N_BURST_INFO              10            // the length of burst info (id, io_type, io_idx, start_h32/l32, stop_h32/l32, cycle_h32/l32, flag)
 #endif

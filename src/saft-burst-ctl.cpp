@@ -421,9 +421,10 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
         std::cout << "Burst info (text):";
         std::string name = find_io_name(tr, args);
         std::cout << " id = " << args.at(0) << ", IO = " << name <<
-          ", trig = " << std::hex << args.at(3) << ':' << args.at(4) <<
-          ", togg = " << args.at(5) << ':' << args.at(6) <<
-          ", enabled = " << ((args.at(7) & CTL_EN) ? "yes" : "no") << std::endl;
+          ", start = " << std::hex << args.at(3) << ':' << args.at(4) <<
+          ", stop = " << args.at(5) << ':' << args.at(6) <<
+          ", cycle = " << args.at(7) << ':' << args.at(8) <<
+          ", enabled = " << ((args.at(9) & CTL_EN) ? "yes" : "no") << std::endl;
       }
     }
     else
