@@ -149,14 +149,12 @@ void WrMilGateway::oledUpdate()
       lines[0] << "???";
   }
 
-  if (firmware_running && firmware_state == WR_MIL_GW_STATE_CONFIGURED) {
+  if (readRegisterContent(WR_MIL_GW_REG_SET_OP_READY)) {
     lines[1] << "OP_READY";
-  } else {
-    lines[1] << "not ready";
-  }
+  } 
 
   lines[2] << "#"     << std::setw(9) << num_mil_events;
-  lines[3] << "#late" << std::setw(5)  << num_late_events;
+  //lines[3] << "#late" << std::setw(5)  << num_late_events;
 
   
   if (idle) {
