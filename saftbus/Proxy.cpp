@@ -26,6 +26,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	: _name(name)
 	, _object_path(object_path)
 	, _interface_name(interface_name)
+	, _saftbus_index(-1)
 {
 	//std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
 	// if there is no ProxyConnection for this process yet we need to create one
@@ -41,6 +42,9 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		// (connection_id is the socket number XX in the socket filename "/tmp/saftbus_XX")
 		_global_id = 100*_global_id_counter + _connection->get_connection_id();
 	}
+
+	_saftbus_index = _connection->get_saftbus_index(object_path, interface_name);
+	// std::cerr << "saftbus index of objec: " << _saftbus_index << std::endl;
 
 	// create a pipe through which we will receive signals from the saftd
 	if (&signalGroup != &saftlib::noSignals) {
@@ -62,6 +66,10 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		// saftlib::globalSignalGroup is the default
 		signalGroup.add(this);
 	}
+
+	if (_saftbus_index <= 0 || _saftbus_index != _connection->get_saftbus_index(object_path, interface_name)) {
+		throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "Proxy: inconsistent saftbus index");
+	}
 }
 
 Proxy::~Proxy() 
@@ -75,7 +83,7 @@ Proxy::~Proxy()
 
 	// free all resources ...
 	try {
-		_connection->remove_proxy_signal_fd(_object_path, _interface_name, _global_id);
+		_connection->remove_proxy_signal_fd(_saftbus_index, _object_path, _interface_name, _global_id);
 		close(_pipe_fd[0]);
 		close(_pipe_fd[1]);
 	} catch(std::exception &e) {
@@ -226,6 +234,11 @@ std::string Proxy::get_name() const
 {
 	return _name;
 }
+int Proxy::get_saftbus_index() const
+{
+	return _saftbus_index;
+}
+
 
 const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 {
@@ -240,7 +253,9 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 	// 	                                      query)).get_child(0));
 	// return _result;
 
-	const Serial &result = _connection->call_sync(_object_path, 
+	const Serial &result = _connection->call_sync(
+		                          _saftbus_index, 
+		                          _object_path, 
 		                          _interface_name,
 		                          function_name,
 		                          query);

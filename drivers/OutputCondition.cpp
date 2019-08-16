@@ -49,7 +49,6 @@ void OutputCondition::setOn(bool v)
   tag = val;
   try {
     if (active) sink->compile();
-    On(tag);
   } catch (...) {
     tag = old;
     throw;

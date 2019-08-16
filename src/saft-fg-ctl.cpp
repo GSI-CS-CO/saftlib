@@ -110,7 +110,8 @@ static void help(std::shared_ptr<SAFTd_Proxy> saftd)
   std::cerr << "  -e <id>       generate tag when timing event id is received\n";
   std::cerr << "  -g            generate tag immediately\n";
   std::cerr << "  -r            repeat the waveform over and over forever\n";
-  std::cerr << "  -s            scan for connected fg channels\n";
+  std::cerr << "  -sm           scan connected fg channels and create masterfg\n";
+  std::cerr << "  -si           scan connected fg channels and create individual channels\n";
   std::cerr << "  -U            print time values in UTC instead of TAI\n";
   std::cerr << "  -h            print this message\n";
   std::cerr << "\n";
@@ -138,10 +139,11 @@ int main(int argc, char** argv)
     bool repeat = false;
     bool generate = false;
     bool scan = false; 
+    char i_or_m;
     
     // Process command-line
     int opt, error = 0;
-    while ((opt = getopt(argc, argv, "d:f:rght:e:sU")) != -1) {
+    while ((opt = getopt(argc, argv, "d:f:rght:e:s:U")) != -1) {
       switch (opt) {
         case 'd':
           device = optarg;
@@ -164,6 +166,11 @@ int main(int argc, char** argv)
           break;
         case 's':
           scan = true;
+          i_or_m = optarg[0];
+          if (i_or_m != 'i' && i_or_m != 'm') {
+            std::cerr << ": use -si or -sm" << std::endl;
+            error = 1;
+          }
           break;
         case 'U':
           UTC = true;
@@ -198,30 +205,6 @@ int main(int argc, char** argv)
     alarm(2);
     
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
-    ParamSet params;
-    int32_t a, la, b, lb, c, n, s, num;
-    while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
-      // turn off warning
-      if (params.coeff_a.empty()) alarm(0);
-      
-      params.coeff_a.push_back(a);
-      params.coeff_b.push_back(b);
-      params.coeff_c.push_back(c);
-      params.step.push_back(n);
-      params.freq.push_back(s);
-      params.shift_a.push_back(la);
-      params.shift_b.push_back(lb);
-    }
-    
-    if (num != EOF || !feof(stdin)) {
-      std::cerr << "warning: junk data at end of input file" << std::endl;
-    }
-    
-    if (params.shift_b.empty()) {
-      std::cerr << "Provided data file was empty" << std::endl;
-      return 1;
-    }
-    
     // Get a list of devices from the saftlib directory
     map<std::string, std::string> devices = saftd->getDevices();
     
@@ -272,10 +255,16 @@ int main(int argc, char** argv)
       }
       std::shared_ptr<FunctionGeneratorFirmware_Proxy> fg_firmware = FunctionGeneratorFirmware_Proxy::create(fg_fw.begin()->second);
       std::cout << "Scanning for fg-channels ... " << std::flush;
-      auto scanning_result = fg_firmware->Scan();
-      std::cout << "done, found " << std::endl;
-      for (auto &pair: scanning_result) {
-        std::cout << "  " << pair.first << " " << pair.second << std::endl;
+      try {
+        std::map<std::string, std::string> scanning_result;
+        if (i_or_m == 'i') scanning_result = fg_firmware->ScanFgChannels();
+        if (i_or_m == 'm') scanning_result = fg_firmware->ScanMasterFg();
+        std::cout << "done, found " << std::endl;
+        for (auto &pair: scanning_result) {
+          std::cout << "  " << pair.first << " " << pair.second << std::endl;
+        }
+      } catch (saftbus::Error &e) {
+        std::cerr << "could not scan: " << e.what() << std::endl;
       }
       return 0;
     }
@@ -314,6 +303,30 @@ int main(int argc, char** argv)
     }
     
     // Ok! Find all the devices is now out of the way. Let's get some work done.
+
+    ParamSet params;
+    int32_t a, la, b, lb, c, n, s, num;
+    while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
+      // turn off warning
+      if (params.coeff_a.empty()) alarm(0);
+      
+      params.coeff_a.push_back(a);
+      params.coeff_b.push_back(b);
+      params.coeff_c.push_back(c);
+      params.step.push_back(n);
+      params.freq.push_back(s);
+      params.shift_a.push_back(la);
+      params.shift_b.push_back(lb);
+    }
+    
+    if (num != EOF || !feof(stdin)) {
+      std::cerr << "warning: junk data at end of input file" << std::endl;
+    }
+    
+    if (params.shift_b.empty()) {
+      std::cerr << "Provided data file was empty" << std::endl;
+      return 1;
+    }
     
     // Claim the function generator for ourselves
     gen->Own();
@@ -349,7 +362,7 @@ int main(int argc, char** argv)
 
     // Trigger the function generator ourselves?
     if (generate) gen->SigArmed.connect(sigc::bind(sigc::ptr_fun(&on_armed), scu, tag));
-    
+
     // Ready to execute!
     gen->setStartTag(tag);
     gen->Arm();
@@ -359,7 +372,6 @@ int main(int argc, char** argv)
     //     SAFTd has been properly configured to run autonomously at this point.
     // ... of course, then the user doesn't get the final error status message either
     while(continue_main_loop) {
-      //std::cerr << "tick " << continue_main_loop << std::endl;
       saftlib::wait_for_signal(100);
     }
     

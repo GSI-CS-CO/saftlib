@@ -66,6 +66,8 @@ namespace saftbus
 		SAFTBUS_CTL_GET_STATE, 
 		SAFTBUS_CTL_ENABLE_LOGGING,
 		SAFTBUS_CTL_DISABLE_LOGGING,
+
+		GET_SAFTBUS_INDEX,
 	};
 
 	// bool deserialize(Glib::Variant<std::vector<Glib::VariantBase> > &result, const char *data, gsize size);

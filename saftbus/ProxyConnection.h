@@ -35,7 +35,8 @@ namespace saftbus
 		using SlotSignal = sigc::slot<void, const std::shared_ptr<ProxyConnection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&>;
 
 		// is used by Proxies to fetch properties
-		Serial& call_sync(const std::string& object_path, 
+		Serial& call_sync(int saftbus_index,
+			              const std::string& object_path, 
 						  const std::string& interface_name, 
 						  const std::string& method_name, 
 						  const Serial& parameters, 
@@ -49,12 +50,15 @@ namespace saftbus
                                   std::string object_path,
                                   std::string interface_name,
                                   int global_id);
-		void remove_proxy_signal_fd(std::string object_path,
+		void remove_proxy_signal_fd(int saftbus_index,
+			                        std::string object_path,
                                     std::string interface_name,
                                     int global_id) ;
 
 		std::string get_saftbus_id() { return _saftbus_id; }
 		int get_connection_id();
+
+		int get_saftbus_index(const std::string &object_path, const std::string &interface_name);
 
 		// returned fd should only be used with a lock or in single threaded environments
 		int get_fd() const {return _create_socket; }

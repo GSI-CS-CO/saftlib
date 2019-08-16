@@ -55,6 +55,7 @@ namespace saftbus
 
 		std::string get_object_path() const;
 		std::string get_name() const;
+		int get_saftbus_index() const;
 
 		const Serial& call_sync(std::string function_name, const Serial &query);
 
@@ -75,6 +76,8 @@ namespace saftbus
 		std::string _name;
 		std::string _object_path;
 		std::string _interface_name;
+		int         _saftbus_index;      // this is requested from the server connection 
+		                                 // during proxy construction.
 
 
 		Serial            _call_sync_result;

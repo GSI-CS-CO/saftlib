@@ -351,7 +351,7 @@
       </xsl:for-each>
 
       <!-- Property Signal pointers -->
-      <xsl:text>    // Property signals&#10;</xsl:text>
+<!--       <xsl:text>    // Property signals&#10;</xsl:text>
       <xsl:for-each select="property[@access='read' or @access='readwrite']">
         <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
           <xsl:text>    </xsl:text>
@@ -359,7 +359,7 @@
           <xsl:text>;&#10;</xsl:text>
         </xsl:if>
       </xsl:for-each>
-
+ -->
       <!-- Signal pointers -->
       <xsl:text>    // Signals&#10;</xsl:text>
       <xsl:for-each select="signal">
@@ -410,14 +410,14 @@
       <xsl:text>&#10;</xsl:text>
 
       <!-- Property Signal pointers -->
-      <xsl:for-each select="property[@access='read' or @access='readwrite']">
+<!--       <xsl:for-each select="property[@access='read' or @access='readwrite']">
         <xsl:if test="not(annotation[@name = 'org.freedesktop.DBus.Property.EmitsChangedSignal' and @value != 'true'])">
           <xsl:text>    </xsl:text>
           <xsl:call-template name="prop-sigtype"/>
           <xsl:text>;&#10;</xsl:text>
         </xsl:if>
       </xsl:for-each>
-
+ -->
       <!-- Signal pointers -->
       <xsl:for-each select="signal">
         <xsl:text>    </xsl:text>
@@ -439,7 +439,7 @@
 
       <!-- Implementation -->
   protected:
-    void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; std::string &gt;&amp; invalidated_properties);
+    //void on_properties_changed(const MapChangedProperties&amp; changed_properties, const std::vector&lt; std::string &gt;&amp; invalidated_properties);
     void on_signal(const std::string&amp; sender_name, const std::string&amp; signal_name, const saftbus::Serial&amp; parameters);
     void fetch_property(const char* name, saftbus::Serial&amp; val) const;
     void update_property(const char* name, const saftbus::Serial&amp; val);
