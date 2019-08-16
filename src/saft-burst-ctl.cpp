@@ -746,7 +746,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
 
     args.clear();
     args.push_back(burst_id);
-    args.push_back((out_type << 16) | (out_proxy->getIndexOut() && 0xFFFF));
+    args.push_back((out_type << 16) | (out_proxy->getIndexOut() & 0xFFFF));
     args.push_back((uint32_t)(e_id >> 32));
     args.push_back((uint32_t)e_id);
     args.push_back((uint32_t)(stop_e_id >> 32));
