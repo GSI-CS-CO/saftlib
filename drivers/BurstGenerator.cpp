@@ -78,7 +78,6 @@ namespace saftlib {
     for (unsigned i = 0; i < ram.size(); ++i)
     {
       ram_base = ram[i].sdb_component.addr_first;
-      cpu_idx = i;
 
       // get a mailbox slot subscribed by the burst generator
       device.read(ram_base + SHM_MB_SLOT, EB_DATA32, &data);
@@ -92,6 +91,13 @@ namespace saftlib {
       // read the firmware id from a reserved location (shared memory)
       device.read(ram_base + SHM_FW_ID, EB_DATA32, &data);
       bg_id = static_cast<uint32_t>(data);
+
+      if (bg_id == 0)
+      {
+        continue;
+      }
+
+      cpu_idx = i;
 
       // write own slot number to a reserved location (shared memory)
       device.read(ram_base + SHM_FW_ID, EB_DATA32, &data);         // back up data
