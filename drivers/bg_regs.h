@@ -32,6 +32,7 @@
 #define MSI_MAILBOX_VENDOR        0x651
 #define MSI_MAILBOX_PRODUCT       0xfab0bdd8
 #define MB_SLOT_RANGE             128          // 0 .. 127
+#define MB_SLOT_CFG_FREE          0xffffffffUL
 
 // defines
 #define BG_FW_ID                  0xb2b2b2b2
@@ -41,8 +42,9 @@
 
 #define SHM_FW_ID                 SHM_BASE
 #define SHM_MB_SLOT               SHM_BASE + 0x04UL
-#define SHM_CMD                   SHM_BASE + 0x08UL
-#define SHM_INPUT                 SHM_BASE + 0x10UL
+#define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL
+#define SHM_CMD                   SHM_BASE + 0x10UL
+#define SHM_INPUT                 SHM_BASE + 0x20UL
 
 #define EVT_ID_IO_H32             0x0000FCA0UL  // event id of timing message for IO actions (hi32)
 #define EVT_ID_IO_L32             0x00000000UL  // event id of timing message for IO actions (lo32)

@@ -900,6 +900,7 @@ void TimingReceiver::probe(OpenDevice& od)
       tr->otherStuff["BurstGenerator"][bg_fw_str] = BurstGenerator::create(bg_fw_args);
       clog << kLogDebug << "TimingReceiver: BurstGenerator firmware found" << std::endl;
     } catch (saftbus::Error &e) {
+      clog << kLogDebug << "TimingReceiver: " << e.what() << std::endl;
       clog << kLogDebug << "TimingReceiver: no BurstGenerator firmware found" << std::endl;
     }
   }

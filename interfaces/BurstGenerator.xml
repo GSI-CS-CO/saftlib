@@ -82,5 +82,18 @@
       <arg direction="out" type="au" name="data"/>
     </method>
 
+    <!-- sigInstComplete: Notify the completion of an instruction.
+         It is the response of the burst generator on user instruction request.
+
+         @code:   User instruction code
+      -->
+    <signal name="sigInstComplete">
+      <arg name="code" type="u"/>
+    </signal>
+
+    <!-- Response: The burst generator response sent via mailbox.
+      -->
+    <property name="Response" type="u" access="read"/>
+
   </interface>
 </node>
