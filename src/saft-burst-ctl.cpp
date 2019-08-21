@@ -110,7 +110,27 @@ static int  ecpu_check          (uint64_t e_id, uint64_t e_mask, int64_t offset,
 static int  ecpu_destroy        (bool verbose_mode);
 static int  bg_clear_all        (bool verbose);
 static void bg_help             (char option);
+static int  bg_invoke_async     (std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t inst_code, std::vector<uint32_t> inst_args);
 
+/* Asyncronous method call to invoke a burst generator instruction */
+static int  bg_invoke_async(std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t inst_code, std::vector<uint32_t> inst_args)
+{
+  if (bg == NULL)
+    return -1;
+
+  if (bg->instruct(inst_code, inst_args)) // send an instruction to the burst generator
+  {
+    std::cerr << "Failed to send an instruction to the burst generator: " << inst_code << std::endl;
+    return -1;
+  }
+
+  saftlib::wait_for_signal(3000);         // wait for response or time-out (burst generator checks its mailbox every second)
+
+  if (bg->getResponse() == inst_code)     // check response
+    return 0;
+  else
+    return -1;
+}
 /* Print help message to check created bursts */
 static void bg_help(char option)
 {
@@ -141,12 +161,12 @@ static int bg_read_fw_id(void)
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
     std::cout << std::showbase;
 
-    if (bg_firmware)
-      std::cout << "Firmware ID: " << std::hex << bg_firmware->readFirmwareId() << std::endl;
+    if (bg)
+      std::cout << "Firmware ID: " << std::hex << bg->readFirmwareId() << std::endl;
     else
       std::cerr << "Failed to get firmware ID of burst generator" << std::endl;
   }
@@ -177,9 +197,9 @@ static int bg_get_fw_id(void)
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Could not connect to the burst generator driver" << std::endl;
       return -1;
@@ -188,14 +208,14 @@ static int bg_get_fw_id(void)
     std::vector<uint32_t> args;
     args.push_back(0);
 
-    int res = bg_firmware->instruct(CMD_LS_FW_ID, args);
-    if (res)
-      std::cerr << "Failed method call bg_instruct()!" << std::endl;
-
-    sleep(1); // let LM32 complete the previous command
+    if (bg_invoke_async(bg, CMD_LS_FW_ID, args))
+    {
+      std::cerr << "Failed to get the firmware ID. Try again!" << std::endl;
+      return -1;
+    }
 
     args.clear();
-    args = bg_firmware->readSharedBuffer(1);
+    args = bg->readSharedBuffer(1);
     if (args.size() > 0)
     {
       std::cout << "Got firmware id: 0x" << std::hex << args.at(0) << std::endl;
@@ -239,9 +259,9 @@ static int bg_instruct(std::vector<std::string> instr)
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware)
+    if (bg)
     {
       std::vector<std::string>::iterator it = instr.begin();
 
@@ -255,7 +275,7 @@ static int bg_instruct(std::vector<std::string> instr)
         ++it;
       }
 
-      int res = bg_firmware->instruct(instr_code, instr_args);
+      int res = bg->instruct(instr_code, instr_args);
       if (res)
         std::cerr << "Failed method call bg_instruct()!" << std::endl;
     }
@@ -325,9 +345,9 @@ static int bg_get_io_name(int burst_id, std::string &name)
     }
 
     /* Create a proxy for the burst generator */
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Failed to create a proxy for the burst generator driver" << std::endl;
       return -1;
@@ -336,13 +356,13 @@ static int bg_get_io_name(int burst_id, std::string &name)
     std::vector<uint32_t> info;
     info.push_back(burst_id);
 
-    int res = bg_firmware->instruct(CMD_LS_BURST, info);
-    if (res)
-      std::cerr << "Failed method call bg_instruct()!" << std::endl;
+    if (bg_invoke_async(bg, CMD_LS_BURST, info))
+    {
+      std::cerr << "Failed to get the burst info. Try again!" << std::endl;
+      return -1;
+    }
 
-    sleep(1); // let LM32 complete the previous command
-
-    info = bg_firmware->readBurstInfo(burst_id);
+    info = bg->readBurstInfo(burst_id);
     if (info.size() == 0)
     {
       std::cerr << "Failed to get burst info" << std::endl;
@@ -378,9 +398,9 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Could not create a proxy for the burst generator driver" << std::endl;
       return -1;
@@ -390,19 +410,13 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
     args.push_back(burst_id);
     args.push_back((uint32_t)verbose_mode);
 
-    int res = bg_firmware->instruct(CMD_LS_BURST, args);
-    if (res)
+    if (bg_invoke_async(bg, CMD_LS_BURST, args))
     {
-      std::cerr << "Failed to list currently enabled bursts" << std::endl;
+      std::cerr << "Failed to get the burst info. Try again!" << std::endl;
       return -1;
     }
 
-    if (verbose_mode) // TODO: replace sleep with a better method if possible!
-      sleep(2);
-    else
-      sleep(1);
-
-    args = bg_firmware->readBurstInfo(burst_id);
+    args = bg->readBurstInfo(burst_id);
 
     if (args.empty())
     {
@@ -507,9 +521,9 @@ static int bg_remove_burst(int burst_id, bool verbose)
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Could not connect to the burst generator driver" << std::endl;
       return -1;
@@ -519,7 +533,7 @@ static int bg_remove_burst(int burst_id, bool verbose)
     args.push_back(burst_id);
     args.push_back(static_cast<uint32_t>(verbose));
 
-    int res = bg_firmware->instruct(CMD_RM_BURST, args);
+    int res = bg->instruct(CMD_RM_BURST, args);
     if (res)
     {
       std::cerr << "Failed to disable burst" << std::endl;
@@ -553,9 +567,9 @@ static int bg_disenable_burst(int burst_id, int disen, bool verbose)
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Could not connect to the burst generator driver" << std::endl;
       return -1;
@@ -564,14 +578,14 @@ static int bg_disenable_burst(int burst_id, int disen, bool verbose)
     std::vector<uint32_t> args;
     args.push_back(0);
 
-    int res = bg_firmware->instruct(CMD_LS_BURST, args);
-    if (res)
-      std::cerr << "Failed method call bg_instruct()!" << std::endl;
-
-    sleep(1); // let LM32 complete the previous command
+    if (bg_invoke_async(bg, CMD_LS_BURST, args))
+    {
+      std::cerr << "Failed to get the burst info. Try again!" << std::endl;
+      return -1;
+    }
 
     args.clear();
-    args = bg_firmware->readBurstInfo(0);
+    args = bg->readBurstInfo(0);
     if (args.size() > 0)
     {
       uint32_t burstIdMask = 0x1 << (burst_id - 1);
@@ -593,10 +607,9 @@ static int bg_disenable_burst(int burst_id, int disen, bool verbose)
     args.push_back(disen);
     args.push_back(static_cast<uint32_t>(verbose));
 
-    res = bg_firmware->instruct(CMD_DE_BURST, args);
-    if (res)
+    if (bg_invoke_async(bg, CMD_DE_BURST, args))
     {
-      std::cerr << "Failed to disable burst" << std::endl;
+      std::cerr << "Failed to disable a burst. Try again!" << std::endl;
       return -1;
     }
  }
@@ -641,9 +654,9 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     }
 
     /* Create a proxy for the burst generator */
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Failed to create a proxy for the burst generator driver" << std::endl;
       return -1;
@@ -671,18 +684,16 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     std::vector<uint32_t> args;
     args.push_back(0);
 
-    if (bg_firmware->instruct(CMD_LS_FW_ID, args))
+    if (bg_invoke_async(bg, CMD_LS_FW_ID, args))
     {
       std::cerr << "Failed to get the firmware ID. Try again!" << std::endl;
+      return -1;
     }
-    else
-    {
-      sleep(1); // let LM32 respond to the previous command
-      args.clear();
-      args = bg_firmware->readSharedBuffer(1);
-      if (args.size())
-        tag = args.at(0);
-    }
+
+    args.clear();
+    args = bg->readSharedBuffer(1);
+    if (args.size())
+      tag = args.at(0);
 
     /* Check if the same conditions for eCPU actions exist already */
     int check = ecpu_check(e_id, e_mask, 0, tag);
@@ -738,6 +749,10 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
       return result;
     }
 
+    std::shared_ptr<Input_Proxy> in_proxy = Input_Proxy::create(tr->getInputs()[ioName]);
+    if (in_proxy)
+      in_proxy->setEventEnable(false);                   // disable event source for the IO port
+
     uint32_t out_type = IO_CFG_CHANNEL_FIXED;            // io_control_regs.h
     std::string out_type_name = out_proxy->getTypeOut(); // missing a member function to get integer type in Inoutimpl
     if (out_type_name.find("8ns") != std::string::npos)
@@ -754,7 +769,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     args.push_back((uint32_t)stop_e_id);
     args.push_back(static_cast<uint32_t>(verbose));
 
-    int res = bg_firmware->instruct(CMD_MK_BURST, args);
+    int res = bg->instruct(CMD_MK_BURST, args);
     if (res)
     {
       std::cerr << "Failed to enable burst" << std::endl;
@@ -836,9 +851,9 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Could not connect to the burst generator driver" << std::endl;
       return -1;
@@ -854,14 +869,14 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
     std::vector<uint32_t> args;
     args.push_back(0);
 
-    int res = bg_firmware->instruct(CMD_LS_BURST, args);
-    if (res)
-      std::cerr << "Failed method call bg_instruct()!" << std::endl;
-
-    sleep(1); // let LM32 complete the previous command
+    if (bg_invoke_async(bg, CMD_LS_BURST, args))
+    {
+      std::cerr << "Failed to get the burst info. Try again!" << std::endl;
+      return -1;
+    }
 
     args.clear();
-    args = bg_firmware->readBurstInfo(0);
+    args = bg->readBurstInfo(0);
     if (args.size() > 0)
     {
       uint32_t burstIdMask = 0x1 << (burstId - 1);
@@ -998,9 +1013,9 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
       return -1;
     }
 
-    std::shared_ptr<BurstGenerator_Proxy> bg_firmware = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
 
-    if (bg_firmware == NULL)
+    if (bg == NULL)
     {
       std::cerr << "Could not connect to the burst generator driver" << std::endl;
       return -1;
@@ -1021,14 +1036,11 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
       std::cout << std::hex << *it << ' ';
     std::cout << std::endl;
 
-    int res = bg_firmware->instruct(CMD_GET_PARAM, args);
-    if (res)
+    if (bg_invoke_async(bg, CMD_GET_PARAM, args))
     {
-      std::cerr << "Failed to send pulse parameters" << std::endl;
+      std::cerr << "Failed to send the pulse parameters. Try again!" << std::endl;
       return -1;
     }
-
-    sleep(1); // wait until LM32 reads from RAM, TODO: optimize it later!
 
     args.clear();
 
@@ -1043,8 +1055,7 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
       std::cout << std::hex << *it << ' ';
     std::cout << std::endl;
 
-    res = bg_firmware->instruct(CMD_GET_CYCLE, args);
-    if (res)
+    if (bg_invoke_async(bg, CMD_GET_CYCLE, args))
     {
       std::cerr << "Failed to send production cycles" << std::endl;
       return -1;
