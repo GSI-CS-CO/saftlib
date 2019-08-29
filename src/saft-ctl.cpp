@@ -84,15 +84,14 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   uint32_t evtNo;
   uint32_t vacc;
   uint32_t flagsPZ;
-  uint32_t flagNochop;
-  uint32_t flagShortchop;
-
   string   sVacc;
-  string   rf;
+  string   special;
     
-  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7, info;;
+  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
   static saftlib::Time prevDeadline = deadline;
-  static uint32_t nCycle            = 0x0;
+  static uint32_t      nCycle       = 0x0;
+  static uint32_t      flagNochop;
+  static uint32_t      flagShortchop;
 
   gid     = ((id    & 0x0fff000000000000) >> 48);
   evtNo   = ((id    & 0x0000fff000000000) >> 36);
@@ -102,6 +101,7 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   flagNochop    = ((flagsPZ & 0x1) != 0);
   flagShortchop = ((flagsPZ & 0x2) != 0);
 
+
   if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
     switch (nCycle) {
       case 0 :        // print header
@@ -110,6 +110,7 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
       case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
         break;
       default :       // default
+                          
         std::cout << std::setw(10) << nCycle << ":"
                   << std::setw( 5) << pz1
                   << std::setw( 5) << pz2
@@ -118,21 +119,35 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
                   << std::setw( 5) << pz5
                   << std::setw( 5) << pz6 
                   << std::setw( 5) << pz7
-                  << info
                   << std::endl;
         break;
     } // switch nCycle
-    pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = info = "";
-    prevDeadline = deadline;
+    pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = "";
+    /*flagNochop    = 0;
+      flagShortchop = 0;*/
+    prevDeadline  = deadline;
     nCycle++;
   } // if deadline
 
-  if (evtNo == NXTRF) rf = "RF";
-  else                rf = "";
-  sVacc = rf + std::to_string(vacc);
+  // special cases
+  /*flagNochop    = flagNochop    | ((flagsPZ & 0x1) != 0);
+    flagShortchop = flagShortchop | ((flagsPZ & 0x2) != 0);*/
 
-  if (flagNochop)    info = info + " !Chop";
-  if (flagShortchop) info = info + " sChop"; 
+  special = "";
+  if (evtNo == NXTRF) special = "RF";
+  if (evtNo == NXTACC) {
+    if (((gid == QR) || (gid == QL) || (gid == QN)) && (vacc == 14)) {
+      special = "IQ";
+    } // ion source not producing beam (heating only)
+    else {
+      if (flagNochop)    special = "N";
+      else               special = " ";
+      if (flagShortchop) special += "S";
+      else               special += " ";
+    } // ion source (beam)
+  } // if NXTACC
+  
+  sVacc = special + std::to_string(vacc);
 
   switch (gid) {
   case QR : 
@@ -157,7 +172,7 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
     pz7 = sVacc;
     break;
   default :
-    break;
+    special += " unknown GID" + sVacc + " ";
   }
 
 /*  
