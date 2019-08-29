@@ -83,37 +83,46 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   uint32_t gid;
   uint32_t evtNo;
   uint32_t vacc;
+  uint32_t flags;
+  uint32_t flagNochop;
+  unit32_t flagShortchop;
+
   string   sVacc;
   string   rf;
-  
-  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
+    
+  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7, info;;
   static saftlib::Time prevDeadline = deadline;
   static uint32_t nCycle            = 0x0;
 
-  gid   = ((id & 0x0fff000000000000) >> 48);
-  evtNo = ((id & 0x0000fff000000000) >> 36);
-  vacc  = ((id & 0x00000000fff00000) >> 20);
-  
+  gid   = ((id    & 0x0fff000000000000) >> 48);
+  evtNo = ((id    & 0x0000fff000000000) >> 36);
+  vacc  = ((id    & 0x00000000fff00000) >> 20);
+  flags = ((param & 0xffffffff00000000) >> 32);
+
+  flagNochop    = ((flags & 0x1) != 0);
+  flagShortchop = ((flags & 0x2) != 0);
+
   if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
     switch (nCycle) {
-    case 0 :        // print header
-      std::cout << "   # cycle:   QR   QL   QN  HLI  HSI   AT   TK" << std::endl;
-      break;
-    case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
-      break;
-    default :       // default
-      std::cout << std::setw(10) << nCycle << ":"
-                << std::setw( 5) << pz1
-                << std::setw( 5) << pz2
-                << std::setw( 5) << pz3
-                << std::setw( 5) << pz4
-                << std::setw( 5) << pz5
-                << std::setw( 5) << pz6 
-                << std::setw( 5) << pz7 
-                << std::endl;
-      break;
+      case 0 :        // print header
+        std::cout << "   # cycle:   QR   QL   QN  HLI  HSI   AT   TK" << std::endl;
+        break;
+      case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
+        break;
+      default :       // default
+        std::cout << std::setw(10) << nCycle << ":"
+                  << std::setw( 5) << pz1
+                  << std::setw( 5) << pz2
+                  << std::setw( 5) << pz3
+                  << std::setw( 5) << pz4
+                  << std::setw( 5) << pz5
+                  << std::setw( 5) << pz6 
+                  << std::setw( 5) << pz7
+                  << info
+                  << std::endl;
+        break;
     } // switch nCycle
-    pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = "";
+    pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = info = "";
     prevDeadline = deadline;
     nCycle++;
   } // if deadline
@@ -121,6 +130,9 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   if (evtNo == NXTRF) rf = "RF";
   else                rf = "";
   sVacc = rf + std::to_string(vacc);
+
+  if (flagNochop)    info = info + " !Chop";
+  if (flagShortchop) info = info + " sChop"; 
 
   switch (gid) {
   case QR : 
