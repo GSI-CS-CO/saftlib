@@ -83,9 +83,9 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   uint32_t gid;
   uint32_t evtNo;
   uint32_t vacc;
-  uint32_t flags;
+  uint32_t flagsPZ;
   uint32_t flagNochop;
-  unit32_t flagShortchop;
+  uint32_t flagShortchop;
 
   string   sVacc;
   string   rf;
@@ -94,13 +94,13 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   static saftlib::Time prevDeadline = deadline;
   static uint32_t nCycle            = 0x0;
 
-  gid   = ((id    & 0x0fff000000000000) >> 48);
-  evtNo = ((id    & 0x0000fff000000000) >> 36);
-  vacc  = ((id    & 0x00000000fff00000) >> 20);
-  flags = ((param & 0xffffffff00000000) >> 32);
+  gid     = ((id    & 0x0fff000000000000) >> 48);
+  evtNo   = ((id    & 0x0000fff000000000) >> 36);
+  vacc    = ((id    & 0x00000000fff00000) >> 20);
+  flagsPZ = ((param & 0xffffffff00000000) >> 32);
 
-  flagNochop    = ((flags & 0x1) != 0);
-  flagShortchop = ((flags & 0x2) != 0);
+  flagNochop    = ((flagsPZ & 0x1) != 0);
+  flagShortchop = ((flagsPZ & 0x2) != 0);
 
   if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
     switch (nCycle) {
