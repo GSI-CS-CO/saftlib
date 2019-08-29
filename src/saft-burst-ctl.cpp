@@ -44,6 +44,9 @@
 #include <inttypes.h>
 #include <string>
 #include <unistd.h>
+#include <algorithm>
+#include <cstring>
+#include <cctype> // isspace, isalpha
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -70,20 +73,95 @@ using namespace std;
 
 /* Global */
 /* ==================================================================================================== */
-static const char   *program      = NULL;  /* Name of the application */
-static const char   *deviceName   = NULL;  /* Name of the device */
-static const char   *ioName       = NULL;  /* Name of the IO */
-static bool          ioNameGiven  = false; /* IO name given? */
-static bool          ioNameExists = false; /* IO name does exist? */
-static bool          UTC          = false; /* use UTC instead of TAI */
-std::map<std::string,uint64_t>     map_PrefixName; /* Translation table IO name <> prefix */
-static int           burstId      = 0;     /* burst ID */
-static bool          burstIdGiven = false; /* is burst ID given? */
+const char*    program      = NULL;  /* Name of the application */
+const char*    deviceName   = NULL;  /* Name of the device */
+char*          pEnd         = NULL;  /* Arguments parsing */
+vector<string> bg_options;           /* Command options */
+int            opt          = 0;     /* Number of given options */
+string         optFileName  = "";    /* Option file name */
+char           opt_buf[4096];        /* Option buffer */
+shared_ptr<TimingReceiver_Proxy> tr = NULL; /* Proxy for the target timing receiver */
+map<string, string> outs;         /* Outputs */
+map<string, string> ins;          /* Inputs */
+map<string, string> bg_iface;     /* BurstGenerator interface of the target timing receiver */
+shared_ptr<BurstGenerator_Proxy> bg = NULL; /* Proxy for the burst generator */
+shared_ptr<EmbeddedCPUActionSink_Proxy> ecpu = NULL; /* Proxy for the eCPU action channel */
+
+const char*    ioName       = NULL;  /* Name of the IO */
+bool           ioNameGiven  = false; /* IO name given? */
+bool           ioNameExists = false; /* IO name does exist? */
+bool           UTC          = false; /* use UTC instead of TAI */
+map<string, uint64_t> map_PrefixName;       /* Translation table IO name <> prefix */
+int            io_oe        = 0;     /* Output enable */
+int            io_term      = 0;     /* Input Termination */
+int            io_spec_out  = 0;     /* Special (output) function */
+int            io_spec_in   = 0;     /* Special (input) function */
+int            io_gate_out  = 0;     /* Output gate */
+int            io_gate_in   = 0;     /* Input gate */
+int            io_mux       = 0;     /* Gate (BuTiS) */
+int            io_pps       = 0;     /* Gate (PPS) */
+int            io_drive     = 0;     /* Drive IO value */
+int            ioc_flip     = 0;     /* Flip active bit for all conditions */
+int            s_time       = 0;     /* Stable time to set */
+uint64_t       eventID      = 0x0;   /* Event ID (new condition) */
+uint64_t       eventMask    = 0x0;   /* Event mask (new condition) */
+int64_t        offset       = 0x0;   /* Event offset (new condition) */
+uint64_t       flags        = 0x0;   /* Accept flags (new condition) */
+int64_t        level        = 0x0;   /* Rising or falling edge (new condition) */
+uint64_t       prefix       = 0x0;   /* IO input prefix */
+bool           translate_mask = false; /* Translate mask? */
+bool           negative     = false; /* Offset negative? */
+bool           ioc_valid    = false; /* Create arguments valid? */
+bool           set_oe       = false; /* Set? */
+bool           set_term     = false; /* Set? */
+bool           set_spec_in  = false; /* Set? */
+bool           set_spec_out = false; /* Set? */
+bool           set_gate_in  = false; /* Set? */
+bool           set_gate_out = false; /* Set? */
+bool           set_mux      = false; /* Set? (BuTiS gate) */
+bool           set_pps      = false; /* Set? (PPS gate) */
+bool           set_drive    = false; /* Set? */
+bool           set_stime    = false; /* Set? (Stable time) */
+bool           ios_snoop    = false; /* Snoop on an input(s) */
+bool           ios_wipe     = false; /* Wipe/disable all events from input(s) */
+bool           ios_i_to_e   = false; /* List input to event table */
+bool           ios_setup_only = false; /* Only setup input to event */
+bool           ioc_create   = false; /* Create condition */
+bool           ioc_disown   = false; /* Disown created condition */
+bool           ioc_destroy  = false; /* Destroy condition */
+bool           ioc_list     = false; /* List conditions */
+bool           ioc_dis_ios  = false; /* Disable event source? */
+bool           verbose_mode = false; /* Print verbose output to output stream => -v */
+bool           show_help    = false; /* Print help => -h */
+bool           show_table   = false; /* Print io mapping table => -i */
+
+int            burstId         = 0;     /* burst ID */
+bool           burstIdGiven    = false; /* is burst ID given? */
+uint64_t       bg_start_e_id   = 0x00;  /* Start event ID */
+uint64_t       bg_start_e_mask = 0x00;  /* Start event mask */
+uint64_t       bg_stop_e_id    = 0x00;  /* Stop event ID */
+uint64_t       bg_stop_e_mask  = 0x00;  /* Stop event mask */
+uint32_t       bg_t_high       = 0x00;  /* Signal active state length, t_high */
+uint32_t       bg_t_p          = 0x00;  /* Signal period, t_p */
+int64_t        bg_t_b          = 0x00;  /* Burst period, t_b (=0 endless) */
+uint64_t       bg_b_delay      = 0x00;  /* Burst delay, b_d, nanoseconds */
+uint32_t       bg_b_flag       = 0x00;  /* Burst flag, b_f, (=0 new/overwrite, =1 append) */
+int            bg_disen        = 0;     /* Disable or enable option argument value */
+vector<string> bg_instr_args;           /* Arguments of instruct option */
+int            bg_id           = 0x00;  /* Burst ID */
+bool           bg_fw_id        = false; /* Get and print the firmware id of the burst generator */
+bool           bg_instr        = false; /* Demo option to test the instruct method call */
+bool           bg_cfg_io       = false; /* Set the ECA conditions for IO actions */
+bool           bg_clr_all      = false; /* Clear all unowned conditions for the IO and eCPU actions */
+bool           bg_ls_bursts    = false; /* List enabled bursts */
+bool           bg_disen_burst  = false; /* Disable or enable burst, id */
+bool           bg_mk_burst     = false; /* Create new burst */
+bool           bg_rm_burst     = false; /* Remove burst */
 
 /* Prototypes */
 /* ==================================================================================================== */
 static void io_help        (void);
-static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_gate_out, int io_gate_in, int io_mux, int io_pps, int io_drive, int stime,
+static int  io_setup       (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_gate_out, int io_gate_in, int io_mux, int io_pps, int io_drive, int s_time,
                             bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_gate_out, bool set_gate_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
                             bool verbose_mode);
 static int  io_create      (bool disown, uint64_t eventID, uint64_t eventMask, int64_t offset, uint64_t flags, int64_t level, bool offset_negative, bool translate_mask);
@@ -111,6 +189,446 @@ static int  ecpu_destroy        (bool verbose_mode);
 static int  bg_clear_all        (bool verbose);
 static void bg_help             (char option);
 static int  bg_invoke_async     (std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t inst_code, std::vector<uint32_t> inst_args);
+static bool bg_is_comment       (const std::string& str);
+static std::vector<std::string> bg_split(const std::string& in, const char delimiter);
+//static std::vector<std::string> bg_extract_options(const std::string& str, const std::string& rule);
+static int parse_options        (int optc, char* optv[], const char* optstr);
+static int bg_parse_options     (const std::string& options, const char* optstring);
+static int bg_check_arguments   (void);
+static void bg_reset_variables  (void);
+static int bg_do_configuration  (void);
+static int bg_setup_device      (const char* device_name);
+
+/* Set up a timing receiver */
+static int bg_setup_device(const char* device_name)
+{
+  map<string, string> devices = SAFTd_Proxy::create()->getDevices();
+  if (devices.find(device_name) == devices.end())
+  {
+    cerr << "Error: device " << device_name << " does not exist!" << endl;
+    return -1;
+  }
+
+  tr = TimingReceiver_Proxy::create(devices[device_name]);
+  if (tr == NULL) {
+    cerr << "Error: could not connect to the timing receiver driver" << endl;
+    return -1;
+  }
+  outs = tr->getOutputs();
+  ins = tr->getInputs();
+  bg_iface = tr->getInterfaces()["BurstGenerator"];
+  if (bg_iface.empty()) {
+    cerr << "Error: no burst generator firmware found" << endl;
+    return -1;
+  }
+  bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
+  if (bg == NULL) {
+    cerr << "Error: could not connect to the burst generator driver" << endl;
+    return -1;
+  }
+  map<string, string> ecpus = tr->getInterfaces()["EmbeddedCPUActionSink"];
+  if (ecpus.empty()) {
+    cerr << "Error: no embedded CPU action channel found!" << endl;
+    return -1;
+  }
+  ecpu = EmbeddedCPUActionSink_Proxy::create(ecpus.begin()->second);
+  if (ecpu == NULL) {
+    cerr << "Error: could not create a proxy for the eCPU action channel" << endl;
+    return -1;
+  }
+
+  return 0;
+}
+
+/* Configure the burst generator according to the given command-line options */
+static int bg_do_configuration(void)
+{
+  int return_code = 0;
+
+  if      (bg_fw_id)       { return_code = bg_get_fw_id(); }
+  else if (bg_instr)       { return_code = bg_instruct(bg_instr_args); }
+  else if (bg_cfg_io)      { return_code = bg_config_io(bg_t_high, bg_t_p, bg_t_b, bg_b_delay, bg_b_flag, verbose_mode); }
+  else if (bg_clr_all)     { return_code = bg_clear_all(verbose_mode); }
+  else if (bg_ls_bursts)   { return_code = bg_list_bursts(bg_id, verbose_mode); }
+  else if (bg_rm_burst)    { return_code = bg_remove_burst(bg_id, verbose_mode); }
+  else if (bg_disen_burst) { return_code = bg_disenable_burst(bg_id, bg_disen, verbose_mode); }
+  else if (bg_mk_burst)    { return_code = bg_create_burst(burstId, bg_start_e_id, bg_start_e_mask, bg_stop_e_id, bg_stop_e_mask, verbose_mode); }
+  else if (show_table)     { return_code = io_print_table(verbose_mode); }
+  else if (ios_wipe)       { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
+  else if (ios_snoop)      { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
+  else if (ios_setup_only) { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
+  else if (ios_i_to_e)     { return_code = io_list_i_to_e(); }
+  else if (ioc_create)     { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative, translate_mask); }
+  else if (ioc_destroy)    { return_code = io_destroy(verbose_mode); }
+  else if (ioc_flip)       { return_code = io_flip(verbose_mode); }
+  else if (ioc_list)       { return_code = io_list(); }
+  else                     { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_gate_out, io_gate_in, io_mux, io_pps, io_drive, s_time, set_oe, set_term, set_spec_out, set_spec_in, set_gate_out, set_gate_in, set_mux, set_pps, set_drive, set_stime, verbose_mode); }
+
+  return return_code;
+}
+
+/* Reset the internal variables */
+static void bg_reset_variables(void)
+{
+  ioName         = "";    /* Name of the IO */
+  ioNameGiven    = false; /* IO name given? */
+  ioNameExists   = false; /* IO name does exist? */
+  UTC            = false; /* use UTC instead of TAI */
+  map_PrefixName.clear();       /* Translation table IO name <> prefix */
+
+  io_oe          = 0;     /* Output enable */
+  io_term        = 0;     /* Input Termination */
+  io_spec_out    = 0;     /* Special (output) function */
+  io_spec_in     = 0;     /* Special (input) function */
+  io_gate_out    = 0;     /* Output gate */
+  io_gate_in     = 0;     /* Input gate */
+  io_mux         = 0;     /* Gate (BuTiS) */
+  io_pps         = 0;     /* Gate (PPS) */
+  io_drive       = 0;     /* Drive IO value */
+  ioc_flip       = 0;     /* Flip active bit for all conditions */
+  s_time         = 0;     /* Stable time to set */
+  eventID        = 0x0;   /* Event ID (new condition) */
+  eventMask      = 0x0;   /* Event mask (new condition) */
+  offset         = 0x0;   /* Event offset (new condition) */
+  flags          = 0x0;   /* Accept flags (new condition) */
+  level          = 0x0;   /* Rising or falling edge (new condition) */
+  prefix         = 0x0;   /* IO input prefix */
+  translate_mask = false; /* Translate mask? */
+  negative       = false; /* Offset negative? */
+  ioc_valid      = false; /* Create arguments valid? */
+  set_oe         = false; /* Set? */
+  set_term       = false; /* Set? */
+  set_spec_in    = false; /* Set? */
+  set_spec_out   = false; /* Set? */
+  set_gate_in    = false; /* Set? */
+  set_gate_out   = false; /* Set? */
+  set_mux        = false; /* Set? (BuTiS gate) */
+  set_pps        = false; /* Set? (PPS gate) */
+  set_drive      = false; /* Set? */
+  set_stime      = false; /* Set? (Stable time) */
+  ios_snoop      = false; /* Snoop on an input(s) */
+  ios_wipe       = false; /* Wipe/disable all events from input(s) */
+  ios_i_to_e     = false; /* List input to event table */
+  ios_setup_only = false; /* Only setup input to event */
+  ioc_create     = false; /* Create condition */
+  ioc_disown     = false; /* Disown created condition */
+  ioc_destroy    = false; /* Destroy condition */
+  ioc_list       = false; /* List conditions */
+  ioc_dis_ios    = false; /* Disable event source? */
+  verbose_mode   = false; /* Print verbose output to output stream => -v */
+  show_help      = false; /* Print help => -h */
+  show_table     = false; /* Print io mapping table => -i */
+
+  burstId         = 0;     /* burst ID */
+  burstIdGiven    = false; /* is burst ID given? */
+  bg_start_e_id   = 0x00;  /* Start event ID */
+  bg_start_e_mask = 0x00;  /* Start event mask */
+  bg_stop_e_id    = 0x00;  /* Stop event ID */
+  bg_stop_e_mask  = 0x00;  /* Stop event mask */
+  bg_t_high       = 0x00;  /* Signal active state length, t_high */
+  bg_t_p          = 0x00;  /* Signal period, t_p */
+  bg_t_b          = 0x00;  /* Burst period, t_b (=0 endless) */
+  bg_b_delay      = 0x00;  /* Burst delay, b_d, nanoseconds */
+  bg_b_flag       = 0x00;  /* Burst flag, b_f, (=0 new/overwrite, =1 append) */
+  bg_disen        = 0;     /* Disable or enable option argument value */
+  bg_instr_args.clear() ;  /* Arguments of instruct option */
+  bg_id           = 0x00;  /* Burst ID */
+  bg_fw_id        = false; /* Get and print the firmware id of the burst generator */
+  bg_instr        = false; /* Demo option to test the instruct method call */
+  bg_cfg_io       = false; /* Set the ECA conditions for IO actions */
+  bg_clr_all      = false; /* Clear all unowned conditions for the IO and eCPU actions */
+  bg_ls_bursts    = false; /* List enabled bursts */
+  bg_disen_burst  = false; /* Disable or enable burst, id */
+  bg_mk_burst     = false; /* Create new burst */
+  bg_rm_burst     = false; /* Remove burst */
+}
+
+/* Plausibility check on the option arguments */
+static int bg_check_arguments(void)
+{
+  if ((ioc_create || ioc_disown) && ioc_destroy) { std::cerr << "Incorrect arguments!" << std::endl; return (__IO_RETURN_FAILURE); }
+  else                                           { ioc_valid = true; }
+
+  if      (ios_snoop && ios_wipe)       { std::cerr << "Incorrect arguments (disable input events or snoop)!"  << std::endl; return (__IO_RETURN_FAILURE);}
+  else if (ios_snoop && ios_setup_only) { std::cerr << "Incorrect arguments (enable input events or snoop)!"   << std::endl; return (__IO_RETURN_FAILURE);}
+  else if (ios_wipe  && ios_setup_only) { std::cerr << "Incorrect arguments (disable or enable input events)!" << std::endl; return (__IO_RETURN_FAILURE); }
+
+  if (io_oe > 1       || io_oe < 0)       { std::cout << "Error: Output enable setting is invalid!"             << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_term > 1     || io_term < 0)     { std::cout << "Error: Input termination setting is invalid"          << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_spec_out > 1 || io_spec_out < 0) { std::cout << "Error: Special (output) function setting is invalid!" << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_spec_in > 1  || io_spec_in < 0)  { std::cout << "Error: Special (input) function setting is invalid!"  << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_gate_out > 1 || io_gate_out < 0) { std::cout << "Error: Gate (output) setting is invalid!"             << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_gate_in > 1  || io_gate_in < 0)  { std::cout << "Error: Gate (input) setting is invalid!"              << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 gate/mux setting is invalid!"         << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_pps > 1      || io_pps < 0)      { std::cout << "Error: WR PPS gate/mux setting is invalid!"           << std::endl; return (__IO_RETURN_FAILURE); }
+  if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; return (__IO_RETURN_FAILURE); }
+
+  if (set_stime)
+  {
+    if (s_time % 8 != 0)                  { std::cout << "Error: StableTime must be a multiple of 8 ns"         << std::endl; return (__IO_RETURN_FAILURE); }
+    if (s_time < 16)                      { std::cout << "Error: StableTime must be at least 16 ns"             << std::endl; return (__IO_RETURN_FAILURE); }
+  }
+
+  if (ioNameGiven)
+  {
+    if (tr == NULL) // no target timing receiver is available
+      return (__IO_RETURN_FAILURE);
+
+    /* Check all inputs and outputs */
+    for (std::map<std::string,std::string>::iterator it = outs.begin(); it != outs.end(); ++it)
+    {
+      if (it->first == ioName)          { ioNameExists = true; }
+      if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (output)!" << std::endl; break; }
+    }
+    for (std::map<std::string,std::string>::iterator it = ins.begin(); it != ins.end(); ++it)
+    {
+      if (it->first == ioName)          { ioNameExists = true; }
+      if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (input)!" << std::endl; break; }
+    }
+
+    /* Inform the user if the given IO does not exist */
+    if (!ioNameExists)
+    {
+      std::cerr << "IO " << ioName << " does not exist!" << std::endl;
+      return (__IO_RETURN_FAILURE);
+    }
+  }
+
+  if (bg_mk_burst)
+  {
+    if (bg_start_e_id == 0)             { std::cout << "Error: Invalid ID for the start event!" << std::endl; return (__IO_RETURN_FAILURE); }
+    if (bg_start_e_id == bg_stop_e_id)  { std::cout << "Error: IDs of the start and stop events must be different!" << std::endl; return (__IO_RETURN_FAILURE); }
+  }
+
+  return 0;
+}
+
+/* Parse the command-line options */
+static int parse_options(int optc, char* optv[], const char* optstr)
+{
+  int opt = 0;
+  optind = 1;   // index must point to the next element
+
+  while ((opt = getopt(optc, optv, optstr)) != -1)
+  {
+    switch (opt)
+    {
+      case 'f': { bg_fw_id       = true; break; }
+      case 'p': { if (optv[optind-1] != NULL) { bg_t_high = strtoul(optv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error::Missing active state length of a pulse (u32)!" << std::endl; return -1; }
+                  if (optv[optind+0] != NULL) { bg_t_p = strtoul(optv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error::Missing signal period (u32)!" << std::endl; return -1; }
+                  if (optv[optind+1] != NULL) { bg_t_b = strtoll(optv[optind+1], &pEnd, 0); }
+                  else                        { std::cerr << "Error::Missing burst period (i64)!" << std::endl; return -1; }
+                  if (bg_t_high > bg_t_p)    { std::cerr << "Invalid signal parameters, t_high > t_p" << std::endl; return -1; }
+                  if (bg_t_b > 0 && bg_t_p > bg_t_b) { std::cerr << "Invalid burst parameters, t_p > t_b" << std::endl; return -1; }
+                  if (optv[optind+2] != NULL) { bg_b_delay = strtoull(optv[optind+2], &pEnd, 0); }
+                  else                        { std::cerr << "Error::Missing burst delay!" << std::endl; return -1; }
+                  if (optv[optind+3] != NULL) { bg_b_flag = strtoul(optv[optind+3], &pEnd, 0); }
+                  else                        { std::cerr << "Error::Missing burst flag!" << std::endl; return -1; }
+                  bg_cfg_io      = true;
+                  break; }
+      case 'e': { if (optv[optind-1] != NULL) { bg_id = strtol(optv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
+                  if (bg_id < 0 || bg_id > N_BURSTS) { std::cerr << "Error: invalid burst id, must be 0 <= id <= " << N_BURSTS << std::endl; return -1; }
+                  if (optv[optind+0] != NULL) { bg_disen = strtol(optv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing dis/enable setting!" << std::endl; return -1; }
+                  bg_disen_burst = true;
+                  break; }
+      case 'i': { bg_instr       = true;
+                  int index      = optind - 1;
+                  while (index < optc)
+                  {
+                    if (optv[index] != NULL && optv[index][0] != '-') { bg_instr_args.push_back(optv[index]); ++index; }
+                    else                                              { optind = index - 1; break; }
+                  }
+                  if (!bg_instr_args.empty())
+                  {
+                    std::cout << "Arguments: ";
+                    for (vector<string>::iterator it = bg_instr_args.begin(); it != bg_instr_args.end(); ++it)
+                      std::cout << *it << ' ';
+                    std::cout << std::endl;
+                  }
+                  break; }
+      case 'l': { if (optv[optind-1] != NULL) { bg_id = strtol(optv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
+                  if (bg_id < 0 || bg_id > N_BURSTS)  { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
+                  bg_ls_bursts   = true;
+                  break; }
+      case 'b': { if (optv[optind-1] != NULL) { burstId = strtol(optv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
+                  if (burstId <= 0 || burstId > N_BURSTS)  { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
+                  burstIdGiven  = true;
+                  break; }
+      case 'r': { if (optv[optind-1] != NULL) { bg_id = strtol(optv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
+                  if (bg_id <= 0 || bg_id > N_BURSTS) { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
+                  bg_rm_burst   = true;
+                  break; }
+      case 's': { if (optv[optind-1] != NULL) { bg_start_e_id = strtoull(optv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing an ID for the start event!" << std::endl; return -1; }
+                  if (optv[optind+0] != NULL) { bg_start_e_mask = strtoull(optv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing a mask for the start event!" << std::endl; return -1; }
+                  bg_mk_burst   = true;
+                  break; }
+      case 't': { if (optv[optind-1] != NULL) { bg_stop_e_id = strtoull(optv[optind-1], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing an ID for the stop event!" << std::endl; return -1; }
+                  if (optv[optind+0] != NULL) { bg_stop_e_mask = strtoull(optv[optind+0], &pEnd, 0); }
+                  else                        { std::cerr << "Error: Missing a mask for the stop event!" << std::endl; return -1; }
+                  break; }
+      case 'x': { bg_clr_all    = true;
+                  break; }
+      case 'n': { ioName         = optv[optind - 1]; ioNameGiven  = true; break; }
+      case 'v': { verbose_mode   = true; break; }
+      case 'h': { show_help      = true; break; }
+      case 'o': { if (optv[optind-1] != NULL) { optFileName = string(optv[optind-1]); }
+                  else                        { std::cerr << "Error: Missing file name!" << std::endl; return -1; }
+                  break; }
+      case ':': { std::cout << "Option -" << (char)optopt << " requires argument(s)!" << std::endl; show_help = true; break; }
+      default:  { std::cout << "Unknown option: " << (char)optopt << std::endl; show_help = true; break; }
+    }
+    // break loop if help is requested
+    if (show_help) { return -1; }
+  }
+
+  return 0;
+}
+
+/* Parse the burst generation options */
+static int bg_parse_options(const std::string& options, const char* optstring)
+{
+  // clear option buffer
+  memset(opt_buf, '\0', sizeof(opt_buf));
+
+  // make a local copy of a string
+  std::size_t len = options.size();
+  for (size_t i = 0; i < len; ++i)
+    opt_buf[i] = options[i];
+  opt_buf[len] = '\0';
+
+  // get the number of option elements, optc
+  int optc = bg_split(options, ' ').size();
+
+  // create and set up an option vector
+  char* optv[optc];
+  int i = 0;
+
+  optv[i] = std::strtok(opt_buf, " ");
+
+  while (optv[i] != NULL && i < optc)
+  {
+    ++i;
+    optv[i] = std::strtok(NULL, " ");
+  }
+
+  //std::cout << "optc = " << optc << std::endl << "optstring = " << optstring << std::endl;
+  std::cout << "Parsing options : ";
+
+  for (i = 0; i < optc; ++i)
+    std::cout << optv[i] << " ";
+
+  std::cout << std::endl;
+
+  return parse_options(optc, optv, optstring);
+}
+
+/* Split a given string with the delimiter */
+static std::vector<std::string> bg_split(const std::string& in, const char delimiter)
+{
+  std::vector<std::string> out;
+  typedef std::string::const_iterator iter;
+
+  iter b = in.begin();  // begin of a word
+  iter e = b;           // end of a word
+
+  while(e != in.end())
+  {
+    // find begin of a word
+    while (b != in.end() && *b == delimiter) // find a begin of a word
+      ++b;
+
+    if (b == in.end())
+    {
+      e = in.end(); // reached end of a string
+    }
+    else            // find end of a word
+    {
+      e = b + 1;
+
+      while (e != in.end() && *e != delimiter)
+        ++e;
+
+      if (b != e)   // found a word
+      {
+        out.push_back(std::string(b, e));
+
+        if (e != in.end())
+          b = e + 1;
+      }
+    }
+  }
+
+  return out;
+}
+
+/* Extract options from a single string */
+/*static std::vector<std::string> bg_extract_options(const std::string& str, const std::string& rule)
+{
+  // elements     : option format
+  //
+  // <io>         : -n name_str
+  // <burst>      : -b id_n
+  // <start_evt>  : -s evt_id_u32 evt_mask_u32
+  // <stop_evt>   : -t evt_id_u32 evt_mask_u32
+  // <parameter>  : -p s_widht_u32 s_period_u32 b_period_u32 b_delay_32 b_flag_bool
+  //
+  // rules        : option format
+  //
+  // <create>     : <io> <burst> <start_evt> <stop_evt> <parameter>
+  // <list>       : -l id_n
+  // <en_disable> : -e id_n disen_bool
+  // <remove>     : -r id_n
+  // <update>     : -i id_n cycle_hi_u32 cycle_lo_32
+  // <clear_all>  : -x
+
+  typedef std::vector<std::string>::const_iterator v_iter;
+
+  // rules
+  static const std::vector<std::string> rules = { "nbstp", "l", "e", "r", "i", "x"};
+  std::map<int, std::string> ruled_options;
+
+  std::vector<std::string> options = bg_split(str, '-');
+
+  v_iter opt = options.begin();
+  while (opt != options.end())
+  {
+    //std::cout << *opt << std::endl;
+    int cnt = 0;
+
+    for (v_iter rule = rules.begin(); rule != rules.end(); ++rule, ++cnt)
+    {
+      //std::cout << (*opt).front() << std::endl;
+      if ((*rule).find((*opt).front()) != std::string::npos)
+      {
+        ruled_options[cnt].append("-" + *opt + " ");
+        break;
+      }
+    }
+
+    ++opt;
+  }
+
+  for (std::size_t i = 0; i < ruled_options.size(); ++i)
+    std::cout << ruled_options[i] << std::endl;
+
+  return options;
+}*/
+
+/* Check if string is comment (string started with '#') */
+static bool bg_is_comment(const std::string& str)
+{
+  return *str.cbegin() == '#';
+}
 
 /* Asyncronous method call to invoke a burst generator instruction */
 static int  bg_invoke_async(std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t inst_code, std::vector<uint32_t> inst_args)
@@ -131,6 +649,7 @@ static int  bg_invoke_async(std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t i
   else
     return -1;
 }
+
 /* Print help message to check created bursts */
 static void bg_help(char option)
 {
@@ -150,21 +669,6 @@ static int bg_read_fw_id(void)
 {
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    std::cout << std::showbase;
-
     if (bg)
       std::cout << "Firmware ID: " << std::hex << bg->readFirmwareId() << std::endl;
     else
@@ -186,25 +690,6 @@ static int bg_get_fw_id(void)
 {
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
-      return -1;
-    }
-
     std::vector<uint32_t> args;
     args.push_back(0);
 
@@ -248,39 +733,20 @@ static int bg_instruct(std::vector<std::string> instr)
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
+    std::vector<std::string>::iterator it = instr.begin();
 
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
+    std::vector<uint32_t> instr_args;
+    uint32_t instr_code = strtoul((*it).c_str(), NULL, 0);
+    ++it;
+
+    while (it != instr.end())
     {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg)
-    {
-      std::vector<std::string>::iterator it = instr.begin();
-
-      std::vector<uint32_t> instr_args;
-      uint32_t instr_code = strtoul((*it).c_str(), NULL, 0);
+      instr_args.push_back(strtoul((*it).c_str(), NULL, 0));
       ++it;
-
-      while (it != instr.end())
-      {
-        instr_args.push_back(strtoul((*it).c_str(), NULL, 0));
-        ++it;
-      }
-
-      int res = bg->instruct(instr_code, instr_args);
-      if (res)
-        std::cerr << "Failed method call bg_instruct()!" << std::endl;
     }
-    else
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
+
+    if (bg_invoke_async(bg, instr_code, instr_args))
+      std::cerr << "Failed method call bg_instruct()!" << std::endl;
   }
   catch (const saftbus::Error& error)
   {
@@ -295,7 +761,6 @@ static int bg_instruct(std::vector<std::string> instr)
 /* Find the IO port name based on the given burst info */
 static std::string find_io_name(std::shared_ptr<TimingReceiver_Proxy> tr, std::vector<uint32_t> info)
 {
-  std::map<std::string, std::string> outs = tr->getOutputs();
   std::shared_ptr<Output_Proxy> out_proxy;
 
   std::string out_type_name = "undefined";
@@ -333,26 +798,6 @@ static int bg_get_io_name(int burst_id, std::string &name)
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    /* Create a proxy for the burst generator */
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Failed to create a proxy for the burst generator driver" << std::endl;
-      return -1;
-    }
-
     std::vector<uint32_t> info;
     info.push_back(burst_id);
 
@@ -387,25 +832,6 @@ static int bg_list_bursts(int burst_id, bool verbose_mode)
 {
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Could not create a proxy for the burst generator driver" << std::endl;
-      return -1;
-    }
-
     std::vector<uint32_t> args;
     args.push_back(burst_id);
     args.push_back((uint32_t)verbose_mode);
@@ -510,31 +936,11 @@ static int bg_remove_burst(int burst_id, bool verbose)
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
-      return -1;
-    }
-
     std::vector<uint32_t> args;
     args.push_back(burst_id);
     args.push_back(static_cast<uint32_t>(verbose));
 
-    int res = bg->instruct(CMD_RM_BURST, args);
-    if (res)
+    if (bg_invoke_async(bg, CMD_RM_BURST, args))
     {
       std::cerr << "Failed to disable burst" << std::endl;
       return -1;
@@ -550,31 +956,11 @@ static int bg_remove_burst(int burst_id, bool verbose)
   return result;
 }
 
-
 /* Dis/enable burst */
 static int bg_disenable_burst(int burst_id, int disen, bool verbose)
 {
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
-      return -1;
-    }
-
     std::vector<uint32_t> args;
     args.push_back(0);
 
@@ -642,27 +1028,6 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    /* Create a proxy for the burst generator */
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Failed to create a proxy for the burst generator driver" << std::endl;
-      return -1;
-    }
-
-    std::map<std::string, std::string> outs = tr->getOutputs();
     std::shared_ptr<Output_Proxy> out_proxy = NULL;
 
     std::map<std::string,std::string>::iterator it = outs.begin();
@@ -769,8 +1134,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     args.push_back((uint32_t)stop_e_id);
     args.push_back(static_cast<uint32_t>(verbose));
 
-    int res = bg->instruct(CMD_MK_BURST, args);
-    if (res)
+    if (bg_invoke_async(bg, CMD_MK_BURST, args))
     {
       std::cerr << "Failed to enable burst" << std::endl;
       return -1;
@@ -840,25 +1204,6 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
-      return -1;
-    }
-
     uint32_t eca_entries = tr->getFree();
     if (conditions > eca_entries)
     {
@@ -1002,25 +1347,6 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> bg_iface = tr->getInterfaces()["BurstGenerator"];
-    if (bg_iface.empty())
-    {
-      std::cerr << "No BurstGenerator firmware found" << std::endl;
-      return -1;
-    }
-
-    std::shared_ptr<BurstGenerator_Proxy> bg = BurstGenerator_Proxy::create(bg_iface.begin()->second);
-
-    if (bg == NULL)
-    {
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
-      return -1;
-    }
-
     std::vector<uint32_t> args;
 
     // pack burst parameters (id, delay, conditions, block period, burst flag)
@@ -1077,21 +1403,6 @@ static int ecpu_destroy(bool verbose_mode)
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> ecpus = tr->getInterfaces()["EmbeddedCPUActionSink"];
-    if (ecpus.empty())
-    {
-      std::cerr << "No embedded CPU found!" << std::endl;
-      return -1;
-    }
-
-    /* Get connection */
-    std::shared_ptr<EmbeddedCPUActionSink_Proxy> ecpu = EmbeddedCPUActionSink_Proxy::create(ecpus.begin()->second);
-
-    /* Create the action sink */
     if (ecpu)
     {
       std::shared_ptr<EmbeddedCPUCondition_Proxy> condition;
@@ -1115,6 +1426,11 @@ static int ecpu_destroy(bool verbose_mode)
             std::cout << "Found not destructible " << ecpu_sink << std::endl;
         }
       }
+    }
+    else
+    {
+      std::cerr << "eCPU action sink is not available!" << std::endl;
+      return -1;
     }
   }
   catch (const saftbus::Error& error)
@@ -1150,26 +1466,12 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
     /* Check space in the condition table */
     if (tr->getFree() == 0)
     {
       std::cerr << "Error: Cannot set the given condition! Condition table is full." << std::endl;
       return -1;
     }
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> ecpus = tr->getInterfaces()["EmbeddedCPUActionSink"];
-    if (ecpus.empty())
-    {
-      std::cerr << "No embedded CPU found!" << std::endl;
-      return -1;
-    }
-
-    /* Get connection */
-    std::shared_ptr<EmbeddedCPUActionSink_Proxy> ecpu = EmbeddedCPUActionSink_Proxy::create(ecpus.begin()->second);
 
     /* Create the action sink */
     if (ecpu)
@@ -1189,7 +1491,7 @@ static int  ecpu_update(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t
     }
     else
     {
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
+      std::cerr << "eCPU action sink is not available!" << std::endl;
       return -1;
     }
   }
@@ -1233,20 +1535,6 @@ static int  ecpu_check(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t 
 
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> tr = TimingReceiver_Proxy::create(devices[deviceName]);
-
-    /* Check if timing receiver has dedicated interfaces */
-    map<std::string, std::string> ecpus = tr->getInterfaces()["EmbeddedCPUActionSink"];
-    if (ecpus.empty())
-    {
-      std::cerr << "No embedded CPU found!" << std::endl;
-      return -1;
-    }
-
-    /* Get connection */
-    std::shared_ptr<EmbeddedCPUActionSink_Proxy> ecpu = EmbeddedCPUActionSink_Proxy::create(ecpus.begin()->second);
-
     /* Create the action sink */
     if (ecpu)
     {
@@ -1270,7 +1558,7 @@ static int  ecpu_check(uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t 
     }
     else
     {
-      std::cerr << "Could not connect to the burst generator driver" << std::endl;
+      std::cerr << "eCPU action sink is not available!" << std::endl;
       return -1;
     }
   }
@@ -1312,13 +1600,8 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-
     /* Search for IO name */
-    std::map< std::string, std::string > outs;
     std::string io_path;
-    outs = receiver->getOutputs();
     std::shared_ptr<Output_Proxy> output_proxy;
 
     /* Check flags */
@@ -1395,13 +1678,8 @@ static int io_destroy (bool verbose_mode)
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-
     /* Search for IO name */
-    std::map< std::string, std::string > outs;
     std::string io_path;
-    outs = receiver->getOutputs();
     std::shared_ptr<Output_Proxy> output_proxy;
 
     /* Check if IO exists output */
@@ -1451,13 +1729,8 @@ static int io_flip (bool verbose_mode)
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-
     /* Search for IO name */
-    std::map< std::string, std::string > outs;
     std::string io_path;
-    outs = receiver->getOutputs();
     std::shared_ptr<Output_Proxy> output_proxy;
     std::vector< std::string > conditions_to_destroy;
 
@@ -1519,13 +1792,8 @@ static int io_list (void)
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-
     /* Search for IO name */
-    std::map< std::string, std::string > outs;
     std::string io_path;
-    outs = receiver->getOutputs();
     std::shared_ptr<Output_Proxy> output_proxy;
 
     /* Check if IO exists output */
@@ -1647,6 +1915,7 @@ static void io_help (void)
   std::cout << "      0x12                                       Print ECA queue content" << std::endl;
   std::cout << "  All print instructions require the eb-console tool to be run to see the output" << std::endl;*/
   std::cout << "  -x:                                            Clear all unowned conditions for the IO and eCPU actions." << std::endl;
+  std::cout << "  -o <file>:                                     Load options from a given <file>" << std::endl;
   std::cout << std::endl;
   std::cout << "Examples:" << std::endl << std::endl;
   std::cout << program << " tr0" << " -l 0" << std::endl;
@@ -1677,12 +1946,8 @@ static int io_list_i_to_e()
   /* Get inputs and snoop */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< std::string, std::string > inputs = receiver->getInputs();
-
     /* Check inputs */
-    for (std::map<std::string,std::string>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
     {
 
       if (!printed_header)
@@ -1697,7 +1962,7 @@ static int io_list_i_to_e()
         ioName =  it->first.c_str();
         uint64_t prefix = ECA_EVENT_ID_LATCH + (map_PrefixName.size()*2);
         map_PrefixName[ioName] = prefix;
-        std::shared_ptr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+        std::shared_ptr<Input_Proxy> input = Input_Proxy::create(ins[ioName]);
 
         std::cout << std::left;
         std::cout << std::setw(12+2) << it->first << " ";
@@ -1766,12 +2031,8 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
   /* Get inputs and snoop */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< std::string, std::string > inputs = receiver->getInputs();
-
     /* Check inputs */
-    for (std::map<std::string,std::string>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+    for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
     {
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
@@ -1785,7 +2046,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         {
           if (!setup_only)
           {
-            sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
+            sinks.push_back( SoftwareActionSink_Proxy::create(tr->NewSoftwareActionSink("")));
             proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
             proxies.back()->SigAction.connect(sigc::ptr_fun(&io_catch_input));
             proxies.back()->setAcceptConflict(true);
@@ -1795,7 +2056,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
           }
 
           /* Setup the event */
-          std::shared_ptr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+          std::shared_ptr<Input_Proxy> input = Input_Proxy::create(ins[ioName]);
           if (prefix_custom != 0x0) { prefix = prefix_custom; }
           if (disable_source)
           {
@@ -1811,7 +2072,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         else
         {
           /* Disable the event */
-          std::shared_ptr<Input_Proxy> input = Input_Proxy::create(inputs[ioName]);
+          std::shared_ptr<Input_Proxy> input = Input_Proxy::create(ins[ioName]);
           input->setEventEnable(false);
         }
       }
@@ -1850,7 +2111,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
 
 /* Function io_setup() */
 /* ==================================================================================================== */
-static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_gate_out, int io_gate_in, int io_mux, int io_pps, int io_drive, int stime,
+static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, int io_gate_out, int io_gate_in, int io_mux, int io_pps, int io_drive, int s_time,
                     bool set_oe, bool set_term, bool set_spec_out, bool set_spec_in, bool set_gate_out, bool set_gate_in, bool set_mux, bool set_pps, bool set_drive, bool set_stime,
                     bool verbose_mode)
 {
@@ -1880,16 +2141,9 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-
     /* Search for IO name */
-    std::map< std::string, std::string > outs;
-    std::map< std::string, std::string > ins;
     std::string io_path;
     std::string io_partner;
-    outs = receiver->getOutputs();
-    ins = receiver->getInputs();
     std::shared_ptr<Output_Proxy> output_proxy;
     std::shared_ptr<Input_Proxy> input_proxy;
 
@@ -2089,7 +2343,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       if (set_mux)      { output_proxy->setBuTiSMultiplexer(io_mux); }
       if (set_pps)      { output_proxy->setPPSMultiplexer(io_pps); }
       if (set_drive)    { output_proxy->WriteOutput(io_drive); }
-      if (set_stime)    { input_proxy->setStableTime(stime); }
+      if (set_stime)    { input_proxy->setStableTime(s_time); }
     }
     else
     {
@@ -2190,13 +2444,6 @@ static int io_print_table(bool verbose_mode)
   /* Try to get the table */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< std::string, std::string > outs;
-    std::map< std::string, std::string > ins;
-    outs = receiver->getOutputs();
-    ins = receiver->getInputs();
-
     /* Show verbose output */
     if (verbose_mode)
     {
@@ -2286,283 +2533,158 @@ static int io_print_table(bool verbose_mode)
 /* ==================================================================================================== */
 int main (int argc, char** argv)
 {
-  /* Helpers to deal with endless arguments */
-  char * pEnd         = NULL;  /* Arguments parsing */
-  int  opt            = 0;     /* Number of given options */
-  int  io_oe          = 0;     /* Output enable */
-  int  io_term        = 0;     /* Input Termination */
-  int  io_spec_out    = 0;     /* Special (output) function */
-  int  io_spec_in     = 0;     /* Special (input) function */
-  int  io_gate_out    = 0;     /* Output gate */
-  int  io_gate_in     = 0;     /* Input gate */
-  int  io_mux         = 0;     /* Gate (BuTiS) */
-  int  io_pps         = 0;     /* Gate (PPS) */
-  int  io_drive       = 0;     /* Drive IO value */
-  int  ioc_flip       = 0;     /* Flip active bit for all conditions */
-  int  stime          = 0;     /* Stable time to set */
-  int  return_code    = 0;     /* Return code */
-  uint64_t eventID     = 0x0;   /* Event ID (new condition) */
-  uint64_t eventMask   = 0x0;   /* Event mask (new condition) */
-  int64_t  offset      = 0x0;   /* Event offset (new condition) */
-  uint64_t flags       = 0x0;   /* Accept flags (new condition) */
-  int64_t  level       = 0x0;   /* Rising or falling edge (new condition) */
-  uint64_t prefix      = 0x0;   /* IO input prefix */
-  bool translate_mask = false; /* Translate mask? */
-  bool negative       = false; /* Offset negative? */
-  bool ioc_valid      = false; /* Create arguments valid? */
-  bool set_oe         = false; /* Set? */
-  bool set_term       = false; /* Set? */
-  bool set_spec_in    = false; /* Set? */
-  bool set_spec_out   = false; /* Set? */
-  bool set_gate_in    = false; /* Set? */
-  bool set_gate_out   = false; /* Set? */
-  bool set_mux        = false; /* Set? (BuTiS gate) */
-  bool set_pps        = false; /* Set? (PPS gate) */
-  bool set_drive      = false; /* Set? */
-  bool set_stime      = false; /* Set? (Stable time) */
-  bool ios_snoop      = false; /* Snoop on an input(s) */
-  bool ios_wipe       = false; /* Wipe/disable all events from input(s) */
-  bool ios_i_to_e     = false; /* List input to event table */
-  bool ios_setup_only = false; /* Only setup input to event */
-  bool ioc_create     = false; /* Create condition */
-  bool ioc_disown     = false; /* Disown created condition */
-  bool ioc_destroy    = false; /* Destroy condition */
-  bool ioc_list       = false; /* List conditions */
-  bool ioc_dis_ios    = false; /* Disable event source? */
-  bool verbose_mode   = false; /* Print verbose output to output stream => -v */
-  bool show_help      = false; /* Print help => -h */
-  bool show_table     = false; /* Print io mapping table => -i */
-
-  uint64_t bg_start_e_id   = 0x00;  /* Start event ID */
-  uint64_t bg_start_e_mask = 0x00;  /* Start event mask */
-  uint64_t bg_stop_e_id    = 0x00;  /* Stop event ID */
-  uint64_t bg_stop_e_mask  = 0x00;  /* Stop event mask */
-  uint32_t bg_t_high  = 0x00;  /* Signal active state length, t_high */
-  uint32_t bg_t_p     = 0x00;  /* Signal period, t_p */
-  int64_t  bg_t_b     = 0x00;  /* Burst period, t_b (=0 endless) */
-  uint64_t bg_b_delay = 0x00;  /* Burst delay, b_d, nanoseconds */
-  uint32_t bg_b_flag  = 0x00;  /* Burst flag, b_f, (=0 new/overwrite, =1 append) */
-  int      bg_disen   = 0;     /* Disable or enable option argument value */
-  std::vector<std::string> bg_instr_args;  /* Arguments of instruct option */
-  int      bg_id      = 0x00;  /* Burst ID */
-  bool bg_fw_id       = false; /* Get and print the firmware id of the burst generator */
-  bool bg_instr       = false; /* Demo option to test the instruct method call */
-  bool bg_cfg_io      = false; /* Set the ECA conditions for IO actions */
-  bool bg_clr_all     = false; /* Clear all unowned conditions for the IO and eCPU actions */
-  bool bg_ls_bursts   = false; /* List enabled bursts */
-  bool bg_disen_burst = false; /* Disable or enable burst, id */
-  bool bg_mk_burst    = false; /* Create new burst */
-  bool bg_rm_burst    = false; /* Remove burst */
-
   /* Get the application name */
   program = argv[0];
-  deviceName = "NoDeviceNameGiven";
 
-  /* Parse for options */
-  while ((opt = getopt(argc, argv, ":fp:e:i:l:b:r:s:t:xn:vh")) != -1)
-  {
-    switch (opt)
-    {
-      case 'f': { bg_fw_id       = true; break; }
-      case 'p': {
-                  if (argv[optind-1] != NULL) { bg_t_high = strtoul(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error::Missing active state length of a pulse (u32)!" << std::endl; return -1; }
-                  if (argv[optind+0] != NULL) { bg_t_p = strtoul(argv[optind+0], &pEnd, 0); }
-                  else                        { std::cerr << "Error::Missing signal period (u32)!" << std::endl; return -1; }
-                  if (argv[optind+1] != NULL) { bg_t_b = strtoll(argv[optind+1], &pEnd, 0); }
-                  else                        { std::cerr << "Error::Missing burst period (i64)!" << std::endl; return -1; }
-                  if (bg_t_high > bg_t_p)    { std::cerr << "Invalid signal parameters, t_high > t_p" << std::endl; return -1; }
-                  if (bg_t_b > 0 && bg_t_p > bg_t_b) { std::cerr << "Invalid burst parameters, t_p > t_b" << std::endl; return -1; }
-                  if (argv[optind+2] != NULL) { bg_b_delay = strtoull(argv[optind+2], &pEnd, 0); }
-                  else                        { std::cerr << "Error::Missing burst delay!" << std::endl; return -1; }
-                  if (argv[optind+3] != NULL) { bg_b_flag = strtoul(argv[optind+3], &pEnd, 0); }
-                  else                        { std::cerr << "Error::Missing burst flag!" << std::endl; return -1; }
-                  bg_cfg_io      = true;
-                  break; }
-      case 'e': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
-                  if (bg_id < 0 || bg_id > N_BURSTS) { std::cerr << "Error: invalid burst id, must be 0 <= id <= " << N_BURSTS << std::endl; return -1; }
-                  if (argv[optind+0] != NULL) { bg_disen = strtol(argv[optind+0], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing dis/enable setting!" << std::endl; return -1; }
-                  bg_disen_burst = true;
-                  break; }
-      case 'i': { bg_instr       = true;
-                  int index      = optind - 1;
-                  while (index < argc)
-                  {
-                    if (argv[index] != NULL && argv[index][0] != '-') { bg_instr_args.push_back(argv[index]); ++index; }
-                    else                                              { optind = index - 1; break; }
-                  }
-                  if (!bg_instr_args.empty())
-                  {
-                    std::cout << "Arguments: ";
-                    for (vector<string>::iterator it = bg_instr_args.begin(); it != bg_instr_args.end(); ++it)
-                      std::cout << *it << ' ';
-                    std::cout << std::endl;
-                  }
-                  break; }
-      case 'l': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
-                  if (bg_id < 0 || bg_id > N_BURSTS)  { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
-                  bg_ls_bursts   = true;
-                  break; }
-      case 'b': { if (argv[optind-1] != NULL) { burstId = strtol(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
-                  if (burstId <= 0 || burstId > N_BURSTS)  { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
-                  burstIdGiven  = true;
-                  break; }
-      case 'r': { if (argv[optind-1] != NULL) { bg_id = strtol(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
-                  if (bg_id <= 0 || bg_id > N_BURSTS) { std::cerr << "Error: invalid burst id, must be 0 < id <= " << N_BURSTS << std::endl; return -1; }
-                  bg_rm_burst   = true;
-                  break; }
-      case 's': { if (argv[optind-1] != NULL) { bg_start_e_id = strtoull(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing an ID for the start event!" << std::endl; return -1; }
-                  if (argv[optind+0] != NULL) { bg_start_e_mask = strtoull(argv[optind+0], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing a mask for the start event!" << std::endl; return -1; }
-                  bg_mk_burst   = true;
-                  break; }
-      case 't': { if (argv[optind-1] != NULL) { bg_stop_e_id = strtoull(argv[optind-1], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing an ID for the stop event!" << std::endl; return -1; }
-                  if (argv[optind+0] != NULL) { bg_stop_e_mask = strtoull(argv[optind+0], &pEnd, 0); }
-                  else                        { std::cerr << "Error: Missing a mask for the stop event!" << std::endl; return -1; }
-                  break; }
-      case 'x': { bg_clr_all    = true;
-                  break; }
-      case 'n': { ioName         = argv[optind-1]; ioNameGiven  = true; break; }
-      case 'v': { verbose_mode   = true; break; }
-      case 'h': { show_help      = true; break; }
-      case ':': { std::cout << "Option -" << (char)optopt << " requires argument(s)!" << std::endl; show_help = true; break; }
-      default:  { std::cout << "Unknown option: " << (char)optopt << std::endl; show_help = true; break; }
-    }
-    /* Break loop if help is needed */
-    if (show_help) { break; }
-  }
+  /* Evaluate the command line arguments */
+  if (argc > 2) {
+    if (argv[1] != NULL)
+      deviceName = argv[1];
 
-  /* Help wanted? */
-  if (show_help) { io_help(); return (__IO_RETURN_SUCCESS); }
+    string cmd_args;
+    for (int i = 1; i < argc; ++i)
+      cmd_args.append(string(argv[i]) + " ");
 
-  /* Plausibility check for arguments */
-  if ((ioc_create || ioc_disown) && ioc_destroy) { std::cerr << "Incorrect arguments!" << std::endl; return (__IO_RETURN_FAILURE); }
-  else                                           { ioc_valid = true; }
+    cout << "Command args: " << cmd_args << endl;
 
-  /* Plausibility check for event input options */
-  if      (ios_snoop && ios_wipe)       { std::cerr << "Incorrect arguments (disable input events or snoop)!"  << std::endl; return (__IO_RETURN_FAILURE);}
-  else if (ios_snoop && ios_setup_only) { std::cerr << "Incorrect arguments (enable input events or snoop)!"   << std::endl; return (__IO_RETURN_FAILURE);}
-  else if (ios_wipe  && ios_setup_only) { std::cerr << "Incorrect arguments (disable or enable input events)!" << std::endl; return (__IO_RETURN_FAILURE); }
+    // check if an option file is specified
+    while((opt = getopt(argc, argv, ":ho:")) != -1) {
+      switch (opt) {
+        case 'h':
+          show_help = true;
+          break;
+        case 'o':
+          if (argv[optind-1] != NULL) {
+            optFileName = string(argv[optind-1]);
+            // remove option and its argument from cmd_args
+            string what = "-o";
+            string::size_type n = cmd_args.rfind(what);
+            if (n != string::npos)
+              cmd_args.erase(n, what.length());
+            n = cmd_args.rfind(optFileName);
+            if (n != string::npos)
+              cmd_args.erase(n, optFileName.length());
 
-  /* Get basic arguments, we need at least the device name */
-  if (optind + 1 == argc)
-  {
-    deviceName = argv[optind]; /* Get the device name */
-    if ((io_oe || io_term || io_spec_out || io_spec_in || io_gate_out || io_gate_in || io_mux || io_pps || io_drive || show_help || show_table ||
-         ios_snoop || ioc_create || ioc_disown || ioc_destroy || ioc_flip || ioc_list || ioNameGiven || ioc_valid) == false)
-    {
-      std::cerr << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)(arg)!" << std::endl;
-      return (__IO_RETURN_FAILURE);
-    }
-  }
-  else if (ioc_valid)
-  {
-    deviceName = argv[optind]; /* Get the device name */
-  }
-  else
-  {
-    std::cerr << "Incorrect non-optional arguments (expecting at least the device name and one additional argument)(dev)!" << std::endl;
-    return (__IO_RETURN_FAILURE);
-  }
+            // check any option
+            n = cmd_args.find('-');
+            if (0 < n && n + 1 < cmd_args.length())
+              if (!std::isspace(static_cast<unsigned char>(cmd_args[n-1])) &&
+                  !std::isalpha(static_cast<unsigned char>(cmd_args[n+1])))
+                n = string::npos;
 
-  /* Confirm device exists */
-  if (deviceName == NULL)
-  {
-    std::cerr << "Missing device name!" << std::endl;
-    return (__IO_RETURN_FAILURE);
-  }
-//  Gio::init();
-  map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-  if (devices.find(deviceName) == devices.end())
-  {
-    std::cerr << "Device " << deviceName << " does not exist!" << std::endl;
-    return (__IO_RETURN_FAILURE);
-  }
-  if (verbose_mode) { std::cout << "Device " << deviceName << " found!" << std::endl; }
-
-  /* Plausibility check */
-  if (io_oe > 1       || io_oe < 0)       { std::cout << "Error: Output enable setting is invalid!"             << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_term > 1     || io_term < 0)     { std::cout << "Error: Input termination setting is invalid"          << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_spec_out > 1 || io_spec_out < 0) { std::cout << "Error: Special (output) function setting is invalid!" << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_spec_in > 1  || io_spec_in < 0)  { std::cout << "Error: Special (input) function setting is invalid!"  << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_gate_out > 1 || io_gate_out < 0) { std::cout << "Error: Gate (output) setting is invalid!"             << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_gate_in > 1  || io_gate_in < 0)  { std::cout << "Error: Gate (input) setting is invalid!"              << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_mux > 1      || io_mux < 0)      { std::cout << "Error: BuTiS t0 gate/mux setting is invalid!"         << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_pps > 1      || io_pps < 0)      { std::cout << "Error: WR PPS gate/mux setting is invalid!"           << std::endl; return (__IO_RETURN_FAILURE); }
-  if (io_drive > 1    || io_drive < 0)    { std::cout << "Error: Output value is not valid!"                    << std::endl; return (__IO_RETURN_FAILURE); }
-  if (set_stime)
-  {
-    if (stime % 8 != 0)                     { std::cout << "Error: StableTime must be a multiple of 8 ns"         << std::endl; return (__IO_RETURN_FAILURE); }
-    if (stime < 16)                         { std::cout << "Error: StableTime must be at least 16 ns"             << std::endl; return (__IO_RETURN_FAILURE); }
-  }
-
-  /* Check if given IO name exists */
-  if (ioNameGiven)
-  {
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    std::map< std::string, std::string > outs;
-    std::map< std::string, std::string > ins;
-    outs = receiver->getOutputs();
-    ins = receiver->getInputs();
-
-    /* Check all inputs and outputs */
-    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
-    {
-      if (it->first == ioName)          { ioNameExists = true; }
-      if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (output)!" << std::endl; break; }
-    }
-    for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it)
-    {
-      if (it->first == ioName)          { ioNameExists = true; }
-      if (verbose_mode && ioNameExists) { std::cout << "IO " << ioName << " found (input)!" << std::endl; break; }
+            // no option at all
+            if (n == string::npos)
+              cmd_args.clear();
+          }
+          else {
+            std::cerr << "Error: Missing file name!" << std::endl;
+            show_help = true;
+          }
+          break;
+        case ':':
+          std::cout << "Option -" << (char)optopt << " requires argument(s)!" << std::endl;
+          show_help = true;
+          break;
+        default:
+          break;
+      }
     }
 
-    /* Inform the user if the given IO does not exist */
-    if (!ioNameExists)
-    {
-      std::cerr << "IO " << ioName << " does not exist!" << std::endl;
-      return (__IO_RETURN_FAILURE);
+    if (show_help) {
+      io_help();
+      return 0;
+    }
+
+    if (!cmd_args.empty())
+      bg_options.push_back(cmd_args);
+  }
+  else {
+    cerr << "Error: Missing options!" << endl;
+    io_help();
+    return -1;
+  }
+
+  /* Get options from the specified option file */
+  if (!optFileName.empty()) {
+
+    cout << "Content in file " << optFileName << ":"<< endl;
+
+    ifstream file(optFileName);
+    if (file) {
+      string line;
+      while(getline(file, line)) {
+        cout << line << endl;
+        if (line.length() != 0)           // ignore empty line
+          bg_options.push_back(line);
+      }
+    }
+    else {
+      cerr << "Error: Trouble with " << optFileName << endl;
+      return -1;
     }
   }
 
-  if (bg_mk_burst)
-  {
-    if (bg_start_e_id == 0)             { std::cout << "Error: Invalid ID for the start event!" << std::endl; return (__IO_RETURN_FAILURE); }
-    if (bg_start_e_id == bg_stop_e_id)  { std::cout << "Error: IDs of the start and stop events must be different!" << std::endl; return (__IO_RETURN_FAILURE); }
+  /* Check if any command-line option is given */
+  if (bg_options.empty()) {
+    cout << "No option to proceed. Exit" << endl;
+    return 0;
   }
 
-  /* Check if help is needed, otherwise evaluate given arguments */
-  if (show_help) { io_help(); }
-  else
-  {
-    /* Proceed with program */
-    if      (bg_fw_id)       { return_code = bg_get_fw_id(); }
-    else if (bg_instr)       { return_code = bg_instruct(bg_instr_args); }
-    else if (bg_cfg_io)      { return_code = bg_config_io(bg_t_high, bg_t_p, bg_t_b, bg_b_delay, bg_b_flag, verbose_mode); }
-    else if (bg_clr_all)     { return_code = bg_clear_all(verbose_mode); }
-    else if (bg_ls_bursts)   { return_code = bg_list_bursts(bg_id, verbose_mode); }
-    else if (bg_rm_burst)    { return_code = bg_remove_burst(bg_id, verbose_mode); }
-    else if (bg_disen_burst) { return_code = bg_disenable_burst(bg_id, bg_disen, verbose_mode); }
-    else if (bg_mk_burst)    { return_code = bg_create_burst(burstId, bg_start_e_id, bg_start_e_mask, bg_stop_e_id, bg_stop_e_mask, verbose_mode); }
-    else if (show_table)     { return_code = io_print_table(verbose_mode); }
-    else if (ios_wipe)       { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
-    else if (ios_snoop)      { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
-    else if (ios_setup_only) { return_code = io_snoop(ios_wipe, ios_setup_only, ioc_dis_ios, prefix); }
-    else if (ios_i_to_e)     { return_code = io_list_i_to_e(); }
-    else if (ioc_create)     { return_code = io_create(ioc_disown, eventID, eventMask, offset, flags, level, negative, translate_mask); }
-    else if (ioc_destroy)    { return_code = io_destroy(verbose_mode); }
-    else if (ioc_flip)       { return_code = io_flip(verbose_mode); }
-    else if (ioc_list)       { return_code = io_list(); }
-    else                     { return_code = io_setup(io_oe, io_term, io_spec_out, io_spec_in, io_gate_out, io_gate_in, io_mux, io_pps, io_drive, stime, set_oe, set_term, set_spec_out, set_spec_in, set_gate_out, set_gate_in, set_mux, set_pps, set_drive, set_stime, verbose_mode); }
+  /* Detect a given target device */
+  cout << "Detecting target device: " << deviceName << endl;
+  if (deviceName != NULL) {
+    if (bg_setup_device(deviceName))
+    {
+      cerr << "Failed to set up " << deviceName << endl;
+      return -1;
+    }
+
+    cout << "Device " << deviceName << " found!" << endl;
+  }
+  else {
+    cerr << "Error: device name is missing!" << endl;
+    return -1;
+  }
+
+  /* Remove comments (lines starting with '#') and resize the container */
+  vector<string>::iterator itr = remove_if(bg_options.begin(), bg_options.end(), bg_is_comment);
+  bg_options.erase(itr, bg_options.end());
+
+  cout << "Options to process:" << endl;
+  itr = bg_options.begin();
+  while (itr != bg_options.end()) {
+    cout << "<" << *itr << ">" << endl;
+    ++itr;
+  }
+
+  bg_reset_variables();
+  cout << "Starting configuration ..." << endl;
+
+  /* Parse the command-line options, check their arguments and configure the target */
+  itr = bg_options.begin();
+  while (itr != bg_options.end()) {
+    // parse options
+    if (bg_parse_options(*itr, ":fp:e:i:l:b:r:s:t:xn:v"))
+      cerr << "Cannot parse options: " << *itr << endl;
+    else
+    {
+      // check arguments
+      if (bg_check_arguments())
+        cerr << "Bad arguments in options: " << *itr << endl;
+      else
+      {
+        // do configuration
+        if (bg_do_configuration())
+          cerr << "Failed options: " << *itr << endl;
+        else
+          cout << "Successed: " << *itr << endl;
+      }
+
+      bg_reset_variables();
+    }
+    ++itr;
   }
 
   /* Done */
-  return (return_code);
+  return 0;
 }
