@@ -173,7 +173,6 @@ static int  io_print_table (bool verbose_mode);
 static void io_catch_input (uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags);
 static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
-static int  bg_read_fw_id       (void);
 static int  bg_get_fw_id        (void);
 static int  bg_instruct         (std::vector<std::string> instr);
 static int  bg_config_io        (uint32_t t_high, uint32_t t_period, int64_t t_burst, uint64_t b_delay, uint32_t b_flag, bool verbose_mode);
@@ -661,27 +660,6 @@ static void bg_help(char option)
     default :
       break;
   }
-}
-
-/* Read the firmware id of the burst generator */
-/* ==================================================================================================== */
-static int bg_read_fw_id(void)
-{
-  try
-  {
-    if (bg)
-      std::cout << "Firmware ID: " << std::hex << bg->readFirmwareId() << std::endl;
-    else
-      std::cerr << "Failed to get firmware ID of burst generator" << std::endl;
-  }
-  catch (const saftbus::Error& error)
-  {
-    /* Catch error(s) */
-    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
-    return -1;
-  }
-
-  return 0;
 }
 
 /* Get the firmware id of the burst generator */
