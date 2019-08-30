@@ -46,9 +46,9 @@
 using namespace std;
 
 static const char* program;
-static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
+static uint32_t pmode = PMODE_NONE;   // how data are printed (hex, dec, verbosity)
 bool absoluteTime   = false;
-bool UTC            = false; // show UTC instead of TAI
+bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
 
 // GID
@@ -83,71 +83,73 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   uint32_t gid;
   uint32_t evtNo;
   uint32_t vacc;
+  uint32_t flagsSPZ;
   uint32_t flagsPZ;
   string   sVacc;
   string   special;
-    
+
+  uint32_t      flagNochop;
+  uint32_t      flagShortchop;
+  uint32_t      flagHighC;
+  uint32_t      flagRigid;
+  uint32_t      flagDry;
+
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
   static saftlib::Time prevDeadline = deadline;
   static uint32_t      nCycle       = 0x0;
-  static uint32_t      flagNochop;
-  static uint32_t      flagShortchop;
+  
+  gid      = ((id    & 0x0fff000000000000) >> 48);
+  evtNo    = ((id    & 0x0000fff000000000) >> 36);
+  vacc     = ((id    & 0x00000000fff00000) >> 20);
+  flagsSPZ = ((param & 0xffffffff00000000) >> 32);
+  flagsPZ  = ( param & 0x00000000ffffffff);
 
-  gid     = ((id    & 0x0fff000000000000) >> 48);
-  evtNo   = ((id    & 0x0000fff000000000) >> 36);
-  vacc    = ((id    & 0x00000000fff00000) >> 20);
-  flagsPZ = ((param & 0xffffffff00000000) >> 32);
-
-  flagNochop    = ((flagsPZ & 0x1) != 0);
-  flagShortchop = ((flagsPZ & 0x2) != 0);
-
+  flagNochop    = ((flagsSPZ & 0x1) != 0);
+  flagShortchop = ((flagsSPZ & 0x2) != 0);
+  flagRigid     = ((flagsPZ  & 0x2) != 0);
+  flagDry       = ((flagsPZ  & 0x4) != 0);
+  flagHighC     = ((flagsPZ  & 0x8) != 0);
 
   if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
     switch (nCycle) {
       case 0 :        // print header
-        std::cout << "   # cycle:   QR   QL   QN  HLI  HSI   AT   TK" << std::endl;
+        std::cout << "   # cycle:      QR      QL      QN     HLI     HSI      AT      TK" << std::endl;
         break;
       case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
         break;
       default :       // default
                           
         std::cout << std::setw(10) << nCycle << ":"
-                  << std::setw( 5) << pz1
-                  << std::setw( 5) << pz2
-                  << std::setw( 5) << pz3
-                  << std::setw( 5) << pz4
-                  << std::setw( 5) << pz5
-                  << std::setw( 5) << pz6 
-                  << std::setw( 5) << pz7
+                  << std::setw( 8) << pz1
+                  << std::setw( 8) << pz2
+                  << std::setw( 8) << pz3
+                  << std::setw( 8) << pz4
+                  << std::setw( 8) << pz5
+                  << std::setw( 8) << pz6 
+                  << std::setw( 8) << pz7
                   << std::endl;
         break;
     } // switch nCycle
     pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = "";
-    /*flagNochop    = 0;
-      flagShortchop = 0;*/
     prevDeadline  = deadline;
     nCycle++;
   } // if deadline
 
+  sVacc = "";
   // special cases
-  /*flagNochop    = flagNochop    | ((flagsPZ & 0x1) != 0);
-    flagShortchop = flagShortchop | ((flagsPZ & 0x2) != 0);*/
-
-  special = "";
-  if (evtNo == NXTRF) special = "RF";
+  if (evtNo == NXTRF) sVacc = "(HF)";
   if (evtNo == NXTACC) {
-    if (((gid == QR) || (gid == QL) || (gid == QN)) && (vacc == 14)) {
-      special = "IQ";
-    } // ion source not producing beam (heating only)
+    if (((gid == QR) || (gid == QL) || (gid == QN)) && (vacc == 14)) sVacc = "(IQ)";
     else {
-      if (flagNochop)    special = "N";
-      else               special = " ";
+      special = "";
+      if (flagNochop)    special  = "N";
       if (flagShortchop) special += "S";
-      else               special += " ";
-    } // ion source (beam)
+      if (flagHighC)     special += "H";
+      if (flagRigid)     special += "R"; 
+      if (flagDry)       special += "D"; 
+      sVacc = special + std::to_string(vacc);
+    } // else: ion source producing real beam
   } // if NXTACC
-  
-  sVacc = special + std::to_string(vacc);
 
   switch (gid) {
   case QR : 
@@ -172,16 +174,8 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
     pz7 = sVacc;
     break;
   default :
-    special += " unknown GID" + sVacc + " ";
-  }
-
-/*  
-
-  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
-  std::cout << tr_formatActionEvent(id, pmode);
-  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
-  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
-  std::cout << std::endl; */
+    break;
+  } // switch gid
 } // on_action_uni
 
 using namespace saftlib;
@@ -208,9 +202,11 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
   std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
-  std::cout << "  usnoop  <type>       (experimental feature) snoop events from DM @ UNILAC,  <type> may be one of the following" << std::endl;
+  std::cout << "  usnoop  <type>       (experimental feature) snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
   std::cout << "            '0'        event display, but limited to GIDs of UNILAC and special event numbers" << std::endl;
   std::cout << "            '1'        shows virt acc executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
+  std::cout << "                       the virt acc is accompanied by flags 'N'o chopper, 'S'hort chopper, 'R'igid beam, 'D'ry and 'H'igh current," << std::endl;
+  std::cout << "                       'warming pulses' are shown in brackets" << std::endl;
   std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
