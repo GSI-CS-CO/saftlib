@@ -27,9 +27,6 @@ namespace saftlib {
       static std::shared_ptr<BurstGenerator> create(const ConstructorType& args);
 
       // iBurstGenerator overrides
-      uint32_t readFirmwareId();
-      int32_t sendPulseParams(uint32_t eventHi, uint32_t delay, uint32_t conditions, uint32_t offset);
-      int32_t sendProdCycles(uint32_t eventHi, uint64_t cycles);
       int32_t instruct(uint32_t code, const std::vector< uint32_t >& args);
       std::vector< uint32_t > readBurstInfo(uint32_t id);
       std::vector< uint32_t > readSharedBuffer(uint32_t size);
