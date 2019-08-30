@@ -204,8 +204,8 @@ static void help(void) {
   std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
   std::cout << "  usnoop  <type>       (experimental feature) snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
   std::cout << "            '0'        event display, but limited to GIDs of UNILAC and special event numbers" << std::endl;
-  std::cout << "            '1'        shows virt acc executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
-  std::cout << "                       the virt acc is accompanied by flags 'N'o chopper, 'S'hort chopper, 'R'igid beam, 'D'ry and 'H'igh current," << std::endl;
+  std::cout << "            '1'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
+  std::cout << "                       the vacc number is accompanied by flags 'N'o chopper, 'S'hort chopper, 'R'igid beam, 'D'ry and 'H'igh current;" << std::endl;
   std::cout << "                       'warming pulses' are shown in brackets" << std::endl;
   std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
