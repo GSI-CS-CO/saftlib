@@ -45,7 +45,7 @@ namespace saftlib {
       sdb_device                 mailbox;
       eb_address_t               my_msi_path;   // my msi path (required to configure mailbox)
       int                        my_slot;       // mailbox slot subscribed by me
-      uint32_t                   inst_code;     // instruction code sent via MSI
+      uint32_t                   response;      // instruction result and instruction code (sent by MSI)
 
       bool                       found_bg_fw;
       eb_address_t               bg_slot;       // mailbox slot subscribed by the burst generator

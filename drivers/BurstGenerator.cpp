@@ -23,6 +23,7 @@ namespace saftlib {
     sdb_msi_base(args.sdb_msi_base),
     mailbox(args.mailbox),
     my_msi_path(args.device.request_irq(args.sdb_msi_base, sigc::mem_fun(*this, &BurstGenerator::msi_handler))),
+    response(0),
     found_bg_fw(false)
   {
     // detect lm32 cores
@@ -312,7 +313,7 @@ namespace saftlib {
 
   uint32_t BurstGenerator::getResponse() const
   {
-    return inst_code;
+    return response;
   }
 
   void BurstGenerator::msi_handler(eb_data_t msg)
@@ -320,9 +321,9 @@ namespace saftlib {
     //clog << kLogDebug << "BurstGenerator: msi_handler(" << msg << ") called." << std::endl;
     //if (!getOwner().empty())
     {
-      inst_code = (uint32_t)msg;
-      sigInstComplete(inst_code);
-      clog << kLogInfo << "BurstGenerator: signal sigInstComplete(" << inst_code << ") emitted." << std::endl;
+      response = (uint32_t)msg;
+      sigInstComplete(response);
+      clog << kLogInfo << "BurstGenerator: signal sigInstComplete(" << response << ") emitted." << std::endl;
     }
   }
 
