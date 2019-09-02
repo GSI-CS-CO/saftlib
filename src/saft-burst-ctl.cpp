@@ -643,10 +643,11 @@ static int  bg_invoke_async(std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t i
 
   saftlib::wait_for_signal(3000);         // wait for response or time-out (burst generator checks its mailbox every second)
 
-  if (bg->getResponse() == inst_code)     // check response
-    return 0;
-  else
+  uint32_t response = bg->getResponse();  // check response
+  if ((response & 0xFFFF) != inst_code)
     return -1;
+
+  return (response >> 16) & 0xFFFF;       // return instruction result, if instruction is complete
 }
 
 /* Print help message to check created bursts */
