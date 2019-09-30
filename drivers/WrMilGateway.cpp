@@ -312,7 +312,6 @@ bool WrMilGateway::poll()
     if (value & 0x8) {
       // we have mil events
       device.read(mil_event_read_and_pop, EB_DATA32, &value);
-      clog << kLogInfo << "got MIL event: " << std::hex << "0x" << value << std::dec << std::endl;
       SigReceivedMilEvent(value); // send signal to Proxies
     } else {
       break;
