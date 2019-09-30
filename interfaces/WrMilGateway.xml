@@ -127,6 +127,11 @@
       <arg name="since_last_signal" type="u"/>
     </signal>
 
+    <!-- SigReceivedMilEvent: received a MIL signal on the MIL piggy -->
+    <signal name="SigReceivedMilEvent">
+      <arg name="message" type="u"/>
+    </signal>
+
 
     <!-- InUse: indicates if the gateway is translating any events -->
     <property name="InUse"   type="b" access="read">

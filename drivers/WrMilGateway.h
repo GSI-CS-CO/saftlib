@@ -114,6 +114,8 @@ class WrMilGateway : public Owned, public iWrMilGateway
 
     eb_address_t  oled_reset;
     eb_address_t  oled_char;
+    eb_address_t  mil_events_present;
+    eb_address_t  mil_event_read_and_pop;
 
 
     //std::shared_ptr<TimingReceiver> receiver;

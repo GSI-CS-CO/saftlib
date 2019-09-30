@@ -131,6 +131,17 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   }
   device.write(oled_reset, EB_DATA32, (eb_data_t)1); // reset the oled
   oledUpdate();
+
+  // find MIL piggy device
+  uint64_t MIL_SDB_VENDOR_ID = UINT64_C(0x651);
+  uint32_t MIL_SDB_DEVICE_ID = UINT32_C(0x35aa6b96);
+  std::vector<struct sdb_device> mil_devices;
+  device.sdb_find_by_identity(MIL_SDB_VENDOR_ID, MIL_SDB_DEVICE_ID, mil_devices);
+  if (!oled_devices.empty()) {
+    mil_events_present     = mil_devices.front().sdb_component.addr_first + 0x1008; 
+    mil_event_read_and_pop = mil_devices.front().sdb_component.addr_first + 0x1014;
+  }
+
 }
 
 void WrMilGateway::oledUpdate()
@@ -293,6 +304,21 @@ bool WrMilGateway::poll()
   } 
 
   oledUpdate();
+
+  // look for MIl events caputred by the MIL piggy;
+  for (;;) {
+    eb_data_t value;
+    device.read(mil_events_present, EB_DATA32, &value);
+    if (value & 0x8) {
+      // we have mil events
+      device.read(mil_event_read_and_pop, EB_DATA32, &value);
+      clog << kLogInfo << "got MIL event: " << std::hex << "0x" << value << std::dec << std::endl;
+      SigReceivedMilEvent(value); // send signal to Proxies
+    } else {
+      break;
+    }
+  }
+
   return true; // return true to continue polling
 }
 
