@@ -41,7 +41,7 @@ namespace saftbus
 
 	public:
 
-		Connection(int number_of_sockets = N_CONNECTIONS, const std::string& base_name = "/tmp/saftbus_");
+		Connection(int number_of_sockets = N_CONNECTIONS, const std::string& base_name = socket_base_name);
 		~Connection();
 
 		unsigned 	register_object (const std::string& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);

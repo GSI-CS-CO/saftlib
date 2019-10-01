@@ -5,6 +5,7 @@
 #include <utility>
 #include <time.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 //#include "giomm.h"
 #include "core.h"
@@ -21,14 +22,29 @@ void Socket::wait_for_client()
 	if (_create_socket > 0) {
 		if (_debug_level > 5) std::cerr << "socket created" << std::endl;
 	} // TODO: else { ... }
-	unlink(_filename.c_str());
+	std::string dirname = _filename.substr(0,_filename.find_last_of('/'));
+	//std::cerr << dirname << std::endl;
+	std::ostringstream command;
+	command << "mkdir -p " << dirname;
+	system(command.str().c_str());
+	int unlink_result = unlink(_filename.c_str());
+	std::ostringstream unlink_error;
+	if (unlink_result != 0) {
+		unlink_error << "could not unlink socket file " << _filename << ": " << strerror(errno);
+	}
 	_address.sun_family = AF_LOCAL;
 	strcpy(_address.sun_path, _filename.c_str());
 	if (_debug_level > 5) std::cerr << "bind to file " << _filename << std::endl;
 	int bind_result = bind (_create_socket, (struct sockaddr *)&_address, sizeof(_address) );
 	if (bind_result != 0) {
-		if (_debug_level > 5) std::cerr << "port busy" << std::endl;
-		throw std::runtime_error("port busy");
+		std::ostringstream msg;
+		msg << std::endl;
+		if (unlink_error.str().size() > 0) {
+			msg << unlink_error.str() << std::endl;
+		}
+		msg << "could not bind to socket: " << strerror(errno);
+		if (_debug_level > 5) std::cerr << msg.str() << std::endl;
+		throw std::runtime_error(msg.str().c_str());
 	}
 	chmod(_filename.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | 
 		                     S_IRGRP | S_IWGRP | S_IXGRP | 

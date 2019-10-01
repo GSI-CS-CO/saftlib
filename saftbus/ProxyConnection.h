@@ -30,7 +30,7 @@ namespace saftbus
 	class ProxyConnection /*: public Glib::Object*///Base
 	{
 	public:
-		ProxyConnection(const std::string &base_name = "/tmp/saftbus_");
+		ProxyConnection(const std::string &base_name = socket_base_name);
 
 		using SlotSignal = sigc::slot<void, const std::shared_ptr<ProxyConnection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&>;
 
