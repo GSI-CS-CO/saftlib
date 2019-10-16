@@ -69,6 +69,8 @@ class FunctionGeneratorFirmware : public Owned, public iFunctionGeneratorFirmwar
     FunctionGeneratorFirmware(const ConstructorType& args);
     ~FunctionGeneratorFirmware();
 
+    void firmware_rescan(eb_address_t swi);
+
     bool nothing_runs();
 
     std::string                objectPath;
