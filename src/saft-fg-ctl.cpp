@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     bool repeat = false;
     bool generate = false;
     bool scan = false; 
-    char i_or_m;
+    char i_or_m = 'x';
     
     // Process command-line
     int opt, error = 0;
