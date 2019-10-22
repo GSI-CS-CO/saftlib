@@ -65,6 +65,7 @@ bool UTCleap        = false;
 #define NXTRF    0x12                 // EVT_RF_PREP_NXT_ACC
 
 #define NPZ      7                    // # of UNILAC 'Pulszentralen'
+#define NVACC    16                   // max # of vACC
 #define FID      0x1
 
 // this will be called, in case we are snooping for events
@@ -77,8 +78,9 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
   std::cout << std::endl;
 } // on_action
 
-// this will be called, in case we are snooping for events
-static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
+
+// this will be called, in case we are snooping UNILAC cycles
+static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   uint32_t gid;
   uint32_t evtNo;
@@ -176,7 +178,77 @@ static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, s
   default :
     break;
   } // switch gid
-} // on_action_uni
+} // on_action_uni_cycle
+
+
+// this will be called, in case we are snooping for UNILAC virtual accelerators
+static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
+{
+#define VACCINACTIVE  3000
+#define PRINTCYCLE    100
+
+  uint32_t gid;
+  uint32_t evtNo;
+  uint32_t vacc;
+  string   sVacc;
+  string   rf;
+  int      i, j;
+  
+  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
+  static saftlib::Time prevDeadline = deadline;
+  static uint32_t nCycle            = 0x0;
+  static uint32_t firstTime         = 0x1;
+  static uint32_t runFlag[NPZ][NVACC];     // 1: VACC is executed in PZ
+  static uint32_t nInactive[NPZ][NVACC];   // counts # of cycles, where VACC was not executed in PZ
+
+
+  if (firstTime) {
+    for (i=0; i<NPZ; i++) {
+      for (j=0; j<NVACC; j++) {
+        nInactive[i][j] = VACCINACTIVE;
+        runFlag[i][j]   = 0;
+      } // for j
+    } // for i
+  } // if firstTime
+
+  gid   = ((id & 0x0fff000000000000) >> 48);
+  evtNo = ((id & 0x0000fff000000000) >> 36);
+  vacc  = ((id & 0x00000000fff00000) >> 20);
+  
+  if ((deadline - prevDeadline) > 10000000) {           // new UNILAC cycle starts if diff > 10ms
+    if (nCycle > 20) {                                  // hack: throw away first cycles (as it takes a while to create the ECA conditions)
+      for (i=0; i<NPZ; i++) {
+        for (j=0; j<NVACC; j++) {
+          if (runFlag[i][j] == 0) (nInactive[i][j])++;  // increase inactivity counter
+          runFlag[i][j] = 0;                            // clear 'run flag'
+        } // for j
+      } // for i
+    } // if nCycle
+
+    if ((nCycle % PRINTCYCLE) == 0) {
+      std::cout << "   # cycle:   QR   QL   QN  HLI  HSI   AT   TK" << std::endl;
+      for (j=0; j<NVACC; j++) {
+        std::cout << std::endl;
+        std::cout << "             ";
+        for (i=0; i<NPZ; i++) {
+          if (nInactive[i][j] < VACCINACTIVE) std::cout << "X    ";
+          else                                std::cout << "     ";
+        } // for PZs
+      } // for vacc
+    } // if print 
+
+    prevDeadline = deadline;                           
+    nCycle++;
+  } // if deadline
+
+  if (vacc >= NVACC)            return;                // illegal vacc?
+  if ((gid < QR) || (gid > TK)) return;                // illegal gid?
+
+  runFlag[gid - QR][vacc] = 1;                          // set 'run flag'
+
+  return;
+} // on_action_uni_vacc
+
 
 using namespace saftlib;
 using namespace std;
@@ -207,6 +279,7 @@ static void help(void) {
   std::cout << "            '1'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
   std::cout << "                       the vacc number is accompanied by flags 'N'o chopper, 'S'hort chopper, 'R'igid beam, 'D'ry and 'H'igh current;" << std::endl;
   std::cout << "                       'warming pulses' are shown in brackets" << std::endl;
+  std::cout << "            '2'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'eOverview'" << std::endl;
   std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
@@ -757,7 +830,7 @@ int main(int argc, char** argv)
         condition[i]->setAcceptDelayed(true);
         switch (uniSnoopType) {
         case 1:
-          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni));
+          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_cycle));
           break;
         default : 
           condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
