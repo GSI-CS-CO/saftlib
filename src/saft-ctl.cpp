@@ -184,8 +184,8 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
 // this will be called, in case we are snooping for UNILAC virtual accelerators
 static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-#define VACCINACTIVE  3000
-#define PRINTCYCLE    100
+#define VACCINACTIVE  3000                 // # of cycles without execution a vacc is considered inactive
+#define OBSCYCLES      200                 // # of cycles observed before printing (a cycle takes 20ms)
 
   uint32_t gid;
   uint32_t evtNo;
@@ -193,22 +193,24 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   string   sVacc;
   string   rf;
   int      i, j;
+  double   rate;
   
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
   static saftlib::Time prevDeadline = deadline;
   static uint32_t nCycle            = 0x0;
   static uint32_t firstTime         = 0x1;
-  static uint32_t runFlag[NPZ][NVACC];     // 1: VACC is executed in PZ
-  static uint32_t nInactive[NPZ][NVACC];   // counts # of cycles, where VACC was not executed in PZ
+  static uint32_t nExe[NPZ][NVACC];        // # of vacc executions within OBSCYCLES
+  static uint32_t nInactive[NPZ][NVACC];   // # of cycles, where VACC was not executed
 
 
   if (firstTime) {
     for (i=0; i<NPZ; i++) {
       for (j=0; j<NVACC; j++) {
         nInactive[i][j] = VACCINACTIVE;
-        runFlag[i][j]   = 0;
+        nExe[i][j]      = 0;
       } // for j
     } // for i
+    firstTime = 0x0;
   } // if firstTime
 
   gid   = ((id & 0x0fff000000000000) >> 48);
@@ -216,35 +218,57 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   vacc  = ((id & 0x00000000fff00000) >> 20);
   
   if ((deadline - prevDeadline) > 10000000) {           // new UNILAC cycle starts if diff > 10ms
-    if (nCycle > 20) {                                  // hack: throw away first cycles (as it takes a while to create the ECA conditions)
+    /*if (nCycle > 20) {                                  // hack: throw away first cycles (as it takes a while to create the ECA conditions)
       for (i=0; i<NPZ; i++) {
         for (j=0; j<NVACC; j++) {
-          if (runFlag[i][j] == 0) (nInactive[i][j])++;  // increase inactivity counter
-          runFlag[i][j] = 0;                            // clear 'run flag'
+          if (nExe[i][j] == 0) nInactive[i][j] += OBSCYCLES;              // vacc was not executed: increase inactivity counter
+          else                 nInactive[i][j]  = OBSCYCLES - nExe[i][j]; // vacc was executed: reset inactiviy counter 
+          nExe[i][j] = 0;                               // clear execution counter
         } // for j
       } // for i
     } // if nCycle
+    */
 
-    if ((nCycle % PRINTCYCLE) == 0) {
-      std::cout << "   # cycle:   QR   QL   QN  HLI  HSI   AT   TK" << std::endl;
-      for (j=0; j<NVACC; j++) {
-        std::cout << std::endl;
-        std::cout << "             ";
+    if ((nCycle % OBSCYCLES) == 0) {
+      for (i=0; i<NPZ; i++) {
+        for (j=0; j<NVACC; j++) {
+          if (nExe[i][j] == 0) nInactive[i][j] += OBSCYCLES;              // vacc was not executed: increase inactivity counter
+          else                 nInactive[i][j]  = OBSCYCLES - nExe[i][j]; // vacc was executed: reset inactiviy counter 
+          nExe[i][j] = 0;                               // clear execution counter
+        } // for j
+      } // for i
+      
+      
+      std::cout << std::endl;
+      std::cout << "vacc   QR   QL   QN   HLI  HSI  AT   TK  rate";
+      std::cout << std::endl;
+      for (j=0; j < NVACC; j++) {
+        rate = 0.0;
+        std::cout << std::setw(4) << j;
         for (i=0; i<NPZ; i++) {
-          if (nInactive[i][j] < VACCINACTIVE) std::cout << "X    ";
-          else                                std::cout << "     ";
+          if (nInactive[i][j] < VACCINACTIVE) {
+            std::cout    << "    X";
+            rate = 50.0 * (double)(OBSCYCLES - nInactive[i][j])/(double)OBSCYCLES;
+            //rate = (double)(nInactive[i][j]);
+          }
+          else std::cout << "     ";
         } // for PZs
+        if (rate > 0.0001) std::cout << std::setw(6) << fixed << setprecision(2) << rate; // printf was so easy :)
+        std::cout << std::endl;
       } // for vacc
+      std::cout << std::endl;
+      std::cout << std::endl;
     } // if print 
 
     prevDeadline = deadline;                           
     nCycle++;
-  } // if deadline
+  } // if deadline (new UNILAC cycle)
 
   if (vacc >= NVACC)            return;                // illegal vacc?
   if ((gid < QR) || (gid > TK)) return;                // illegal gid?
-
-  runFlag[gid - QR][vacc] = 1;                          // set 'run flag'
+  (nExe[gid - QR][vacc])++;                            // increase run counter
+  // chk  printf("gid %d, pz %d, vacc %d, nExe %d\n", gid, gid - QR, vacc, nExe[gid - QR][vacc]);
+    
 
   return;
 } // on_action_uni_vacc
@@ -606,7 +630,7 @@ int main(int argc, char** argv)
         std::cerr << program << ": invalid type -- " << argv[optind+2] << std::endl;
         return 1;
       } // uniSnoopType
-      if ((uniSnoopType < 0) || (uniSnoopType > 1)) {
+      if ((uniSnoopType < 0) || (uniSnoopType > 2)) {
         std::cerr << program << ": invalid value -- " << uniSnoopType << std::endl;
         return 1;
       } // range of uniSnoopType
@@ -829,12 +853,15 @@ int main(int argc, char** argv)
         condition[i]->setAcceptConflict(true);
         condition[i]->setAcceptDelayed(true);
         switch (uniSnoopType) {
-        case 1:
-          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_cycle));
-          break;
-        default : 
-          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
-          break;
+          case 2:
+            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_vacc));
+            break;
+          case 1:
+            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_cycle));
+            break;
+          default : 
+            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
+            break;
         }
         condition[i]->setActive(true);    
       } // for i
