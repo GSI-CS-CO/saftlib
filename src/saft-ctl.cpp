@@ -51,22 +51,6 @@ bool absoluteTime   = false;
 bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
 
-// GID
-#define QR       0x1c0                // 'PZ1, Quelle Rechts'
-#define QL       0x1c1                // 'PZ2, PQuelle Links'
-#define QN       0x1c2                // 'PZ3, Quelle Hochladungsinjektor UN (HLI)'
-#define HLI      0x1c3                // 'PZ4, Hochladungsinjektor UN (HLI)'
-#define HSI      0x1c4                // 'PZ5, Hochstrominjektor UH (HSI)'
-#define AT       0x1c5                // 'PZ6, Alvarez'
-#define TK       0x1c6                // 'PZ7, Transferkanal'
-
-// EVTNO
-#define NXTACC   0x10                 // EVT_PREP_NEXT_ACC
-#define NXTRF    0x12                 // EVT_RF_PREP_NXT_ACC
-
-#define NPZ      7                    // # of UNILAC 'Pulszentralen'
-#define NVACC    16                   // max # of vACC
-#define FID      0x1
 
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
@@ -77,213 +61,6 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
   std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
   std::cout << std::endl;
 } // on_action
-
-
-// this will be called, in case we are snooping UNILAC cycles
-static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
-{
-  uint32_t gid;
-  uint32_t evtNo;
-  uint32_t vacc;
-  uint32_t flagsSPZ;
-  uint32_t flagsPZ;
-  string   sVacc;
-  string   special;
-
-  uint32_t      flagNochop;
-  uint32_t      flagShortchop;
-  uint32_t      flagHighC;
-  uint32_t      flagRigid;
-  uint32_t      flagDry;
-
-  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
-  static saftlib::Time prevDeadline = deadline;
-  static uint32_t      nCycle       = 0x0;
-  
-  gid      = ((id    & 0x0fff000000000000) >> 48);
-  evtNo    = ((id    & 0x0000fff000000000) >> 36);
-  vacc     = ((id    & 0x00000000fff00000) >> 20);
-  flagsSPZ = ((param & 0xffffffff00000000) >> 32);
-  flagsPZ  = ( param & 0x00000000ffffffff);
-
-  flagNochop    = ((flagsSPZ & 0x1) != 0);
-  flagShortchop = ((flagsSPZ & 0x2) != 0);
-  flagRigid     = ((flagsPZ  & 0x2) != 0);
-  flagDry       = ((flagsPZ  & 0x4) != 0);
-  flagHighC     = ((flagsPZ  & 0x8) != 0);
-
-  if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
-    switch (nCycle) {
-      case 0 :        // print header
-        std::cout << "   # cycle:      QR      QL      QN     HLI     HSI      AT      TK" << std::endl;
-        break;
-      case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
-        break;
-      default :       // default
-                          
-        std::cout << std::setw(10) << nCycle << ":"
-                  << std::setw( 8) << pz1
-                  << std::setw( 8) << pz2
-                  << std::setw( 8) << pz3
-                  << std::setw( 8) << pz4
-                  << std::setw( 8) << pz5
-                  << std::setw( 8) << pz6 
-                  << std::setw( 8) << pz7
-                  << std::endl;
-        break;
-    } // switch nCycle
-    pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = "";
-    prevDeadline  = deadline;
-    nCycle++;
-  } // if deadline
-
-  sVacc = "";
-  // special cases
-  if (evtNo == NXTRF) sVacc = "(HF)";
-  if (evtNo == NXTACC) {
-    if (((gid == QR) || (gid == QL) || (gid == QN)) && (vacc == 14)) sVacc = "(IQ)";
-    else {
-      special = "";
-      if (flagNochop)    special  = "N";
-      if (flagShortchop) special += "S";
-      if (flagHighC)     special += "H";
-      if (flagRigid)     special += "R"; 
-      if (flagDry)       special += "D"; 
-      sVacc = special + std::to_string(vacc);
-    } // else: ion source producing real beam
-  } // if NXTACC
-
-  switch (gid) {
-  case QR : 
-    pz1 = sVacc;
-    break;
-  case QL :
-    pz2 = sVacc;
-    break;
-  case QN :
-    pz3 = sVacc;
-    break;
-  case HLI :
-    pz4 = sVacc;
-    break;
-  case HSI :
-    pz5 = sVacc;
-    break;
-  case AT :
-    pz6 = sVacc;
-    break;
-  case TK :
-    pz7 = sVacc;
-    break;
-  default :
-    break;
-  } // switch gid
-} // on_action_uni_cycle
-
-
-// this will be called, in case we are snooping for UNILAC virtual accelerators
-static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
-{
-#define OBSCYCLES      200                 // # of cycles observed before printing (a cycle takes 20ms)
-
-  uint32_t gid;
-  uint32_t vacc;
-  uint32_t flagsSPZ;
-  uint32_t flagsPZ;
-
-  string   sVacc;
-  string   rf;
-  int      i, j;
-  double   rate;
-  
-  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
-  static saftlib::Time prevDeadline = deadline;
-  static uint32_t nCycle            = 0x0;
-  static uint32_t firstTime         = 0x1;
-  static uint32_t nExe[NPZ][NVACC];                     // # of vacc executions within OBSCYCLES
-
-  static uint32_t flagNochop[NVACC];
-  static uint32_t flagShortchop[NVACC];
-  static uint32_t flagHighC[NVACC];
-  static uint32_t flagRigid[NVACC];
-  static uint32_t flagDry[NVACC];
-
-  if (firstTime) {                                     
-    for (j=0; j<NVACC; j++) {                          // clear execution counter and flags 
-      for (i=0; i<NPZ; i++) nExe[i][j] = 0;          
-      flagNochop[j]    = 0;
-      flagShortchop[j] = 0;
-      flagHighC[j]     = 0;
-      flagRigid[j]     = 0;
-      flagDry[j]       = 0;
-    } // for j
-    firstTime = 0x0;
-    std::cout << std::endl;
-    std::cout << "vacc 14: ion source operation or rf-conditioning" << std::endl;
-    std::cout << "vacc 15: warming pulse" << std::endl;
-    std::cout << "flags N(o chopper), S(hort chopper), H(igh current beam), R(igid beam), D(ry 'beam')" << std::endl;
-  } // if firstTime
-
-  gid      = ((id & 0x0fff000000000000) >> 48);
-  vacc     = ((id & 0x00000000fff00000) >> 20);
-  flagsSPZ = ((param & 0xffffffff00000000) >> 32);
-  flagsPZ  = ( param & 0x00000000ffffffff);
-
-  if ((deadline - prevDeadline) > 10000000) {           // new UNILAC cycle starts if diff > 10ms
-    if ((nCycle % OBSCYCLES) == 0) {                    // observation period is over
-      if (nCycle > 20) {                                // ignore first 20 cycles as it takes some time to creat the ECA conditions
-        std::cout << std::endl;
-        std::cout << "vacc   QR   QL   QN   HLI  HSI  AT   TK  rate flags";
-        std::cout << std::endl;
-        for (j=0; j < NVACC; j++) {
-          rate = 0.0;
-          std::cout << std::setw(4) << j;
-          for (i=0; i<NPZ; i++) {
-            if (nExe[i][j] > 0) {
-              std::cout    << "    X";
-              rate = 50.0 * (double)(nExe[i][j])/(double)OBSCYCLES;
-            } // if nExe
-            else std::cout << "     ";
-          } // for PZs
-          if (rate > 0.0001) std::cout << std::setw(6) << fixed << setprecision(2) << rate; // printf was so easy :)
-          std::cout << " ";
-          if (flagNochop[j])    std::cout << "N";  
-          if (flagShortchop[j]) std::cout << "S";
-          if (flagHighC[j])     std::cout << "H";
-          if (flagRigid[j])     std::cout << "R";
-          if (flagDry[j])       std::cout << "D";
-          std::cout << std::endl;
-        } // for vacc
-        
-        std::cout << std::endl;
-      } // if nCycle > 20
-      for (j=0; j<NVACC; j++) {                        // clear execution counter and flags 
-        for (i=0; i<NPZ; i++) nExe[i][j] = 0;          
-         flagNochop[j]    = 0;
-         flagShortchop[j] = 0;
-         flagHighC[j]     = 0;
-         flagRigid[j]     = 0;
-         flagDry[j]       = 0;
-      } // for j
-    } // if nCycle % OBSCYCLES
-    else if ((nCycle % 10) == 0) std::cout << "." << std::flush;
-
-    prevDeadline = deadline;                           
-    nCycle++;
-  } // if deadline (new UNILAC cycle)
-
-  if (vacc >= NVACC)            return;                // illegal vacc?
-  if ((gid < QR) || (gid > TK)) return;                // illegal gid?
-
-  (nExe[gid - QR][vacc])++;                            // increase run counter
-  if ((flagsSPZ & 0x1) != 0) flagNochop[vacc]    = 1;     // set flags ...
-  if ((flagsSPZ & 0x2) != 0) flagShortchop[vacc] = 1;
-  if ((flagsPZ  & 0x2) != 0) flagHighC[vacc]     = 1;
-  if ((flagsPZ  & 0x4) != 0) flagRigid[vacc]     = 1;
-  if ((flagsPZ  & 0x8) != 0) flagDry[vacc]       = 1;
-
-  return;
-} // on_action_uni_vacc
 
 
 using namespace saftlib;
@@ -310,12 +87,6 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
   std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
-  std::cout << "  usnoop  <type>       (experimental feature) snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
-  std::cout << "            '0'        event display, but limited to GIDs of UNILAC and special event numbers" << std::endl;
-  std::cout << "            '1'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
-  std::cout << "                       the vacc number is accompanied by flags 'N'o chopper, 'S'hort chopper, 'R'igid beam, 'D'ry and 'H'igh current;" << std::endl;
-  std::cout << "                       'warming pulses' are shown in brackets" << std::endl;
-  std::cout << "            '2'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'eOverview'" << std::endl;
   std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
@@ -470,8 +241,6 @@ int main(int argc, char** argv)
   // variables and flags for command line parsing
   int  opt;
   bool eventSnoop     = false;
-  bool uniSnoop       = false;
-  int  uniSnoopType   = 0;
   bool statusDisp     = false;
   bool infoDispSW     = false;
   bool infoDispHW     = false;
@@ -631,25 +400,6 @@ int main(int argc, char** argv)
       eventSnoop = true;
     } // "snoop"
 
-    else if (strcasecmp(command, "usnoop") == 0) {
-      if (optind+3  != argc) {
-        std::cerr << program << ": expecting exactly one argument: usnoop <type>" << std::endl;
-        return 1;
-      }
-      uniSnoopType = strtoull(argv[optind+2], &value_end, 0);
-      //std::cout << std::hex << snoopID << std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid type -- " << argv[optind+2] << std::endl;
-        return 1;
-      } // uniSnoopType
-      if ((uniSnoopType < 0) || (uniSnoopType > 2)) {
-        std::cerr << program << ": invalid value -- " << uniSnoopType << std::endl;
-        return 1;
-      } // range of uniSnoopType
-
-      uniSnoop = true;
-    } // "usnoop"
-
     else if (strcasecmp(command, "attach") == 0) {
       if (optind+3  != argc) {
         std::cerr << program << ": expecting exactly one argument: attach <path>" << std::endl;
@@ -798,90 +548,6 @@ int main(int argc, char** argv)
         saftlib::wait_for_signal();
       }
     } // eventSnoop (without UNILAC option)
-
-    // snoop for UNILAC
-    if (uniSnoop) {
-      snoopMask = 0xfffffff000000000;
-
-      std::shared_ptr<SoftwareCondition_Proxy> condition[NPZ * 2];
-      int nPz = 0;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTACC << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTACC << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTACC << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
-
-      for (int i=0; i<nPz; i++) {
-        condition[i]->setAcceptLate(true);
-        condition[i]->setAcceptEarly(true);
-        condition[i]->setAcceptConflict(true);
-        condition[i]->setAcceptDelayed(true);
-        switch (uniSnoopType) {
-          case 2:
-            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_vacc));
-            break;
-          case 1:
-            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_cycle));
-            break;
-          default : 
-            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
-            break;
-        }
-        condition[i]->setActive(true);    
-      } // for i
-
-      while(true) {
-        saftlib::wait_for_signal();
-      }
-    } // eventSnoop (with UNILAC option)
 
   } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
