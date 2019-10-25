@@ -1,10 +1,10 @@
-// @file saft-ctl.cpp
-// @brief Command-line interface for saftlib. This tool focuses on the software part.
+// @file saft-uni.cpp
+// @brief Command-line interface for saftlib. This tool focuses on UNILAC specific featueres
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
-// Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+// Copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 //
-// Have a chat with saftlib
+// Have a chat with saftlib and UNILAC
 //
 //*****************************************************************************
 // This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,7 @@ bool UTCleap        = false;
 #define NPZ      7                    // # of UNILAC 'Pulszentralen'
 #define NVACC    16                   // max # of vACC
 #define FID      0x1
+
 
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
@@ -230,40 +231,38 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   flagsPZ  = ( param & 0x00000000ffffffff);
 
   if ((deadline - prevDeadline) > 10000000) {           // new UNILAC cycle starts if diff > 10ms
-    if ((nCycle % OBSCYCLES) == 0) {                    // observation period is over
-      if (nCycle > 20) {                                // ignore first 20 cycles as it takes some time to creat the ECA conditions
+    if (((nCycle % OBSCYCLES) == 0) && (nCycle > 0)) {  // observation period is over
+      std::cout << std::endl;
+      std::cout << "vacc   QR   QL   QN   HLI  HSI  AT   TK  rate flags";
+      std::cout << std::endl;
+      for (j=0; j < NVACC; j++) {
+        rate = 0.0;
+        std::cout << std::setw(4) << j;
+        for (i=0; i<NPZ; i++) {
+          if (nExe[i][j] > 0) {
+            std::cout    << "    X";
+            rate = 50.0 * (double)(nExe[i][j])/(double)OBSCYCLES;
+          } // if nExe
+          else std::cout << "     ";
+        } // for PZs
+        if (rate > 0.0001) std::cout << std::setw(6) << fixed << setprecision(2) << rate; // printf was so easy :)
+        std::cout << " ";
+        if (flagNochop[j])    std::cout << "N";  
+        if (flagShortchop[j]) std::cout << "S";
+        if (flagHighC[j])     std::cout << "H";
+        if (flagRigid[j])     std::cout << "R";
+        if (flagDry[j])       std::cout << "D";
         std::cout << std::endl;
-        std::cout << "vacc   QR   QL   QN   HLI  HSI  AT   TK  rate flags";
-        std::cout << std::endl;
-        for (j=0; j < NVACC; j++) {
-          rate = 0.0;
-          std::cout << std::setw(4) << j;
-          for (i=0; i<NPZ; i++) {
-            if (nExe[i][j] > 0) {
-              std::cout    << "    X";
-              rate = 50.0 * (double)(nExe[i][j])/(double)OBSCYCLES;
-            } // if nExe
-            else std::cout << "     ";
-          } // for PZs
-          if (rate > 0.0001) std::cout << std::setw(6) << fixed << setprecision(2) << rate; // printf was so easy :)
-          std::cout << " ";
-          if (flagNochop[j])    std::cout << "N";  
-          if (flagShortchop[j]) std::cout << "S";
-          if (flagHighC[j])     std::cout << "H";
-          if (flagRigid[j])     std::cout << "R";
-          if (flagDry[j])       std::cout << "D";
-          std::cout << std::endl;
-        } // for vacc
-        
-        std::cout << std::endl;
-      } // if nCycle > 20
-      for (j=0; j<NVACC; j++) {                        // clear execution counter and flags 
+      } // for vacc
+      
+      std::cout << std::endl;
+      for (j=0; j<NVACC; j++) {                         // clear execution counter and flags 
         for (i=0; i<NPZ; i++) nExe[i][j] = 0;          
-         flagNochop[j]    = 0;
-         flagShortchop[j] = 0;
-         flagHighC[j]     = 0;
-         flagRigid[j]     = 0;
-         flagDry[j]       = 0;
+        flagNochop[j]    = 0;
+        flagShortchop[j] = 0;
+        flagHighC[j]     = 0;
+        flagRigid[j]     = 0;
+        flagDry[j]       = 0;
       } // for j
     } // if nCycle % OBSCYCLES
     else if ((nCycle % 10) == 0) std::cout << "." << std::flush;
@@ -294,22 +293,8 @@ static void help(void) {
   std::cout << std::endl << "Usage: " << program << " <device name> [OPTIONS] [command]" << std::endl;
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
-  std::cout << "  -a                   absolute time injection" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
-  std::cout << "  -d                   display values in dec format" << std::endl;
-  std::cout << "  -x                   display values in hex format" << std::endl;
-  std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
-  std::cout << "  -p                   used with command 'inject': <time> will be added to next full second (option -p) or current time (option unused)" << std::endl;
-  std::cout << "  -i                   display saftlib info" << std::endl;
-  std::cout << "  -j                   list all attached devices (hardware)" << std::endl;
-  std::cout << "  -k                   display gateware version (hardware)" << std::endl;
-  std::cout << "  -s                   display actual status of software actions" << std::endl;
-  std::cout << "  -t                   display the current temperature in Celsius (if sensor is available) " << std::endl;
-  std::cout << "  -U                   display/inject absolute time in UTC instead of TAI" << std::endl;
-  std::cout << "  -L                   used with command 'inject' and -U: if injected UTC second is ambiguous choose the later one" << std::endl;
   std::cout << std::endl;
-  std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
-  std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
   std::cout << "  usnoop  <type>       (experimental feature) snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
   std::cout << "            '0'        event display, but limited to GIDs of UNILAC and special event numbers" << std::endl;
   std::cout << "            '1'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
@@ -317,191 +302,29 @@ static void help(void) {
   std::cout << "                       'warming pulses' are shown in brackets" << std::endl;
   std::cout << "            '2'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'eOverview'" << std::endl;
   std::cout << std::endl;
-  std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
-  std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
-  std::cout << "  quit                             instructs the saftlib daemon to quit (admin only)" << std::endl << std::endl;
+  std::cout << "This tool snoops and diplays UNILAC specific info." <<std::endl;
+  std::cout << "UNILAC has 7 'Pulszentralen' (PZ), uses 16 virtual accelerators (vacc) and operates with 50Hz cycle rate." <<std::endl;
   std::cout << std::endl;
-  std::cout << "This tool displays Timing Receiver and related saftlib status. It can also be used to list the ECA status for" << std::endl;
-  std::cout << "software actions. Furthermore, one can do simple things with a Timing Receiver (snoop for events, inject messages)." <<std::endl;
-  std::cout << std::endl;
-  std::cout << "Tip: For using negative values with commands such as 'snoop', consider" << std::endl;
-  std::cout << "using the special argument '--' to terminate option scanning." << std::endl << std::endl;
-
   std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cout << "Licensed under the GPL v3." << std::endl;
   std::cout << std::endl;
 } // help
 
 
-// display status
-static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
-						  std::shared_ptr<SoftwareActionSink_Proxy> sink) {
-  uint32_t       nFreeConditions;
-  bool          wrLocked;
-  saftlib::Time   wrTime;
-  int           width;
-  string        fmt;
-  
-  map<std::string, std::string> allSinks;
-  std::shared_ptr<SoftwareActionSink_Proxy> aSink;
-  
-  map<std::string, std::string>::iterator i;
-  vector<std::string>::iterator j;
-
-  // display White Rabbit status
-  wrLocked        = receiver->getLocked();
-  if (wrLocked) {
-    wrTime        = receiver->CurrentTime();
-    if (absoluteTime) std::cout << "WR locked, time: " << tr_formatDate(wrTime, UTC?PMODE_UTC:PMODE_NONE) <<std::endl;
-    else std::cout << "WR locked, time: " << tr_formatDate(wrTime, pmode) <<std::endl;
-  }
-  else std::cout << "no WR lock!!!" << std::endl;
-
-  // display ECA status
-  nFreeConditions  = receiver->getFree();
-  std::cout << "receiver free conditions: " << nFreeConditions;
-
-  std::cout << ", max (capacity of HW): " << sink->getMostFull()
-            << "(" << sink->getCapacity() << ")"
-            << ", early threshold: " << sink->getEarlyThreshold() << " ns"
-            << ", latency: " << sink->getLatency() << " ns"
-            << std::endl;
-
-  // find software sinks and display their status
-  allSinks = receiver->getSoftwareActionSinks();
-  if (allSinks.size() > 0) {
-    std::cout << "sinks instantiated on this host: " << allSinks.size() << std::endl;
-    // get status of each sink
-    for (i = allSinks.begin(); i != allSinks.end(); i++) {
-      aSink = SoftwareActionSink_Proxy::create(i->second);
-      std::cout << "  " << i->second
-                << " (minOffset: " << aSink->getMinOffset() << " ns"
-                << ", maxOffset: " << aSink->getMaxOffset() << " ns)"
-                << std::endl;
-      std::cout << "  -- actions: " << aSink->getActionCount()
-                << ", delayed: "    << aSink->getDelayedCount()
-                << ", conflict: "   << aSink->getConflictCount()
-                << ", late: "       << aSink->getLateCount()
-                << ", early: "      << aSink->getEarlyCount()
-                << ", overflow: "   << aSink->getOverflowCount()
-                << " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate() / 1000000000.0) << "Hz)"
-                << std::endl;
-      // get all conditions for this sink
-      vector< std::string > allConditions = aSink->getAllConditions();
-      std::cout << "  -- conditions: " << allConditions.size() << std::endl;
-      for (j = allConditions.begin(); j != allConditions.end(); j++ ) {
-        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
-        if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
-        else           {std::cout << std::hex; width = 16; fmt = "0x";}
-        std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "  	<< fmt << std::setw(width) << std::setfill('0') << condition->getID()
-                  << ", mask: "     	<< fmt << std::setw(width) << std::setfill('0') << condition->getMask()
-                  << ", offset: "   	<< fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
-                  << ", active: "   	<< std::dec << condition->getActive()
-                  << ", destructible: " << condition->getDestructible()
-                  << ", owner: "        << condition->getOwner()
-                  << std::endl;
-      } // for all conditions
-    } // for all sinks
-  } // display all sinks
-} // displayStatus
-
-
-// display information on the software environmet
-static void displayInfoSW(std::shared_ptr<SAFTd_Proxy> saftd) {
-  std::string sourceVersion;
-  std::string buildInfo;
-  
-  sourceVersion   = saftd->getSourceVersion();
-  buildInfo       = saftd->getBuildInfo();
-
-  std::cout << "saftlib source version                  : " << sourceVersion << std::endl;
-  std::cout << "saftlib build info                      : " << buildInfo << std::endl;
-} // displayInfoSW
-
-
-// display information on the hardware environmet
-static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
-  std::string sourceVersion;
-  std::string buildInfo;
-  std::string ebDevice;  
-  std::string devName;
-  map< std::string, std::string > allDevices;
-  map<std::string, std::string>::iterator i;
-  std::shared_ptr<TimingReceiver_Proxy> aDevice;
-  
-  map< std::string, std::string > gatewareInfo;
-  map<std::string, std::string>::iterator j;
-  
-  allDevices      = saftd->getDevices();
-
-  std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
-  for (i = allDevices.begin(); i != allDevices.end(); i++ ) {
-    aDevice =  TimingReceiver_Proxy::create(i->second);
-    std::cout << "  device: " << i->second;
-    std::cout << ", name: " << aDevice->getName();
-    std::cout << ", path: " << aDevice->getEtherbonePath();
-    std::cout << ", gatewareVersion : " << aDevice->getGatewareVersion();
-    std::cout << std::endl;
-    gatewareInfo = aDevice->getGatewareInfo();
-    std::cout << "  --gateware version info:" << std::endl;
-    for (j = gatewareInfo.begin(); j != gatewareInfo.end(); j++) {
-      std::cout << "  ---- " << j->second << std::endl;
-    } // for j
-    std::cout <<std::endl;
-  } //for i
-} // displayInfoHW
-
-
-static void displayInfoGW(std::shared_ptr<TimingReceiver_Proxy> receiver)
-{
-  std::cout << receiver->getGatewareVersion() << std::endl;
-} // displayInfoGW
-
-static void displayCurrentTemperature(std::shared_ptr<TimingReceiver_Proxy> receiver)
-{
-  if (receiver->getTemperatureSensorAvail())
-    std::cout << "current temperature (Celsius): " << receiver->CurrentTemperature() << std::endl;
-  else
-    std::cout << "no temperature sensor is available in this device!" << std::endl;
-}
-
 int main(int argc, char** argv)
 {
   // variables and flags for command line parsing
   int  opt;
-  bool eventSnoop     = false;
   bool uniSnoop       = false;
   int  uniSnoopType   = 0;
-  bool statusDisp     = false;
-  bool infoDispSW     = false;
-  bool infoDispHW     = false;
-  bool infoDispGW     = false;
-  bool ppsAlign       = false;
-  bool eventInject    = false;
-  bool deviceAttach   = false;
-  bool deviceRemove   = false;
   bool useFirstDev    = false;
-  bool saftdQuit      = false;
-  bool currentTemp    = false;
   char *value_end;
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
   uint64_t snoopMask   = 0x0;
-  int64_t  snoopOffset = 0x0;
-  
 
-  // variables inject event
-  uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
-  uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
-  saftlib::Time eventTime;     // time for next event in PTP time
-  saftlib::Time ppsNext;     // time for next PPS 
-  saftlib::Time wrTime;     // current WR time
-
-  // variables attach, remove
   char    *deviceName = NULL;
-  char    *devicePath = NULL;
 
   const char *command;
 
@@ -509,52 +332,10 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxsvapijkhftUL")) != -1) {
+  while ((opt = getopt(argc, argv, "hf")) != -1) {
     switch (opt) {
     case 'f' :
       useFirstDev = true;
-      break;
-    case 's':
-      statusDisp = true;
-      break;
-    case 't':
-      currentTemp = true;
-      break;
-    case 'i':
-      infoDispSW = true;
-      break;
-    case 'a':
-      absoluteTime = true;
-      break;
-    case 'j':
-      infoDispHW = true;
-      break;
-    case 'k':
-      infoDispGW = true;
-      break;
-    case 'p':
-      ppsAlign = true;
-      break;
-    case 'U':
-      UTC = true;
-      pmode = pmode + PMODE_UTC;
-      break;
-    case 'L':
-      if (UTC) {
-        UTCleap = true;
-      } else {
-        std::cerr << "-L only works with -U" << std::endl;
-        return -1;
-      }
-      break;
-    case 'd':
-      pmode = pmode + PMODE_DEC;
-      break;
-    case 'x':
-      pmode = pmode + PMODE_HEX;
-      break;
-    case 'v':
-      pmode = pmode + PMODE_VERBOSE;
       break;
     case 'h':
       help();
@@ -577,61 +358,7 @@ int main(int argc, char** argv)
   if (optind + 1< argc) {
     command = argv[optind+1];
     
-    // "inject" 
-    if (strcasecmp(command, "inject") == 0) {
-      if (optind+5  != argc) {
-        std::cerr << program << ": expecting exactly three arguments: send <eventID> <param> <time>" << std::endl;
-        return 1;
-      }
-      eventInject = true;
-      eventID     = strtoull(argv[optind+2], &value_end, 0);
-      //std::cout << std::hex << eventID << std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid eventID -- " << argv[optind+2] << std::endl;
-        return 1;
-      } // eventID
-      eventParam     = strtoull(argv[optind+3], &value_end, 0);
-      //std::cout << std::hex << eventParam << std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid param -- " << argv[optind+3] << std::endl;
-        return 1;
-      } // param
-      eventTNext = strtoll(argv[optind+4], &value_end, 10);
-      //std::cout << std::hex << eventTime << std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid time -- " << argv[optind+4] << std::endl;
-        return 1;
-      } // time
-    } // "inject"
-
-    else if (strcasecmp(command, "snoop") == 0) {
-      if (optind+5  != argc) {
-        std::cerr << program << ": expecting exactly three arguments: snoop <eventID> <mask> <offset>" << std::endl;
-        return 1;
-      }
-      snoopID     = strtoull(argv[optind+2], &value_end, 0);
-      //std::cout << std::hex << snoopID << std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid eventID -- " << argv[optind+2] << std::endl;
-        return 1;
-      } // snoopID
-      snoopMask     = strtoull(argv[optind+3], &value_end, 0);
-      //std::cout << std::hex << snoopMask<< std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid mask -- " << argv[optind+3] << std::endl;
-        return 1;
-      } // mask
-      snoopOffset   = strtoll(argv[optind+4], &value_end, 0);
-      //std::cout << std::hex << snoopOffset<< std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid offset -- " << argv[optind+4] << std::endl;
-        return 1;
-      } // offset
-      
-      eventSnoop = true;
-    } // "snoop"
-
-    else if (strcasecmp(command, "usnoop") == 0) {
+    if (strcasecmp(command, "usnoop") == 0) {
       if (optind+3  != argc) {
         std::cerr << program << ": expecting exactly one argument: usnoop <type>" << std::endl;
         return 1;
@@ -650,41 +377,6 @@ int main(int argc, char** argv)
       uniSnoop = true;
     } // "usnoop"
 
-    else if (strcasecmp(command, "attach") == 0) {
-      if (optind+3  != argc) {
-        std::cerr << program << ": expecting exactly one argument: attach <path>" << std::endl;
-        return 1;
-      }
-      deviceAttach = true;
-      if (strlen(deviceName) == 0) {
-        std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
-        return 1;
-      } // name
-      devicePath = argv[optind+2];
-      std::cout << devicePath << std::endl;
-      if (strlen(devicePath) == 0) {
-        std::cerr << program << ": invalid path -- " << argv[optind+2] << std::endl;
-        return 1;
-      } // path
-    } // "attach"
-
-    else if (strcasecmp(command, "remove") == 0) {
-      deviceRemove = true;
-      std::cout << deviceName << std::endl;
-      if (strlen(deviceName) == 0) {
-        std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
-        return 1;
-      } // name
-    } // "remove"
-
-    else if (strcasecmp(command, "quit") == 0) {
-      if (optind+2  != argc) {
-        std::cerr << program << ": expecting no argument: quit" << std::endl;
-        return 1;
-      }
-      saftdQuit = true;
-    } // "quit"
-
     else std::cerr << program << ": unknown command: " << command << std::endl;
   } // commands
 
@@ -697,37 +389,6 @@ int main(int argc, char** argv)
   try {
     // initialize required stuff
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
-
-    // do display information that is INDEPENDANT of a specific device
-    if (infoDispSW) {
-      displayInfoSW(saftd);
-    }
-    if (infoDispHW) {
-      displayInfoHW(saftd);
-    }
-
-    // do things that DEPEND on a specific device
-
-    // do commands for saftd management first
-    // attach device
-    if (deviceAttach) {
-      saftd->AttachDevice(deviceName, devicePath);
-    } // attach device
-
-    // remove device
-    if (deviceRemove) {
-      saftd->RemoveDevice(deviceName);
-    }
-
-    // quit !!!
-    if (saftdQuit) {
-      // exit the program in a second thread, because the main 
-      // thread will be stuck waiting for the response from saftd
-      // which will never be sent after calling the quit() method
-      std::thread t( [](){sleep(1);exit(1);} );
-      saftd->Quit();
-      t.join();
-    }
 
     // get a specific device
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
@@ -742,62 +403,7 @@ int main(int argc, char** argv)
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     } //if(useFirstDevice);
 
-    if (infoDispGW) {
-      displayInfoGW(receiver);
-    }
-
-    if (currentTemp) {
-      displayCurrentTemperature(receiver);
-    }
-
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-
-    // display status of software actions
-    if (statusDisp) {
-      displayStatus(receiver, sink);
-    }
-
-    // inject event
-    if (eventInject) {
-      wrTime    = receiver->CurrentTime();
-      if (ppsAlign) {
-        ppsNext   = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;
-        eventTime = (ppsNext + eventTNext); }
-      else if (absoluteTime) {
-        if (UTC) {
-          eventTime = saftlib::makeTimeUTC(eventTNext, UTCleap);
-        } else {
-          eventTime = saftlib::makeTimeTAI(eventTNext);
-        }
-      } // ppsAlign
-      else eventTime = wrTime + eventTNext;
-
-      receiver->InjectEvent(eventID, eventParam, eventTime);
-
-      if (pmode & PMODE_HEX)
-      {
-        std::cout << "Injected event (eventID/parameter/time): 0x" << std::hex << std::setw(16) << std::setfill('0') << eventID
-                                                                      << " 0x" << std::setw(16) << std::setfill('0') << eventParam
-                                                                      << " 0x" << std::setw(16) << std::setfill('0') << (UTC?eventTime.getUTC():eventTime.getTAI()) << std::dec << std::endl;
-      }
-
-    } //inject event
-
-    // snoop
-    if (eventSnoop) {
-      std::shared_ptr<SoftwareCondition_Proxy> condition 
-        = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
-      // Accept all errors
-      condition->setAcceptLate(true);
-      condition->setAcceptEarly(true);
-      condition->setAcceptConflict(true);
-      condition->setAcceptDelayed(true);
-      condition->SigAction.connect(sigc::ptr_fun(&on_action));
-      condition->setActive(true);
-      while(true) {
-        saftlib::wait_for_signal();
-      }
-    } // eventSnoop (without UNILAC option)
 
     // snoop for UNILAC
     if (uniSnoop) {
