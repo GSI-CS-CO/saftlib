@@ -297,7 +297,7 @@ static void help(void) {
   std::cout << "  -U                   display/inject absolute time in UTC instead of TAI" << std::endl;
   std::cout << "  -L                   used with command 'inject' and -U: if injected UTC second is ambiguous choose the later one" << std::endl;
   std::cout << std::endl;
-  std::cout << "  usnoop  <type>       snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
+  std::cout << "  snoop  <type>        snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
   std::cout << "            '0'        event display, but limited to GIDs of UNILAC and a subset of event numbers" << std::endl;
   std::cout << "            '1'        shows virtual accelerator executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
   std::cout << "            '2'        shows virtual accelerator executed at the seven PZs, similar to 'eOverview'" << std::endl;
@@ -393,9 +393,9 @@ int main(int argc, char** argv)
   if (optind + 1< argc) {
     command = argv[optind+1];
     
-    if (strcasecmp(command, "usnoop") == 0) {
+    if (strcasecmp(command, "snoop") == 0) {
       if (optind+3  != argc) {
-        std::cerr << program << ": expecting exactly one argument: usnoop <type>" << std::endl;
+        std::cerr << program << ": expecting exactly one argument: snoop <type>" << std::endl;
         return 1;
       }
       uniSnoopType = strtoull(argv[optind+2], &value_end, 0);
@@ -410,7 +410,7 @@ int main(int argc, char** argv)
       } // range of uniSnoopType
 
       uniSnoop = true;
-    } // "usnoop"
+    } // "snoop"
 
     else std::cerr << program << ": unknown command: " << command << std::endl;
   } // commands
