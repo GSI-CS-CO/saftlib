@@ -2,7 +2,7 @@ SUBDIRS = interfaces saftbus saftcommon
 SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS)
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd
+bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-uni
 noinst_PROGRAMS = client
 
 pkgdir = @libdir@/pkgconfig
@@ -63,6 +63,9 @@ client_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_ctl_SOURCES = src/saft-ctl.cpp
 saft_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
+
+saft_uni_SOURCES = src/saft-uni.cpp
+saft_uni_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp
 saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
