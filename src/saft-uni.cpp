@@ -1,5 +1,5 @@
 // @file saft-uni.cpp
-// @brief Command-line interface for saftlib. This tool focuses on UNILAC specific featueres
+// @brief Command-line interface for saftlib. This tool focuses on UNILAC specific features
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
 // Copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH 
@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-//
+// version: 2019-oct-25
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -47,9 +47,9 @@ using namespace std;
 
 static const char* program;
 static uint32_t pmode = PMODE_NONE;   // how data are printed (hex, dec, verbosity)
-bool absoluteTime   = false;
 bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
+
 
 // GID
 #define QR       0x1c0                // 'PZ1, Quelle Rechts'
@@ -65,7 +65,7 @@ bool UTCleap        = false;
 #define NXTRF    0x12                 // EVT_RF_PREP_NXT_ACC
 
 #define NPZ      7                    // # of UNILAC 'Pulszentralen'
-#define NVACC    16                   // max # of vACC
+#define NVACC    16                   // # of vACC
 #define FID      0x1
 
 
@@ -220,9 +220,6 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
     } // for j
     firstTime = 0x0;
     std::cout << std::endl;
-    std::cout << "vacc 14: ion source operation or rf-conditioning" << std::endl;
-    std::cout << "vacc 15: warming pulse" << std::endl;
-    std::cout << "flags N(o chopper), S(hort chopper), H(igh current beam), R(igid beam), D(ry 'beam')" << std::endl;
   } // if firstTime
 
   gid      = ((id & 0x0fff000000000000) >> 48);
@@ -265,7 +262,7 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
         flagDry[j]       = 0;
       } // for j
     } // if nCycle % OBSCYCLES
-    else if ((nCycle % 10) == 0) std::cout << "." << std::flush;
+    else if ((nCycle % 10) == 0) std::cout << "." << std::flush; // user entertainment
 
     prevDeadline = deadline;                           
     nCycle++;
@@ -294,16 +291,33 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
+  std::cout << "  -d                   display values in dec format" << std::endl;
+  std::cout << "  -x                   display values in hex format" << std::endl;
+  std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
+  std::cout << "  -U                   display/inject absolute time in UTC instead of TAI" << std::endl;
+  std::cout << "  -L                   used with command 'inject' and -U: if injected UTC second is ambiguous choose the later one" << std::endl;
   std::cout << std::endl;
-  std::cout << "  usnoop  <type>       (experimental feature) snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
-  std::cout << "            '0'        event display, but limited to GIDs of UNILAC and special event numbers" << std::endl;
-  std::cout << "            '1'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
-  std::cout << "                       the vacc number is accompanied by flags 'N'o chopper, 'S'hort chopper, 'R'igid beam, 'D'ry and 'H'igh current;" << std::endl;
-  std::cout << "                       'warming pulses' are shown in brackets" << std::endl;
-  std::cout << "            '2'        shows virtual accelerator (vacc) executed at the seven PZs, similar to 'eOverview'" << std::endl;
+  std::cout << "  usnoop  <type>       snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
+  std::cout << "            '0'        event display, but limited to GIDs of UNILAC and a subset of event numbers" << std::endl;
+  std::cout << "            '1'        shows virtual accelerator executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
+  std::cout << "            '2'        shows virtual accelerator executed at the seven PZs, similar to 'eOverview'" << std::endl;
   std::cout << std::endl;
   std::cout << "This tool snoops and diplays UNILAC specific info." <<std::endl;
-  std::cout << "UNILAC has 7 'Pulszentralen' (PZ), uses 16 virtual accelerators (vacc) and operates with 50Hz cycle rate." <<std::endl;
+  std::cout << std::endl;
+  std::cout << "UNILAC is operated at 50Hz cycle rate. Timing sections are named QR, QL, HSI, QN, HLI, AT and TK." <<std::endl;
+  std::cout << "There exist two injectors:" <<std::endl;
+  std::cout << "1. The High Current Injector (HSI) with two ions sources (QR, QL)." <<std::endl;
+  std::cout << "2. The High Charge Injector (HLI) with one ion source (QN)." <<std::endl;
+  std::cout << "The beams of the two injectors are accelerated into the 'Alvarez Section' (AT). The beam can be" << std::endl;
+  std::cout << "used for experiments or guided to the SIS18 via the 'Transfer Channel' (TK)." << std::endl;
+  std::cout << std::endl;
+  std::cout << "Beams are defined by 'Virtual Acceleratores' (vacc):" <<std::endl;
+  std::cout << "vacc 0..13 are used for standard operaton." <<std::endl;
+  std::cout << "vacc 14 is used for rf-conditioning or standalone ion-source operation." <<std::endl;
+  std::cout << "vacc 15 is used for warming pulses." <<std::endl;
+  std::cout << std::endl;    
+  std::cout << "Shown are flags indicating special modes of operation: N(o chopper), S(hort chopper), R(igid beam)," << std::endl; 
+  std::cout << "D(ry 'beam') and H(igh current beam); warming pulses are shown in brackets" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cout << "Licensed under the GPL v3." << std::endl;
@@ -332,20 +346,41 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "hf")) != -1) {
+  while ((opt = getopt(argc, argv, "hdfULxv")) != -1) {
     switch (opt) {
-    case 'f' :
-      useFirstDev = true;
-      break;
-    case 'h':
-      help();
-      return 0;
-    default:
-      std::cerr << program << ": bad getopt result" << std::endl;
-      return 1;
+      case 'f' :
+        useFirstDev = true;
+        break;
+      case 'U':
+        UTC = true;
+        pmode = pmode + PMODE_UTC;
+        break;
+      case 'L':
+        if (UTC) {
+          UTCleap = true;
+        } else {
+          std::cerr << "-L only works with -U" << std::endl;
+          return -1;
+        }
+        break;
+      case 'd':
+        pmode = pmode + PMODE_DEC;
+        break;
+      case 'x':
+        pmode = pmode + PMODE_HEX;
+        break;
+      case 'v':
+        pmode = pmode + PMODE_VERBOSE;
+        break;
+      case 'h':
+        help();
+        return 0;
+      default:
+        std::cerr << program << ": bad getopt result" << std::endl;
+        return 1;
     } // switch opt
   }   // while opt
-
+  
   if (optind >= argc) {
     std::cerr << program << " expecting one non-optional argument: <device name>" << std::endl;
     help();
