@@ -280,57 +280,57 @@ int main(int argc, char** argv)
   program = argv[0];
   while ((opt = getopt(argc, argv, "dxsvapijkhftUL")) != -1) {
     switch (opt) {
-    case 'f' :
-      useFirstDev = true;
-      break;
-    case 's':
-      statusDisp = true;
-      break;
-    case 't':
-      currentTemp = true;
-      break;
-    case 'i':
-      infoDispSW = true;
-      break;
-    case 'a':
-      absoluteTime = true;
-      break;
-    case 'j':
-      infoDispHW = true;
-      break;
-    case 'k':
-      infoDispGW = true;
-      break;
-    case 'p':
-      ppsAlign = true;
-      break;
-    case 'U':
-      UTC = true;
-      pmode = pmode + PMODE_UTC;
-      break;
-    case 'L':
-      if (UTC) {
-        UTCleap = true;
-      } else {
-        std::cerr << "-L only works with -U" << std::endl;
-        return -1;
-      }
-      break;
-    case 'd':
-      pmode = pmode + PMODE_DEC;
-      break;
-    case 'x':
-      pmode = pmode + PMODE_HEX;
-      break;
-    case 'v':
-      pmode = pmode + PMODE_VERBOSE;
-      break;
-    case 'h':
-      help();
-      return 0;
-    default:
-      std::cerr << program << ": bad getopt result" << std::endl;
-      return 1;
+      case 'f' :
+        useFirstDev = true;
+        break;
+      case 's':
+        statusDisp = true;
+        break;
+      case 't':
+        currentTemp = true;
+        break;
+      case 'i':
+        infoDispSW = true;
+        break;
+      case 'a':
+        absoluteTime = true;
+        break;
+      case 'j':
+        infoDispHW = true;
+        break;
+      case 'k':
+        infoDispGW = true;
+        break;
+      case 'p':
+        ppsAlign = true;
+        break;
+      case 'U':
+        UTC = true;
+        pmode = pmode + PMODE_UTC;
+        break;
+      case 'L':
+        if (UTC) {
+          UTCleap = true;
+        } else {
+          std::cerr << "-L only works with -U" << std::endl;
+          return -1;
+        } // else 'L'
+        break;
+      case 'd':
+        pmode = pmode + PMODE_DEC;
+        break;
+      case 'x':
+        pmode = pmode + PMODE_HEX;
+        break;
+      case 'v':
+        pmode = pmode + PMODE_VERBOSE;
+        break;
+      case 'h':
+        help();
+        return 0;
+      default:
+        std::cerr << program << ": bad getopt result" << std::endl;
+        return 1;
     } // switch opt
   }   // while opt
 
