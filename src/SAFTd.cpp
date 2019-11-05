@@ -33,6 +33,8 @@
 #include "build.h"
 #include "clog.h"
 
+#include "saftbus/Socket.h"
+
 namespace saftlib {
 
 static void just_rethrow(const char*)
@@ -143,10 +145,19 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
       od.name = name;
       od.objectPath = "/de/gsi/saftlib/" + name;
       od.etherbonePath = path;
+
+
     
       Drivers::probe(od);
       if (od.ref) {
         devs.insert(std::make_pair(name, od));
+
+        // create a special socket for eb-tools to attach to.
+        std::string eb_socket_name = "/tmp/saft-eb-" + name;
+        m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(eb_socket_name, path));
+        m_eb_forward[name]->wait_for_client();
+        ///////////////////////////
+
         return od.objectPath;
       } else {
         throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no driver available for this device");
@@ -167,7 +178,11 @@ void SAFTd::RemoveDevice(const std::string& name)
   std::map< std::string, OpenDevice >::iterator elem = devs.find(name);
   if (elem == devs.end())
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
-  
+
+  // remove special socket for eb-tools  
+  m_eb_forward.erase(name);
+  ///////////////////////////
+
   elem->second.ref.reset();
   elem->second.device.close();
   devs.erase(elem);
