@@ -27,8 +27,6 @@ namespace saftlib {
 
 	private:
 		int     _eb_device_fd, _pts_fd; 
-		uint8_t _write_buffer[32768];
-		int     _write_buffer_length;
 	};
 
 
