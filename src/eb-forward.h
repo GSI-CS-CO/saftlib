@@ -24,8 +24,6 @@ namespace saftlib {
 
 		bool accept_connection(Slib::IOCondition condition);
 		void wait_for_client(); 
-		void close_connection();
-
 
 	private:
 		int     _eb_device_fd, _pts_fd; 

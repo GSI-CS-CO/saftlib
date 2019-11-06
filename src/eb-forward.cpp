@@ -10,7 +10,7 @@ namespace saftlib {
 
 	EB_Forward::EB_Forward(const std::string & device_name, const std::string & eb_name)
 	{
-		_eb_device_fd = open(eb_name.c_str(), O_RDWR | O_NONBLOCK );
+		_eb_device_fd = open(eb_name.c_str(), O_RDWR);
 		if (_eb_device_fd == -1) {
 			return;
 		}
@@ -18,68 +18,104 @@ namespace saftlib {
 	} 
 	EB_Forward::~EB_Forward()
 	{
+		close(_eb_device_fd);		
 	}
 
 	bool EB_Forward::accept_connection(Slib::IOCondition condition)
 	{
-		uint32_t header1;
-		uint32_t header1_response = 0x44166f4e;
-		uint32_t header2;
+		static std::vector<uint8_t> request;  // data from eb-tool
+		static std::vector<uint8_t> response; // data from device
+		request.clear();
+		response.clear();
 
-
-		read(_pts_fd, (void*)&header1, sizeof(header1));
-		write(_pts_fd, &header1_response, sizeof(header1_response));
-		if (header1 == 0xff116f4e) {
-			std::cerr << "accept_connection_h1 0x" << std::setfill('0') << std::setw(8) << std::hex << header1 << std::endl;
-			read(_pts_fd, (void*)&header2, sizeof(header2));
-			write(_pts_fd, &header2, sizeof(header2));
-		} else {
-			std::cerr << "header1 0x" << std::setfill('0') << std::setw(8) << std::hex << header1 << std::endl;
-		}
+		unsigned request_size = 0;
 
 		for (;;) {
 			uint8_t val;
-			int result;
-			int n = 0;
-			while ((result = read(_pts_fd, (void*)&val, sizeof(val))) == sizeof(val)) {
-				++n;
-				std::cerr<< "<<<< 0x" << std::setfill('0') << std::setw(2) << std::hex << (int)val << std::endl;
-				write(_eb_device_fd, (void*)&val, sizeof(val));
-			}
-			if (result == -1) {
-				std::cerr << errno << " " << strerror(errno) << std::endl;
-			} 
-			if (result == 0) {
-				std::cerr << "transfer done" << std::endl;
-				_write_buffer_length = 0;
+			int result = read(_pts_fd, (void*)&val, sizeof(val));
+			if (result == 0) { // end of file 
+				// std::cerr << "end of file" << std::endl;
 				return true;
 			}
-			while (n > 0) {
-				if ( read(_eb_device_fd, (void*)&val, sizeof(val)) == sizeof(val)) {
-					std::cerr<< ">>>>(" << std::dec << n << ") 0x" << std::setfill('0') << std::setw(2) << std::hex << (int)val << std::endl;
-					_write_buffer[_write_buffer_length++] = val;
-					--n;
-				}
+			if (result == -1) {
+				std::cerr << "EB_Forward error(" << std::dec << errno << "): " << strerror(errno) << std::endl;
+				return true;
 			}
-			write(_pts_fd, (void*)_write_buffer, _write_buffer_length);
-			_write_buffer_length = 0;
+			if (result == sizeof(val)) {
+				// std::cerr << "<<<< " << std::setfill('0') << std::setw(2) << std::hex << (int)val << std::endl;
+				request.push_back(val);
+
+				if (request.size() == 4) {
+					if (request[0]     == 0x4e && // test for Etherbone magic word
+						request[1]     == 0x6f &&
+						request[2]     == 0x11 &&
+						request[3]     == 0xff) {
+						// std::cerr << "etherbone header detected" << std::endl;
+
+						response.push_back(0x4e);
+						response.push_back(0x6f);
+						response.push_back(0x16);
+						response.push_back(0x44);
+
+						for (int i = 0; i < 4; ++i) {
+							read(_pts_fd, (void*)&val, sizeof(val));
+							// std::cerr << "<<<< " << std::setfill('0') << std::setw(2) << std::hex << (int)val << std::endl;
+							response.push_back(val);
+						}
+						// for (int i = 0; i < response.size(); ++i) {
+						// 	std::cerr << ">>>> " << std::setfill('0') << std::setw(2) << std::hex << (int)response[i] << std::endl;
+						// }
+						write(_pts_fd, (void*)&response[0], response.size());
+						// handling of Etherbone header done.
+						return true;
+					} else { // assume it is an Etherbone cycle header, calculate the response size
+						//std::cerr << "cycle header detected" << std::endl;
+						int wcount = request[2];
+						int rcount = request[3];
+						request_size += 4;
+						if (wcount) {
+							request_size += 4*(1+wcount);
+						}
+						if (rcount) {
+							request_size += 4*(1+rcount);
+						}
+						// std::cerr << "  wcount=" << std::dec << wcount 
+						// 		  << "  rcount=" << std::dec << rcount 
+						//           << "  request size = " << std::dec << request_size << std::endl;
+					}
+				}
+
+				// process the request by sending it to the device,
+				//  read the response from the device and write the 
+				//  response back to the eb-tool
+				if (request_size && request_size == request.size()) {
+					// all cycle bytes read
+					write(_eb_device_fd, (void*)&request[0], request.size());
+					response.clear();
+					response.resize(request.size());
+					read(_eb_device_fd, (void*)&response[0], response.size());
+					// for (int i = 0; i < response.size(); ++i) {
+					// 	std::cerr << ">>>> " << std::setfill('0') << std::setw(2) << std::hex << (int)response[i] << std::endl;
+					// }
+					write(_pts_fd, (void*)&response[0], response.size());
+					return true;
+				}
+
+
+			}
 		}
-		return true; // MainLoop should stop watching _create_socket file descriptor		
-	}
+		return false;
+	}	
+
 	void EB_Forward::wait_for_client()
 	{
 		std::cerr << "EB_Forward::wait_for_client()" << std::endl;
-		_pts_fd = open("/dev/pts/24", O_RDWR | O_NONBLOCK);
+		_pts_fd = open("/dev/pts/24", O_RDWR);
 		try {
 			Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 		} catch(std::exception &e)	{
 			throw;
 		}
 	} 
-	void EB_Forward::close_connection()
-	{
-		close(_eb_device_fd);
-	}
-
 
 }
