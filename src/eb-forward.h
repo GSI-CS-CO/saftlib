@@ -23,10 +23,12 @@ namespace saftlib {
 		~EB_Forward();
 
 		bool accept_connection(Slib::IOCondition condition);
-		void wait_for_client(); 
+
+		std::string saft_eb_devide();
 
 	private:
 		int     _eb_device_fd, _pts_fd; 
+		std::string _saft_eb_name;
 	};
 
 

@@ -2,6 +2,9 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <iomanip>
@@ -9,15 +12,23 @@
 namespace saftlib {
 
 	EB_Forward::EB_Forward(const std::string & device_name, const std::string & eb_name)
+		: _saft_eb_name(device_name)
 	{
 		_eb_device_fd = open(eb_name.c_str(), O_RDWR);
 		if (_eb_device_fd == -1) {
 			return;
 		}
+
+		_pts_fd = open("/dev/ptmx", O_RDWR);
+		grantpt(_pts_fd);
+		unlockpt(_pts_fd);
+
+		Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN, Slib::PRIORITY_LOW);
 	} 
 	EB_Forward::~EB_Forward()
 	{
 		close(_eb_device_fd);		
+		unlink(_saft_eb_name.c_str());
 	}
 
 	bool EB_Forward::accept_connection(Slib::IOCondition condition)
@@ -33,7 +44,7 @@ namespace saftlib {
 			uint8_t val;
 			int result = read(_pts_fd, (void*)&val, sizeof(val));
 			if (result == 0) { // end of file 
-				return true;
+				return false;
 			}
 			if (result == -1) { // error
 				std::cerr << "EB_Forward error(" << std::dec << errno << "): " << strerror(errno) << std::endl;
@@ -91,15 +102,11 @@ namespace saftlib {
 		return false;
 	}	
 
-	void EB_Forward::wait_for_client()
+
+	std::string EB_Forward::saft_eb_devide()
 	{
-		std::cerr << "EB_Forward::wait_for_client()" << std::endl;
-		_pts_fd = open("/dev/pts/24", O_RDWR);
-		try {
-			Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
-		} catch(std::exception &e)	{
-			throw;
-		}
-	} 
+		return std::string(ptsname(_pts_fd));
+	}
+
 
 }

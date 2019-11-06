@@ -56,6 +56,15 @@
       <arg direction="in" type="s" name="path"/>
       <arg direction="out" type="s" name="result"/>
     </method>
+
+    <!-- EbForward: Get the name of the device that forwards etherbone requests to saftlib_device.
+         @saftlib_device: The name of an attached device.
+         @saft_eb_device: The name any eb-tool can use to communicate with the hardware attached to saftlib_device.
+    -->
+    <method name="EbForward">
+      <arg direction="in" type="s" name="saftlib_device"/>
+      <arg direction="out" type="s" name="saft_eb_fwd"/>
+    </method>
     
     <!-- RemoveDevice: Remove the device from saftlib management.
          @name:        The logical name for the device

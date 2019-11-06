@@ -2,7 +2,7 @@ SUBDIRS = interfaces saftbus saftcommon
 SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS)
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd
+bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-eb-fwd
 noinst_PROGRAMS = client
 
 pkgdir = @libdir@/pkgconfig
@@ -94,6 +94,9 @@ saft_gmt_check_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_lcd_SOURCES = src/saft-lcd.cpp
 saft_lcd_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+
+saft_eb_fwd_SOURCES = src/saft-eb-fwd.cpp
+saft_eb_fwd_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 
 if GIT_TREE
