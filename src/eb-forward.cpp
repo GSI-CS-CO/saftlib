@@ -11,8 +11,7 @@
 
 namespace saftlib {
 
-	EB_Forward::EB_Forward(const std::string & device_name, const std::string & eb_name)
-		: _saft_eb_name(device_name)
+	EB_Forward::EB_Forward(const std::string & eb_name)
 	{
 		_eb_device_fd = open(eb_name.c_str(), O_RDWR);
 		if (_eb_device_fd == -1) {
@@ -28,7 +27,6 @@ namespace saftlib {
 	EB_Forward::~EB_Forward()
 	{
 		close(_eb_device_fd);		
-		unlink(_saft_eb_name.c_str());
 	}
 
 	bool EB_Forward::accept_connection(Slib::IOCondition condition)

@@ -153,7 +153,7 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
         devs.insert(std::make_pair(name, od));
 
         // create a special socket for eb-tools to attach to.
-        m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward("/tmp/saft-eb-"+name, path));
+        m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(path));
         ///////////////////////////
 
         return od.objectPath;
