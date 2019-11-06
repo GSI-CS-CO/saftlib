@@ -41,6 +41,7 @@ class SAFTd : public iSAFTd
     
     std::string AttachDevice(const std::string& name, const std::string& path);
     void RemoveDevice(const std::string& name);
+    std::string EbForward(const std::string& saftlib_device);
     void Quit();
     std::map< std::string, std::string > getDevices() const;
     

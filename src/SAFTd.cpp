@@ -153,9 +153,7 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
         devs.insert(std::make_pair(name, od));
 
         // create a special socket for eb-tools to attach to.
-        std::string eb_socket_name = "/tmp/saft-eb-" + name;
-        m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(eb_socket_name, path));
-        m_eb_forward[name]->wait_for_client();
+        m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward("/tmp/saft-eb-"+name, path));
         ///////////////////////////
 
         return od.objectPath;
@@ -187,6 +185,15 @@ void SAFTd::RemoveDevice(const std::string& name)
   elem->second.device.close();
   devs.erase(elem);
 }
+
+std::string SAFTd::EbForward(const std::string& saftlib_device)
+{
+  if (m_eb_forward.find(saftlib_device) != m_eb_forward.end()) {
+    return m_eb_forward[saftlib_device]->saft_eb_devide().substr(1);
+  }
+  return std::string("unknown");
+}
+
 
 std::string SAFTd::getSourceVersion() const
 {
