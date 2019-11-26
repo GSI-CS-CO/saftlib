@@ -26,6 +26,7 @@
 #include <string.h>
 #include "Device.h"
 #include <iostream>
+#include <iomanip>
 #include <memory>
 
 #include "Source.h"
@@ -35,8 +36,8 @@ namespace saftlib {
 // Device::irqMap Device::irqs;   // this is in globals.cpp
 // Device::msiQueue Device::msis; // this is in globals.cpp
 
-Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last)
- : etherbone::Device(d), base(first), mask(last-first)
+Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll)
+ : etherbone::Device(d), base(first), mask(last-first), activate_msi_polling(poll)
 {
 }
 
@@ -71,7 +72,12 @@ eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sig
   if (retry == 0) {
     throw etherbone::exception_t("request_irq/no_free", EB_FAIL);
   }
+
+  if (activate_msi_polling) {
+    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), 1);
+  }
   
+  msi_first = sdb.msi_first;
   // Bind the IRQ
   irqs[irq] = slot;
   // Report the MSI as seen from the point-of-view of the slave
@@ -81,6 +87,31 @@ eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sig
 void Device::release_irq(eb_address_t irq)
 {
   irqs.erase((irq & mask) + base);
+}
+
+bool Device::poll_msi() {
+  //std::cerr << "polling for msi" << std::endl;
+  etherbone::Cycle cycle;
+  eb_data_t msi_adr = 0;
+  eb_data_t msi_dat = 0;
+  eb_data_t msi_cnt = 0;
+  for (int i = 0; i < 32; ++i) { // never more than 10 MSIs in one go
+    cycle.open(*(etherbone::Device*)this);
+    cycle.read_config(0x40, EB_DATA32, &msi_adr);
+    cycle.read_config(0x44, EB_DATA32, &msi_dat);
+    cycle.read_config(0x48, EB_DATA32, &msi_cnt);
+    cycle.close();
+    if (msi_cnt & 1) {
+      Device::MSI msi;
+      msi.address = msi_adr-msi_first;
+      msi.data    = msi_dat;
+      Device::msis.push_back(msi);
+    }
+    if (!(msi_cnt & 2)) {
+      break; // normal end 
+    }
+  }
+  return true;
 }
 
 struct IRQ_Handler : public etherbone::Handler
@@ -131,14 +162,17 @@ class MSI_Source : public Slib::Source
   public:
     static std::shared_ptr<MSI_Source> create();
     sigc::connection connect(const sigc::slot<bool>& slot);
-    
+  
   protected:
     explicit MSI_Source();
-    
+
     virtual bool prepare(int& timeout);
     virtual bool check();
     virtual bool dispatch(sigc::slot_base* slot);
+
+  private:
 };
+
 
 std::shared_ptr<MSI_Source> MSI_Source::create()
 {

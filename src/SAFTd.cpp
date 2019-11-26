@@ -141,7 +141,14 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
       if ((first & size) != 0)
         throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
     
-      struct OpenDevice od(edev, first, last);
+      bool poll_msis = false;
+      std::string path_prefix = path.substr(0,7);
+      std::cerr << path_prefix << std::endl;
+      if (path_prefix == "dev/tty") {
+        poll_msis = true;
+        std::cerr << "polling msi enabled" << std::endl;
+      }
+      struct OpenDevice od(edev, first, last, poll_msis);
       od.name = name;
       od.objectPath = "/de/gsi/saftlib/" + name;
       od.etherbonePath = path;
