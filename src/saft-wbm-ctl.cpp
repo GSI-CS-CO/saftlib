@@ -73,8 +73,8 @@ static void wbm_help (void)
   std::cout << "                0x5 = channel parameter low bits" << std::endl;
   std::cout << "                0x6 = channel tag" << std::endl;
   std::cout << "                0x7 = channel tef" << std::endl;
-  std::cout << "                0x8 = channel time" << std::endl;
-  std::cout << "                0x9 =   " << std::endl;
+  std::cout << "                0x8 = channel time high bits" << std::endl;
+  std::cout << "                0x9 = channel time low bits" << std::endl;
   std::cout << "          s are the wishbone select bits" << std::endl;
   std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
   std::cout << "Licensed under the GPLv3" << std::endl;
