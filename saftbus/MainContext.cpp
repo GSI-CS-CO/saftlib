@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include <time.h>
+#include <unistd.h>
 
 namespace Slib
 {
@@ -48,6 +49,7 @@ namespace Slib
 				}
 			}
 		}
+
 
 		 // 	Runs a single iteration for the given main loop.
 		bool MainContext::iteration (bool may_block)
@@ -130,9 +132,12 @@ namespace Slib
 							signal_io_removed_indices.push_back(idx);
 						}
 						if (fd.events & fd.revents) {
-							//execute  signal_io callback
-							// nested calls to MainContext::iteration() may happen here!
-							bool result = signal_io_slots[idx](fd.revents);
+							bool result = false;
+							if (fd.events & POLLIN) {
+								//execute  signal_io callback
+								// nested calls to MainContext::iteration() may happen here!
+								result = signal_io_slots[idx](fd.revents);
+							} 
 							if (result == false ) { // add this index to the removal list
 								signal_io_removed_indices.push_back(idx);
 							}
@@ -149,7 +154,6 @@ namespace Slib
 				int dt_ms = (stop.tv_sec - start.tv_sec)*1000 
 				               + (stop.tv_nsec - start.tv_nsec)/1000000;
 
-				// std::cerr << "poll done .... dt_ms = " << dt_ms << std::endl;				               
 				for (unsigned i = 0; i < signal_timeouts.size(); ++i) {
 					if (signal_timeouts[i].time_left >= dt_ms) {
 						signal_timeouts[i].time_left -= dt_ms;
@@ -160,16 +164,26 @@ namespace Slib
 				}
 
 			}
-			 else if (poll_result == 0) { // poll timed out
-				// std::cerr << "poll timeout" << std::endl;
+			bool any_timeout_is_0 = false;
+			for (unsigned i = 0; i < signal_timeouts.size(); ++i) {
+				if (signal_timeouts[i].time_left == 0) {
+					any_timeout_is_0 = true;
+					break;
+				}
+			}
+			if (poll_result == 0 || any_timeout_is_0) { // poll timed out
+				//std::cerr << "poll timed out" << std::endl;
 				bool need_cleanup = false;
 				for (unsigned i = 0; i < signal_timeouts.size(); ++i) {
 					// subtract the timeout_ms as used in the poll call
-					if (signal_timeouts[i].time_left >= timeout_ms) {
-						signal_timeouts[i].time_left -= timeout_ms;
-					} else {
-						signal_timeouts[i].time_left = 0;
+					if (poll_result == 0) { // if poll resulted in timeout, the timeout value must be subtracted
+						if (signal_timeouts[i].time_left >= timeout_ms) {
+							signal_timeouts[i].time_left -= timeout_ms;
+						} else {
+							signal_timeouts[i].time_left = 0;
+						}
 					}
+					// std::cerr << signal_timeouts[i].time_left << " ";
 
 					// std::cerr << "check timeout[" << i << "/" << signal_timeout_time_left.size() 
 					//           << "] time_left = " << signal_timeout_time_left[i] 
@@ -202,7 +216,7 @@ namespace Slib
 						                            [](const Timeout &to){return to.time_left == 0;} ), signal_timeouts.end());
 					//std::cerr << "cleaning up done : size = " << signal_timeouts.size() << std::endl;
 				}
-
+				//std::cerr << "\n";
 			}
 
 			for (auto &id_source: sources) {

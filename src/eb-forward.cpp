@@ -11,18 +11,25 @@
 
 namespace saftlib {
 
+	void EB_Forward::open_pts() 
+	{
+		_pts_fd = open("/dev/ptmx", O_RDWR);
+		grantpt(_pts_fd);
+		unlockpt(_pts_fd);
+		chmod(ptsname(_pts_fd), S_IRUSR | S_IWUSR | 
+			                    S_IRGRP | S_IWGRP | 
+			                    S_IROTH | S_IWOTH );
+
+		Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
+	}
+
 	EB_Forward::EB_Forward(const std::string & eb_name)
 	{
 		_eb_device_fd = open(eb_name.c_str(), O_RDWR);
 		if (_eb_device_fd == -1) {
 			return;
 		}
-
-		_pts_fd = open("/dev/ptmx", O_RDWR);
-		grantpt(_pts_fd);
-		unlockpt(_pts_fd);
-
-		Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN, Slib::PRIORITY_LOW);
+		open_pts();
 	} 
 	EB_Forward::~EB_Forward()
 	{
@@ -31,6 +38,7 @@ namespace saftlib {
 
 	bool EB_Forward::accept_connection(Slib::IOCondition condition)
 	{
+		// std::cerr << "EB_Forward::accept_connection()" << std::endl;
 		static std::vector<uint8_t> request;  // data from eb-tool
 		static std::vector<uint8_t> response; // data from device
 		request.clear();
@@ -41,12 +49,14 @@ namespace saftlib {
 		for (;;) {
 			uint8_t val;
 			int result = read(_pts_fd, (void*)&val, sizeof(val));
-			if (result == 0) { // end of file 
-				return false;
-			}
-			if (result == -1) { // error
-				std::cerr << "EB_Forward error(" << std::dec << errno << "): " << strerror(errno) << std::endl;
-				return true;
+			if (result <= 0) { // end of file 
+				if (result == -1) { // error
+					// std::cerr << "EB_Forward error(" << std::dec << errno << "): " << strerror(errno) << std::endl;
+				}
+				// close and reopen immediately
+				close(_pts_fd);
+				open_pts(); 
+				return false; // remove old fd from loop
 			}
 			if (result == sizeof(val)) { // normal read 
 				request.push_back(val);
@@ -90,6 +100,12 @@ namespace saftlib {
 					write(_eb_device_fd, (void*)&request[0], request.size());
 					response.clear();
 					response.resize(request.size());
+					struct pollfd pfds[1] = {0,};
+					pfds[0].fd = _eb_device_fd;
+					pfds[0].events = POLLIN | POLLHUP;
+					if (poll(pfds,1,-1) == 0) {
+						return false;
+					}
 					read(_eb_device_fd, (void*)&response[0], response.size());
 					write(_pts_fd, (void*)&response[0], response.size());
 					return true;

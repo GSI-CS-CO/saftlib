@@ -27,6 +27,7 @@ namespace saftlib {
 		std::string saft_eb_devide();
 
 	private:
+		void open_pts();
 		int     _eb_device_fd, _pts_fd; 
 	};
 
