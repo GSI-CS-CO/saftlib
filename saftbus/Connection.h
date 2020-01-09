@@ -26,7 +26,7 @@ namespace saftbus
 	{
 		int id;
 		int fd, fd_back;
-		int socket_nr;
+		int socket_fd;
 		bool operator<(const ProxyPipe& rhs) const {
 			return id < rhs.id;
 		}
@@ -71,8 +71,6 @@ namespace saftbus
 	private:
 		void handle_disconnect(Socket *socket);
 		void proxy_pipe_garbage_collection();
-
-		int socket_nr(Socket *socket);
 
 		void print_all_fds();
 		void clean_all_fds_from_socket(Socket *socket);
