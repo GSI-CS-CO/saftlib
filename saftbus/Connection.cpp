@@ -9,6 +9,7 @@
 #include <ctime>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 
 namespace saftbus
@@ -22,16 +23,46 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 	, logger("/tmp/saftbus_connection.log")
 	, _create_signal_flight_time_statistics(false)
 {
-	for (int i = 0; i < number_of_sockets; ++i)
-	{
-		std::ostringstream name_out;
-		name_out << base_name << std::setw(2) << std::setfill('0') << i;
-		_sockets.push_back(std::shared_ptr<Socket>(new Socket(name_out.str(), this)));
+	_listen_fd = socket(AF_LOCAL, SOCK_SEQPACKET, 0);
+	std::string err_msg = "Connection constructor errror: ";
+	if (_listen_fd <= 0) {
+		err_msg.append(strerror(errno));
+		throw std::runtime_error(err_msg);
 	}
+	unlink(base_name.c_str());
+	_listen_sockaddr_un.sun_family = AF_LOCAL;
+	strcpy(_listen_sockaddr_un.sun_path, base_name.c_str());
+	int bind_result = bind(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, sizeof(_listen_sockaddr_un));
+	if (bind_result != 0) {
+		err_msg.append(strerror(errno));
+		throw std::runtime_error(err_msg);
+	}
+	chmod(base_name.c_str(), S_IRUSR | S_IWUSR | 
+		                     S_IRGRP | S_IWGRP | 
+		                     S_IROTH | S_IWOTH );
+	listen(_listen_fd, 10);
+	Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), _listen_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
+
+	// for (int i = 0; i < number_of_sockets; ++i)
+	// {
+	// 	std::ostringstream name_out;
+	// 	name_out << base_name << std::setw(2) << std::setfill('0') << i;
+	// 	_sockets.push_back(std::shared_ptr<Socket>(new Socket(name_out.str(), this)));
+	// }
+}
+
+bool Connection::accept_client(Slib::IOCondition condition) 
+{
+	std::cerr << "Connection::accept_client()" << std::endl;
+	socklen_t addrlen = sizeof(_listen_sockaddr_un);
+	int client_fd = accept(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, &addrlen);
+	_sockets.push_back(std::shared_ptr<Socket>(new Socket(this, client_fd)));
+	return true; // continue listening
 }
 
 Connection::~Connection()
 {
+	close(_listen_fd);
 	logger.newMsg(1).add("Connection::~Connection()\n").log();
 }
 
@@ -199,6 +230,12 @@ void Connection::handle_disconnect(Socket *socket)
 			clean_all_fds_from_socket(socket);
 		}
 
+		// remove socket from _sockets
+		int idx = socket_nr(socket);
+		if (idx != -1) {
+			std::swap(_sockets[idx], _sockets[_sockets.size()-1]);
+			_sockets.pop_back();
+		}
 
 		logger.log();
 	} catch (std::exception &e) {
@@ -277,6 +314,12 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 		logger.newMsg(0).add("Connection::dispatch(condition, ").add(socket->get_fd()).add(")\n");
 		//saftbus::Timer* f_time = new saftbus::Timer(_function_run_times["Connection::dispatch"]);
 
+		std::cerr << "Connection::dispatch " << condition << std::endl;
+		if (condition & Slib::IO_HUP) {
+			std::cerr << " IO_HUP " << std::endl;
+			handle_disconnect(socket);
+			return true;
+		}
 		// determine the request type
 		MessageTypeC2S type;
 		int result = saftbus::read(socket->get_fd(), type);
@@ -420,7 +463,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 				{
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SENDER_ID"]);
 					logger.add("     SENDER_ID received\n");
-					std::string sender_id;
+					// std::string sender_id;
 					// generate a new id value (increasing numbers)
 					++_saftbus_id_counter; 
 					std::ostringstream id_out;

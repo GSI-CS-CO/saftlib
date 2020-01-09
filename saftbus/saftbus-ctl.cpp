@@ -249,21 +249,21 @@ void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connec
 
 
 
-	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
-	std::cout << std::endl;
-	std::cout << "socket: ";
-	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
-		std::cout << std::setw(3) << i;
-	}
-	std::cout << std::endl;
-	std::cout << "busy:   ";
-	for(unsigned i = 0; i < sockets_active.size(); ++i ) {
-		if (sockets_active[i]) {
-			std::cout << std::setw(3) << "*";
-		} else {
-			std::cout << std::setw(3) << " ";
-		}
-	}
+	// std::cout << "_____________________________________________________________________________________________________________" << std::endl;
+	// std::cout << std::endl;
+	// std::cout << "socket: ";
+	// for(unsigned i = 0; i < sockets_active.size(); ++i ) {
+	// 	std::cout << std::setw(3) << i;
+	// }
+	// std::cout << std::endl;
+	// std::cout << "busy:   ";
+	// for(unsigned i = 0; i < sockets_active.size(); ++i ) {
+	// 	if (sockets_active[i]) {
+	// 		std::cout << std::setw(3) << "*";
+	// 	} else {
+	// 		std::cout << std::setw(3) << " ";
+	// 	}
+	// }
 	std::cout << std::endl;
 	std::cout << "_____________________________________________________________________________________________________________" << std::endl;
 	std::cout << std::endl;
