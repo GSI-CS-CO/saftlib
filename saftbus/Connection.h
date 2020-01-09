@@ -114,6 +114,11 @@ namespace saftbus
 		Logger logger;
 
 		bool _create_signal_flight_time_statistics;
+
+
+		int _listen_fd;
+		struct sockaddr_un _listen_sockaddr_un;
+		bool accept_client(Slib::IOCondition condition);
 	};
 
 }

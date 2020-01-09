@@ -29,25 +29,29 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 		_address.sun_family = AF_LOCAL;
 
 		// try to open first available socket
-		for (int i = 0; i < N_CONNECTIONS; ++i)
+		//for (int i = 0; i < N_CONNECTIONS; ++i)
 		{
-			std::ostringstream socket_filename;
-			socket_filename << base_name << std::setw(2) << std::setfill('0') << i;
-			strcpy(_address.sun_path, socket_filename.str().c_str());
+			// std::ostringstream socket_filename;
+			// socket_filename << base_name ;//<< std::setw(2) << std::setfill('0') << i;
+			strcpy(_address.sun_path, base_name.c_str());
 			// try to connect the socket to this 
 			int connect_result = connect( _create_socket, (struct sockaddr *)&_address , sizeof(_address));
-			if (connect_result == 0) {
+			std::cerr << "connecting to base name " << base_name << std::endl;
+			if (connect_result != 0) {
 				// success! we are done
-				_connection_id = i;
-				break;
+				std::cerr << "throwing" << std::endl;
+				throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
+				// _connection_id = i;
+				// break;
 			}
+			std::cerr << "connected"<< std::endl;
 			// failure to connect ...
 			
 			// check if we failed to connect even on the last socket filename
-			if (i == N_CONNECTIONS-1) {
-				// no success on all socket files
-				throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
-			}
+			// if (i == N_CONNECTIONS-1) {
+			// 	// no success on all socket files
+			// 	throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
+			// }
 			// if there are more attempts left just continue with the next socket filename
 		}
 
