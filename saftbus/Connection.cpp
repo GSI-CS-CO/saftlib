@@ -43,12 +43,6 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 	listen(_listen_fd, 10);
 	Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), _listen_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 
-	// for (int i = 0; i < number_of_sockets; ++i)
-	// {
-	// 	std::ostringstream name_out;
-	// 	name_out << base_name << std::setw(2) << std::setfill('0') << i;
-	// 	_sockets.push_back(std::shared_ptr<Socket>(new Socket(name_out.str(), this)));
-	// }
 }
 
 bool Connection::accept_client(Slib::IOCondition condition) 
@@ -165,11 +159,10 @@ void Connection::handle_disconnect(Socket *socket)
 		Serial dummy_arg;
 		std::string& saftbus_id = socket->saftbus_id();
 
-		_socket_owner.erase(socket_nr(socket));
+		_socket_owner.erase(socket->get_fd());
 
 		// make the socket available for new connection requests
 		socket->close_connection();
-		socket->wait_for_client();
 
 		if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { // we have to emit the quit signals
 			for(auto it = _id_handles_map[saftbus_id].begin(); it != _id_handles_map[saftbus_id].end(); ++it) {
@@ -231,7 +224,13 @@ void Connection::handle_disconnect(Socket *socket)
 		}
 
 		// remove socket from _sockets
-		int idx = socket_nr(socket);
+		int idx = -1;
+		for (uint32_t i = 0; i < _sockets.size(); ++i) {
+			if (_sockets[i].get() == socket) {
+				idx = i;
+				break;
+			}
+		}
 		if (idx != -1) {
 			std::swap(_sockets[idx], _sockets[_sockets.size()-1]);
 			_sockets.pop_back();
@@ -469,8 +468,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					std::ostringstream id_out;
 					id_out << ":" << _saftbus_id_counter;
 					socket->saftbus_id() = id_out.str();
-					//std::cerr << "socket_nr " << socket_nr(socket) << "   id " << id_out.str() << std::endl;
-					_socket_owner[socket_nr(socket)] = id_out.str();
+					_socket_owner[socket->get_fd()] = id_out.str();
 					// send the id to the ProxyConnection
 					saftbus::write(socket->get_fd(), socket->saftbus_id());
 				}
@@ -526,7 +524,7 @@ bool Connection::dispatch(Slib::IOCondition condition, Socket *socket)
 					ProxyPipe pp;
 					pp.id = proxy_id;
 					pp.fd = fd;
-					pp.socket_nr = socket_nr(socket);
+					pp.socket_fd = socket->get_fd();
 					_proxy_pipes[interface_name][object_path].insert(pp);
 					char ch = 'x';
 					//std::cerr << "writing ping: " << ch << std::endl;
@@ -766,12 +764,12 @@ void Connection::clean_all_fds_from_socket(Socket *socket)
 {
 	try {
 		saftbus::Timer f_time(_function_run_times["Connection::clean_all_fds_from_socket"]);
-		int nr = socket_nr(socket);
+		int fd = socket->get_fd();
 		for (auto iter = _proxy_pipes.begin(); iter != _proxy_pipes.end(); ++iter) {
 			for (auto itr = iter->second.begin(); itr != iter->second.end(); ++itr) {
 				std::vector<std::set<ProxyPipe>::iterator > erase_iters;
 				for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
-					if (nr == it->socket_nr) {
+					if (fd == it->socket_fd) {
 						erase_iters.push_back(it);
 						close(it->fd);
 					}
@@ -787,15 +785,6 @@ void Connection::clean_all_fds_from_socket(Socket *socket)
 		std::cerr << "Connection::clean_all_fds_from_socket() exception : " << e.what() << std::endl;
 	}
 
-}
-
-int Connection::socket_nr(Socket *socket)
-{
-	for (uint32_t i = 0; i < _sockets.size(); ++i) {
-		if (_sockets[i].get() == socket)
-			return i;
-	}
-	return -1;
 }
 
 void Connection::proxy_pipe_garbage_collection()
