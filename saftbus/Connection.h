@@ -20,8 +20,6 @@
 
 namespace saftbus
 {
-	class Socket;
-
 	struct ProxyPipe
 	{
 		int id;
@@ -66,14 +64,14 @@ namespace saftbus
 			                 const std::string& destination_bus_name=std::string(), 
 			                 const Serial& parameters=Serial());
 
-		bool dispatch(Slib::IOCondition condition, Socket *socket);
+		bool dispatch(Slib::IOCondition condition, int client_fd);
 
 	private:
-		void handle_disconnect(Socket *socket);
+		void handle_disconnect(int client_fd);
 		void proxy_pipe_garbage_collection();
 
 		void print_all_fds();
-		void clean_all_fds_from_socket(Socket *socket);
+		void clean_all_fds_from_socket(int client_fd);
 
 		void list_all_resources();
 
@@ -85,7 +83,8 @@ namespace saftbus
 		int _saftbus_signal_handle_counter; // log signal subscriptions
 
 		// TODO: use std::set instead of std::vector
-		std::vector<std::shared_ptr<Socket> > _sockets; 
+		//std::vector<std::shared_ptr<Socket> > _sockets; 
+		std::vector<int> _sockets;
 
 		//int _client_id;
 
