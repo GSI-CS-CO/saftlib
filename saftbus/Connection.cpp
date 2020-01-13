@@ -301,6 +301,11 @@ void Connection::emit_signal(const std::string& object_path,
 }
 
 
+static bool proxy_pipe_closed(Slib::IOCondition condition) {
+	std::cerr << "proxy pipe closed (HUP received)" << std::endl;
+	return false;
+}
+
 
 bool Connection::dispatch(Slib::IOCondition condition, int client_fd) 
 {
@@ -521,6 +526,9 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					pp.fd = fd;
 					pp.socket_fd = client_fd;
 					_proxy_pipes[interface_name][object_path].insert(pp);
+					std::cerr << "got signal fd (socketpair)" << std::endl;
+					Slib::signal_io().connect(sigc::ptr_fun(&proxy_pipe_closed), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
+
 					char ch = 'x';
 					//std::cerr << "writing ping: " << ch << std::endl;
 					saftbus::write(fd, ch);
@@ -551,7 +559,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						close(pp_done->fd);
 					    logger.add(" fd=").add(pp_done->fd).add("\n");
 						_proxy_pipes[interface_name][object_path].erase(pp_done);
-						proxy_pipe_garbage_collection();
 					} else {
 						logger.add(" ==> NOT removing signal pipe because saftbus object under this object_path changed since proxy creation!\n");
 					}
@@ -755,6 +762,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 	return false;
 }
 
+
 void Connection::clean_all_fds_from_socket(int client_fd)
 {
 	try {
@@ -774,26 +782,10 @@ void Connection::clean_all_fds_from_socket(int client_fd)
 				}
 			}
 		}
-		// more complete garbage collection
-		proxy_pipe_garbage_collection();
 	} catch( std::exception & e) {
 		std::cerr << "Connection::clean_all_fds_from_socket() exception : " << e.what() << std::endl;
 	}
 
-}
-
-void Connection::proxy_pipe_garbage_collection()
-{
-	// // this does nothing, does it?!
-	// std::map<std::string, std::map < std::string , std::set< ProxyPipe > > > new_proxy_pipes;
-	// for (auto iter1: _proxy_pipes) {
-	// 	for (auto iter2: iter1.second) {
-	// 		for(auto pp: iter2.second) {
-	// 			new_proxy_pipes[iter1.first][iter2.first].insert(pp);
-	// 		}
-	// 	}
-	// }
-	// _proxy_pipes = new_proxy_pipes;
 }
 
 

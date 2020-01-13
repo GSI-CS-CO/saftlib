@@ -68,7 +68,6 @@ namespace saftbus
 
 	private:
 		void handle_disconnect(int client_fd);
-		void proxy_pipe_garbage_collection();
 
 		void print_all_fds();
 		void clean_all_fds_from_socket(int client_fd);
