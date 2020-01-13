@@ -3,6 +3,8 @@
 #include <iostream>
 
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "saftbus.h"
 #include "core.h"
@@ -49,9 +51,12 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	// create a pipe through which we will receive signals from the saftd
 	if (&signalGroup != &saftlib::noSignals) {
 		try {
-			if (pipe(_pipe_fd) != 0) {
+			if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, _pipe_fd) != 0) {
 				throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
 			}
+			// if (pipe(_pipe_fd) != 0) {
+			// 	throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
+			// }
 
 			// send the writing end of a pipe to saftd 
 			_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
