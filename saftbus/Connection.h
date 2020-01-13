@@ -82,11 +82,7 @@ namespace saftbus
 		int _saftbus_object_id_counter; // log saftbus object creation
 		int _saftbus_signal_handle_counter; // log signal subscriptions
 
-		// TODO: use std::set instead of std::vector
-		//std::vector<std::shared_ptr<Socket> > _sockets; 
-		std::vector<int> _sockets;
-
-		//int _client_id;
+		std::set<int> _sockets;
 
 
 		// 	     // handle    // signal
