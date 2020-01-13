@@ -8,7 +8,6 @@ saftbus_HEADERS = \
 	core.h          \
 	Proxy.h          \
 	Error.h           \
-	Socket.h           \
 	Connection.h       \
 	ProxyConnection.h  \
 	Interface.h        \
@@ -27,7 +26,6 @@ libsaftbus_la_SOURCES = \
 	core.cpp                   \
 	Proxy.cpp                  \
 	Error.cpp                  \
-	Socket.cpp                 \
 	Connection.cpp             \
 	ProxyConnection.cpp        \
 	Interface.cpp              \

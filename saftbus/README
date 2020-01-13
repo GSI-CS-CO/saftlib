@@ -53,11 +53,14 @@ The saftbus library within saftlib
 
 	* owner (e.g. ":45")
 	Each saftbus object may be owned by at most one client process that is connected to saftd via saftbus. 
-	Saftbus objects may also be unowned.
-	Client processes get a unique std::string identifier when they connect to a saftbus socket.
+	Saftbus objects may also be unowned, i.e. not owned by any process.
+	Client processes get a unique std::string identifier when they connect to a saftbus socket the "saftbus_id".
 	The identifier starts with a colon, followed by a number, e.g. ":45".
 	If a the owner of a saftlib services quits, the service is de-constructed automatically. 
 	This is done in the Connection::signal_subsribe(...), Connection::signal_unsubscribe(...), and Connection::handle_disconnect(...) methods.
+
+	* saftbus_id
+	A string that looks like ":<some_number>" (e.g. ":1" or ":34"). It is assigned to each client process that connects to saftbus. The client sends the safbus_id along with each remote function call. This is that equivalent of the "sender_id" in DBus. Saftlib uses the saftbus_id for ownership management. That means, a client process owns a saftbus object, if the saftbus object's owner is equal to the client's saftbus_id.
 
 	* function call
 	A saftlib function call is initiated by a saftlib::Proxy object. It sends a request over the socket and blocks until saftd answers. The answer contains the(all) function return value(s).

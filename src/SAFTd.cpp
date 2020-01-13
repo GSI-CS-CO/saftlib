@@ -33,8 +33,6 @@
 #include "build.h"
 #include "clog.h"
 
-#include "saftbus/Socket.h"
-
 namespace saftlib {
 
 static void just_rethrow(const char*)
