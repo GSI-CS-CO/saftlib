@@ -50,7 +50,7 @@ bool Connection::accept_client(Slib::IOCondition condition)
 	socklen_t addrlen = sizeof(_listen_sockaddr_un);
 	int client_fd = accept(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, &addrlen);
 	//_sockets.push_back(std::shared_ptr<Socket>(new Socket(this, client_fd)));
-	_sockets.push_back(client_fd);
+	_sockets.insert(client_fd);
 	Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::dispatch), client_fd), client_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_HIGH);
 	return true; // continue listening
 }
@@ -162,7 +162,6 @@ void Connection::handle_disconnect(int client_fd)
 		Serial dummy_arg;
 		std::string& saftbus_id = _socket_owner[client_fd];
 
-		_socket_owner.erase(client_fd);
 
 		// make the socket available for new connection requests
 		close(client_fd);
@@ -227,17 +226,9 @@ void Connection::handle_disconnect(int client_fd)
 		}
 
 		// remove socket from _sockets
-		int idx = -1;
-		for (uint32_t i = 0; i < _sockets.size(); ++i) {
-			if (_sockets[i] == client_fd) {
-				idx = i;
-				break;
-			}
-		}
-		if (idx != -1) {
-			std::swap(_sockets[idx], _sockets[_sockets.size()-1]);
-			_sockets.pop_back();
-		}
+		// and from saftbus_id table
+		_socket_owner.erase(client_fd);
+		_sockets.erase(client_fd);
 
 		logger.log();
 	} catch (std::exception &e) {
