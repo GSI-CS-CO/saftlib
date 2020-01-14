@@ -22,7 +22,7 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 	, logger("/tmp/saftbus_connection.log")
 	, _create_signal_flight_time_statistics(false)
 {
-	_listen_fd = socket(AF_LOCAL, SOCK_SEQPACKET, 0);
+	_listen_fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
 	std::string err_msg = "Connection constructor errror: ";
 	if (_listen_fd <= 0) {
 		err_msg.append(strerror(errno));
@@ -39,16 +39,17 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 	chmod(base_name.c_str(), S_IRUSR | S_IWUSR | 
 		                     S_IRGRP | S_IWGRP | 
 		                     S_IROTH | S_IWOTH );
-	listen(_listen_fd, 10);
+	//listen(_listen_fd, 10);
 	Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), _listen_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 
 }
 
 bool Connection::accept_client(Slib::IOCondition condition) 
 {
-	std::cerr << "Connection::accept_client()" << std::endl;
 	socklen_t addrlen = sizeof(_listen_sockaddr_un);
-	int client_fd = accept(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, &addrlen);
+	int client_fd = recvfd(_listen_fd);
+	//std::cerr << "Connection::accept_client() " << client_fd << std::endl;
+	//int client_fd = accept(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, &addrlen);
 	//_sockets.push_back(std::shared_ptr<Socket>(new Socket(this, client_fd)));
 	_sockets.insert(client_fd);
 	Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::dispatch), client_fd), client_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_HIGH);
@@ -61,7 +62,8 @@ Connection::~Connection()
 	logger.newMsg(1).add("Connection::~Connection()\n").log();
 }
 
-// Add an object to the set of saftbus controlled objects. Each registered object has a unique ID.
+// Add an object to the set of saftbus controlled objects. 
+// Each registered object has a unique ID.
 // The ID is returned by this function to Saftlib and is used later to unregister the object.
 // This ID is internal to the saftd. Saftbus proxies never use this ID.
 // Saftbus proxies address saftbus objects using object_path and interface_name.
@@ -227,6 +229,7 @@ void Connection::handle_disconnect(int client_fd)
 
 		// remove socket from _sockets
 		// and from saftbus_id table
+		//std::cerr << "erasing " << client_fd << std::endl;
 		_socket_owner.erase(client_fd);
 		_sockets.erase(client_fd);
 
@@ -250,7 +253,7 @@ void Connection::emit_signal(const std::string& object_path,
 	    struct timespec start_time;
 	    clock_gettime( CLOCK_REALTIME, &start_time);
 
-	    std::cerr << "emit signal " << object_path << " " << interface_name << " " << signal_name << std::endl;
+	    //std::cerr << "emit signal " << object_path << " " << interface_name << " " << signal_name << std::endl;
 
 		saftbus::Timer f_time(_function_run_times["Connection::emit_signal"]);
 		logger.newMsg(0).add("Connection::emit_signal(").add(object_path).add(",")
@@ -302,23 +305,24 @@ void Connection::emit_signal(const std::string& object_path,
 
 
 static bool proxy_pipe_closed(Slib::IOCondition condition) {
-	std::cerr << "proxy pipe closed (HUP received)" << std::endl;
+	//std::cerr << "proxy pipe closed (HUP received)" << std::endl;
 	return false;
 }
 
 
 bool Connection::dispatch(Slib::IOCondition condition, int client_fd) 
 {
+
 	// handle a request coming from one of the sockets
 	try {
 		logger.newMsg(0).add("Connection::dispatch(condition, ").add(client_fd).add(")\n");
 		//saftbus::Timer* f_time = new saftbus::Timer(_function_run_times["Connection::dispatch"]);
 
-		std::cerr << "Connection::dispatch " << condition << std::endl;
+		//std::cerr << "Connection::dispatch " << client_fd << std::endl;
 		if (condition & Slib::IO_HUP) {
-			std::cerr << " IO_HUP " << std::endl;
+			//std::cerr << " IO_HUP " << std::endl;
 			handle_disconnect(client_fd);
-			return true;
+			return false;
 		}
 		// determine the request type
 		MessageTypeC2S type;
@@ -326,6 +330,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 		if (result == -1) {
 			logger.add("       client disconnected\n");
 			handle_disconnect(client_fd);
+			return false;
 		} else {
 			switch(type)
 			{
@@ -526,7 +531,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					pp.fd = fd;
 					pp.socket_fd = client_fd;
 					_proxy_pipes[interface_name][object_path].insert(pp);
-					std::cerr << "got signal fd (socketpair)" << std::endl;
+					//std::cerr << "got signal fd (socketpair)" << std::endl;
 					Slib::signal_io().connect(sigc::ptr_fun(&proxy_pipe_closed), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 
 					char ch = 'x';

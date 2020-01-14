@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <algorithm>
 #include <ctime>
+
+#include <unistd.h>
 //#include <giomm/dbuserror.h>
 
 namespace saftbus
@@ -22,8 +24,9 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 	//std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
 	for (;;) {
 		// create a local unix socket
-		_create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
-		if (_create_socket <= 0) {
+		// _create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
+		int server_socket = socket(PF_LOCAL, SOCK_DGRAM, 0);
+		if (server_socket <= 0) {
 			throw std::runtime_error("ProxyConnection::ProxyConnection() : cannot create socket");
 		}
 		_address.sun_family = AF_LOCAL;
@@ -35,7 +38,7 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 			// socket_filename << base_name ;//<< std::setw(2) << std::setfill('0') << i;
 			strcpy(_address.sun_path, base_name.c_str());
 			// try to connect the socket to this 
-			int connect_result = connect( _create_socket, (struct sockaddr *)&_address , sizeof(_address));
+			int connect_result = connect( server_socket, (struct sockaddr *)&_address , sizeof(_address));
 			std::cerr << "connecting to base name " << base_name << std::endl;
 			if (connect_result != 0) {
 				// success! we are done
@@ -45,6 +48,17 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 				// break;
 			}
 			std::cerr << "connected"<< std::endl;
+
+			// create socketpair
+			int fd_pair[2];
+			if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, fd_pair) != 0) {
+				throw std::runtime_error("Cannot create socket pair");
+			}
+			if (sendfd(server_socket, fd_pair[0]) == -1) {
+				throw std::runtime_error("couldn't send socket pair");
+			}
+			close(fd_pair[0]);
+			_create_socket = fd_pair[1];
 			// failure to connect ...
 			
 			// check if we failed to connect even on the last socket filename
@@ -87,7 +101,11 @@ int ProxyConnection::get_saftbus_index(const std::string &object_path, const std
 int ProxyConnection::get_connection_id()
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
-	return _connection_id;
+	std::istringstream id_in(_saftbus_id.substr(1));
+	int id;
+	id_in >> id;
+	//std::cerr << "saftbus_id : " << _saftbus_id << "    => " << id << std::endl;
+	return id;
 }
 
 void ProxyConnection::send_signal_flight_time(double signal_flight_time) {
