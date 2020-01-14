@@ -15,10 +15,13 @@ namespace saftlib
 		void add(saftbus::Proxy *proxy, bool automatic_dispatch = true);
 		void remove(saftbus::Proxy *proxy);
 		int wait_for_signal(int timeout_ms = -1);
+		bool sender_alive();
 
 	private:
 		std::vector<saftbus::Proxy* > _signal_group;
 		std::vector<struct pollfd> _fds;
+
+		bool _sender_alive;
 	};
 
 	// Block until a signal of a connected saftbus::Proxy arrives.
