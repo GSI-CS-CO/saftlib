@@ -17,8 +17,9 @@ namespace saftlib
 		_signal_group.push_back(automatic_dispatch?proxy:nullptr);
 		struct pollfd pfd;
 		pfd.fd = proxy->get_reading_end_of_signal_pipe();
-		pfd.events = POLLIN;
+		pfd.events = POLLIN | POLLHUP | POLLERR | POLLNVAL;
 		_fds.push_back(pfd);
+		_sender_alive = true;
 	}
 
 	void SignalGroup::remove(saftbus::Proxy *proxy) 
@@ -43,23 +44,14 @@ namespace saftlib
 		if ((result = poll(&_fds[0], _fds.size(), timeout_ms)) > 0) {
 			int idx = 0;
 			for (auto fd: _fds) {
-				if (fd.revents & POLLIN) {
-					if (_signal_group[idx] != nullptr) {
-		                // The dispatch time measurement is ok for debugging, 
-		                //     but should not be in production
-		                
-				    	// struct timespec start, stop;
-					    // clock_gettime( CLOCK_REALTIME, &start);
-
-						_signal_group[idx]->dispatch(Slib::IOCondition());
-
-					    // clock_gettime( CLOCK_REALTIME, &stop);
-						// double signal_dispatch_time = (1.0e6*stop.tv_sec  + 1.0e-3*stop.tv_nsec) 
-		                //                             - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
-
-		    			// if (signal_dispatch_time > 1000) { // more than 1ms will trigger message
-						// 	std::cerr << "saftlib::SignalGroup::wait_for_signal() too long signal dispatch time for [" << idx << "] = " << signal_dispatch_time << "us" << std::endl;
-						// }
+				if (fd.revents & POLLNVAL || fd.revents & POLLERR || fd.revents & POLLHUP) {
+					// saftd was closed or crashed
+					throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "saftd terminated");
+				} else {
+					if (fd.revents & POLLIN) {
+						if (_signal_group[idx] != nullptr) {
+							_signal_group[idx]->dispatch(Slib::IOCondition());
+						}
 					}
 				}
 				++idx;
@@ -85,6 +77,11 @@ namespace saftlib
 			// timeout was hit. do nothing
 		}
 		return result;
+	}
+
+	bool SignalGroup::sender_alive() 
+	{
+		return _sender_alive;
 	}
 
 } // namespace saftlib

@@ -90,7 +90,7 @@ namespace saftbus
 		// The Proxy constructor creates it and sends the writing end of the pipe through the 
 		// socket connection
 		int _pipe_fd[2];
-
+		saftlib::SignalGroup &_signal_group;
 		sigc::connection _signal_connection_handle;
 	};
 
