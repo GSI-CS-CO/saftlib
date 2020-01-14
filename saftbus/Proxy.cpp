@@ -42,7 +42,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		++_global_id_counter;
 		// thjs assumes there are no more than 100 saftbus sockets available ever
 		// (connection_id is the socket number XX in the socket filename "/tmp/saftbus_XX")
-		_global_id = 100*_global_id_counter + _connection->get_connection_id();
+		_global_id = 0xffff*_global_id_counter + _connection->get_connection_id();
 	}
 
 	_saftbus_index = _connection->get_saftbus_index(object_path, interface_name);

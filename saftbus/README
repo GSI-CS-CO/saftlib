@@ -60,7 +60,7 @@ The saftbus library within saftlib
 	This is done in the Connection::signal_subsribe(...), Connection::signal_unsubscribe(...), and Connection::handle_disconnect(...) methods.
 
 	* saftbus_id
-	A string that looks like ":<some_number>" (e.g. ":1" or ":34"). It is assigned to each client process that connects to saftbus. The client sends the safbus_id along with each remote function call. This is that equivalent of the "sender_id" in DBus. Saftlib uses the saftbus_id for ownership management. That means, a client process owns a saftbus object, if the saftbus object's owner is equal to the client's saftbus_id.
+	A string that looks like ":<some_number>" (e.g. ":1" or ":34"). It is assigned to each client process that connects to saftbus. The client sends the safbus_id along with each remote function call. This is the equivalent of the "sender_id" in DBus. Saftlib uses the saftbus_id for ownership management. That means, a client process owns a saftbus object, if the saftbus object's owner string is equal to the client's saftbus_id string.
 
 	* function call
 	A saftlib function call is initiated by a saftlib::Proxy object. It sends a request over the socket and blocks until saftd answers. The answer contains the(all) function return value(s).

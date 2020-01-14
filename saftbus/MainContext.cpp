@@ -54,6 +54,7 @@ namespace Slib
 		 // 	Runs a single iteration for the given main loop.
 		bool MainContext::iteration (bool may_block)
 		{
+			// std::cerr << "." << std::endl;
 			// was hier passieren muss:
 			// - alle fds einsammeln und in ein Array stopfen
 			// - poll() aufrufen
