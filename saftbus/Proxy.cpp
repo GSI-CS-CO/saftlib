@@ -31,15 +31,13 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	, _saftbus_index(-1)
 	, _signal_group(signalGroup)
 {
-	//std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
 		_connection = std::shared_ptr<saftbus::ProxyConnection>(new ProxyConnection);
 	}
 
 	// generate unique proxy id (unique for all running saftlib programs)
-	{
-		std::unique_lock<std::mutex> lock(_id_counter_mutex);
+	{	std::unique_lock<std::mutex> lock(_id_counter_mutex);
 		++_global_id_counter;
 		// thjs assumes there are no more than 100 saftbus sockets available ever
 		// (connection_id is the socket number XX in the socket filename "/tmp/saftbus_XX")
@@ -55,16 +53,12 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 			if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, _pipe_fd) != 0) {
 				throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
 			}
-			// if (pipe(_pipe_fd) != 0) {
-			// 	throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
-			// }
-
-			// send the writing end of a pipe to saftd 
+			// send one end fd[1] to saftd and close it
 			_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
 			close(_pipe_fd[1]);
+			// keep the other end fd[0] and listen for incoming signals
 			char ping;
 			saftbus::read(_pipe_fd[0], ping);
-			//std::cerr << "got ping after sending pipe: " << ping << std::endl;
 		} catch(...) {
 			std::cerr << "Proxy::~Proxy() exception" << std::endl;
 		}

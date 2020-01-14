@@ -75,7 +75,7 @@ namespace saftbus
 		void list_all_resources();
 
 				// interface_name       // object_path
-		std::map<std::string, std::map<std::string, int> > _saftbus_indices; 
+		std::map<std::string, std::map<std::string, int> > _saftbus_object_ids; 
 
 		std::map<int, std::shared_ptr<InterfaceVTable> > _saftbus_objects;
 		int _saftbus_object_id_counter; // log saftbus object creation

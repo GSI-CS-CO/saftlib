@@ -39,18 +39,13 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 	chmod(base_name.c_str(), S_IRUSR | S_IWUSR | 
 		                     S_IRGRP | S_IWGRP | 
 		                     S_IROTH | S_IWOTH );
-	//listen(_listen_fd, 10);
 	Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), _listen_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
-
 }
 
 bool Connection::accept_client(Slib::IOCondition condition) 
 {
 	socklen_t addrlen = sizeof(_listen_sockaddr_un);
 	int client_fd = recvfd(_listen_fd);
-	//std::cerr << "Connection::accept_client() " << client_fd << std::endl;
-	//int client_fd = accept(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, &addrlen);
-	//_sockets.push_back(std::shared_ptr<Socket>(new Socket(this, client_fd)));
 	_sockets.insert(client_fd);
 	Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::dispatch), client_fd), client_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_HIGH);
 	return true; // continue listening
@@ -75,19 +70,20 @@ unsigned Connection::register_object (const std::string& object_path,
 								   const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
-	logger.newMsg(1).add("Connection::register_object(").add(object_path).add(")\n");
-	unsigned registration_id = _saftbus_object_id_counter;
+	//logger.newMsg(1).add("Connection::register_object(").add(object_path).add(")\n");
+	unsigned saftbus_object_id = _saftbus_object_id_counter;
 	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
 	std::string interface_name = interface_info->get_interface_name();
-	logger.add(" interface_name:").add(interface_name).add(" -> id:").add(registration_id).log();
-	_saftbus_indices[interface_name][object_path] = registration_id;
-	return registration_id;
-}
-bool Connection::unregister_object (unsigned registration_id)
-{
-	logger.newMsg(0).add("Connection::unregister_object(").add(registration_id).add(")\n").log();
+	//logger.add(" interface_name:").add(interface_name).add(" -> id:").add(saftbus_object_id).log();
 
-	_saftbus_objects.erase(registration_id);
+	// fill the lookup table to map interface_name and object path to saftbus_object_id
+	_saftbus_object_ids[interface_name][object_path] = saftbus_object_id;
+	return saftbus_object_id;
+}
+bool Connection::unregister_object (unsigned saftbus_object_id)
+{
+	logger.newMsg(0).add("Connection::unregister_object(").add(saftbus_object_id).add(")\n").log();
+	_saftbus_objects.erase(saftbus_object_id);
 	return true;
 	//list_all_resources();
 }
@@ -205,7 +201,7 @@ void Connection::handle_disconnect(int client_fd)
 
 		// "garbage collection" : remove all inactive objects
 		std::vector<std::pair<std::string, std::string> > objects_to_be_erased;
-		for (auto saftbus_index: _saftbus_indices) {
+		for (auto saftbus_index: _saftbus_object_ids) {
 			std::string interface_name = saftbus_index.first;
 			for (auto object_path: saftbus_index.second) {
 				if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
@@ -215,9 +211,9 @@ void Connection::handle_disconnect(int client_fd)
 			}
 		}
 		for (auto erase: objects_to_be_erased) {
-			_saftbus_indices[erase.first].erase(erase.second);
-			if (_saftbus_indices[erase.first].size() == 0) {
-				_saftbus_indices.erase(erase.first);
+			_saftbus_object_ids[erase.first].erase(erase.second);
+			if (_saftbus_object_ids[erase.first].size() == 0) {
+				_saftbus_object_ids.erase(erase.first);
 			}
 		}
 
@@ -374,7 +370,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SAFTBUS_CTL_STATUS"]);
 					logger.add("   got stats request from saftbus-ctl\n");
-					saftbus::write(client_fd, _saftbus_indices);
+					saftbus::write(client_fd, _saftbus_object_ids);
 					std::vector<int> indices;
 					for (auto it: _saftbus_objects) {
 						indices.push_back(it.first);
@@ -389,8 +385,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					// Send all mutable state variables of the Connection object.
 					// This is supposed to be used by the saftbus-ctl tool.
 
-					//std::map<std::string, std::map<std::string, int> > _saftbus_indices; 
-					saftbus::write(client_fd, _saftbus_indices);
+					//std::map<std::string, std::map<std::string, int> > _saftbus_object_ids; 
+					saftbus::write(client_fd, _saftbus_object_ids);
 
 					//std::map<int, std::shared_ptr<InterfaceVTable> > _saftbus_objects;
 					std::vector<int> indices;
@@ -446,7 +442,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					// list owners
 					// map object path to owner
 					std::map<std::string, std::string> owners;
-					auto owned_object_paths = _saftbus_indices["de.gsi.saftlib.Owned"];
+					auto owned_object_paths = _saftbus_object_ids["de.gsi.saftlib.Owned"];
 					for (auto object_path_index: owned_object_paths) {
 						std::string obj_path = object_path_index.first;
 						int idx              = object_path_index.second;
@@ -502,7 +498,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					std::string object_path, interface_name;
 					saftbus::read(client_fd, object_path);
 					saftbus::read(client_fd, interface_name);
-					saftbus::write(client_fd, _saftbus_indices[interface_name][object_path]);
+					saftbus::write(client_fd, _saftbus_object_ids[interface_name][object_path]);
 				}
 				break;
 				case saftbus::SIGNAL_FD: 
@@ -559,7 +555,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					      .add(" interface_name=").add(interface_name)
 					      .add(" proxy_id=").add(proxy_id);
 
-					if (saftbus_index == _saftbus_indices[interface_name][object_path]) {
+					if (saftbus_index == _saftbus_object_ids[interface_name][object_path]) {
 						auto pp_done = _proxy_pipes[interface_name][object_path].find(pp);
 						close(pp_done->fd);
 					    logger.add(" fd=").add(pp_done->fd).add("\n");
@@ -585,7 +581,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					saftbus::read_all(client_fd, &payload.data()[0], size);
 
 					// saftbus::Serial to get content
-					int saftbus_index;
+					int saftbus_object_id;
 					std::string object_path;
 					std::string sender;
 					std::string interface_name;
@@ -593,7 +589,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					Serial parameters;
 
 					payload.get_init();
-					payload.get(saftbus_index);
+					payload.get(saftbus_object_id);
 					payload.get(object_path);
 					payload.get(sender);
 					payload.get(interface_name);
@@ -619,8 +615,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						      .add("\n");
 				
 						// saftbus object lookup
-						int index = _saftbus_indices[derived_interface_name][object_path];
-						if (index == 0 || index != saftbus_index) {// == not found or wrong check index
+						int index = _saftbus_object_ids[derived_interface_name][object_path];
+						if (index == 0 || index != saftbus_object_id) {// == not found or wrong check index
 							// this causes an exception on the proxy side
 							std::string what;
 							if (index == 0) {
@@ -692,11 +688,11 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						saftbus::Timer f_time(_function_run_times[function_name.str().c_str()]);
 
 						// saftbus object lookup
-						int index = _saftbus_indices[interface_name][object_path];
-						if (index == 0 || index != saftbus_index) {// == not found
+						int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
+						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found
 							// this causes an exception on the proxy side
 							std::string what;
-							if (index == 0) {
+							if (saftd_object_id == 0) {
 								what.append("unknown object path: ");
 							} else {
 								what.append("saftbus object under this object path has changed since Proxy creation: ");
@@ -713,7 +709,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
 
 						logger.add("         calling the driver function ...\n");
-						_saftbus_objects[index]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
+						_saftbus_objects[saftd_object_id]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
 						logger.add("         ... done \n");
 
 						if (method_invocation_rptr->has_error()) {
