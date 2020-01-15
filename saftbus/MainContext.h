@@ -65,8 +65,9 @@ namespace Slib
 			int time_left;
 			std::shared_ptr<sigc::slot<bool> > slot;
 			sigc::connection connection;
+			bool remove;
 			Timeout(int iv, std::shared_ptr<sigc::slot<bool> > sl) 
-				: interval(iv), time_left(iv), slot(sl), connection(*sl) {}
+				: interval(iv), time_left(iv), slot(sl), connection(*sl), remove(false) {}
 		};
 		// std::vector<int>                            signal_timeout_intervals;
 		// std::vector<int>                            signal_timeout_time_left;
