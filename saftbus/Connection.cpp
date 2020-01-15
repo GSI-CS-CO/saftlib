@@ -44,7 +44,6 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 
 bool Connection::accept_client(Slib::IOCondition condition) 
 {
-	socklen_t addrlen = sizeof(_listen_sockaddr_un);
 	int client_fd = recvfd(_listen_fd);
 	_sockets.insert(client_fd);
 	Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::dispatch), client_fd), client_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_HIGH);
@@ -160,21 +159,11 @@ void Connection::handle_disconnect(int client_fd)
 		Serial dummy_arg;
 		std::string& saftbus_id = _socket_owner[client_fd];
 
-
-		// make the socket available for new connection requests
 		close(client_fd);
 
-		if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { // we have to emit the quit signals
-			for(auto it = _id_handles_map[saftbus_id].begin(); it != _id_handles_map[saftbus_id].end(); ++it) {
-				logger.add("      _handle_to_signal_map[").add(*it).add("]\n");
-			}
-		}
-
 		logger.add("   collect unsubscription handles:\n");
-
-
 		if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { 
-			// We have an entry with this saftbus_id, so we have to emit quit signals.
+			// We have a signal subscription with this saftbus_id, so we have to emit signals.
 			// This will cause the saftlib device to remove itself and free all resources.
 			for (auto id_handles : _id_handles_map[saftbus_id]) {
 				// The emitted signal will cause the signal_unsubscribe function (see above) to be called.
@@ -206,7 +195,7 @@ void Connection::handle_disconnect(int client_fd)
 			for (auto object_path: saftbus_index.second) {
 				if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
 					objects_to_be_erased.push_back(std::make_pair(interface_name, object_path.first));
-					//std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
+					std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
 				}
 			}
 		}
@@ -217,15 +206,7 @@ void Connection::handle_disconnect(int client_fd)
 			}
 		}
 
-		// remove all signal pipe file descriptors that were registered for this socket
-		{
-			saftbus::Timer f_time(_function_run_times["Connection::handle_disconnect_clean_fds_from_socket"]);
-			clean_all_fds_from_socket(client_fd);
-		}
-
-		// remove socket from _sockets
-		// and from saftbus_id table
-		//std::cerr << "erasing " << client_fd << std::endl;
+		// remove socket file descriptor
 		_socket_owner.erase(client_fd);
 		_sockets.erase(client_fd);
 
@@ -233,6 +214,18 @@ void Connection::handle_disconnect(int client_fd)
 	} catch (std::exception &e) {
 		std::cerr << "Connection::handle_disconnect() exception : " << e.what() << std::endl;
 	}
+
+	// output all signal fds
+	for(auto it1: _proxy_pipes) {
+		std::string interface_name = it1.first;
+		for(auto it2: it1.second) {
+			std::string object_path = it2.first;
+			for(auto fd: it2.second) {
+				std::cerr << interface_name << " " << object_path << " " << fd.fd << std::endl;
+			}
+		}
+	}
+
 }
 
 
@@ -299,24 +292,26 @@ void Connection::emit_signal(const std::string& object_path,
 	}
 }
 
-
-static bool proxy_pipe_closed(Slib::IOCondition condition) {
-	//std::cerr << "proxy pipe closed (HUP received)" << std::endl;
+bool Connection::proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, ProxyPipe pp) 
+{
+	std::cerr << "proxy pipe closed (HUP received) for interface " << interface_name << "    on object path " << object_path << std::endl;
+	close(pp.fd);
+	std::set<ProxyPipe> &proxy_pipes = _proxy_pipes[interface_name][object_path];
+	proxy_pipes.erase(pp);
+	if (_proxy_pipes.size() == 0) {
+		_proxy_pipes[interface_name].erase(object_path);
+		_proxy_pipes.erase(interface_name);
+	}
 	return false;
 }
 
-
 bool Connection::dispatch(Slib::IOCondition condition, int client_fd) 
 {
-
 	// handle a request coming from one of the sockets
 	try {
 		logger.newMsg(0).add("Connection::dispatch(condition, ").add(client_fd).add(")\n");
-		//saftbus::Timer* f_time = new saftbus::Timer(_function_run_times["Connection::dispatch"]);
 
-		//std::cerr << "Connection::dispatch " << client_fd << std::endl;
 		if (condition & Slib::IO_HUP) {
-			//std::cerr << " IO_HUP " << std::endl;
 			handle_disconnect(client_fd);
 			return false;
 		}
@@ -402,7 +397,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 
 					//std::vector<std::shared_ptr<Socket> > _sockets; 
 					std::vector<int> sockets_active;
-					for (auto socket: _sockets) {
+					for (unsigned i = 0; i < _sockets.size(); ++i) {
 						sockets_active.push_back(true); // sockets are always active with new socket mechanism. non-active sockets are removed immediately
 					}
 					saftbus::write(client_fd, sockets_active);
@@ -528,7 +523,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					pp.socket_fd = client_fd;
 					_proxy_pipes[interface_name][object_path].insert(pp);
 					//std::cerr << "got signal fd (socketpair)" << std::endl;
-					Slib::signal_io().connect(sigc::ptr_fun(&proxy_pipe_closed), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
+					Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::proxy_pipe_closed), interface_name, object_path, pp), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 
 					char ch = 'x';
 					//std::cerr << "writing ping: " << ch << std::endl;
@@ -537,32 +532,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				break;
 				case saftbus::SIGNAL_REMOVE_FD: 
 				{
-					// when a Proxy is destroyed it will send a signal remove request
-					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_REMOVE_FD"]);
-
-					logger.add("           SIGNAL_REMOVE_FD received: ");
-					int saftbus_index;
-					std::string name, object_path, interface_name;
-					int proxy_id;
-					saftbus::read(client_fd, saftbus_index);
-					saftbus::read(client_fd, object_path);
-					saftbus::read(client_fd, interface_name);
-					saftbus::read(client_fd, proxy_id);
-
-					ProxyPipe pp;
-					pp.id = proxy_id;
-					logger.add("for object_path=").add(object_path)
-					      .add(" interface_name=").add(interface_name)
-					      .add(" proxy_id=").add(proxy_id);
-
-					if (saftbus_index == _saftbus_object_ids[interface_name][object_path]) {
-						auto pp_done = _proxy_pipes[interface_name][object_path].find(pp);
-						close(pp_done->fd);
-					    logger.add(" fd=").add(pp_done->fd).add("\n");
-						_proxy_pipes[interface_name][object_path].erase(pp_done);
-					} else {
-						logger.add(" ==> NOT removing signal pipe because saftbus object under this object_path changed since proxy creation!\n");
-					}
 				}
 				break;
 				case saftbus::METHOD_CALL: 
@@ -762,32 +731,5 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 	}
 	return false;
 }
-
-
-void Connection::clean_all_fds_from_socket(int client_fd)
-{
-	try {
-		saftbus::Timer f_time(_function_run_times["Connection::clean_all_fds_from_socket"]);
-		int fd = client_fd;
-		for (auto iter = _proxy_pipes.begin(); iter != _proxy_pipes.end(); ++iter) {
-			for (auto itr = iter->second.begin(); itr != iter->second.end(); ++itr) {
-				std::vector<std::set<ProxyPipe>::iterator > erase_iters;
-				for (auto it = itr->second.begin(); it != itr->second.end(); ++it) {
-					if (fd == it->socket_fd) {
-						erase_iters.push_back(it);
-						close(it->fd);
-					}
-				}
-				for(auto it = erase_iters.begin(); it != erase_iters.end(); ++it) {
-					itr->second.erase(*it);
-				}
-			}
-		}
-	} catch( std::exception & e) {
-		std::cerr << "Connection::clean_all_fds_from_socket() exception : " << e.what() << std::endl;
-	}
-
-}
-
 
 }
