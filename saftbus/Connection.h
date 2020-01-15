@@ -20,12 +20,12 @@
 
 namespace saftbus
 {
-	struct ProxyPipe
+	struct SignalFD
 	{
 		int id;
 		int fd, fd_back;
 		int socket_fd;
-		bool operator<(const ProxyPipe& rhs) const {
+		bool operator<(const SignalFD& rhs) const {
 			return id < rhs.id;
 		}
 	};
@@ -70,7 +70,7 @@ namespace saftbus
 		void handle_disconnect(int client_fd);
 
 		void print_all_fds();
-		bool proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, ProxyPipe pp);
+		bool proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, SignalFD pp);
 		void clean_all_fds_from_socket(int client_fd);
 
 		void list_all_resources();
@@ -93,7 +93,7 @@ namespace saftbus
 
 		// store the pipes that go directly to one or many Proxy objects
 				// interface_name        // object path
-		std::map<std::string, std::map < std::string , std::set< ProxyPipe > > > _proxy_pipes;
+		std::map<std::string, std::map < std::string , std::set< SignalFD > > > _signal_fds;
 
 		static int _saftbus_id_counter;
 

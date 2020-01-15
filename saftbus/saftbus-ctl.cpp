@@ -100,7 +100,7 @@ void print_mutable_state(std::shared_ptr<saftbus::ProxyConnection> connection)
 
 	// store the pipes that go directly to one or many Proxy objects
 			// interface_name        // object path
-	std::map<std::string, std::map < std::string , std::set< saftbus::ProxyPipe > > > proxy_pipes;
+	std::map<std::string, std::map < std::string , std::set< saftbus::SignalFD > > > proxy_pipes;
 	saftbus::read(connection->get_fd(), proxy_pipes);
 
 	int _saftbus_id_counter;
@@ -238,7 +238,7 @@ void print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConnection> connec
 
 	// store the pipes that go directly to one or many Proxy objects
 			// interface_name        // object path
-	std::map<std::string, std::map < std::string , std::set< saftbus::ProxyPipe > > > proxy_pipes;
+	std::map<std::string, std::map < std::string , std::set< saftbus::SignalFD > > > proxy_pipes;
 	saftbus::read(connection->get_fd(), proxy_pipes);
 
 	int _saftbus_id_counter;
