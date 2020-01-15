@@ -46,7 +46,7 @@ namespace saftlib
 			for (auto fd: _fds) {
 				if (fd.revents & POLLNVAL || fd.revents & POLLERR || fd.revents & POLLHUP) {
 					// saftd was closed or crashed
-					throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "saftd terminated");
+					throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "safbus object diappeared");
 				} else {
 					if (fd.revents & POLLIN) {
 						if (_signal_group[idx] != nullptr) {

@@ -70,7 +70,7 @@ The saftbus library within saftlib
 	The call addresses the special interface org.freedesktop.DBus.Properties (inherited from the DBus aera) and the property name, the type of operation (Get/Set), as well as the set value are part of the function call arguments.
 
 	* signal
-	Saftlib Proxy objects can receive signals from saftd. These signals are transmitted using dedicated UNIX Pipes. The pipes are created whenever a Proxy object is created. There is one Pipe for each Interface of a Proxy object. 
+	Saftlib Proxy objects can receive signals from saftd. These signals are transmitted using a dedicated socketpair. The socketpair is created whenever a Proxy object is created and one of the tow elements of the socketpair is sent to saftd. There is one socketpair for each Interface of a Proxy object. 
 	The reason for this second data path for signals is to allow multi threaded clients without needing to synchronize the socket access.
 	Example: /de/gsi/saftlib/tr0/embedded_cpu
 		this object path is a service with three different interfaces, i.e. there are three distinct saftbus objects:
