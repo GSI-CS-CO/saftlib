@@ -195,15 +195,22 @@ void Connection::handle_disconnect(int client_fd)
 			for (auto object_path: saftbus_index.second) {
 				if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
 					objects_to_be_erased.push_back(std::make_pair(interface_name, object_path.first));
-					std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
+					//std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
 				}
 			}
 		}
 		for (auto erase: objects_to_be_erased) {
-			_saftbus_object_ids[erase.first].erase(erase.second);
-			if (_saftbus_object_ids[erase.first].size() == 0) {
-				_saftbus_object_ids.erase(erase.first);
+			std::string &interface_name = erase.first;
+			std::string &object_path    = erase.second;
+			_saftbus_object_ids[interface_name].erase(object_path);
+			if (_saftbus_object_ids[interface_name].size() == 0) {
+				_saftbus_object_ids.erase(interface_name);
 			}
+			for (auto pp: _signal_fds[interface_name][object_path]) {
+				close(pp.fd);
+				pp.con.disconnect();
+			}
+			_signal_fds[interface_name].erase(object_path);
 		}
 
 		// remove socket file descriptor
@@ -283,7 +290,7 @@ void Connection::emit_signal(const std::string& object_path,
 
 bool Connection::proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, SignalFD pp) 
 {
-	std::cerr << "proxy pipe closed (HUP received) for interface " << interface_name << "    on object path " << object_path << std::endl;
+	//std::cerr << "proxy pipe closed (HUP received) for interface " << interface_name << "    on object path " << object_path << std::endl;
 	close(pp.fd);
 	std::set<SignalFD> &proxy_pipes = _signal_fds[interface_name][object_path];
 	proxy_pipes.erase(pp);
@@ -510,9 +517,9 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					pp.id = proxy_id;
 					pp.fd = fd;
 					pp.socket_fd = client_fd;
-					_signal_fds[interface_name][object_path].insert(pp);
 					//std::cerr << "got signal fd (socketpair)" << std::endl;
-					Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::proxy_pipe_closed), interface_name, object_path, pp), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
+					pp.con = Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::proxy_pipe_closed), interface_name, object_path, pp), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
+					_signal_fds[interface_name][object_path].insert(pp);
 
 					char ch = 'x';
 					//std::cerr << "writing ping: " << ch << std::endl;
@@ -573,11 +580,11 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						      .add("\n");
 				
 						// saftbus object lookup
-						int index = _saftbus_object_ids[derived_interface_name][object_path];
-						if (index == 0 || index != saftbus_object_id) {// == not found or wrong check index
+						int saftd_object_id = _saftbus_object_ids[derived_interface_name][object_path];
+						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found or wrong check saftd_object_id
 							// this causes an exception on the proxy side
 							std::string what;
-							if (index == 0) {
+							if (saftd_object_id == 0) {
 								what.append("unknown object path: ");
 							} else {
 								what.append("saftbus object under this object path has changed since Proxy creation: ");
@@ -590,14 +597,23 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							logger.log();
 							break;
 						}
-						logger.add("    found saftbus object at index=").add(index).add("\n");
+						if (_saftbus_objects.find(saftd_object_id) == _saftbus_objects.end()) {
+							std::string what;
+							what.append("unknown object path: ");
+							what.append(object_path);
+							saftbus::write(client_fd, saftbus::METHOD_ERROR);
+							saftbus::write(client_fd, saftbus::Error::FAILED);
+							saftbus::write(client_fd, what);
+							break;
+						}
+						logger.add("    found saftbus object at saftd_object_id=").add(saftd_object_id).add("\n");
 						if (name == "Get") {
 							logger.add("      Get the property\n");
 							saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_GetProperty"]);
 
 							// call auto-generated get_porperty handler using the vtable
 							Serial result;
-							_saftbus_objects[index]->get_property(result, saftbus::connection, sender, object_path, derived_interface_name, property_name);
+							_saftbus_objects[saftd_object_id]->get_property(result, saftbus::connection, sender, object_path, derived_interface_name, property_name);
 
 							// prepare response data
 							// serialize response data
@@ -619,7 +635,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							// set the value using the set_property handler from auto-generated saftlib code
 							Serial par2;
 							parameters.get(par2);
-							bool result = _saftbus_objects[index]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
+							bool result = _saftbus_objects[saftd_object_id]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
 
 							// even the set property has a response ...
 							Serial response;
@@ -667,7 +683,14 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
 
 						logger.add("         calling the driver function ...\n");
-						_saftbus_objects[saftd_object_id]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
+						if (_saftbus_objects.find(saftd_object_id) != _saftbus_objects.end()) {
+							_saftbus_objects[saftd_object_id]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
+						} else {
+							std::string what;
+							what.append("unknown object path: ");
+							what.append(object_path);
+							method_invocation_rptr->return_error(saftbus::Error(saftbus::Error::ACCESS_DENIED, what));
+						}
 						logger.add("         ... done \n");
 
 						if (method_invocation_rptr->has_error()) {

@@ -25,6 +25,7 @@ namespace saftbus
 		int id;
 		int fd, fd_back;
 		int socket_fd;
+		sigc::connection con;
 		bool operator<(const SignalFD& rhs) const {
 			return id < rhs.id;
 		}
