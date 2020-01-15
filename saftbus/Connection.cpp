@@ -215,17 +215,6 @@ void Connection::handle_disconnect(int client_fd)
 		std::cerr << "Connection::handle_disconnect() exception : " << e.what() << std::endl;
 	}
 
-	// output all signal fds
-	for(auto it1: _proxy_pipes) {
-		std::string interface_name = it1.first;
-		for(auto it2: it1.second) {
-			std::string object_path = it2.first;
-			for(auto fd: it2.second) {
-				std::cerr << interface_name << " " << object_path << " " << fd.fd << std::endl;
-			}
-		}
-	}
-
 }
 
 
@@ -268,8 +257,8 @@ void Connection::emit_signal(const std::string& object_path,
 			// does not have a running MainLoop. In this case the pipe will become full
 			// at some point and the write function will throw. We have to catch that
 			// to prevent the saft daemon from crashing
-			std::set<ProxyPipe> &setProxyPipe = _proxy_pipes[interface_name][object_path];
-			for (auto i = setProxyPipe.begin(); i != setProxyPipe.end(); ++i) {
+			std::set<SignalFD> &setSignalFD = _signal_fds[interface_name][object_path];
+			for (auto i = setSignalFD.begin(); i != setSignalFD.end(); ++i) {
 				try {
 					logger.add("            writing to pipe: fd=").add(i->fd).add("    ");
 					saftbus::write(i->fd, saftbus::SIGNAL);
@@ -277,7 +266,7 @@ void Connection::emit_signal(const std::string& object_path,
 					saftbus::write_all(i->fd, data_ptr, size);
 				} catch(std::exception &e) {
 					logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
-					logger.add("    setProxyPipe.size() = ").add(setProxyPipe.size()).add("\n");
+					logger.add("    setSignalFD.size() = ").add(setSignalFD.size()).add("\n");
 				}
 			}
 			//std::cerr << "Connection::emit_signal(" << object_path << ", " << interface_name << ", " << signal_name << ") done" << std::endl;
@@ -292,15 +281,15 @@ void Connection::emit_signal(const std::string& object_path,
 	}
 }
 
-bool Connection::proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, ProxyPipe pp) 
+bool Connection::proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, SignalFD pp) 
 {
 	std::cerr << "proxy pipe closed (HUP received) for interface " << interface_name << "    on object path " << object_path << std::endl;
 	close(pp.fd);
-	std::set<ProxyPipe> &proxy_pipes = _proxy_pipes[interface_name][object_path];
+	std::set<SignalFD> &proxy_pipes = _signal_fds[interface_name][object_path];
 	proxy_pipes.erase(pp);
-	if (_proxy_pipes.size() == 0) {
-		_proxy_pipes[interface_name].erase(object_path);
-		_proxy_pipes.erase(interface_name);
+	if (_signal_fds.size() == 0) {
+		_signal_fds[interface_name].erase(object_path);
+		_signal_fds.erase(interface_name);
 	}
 	return false;
 }
@@ -428,8 +417,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 
 					// store the pipes that go directly to one or many Proxy objects
 							// interface_name        // object path
-					//std::map<std::string, std::map < std::string , std::set< ProxyPipe > > > _proxy_pipes;
-					saftbus::write(client_fd, _proxy_pipes);
+					//std::map<std::string, std::map < std::string , std::set< SignalFD > > > _signal_fds;
+					saftbus::write(client_fd, _signal_fds);
 
 					//static int _saftbus_id_counter;
 					saftbus::write(client_fd, _saftbus_id_counter);
@@ -517,11 +506,11 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					int flags = fcntl(fd, F_GETFL, 0);
 					fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 
-					ProxyPipe pp;
+					SignalFD pp;
 					pp.id = proxy_id;
 					pp.fd = fd;
 					pp.socket_fd = client_fd;
-					_proxy_pipes[interface_name][object_path].insert(pp);
+					_signal_fds[interface_name][object_path].insert(pp);
 					//std::cerr << "got signal fd (socketpair)" << std::endl;
 					Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::proxy_pipe_closed), interface_name, object_path, pp), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 
