@@ -70,6 +70,7 @@ namespace saftbus
 		void handle_disconnect(int client_fd);
 
 		void print_all_fds();
+		bool proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, ProxyPipe pp);
 		void clean_all_fds_from_socket(int client_fd);
 
 		void list_all_resources();

@@ -128,18 +128,18 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 	saftbus::write(get_fd(), global_id);
 }
 
-void ProxyConnection::remove_proxy_signal_fd(int saftbus_index,
-			                                 std::string object_path,
-	                                         std::string interface_name,
-	                                         int global_id) 
-{
-	std::unique_lock<std::mutex> lock(_socket_mutex);
-	saftbus::write(get_fd(), saftbus::SIGNAL_REMOVE_FD);
-	saftbus::write(get_fd(), saftbus_index);
-	saftbus::write(get_fd(), object_path);
-	saftbus::write(get_fd(), interface_name);
-	saftbus::write(get_fd(), global_id);
-}
+// void ProxyConnection::remove_proxy_signal_fd(int saftbus_index,
+// 			                                 std::string object_path,
+// 	                                         std::string interface_name,
+// 	                                         int global_id) 
+// {
+// 	std::unique_lock<std::mutex> lock(_socket_mutex);
+// 	saftbus::write(get_fd(), saftbus::SIGNAL_REMOVE_FD);
+// 	saftbus::write(get_fd(), saftbus_index);
+// 	saftbus::write(get_fd(), object_path);
+// 	saftbus::write(get_fd(), interface_name);
+// 	saftbus::write(get_fd(), global_id);
+// }
 
 Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                const std::string& object_path, 
