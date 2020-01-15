@@ -206,6 +206,7 @@ namespace Slib
 							// std::cerr << "refresh timeout" << std::endl;
 							signal_timeouts[i].time_left = signal_timeouts[i].interval;
 						} else {
+							signal_timeouts[i].remove = true;
 							need_cleanup = true;
 						}
 					}
@@ -213,8 +214,11 @@ namespace Slib
 				}
 				if (need_cleanup) {
 					//std::cerr << "cleaning up: size = " << signal_timeouts.size() << std::endl;
-					signal_timeouts.erase(remove_if(signal_timeouts.begin(), signal_timeouts.end(),
-						                            [](const Timeout &to){return to.time_left == 0;} ), signal_timeouts.end());
+					signal_timeouts.erase(
+						remove_if(signal_timeouts.begin(), signal_timeouts.end(),
+						    [](const Timeout &to){return to.remove;} ), 
+						signal_timeouts.end()
+					);
 					//std::cerr << "cleaning up done : size = " << signal_timeouts.size() << std::endl;
 				}
 				//std::cerr << "\n";
