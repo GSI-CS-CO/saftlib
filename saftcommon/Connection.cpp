@@ -28,13 +28,26 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 		err_msg.append(strerror(errno));
 		throw std::runtime_error(err_msg);
 	}
-	unlink(base_name.c_str());
+	std::string dirname = base_name.substr(0,base_name.find_last_of('/'));
+	std::ostringstream command;
+	command << "mkdir -p " << dirname;
+	system(command.str().c_str());
+	int unlink_result = unlink(base_name.c_str());
+	std::ostringstream unlink_error;
+	if (unlink_result != 0) {
+		unlink_error << "could not unlink socket file " << base_name << ": " << strerror(errno);
+	}
 	_listen_sockaddr_un.sun_family = AF_LOCAL;
 	strcpy(_listen_sockaddr_un.sun_path, base_name.c_str());
 	int bind_result = bind(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, sizeof(_listen_sockaddr_un));
 	if (bind_result != 0) {
-		err_msg.append(strerror(errno));
-		throw std::runtime_error(err_msg);
+		std::ostringstream msg;
+		msg << std::endl;
+		if (unlink_error.str().size() > 0) {
+			msg << unlink_error.str() << std::endl;
+		}
+		msg << "could not bind to socket: " << strerror(errno);
+		throw std::runtime_error(msg.str().c_str());
 	}
 	chmod(base_name.c_str(), S_IRUSR | S_IWUSR | 
 		                     S_IRGRP | S_IWGRP | 
