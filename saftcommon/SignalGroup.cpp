@@ -45,8 +45,8 @@ namespace saftlib
 			int idx = 0;
 			for (auto fd: _fds) {
 				if (fd.revents & POLLNVAL || fd.revents & POLLERR || fd.revents & POLLHUP) {
-					// saftd was closed or crashed
-					throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "safbus object diappeared");
+					// saftbus object was removed or saftd was closed or suffered a crash
+					throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "saftbus object diappeared");
 				} else {
 					if (fd.revents & POLLIN) {
 						if (_signal_group[idx] != nullptr) {

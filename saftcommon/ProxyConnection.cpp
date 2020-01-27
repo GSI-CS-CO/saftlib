@@ -39,7 +39,7 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 			strcpy(_address.sun_path, base_name.c_str());
 			// try to connect the socket to this 
 			int connect_result = connect( server_socket, (struct sockaddr *)&_address , sizeof(_address));
-			std::cerr << "connecting to base name " << base_name << std::endl;
+			//std::cerr << "connecting to base name " << base_name << std::endl;
 			if (connect_result != 0) {
 				// success! we are done
 				std::cerr << "throwing" << std::endl;
@@ -47,7 +47,7 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 				// _connection_id = i;
 				// break;
 			}
-			std::cerr << "connected"<< std::endl;
+			//std::cerr << "connected"<< std::endl;
 
 			// create socketpair
 			int fd_pair[2];

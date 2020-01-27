@@ -22,7 +22,7 @@
 
 #include <sigc++/sigc++.h>
 #include <etherbone.h>
-#include "saftbus/MainLoop.h"
+#include "MainLoop.h"
 
 sigc::connection eb_attach_source(const std::shared_ptr<Slib::MainLoop>& loop, etherbone::Socket socket);
 
