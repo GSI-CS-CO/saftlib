@@ -96,7 +96,8 @@ bool Device::poll_msi() {
   eb_data_t msi_adr = 0;
   eb_data_t msi_dat = 0;
   eb_data_t msi_cnt = 0;
-  for (int i = 0; i < 1024; ++i) { // never more this many MSIs in one go
+  const int MAX_MSIS_IN_ONE_GO = 1024;
+  for (int i = 0; i < MAX_MSIS_IN_ONE_GO; ++i) { // never more this many MSIs in one go
     cycle.open(*(etherbone::Device*)this);
     cycle.read_config(0x40, EB_DATA32, &msi_adr);
     cycle.read_config(0x44, EB_DATA32, &msi_dat);
@@ -113,6 +114,9 @@ bool Device::poll_msi() {
         //std::cerr << i << " msis popped" << std::endl;
       }
       break; // normal end 
+    }
+    if (i == MAX_MSIS_IN_ONE_GO-1) {
+      std::cerr << "reached MAX_MSIS_IN_ONE_GO" << std::endl;
     }
   }
   return true;

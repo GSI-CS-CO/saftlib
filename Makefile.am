@@ -1,5 +1,5 @@
-SUBDIRS = interfaces saftbus saftcommon
-SAFTLIBS = interfaces/libsaftlib.la saftbus/libsaftbus.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS)
+SUBDIRS = interfaces saftcommon
+SAFTLIBS = interfaces/libsaftlib.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS)
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-wbm-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-uni saft-eb-fwd
@@ -58,53 +58,53 @@ saftd_SOURCES = version.h \
 	drivers/WrMilGateway.cpp drivers/WrMilGateway.h \
 	src/globals.cpp			src/main.cpp
 
-saftd_LDADD = $(EB_LIBS) $(GIOMM_LIBS) $(SAFTLIBS)
+saftd_LDADD = $(EB_LIBS) $(SAFTLIBS)
 saftd_LDFLAGS = -lpthread -lrt -rdynamic # needed for shared memory, stack trace
 
 client_SOURCES = src/client.cpp
-client_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+client_LDADD   = $(SAFTLIBS)
 
 saft_ctl_SOURCES = src/saft-ctl.cpp
-saft_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
+saft_ctl_LDADD   = $(SAFTLIBS) -lpthread
 
 saft_uni_SOURCES = src/saft-uni.cpp
 saft_uni_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp
-saft_ecpu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_ecpu_ctl_LDADD   = $(SAFTLIBS)
 
 saft_wbm_ctl_SOURCES = src/saft-wbm-ctl.cpp
 saft_wbm_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
 
 saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp
-saft_scu_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_scu_ctl_LDADD   = $(SAFTLIBS)
 
 saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp
-saft_fg_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_fg_ctl_LDADD   = $(SAFTLIBS)
 
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp
-saft_mfg_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
+saft_mfg_ctl_LDADD   = $(SAFTLIBS) -lpthread
 
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp
-saft_io_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_io_ctl_LDADD   = $(SAFTLIBS)
 
 saft_pps_gen_SOURCES = src/saft-pps-gen.cpp
-saft_pps_gen_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_pps_gen_LDADD   = $(SAFTLIBS)
 
 saft_clk_gen_SOURCES = src/saft-clk-gen.cpp
-saft_clk_gen_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_clk_gen_LDADD   = $(SAFTLIBS)
 
 saft_dm_SOURCES = src/saft-dm.cpp
-saft_dm_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_dm_LDADD   = $(SAFTLIBS)
 
 saft_gmt_check_SOURCES = src/saft-gmt-check.cpp
-saft_gmt_check_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_gmt_check_LDADD   = $(SAFTLIBS)
 
 saft_lcd_SOURCES = src/saft-lcd.cpp
-saft_lcd_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_lcd_LDADD   = $(SAFTLIBS)
 
 saft_eb_fwd_SOURCES = src/saft-eb-fwd.cpp
-saft_eb_fwd_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS)
+saft_eb_fwd_LDADD   = $(SAFTLIBS)
 
 
 if GIT_TREE

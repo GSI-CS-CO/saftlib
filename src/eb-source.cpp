@@ -28,8 +28,8 @@
 #include <sigc++/sigc++.h>
 #include <etherbone.h>
 #include "eb-source.h"
-#include "saftbus/Source.h"
-#include "saftbus/PollFD.h"
+#include "Source.h"
+#include "PollFD.h"
 
 class EB_Source : public Slib::Source
 {

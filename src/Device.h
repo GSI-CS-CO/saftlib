@@ -24,7 +24,7 @@
 #include <memory>
 #include <etherbone.h>
 #include <sigc++/sigc++.h>
-#include "saftbus/MainLoop.h"
+#include "MainLoop.h"
 
 namespace saftlib {
 
