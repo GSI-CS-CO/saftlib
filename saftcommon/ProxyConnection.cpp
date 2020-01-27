@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <algorithm>
 #include <ctime>
+#include <cstdlib>
 
 #include <unistd.h>
 //#include <giomm/dbuserror.h>
@@ -21,69 +22,41 @@ namespace saftbus
 ProxyConnection::ProxyConnection(const std::string &base_name)
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
-	//std::cerr << "saftbus::ProxyConnection(" << base_name << ")" << std::endl;
-	for (;;) {
-		// create a local unix socket
-		// _create_socket = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
-		int server_socket = socket(PF_LOCAL, SOCK_DGRAM, 0);
-		if (server_socket <= 0) {
-			throw std::runtime_error("ProxyConnection::ProxyConnection() : cannot create socket");
-		}
-		_address.sun_family = AF_LOCAL;
 
-		// try to open first available socket
-		//for (int i = 0; i < N_CONNECTIONS; ++i)
-		{
-			// std::ostringstream socket_filename;
-			// socket_filename << base_name ;//<< std::setw(2) << std::setfill('0') << i;
-			strcpy(_address.sun_path, base_name.c_str());
-			// try to connect the socket to this 
-			int connect_result = connect( server_socket, (struct sockaddr *)&_address , sizeof(_address));
-			//std::cerr << "connecting to base name " << base_name << std::endl;
-			if (connect_result != 0) {
-				// success! we are done
-				std::cerr << "throwing" << std::endl;
-				throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
-				// _connection_id = i;
-				// break;
-			}
-			//std::cerr << "connected"<< std::endl;
-
-			// create socketpair
-			int fd_pair[2];
-			if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, fd_pair) != 0) {
-				throw std::runtime_error("Cannot create socket pair");
-			}
-			if (sendfd(server_socket, fd_pair[0]) == -1) {
-				throw std::runtime_error("couldn't send socket pair");
-			}
-			close(fd_pair[0]);
-			_create_socket = fd_pair[1];
-			// failure to connect ...
-			
-			// check if we failed to connect even on the last socket filename
-			// if (i == N_CONNECTIONS-1) {
-			// 	// no success on all socket files
-			// 	throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
-			// }
-			// if there are more attempts left just continue with the next socket filename
-		}
-
-		try {
-			//std::cerr << "ProxyConnection ask for _saftbus_id" << std::endl;
-			// see if we can really write and read on the socket...
-			saftbus::write(get_fd(), saftbus::SENDER_ID);  // ask the saftd for an ID on the saftbus
-			saftbus::read(get_fd(), _saftbus_id);  
-			//std::cerr << "received _saftbus_id " << _saftbus_id << std::endl;
-			return;
-		}  catch (...) {
-			std::cerr << "ProxyConnection::ProxyConnection() threw" << std::endl;
-			// ... If above operation failed, our socket was probably assigned to 
-			//     another ProxyConnection as well, and we lost that race condition. 
-			//     We react with going to the next free socket filename
-			continue;
-		}
+	char *socketname_env = getenv("SAFTBUS_SOCKET");
+	std::string socketname = base_name;
+	if (socketname_env != nullptr) {
+		socketname = socketname_env;
 	}
+	if (socketname[0] != '/') {
+		throw std::runtime_error("saftbus socket is not an absolute pathname");
+	}
+
+	int server_socket = socket(PF_LOCAL, SOCK_DGRAM, 0);
+	if (server_socket <= 0) {
+		throw std::runtime_error("ProxyConnection::ProxyConnection() : cannot create socket");
+	}
+	_address.sun_family = AF_LOCAL;
+
+	strcpy(_address.sun_path, socketname.c_str());
+	int connect_result = connect( server_socket, (struct sockaddr *)&_address , sizeof(_address));
+	if (connect_result != 0) {
+		std::cerr << "throwing" << std::endl;
+		throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
+	}
+
+	int fd_pair[2];
+	if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, fd_pair) != 0) {
+		throw std::runtime_error("Cannot create socket pair");
+	}
+	if (sendfd(server_socket, fd_pair[0]) == -1) {
+		throw std::runtime_error("couldn't send socket pair");
+	}
+	close(fd_pair[0]);
+	_create_socket = fd_pair[1];
+
+	saftbus::write(get_fd(), saftbus::SENDER_ID);  // ask the saftd for an ID on the saftbus
+	saftbus::read(get_fd(), _saftbus_id);  
 }
 
 int ProxyConnection::get_saftbus_index(const std::string &object_path, const std::string &interface_name)
@@ -104,7 +77,6 @@ int ProxyConnection::get_connection_id()
 	std::istringstream id_in(_saftbus_id.substr(1));
 	int id;
 	id_in >> id;
-	//std::cerr << "saftbus_id : " << _saftbus_id << "    => " << id << std::endl;
 	return id;
 }
 
@@ -128,19 +100,6 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 	saftbus::write(get_fd(), global_id);
 }
 
-// void ProxyConnection::remove_proxy_signal_fd(int saftbus_index,
-// 			                                 std::string object_path,
-// 	                                         std::string interface_name,
-// 	                                         int global_id) 
-// {
-// 	std::unique_lock<std::mutex> lock(_socket_mutex);
-// 	saftbus::write(get_fd(), saftbus::SIGNAL_REMOVE_FD);
-// 	saftbus::write(get_fd(), saftbus_index);
-// 	saftbus::write(get_fd(), object_path);
-// 	saftbus::write(get_fd(), interface_name);
-// 	saftbus::write(get_fd(), global_id);
-// }
-
 Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                const std::string& object_path, 
 	                                const std::string& interface_name, 
@@ -151,20 +110,6 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 {
 	try {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
-	// perform a remote function call
-	// first append message meta informations like: type of message, recipient, sender, interface name
-	// std::vector<Glib::VariantBase> message;
-	// message.push_back(Glib::Variant<std::string>::create(object_path));
-	// message.push_back(Glib::Variant<std::string>::create(_saftbus_id));
-	// message.push_back(Glib::Variant<std::string>::create(interface_name));
-	// message.push_back(Glib::Variant<std::string>::create(name)); // name can be method_name or property_name
-	// message.push_back(parameters);
-	// // then convert into a variant vector type
-	// Glib::Variant<std::vector<Glib::VariantBase> > var_message = Glib::Variant<std::vector<Glib::VariantBase> >::create(message);
-
-	// std::cerr << "ProxyConnection::call_sync(" << object_path << ", " 
-	//                                            << interface_name << ", "
-	//                                            << name << ")" << std::endl;
 
 	Serial message;
 	message.put(saftbus_index);
@@ -195,18 +140,11 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 	} else if (type == saftbus::METHOD_REPLY) {
 		// read regular function return value
 		saftbus::read(get_fd(), size);
-		//_call_sync_result_buffer.resize(size);
 		_call_sync_result.data().resize(size);
 		if (size > 0) {
 			saftbus::read_all(get_fd(), &_call_sync_result.data()[0], size);
 		}
 
-		// deserialize the content into our buffer
-		//deserialize(_call_sync_result, &_call_sync_result_buffer[0], _call_sync_result_buffer.size());
-
-		//std::cerr << "ProxyConnection::call_sync(" << name << ") received Serial" << std::endl;
-		//_call_sync_result.print();
-		//std::cerr << "ProxyConnection::call_sync(" << name << ") done " << std::endl;
 		return _call_sync_result;
 	} else {
 		std::ostringstream msg;

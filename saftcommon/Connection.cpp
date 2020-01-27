@@ -6,10 +6,10 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
 
 namespace saftbus
 {
@@ -22,30 +22,34 @@ Connection::Connection(int number_of_sockets, const std::string& base_name)
 	, logger("/tmp/saftbus_connection.log")
 	, _create_signal_flight_time_statistics(false)
 {
+	char *socketname_env = getenv("SAFTBUS_SOCKET");
+	std::string socketname = base_name;
+	if (socketname_env != nullptr) {
+		socketname = socketname_env;
+	}
+	if (socketname[0] != '/') {
+		throw std::runtime_error("saftbus socket is not an absolute pathname");
+	}
 	_listen_fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
 	std::string err_msg = "Connection constructor errror: ";
 	if (_listen_fd <= 0) {
 		err_msg.append(strerror(errno));
 		throw std::runtime_error(err_msg);
 	}
-	std::string dirname = base_name.substr(0,base_name.find_last_of('/'));
+	std::string dirname = socketname.substr(0,socketname.find_last_of('/'));
 	std::ostringstream command;
 	command << "mkdir -p " << dirname;
 	system(command.str().c_str());
-	int unlink_result = unlink(base_name.c_str());
+	int unlink_result = unlink(socketname.c_str());
 	std::ostringstream unlink_error;
 	if (unlink_result != 0) {
-		unlink_error << "could not unlink socket file " << base_name << ": " << strerror(errno);
+		unlink_error << "could not unlink socket file " << socketname << ": " << strerror(errno);
 	}
 	_listen_sockaddr_un.sun_family = AF_LOCAL;
-	strcpy(_listen_sockaddr_un.sun_path, base_name.c_str());
+	strcpy(_listen_sockaddr_un.sun_path, socketname.c_str());
 	int bind_result = bind(_listen_fd, (struct sockaddr*)&_listen_sockaddr_un, sizeof(_listen_sockaddr_un));
 	if (bind_result != 0) {
 		std::ostringstream msg;
-		msg << std::endl;
-		if (unlink_error.str().size() > 0) {
-			msg << unlink_error.str() << std::endl;
-		}
 		msg << "could not bind to socket: " << strerror(errno);
 		throw std::runtime_error(msg.str().c_str());
 	}
