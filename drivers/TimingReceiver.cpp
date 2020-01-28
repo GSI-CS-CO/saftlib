@@ -878,7 +878,7 @@ void TimingReceiver::probe(OpenDevice& od)
       clog << kLogDebug << "TimingReceiver: FunctionGenerator firmware found" << std::endl;
     } catch (saftbus::Error &e) {
       // send log message if firmware was not found ?
-      clog << kLogDebug << "TimingReceiver: no FunctionGenerator firmware found" << std::endl;
+      //clog << kLogDebug << "TimingReceiver: no FunctionGenerator firmware found" << std::endl;
     }
 
    
@@ -891,7 +891,7 @@ void TimingReceiver::probe(OpenDevice& od)
       clog << kLogDebug << "TimingReceiver: WR-MIL-Gateway firmware found" << std::endl;
     } catch (saftbus::Error &e) {
       // send log message if firmware was not found ?
-      clog << kLogDebug << "TimingReceiver: no WR-MIL-Gateway firmware found" << std::endl;
+      //clog << kLogDebug << "TimingReceiver: no WR-MIL-Gateway firmware found" << std::endl;
     }
 
 
