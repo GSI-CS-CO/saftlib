@@ -16,20 +16,9 @@ namespace Slib
 	static const int IO_HUP  = POLLHUP;  // Hung up (the connection has been broken, usually for pipes and sockets).
 	static const int IO_NVAL = POLLNVAL; // Invalid request. The file descriptor is not open. 
 
-	// enum IOCondition{
-	// 	IO_IN 	=  POLLIN,	// There is data to read.
-	// 	IO_OUT 	=  POLLOUT,	// Data can be written (without blocking).
-	// 	IO_PRI 	=  POLLPRI,	// There is urgent data to read.
-	// 	IO_ERR 	=  POLLERR,	// Error condition.
-	// 	IO_HUP 	=  POLLHUP,	// Hung up (the connection has been broken, usually for pipes and sockets).
-	// 	IO_NVAL =  POLLNVAL,	// Invalid request. The file descriptor is not open. 
-	// };
-
-
 	class PollFD
 	{
 	public:
-
 		PollFD ();
 		PollFD (int fd);
 		PollFD (int fd, IOCondition events);
@@ -43,11 +32,7 @@ namespace Slib
 		bool operator==(const PollFD &rhs);
 
 		struct pollfd pfd;
-	private:
-
 	};
-
-
 
 } // namespace Slib
 

@@ -407,10 +407,7 @@ void saftbus_get_property(const std::string& interface_name,
 
 	if (property_type_signature == "a{sa{ss}}") { print_serial_map_map<std::string,std::string,std::string>(val); return;}
 
-
-
 	std::cout << "unsupported type signature" << std::endl;
-
 }
 
 void saftbus_set_property(const std::string& interface_name,
@@ -419,7 +416,6 @@ void saftbus_set_property(const std::string& interface_name,
 	                      const std::string& property_type_signature,
 	                      const std::string& value) 
 {
-
 	saftbus::ProxyConnection connection;
 	saftbus::Serial params;
 	params.put(interface_name);
@@ -439,7 +435,6 @@ void saftbus_set_property(const std::string& interface_name,
 	if (property_type_signature == "s") { std::string   value; value_in >> value; property_value.put(value); }
 	params.put(property_value);
 
-
 	int saftbus_index = connection.get_saftbus_index(object_path, interface_name);
 	saftbus::Serial val = connection.call_sync(saftbus_index, object_path, "org.freedesktop.DBus.Properties", "Set", 
 	  params, "sender");
@@ -452,7 +447,6 @@ void saftbus_method_call (const std::string& interface_name,
 	                      const std::vector<std::string>& arguments,
 	                      const std::string return_type_signature) 
 {
-
 	saftbus::ProxyConnection connection;
 	saftbus::Serial args;
 	for (unsigned i = 0; i < type_signature.size(); ++i) {

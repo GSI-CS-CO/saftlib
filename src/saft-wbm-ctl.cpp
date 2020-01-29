@@ -301,7 +301,6 @@ int main (int argc, char** argv)
       std::cerr << "Missing at least one parameter!" << std::endl;
       return (-1);
     }
-    
   } 
   catch (const saftbus::Error& error)
   {

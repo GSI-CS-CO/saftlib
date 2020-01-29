@@ -65,8 +65,8 @@ namespace saftlib {
 					if (request[0]     == 0x4e && // test for Etherbone magic word
 						request[1]     == 0x6f &&
 						request[2]     == 0x11 &&
-						request[3]     == 0xff) {
-
+						request[3]     == 0xff) 
+					{
 						response.push_back(0x4e);
 						response.push_back(0x6f);
 						response.push_back(0x16);

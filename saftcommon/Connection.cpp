@@ -238,7 +238,6 @@ void Connection::handle_disconnect(int client_fd)
 	} catch (std::exception &e) {
 		std::cerr << "Connection::handle_disconnect() exception : " << e.what() << std::endl;
 	}
-
 }
 
 
@@ -483,7 +482,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				}
 				case saftbus::REGISTER_CLIENT: 
 				{
-
 				}
 				break;
 				case saftbus::SIGNAL_FLIGHT_TIME: 
@@ -585,7 +583,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					      .add(" \n");
 
 					if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
-
 						logger.add("       Set/Get was called: ");
 						std::string derived_interface_name;
 						std::string property_name;
@@ -669,7 +666,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write_all(client_fd, data_ptr, size);
 							logger.add("         response was sent\n");
 						}
-
 					}
 					else // normal method calls 
 					{

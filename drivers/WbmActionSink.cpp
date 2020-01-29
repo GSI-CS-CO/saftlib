@@ -35,7 +35,6 @@ namespace saftlib {
 WbmActionSink::WbmActionSink(const ConstructorType& args)
  : ActionSink(args.objectPath, args.dev, args.name, args.channel, 0), acwbm(args.acwbm)
 {
-
 }
 
 const char *WbmActionSink::getInterfaceName() const

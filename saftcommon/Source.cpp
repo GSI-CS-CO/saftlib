@@ -43,7 +43,6 @@ namespace Slib
  	//Construct an object that uses the virtual functions prepare(), check() and dispatch().
  	Source::Source () 
  	{
-
  	}
 	sigc::connection Source::connect_generic (const sigc::slot_base& slot) 
 	{
@@ -52,7 +51,6 @@ namespace Slib
 	}
 	Source::~Source () 
 	{
-
 	}
  	//Adds a file descriptor to the set of file descriptors polled for this source.
 	void Source::add_poll (PollFD& poll_fd) 

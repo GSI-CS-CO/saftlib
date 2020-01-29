@@ -109,49 +109,48 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                int timeout_msec)
 {
 	try {
-	std::unique_lock<std::mutex> lock(_socket_mutex);
+		std::unique_lock<std::mutex> lock(_socket_mutex);
 
-	Serial message;
-	message.put(saftbus_index);
-	message.put(object_path);
-	message.put(_saftbus_id);
-	message.put(interface_name);
-	message.put(name);
-	message.put(parameters);
+		Serial message;
+		message.put(saftbus_index);
+		message.put(object_path);
+		message.put(_saftbus_id);
+		message.put(interface_name);
+		message.put(name);
+		message.put(parameters);
 
-	// serialize into a byte stream
-	uint32_t size = message.get_size();
-	const char *data_ptr =  static_cast<const char*>(message.get_data());
-	// write the data into the socket
-	saftbus::write(get_fd(), saftbus::METHOD_CALL);
-	saftbus::write(get_fd(), size);
-	saftbus::write_all(get_fd(), data_ptr, size);
+		// serialize into a byte stream
+		uint32_t size = message.get_size();
+		const char *data_ptr =  static_cast<const char*>(message.get_data());
+		// write the data into the socket
+		saftbus::write(get_fd(), saftbus::METHOD_CALL);
+		saftbus::write(get_fd(), size);
+		saftbus::write_all(get_fd(), data_ptr, size);
 
-	// receive response from socket
-	saftbus::MessageTypeS2C type;
-	saftbus::read(get_fd(), type);
-	if (type == saftbus::METHOD_ERROR) {
-		// this was an error which will be converted into an exception
-		saftbus::Error::Type type;
-		std::string what;
+		// receive response from socket
+		saftbus::MessageTypeS2C type;
 		saftbus::read(get_fd(), type);
-		saftbus::read(get_fd(), what);
-		throw saftbus::Error(saftbus::Error::FAILED, what);
-	} else if (type == saftbus::METHOD_REPLY) {
-		// read regular function return value
-		saftbus::read(get_fd(), size);
-		_call_sync_result.data().resize(size);
-		if (size > 0) {
-			saftbus::read_all(get_fd(), &_call_sync_result.data()[0], size);
+		if (type == saftbus::METHOD_ERROR) {
+			// this was an error which will be converted into an exception
+			saftbus::Error::Type type;
+			std::string what;
+			saftbus::read(get_fd(), type);
+			saftbus::read(get_fd(), what);
+			throw saftbus::Error(saftbus::Error::FAILED, what);
+		} else if (type == saftbus::METHOD_REPLY) {
+			// read regular function return value
+			saftbus::read(get_fd(), size);
+			_call_sync_result.data().resize(size);
+			if (size > 0) {
+				saftbus::read_all(get_fd(), &_call_sync_result.data()[0], size);
+			}
+
+			return _call_sync_result;
+		} else {
+			std::ostringstream msg;
+			msg << "ProxyConnection::call_sync() : unexpected type " << type << " instead of METHOD_REPLY or METHOD_ERROR";
+			throw saftbus::Error(saftbus::Error::FAILED, msg.str());
 		}
-
-		return _call_sync_result;
-	} else {
-		std::ostringstream msg;
-		msg << "ProxyConnection::call_sync() : unexpected type " << type << " instead of METHOD_REPLY or METHOD_ERROR";
-		throw saftbus::Error(saftbus::Error::FAILED, msg.str());
-	}
-
 	} catch(std::exception &e) {
 		std::cerr << "ProxyConnection::call_sync() exception: " << e.what() << std::endl;
 		std::cerr << object_path << std::endl;

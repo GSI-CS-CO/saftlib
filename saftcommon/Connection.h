@@ -39,7 +39,6 @@ namespace saftbus
 	{
 
 	public:
-
 		Connection(const std::string& base_name = socket_base_name);
 		~Connection();
 
