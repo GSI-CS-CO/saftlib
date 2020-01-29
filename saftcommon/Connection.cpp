@@ -16,13 +16,13 @@ namespace saftbus
 
 int Connection::_saftbus_id_counter = 0;
 
-Connection::Connection(int number_of_sockets, const std::string& base_name)
+Connection::Connection(const std::string& base_name)
 	: _saftbus_object_id_counter(1)
 	, _saftbus_signal_handle_counter(1)
 	, logger("/tmp/saftbus_connection.log")
 	, _create_signal_flight_time_statistics(false)
 {
-	char *socketname_env = getenv("SAFTBUS_SOCKET");
+	char *socketname_env = getenv(saftbus_socket_environment_variable_name);
 	std::string socketname = base_name;
 	if (socketname_env != nullptr) {
 		socketname = socketname_env;

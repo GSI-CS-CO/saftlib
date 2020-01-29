@@ -13,10 +13,8 @@
 namespace saftbus
 {
 
-	extern const int N_CONNECTIONS;
-
-	static const std::string socket_base_dir = "/var/run/saftbus";
-	static const std::string socket_base_name = socket_base_dir+"/saftbus";
+	extern const std::string socket_base_name;
+	extern const char* saftbus_socket_environment_variable_name;
 
 	enum BusType
 	{

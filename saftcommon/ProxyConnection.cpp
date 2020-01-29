@@ -23,7 +23,7 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 {
 	std::unique_lock<std::mutex> lock(_socket_mutex);
 
-	char *socketname_env = getenv("SAFTBUS_SOCKET");
+	char *socketname_env = getenv(saftbus_socket_environment_variable_name);
 	std::string socketname = base_name;
 	if (socketname_env != nullptr) {
 		socketname = socketname_env;
