@@ -116,7 +116,7 @@ bool Device::poll_msi() {
       break; // normal end 
     }
     if (i == MAX_MSIS_IN_ONE_GO-1) {
-      std::cerr << "reached MAX_MSIS_IN_ONE_GO" << std::endl;
+      //std::cerr << "reached MAX_MSIS_IN_ONE_GO" << std::endl;
     }
   }
   return true;

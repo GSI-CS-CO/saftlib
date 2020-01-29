@@ -141,10 +141,9 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
     
       bool poll_msis = false;
       std::string path_prefix = path.substr(0,7);
-      std::cerr << path_prefix << std::endl;
       if (path_prefix == "dev/tty") {
         poll_msis = true;
-        std::cerr << "polling msi enabled" << std::endl;
+        //std::cerr << "polling msi enabled" << std::endl;
       }
       struct OpenDevice od(edev, first, last, poll_msis);
       od.name = name;
@@ -157,9 +156,10 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
       if (od.ref) {
         devs.insert(std::make_pair(name, od));
 
-        // create a special socket for eb-tools to attach to.
-        m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(path));
-        ///////////////////////////
+        if (poll_msis) {
+          // create a special socket for eb-tools to attach to.
+          m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(path));
+        }
 
         return od.objectPath;
       } else {
@@ -193,10 +193,11 @@ void SAFTd::RemoveDevice(const std::string& name)
 
 std::string SAFTd::EbForward(const std::string& saftlib_device)
 {
+  std::cerr << "SAFTd::EbForward(" << saftlib_device << ") called" << std::endl;
   if (m_eb_forward.find(saftlib_device) != m_eb_forward.end()) {
     return m_eb_forward[saftlib_device]->saft_eb_devide().substr(1);
   }
-  return std::string("unknown");
+  return std::string("non-forwarded-device");
 }
 
 

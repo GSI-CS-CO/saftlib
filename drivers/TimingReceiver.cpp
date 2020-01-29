@@ -69,7 +69,6 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    locked(false),
    temperature(0)
 {
-  std::cerr << "TimingReceiver constructor called. stream = " << std::hex<< stream<< std::dec << std::endl;
   // try to acquire watchdog
   eb_data_t retry;
   device.read(watchdog, EB_DATA32, &watchdog_value);
@@ -103,8 +102,6 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   search_size = raw_search;
   walker_size = raw_walker;
 
-  std::cerr << "TimingReceiver channels = " << channels << std::endl;
-  
   // Worst-case assumption
   max_conditions = std::min(search_size/2, walker_size);
   
@@ -119,7 +116,6 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   std::vector<sdb_device> queues;
   device.sdb_find_by_identity(ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, queues);
   
-  std::cerr << "TimingReceiver queues.size() = " << queues.size() << std::endl;
   // Figure out which queues correspond to which channels
   for (unsigned i = 0; i < queues.size(); ++i) {
     eb_data_t id;
@@ -158,10 +154,8 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
           break;
         }
         case ECA_WBM: {
-          // !!! under development !!!
           std::vector<sdb_device> acwbms;
           device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x18415778, acwbms);
-          std::cerr << "TimingReceiver has " << acwbms.size() << " wishbone master action channels" << std::endl;
           if (acwbms.size() == 1) {
             std::string path = getObjectPath() + "/acwbm";
             WbmActionSink::ConstructorType args = { path, this, "acwbm", i, (eb_address_t)acwbms[0].sdb_component.addr_first };
