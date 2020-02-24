@@ -50,11 +50,7 @@ namespace saftlib {
 			uint8_t val;
 			int result = read(_pts_fd, (void*)&val, sizeof(val));
 			if (result <= 0) { // end of file 
-				if (result == -1) { // error
-					// std::cerr << "EB_Forward error(" << std::dec << errno << "): " << strerror(errno) << std::endl;
-				}
-				// close and reopen immediately
-				close(_pts_fd);
+				close(_pts_fd); // close and reopen immediately
 				open_pts(); 
 				return false; // remove old fd from loop
 			}
@@ -73,10 +69,20 @@ namespace saftlib {
 						response.push_back(0x44);
 
 						for (int i = 0; i < 4; ++i) {
-							read(_pts_fd, (void*)&val, sizeof(val));
+							result = read(_pts_fd, (void*)&val, sizeof(val));
+							if (result <= 0) { 
+								close(_pts_fd); // close and reopen immediately
+								open_pts(); 
+								return false; // remove old fd from loop
+							}
 							response.push_back(val);
 						}
-						write(_pts_fd, (void*)&response[0], response.size());
+						result = write(_pts_fd, (void*)&response[0], response.size());
+						if (result <= 0) { 
+							close(_pts_fd); // close and reopen immediately
+							open_pts(); 
+							return false; // remove old fd from loop
+						}
 						// handling of Etherbone header done.
 						return true;
 					} else { // assume it is an Etherbone cycle header, calculate the response size
@@ -97,7 +103,7 @@ namespace saftlib {
 				//   response back to the eb-tool
 				if (request_size && request_size == request.size()) {
 					// all cycle bytes read
-					write(_eb_device_fd, (void*)&request[0], request.size());
+					write_all(_eb_device_fd, (char*)&request[0], request.size());
 					response.clear();
 					response.resize(request.size());
 					struct pollfd pfds[1] = {0,};
@@ -106,8 +112,8 @@ namespace saftlib {
 					if (poll(pfds,1,-1) == 0) {
 						return false;
 					}
-					read(_eb_device_fd, (void*)&response[0], response.size());
-					write(_pts_fd, (void*)&response[0], response.size());
+					read_all(_eb_device_fd, (char*)&response[0], response.size());
+					write_all(_pts_fd, (char*)&response[0], response.size());
 					return true;
 				}
 
@@ -115,6 +121,35 @@ namespace saftlib {
 		}
 		return false;
 	}	
+
+	void EB_Forward::write_all(int fd, char *ptr, int size) 
+	{
+		while (size > 0) {
+			int result = write(fd, ptr, size);
+			if (result > 0) {
+				size -= result;
+				ptr += result;
+			} else {
+				// error... very bad... dont know how to handle this 
+				// this probably means that the device is not connected anymore
+				return;
+			}
+		}
+	}
+	void EB_Forward::read_all(int fd, char *ptr, int size) 
+	{
+		while (size > 0) {
+			int result = read(fd, ptr, size);
+			if (result > 0) {
+				size -= result;
+				ptr += result;
+			} else {
+				// error... very bad... dont know how to handle this 
+				// this probably means that the device is not connected anymore
+				return;
+			}
+		}
+	}
 
 
 	std::string EB_Forward::saft_eb_devide()

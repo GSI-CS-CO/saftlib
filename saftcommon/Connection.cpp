@@ -39,7 +39,12 @@ Connection::Connection(const std::string& base_name)
 	std::string dirname = socketname.substr(0,socketname.find_last_of('/'));
 	std::ostringstream command;
 	command << "mkdir -p " << dirname;
-	system(command.str().c_str());
+	int result = system(command.str().c_str());
+	if (result == -1) {
+		std::ostringstream msg;
+		msg << "system call \"" << command.str() << "\" failed: " << strerror(errno);
+		throw std::runtime_error(msg.str().c_str());
+	}
 	int unlink_result = unlink(socketname.c_str());
 	std::ostringstream unlink_error;
 	if (unlink_result != 0) {
