@@ -3,6 +3,8 @@
 #include <iostream>
 
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "saftbus.h"
 #include "core.h"
@@ -27,20 +29,19 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	, _object_path(object_path)
 	, _interface_name(interface_name)
 	, _saftbus_index(-1)
+	, _signal_group(signalGroup)
 {
-	//std::cerr << "saftbus::Proxy(" << object_path << ")" << std::endl;
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
 		_connection = std::shared_ptr<saftbus::ProxyConnection>(new ProxyConnection);
 	}
 
 	// generate unique proxy id (unique for all running saftlib programs)
-	{
-		std::unique_lock<std::mutex> lock(_id_counter_mutex);
+	{	std::unique_lock<std::mutex> lock(_id_counter_mutex);
 		++_global_id_counter;
 		// thjs assumes there are no more than 100 saftbus sockets available ever
 		// (connection_id is the socket number XX in the socket filename "/tmp/saftbus_XX")
-		_global_id = 100*_global_id_counter + _connection->get_connection_id();
+		_global_id = 0xffff*_global_id_counter + _connection->get_connection_id();
 	}
 
 	_saftbus_index = _connection->get_saftbus_index(object_path, interface_name);
@@ -49,15 +50,15 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	// create a pipe through which we will receive signals from the saftd
 	if (&signalGroup != &saftlib::noSignals) {
 		try {
-			if (pipe(_pipe_fd) != 0) {
+			if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, _pipe_fd) != 0) {
 				throw std::runtime_error("Proxy constructor: could not create pipe for signal transmission");
 			}
-
-			// send the writing end of a pipe to saftd 
+			// send one end fd[1] to saftd and close it
 			_connection->send_proxy_signal_fd(_pipe_fd[1], _object_path, _interface_name, _global_id);
+			close(_pipe_fd[1]);
+			// keep the other end fd[0] and listen for incoming signals
 			char ping;
 			saftbus::read(_pipe_fd[0], ping);
-			//std::cerr << "got ping after sending pipe: " << ping << std::endl;
 		} catch(...) {
 			std::cerr << "Proxy::~Proxy() exception" << std::endl;
 		}
@@ -76,19 +77,8 @@ Proxy::~Proxy()
 {
 	//std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
 	_signal_connection_handle.disconnect();
-
-	// remove this Proxy from the globalSignalGroup. if the Proxy was not 
-	// attached to the globalSignalGroup nothing happens
-	saftlib::globalSignalGroup.remove(this);
-
-	// free all resources ...
-	try {
-		_connection->remove_proxy_signal_fd(_saftbus_index, _object_path, _interface_name, _global_id);
-		close(_pipe_fd[0]);
-		close(_pipe_fd[1]);
-	} catch(std::exception &e) {
-		std::cerr << "Proxy::~Proxy() exception: " << e.what() << std::endl;
-	}
+	_signal_group.remove(this);
+	close(_pipe_fd[0]);
 }
 
 int Proxy::get_reading_end_of_signal_pipe()

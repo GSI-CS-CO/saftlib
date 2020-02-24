@@ -5,7 +5,8 @@
 namespace saftbus
 {
 
-	const int N_CONNECTIONS = 32;
+	const std::string socket_base_name = "/var/run/saftbus/saftbus";
+	const char* saftbus_socket_environment_variable_name = "SAFTBUS_SOCKET_PATH";
 
 	SlotBusAcquired   bus_acquired;
 	SlotNameAcquired  name_acquired;

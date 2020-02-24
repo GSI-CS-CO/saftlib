@@ -27,11 +27,13 @@
 #include <algorithm>
 #include <map>
 #include <cstdint>
+#include <iostream>
 
 #include "RegisteredObject.h"
 #include "Driver.h"
 #include "TimingReceiver.h"
 #include "SCUbusActionSink.h"
+#include "WbmActionSink.h"
 #include "EmbeddedCPUActionSink.h"
 #include "SoftwareActionSink.h"
 #include "SoftwareCondition.h"
@@ -99,7 +101,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   channels = raw_channels;
   search_size = raw_search;
   walker_size = raw_walker;
-  
+
   // Worst-case assumption
   max_conditions = std::min(search_size/2, walker_size);
   
@@ -152,7 +154,13 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
           break;
         }
         case ECA_WBM: {
-          // !!! unsupported
+          std::vector<sdb_device> acwbms;
+          device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x18415778, acwbms);
+          if (acwbms.size() == 1) {
+            std::string path = getObjectPath() + "/acwbm";
+            WbmActionSink::ConstructorType args = { path, this, "acwbm", i, (eb_address_t)acwbms[0].sdb_component.addr_first };
+            actionSinks[SinkKey(i, num)] = WbmActionSink::create(args);
+          }
           break;
         }
         case ECA_SCUBUS: {
@@ -872,9 +880,7 @@ void TimingReceiver::probe(OpenDevice& od)
     try {
       const std::string wrmilgw_str("wrmilgateway");
       WrMilGateway::ConstructorType wrmil_args = { od.objectPath + "/" + wrmilgw_str, 
-                                                   tr->getDevice(), 
-                                                   mbx_msi[0], 
-                                                   mbx[0]  };
+                                                   tr->getDevice()};
       tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
       clog << kLogDebug << "TimingReceiver: WR-MIL-Gateway firmware found" << std::endl;
     } catch (saftbus::Error &e) {

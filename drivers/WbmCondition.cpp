@@ -17,24 +17,45 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef SAFTLIB_OPEN_DEVICE_H
-#define SAFTLIB_OPEN_DEVICE_H
+#define ETHERBONE_THROWS 1
 
-#include "Device.h"
-#include "BaseObject.h"
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
+
+#include "RegisteredObject.h"
+#include "WbmCondition.h"
+#include "ActionSink.h"
 
 namespace saftlib {
 
-struct OpenDevice {
-  Device device;
-  std::string name;
-  std::string objectPath;
-  std::string etherbonePath;
-  std::shared_ptr<BaseObject> ref;
-  
-  OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll = false);
-};
-
+WbmCondition::WbmCondition(const ConstructorType& args)
+ : Condition(args)
+{
 }
 
-#endif
+// uint32_t WbmCondition::getTag() const
+// {
+//   return tag;
+// }
+
+// void WbmCondition::setTag(uint32_t val)
+// {
+//   ownerOnly();
+//   if (val == tag) return;
+//   uint32_t old = tag;
+  
+//   tag = val;
+//   try {
+//     if (active) sink->compile();
+//   } catch (...) {
+//     tag = old;
+//     throw;
+//   }
+// }
+
+std::shared_ptr<WbmCondition> WbmCondition::create(const ConstructorType& args)
+{
+  return RegisteredObject<WbmCondition>::create(args.objectPath, args);
+}
+
+}

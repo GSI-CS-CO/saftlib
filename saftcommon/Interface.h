@@ -59,7 +59,6 @@ namespace saftbus
 	class InterfaceVTable
 	{
 	public:
-
 		using SlotInterfaceGetProperty = sigc::slot< void, Serial&, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string& >;
 		using SlotInterfaceMethodCall = sigc::slot< void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&, const std::shared_ptr<MethodInvocation>& >;
 		using SlotInterfaceSetProperty = sigc::slot< bool, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial& >;

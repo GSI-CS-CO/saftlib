@@ -138,10 +138,10 @@ namespace saftlib
 		}
 		Time(const Time& t) : TAI(t.TAI) {
 		}
-		uint64_t getUTC() {
+		uint64_t getUTC() const {
 			return TAI_to_UTC(TAI);
 		}
-		uint64_t getTAI() {
+		uint64_t getTAI() const {
 			return TAI;
 		}
 		Time& operator=(const Time& t) {
@@ -156,28 +156,28 @@ namespace saftlib
 			TAI -= duration;
 			return *this;
 		}
-		int64_t operator-(const Time& rhs) {
+		int64_t operator-(const Time& rhs) const {
 			return TAI - rhs.TAI;
 		}
-		int64_t getUTCOffset() {
+		int64_t getUTCOffset() const {
 			return UTC_offset_TAI(TAI);
 		}
-		bool operator>(const Time& rhs) {
+		bool operator>(const Time& rhs) const {
 			return TAI > rhs.TAI;
 		}
-		bool operator<(const Time& rhs) {
+		bool operator<(const Time& rhs) const {
 			return TAI < rhs.TAI;
 		}
-		bool operator>=(const Time& rhs) {
+		bool operator>=(const Time& rhs) const {
 			return TAI >= rhs.TAI;
 		}
-		bool operator<=(const Time& rhs) {
+		bool operator<=(const Time& rhs) const {
 			return TAI <= rhs.TAI;
 		}
-		bool operator==(const Time& rhs) {
+		bool operator==(const Time& rhs) const {
 			return TAI == rhs.TAI;
 		}
-		int isLeapUTC() {
+		int isLeapUTC() const {
 			return TAI_is_UTCleap(TAI);
 		}
 

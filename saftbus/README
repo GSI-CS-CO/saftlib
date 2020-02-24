@@ -53,11 +53,14 @@ The saftbus library within saftlib
 
 	* owner (e.g. ":45")
 	Each saftbus object may be owned by at most one client process that is connected to saftd via saftbus. 
-	Saftbus objects may also be unowned.
-	Client processes get a unique std::string identifier when they connect to a saftbus socket.
+	Saftbus objects may also be unowned, i.e. not owned by any process.
+	Client processes get a unique std::string identifier when they connect to a saftbus socket the "saftbus_id".
 	The identifier starts with a colon, followed by a number, e.g. ":45".
 	If a the owner of a saftlib services quits, the service is de-constructed automatically. 
 	This is done in the Connection::signal_subsribe(...), Connection::signal_unsubscribe(...), and Connection::handle_disconnect(...) methods.
+
+	* saftbus_id
+	A string that looks like ":<some_number>" (e.g. ":1" or ":34"). It is assigned to each client process that connects to saftbus. The client sends the safbus_id along with each remote function call. This is the equivalent of the "sender_id" in DBus. Saftlib uses the saftbus_id for ownership management. That means, a client process owns a saftbus object, if the saftbus object's owner string is equal to the client's saftbus_id string.
 
 	* function call
 	A saftlib function call is initiated by a saftlib::Proxy object. It sends a request over the socket and blocks until saftd answers. The answer contains the(all) function return value(s).
@@ -67,7 +70,7 @@ The saftbus library within saftlib
 	The call addresses the special interface org.freedesktop.DBus.Properties (inherited from the DBus aera) and the property name, the type of operation (Get/Set), as well as the set value are part of the function call arguments.
 
 	* signal
-	Saftlib Proxy objects can receive signals from saftd. These signals are transmitted using dedicated UNIX Pipes. The pipes are created whenever a Proxy object is created. There is one Pipe for each Interface of a Proxy object. 
+	Saftlib Proxy objects can receive signals from saftd. These signals are transmitted using a dedicated socketpair. The socketpair is created whenever a Proxy object is created and one of the tow elements of the socketpair is sent to saftd. There is one socketpair for each Interface of a Proxy object. 
 	The reason for this second data path for signals is to allow multi threaded clients without needing to synchronize the socket access.
 	Example: /de/gsi/saftlib/tr0/embedded_cpu
 		this object path is a service with three different interfaces, i.e. there are three distinct saftbus objects:

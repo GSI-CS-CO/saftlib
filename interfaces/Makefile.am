@@ -14,6 +14,8 @@ NODES =				\
 	EmbeddedCPUCondition.xml	\
 	SoftwareActionSink.xml	\
 	SoftwareCondition.xml	\
+	WbmActionSink.xml	\
+	WbmCondition.xml	\
 	TimingReceiver.xml      \
 	WrMilGateway.xml
 INTERFACES =			\
@@ -58,12 +60,16 @@ nodist_saftlib_HEADERS = 	\
 	iSCUbusCondition.h	\
 	iEmbeddedCPUActionSink.h	\
 	iEmbeddedCPUCondition.h	\
+	iWbmActionSink.h	\
+	iWbmCondition.h	\
 	iSoftwareActionSink.h	\
 	iSoftwareCondition.h	\
 	iTimingReceiver.h	\
 	iWrMilGateway.h     \
 	MILbusActionSink.h	\
 	MILbusCondition.h	\
+	WbmActionSink.h	\
+	WbmCondition.h	\
 	OutputCondition.h	\
 	Output.h		\
 	SCUbusActionSink.h	\
@@ -94,6 +100,8 @@ doc_DATA = 			\
 	Owned.pdf		\
 	SCUbusActionSink.pdf	\
 	SCUbusCondition.pdf	\
+	WbmActionSink.pdf	\
+	WbmCondition.pdf	\
 	EmbeddedCPUActionSink.pdf	\
 	EmbeddedCPUCondition.pdf	\
 	SoftwareActionSink.pdf	\
@@ -133,6 +141,8 @@ nodist_libsaftlib_la_SOURCES =	\
 	iOwned.cpp		\
 	iSCUbusActionSink.cpp	\
 	iSCUbusCondition.cpp	\
+	iWbmActionSink.cpp	\
+	iWbmCondition.cpp	\
 	iEmbeddedCPUActionSink.cpp	\
 	iEmbeddedCPUCondition.cpp	\
 	iSoftwareActionSink.cpp	\
@@ -145,6 +155,8 @@ nodist_libsaftlib_la_SOURCES =	\
 	Output.cpp		\
 	SCUbusActionSink.cpp	\
 	SCUbusCondition.cpp	\
+	WbmActionSink.cpp	\
+	WbmCondition.cpp	\
 	EmbeddedCPUActionSink.cpp	\
 	EmbeddedCPUCondition.cpp	\
 	SoftwareActionSink.cpp	\

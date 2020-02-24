@@ -127,6 +127,11 @@
       <arg name="since_last_signal" type="u"/>
     </signal>
 
+    <!-- SigReceivedMilEvent: received a MIL signal on the MIL piggy -->
+    <signal name="SigReceivedMilEvent">
+      <arg name="message" type="u"/>
+    </signal>
+
 
     <!-- InUse: indicates if the gateway is translating any events -->
     <property name="InUse"   type="b" access="read">
@@ -157,6 +162,9 @@
     <!-- UpdateOLED: causes the OLED screen to be redrawn. only useful if 
          OP-READY was changed -->
     <method name="UpdateOLED"/>
+
+    <!-- RequestFillEvent: The gatway is instructed to send a MIL fill event if possible -->
+    <method name="RequestFillEvent"/>
 
   </interface>
 </node>

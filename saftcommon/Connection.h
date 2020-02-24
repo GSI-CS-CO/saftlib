@@ -20,14 +20,13 @@
 
 namespace saftbus
 {
-	class Socket;
-
-	struct ProxyPipe
+	struct SignalFD
 	{
 		int id;
 		int fd, fd_back;
-		int socket_nr;
-		bool operator<(const ProxyPipe& rhs) const {
+		int socket_fd;
+		sigc::connection con;
+		bool operator<(const SignalFD& rhs) const {
 			return id < rhs.id;
 		}
 	};
@@ -40,8 +39,7 @@ namespace saftbus
 	{
 
 	public:
-
-		Connection(int number_of_sockets = N_CONNECTIONS, const std::string& base_name = "/tmp/saftbus_");
+		Connection(const std::string& base_name = socket_base_name);
 		~Connection();
 
 		unsigned 	register_object (const std::string& object_path, const std::shared_ptr< InterfaceInfo >& interface_info, const InterfaceVTable& vtable);
@@ -66,30 +64,25 @@ namespace saftbus
 			                 const std::string& destination_bus_name=std::string(), 
 			                 const Serial& parameters=Serial());
 
-		bool dispatch(Slib::IOCondition condition, Socket *socket);
+		bool dispatch(Slib::IOCondition condition, int client_fd);
 
 	private:
-		void handle_disconnect(Socket *socket);
-		void proxy_pipe_garbage_collection();
-
-		int socket_nr(Socket *socket);
+		void handle_disconnect(int client_fd);
 
 		void print_all_fds();
-		void clean_all_fds_from_socket(Socket *socket);
+		bool proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, SignalFD pp);
+		void clean_all_fds_from_socket(int client_fd);
 
 		void list_all_resources();
 
 				// interface_name       // object_path
-		std::map<std::string, std::map<std::string, int> > _saftbus_indices; 
+		std::map<std::string, std::map<std::string, int> > _saftbus_object_ids; 
 
 		std::map<int, std::shared_ptr<InterfaceVTable> > _saftbus_objects;
 		int _saftbus_object_id_counter; // log saftbus object creation
 		int _saftbus_signal_handle_counter; // log signal subscriptions
 
-		// TODO: use std::set instead of std::vector
-		std::vector<std::shared_ptr<Socket> > _sockets; 
-
-		//int _client_id;
+		std::set<int> _sockets;
 
 
 		// 	     // handle    // signal
@@ -100,7 +93,7 @@ namespace saftbus
 
 		// store the pipes that go directly to one or many Proxy objects
 				// interface_name        // object path
-		std::map<std::string, std::map < std::string , std::set< ProxyPipe > > > _proxy_pipes;
+		std::map<std::string, std::map < std::string , std::set< SignalFD > > > _signal_fds;
 
 		static int _saftbus_id_counter;
 
@@ -114,6 +107,11 @@ namespace saftbus
 		Logger logger;
 
 		bool _create_signal_flight_time_statistics;
+
+
+		int _listen_fd;
+		struct sockaddr_un _listen_sockaddr_un;
+		bool accept_client(Slib::IOCondition condition);
 	};
 
 }

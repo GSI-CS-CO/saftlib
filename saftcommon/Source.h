@@ -41,7 +41,6 @@ namespace Slib
 		friend class MainContext;
 
 		sigc::slot_base _slot;
-
 	};
 
 
