@@ -124,7 +124,7 @@ namespace saftlib {
 
 	void EB_Forward::write_all(int fd, char *ptr, int size) 
 	{
-		while (size) {
+		while (size > 0) {
 			int result = write(fd, ptr, size);
 			if (result > 0) {
 				size -= result;
@@ -138,7 +138,7 @@ namespace saftlib {
 	}
 	void EB_Forward::read_all(int fd, char *ptr, int size) 
 	{
-		while (size) {
+		while (size > 0) {
 			int result = read(fd, ptr, size);
 			if (result > 0) {
 				size -= result;
