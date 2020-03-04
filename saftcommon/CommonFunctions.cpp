@@ -73,7 +73,10 @@ std::string tr_formatActionEvent(uint64_t id, uint32_t pmode)
       full << " SID: "   << fmt << std::setw(4) << ((id >> 20) & 0xfff);
       full << " BPID: "  << fmt << std::setw(5) << ((id >> 6) & 0x3fff);
       full << " RES: "   << fmt << std::setw(4) << (id & 0x3f);
-    } // if fid==0
+    } // if fid==1
+    else {
+      full << " Other: " << fmt << std::setw(9) << (id & 0xfffffffff);
+    }
   }
   else full << " EvtID: " << fmt << std::setw(width) << std::setfill('0') << id;
   

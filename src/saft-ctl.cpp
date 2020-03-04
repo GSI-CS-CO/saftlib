@@ -262,7 +262,7 @@ int main(int argc, char** argv)
 
   // variables inject event
   uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
+  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the timing message
   uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
   saftlib::Time eventTime;     // time for next event in PTP time
   saftlib::Time ppsNext;     // time for next PPS 
