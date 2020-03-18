@@ -34,25 +34,33 @@ std::vector<int> &Message::get_fd_list()
 // 	return _fd_list->gobj();
 // }
 
-InterfaceVTable::InterfaceVTable ( 	const SlotInterfaceMethodCall&  slot_method_call,
+InterfaceVTable::InterfaceVTable ( 	
+									const std::string &introspection_xml,
+									const SlotInterfaceMethodCall&  slot_method_call,
 									const SlotInterfaceGetProperty&  slot_get_property,
-									const SlotInterfaceSetProperty&  slot_set_property 
+									const SlotInterfaceSetProperty&  slot_set_property
 									)
-	: get_property(slot_get_property)
+	: _introspection_xml(introspection_xml)
+	, get_property(slot_get_property)
 	, set_property(slot_set_property)
 	, method_call(slot_method_call)
+	
 {
 	if (_debug_level > 5) std::cerr << "InterfaceVTable::InterfaceVTable() called" << std::endl;
 }
 
-InterfaceInfo::InterfaceInfo(const std::string &interface_name)
+InterfaceInfo::InterfaceInfo(const std::string &interface_name, const std::string &xml)
 	: _interface_name(interface_name)
+	, _xml(xml)
 {}
 const std::string &InterfaceInfo::get_interface_name()
 {
 	return _interface_name;
 }
-
+const std::string &InterfaceInfo::get_introspection_xml()
+{
+	return _xml;
+}
 MethodInvocation::MethodInvocation()
 {}
 
@@ -106,23 +114,19 @@ saftbus::Error& MethodInvocation::get_return_error()
 
 
 
-NodeInfo::NodeInfo(const std::string &interface_name)
-	: _interface_info(new InterfaceInfo(interface_name))
+NodeInfo::NodeInfo(const std::string &interface_name, const std::string &xml)
+	: _interface_info(new InterfaceInfo(interface_name, xml))
 {}
 
 std::shared_ptr<NodeInfo> NodeInfo::create_for_xml (const std::string&  xml_data)
 {
 	// This function only extracts the interface name from the xml interface description
 	// The rest is not needed by saftbus.
-	if (_debug_level > 5) std::cerr << "NodeInfo::create_for_xml() called" << std::endl;
 	std::string::size_type pos_begin = xml_data.find("interface name=\'");
-	if (_debug_level > 5) std::cerr << " pos_begin = " << pos_begin << std::endl;
 	if (pos_begin != xml_data.npos) {
 		std::string::size_type pos_end = xml_data.find("\'",pos_begin+16u);
-		if (_debug_level > 5) std::cerr << " pos_end = " << pos_end << std::endl;
 		std::string interface_name = xml_data.substr(pos_begin+16u,pos_end-pos_begin-16u);
-		if (_debug_level > 5) std::cerr << "found interface name " << interface_name << std::endl;
-		return std::shared_ptr<NodeInfo>(new NodeInfo(interface_name));
+		return std::shared_ptr<NodeInfo>(new NodeInfo(interface_name, xml_data));
 	}
 	return std::shared_ptr<NodeInfo>();
 }
