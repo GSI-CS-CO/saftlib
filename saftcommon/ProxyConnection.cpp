@@ -100,6 +100,16 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 	saftbus::write(get_fd(), global_id);
 }
 
+std::string ProxyConnection::introspect(const std::string &object_path, const std::string &interface_name)
+{
+	saftbus::write(get_fd(), saftbus::SAFTBUS_CTL_INTROSPECT);
+	saftbus::write(get_fd(), object_path);
+	saftbus::write(get_fd(), interface_name);
+	std::string xml;
+	saftbus::read(get_fd(), xml);
+	return xml;
+}
+
 Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                const std::string& object_path, 
 	                                const std::string& interface_name, 

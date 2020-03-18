@@ -49,6 +49,7 @@ void show_help(const char *argv0)
 	std::cout << "   --call <interface-name> <object-path> <method-name> <return-type-signature> <argument-type-signature> <argument1> ..." << std::endl;
 	std::cout << "          the type signature for no argument/return value is v" << std::endl;
 	std::cout << "          the type signature for all other types matches the DBus specification" << std::endl;
+	std::cout << "   --introspect <interface-name> <object-path>" << std::endl;
 	std::cout << "   --enable-logging                   " << std::endl;
 	std::cout << "   --disable-logging                  " << std::endl;
 	std::cout << "   --enable-signal-timing-stats       " << std::endl;
@@ -364,6 +365,7 @@ void print_serial_map_map(saftbus::Serial &s) {
 	}
 }
 
+
 void saftbus_get_property(const std::string& interface_name,
 	                      const std::string& object_path,
 	                      const std::string& property_name,
@@ -501,6 +503,7 @@ int main(int argc, char *argv[])
 		bool get_property                 = false;
 		bool set_property                 = false;
 		bool call_method                  = false;
+		bool introspect                   = false;
 
 		std::string interface_name;
 		std::string object_path;
@@ -591,6 +594,16 @@ int main(int argc, char *argv[])
 						method_arguments.push_back(argv[++i]);
 					}
 				}
+			} else if (argvi == "--introspect") {
+				introspect = true;
+				if (argc - i <= 2) {
+					std::cerr << "expect >= 2 arguments after --introspect" << std::endl;
+					std::cerr << "        interface_name" << std::endl;
+					std::cerr << "        object_path" << std::endl;
+				} else {
+					interface_name          = argv[++i];
+					object_path             = argv[++i];
+				}
 			} else {
 				std::cerr << "unknown argument: " << argvi << std::endl;
 				return 1;
@@ -651,6 +664,15 @@ int main(int argc, char *argv[])
 				saftbus_method_call(interface_name, object_path, method_name, type_signature, method_arguments, return_type_signature);
 			} catch(saftbus::Error &e) {
 				std::cerr << "exepction retured from method call: " << e.what() << std::endl;
+			}
+		}
+		if (introspect) {
+			try {
+				saftbus::ProxyConnection connection;
+				std::cout << "introspecting " << object_path << " " << interface_name << std::endl; 
+				std::cout << connection.introspect(object_path, interface_name) << std::endl;
+			} catch(saftbus::Error &e) {
+				std::cerr << "exepction retured from introspection: " << e.what() << std::endl;
 			}
 		}
 

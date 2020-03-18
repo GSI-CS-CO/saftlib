@@ -34,6 +34,7 @@ namespace saftbus
 
 		using SlotSignal = sigc::slot<void, const std::shared_ptr<ProxyConnection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&>;
 
+		std::string introspect(const std::string &object_path, const std::string &interface_name);
 		// is used by Proxies to fetch properties
 		Serial& call_sync(int saftbus_index,
 			              const std::string& object_path, 

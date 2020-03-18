@@ -392,6 +392,24 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					saftbus::write(client_fd, _function_run_times);
 				}
 				break;
+				case SAFTBUS_CTL_INTROSPECT:
+				{
+					std::string object_path, interface_name;
+					saftbus::read(client_fd, object_path);
+					saftbus::read(client_fd, interface_name);
+					logger.add("   introspect from saftbus-ctl: object_path \'");
+					logger.add(object_path);
+					logger.add("\' interface_name \'");
+					logger.add(interface_name);
+					logger.add("\'\n");
+					int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
+					if (_saftbus_objects.find(saftd_object_id) == _saftbus_objects.end()) {
+						saftbus::write(client_fd, std::string("unknown object path"));
+						break;
+					}
+					saftbus::write(client_fd, _saftbus_objects[saftd_object_id]->_introspection_xml);
+				}
+				break;
 				case saftbus::SAFTBUS_CTL_GET_STATE:
 				{
 					// Send all mutable state variables of the Connection object.

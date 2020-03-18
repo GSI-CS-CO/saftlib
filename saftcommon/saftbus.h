@@ -67,6 +67,7 @@ namespace saftbus
 		SAFTBUS_CTL_GET_STATE, 
 		SAFTBUS_CTL_ENABLE_LOGGING,
 		SAFTBUS_CTL_DISABLE_LOGGING,
+		SAFTBUS_CTL_INTROSPECT, // get introspection xml string
 
 		GET_SAFTBUS_INDEX,
 	};
