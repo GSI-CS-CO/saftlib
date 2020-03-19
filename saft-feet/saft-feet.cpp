@@ -12,22 +12,33 @@
 
 const std::string applicationName = "saft-feet";
 
-std::vector<std::string> get_object_paths() {
-	FILE *fp = popen("saftbus-ctl -s", "r");
+std::string call_saftbus_ctl(const std::string &args) {
+	std::string command = "saftbus-ctl ";
+	command.append(args);
+	FILE *fp = popen(command.c_str(), "r");
 	if (fp == nullptr) {
 		std::cerr << "Error: cannot run saftbus-ctl" << std::endl;
 		exit(1);
 	}
 	char c;
-	std::string text;
-	text.reserve(2048);
+	std::string saftbus_ctl_output;
+	saftbus_ctl_output.reserve(2048);
 	while ((c = fgetc(fp)) != EOF) {
-		text.push_back(c);
+		saftbus_ctl_output.push_back(c);
 	}
 	pclose(fp);
+	return saftbus_ctl_output;
+}
 
+// execute 'saftbus-ctl -s' and extract object_paths and interfaces from the output
+std::vector<std::string> get_object_paths() {
+	std::string text = call_saftbus_ctl("-s");
+
+	// optionally cut the prefix from object_path or interface name
 	std::string object_path_prefix = "";//"/de/gsi";
 	std::string interface_prefix = "";//"de.gsi.";
+
+	// process saftbus-ctl's output
 	std::string object_path;
 	std::vector<std::string> result;
 	std::istringstream in(text);
@@ -37,26 +48,27 @@ std::vector<std::string> get_object_paths() {
 		if (!in) {
 			break;
 		}
-		//std::cerr << "\'" << token << "\'" << std::endl;
-
 		if (token[0] == '/') {
 			object_path = token.substr(object_path_prefix.size()); // take away the "/de/gsi" prefix
 		} else if (object_path.size() > 0) {
 			if (token[0] == '_') {
 				break;
 			}
-			// try {
 			auto interface = token.substr(interface_prefix.size(),token.find(',')-interface_prefix.size());
-			//std::cerr << token << " -> " << token.find(',') << " " << interface << std::endl;
 			result.push_back(object_path);
 			result.back().append("/");
 			result.back().append(interface);
-			// } catch(...) {
-			// 	std::cerr << "exception: " << token << std::endl;
-			// }
 		}
 	}
 	return result;
+}
+
+std::string get_introspection_xml(const std::string &object_path, const std::string &interface_name) {
+	std::string args = "--introspect ";
+	args.append(interface_name);
+	args.append(" ");
+	args.append(object_path);
+	return call_saftbus_ctl(args);
 }
 
 std::vector<std::string> split(const std::string &str, char delimeter) {
@@ -174,6 +186,32 @@ public:
 	void remove_if_not_present(const std::vector<std::string> &object_paths) {
 		remove_if_not_present(object_paths, _treestore->children());
 	}
+
+	std::string get_full_name(Gtk::TreePath path) {
+		std::string full_name;
+		for(;;) {
+			auto row = *_treestore->get_iter(path);
+			std::ostringstream row_name;
+			row_name << row[_col_text];
+			full_name = "/" + row_name.str() + full_name;
+			std::string path_str = path.to_string();
+			if (path_str.find(':') == path_str.npos) break;
+			path.up();
+		} 
+		return full_name;
+	}
+
+	void on_row_activated(Gtk::TreePath path, Gtk::TreeViewColumn* column) {
+		std::string full_name = get_full_name(path);
+		std::cerr << "on_row_activated called: " << full_name << std::endl;
+		auto pos = full_name.find_last_of('/');
+		std::string object_path = full_name.substr(0, pos);
+		std::string interface_name = full_name.substr(pos + 1);
+		const std::string interface_prefix = "de.gsi.saftlib.";
+		if (interface_name.substr(0,interface_prefix.size()) == interface_prefix) {
+			std::cerr << object_path << " " << interface_name << std::endl;
+		}
+	}
 };
 
 
@@ -190,8 +228,14 @@ public:
 		// attach the model to the treeview
 		_treeview.set_model(_treestore.get_model());
 		_treeview.append_column("Objects and Interfaces", _treestore.col_text());
+
+
+		_treeview.signal_row_activated().connect(sigc::mem_fun(_treestore, &ObjectPathTreeStore::on_row_activated));
+		
 		add(_treeview);
 		show_all();
+		
+		_treeview.set_activate_on_single_click(true);
 	}
 private:
 
@@ -206,12 +250,22 @@ private:
 
 	Gtk::TreeView       _treeview;
 	ObjectPathTreeStore _treestore;
+	
 };
 
 class InterfaceBox : public Gtk::Box
 {
 private:
+	struct Property {
+		Gtk::Label name;
+		Gtk::Label value;
+		Gtk::Button write;
+		Gtk::Entry entry;
+	};
+
 	Gtk::Label _properties_label;	
+	std::vector<Property> _properties;
+
 	Gtk::Label _methods_label;	
 	Gtk::Label _signals_label;	
 public:
@@ -225,6 +279,10 @@ public:
 		add(_methods_label);
 		add(_signals_label);
 		show_all();
+	}
+
+	void update(const std::string &object_path, const std::string &interface_name) {
+		std::cerr << get_introspection_xml(object_path, interface_name) << std::endl;
 	}
 
 };
