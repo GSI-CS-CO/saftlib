@@ -57,6 +57,21 @@ std::vector<std::string> split(const std::string &str, char delimeter) {
 	return result;
 }
 
+// return true if str stars with prefix
+bool starts_with(const std::string &str, const std::string &prefix) {
+	auto len = std::min(str.size(), prefix.size());
+	return str.substr(0, len) == prefix;
+}
+
+bool contained_in(const std::string &path, const std::vector<std::string> &object_paths) {
+	for (const auto &object_path : object_paths) {
+		if (starts_with(object_path, path)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 class ObjectPathTreeStore : public Gtk::TreeStore
 {
 private:
@@ -70,29 +85,52 @@ private:
 	{
 		auto object_path_size = object_path_end - object_path_begin;
 		Gtk::TreeModel::iterator iter_insert_after = children.end();
-		for (auto iter : children) {
-			Gtk::TreeModel::Row row = *iter;
+		for (auto child : children) {
+			Gtk::TreeModel::Row row = *child;
 			if (row[_col_text] < *object_path_begin) {
-				iter_insert_after = iter;
+				iter_insert_after = child;
 			}
 			if (row[_col_text] == *object_path_begin &&	object_path_size > 1) {
 				// first part of object path already present 
 				//   -> descend into this branch of the treestore
-				insert_object_path(object_path_begin + 1, object_path_end, iter.children());
+				insert_object_path(object_path_begin + 1, object_path_end, child.children());
 				return;
 			}
 		}
 		// nothing found or children.size()==0 
 		//   -> insert new child at correct position 
-		Gtk::TreeModel::iterator iter = _treestore->prepend(children);
+		Gtk::TreeModel::iterator new_child = _treestore->prepend(children);
 		if (iter_insert_after != children.end()) { 
-			_treestore->move(iter, ++iter_insert_after); 
+			_treestore->move(new_child, ++iter_insert_after); 
 		}
-		Gtk::TreeModel::Row row = *iter;
+		Gtk::TreeModel::Row row = *new_child;
 		row[_col_text] = *object_path_begin;
 		if (object_path_size > 1) {
 			// descend into just inserted branch of treestore
-			insert_object_path(object_path_begin + 1, object_path_end, iter->children());
+			insert_object_path(object_path_begin + 1, object_path_end, new_child->children());
+		}
+	}
+
+	void remove_if_not_present(const std::vector<std::string> &object_paths, Gtk::TreeNodeChildren children, const std::string &parent_path = "" ) {
+		for (;;) {
+			bool removed = false;
+			for (Gtk::TreeStore::iterator child = children.begin(); child != children.end(); ++child) {
+				Gtk::TreeModel::Row row = *child;
+				std::ostringstream path;
+				path << parent_path << '/' << row[_col_text];
+				std::cerr << path.str() << "  " 
+				          << contained_in(path.str(), object_paths) 
+				          << std::endl;
+				if (!contained_in(path.str(), object_paths)) {
+					child = _treestore->erase(child);
+					removed = true;
+					break;
+				}
+				if (child->children().size() > 0) {
+					remove_if_not_present(object_paths, child->children(), path.str());
+				}
+			}
+			if (!removed) break;
 		}
 	}
 public:
@@ -107,30 +145,14 @@ public:
 	Glib::RefPtr<Gtk::TreeStore> get_model() { 
 		return _treestore; 
 	}
-	// void append_toplevel(const std::string &object_path) {
-	// 	Gtk::TreeModel::iterator iter = _treestore->append(_treestore->children());
-	// 	Gtk::TreeModel::Row      row  = *iter;
-	// 	row[_col_text] = object_path;
-	// }
-	// void append_next(const std::string &object_path) {
-	// 	for(auto iter : _treestore->children()) {
-	// 		Gtk::TreeModel::Row      row  =  *_treestore->append(iter.children());
-	// 		row[_col_text] = object_path;
-	// 	}
-	// }
 	void insert_object_path(const std::string &object_path) {
 		std::vector<std::string> object_path_parts = split(object_path, '/');
 		insert_object_path(object_path_parts.begin(), 
 			               object_path_parts.end(),
 			               _treestore->children());
 	}
-
-
-	void add_object_path() {
-
-		for(auto iter : _treestore->children()) {
-			std::cout << iter[_col_text] << std::endl;
-		}
+	void remove_if_not_present(const std::vector<std::string> &object_paths) {
+		remove_if_not_present(object_paths, _treestore->children());
 	}
 };
 
@@ -140,12 +162,15 @@ class ScrolledWindowTreeView : public Gtk::ScrolledWindow
 public:
 	ScrolledWindowTreeView() 
 	{
-		set_propagate_natural_height(true);
-		set_propagate_natural_width(true);
+		// set_propagate_natural_height(true);
+		// set_propagate_natural_width(true);
 
-		for(auto object_path: get_object_paths()) {
+		auto object_paths = get_object_paths();
+		for(auto object_path: object_paths) {
 			_treestore.insert_object_path(object_path);
 		}
+		for (int i = 0; i < 8; ++i)	object_paths.pop_back();
+		_treestore.remove_if_not_present(object_paths);
 
 		// attach the model to the treeview
 		_treeview.set_model(_treestore.get_model());
