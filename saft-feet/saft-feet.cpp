@@ -20,19 +20,40 @@ std::vector<std::string> get_object_paths() {
 	}
 	char c;
 	std::string text;
+	text.reserve(2048);
 	while ((c = fgetc(fp)) != EOF) {
 		text.push_back(c);
 	}
 	pclose(fp);
 
+	std::string object_path_prefix = "";//"/de/gsi";
+	std::string interface_prefix = "";//"de.gsi.";
+	std::string object_path;
 	std::vector<std::string> result;
 	std::istringstream in(text);
 	for(;;) {
 		std::string token;
 		in >> token;
-		if (!in) break;
+		if (!in) {
+			break;
+		}
+		//std::cerr << "\'" << token << "\'" << std::endl;
+
 		if (token[0] == '/') {
-			result.push_back(token);
+			object_path = token.substr(object_path_prefix.size()); // take away the "/de/gsi" prefix
+		} else if (object_path.size() > 0) {
+			if (token[0] == '_') {
+				break;
+			}
+			// try {
+			auto interface = token.substr(interface_prefix.size(),token.find(',')-interface_prefix.size());
+			//std::cerr << token << " -> " << token.find(',') << " " << interface << std::endl;
+			result.push_back(object_path);
+			result.back().append("/");
+			result.back().append(interface);
+			// } catch(...) {
+			// 	std::cerr << "exception: " << token << std::endl;
+			// }
 		}
 	}
 	return result;
@@ -168,7 +189,7 @@ public:
 
 		// attach the model to the treeview
 		_treeview.set_model(_treestore.get_model());
-		_treeview.append_column("Object Path", _treestore.col_text());
+		_treeview.append_column("Objects and Interfaces", _treestore.col_text());
 		add(_treeview);
 		show_all();
 	}
@@ -187,19 +208,45 @@ private:
 	ObjectPathTreeStore _treestore;
 };
 
+class InterfaceBox : public Gtk::Box
+{
+private:
+	Gtk::Label _properties_label;	
+	Gtk::Label _methods_label;	
+	Gtk::Label _signals_label;	
+public:
+	InterfaceBox() 
+		: Gtk::Box(Gtk::ORIENTATION_VERTICAL)
+		, _properties_label("Properties")
+		, _methods_label("Methods")
+		, _signals_label("Signals")
+	{
+		add(_properties_label);
+		add(_methods_label);
+		add(_signals_label);
+		show_all();
+	}
+
+};
+
 class MainWindow : public Gtk::Window 
 {
 private:
 	ScrolledWindowTreeView _object_path_list;
-	Gtk::Button            _testbutton;
 	Gtk::Box               _box;
+	Gtk::Paned             _paned;
+	InterfaceBox           _interface_box;
 public:
 	MainWindow()
-		: _testbutton("Hallo"), _box(Gtk::ORIENTATION_VERTICAL)
+		: _box(Gtk::ORIENTATION_VERTICAL)
+		, _paned(Gtk::ORIENTATION_HORIZONTAL)
 	{
-		_box.add(_testbutton);
+		set_default_size(800, 600);
+		_paned.set_position(300);
 		_box.pack_end(_object_path_list, true, true);
-		add(_box);
+		_paned.add1(_box);
+		_paned.add2(_interface_box);
+		add(_paned);
 		show_all();
 	}
 };
@@ -208,9 +255,6 @@ int main(int argc, char *argv[])
 {
 	auto application = Gtk::Application::create(argc, argv, "de.gsi.saft-feet");
 	MainWindow window;
-	window.set_default_size(600, 600);
-
-
 	return application->run(window);
 
 	return 0;
