@@ -39,43 +39,30 @@ private:
 		                    Gtk::TreeNodeChildren children) 
 	{
 		auto object_path_size = object_path_end - object_path_begin;
-		std::cerr << "insert_object_path " << children.size() << ": ";
-		for(auto it = object_path_begin; it != object_path_end; ++it) {
-			std::cerr << *it << " "; 
-		} std::cerr << std::endl;
-		if (children.size() == 0) {
-
-		} 
-		Gtk::TreeModel::iterator iter_insert_after;
-		bool insert_after = false;
-		bool insert_first  = false;
+		Gtk::TreeModel::iterator iter_insert_after = children.end();
 		for (auto iter : children) {
 			Gtk::TreeModel::Row row = *iter;
-			if (iter == children.begin()) {
-				insert_first = true;
-			}
 			if (row[_col_text] < *object_path_begin) {
 				iter_insert_after = iter;
-				insert_after = true;
 			}
-			if (row[_col_text] == *object_path_begin) {
-				if (object_path_size > 1) {
-					return insert_object_path(object_path_begin + 1, 
-						                      object_path_end,
-						                      iter.children());
-				}
+			if (row[_col_text] == *object_path_begin &&	object_path_size > 1) {
+				// first part of object path already present 
+				//   -> descend into this branch of the treestore
+				insert_object_path(object_path_begin + 1, object_path_end, iter.children());
+				return;
 			}
 		}
-		// nothing found or children.size()==0
-		auto iter = _treestore->append(children);
-		if (insert_after) { _treestore->move(iter, ++iter_insert_after); }
-		else if (insert_first) {_treestore->move(iter, children.begin()); }
+		// nothing found or children.size()==0 
+		//   -> insert new child at correct position 
+		Gtk::TreeModel::iterator iter = _treestore->prepend(children);
+		if (iter_insert_after != children.end()) { 
+			_treestore->move(iter, ++iter_insert_after); 
+		}
 		Gtk::TreeModel::Row row = *iter;
 		row[_col_text] = *object_path_begin;
 		if (object_path_size > 1) {
-			insert_object_path(object_path_begin + 1, 
-			                   object_path_end,
-			                   iter->children());
+			// descend into just inserted branch of treestore
+			insert_object_path(object_path_begin + 1, object_path_end, iter->children());
 		}
 	}
 public:
@@ -103,10 +90,6 @@ public:
 	// }
 	void insert_object_path(const std::string &object_path) {
 		std::vector<std::string> object_path_parts = split(object_path, '/');
-		for(auto part: object_path_parts) {
-			std::cout << part << " ";
-		}
-		std::cout << std::endl;
 		insert_object_path(object_path_parts.begin(), 
 			               object_path_parts.end(),
 			               _treestore->children());
