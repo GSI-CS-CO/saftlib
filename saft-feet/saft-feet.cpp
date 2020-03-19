@@ -90,10 +90,12 @@ private:
 			if (row[_col_text] < *object_path_begin) {
 				iter_insert_after = child;
 			}
-			if (row[_col_text] == *object_path_begin &&	object_path_size > 1) {
-				// first part of object path already present 
-				//   -> descend into this branch of the treestore
-				insert_object_path(object_path_begin + 1, object_path_end, child.children());
+			if (row[_col_text] == *object_path_begin) {
+				if (object_path_size > 1) {
+					// first part of object path already present 
+					//   -> descend into this branch of the treestore
+					insert_object_path(object_path_begin + 1, object_path_end, child.children());
+				}
 				return;
 			}
 		}
@@ -118,9 +120,6 @@ private:
 				Gtk::TreeModel::Row row = *child;
 				std::ostringstream path;
 				path << parent_path << '/' << row[_col_text];
-				std::cerr << path.str() << "  " 
-				          << contained_in(path.str(), object_paths) 
-				          << std::endl;
 				if (!contained_in(path.str(), object_paths)) {
 					child = _treestore->erase(child);
 					removed = true;
@@ -162,15 +161,10 @@ class ScrolledWindowTreeView : public Gtk::ScrolledWindow
 public:
 	ScrolledWindowTreeView() 
 	{
-		// set_propagate_natural_height(true);
-		// set_propagate_natural_width(true);
+		update_object_paths(); 
 
-		auto object_paths = get_object_paths();
-		for(auto object_path: object_paths) {
-			_treestore.insert_object_path(object_path);
-		}
-		for (int i = 0; i < 8; ++i)	object_paths.pop_back();
-		_treestore.remove_if_not_present(object_paths);
+		Glib::signal_timeout().connect(
+			sigc::mem_fun(this, &ScrolledWindowTreeView::update_object_paths), 100);
 
 		// attach the model to the treeview
 		_treeview.set_model(_treestore.get_model());
@@ -179,6 +173,16 @@ public:
 		show_all();
 	}
 private:
+
+	bool update_object_paths() {
+		auto object_paths = get_object_paths();
+		_treestore.remove_if_not_present(object_paths);
+		for(auto object_path: object_paths) {
+			_treestore.insert_object_path(object_path);
+		}
+		return true;
+	}
+
 	Gtk::TreeView       _treeview;
 	ObjectPathTreeStore _treestore;
 };
