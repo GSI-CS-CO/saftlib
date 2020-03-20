@@ -44,6 +44,7 @@ void show_help(const char *argv0)
 	std::cout << "   options are:" << std::endl;
 	std::cout << "   -h,--help                          " << std::endl;
 	std::cout << "   -s,--status                        " << std::endl;
+	std::cout << "   --get-properties <interface-name> <object-path>" << std::endl;
 	std::cout << "   --get-property <interface-name> <object-path> <property-name> <type-signature>" << std::endl;
 	std::cout << "   --set-property <interface-name> <object-path> <property-name> <type-signature> <property-value>" << std::endl;
 	std::cout << "   --call <interface-name> <object-path> <method-name> <return-type-signature> <argument-type-signature> <argument1> ..." << std::endl;
@@ -365,6 +366,33 @@ void print_serial_map_map(saftbus::Serial &s) {
 	}
 }
 
+void saftbus_get_properties(const std::string &interface_name,
+	                        const std::string &object_path) 
+{
+	saftbus::ProxyConnection connection;
+	std::string introspection_xml = connection.introspect(object_path, interface_name);
+	//std::cerr << introspection_xml << std::endl;
+	size_t pos_property_end = 0;
+	for(;;) {
+		auto pos_property_begin = introspection_xml.find("<property", pos_property_end);
+		if (pos_property_begin == std::string::npos) break;
+		pos_property_end = introspection_xml.find("/>", pos_property_begin);
+
+		std::istringstream in(introspection_xml.substr(pos_property_begin, pos_property_end-pos_property_begin));
+		std::string property, name, type, access;
+
+		in >> property >> name >> type >> access;
+
+		name   = name.substr(6, name.find_last_of('\'')-6);
+		type   = type.substr(6, type.find_last_of('\'')-6);
+		access = access.substr(8, access.find_last_of('\'')-8);
+
+		if (access == "read" || access == "readwrite") {
+			std::cout << type << ":" << name << "=" ; saftbus_get_property(interface_name, object_path, name, type);
+		}
+
+	}
+}
 
 void saftbus_get_property(const std::string& interface_name,
 	                      const std::string& object_path,
@@ -504,6 +532,7 @@ int main(int argc, char *argv[])
 		bool set_property                 = false;
 		bool call_method                  = false;
 		bool introspect                   = false;
+		bool get_properties               = false;
 
 		std::string interface_name;
 		std::string object_path;
@@ -594,8 +623,9 @@ int main(int argc, char *argv[])
 						method_arguments.push_back(argv[++i]);
 					}
 				}
-			} else if (argvi == "--introspect") {
-				introspect = true;
+			} else if (argvi == "--introspect" || argvi == "--get-properties") {
+				if (argvi == "--introspect") introspect = true;
+				if (argvi == "--get-properties") get_properties = true;
 				if (argc - i <= 2) {
 					std::cerr << "expect >= 2 arguments after --introspect" << std::endl;
 					std::cerr << "        interface_name" << std::endl;
@@ -655,6 +685,9 @@ int main(int argc, char *argv[])
 
 		if (get_property) {
 			saftbus_get_property(interface_name, object_path, property_name, type_signature);
+		}
+		if (get_properties) {
+			saftbus_get_properties(interface_name, object_path);
 		}
 		if (set_property) {
 			saftbus_set_property(interface_name, object_path, property_name, type_signature, property_value);

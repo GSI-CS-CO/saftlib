@@ -201,7 +201,7 @@ public:
 		return full_name;
 	}
 
-	void on_row_activated(Gtk::TreePath path, Gtk::TreeViewColumn* column) {
+	void on_row_activated(Gtk::TreePath path, Gtk::TreeViewColumn* column, sigc::slot<void, std::string, std::string> update_interface_box) {
 		std::string full_name = get_full_name(path);
 		std::cerr << "on_row_activated called: " << full_name << std::endl;
 		auto pos = full_name.find_last_of('/');
@@ -210,6 +210,8 @@ public:
 		const std::string interface_prefix = "de.gsi.saftlib.";
 		if (interface_name.substr(0,interface_prefix.size()) == interface_prefix) {
 			std::cerr << object_path << " " << interface_name << std::endl;
+			update_interface_box(object_path, interface_name);
+			//std::cout << call_saftbus_ctl("--get-properties " + interface_name + " " + object_path) << std::endl;
 		}
 	}
 };
@@ -218,7 +220,7 @@ public:
 class ScrolledWindowTreeView : public Gtk::ScrolledWindow
 {	
 public:
-	ScrolledWindowTreeView() 
+	ScrolledWindowTreeView(sigc::slot<void, std::string, std::string> update_interface_box) 
 	{
 		update_object_paths(); 
 
@@ -230,7 +232,8 @@ public:
 		_treeview.append_column("Objects and Interfaces", _treestore.col_text());
 
 
-		_treeview.signal_row_activated().connect(sigc::mem_fun(_treestore, &ObjectPathTreeStore::on_row_activated));
+		_treeview.signal_row_activated().connect(
+			sigc::bind(sigc::mem_fun(_treestore, &ObjectPathTreeStore::on_row_activated), update_interface_box ) );
 		
 		add(_treeview);
 		show_all();
@@ -250,7 +253,7 @@ private:
 
 	Gtk::TreeView       _treeview;
 	ObjectPathTreeStore _treestore;
-	
+
 };
 
 class InterfaceBox : public Gtk::Box
@@ -271,18 +274,27 @@ private:
 public:
 	InterfaceBox() 
 		: Gtk::Box(Gtk::ORIENTATION_VERTICAL)
-		, _properties_label("Properties")
-		, _methods_label("Methods")
-		, _signals_label("Signals")
+		, _properties_label("Properties", Gtk::ALIGN_START, Gtk::ALIGN_CENTER)
+		, _methods_label("Methods", Gtk::ALIGN_START, Gtk::ALIGN_CENTER)
+		, _signals_label("Signals", Gtk::ALIGN_START, Gtk::ALIGN_CENTER)
 	{
+		_properties_label.set_justify(Gtk::JUSTIFY_LEFT);
 		add(_properties_label);
+
+		_methods_label.set_justify(Gtk::JUSTIFY_LEFT);
 		add(_methods_label);
+
+		_signals_label.set_justify(Gtk::JUSTIFY_LEFT);
 		add(_signals_label);
+
 		show_all();
 	}
 
 	void update(const std::string &object_path, const std::string &interface_name) {
-		std::cerr << get_introspection_xml(object_path, interface_name) << std::endl;
+		//std::cerr<< "update called" << std::endl;
+		std::string property_string = call_saftbus_ctl("--get-properties " + interface_name + " " + object_path);
+		_properties_label.set_text("Properties\n" + property_string);
+		//std::cerr << get_introspection_xml(object_path, interface_name) << std::endl;
 	}
 
 };
@@ -290,14 +302,15 @@ public:
 class MainWindow : public Gtk::Window 
 {
 private:
-	ScrolledWindowTreeView _object_path_list;
 	Gtk::Box               _box;
-	Gtk::Paned             _paned;
 	InterfaceBox           _interface_box;
+	Gtk::Paned             _paned;
+	ScrolledWindowTreeView _object_path_list;
 public:
 	MainWindow()
 		: _box(Gtk::ORIENTATION_VERTICAL)
 		, _paned(Gtk::ORIENTATION_HORIZONTAL)
+		, _object_path_list(sigc::mem_fun(&_interface_box, &InterfaceBox::update))
 	{
 		set_default_size(800, 600);
 		_paned.set_position(300);
