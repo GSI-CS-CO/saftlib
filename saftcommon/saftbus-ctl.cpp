@@ -7,6 +7,7 @@
 #include "saftbus.h"
 #include "core.h"
 #include "Interface.h"
+#include "Time.h"
 
 void write_histogram(std::string filename, const std::map<int,int> &hist);
 void show_help(const char *argv0);
@@ -50,6 +51,7 @@ void show_help(const char *argv0)
 	std::cout << "   --call <interface-name> <object-path> <method-name> <return-type-signature> <argument-type-signature> <argument1> ..." << std::endl;
 	std::cout << "          the type signature for no argument/return value is v" << std::endl;
 	std::cout << "          the type signature for all other types matches the DBus specification" << std::endl;
+	std::cout << "   --list-methods <interface-name> <object-path>" << std::endl;
 	std::cout << "   --introspect <interface-name> <object-path>" << std::endl;
 	std::cout << "   --enable-logging                   " << std::endl;
 	std::cout << "   --disable-logging                  " << std::endl;
@@ -334,6 +336,18 @@ void print_serial_value(saftbus::Serial &s) {
 	s.get(value);
 	std::cout << value << std::endl;
 }
+template<>
+void print_serial_value<saftlib::Time>(saftbus::Serial &s) {
+	saftlib::Time value;
+	s.get(value);
+	std::cout << value.getTAI() << std::endl;
+}
+template<>
+void print_serial_value<unsigned char>(saftbus::Serial &s) {
+	unsigned char value;
+	s.get(value);
+	std::cout << static_cast<int>(value) << std::endl;
+}
 template<typename T>
 void print_serial_vector(saftbus::Serial &s) {
 	std::vector<T> values;
@@ -347,9 +361,13 @@ template<typename K, typename V>
 void print_serial_map(saftbus::Serial &s) {
 	std::map<K,V> map;
 	s.get(map);
+	std::cout <<"{";
+	int i = 0;
 	for (auto pair: map) {
-		std::cout << pair.first << ":" << pair.second  << " ";
+		if (i++) std::cout << ",";
+		std::cout << pair.first << ":" << pair.second;
 	}
+	std::cout <<"}";
 	std::cout << std::endl;
 }
 
@@ -357,13 +375,21 @@ template<typename K1, typename K2, typename V>
 void print_serial_map_map(saftbus::Serial &s) {
 	std::map<K1, std::map<K2,V> > map;
 	s.get(map);
+	std::cout <<"{";
+	int i = 0;
 	for (auto inner_map: map) {
-		std::cout << inner_map.first << " -> ";
+		if (i++) std::cout << ",";
+		std::cout << inner_map.first << ":";
+		std::cout << "{";
+		int j = 0;
 		for (auto pair: inner_map.second) {
-			std::cout << pair.first << ":" << pair.second  << " ";
+			if (j++) std::cout << ",";
+			std::cout << pair.first << ":" << pair.second;
 		}
-		std::cout << std::endl;
+		std::cout << "}";
 	}
+	std::cout << "}";
+	std::cout << std::endl;
 }
 
 void saftbus_get_properties(const std::string &interface_name,
@@ -387,11 +413,67 @@ void saftbus_get_properties(const std::string &interface_name,
 		type   = type.substr(6, type.find_last_of('\'')-6);
 		access = access.substr(8, access.find_last_of('\'')-8);
 
-		if (access == "read" || access == "readwrite") {
-			std::cout << type << ":" << name << "=" ; saftbus_get_property(interface_name, object_path, name, type);
-		}
+		std::cout << type << ":" << access << ":" << name << "=" ; saftbus_get_property(interface_name, object_path, name, type);
 
 	}
+}
+
+void saftbus_list_methods(const std::string& interface_name,
+	                      const std::string& object_path) 
+{
+	saftbus::ProxyConnection connection;
+	std::string introspection_xml = connection.introspect(object_path, interface_name);
+	//std::cerr << introspection_xml << std::endl;
+	size_t pos_method_end = 0;
+	for(int i = 0;;++i) {
+		auto pos_method_begin = introspection_xml.find("<method", pos_method_end);
+		if (pos_method_begin == std::string::npos) break;
+		pos_method_end = introspection_xml.find("/method>", pos_method_begin);
+
+		std::istringstream in(introspection_xml.substr(pos_method_begin, pos_method_end-pos_method_begin));
+
+		std::string method, raw_name;
+		in >> method >> raw_name;
+		std::string name = raw_name.substr(6, raw_name.find_last_of('\'')-6);
+		if (i) std::cout << std::endl;
+//		std::cerr << " >>>> " << raw_name << " " << raw_name[raw_name.find_last_of('\'')+1] << std::endl;
+		std::cout << name;
+		if (raw_name[raw_name.find_last_of('\'')+1] != '/')// this method has arguments
+		{
+			for (;;) {
+				std::string token;
+				in >> token;
+				if (!in) break;
+				auto pos1 = token.find('\'');
+				auto pos2 = token.find_last_of('\'');
+				if (token.substr(0,10) == "direction=") {
+					std::cout << " " << token.substr(pos1+1,pos2-pos1-1);
+				} 
+				if (token.substr(0,5) == "type=") {
+					std::cout << ":" << token.substr(pos1+1,pos2-pos1-1);
+				} 
+				if (token.substr(0,5) == "name=") {
+					std::cout << ":" << token.substr(pos1+1,pos2-pos1-1) << " ";
+				} 
+			}
+		} else {
+			pos_method_end = pos_method_begin+2; // have to correct the end position in this case because looking for /method as end position was wrong
+		}
+
+		// std::string property, name, type, access;
+
+		// in >> property >> name >> type >> access;
+
+		// name   = name.substr(6, name.find_last_of('\'')-6);
+		// type   = type.substr(6, type.find_last_of('\'')-6);
+		// access = access.substr(8, access.find_last_of('\'')-8);
+
+		// if (access == "read" || access == "readwrite") {
+		// 	std::cout << type << ":" << name << "=" ; saftbus_get_property(interface_name, object_path, name, type);
+		// }
+
+	}
+	std::cout << std::endl;
 }
 
 void saftbus_get_property(const std::string& interface_name,
@@ -489,6 +571,7 @@ void saftbus_method_call (const std::string& interface_name,
 		else if (type_signature[i] == 'u') { uint32_t      value; value_in >> value; args.put(value); }
 		else if (type_signature[i] == 'x') { int64_t       value; value_in >> value; args.put(value); }
 		else if (type_signature[i] == 't') { uint64_t      value; value_in >> value; args.put(value); }
+		else if (type_signature[i] == 'T') { uint64_t      value; value_in >> value; args.put(saftlib::makeTimeTAI(value)); }
 		else if (type_signature[i] == 'd') { double        value; value_in >> value; args.put(value); }
 		else if (type_signature[i] == 'h') { int           value; value_in >> value; args.put(value); }
 		else if (type_signature[i] == 's') { std::string   value; value_in >> value; args.put(value); }
@@ -509,6 +592,7 @@ void saftbus_method_call (const std::string& interface_name,
 	else if (return_type_signature == "u") { print_serial_value<uint32_t>(val); }
 	else if (return_type_signature == "x") { print_serial_value<int64_t>(val); }
 	else if (return_type_signature == "t") { print_serial_value<uint64_t>(val); }
+	else if (return_type_signature == "T") { print_serial_value<saftlib::Time>(val); }
 	else if (return_type_signature == "d") { print_serial_value<double>(val); }
 	else if (return_type_signature == "h") { print_serial_value<int>(val); }
 	else if (return_type_signature == "s") { print_serial_value<std::string>(val); }
@@ -533,6 +617,7 @@ int main(int argc, char *argv[])
 		bool call_method                  = false;
 		bool introspect                   = false;
 		bool get_properties               = false;
+		bool list_methods                 = false;
 
 		std::string interface_name;
 		std::string object_path;
@@ -623,9 +708,10 @@ int main(int argc, char *argv[])
 						method_arguments.push_back(argv[++i]);
 					}
 				}
-			} else if (argvi == "--introspect" || argvi == "--get-properties") {
+			} else if (argvi == "--introspect" || argvi == "--get-properties" || argvi == "--list-methods") {
 				if (argvi == "--introspect") introspect = true;
 				if (argvi == "--get-properties") get_properties = true;
+				if (argvi == "--list-methods") list_methods = true;
 				if (argc - i <= 2) {
 					std::cerr << "expect >= 2 arguments after --introspect" << std::endl;
 					std::cerr << "        interface_name" << std::endl;
@@ -693,11 +779,14 @@ int main(int argc, char *argv[])
 			saftbus_set_property(interface_name, object_path, property_name, type_signature, property_value);
 		}
 		if (call_method) {
-			try {
+			try {	
 				saftbus_method_call(interface_name, object_path, method_name, type_signature, method_arguments, return_type_signature);
 			} catch(saftbus::Error &e) {
-				std::cerr << "exepction retured from method call: " << e.what() << std::endl;
+				std::cerr << "exception retured from method call: " << e.what() << std::endl;
 			}
+		}
+		if (list_methods) {
+			saftbus_list_methods(interface_name, object_path);
 		}
 		if (introspect) {
 			try {

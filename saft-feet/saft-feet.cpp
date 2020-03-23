@@ -12,9 +12,12 @@
 
 const std::string applicationName = "saft-feet";
 
+Gtk::Window *main_window;
+
 std::string call_saftbus_ctl(const std::string &args) {
 	std::string command = "saftbus-ctl ";
 	command.append(args);
+	command.append(" 2>&1"); // redirect stderr to stdout
 	FILE *fp = popen(command.c_str(), "r");
 	if (fp == nullptr) {
 		std::cerr << "Error: cannot run saftbus-ctl" << std::endl;
@@ -26,6 +29,7 @@ std::string call_saftbus_ctl(const std::string &args) {
 	while ((c = fgetc(fp)) != EOF) {
 		saftbus_ctl_output.push_back(c);
 	}
+	if (saftbus_ctl_output.back() == '\n') saftbus_ctl_output.pop_back();
 	pclose(fp);
 	return saftbus_ctl_output;
 }
@@ -203,13 +207,13 @@ public:
 
 	void on_row_activated(Gtk::TreePath path, Gtk::TreeViewColumn* column, sigc::slot<void, std::string, std::string> update_interface_box) {
 		std::string full_name = get_full_name(path);
-		std::cerr << "on_row_activated called: " << full_name << std::endl;
+		//std::cerr << "on_row_activated called: " << full_name << std::endl;
 		auto pos = full_name.find_last_of('/');
 		std::string object_path = full_name.substr(0, pos);
 		std::string interface_name = full_name.substr(pos + 1);
 		const std::string interface_prefix = "de.gsi.saftlib.";
 		if (interface_name.substr(0,interface_prefix.size()) == interface_prefix) {
-			std::cerr << object_path << " " << interface_name << std::endl;
+			//std::cerr << object_path << " " << interface_name << std::endl;
 			update_interface_box(object_path, interface_name);
 			//std::cout << call_saftbus_ctl("--get-properties " + interface_name + " " + object_path) << std::endl;
 		}
@@ -260,40 +264,253 @@ class InterfaceBox : public Gtk::Box
 {
 private:
 	struct Property {
-		Gtk::Label name;
-		Gtk::Label value;
-		Gtk::Button write;
-		Gtk::Entry entry;
+		std::string interface_name;
+		std::string object_path;
+		std::string property_name;
+		Gtk::Box    box;
+		std::string type;
+		Gtk::Label  name;
+		Gtk::Button get;
+		Gtk::Entry  value;
+		Gtk::Button set;
+		Gtk::Entry  entry;
+		bool wr;
+		void set_property() 
+		{
+			std::string new_value = entry.get_text();
+			if (new_value.size() == 0) {
+				Gtk::MessageDialog dialog(*main_window, "missing value");
+				dialog.run();
+				return;
+			}
+			std::string command = "--set-property " + interface_name + " " + object_path + " " + property_name + " " + type + " " + new_value;
+			std::string result = call_saftbus_ctl(command);
+		}
+		void get_property() 
+		{
+			std::string command = "--get-property " + interface_name + " " + object_path + " " + property_name + " " + type;
+			std::string result = call_saftbus_ctl(command);
+			value.set_text(result);
+		}
+		Property(const std::string &ifn, const std::string &obp, std::string t, std::string n, std::string v, bool w)
+			: interface_name(ifn), object_path(obp), property_name(n), box(Gtk::ORIENTATION_HORIZONTAL), type(t), get("get >"), name(t+":"+n), set("< set"), wr(w)
+		{
+			value.set_text(v);
+			value.set_editable(false);
+			get.signal_pressed().connect(sigc::mem_fun(this, &InterfaceBox::Property::get_property));
+			box.add(name);
+			box.add(get);
+			box.add(value);
+			if (wr) {
+				box.add(set);
+				set.signal_pressed().connect(sigc::mem_fun(this, &InterfaceBox::Property::set_property));
+				box.add(entry);
+			}
+		}
+		~Property() {
+			box.remove(name);
+			box.remove(value);
+			if (wr) {
+				box.remove(set);
+				box.remove(entry);
+			}
+		}
+	};
+
+	struct Method {
+		struct Arg{
+			Gtk::Label  name;
+			Gtk::Entry  value;
+			std::string type;
+			bool in;
+			Arg(std::string description) // description is inout:type:name e.g. 'in:t:event' or 'out:i:result' 
+				: name(description), in(description.substr(0,2)=="in"?true:false)
+			{
+				value.set_editable(in);
+				auto pos1 = description.find(":");
+				auto pos2 = description.find_last_of(":");
+				type = description.substr(pos1+1,pos2-pos1-1);
+			}
+		};
+		std::string interface_name;
+		std::string object_path;
+		std::string method_name;
+		std::string in_signature;
+		std::string out_signature;
+		Gtk::Box    box;
+		Gtk::Label  name;
+		Gtk::Button call;
+		std::vector<std::shared_ptr<Arg> > args;
+		// bool execute(GdkEventButton* event) 
+		// {
+		// 	std::cerr << "calling function" << std::endl;
+		// 	return true;
+		// }
+		void execute() 
+		{
+//			std::cerr << "calling function" << std::endl;
+			std::string command = "--call " + interface_name + " " + object_path + " " + method_name + " " + out_signature + " " + in_signature + " ";
+			for (auto &a : args) {
+				if (a->in) {
+					std::string arg = a->value.get_text();
+					if (arg.size() == 0) {
+						std::ostringstream ss;
+						ss << "missing value for in argument " << a->name.get_text();
+						//std::cerr << ss.str() << std::endl;
+						Gtk::MessageDialog dialog(*main_window, ss.str());
+						dialog.run();
+						return;
+					}
+					command.append(a->value.get_text());
+					command.append(" ");
+				}
+			}
+			//std::cerr << command << std::endl;
+			std::string result = call_saftbus_ctl(command);
+			//std::cerr << result << std::endl;
+			std::istringstream in(result);
+			int arg_idx = 0;
+			for (;;) {
+				std::string value;
+				in >> value;
+				if (!in) break;
+				while(args[arg_idx]->in) ++arg_idx;
+				if (value == "exception" || value == "unsupported") {
+					args[arg_idx]->value.set_text(result);
+					break;
+				}
+				args[arg_idx]->value.set_text(value);
+			}
+		}
+		Method(const std::string &ifn, const std::string &obp, std::string n, std::vector<std::shared_ptr<Arg> > a)
+			: interface_name(ifn), object_path(obp), method_name(n), box(Gtk::ORIENTATION_HORIZONTAL), name(n), call("call"), args(a)
+		{
+			box.add(name);
+			//call.signal_button_press_event().connect(sigc::mem_fun(this, &InterfaceBox::Method::execute));
+			call.signal_pressed().connect(sigc::mem_fun(this, &InterfaceBox::Method::execute));
+			box.add(call);
+			for (auto &a : args) {
+				box.add(a->name);
+				box.add(a->value);
+				if (a->in) in_signature.append(a->type);
+				else       out_signature.append(a->type);
+			}
+			if (in_signature.size() == 0) in_signature = "v";
+			if (out_signature.size() == 0) out_signature = "v";
+		}
+		~Method() {
+			box.remove(name);
+			box.remove(call);
+			for (auto &a : args) {
+				box.remove(a->name);
+				box.remove(a->value);
+			}
+		}
 	};
 
 	Gtk::Label _properties_label;	
-	std::vector<Property> _properties;
+	std::vector<std::shared_ptr<Property> > _properties;
+
+	Gtk::Separator _sep1;
 
 	Gtk::Label _methods_label;	
+	std::vector<std::shared_ptr<Method> > _methods;
 	Gtk::Label _signals_label;	
 public:
 	InterfaceBox() 
 		: Gtk::Box(Gtk::ORIENTATION_VERTICAL)
 		, _properties_label("Properties", Gtk::ALIGN_START, Gtk::ALIGN_CENTER)
+		, _sep1(Gtk::ORIENTATION_HORIZONTAL)
 		, _methods_label("Methods", Gtk::ALIGN_START, Gtk::ALIGN_CENTER)
 		, _signals_label("Signals", Gtk::ALIGN_START, Gtk::ALIGN_CENTER)
 	{
 		_properties_label.set_justify(Gtk::JUSTIFY_LEFT);
 		add(_properties_label);
 
+		add(_sep1);
+
 		_methods_label.set_justify(Gtk::JUSTIFY_LEFT);
 		add(_methods_label);
 
-		_signals_label.set_justify(Gtk::JUSTIFY_LEFT);
-		add(_signals_label);
+		// _signals_label.set_justify(Gtk::JUSTIFY_LEFT);
+		// add(_signals_label);
 
-		show_all();
+		//show_all();
 	}
 
 	void update(const std::string &object_path, const std::string &interface_name) {
 		//std::cerr<< "update called" << std::endl;
-		std::string property_string = call_saftbus_ctl("--get-properties " + interface_name + " " + object_path);
-		_properties_label.set_text("Properties\n" + property_string);
+
+		{ // properties
+			for (auto & p : _properties) {
+				remove(p->box);
+			}
+			_properties.clear();
+			remove(_properties_label);
+			add(_properties_label);
+
+			std::string property_string = call_saftbus_ctl("--get-properties " + interface_name + " " + object_path);
+			std::istringstream in(property_string);
+			for (;;) {
+				std::string line;
+				std::getline(in, line);
+				if (!in) break;
+				auto pos_equal = line.find('=');
+				std::string definition = line.substr(0, pos_equal);
+				std::string value      = line.substr(pos_equal + 1);
+				auto property_parts = split(definition, ':');
+				if (property_parts.size() != 3) break;
+				std::string type = property_parts[0];
+				std::string access = property_parts[1];
+				std::string name = property_parts[2];
+				//std::cerr << type << " " << name << " " << value << std::endl;
+				//_properties.push_back(Property(name,value,false));
+				_properties.push_back(std::make_shared<Property>(interface_name, object_path, type, name, value, access=="write"||access=="readwrite"));
+				//std::make_shared<Gtk::Label>(name)
+				add(_properties.back()->box);
+			}
+		}
+
+		remove(_sep1);
+		add(_sep1);
+
+		{ // methods
+			for (auto & m : _methods) {
+				remove(m->box);
+			}
+			_methods.clear();
+			remove(_methods_label);
+			add(_methods_label);
+
+			std::string property_string = call_saftbus_ctl("--list-methods " + interface_name + " " + object_path);
+			std::istringstream in(property_string);
+			for (;;) {
+
+				std::string line;
+				std::getline(in, line);
+				if (!in) break;
+				std::istringstream lin(line);
+				std::string name;
+				lin >> name;
+				if (name.size() == 0) break;
+
+				std::vector<std::shared_ptr<Method::Arg> > args;
+				for (;;) {
+					std::string arg;
+					lin >> arg;
+					if (!lin) break;
+					args.push_back(std::make_shared<Method::Arg>(arg));
+				}
+				_methods.push_back(std::make_shared<Method>(interface_name, object_path, name, args));
+				//std::make_shared<Gtk::Label>(name)
+				add(_methods.back()->box);
+			}
+		}
+
+
+
+		show_all();
+		//_properties_label.set_text("Properties\n" + property_string);
 		//std::cerr << get_introspection_xml(object_path, interface_name) << std::endl;
 	}
 
@@ -304,6 +521,7 @@ class MainWindow : public Gtk::Window
 private:
 	Gtk::Box               _box;
 	InterfaceBox           _interface_box;
+	Gtk::ScrolledWindow    _interface_box_scrolled;
 	Gtk::Paned             _paned;
 	ScrolledWindowTreeView _object_path_list;
 public:
@@ -316,7 +534,8 @@ public:
 		_paned.set_position(300);
 		_box.pack_end(_object_path_list, true, true);
 		_paned.add1(_box);
-		_paned.add2(_interface_box);
+		_interface_box_scrolled.add(_interface_box);
+		_paned.add2(_interface_box_scrolled);
 		add(_paned);
 		show_all();
 	}
@@ -326,6 +545,7 @@ int main(int argc, char *argv[])
 {
 	auto application = Gtk::Application::create(argc, argv, "de.gsi.saft-feet");
 	MainWindow window;
+	main_window = &window;
 	return application->run(window);
 
 	return 0;
