@@ -59,6 +59,9 @@ std::vector<std::string> get_object_paths() {
 				break;
 			}
 			auto interface = token.substr(interface_prefix.size(),token.find(',')-interface_prefix.size());
+			if (interface.find('[') != std::string::npos) {
+				interface = interface.substr(0,interface.find('['));
+			}
 			result.push_back(object_path);
 			result.back().append("/");
 			result.back().append(interface);
@@ -295,7 +298,9 @@ private:
 		void get_property() 
 		{
 			std::string command = "--get-property " + interface_name + " " + object_path + " " + property_name + " " + type;
+			std::cerr << command << std::endl;
 			std::string result = call_saftbus_ctl(command);
+			std::cerr << result << std::endl;
 			value.set_text(result);
 		}
 		Property(const std::string &ifn, const std::string &obp, std::string t, std::string n, std::string v, bool w)
@@ -371,9 +376,15 @@ private:
 					command.append(" ");
 				}
 			}
-			//std::cerr << command << std::endl;
+			std::cerr << command << std::endl;
 			std::string result = call_saftbus_ctl(command);
-			//std::cerr << result << std::endl;
+			std::cerr << result << std::endl;
+			if (result.find("Method call failed:") != std::string::npos) {
+				Gtk::MessageDialog dialog(*main_window, result);
+				dialog.run();
+				return;
+			}
+
 			std::istringstream in(result);
 			int arg_idx = 0;
 			for (;;) {
