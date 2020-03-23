@@ -284,7 +284,13 @@ private:
 				return;
 			}
 			std::string command = "--set-property " + interface_name + " " + object_path + " " + property_name + " " + type + " " + new_value;
+			std::cerr << command << std::endl;
 			std::string result = call_saftbus_ctl(command);
+			std::cerr << result << std::endl;
+			if (result.find("Set property failed:") != std::string::npos) {
+				Gtk::MessageDialog dialog(*main_window, result);
+				dialog.run();
+			}
 		}
 		void get_property() 
 		{

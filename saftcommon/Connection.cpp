@@ -672,22 +672,28 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							// set the value using the set_property handler from auto-generated saftlib code
 							Serial par2;
 							parameters.get(par2);
-							bool result = _saftbus_objects[saftd_object_id]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
+							try {
+								bool result = _saftbus_objects[saftd_object_id]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
 
-							// even the set property has a response ...
-							Serial response;
-							response.put(result);
+								// even the set property has a response ...
+								Serial response;
+								response.put(result);
 
-							// serialize the data
-							size = response.get_size();
-							const char *data_ptr = static_cast<const char*>(response.get_data());
+								// serialize the data
+								size = response.get_size();
+								const char *data_ptr = static_cast<const char*>(response.get_data());
 
-							// send the data 
-							logger.add("         size of response (empty resoponse): ").add(size).add("\n");
-							saftbus::write(client_fd, saftbus::METHOD_REPLY);
-							saftbus::write(client_fd, size);
-							saftbus::write_all(client_fd, data_ptr, size);
-							logger.add("         response was sent\n");
+								// send the data 
+								logger.add("         size of response (empty resoponse): ").add(size).add("\n");
+								saftbus::write(client_fd, saftbus::METHOD_REPLY);
+								saftbus::write(client_fd, size);
+								saftbus::write_all(client_fd, data_ptr, size);
+								logger.add("         response was sent\n");
+							} catch (const saftbus::Error& error) {
+								saftbus::write(client_fd, saftbus::METHOD_ERROR);
+								saftbus::write(client_fd, saftbus::Error::FAILED);
+								saftbus::write(client_fd, error.what());
+							}
 						}
 					}
 					else // normal method calls 

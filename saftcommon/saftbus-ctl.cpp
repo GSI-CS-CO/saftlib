@@ -548,8 +548,12 @@ void saftbus_set_property(const std::string& interface_name,
 	params.put(property_value);
 
 	int saftbus_index = connection.get_saftbus_index(object_path, interface_name);
+	try {
 	saftbus::Serial val = connection.call_sync(saftbus_index, object_path, "org.freedesktop.DBus.Properties", "Set", 
 	  params, "sender");
+	} catch (const saftbus::Error& error) {
+		std::cerr << "Set property failed: " << error.what() << std::endl;
+	}
 } 
 
 void saftbus_method_call (const std::string& interface_name,
