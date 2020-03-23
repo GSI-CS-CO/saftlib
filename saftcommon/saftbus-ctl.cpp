@@ -582,26 +582,30 @@ void saftbus_method_call (const std::string& interface_name,
 		else {std::cerr << "unknow type signature for method call " ; return; }
 	}
 	int saftbus_index = connection.get_saftbus_index(object_path, interface_name);
-	saftbus::Serial val = connection.call_sync(saftbus_index, object_path, interface_name, method_name, args, "sender");
+	try {
+		saftbus::Serial val = connection.call_sync(saftbus_index, object_path, interface_name, method_name, args, "sender");
 
-	val.get_init();
-	if (return_type_signature == "a{sa{ss}}") { print_serial_map_map<std::string,std::string,std::string>(val); }
-	else if (return_type_signature == "a{ss}") { print_serial_map<std::string,std::string>(val); }
-	else if (return_type_signature == "as") { print_serial_vector<std::string>(val); }
-	else if (return_type_signature == "y") { print_serial_value<unsigned char>(val); }
-	else if (return_type_signature == "b") { print_serial_value<bool>(val); }
-	else if (return_type_signature == "n") { print_serial_value<int16_t>(val); }
-	else if (return_type_signature == "q") { print_serial_value<uint16_t>(val); }
-	else if (return_type_signature == "i") { print_serial_value<int32_t>(val); }
-	else if (return_type_signature == "u") { print_serial_value<uint32_t>(val); }
-	else if (return_type_signature == "x") { print_serial_value<int64_t>(val); }
-	else if (return_type_signature == "t") { print_serial_value<uint64_t>(val); }
-	else if (return_type_signature == "T") { print_serial_value<saftlib::Time>(val); }
-	else if (return_type_signature == "d") { print_serial_value<double>(val); }
-	else if (return_type_signature == "h") { print_serial_value<int>(val); }
-	else if (return_type_signature == "s") { print_serial_value<std::string>(val); }
-	else if (return_type_signature == "") { /*void ... do nothing*/ }
-	else {std::cerr << "unsupported return type signature" << std::endl; return; }
+		val.get_init();
+		if (return_type_signature == "a{sa{ss}}") { print_serial_map_map<std::string,std::string,std::string>(val); }
+		else if (return_type_signature == "a{ss}") { print_serial_map<std::string,std::string>(val); }
+		else if (return_type_signature == "as") { print_serial_vector<std::string>(val); }
+		else if (return_type_signature == "y") { print_serial_value<unsigned char>(val); }
+		else if (return_type_signature == "b") { print_serial_value<bool>(val); }
+		else if (return_type_signature == "n") { print_serial_value<int16_t>(val); }
+		else if (return_type_signature == "q") { print_serial_value<uint16_t>(val); }
+		else if (return_type_signature == "i") { print_serial_value<int32_t>(val); }
+		else if (return_type_signature == "u") { print_serial_value<uint32_t>(val); }
+		else if (return_type_signature == "x") { print_serial_value<int64_t>(val); }
+		else if (return_type_signature == "t") { print_serial_value<uint64_t>(val); }
+		else if (return_type_signature == "T") { print_serial_value<saftlib::Time>(val); }
+		else if (return_type_signature == "d") { print_serial_value<double>(val); }
+		else if (return_type_signature == "h") { print_serial_value<int>(val); }
+		else if (return_type_signature == "s") { print_serial_value<std::string>(val); }
+		else if (return_type_signature == "") { /*void ... do nothing*/ }
+		else {std::cerr << "unsupported return type signature" << std::endl; return; }
+	} catch (const saftbus::Error& error) {
+		std::cerr << "Method call failed: " << error.what() << std::endl;
+	}
 } 
 
 
