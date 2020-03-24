@@ -566,6 +566,7 @@ void saftbus_method_call (const std::string& interface_name,
 	saftbus::ProxyConnection connection;
 	saftbus::Serial args;
 	for (unsigned i = 0; i < type_signature.size(); ++i) {
+		if (arguments.size() <= i) break;
 		std::istringstream value_in(arguments[i]);
 		if (type_signature[i] == 'y') { unsigned char value; value_in >> value; args.put(value); }
 		else if (type_signature[i] == 'b') { bool          value; value_in >> value; args.put(value); }
@@ -614,6 +615,7 @@ int main(int argc, char *argv[])
 	try {
 		//Glib::init();
 
+		bool interactive_mode             = false;
 		bool list_mutable_state           = false;
 		bool enable_signal_stats          = false;
 		bool disable_signal_stats         = false;
@@ -648,6 +650,8 @@ int main(int argc, char *argv[])
 			if (argvi == "-h" || argvi == "--help") {
 				show_help(argv[0]);
 				return 0;
+			} else if (argvi == "-i" || argvi == "--interactive") {
+				interactive_mode = true;
 			} else if (argvi == "-s" || argvi == "--status") {
 				list_mutable_state = true;
 			} else if (argvi == "--download-signal-timing-stats") {
@@ -803,6 +807,62 @@ int main(int argc, char *argv[])
 				std::cout << connection.introspect(object_path, interface_name) << std::endl;
 			} catch(saftbus::Error &e) {
 				std::cerr << "exepction retured from introspection: " << e.what() << std::endl;
+			}
+		}
+		if (interactive_mode) {
+			for (;;) {
+				std::string line;
+				std::vector<std::string> cmd;
+				std::cout << "saftbus> ";
+				std::getline(std::cin,line);
+				if (!std::cin) break;
+				std::istringstream lin(line);
+				for (;;) {
+					std::string token;
+					lin >> token;
+					if (!lin) break;
+					cmd.push_back(token);
+				}
+				if (cmd.size() == 0) break;
+				if (cmd[0] == "set-property") {
+					if (cmd.size() != 6) {
+						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <property-name> <type-signture> <value>" << std::endl;
+					} else   {
+						saftbus_set_property(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
+					}
+				}
+				if (cmd[0] == "get-property") {
+					if (cmd.size() != 5) {
+						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <property-name> <type-signture>" << std::endl;
+					} else {
+						saftbus_get_property(cmd[1], cmd[2], cmd[3], cmd[4]);
+					}
+				}
+				if (cmd[0] == "call") {
+					if (cmd.size() < 6) {
+						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <method-name> <return-type-signture> <arg-type-signture> {<args>}" << std::endl;
+					} else {
+						std::vector<std::string> args;
+						for(size_t i = 6; i < cmd.size(); ++i) args.push_back(cmd[i]);
+						saftbus_method_call(cmd[1], cmd[2], cmd[3], cmd[4], args, cmd[5]);
+					}
+				}
+				if (cmd[0] == "introspect" || cmd[0] == "list-methods" || cmd[0] == "get-properties") {
+					if (cmd.size() != 3) {
+						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path>" << std::endl;
+					} else {
+						if (cmd[0] == "introspect") std::cout << connection->introspect(cmd[2], cmd[1]) << std::endl;
+						if (cmd[0] == "list-methods") saftbus_list_methods(cmd[1], cmd[2]);
+						if (cmd[0] == "get-properties") saftbus_get_properties(cmd[1], cmd[2]);
+					}
+				}
+				if (cmd[0] == "status") {
+					if (cmd.size() != 1) {
+						std::cerr << "error: expecting no arguments to status" << std::endl;
+					} else {
+						print_saftbus_object_table(connection);
+					}
+				}
 			}
 		}
 
