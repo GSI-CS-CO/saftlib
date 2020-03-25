@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -10,33 +11,93 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <fcntl.h>
+
 const std::string applicationName = "saft-feet";
 
 Gtk::Window *main_window;
 
-std::string call_saftbus_ctl(const std::string &args) {
-	std::string command = "saftbus-ctl ";
-	command.append(args);
-	command.append(" 2>&1"); // redirect stderr to stdout
-	FILE *fp = popen(command.c_str(), "r");
-	if (fp == nullptr) {
-		std::cerr << "Error: cannot run saftbus-ctl" << std::endl;
-		exit(1);
+class SaftbusCtl 
+{
+public:
+	SaftbusCtl()  {
+		system("rm -f /tmp/saftbus_output; mkfifo /tmp/saftbus_output");
+		fp_write = popen("saftbus-ctl -i > /tmp/saftbus_output", "w");
+		fd_read = open("/tmp/saftbus_output", O_RDONLY);
+		saftbus_id = read_until("> ");
+		std::cerr << "got saftbus id: " << saftbus_id << std::endl;
 	}
-	char c;
-	std::string saftbus_ctl_output;
-	saftbus_ctl_output.reserve(2048);
-	while ((c = fgetc(fp)) != EOF) {
-		saftbus_ctl_output.push_back(c);
+	std::string read_until(const std::string &end) {
+		std::string result;
+		for (;;) {
+			char buffer[1024];
+			int read_bytes;
+			if ((read_bytes = read(fd_read, buffer, 1024)) <= 0) {
+				break;
+			}
+			result.append(buffer, read_bytes);
+			if (result.size() >= end.size()) {
+				if (result.compare(result.size()-end.size(), end.size(), end) == 0) {
+					break;
+				}
+			}
+		}
+		return result;
 	}
-	if (saftbus_ctl_output.back() == '\n') saftbus_ctl_output.pop_back();
-	pclose(fp);
-	return saftbus_ctl_output;
-}
+	std::string get_saftbus_id() {
+		return saftbus_id;
+	}
+	~SaftbusCtl() {
+		pclose(fp_write);
+	}
+	std::string call(std::string args) {
+		if (args[0] == '-' && args[1] == '-') args = args.substr(2);
+		//std::cerr << args << std::endl;
+		fprintf(fp_write, "%s\n", args.c_str());
+		fflush(fp_write);
+		std::string response = read_until(saftbus_id);
+		response = response.substr(0, response.size()-saftbus_id.size());
+		if (response[response.size()-1] == '\n')  {
+			response = response.substr(0, response.size()-1);
+		}
+		//std::cerr << "got response: " << response << std::endl;
+		// if (response.substr(0,saftbus_id.size()) == saftbus_id) {
+		// 	response = response.substr(saftbus_id.size());
+		// }
+		return response;
+	}
+private:
+	FILE *fp_write;
+	int  fd_read;
+	std::string saftbus_id;
+};
+
+SaftbusCtl saftbus_ctl;
+
+
+// std::string call_saftbus_ctl(const std::string &args) {
+// 	std::string command = "saftbus-ctl ";
+// 	command.append(args);
+// 	command.append(" 2>&1"); // redirect stderr to stdout
+// 	FILE *fp = popen(command.c_str(), "r");
+// 	if (fp == nullptr) {
+// 		std::cerr << "Error: cannot run saftbus-ctl" << std::endl;
+// 		exit(1);
+// 	}
+// 	char c;
+// 	std::string saftbus_ctl_output;
+// 	saftbus_ctl_output.reserve(2048);
+// 	while ((c = fgetc(fp)) != EOF) {
+// 		saftbus_ctl_output.push_back(c);
+// 	}
+// 	if (saftbus_ctl_output.back() == '\n') saftbus_ctl_output.pop_back();
+// 	pclose(fp);
+// 	return saftbus_ctl_output;
+// }
 
 // execute 'saftbus-ctl -s' and extract object_paths and interfaces from the output
 std::vector<std::string> get_object_paths() {
-	std::string text = call_saftbus_ctl("-s");
+	std::string text = saftbus_ctl.call("--status");
 
 	// optionally cut the prefix from object_path or interface name
 	std::string object_path_prefix = "";//"/de/gsi";
@@ -75,7 +136,7 @@ std::string get_introspection_xml(const std::string &object_path, const std::str
 	args.append(interface_name);
 	args.append(" ");
 	args.append(object_path);
-	return call_saftbus_ctl(args);
+	return saftbus_ctl.call(args);
 }
 
 std::vector<std::string> split(const std::string &str, char delimeter) {
@@ -218,7 +279,7 @@ public:
 		if (interface_name.substr(0,interface_prefix.size()) == interface_prefix) {
 			//std::cerr << object_path << " " << interface_name << std::endl;
 			update_interface_box(object_path, interface_name);
-			//std::cout << call_saftbus_ctl("--get-properties " + interface_name + " " + object_path) << std::endl;
+			//std::cout << saftbus_ctl.call("--get-properties " + interface_name + " " + object_path) << std::endl;
 		}
 	}
 };
@@ -288,7 +349,7 @@ private:
 			}
 			std::string command = "--set-property " + interface_name + " " + object_path + " " + property_name + " " + type + " " + new_value;
 			std::cerr << command << std::endl;
-			std::string result = call_saftbus_ctl(command);
+			std::string result = saftbus_ctl.call(command);
 			std::cerr << result << std::endl;
 			if (result.find("Set property failed:") != std::string::npos) {
 				Gtk::MessageDialog dialog(*main_window, result);
@@ -299,7 +360,7 @@ private:
 		{
 			std::string command = "--get-property " + interface_name + " " + object_path + " " + property_name + " " + type;
 			std::cerr << command << std::endl;
-			std::string result = call_saftbus_ctl(command);
+			std::string result = saftbus_ctl.call(command);
 			std::cerr << result << std::endl;
 			value.set_text(result);
 		}
@@ -377,7 +438,8 @@ private:
 				}
 			}
 			std::cerr << command << std::endl;
-			std::string result = call_saftbus_ctl(command);
+			//std::string result = saftbus_ctl.call(command);
+			std::string result = saftbus_ctl.call(command);
 			std::cerr << result << std::endl;
 			if (result.find("Method call failed:") != std::string::npos) {
 				Gtk::MessageDialog dialog(*main_window, result);
@@ -466,7 +528,7 @@ public:
 			remove(_properties_label);
 			add(_properties_label);
 
-			std::string property_string = call_saftbus_ctl("--get-properties " + interface_name + " " + object_path);
+			std::string property_string = saftbus_ctl.call("--get-properties " + interface_name + " " + object_path);
 			std::istringstream in(property_string);
 			for (;;) {
 				std::string line;
@@ -499,7 +561,7 @@ public:
 			remove(_methods_label);
 			add(_methods_label);
 
-			std::string property_string = call_saftbus_ctl("--list-methods " + interface_name + " " + object_path);
+			std::string property_string = saftbus_ctl.call("--list-methods " + interface_name + " " + object_path);
 			std::istringstream in(property_string);
 			for (;;) {
 
@@ -547,7 +609,7 @@ public:
 		, _paned(Gtk::ORIENTATION_HORIZONTAL)
 		, _object_path_list(sigc::mem_fun(&_interface_box, &InterfaceBox::update))
 	{
-		set_default_size(800, 600);
+		set_default_size(600, 400);
 		_paned.set_position(300);
 		_box.pack_end(_object_path_list, true, true);
 		_paned.add1(_box);

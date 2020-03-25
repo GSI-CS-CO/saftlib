@@ -667,21 +667,27 @@ int main(int argc, char *argv[])
 			}
 		}
 		if (interactive_mode) {
-			for (;;) {
+			//std::ofstream outputfile("/tmp/saftbus-ctl-output.txt");
+			std::ostream &out = std::cout;
+			bool stop = false;;
+			while (!stop) {
 				std::string line;
 				std::vector<std::string> cmd;
-				std::cout << "saftbus" << connection->get_saftbus_id() << "> " << std::flush;
+				out << "saftbus" << connection->get_saftbus_id() << "> " << std::flush;
 
 				for (;;) {
 					char c;
-					if (read(0, &c, sizeof(c)) != sizeof(c) ||
-						c == '\n') {
+					if (read(0, &c, sizeof(c)) != sizeof(c)) {
+						stop = true;
+						break;
+					}
+					if (c == '\n') {
 						break;
 					}
 					line.push_back(c);
 				}
-				//std::getline(std::cin,line);
-				//if (!std::cin) break;
+				// std::getline(std::cin,line);
+				// if (!std::cin) break;
 				std::istringstream lin(line);
 				for (;;) {
 					std::string token;
@@ -692,48 +698,41 @@ int main(int argc, char *argv[])
 				if (cmd.size() == 0) continue;
 				if (cmd[0] == "set-property") {
 					if (cmd.size() != 6) {
-						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <property-name> <type-signture> <value>" << std::endl;
+						out << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <property-name> <type-signture> <value>" << std::endl;
 					} else   {
-						std::cout << saftbus_set_property(connection, cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]) << std::endl;
+						out << saftbus_set_property(connection, cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]) << std::endl;
 					}
 				}
 				if (cmd[0] == "get-property") {
 					if (cmd.size() != 5) {
-						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <property-name> <type-signture>" << std::endl;
+						out << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <property-name> <type-signture>" << std::endl;
 					} else {
-						std::cout << saftbus_get_property(connection, cmd[1], cmd[2], cmd[3], cmd[4]) << std::endl;
+						out << saftbus_get_property(connection, cmd[1], cmd[2], cmd[3], cmd[4]) << std::endl;
 					}
 				}
 				if (cmd[0] == "call") {
 					if (cmd.size() < 6) {
-						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <method-name> <return-type-signture> <arg-type-signture> {<args>}" << std::endl;
+						out << "error: expecting: " << cmd[0] << " <interface_name> <object_path> <method-name> <return-type-signture> <arg-type-signture> {<args>}" << std::endl;
 					} else {
 						std::vector<std::string> args;
 						for(size_t i = 6; i < cmd.size(); ++i) args.push_back(cmd[i]);
-						std::cout << saftbus_method_call(connection, cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], args) << std::endl;
+						out << saftbus_method_call(connection, cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], args) << std::endl;
 					}
-				}
-
-// static std::string saftbus_method_call (const std::string& interface_name,
-// 	                      const std::string& object_path,
-// 	                      const std::string& method_name,
-// 	                      const std::string& type_signature,
-// 	                      const std::vector<std::string>& arguments,
-// 	                      const std::string return_type_signature) 				
+				}			
 				if (cmd[0] == "introspect" || cmd[0] == "list-methods" || cmd[0] == "get-properties") {
 					if (cmd.size() != 3) {
-						std::cerr << "error: expecting: " << cmd[0] << " <interface_name> <object_path>" << std::endl;
+						out << "error: expecting: " << cmd[0] << " <interface_name> <object_path>" << std::endl;
 					} else {
-						if (cmd[0] == "introspect") std::cout << connection->introspect(cmd[2], cmd[1]) << std::endl;
-						if (cmd[0] == "list-methods") std::cout << saftbus_list_methods(connection, cmd[1], cmd[2]);
-						if (cmd[0] == "get-properties") std::cout << saftbus_get_properties(connection, cmd[1], cmd[2]);
+						if (cmd[0] == "introspect") out << connection->introspect(cmd[2], cmd[1]) << std::endl;
+						if (cmd[0] == "list-methods") out << saftbus_list_methods(connection, cmd[1], cmd[2]);
+						if (cmd[0] == "get-properties") out << saftbus_get_properties(connection, cmd[1], cmd[2]);
 					}
 				}
 				if (cmd[0] == "status") {
 					if (cmd.size() != 1) {
-						std::cerr << "error: expecting no arguments to status" << std::endl;
+						out << "error: expecting no arguments to status" << std::endl;
 					} else {
-						std::cout << print_saftbus_object_table(connection) << std::endl;
+						out << print_saftbus_object_table(connection) << std::endl;
 					}
 				}
 			}
