@@ -61,9 +61,11 @@
 #define ESR_RING           0x154
 #define ESR_TO_GTV2MU2     0x20c
 #define GTH4MU2_TO_GTV1MU1 0x209
+#define GHTBMU1_TO_YRT1MH2 0x213
 
 // GID, CRYRING
-#define YRT1IN_TO_YRT1LQ1  0xc8
+#define YRT1LQ1_TO_YRT1LC1 0xc9
+#define YRT1MH2_TO_CRYRING 0xcb
 #define CRYRING_RING       0xd2
 
 //GID, caves
@@ -94,7 +96,7 @@ static uint32_t  source;              // GID of source
 static uint32_t  idleSource;          // GID played when BPC idle
 static uint32_t  bpcAct;              // actual BPC 
 static uint32_t  vaccAct;             // actual vAcc from UNILAC
-static int      nCmd;                // counts command events for desired machine
+static int       nCmd;                // counts command events for desired machine
 
 
 // this will be called while snooping
@@ -116,30 +118,32 @@ static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, sa
   // machine names
   switch (gid) {
     // SIS, ESR, HEST
-  case GTK3MV4_TO_PLTKMH2   : gName = "(from TK)";     break;
-  case SIS18_RING           : gName = "SIS18";      break;
-  case GTS1MU1_TO_GTS3MU1   : gName = "NE3";        break;
-  case GTS3MU1_TO_GHFSMU1   : gName = "NE4";        break;
-  case GTS1MU1_TO_GTE3MU1   : gName = "NE5";        break;
-  case GHFSMU1_TO_GTS6MU1   : gName = "NE5";        break;
-  case GTS6MU1_TO_ESR       : gName = "NE12";       break;
-  case ESR_RING             : gName = "ESR";        break;
-  case ESR_TO_GTV2MU2       : gName = "NE8";        break;
-  case GTH4MU2_TO_GTV1MU1   : gName = "NE8";        break;
+    case GTK3MV4_TO_PLTKMH2   : gName = "(from TK)";  break;
+    case SIS18_RING           : gName = "SIS18";      break;
+    case GTS1MU1_TO_GTS3MU1   : gName = "NE3";        break;
+    case GTS3MU1_TO_GHFSMU1   : gName = "NE4";        break;
+    case GTS1MU1_TO_GTE3MU1   : gName = "NE5";        break;
+    case GHFSMU1_TO_GTS6MU1   : gName = "NE5";        break;
+    case GTS6MU1_TO_ESR       : gName = "NE12";       break;
+    case ESR_RING             : gName = "ESR";        break;
+    case ESR_TO_GTV2MU2       : gName = "NE8";        break;
+    case GTH4MU2_TO_GTV1MU1   : gName = "NE8";        break;
+    case GHTBMU1_TO_YRT1MH2   : gName = "NE11(ESR)";  break;  
     // CRYRING
-  case YRT1IN_TO_YRT1LQ1    : gName = "YRT1";       break;
-  case CRYRING_RING         : gName = "CRYRING";    break;
+    case YRT1MH2_TO_CRYRING   : gName = "NE11(cave)"; break;
+    case YRT1LQ1_TO_YRT1LC1   : gName = "YRT1";       break;
+    case CRYRING_RING         : gName = "CRYRING";    break;
     // caves
-  case TO_HHD               : gName = "HHD";        break;
-  case TO_HFS               : gName = "HFS";        break;
-  case TO_HHT               : gName = "HHT";        break;
-  case TO_HADES             : gName = "HADES";      break;
-  case TO_HTM               : gName = "HTM";        break;
-  case TO_HTC               : gName = "HTC";        break;
-  case TO_HTD               : gName = "HTD";        break;
-  case TO_HTA               : gName = "HTA";        break;       
-  case TO_HTP               : gName = "HTP";        break;       
-  default                   : gName = "N/A";        break;
+    case TO_HHD               : gName = "HHD";        break;
+    case TO_HFS               : gName = "HFS";        break;
+    case TO_HHT               : gName = "HHT";        break;
+    case TO_HADES             : gName = "HADES";      break;
+    case TO_HTM               : gName = "HTM";        break;
+    case TO_HTC               : gName = "HTC";        break;
+    case TO_HTD               : gName = "HTD";        break;
+    case TO_HTA               : gName = "HTA";        break;       
+    case TO_HTP               : gName = "HTP";        break;       
+    default                   : gName = "N/A";        break;
   }
 
   switch (evtno) {
@@ -197,7 +201,7 @@ static void help(void) {
   std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
   std::cout << std::endl;
   std::cout << "  snoop <source>       snoops and displays Beam Production Chains, CTRL+C to exit (try 'snoop 0'')" << std::endl;
-  std::cout << "                       machine: 0 UNILAC(TK), 1, SIS, 2 ESR, 3 YRT1IN" << std::endl;
+  std::cout << "                       machine: 0 UNILAC(TK), 1 SIS, 2 ESR, 3 CRYRING (injector), 4 CRYRING (NE11)" << std::endl;
   std::cout << std::endl;
   std::cout << "This tool provides a very basic display of beam production chains in the facility." << std::endl;
   std::cout << std::endl;
@@ -285,11 +289,12 @@ int main(int argc, char** argv)
       snoop = true;
       dummy = strtoull(argv[optind+2], &value_end, 0);
       switch (dummy) {
-      case 0 : source = GTK3MV4_TO_PLTKMH2; idleSource = SIS18_RING;   std::cout << "UNILAC(TK)"       ; break;
-      case 1 : source = SIS18_RING;         idleSource = SIS18_RING;   std::cout << "SIS18"            ; break;
-      case 2 : source = ESR_RING;           idleSource = ESR_RING;     std::cout << "ESR"              ; break;
-      case 3 : source = YRT1IN_TO_YRT1LQ1;  idleSource = CRYRING_RING; std::cout << "CRYRING Injector" ; break;
-      default: std::cerr << std::endl << program << ": invalid machine -- " << dummy << std::endl      ; return 1;
+        case 0 : source = GTK3MV4_TO_PLTKMH2; idleSource = SIS18_RING;   std::cout << "UNILAC(TK)"       ; break;
+        case 1 : source = SIS18_RING;         idleSource = SIS18_RING;   std::cout << "SIS18"            ; break;
+        case 2 : source = ESR_RING;           idleSource = ESR_RING;     std::cout << "ESR"              ; break;
+        case 3 : source = YRT1LQ1_TO_YRT1LC1; idleSource = CRYRING_RING; std::cout << "CRYRING  injector"; break;
+        case 4 : source = YRT1MH2_TO_CRYRING; idleSource = CRYRING_RING; std::cout << "CRYRING  intern"  ; break;
+        default: std::cerr << std::endl << program << ": invalid machine -- " << dummy << std::endl      ; return 1;
       } // switch dummy
       std::cout << std::endl << std::endl;
       if (pmode & PMODE_VERBOSE) std::cout << "verbose mode: idle patterns and other BPCs are shown in brackets" << std::endl;
@@ -387,17 +392,26 @@ int main(int argc, char** argv)
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 48));
       nCon++;
 
-      // CRYRING 
-      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)YRT1IN_TO_YRT1LQ1 << 48) | ((uint64_t)SEQ_START << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nCon++;
-
-      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GHTBMU1_TO_YRT1MH2 << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 56));
       nCon++;
       
+
+      // CRYRING 
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)YRT1LQ1_TO_YRT1LC1 << 48) | ((uint64_t)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      nCon++;
+
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)YRT1MH2_TO_CRYRING << 48) | ((uint64_t)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 64));
+      nCon++;
+
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)SEQ_START << 36);
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 72));
+      nCon++;
+      
       snoopID   = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)COMMAND << 36);
-      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 56));
+      condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 72));
       nCon++;
 
       // caves
