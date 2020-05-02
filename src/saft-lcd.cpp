@@ -7,7 +7,7 @@
 //
 // A CLI that allows to see what happens in the facility.
 //
-// version: 2019-Feb-18
+// version: 2020-May-02
 //
 //*****************************************************************************
 // This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
 //
-#define SAFT_LCD_VERSION "0.0.5"
+#define SAFT_LCD_VERSION "0.0.6"
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -90,7 +90,7 @@ using namespace std;
 
 static const char* program;
 static uint32_t  pmode = PMODE_NONE;  // how data are displayed
-static int      getVersion = 0;      // print version?
+static int       getVersion = 0;      // print version?
 
 static uint32_t  source;              // GID of source
 static uint32_t  idleSource;          // GID played when BPC idle
@@ -103,6 +103,7 @@ static int       nCmd;                // counts command events for desired machi
 static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   uint32_t gid;
+  uint32_t sid;
   uint32_t evtno;
   uint32_t bpcid;
   uint32_t vacc;
@@ -111,6 +112,7 @@ static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, sa
 
   gid     = ((id & 0x0fff000000000000) >> 48);
   evtno   = ((id & 0x0000fff000000000) >> 36);
+  sid     = ((id & 0x00000000fff00000) >> 20);
   bpcid   = ((param >> 42) & 0b1111111111111111111111);  // in case of SEQ_START
   vacc    = (id & 0xf);                                  // in case of TC_REQ
   dry     = (id & 0x10);
@@ -128,9 +130,9 @@ static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, sa
     case ESR_RING             : gName = "ESR";        break;
     case ESR_TO_GTV2MU2       : gName = "NE8";        break;
     case GTH4MU2_TO_GTV1MU1   : gName = "NE8";        break;
-    case GHTBMU1_TO_YRT1MH2   : gName = "NE11(ESR)";  break;  
+    case GHTBMU1_TO_YRT1MH2   : gName = "NE11";       break;  
     // CRYRING
-    case YRT1MH2_TO_CRYRING   : gName = "NE11(cave)"; break;
+    case YRT1MH2_TO_CRYRING   : gName = "NE11";       break;
     case YRT1LQ1_TO_YRT1LC1   : gName = "YRT1";       break;
     case CRYRING_RING         : gName = "CRYRING";    break;
     // caves
@@ -149,7 +151,6 @@ static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, sa
   switch (evtno) {
   case SEQ_START :
     if (gid == source) {
-
       // old BPC finished
       if ((vaccAct == 0xffffffff) && (source == GTK3MV4_TO_PLTKMH2)) std::cout << " [no vAcc requested] ";
       std::cout << std::endl;
@@ -158,7 +159,7 @@ static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, sa
       bpcAct  = bpcid;
       vaccAct = 0xffffffff;
       nCmd    = 0;
-      std::cout << std::setw(7) << bpcid << ": " << gName;
+      std::cout << "bpcid " << bpcid << ", sid " << sid << ": " << gName;
     }  // if gid
     else {
       if (bpcid == bpcAct)             std::cout << "-" << gName;
@@ -207,16 +208,17 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "Example: 'saft-lcd bla -f snoop 0' snoops facility for BPCs with origin at UNILAC(TK)," << std::endl;
   std::cout << "         the following information is displayed" << std::endl;
-  std::cout << "BPCID: source-target(s) [UNI vAcc]"              << std::endl;
-  std::cout << "----------------------------------"              << std::endl;
-  std::cout << "    6: UNILAC-SIS18-NE5-HADES [10]"              << std::endl;
-  std::cout << "    '       '     '   '     '   '"               << std::endl;
-  std::cout << "    '       '     '   '     '   '- # of virt acc requested from UNILAC" << std::endl;
-  std::cout << "    '       '     '   '     '- BPC target"       << std::endl;
-  std::cout << "    '       '     '   '- via"                    << std::endl;
-  std::cout << "    '       '     '- via"                        << std::endl;
-  std::cout << "    '       '- BPC origin"                       << std::endl;
-  std::cout << "    '- BPCID"                                    << std::endl;
+  std::cout << "bpcid x: sid y: source-target(s) [UNI vAcc]"     << std::endl;
+  std::cout << "-------------------------------------------"     << std::endl;
+  std::cout << "bpcid 3, sid 4: (from TK)-SIS18-NE5-NE12 [10]"   << std::endl;
+  std::cout << "      '      '         '      '   '    '   '"    << std::endl;
+  std::cout << "      '      '         '      '   '    '   '- # of virt acc requested from UNILAC" << std::endl;
+  std::cout << "      '      '         '      '   '    '- BPC target"                              << std::endl;
+  std::cout << "      '      '         '      '   '- via"        << std::endl;
+  std::cout << "      '      '         '      '- via"            << std::endl;
+  std::cout << "      '      '         '- BPC origin"            << std::endl;
+  std::cout << "      '      '- Sequence ID"                     << std::endl;
+  std::cout << "      '- Beam Production Chain ID"               << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <d.beck@gsi.de> !!!"              << std::endl;
   std::cout << "Licensed under the GPL v3" << std::endl;
@@ -292,16 +294,16 @@ int main(int argc, char** argv)
         case 0 : source = GTK3MV4_TO_PLTKMH2; idleSource = SIS18_RING;   std::cout << "UNILAC(TK)"       ; break;
         case 1 : source = SIS18_RING;         idleSource = SIS18_RING;   std::cout << "SIS18"            ; break;
         case 2 : source = ESR_RING;           idleSource = ESR_RING;     std::cout << "ESR"              ; break;
-        case 3 : source = YRT1LQ1_TO_YRT1LC1; idleSource = CRYRING_RING; std::cout << "CRYRING  injector"; break;
-        case 4 : source = YRT1MH2_TO_CRYRING; idleSource = CRYRING_RING; std::cout << "CRYRING  intern"  ; break;
+        case 3 : source = YRT1LQ1_TO_YRT1LC1; idleSource = CRYRING_RING; std::cout << "CRYRING injector" ; break;
+        case 4 : source = YRT1MH2_TO_CRYRING; idleSource = CRYRING_RING; std::cout << "CRYRING cave"     ; break;
         default: std::cerr << std::endl << program << ": invalid machine -- " << dummy << std::endl      ; return 1;
       } // switch dummy
       std::cout << std::endl << std::endl;
       if (pmode & PMODE_VERBOSE) std::cout << "verbose mode: idle patterns and other BPCs are shown in brackets" << std::endl;
       std::cout << std::endl;
 
-      std::cout << "  BPCID: source-target(s) [UNI vAcc]" << std::endl;
-      std::cout << "------------------------------------" << std::endl;
+      std::cout << "bpcid x: sid y: source-target(s) [UNI vAcc]"     << std::endl;
+      std::cout << "-------------------------------------------"     << std::endl;
     } // "snoop"
 
     else std::cerr << program << ": unknown command: " << command << std::endl;
