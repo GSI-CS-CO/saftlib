@@ -1,3 +1,26 @@
+// @brief Command line tool to interact with saftbus devices
+// @author Michael Reese  <m.reese@gsi.de>
+//
+// Copyright (C) 2019-2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+//
+// A CLI that allows to see saftbus objects, call their methods and get 
+// or set their properties
+//
+//*****************************************************************************
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
+//*****************************************************************************
+//
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -87,21 +110,6 @@ static std::string print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConn
 	std::ostringstream oss;
 
 
-	// std::cout << "_____________________________________________________________________________________________________________" << std::endl;
-	// std::cout << std::endl;
-	// std::cout << "socket: ";
-	// for(unsigned i = 0; i < sockets_active.size(); ++i ) {
-	// 	std::cout << std::setw(3) << i;
-	// }
-	// std::cout << std::endl;
-	// std::cout << "busy:   ";
-	// for(unsigned i = 0; i < sockets_active.size(); ++i ) {
-	// 	if (sockets_active[i]) {
-	// 		std::cout << std::setw(3) << "*";
-	// 	} else {
-	// 		std::cout << std::setw(3) << " ";
-	// 	}
-	// }
 	oss << std::endl;
 	oss << "_____________________________________________________________________________________________________________" << std::endl;
 	oss << std::endl;
@@ -274,18 +282,6 @@ static std::string saftbus_list_methods(std::shared_ptr<saftbus::ProxyConnection
 		} else {
 			pos_method_end = pos_method_begin+2; // have to correct the end position in this case because looking for /method as end position was wrong
 		}
-
-		// std::string property, name, type, access;
-
-		// in >> property >> name >> type >> access;
-
-		// name   = name.substr(6, name.find_last_of('\'')-6);
-		// type   = type.substr(6, type.find_last_of('\'')-6);
-		// access = access.substr(8, access.find_last_of('\'')-8);
-
-		// if (access == "read" || access == "readwrite") {
-		// 	oss << type << ":" << name << "=" ; saftbus_get_property(interface_name, object_path, name, type);
-		// }
 
 	}
 	oss << std::endl;

@@ -1,3 +1,26 @@
+// @brief GUI front end for saftbus-ctl
+// @author Michael Reese  <m.reese@gsi.de>
+//
+// Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+//
+// A GUI that allows to see saftbus objects, call their methods and get 
+// or set their properties
+//
+//*****************************************************************************
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
+//*****************************************************************************
+//
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -65,10 +88,6 @@ public:
 		if (response[response.size()-1] == '\n')  {
 			response = response.substr(0, response.size()-1);
 		}
-		//std::cerr << "got response: " << response << std::endl;
-		// if (response.substr(0,saftbus_id.size()) == saftbus_id) {
-		// 	response = response.substr(saftbus_id.size());
-		// }
 		return response;
 	}
 private:
@@ -79,26 +98,6 @@ private:
 
 SaftbusCtl saftbus_ctl;
 
-
-// std::string call_saftbus_ctl(const std::string &args) {
-// 	std::string command = "saftbus-ctl ";
-// 	command.append(args);
-// 	command.append(" 2>&1"); // redirect stderr to stdout
-// 	FILE *fp = popen(command.c_str(), "r");
-// 	if (fp == nullptr) {
-// 		std::cerr << "Error: cannot run saftbus-ctl" << std::endl;
-// 		exit(1);
-// 	}
-// 	char c;
-// 	std::string saftbus_ctl_output;
-// 	saftbus_ctl_output.reserve(2048);
-// 	while ((c = fgetc(fp)) != EOF) {
-// 		saftbus_ctl_output.push_back(c);
-// 	}
-// 	if (saftbus_ctl_output.back() == '\n') saftbus_ctl_output.pop_back();
-// 	pclose(fp);
-// 	return saftbus_ctl_output;
-// }
 
 // execute 'saftbus-ctl -s' and extract object_paths and interfaces from the output
 std::vector<std::string> get_object_paths() {

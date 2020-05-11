@@ -1,3 +1,20 @@
+/** Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
 #include "core.h"
 #include <stdexcept>
 #include <iostream>
@@ -136,37 +153,37 @@ namespace saftbus
 //  
 //   @note socket should be (PF_UNIX, SOCK_DGRAM)
 int sendfd(int socket, int fd) {
-		char dummy = '$';
-		struct msghdr msg;
-		struct iovec iov;
+	char dummy = '$';
+	struct msghdr msg;
+	struct iovec iov;
 
-		char cmsgbuf[CMSG_SPACE(sizeof(int))];
+	char cmsgbuf[CMSG_SPACE(sizeof(int))];
 
-		iov.iov_base = &dummy;
-		iov.iov_len = sizeof(dummy);
+	iov.iov_base = &dummy;
+	iov.iov_len = sizeof(dummy);
 
-		msg.msg_name = NULL;
-		msg.msg_namelen = 0;
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
-		msg.msg_flags = 0;
-		msg.msg_control = cmsgbuf;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_flags = 0;
+	msg.msg_control = cmsgbuf;
+	msg.msg_controllen = CMSG_LEN(sizeof(int));
 
-		struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
-		cmsg->cmsg_level = SOL_SOCKET;
-		cmsg->cmsg_type = SCM_RIGHTS;
-		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+	struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 
-		*(int*) CMSG_DATA(cmsg) = fd;
+	*(int*) CMSG_DATA(cmsg) = fd;
 
-		int ret = sendmsg(socket, &msg, 0);
+	int ret = sendmsg(socket, &msg, 0);
 
-		if (ret == -1) {
-			std::cerr << "sendmsg failed with " << strerror(errno) << std::endl;
-		}
+	if (ret == -1) {
+		std::cerr << "sendmsg failed with " << strerror(errno) << std::endl;
+	}
 
-		return ret;
+	return ret;
 }
 
 //   Receives file descriptor using given socket
@@ -176,40 +193,40 @@ int sendfd(int socket, int fd) {
 //  
 //   @note socket should be (PF_UNIX, SOCK_DGRAM)
 int recvfd(int socket) {
-		int len;
-		int fd;
-		char buf[1];
-		struct iovec iov;
-		struct msghdr msg;
-		struct cmsghdr *cmsg;
-		char cms[CMSG_SPACE(sizeof(int))];
+	int len;
+	int fd;
+	char buf[1];
+	struct iovec iov;
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
+	char cms[CMSG_SPACE(sizeof(int))];
 
-		iov.iov_base = buf;
-		iov.iov_len = sizeof(buf);
+	iov.iov_base = buf;
+	iov.iov_len = sizeof(buf);
 
-		msg.msg_name = 0;
-		msg.msg_namelen = 0;
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
-		msg.msg_flags = 0;
-		msg.msg_control = (caddr_t) cms;
-		msg.msg_controllen = sizeof cms;
+	msg.msg_name = 0;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_flags = 0;
+	msg.msg_control = (caddr_t) cms;
+	msg.msg_controllen = sizeof cms;
 
-		len = recvmsg(socket, &msg, 0);
+	len = recvmsg(socket, &msg, 0);
 
-		if (len < 0) {
-			std::cerr << "recvmsg failed with " << strerror(errno) << std::endl;
-			return -1;
-		}
+	if (len < 0) {
+		std::cerr << "recvmsg failed with " << strerror(errno) << std::endl;
+		return -1;
+	}
 
-		if (len == 0) {
-			std::cerr << "recvmsg failed no data" << std::endl;
-			return -1;
-		}
+	if (len == 0) {
+		std::cerr << "recvmsg failed no data" << std::endl;
+		return -1;
+	}
 
-		cmsg = CMSG_FIRSTHDR(&msg);
-		memmove(&fd, CMSG_DATA(cmsg), sizeof(int));
-		return fd;
+	cmsg = CMSG_FIRSTHDR(&msg);
+	memmove(&fd, CMSG_DATA(cmsg), sizeof(int));
+	return fd;
 }
 
 
