@@ -13,7 +13,7 @@
 
 #include <fcntl.h>
 
-const std::string applicationName = "saft-feet";
+std::string applicationName;
 
 Gtk::Window *main_window;
 
@@ -26,6 +26,11 @@ public:
 		fd_read = open("/tmp/saftbus_output", O_RDONLY);
 		saftbus_id = read_until("> ");
 		std::cerr << "got saftbus id: " << saftbus_id << std::endl;
+		std::ostringstream window_title;
+		window_title << "saft-feet   " << saftbus_id;
+		applicationName = window_title.str();
+		applicationName.pop_back(); // remove the trailing "> " characters
+		applicationName.pop_back(); // remove the trailing "> " characters
 	}
 	std::string read_until(const std::string &end) {
 		std::string result;
@@ -348,9 +353,9 @@ private:
 				return;
 			}
 			std::string command = "--set-property " + interface_name + " " + object_path + " " + property_name + " " + type + " " + new_value;
-			std::cerr << command << std::endl;
+			// std::cerr << command << std::endl;
 			std::string result = saftbus_ctl.call(command);
-			std::cerr << result << std::endl;
+			// std::cerr << result << std::endl;
 			if (result.find("Set property failed:") != std::string::npos) {
 				Gtk::MessageDialog dialog(*main_window, result);
 				dialog.run();
@@ -359,9 +364,9 @@ private:
 		void get_property() 
 		{
 			std::string command = "--get-property " + interface_name + " " + object_path + " " + property_name + " " + type;
-			std::cerr << command << std::endl;
+			// std::cerr << command << std::endl;
 			std::string result = saftbus_ctl.call(command);
-			std::cerr << result << std::endl;
+			// std::cerr << result << std::endl;
 			value.set_text(result);
 		}
 		Property(const std::string &ifn, const std::string &obp, std::string t, std::string n, std::string v, bool w)
@@ -437,10 +442,9 @@ private:
 					command.append(" ");
 				}
 			}
-			std::cerr << command << std::endl;
-			//std::string result = saftbus_ctl.call(command);
+			// std::cerr << command << std::endl;
 			std::string result = saftbus_ctl.call(command);
-			std::cerr << result << std::endl;
+			// std::cerr << result << std::endl;
 			if (result.find("Method call failed:") != std::string::npos) {
 				Gtk::MessageDialog dialog(*main_window, result);
 				dialog.run();
@@ -610,6 +614,7 @@ public:
 		, _object_path_list(sigc::mem_fun(&_interface_box, &InterfaceBox::update))
 	{
 		set_default_size(600, 400);
+		set_title(applicationName);
 		_paned.set_position(300);
 		_box.pack_end(_object_path_list, true, true);
 		_paned.add1(_box);

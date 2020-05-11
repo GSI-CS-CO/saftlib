@@ -11,16 +11,6 @@
 
 #include <unistd.h>
 
-static void write_histogram(std::string filename, const std::map<int,int> &hist)
-{
-	std::cout << "writing histogram " << filename << std::endl;
-	std::ofstream out(filename.c_str());
-	for (auto it: hist) {
-		out << it.first << " " << it.second << std::endl;
-	}
-
-}
-
 static void show_help(const char *argv0) 
 {
 	std::cout << "usage: " << argv0 << " [options]" << std::endl;
@@ -423,7 +413,7 @@ static std::string saftbus_method_call (std::shared_ptr<saftbus::ProxyConnection
 	                      const std::string& type_signature,
 	                      const std::vector<std::string>& arguments)
 {
-	std::cerr << "method call " << object_path << " " << interface_name << " " << return_type_signature << " " << type_signature << " " << arguments.size() << std::endl;
+	//std::cerr << "method call " << object_path << " " << interface_name << " " << return_type_signature << " " << type_signature << " " << arguments.size() << std::endl;
 	std::ostringstream oss;
 	saftbus::Serial args;
 	for (unsigned i = 0; i < type_signature.size(); ++i) {
