@@ -41,7 +41,6 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 	strcpy(_address.sun_path, socketname.c_str());
 	int connect_result = connect( server_socket, (struct sockaddr *)&_address , sizeof(_address));
 	if (connect_result != 0) {
-		std::cerr << "throwing" << std::endl;
 		throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
 	}
 
@@ -162,11 +161,12 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 			throw saftbus::Error(saftbus::Error::FAILED, msg.str());
 		}
 	} catch(std::exception &e) {
-		std::cerr << "ProxyConnection::call_sync() exception: " << e.what() << std::endl;
-		std::cerr << object_path << std::endl;
-		std::cerr << interface_name << std::endl;
-		std::cerr << name << std::endl;
-		throw saftbus::Error(saftbus::Error::FAILED, e.what());
+		std::ostringstream msg;
+		msg << "ProxyConnection::call_sync() exception: " << e.what() << std::endl;
+		msg << object_path << std::endl;
+		msg << interface_name << std::endl;
+		msg << name << std::endl;
+		throw saftbus::Error(saftbus::Error::FAILED, msg.str().c_str());
 	}
 
 }
