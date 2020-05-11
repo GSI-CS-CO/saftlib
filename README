@@ -18,7 +18,7 @@ A simple example:
   std::cout << "Locked: " << receiver->getLocked() << std::endl;
 
   // Run a callback when this changes
-  receiver->Locked.connect(sigc::ptr_fun(&on_locked_callback));
+  receiver->SigLocked.connect(sigc::ptr_fun(&on_locked_callback));
 
   // Wait forever, running callbacks
   while(true) {
