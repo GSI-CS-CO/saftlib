@@ -1,3 +1,20 @@
+/** Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
 #include "Connection.h"
 #include "core.h"
 
@@ -392,6 +409,24 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					saftbus::write(client_fd, _function_run_times);
 				}
 				break;
+				case SAFTBUS_CTL_INTROSPECT:
+				{
+					std::string object_path, interface_name;
+					saftbus::read(client_fd, object_path);
+					saftbus::read(client_fd, interface_name);
+					logger.add("   introspect from saftbus-ctl: object_path \'");
+					logger.add(object_path);
+					logger.add("\' interface_name \'");
+					logger.add(interface_name);
+					logger.add("\'\n");
+					int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
+					if (_saftbus_objects.find(saftd_object_id) == _saftbus_objects.end()) {
+						saftbus::write(client_fd, std::string("unknown object path"));
+						break;
+					}
+					saftbus::write(client_fd, _saftbus_objects[saftd_object_id]->_introspection_xml);
+				}
+				break;
 				case saftbus::SAFTBUS_CTL_GET_STATE:
 				{
 					// Send all mutable state variables of the Connection object.
@@ -654,22 +689,28 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							// set the value using the set_property handler from auto-generated saftlib code
 							Serial par2;
 							parameters.get(par2);
-							bool result = _saftbus_objects[saftd_object_id]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
+							try {
+								bool result = _saftbus_objects[saftd_object_id]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
 
-							// even the set property has a response ...
-							Serial response;
-							response.put(result);
+								// even the set property has a response ...
+								Serial response;
+								response.put(result);
 
-							// serialize the data
-							size = response.get_size();
-							const char *data_ptr = static_cast<const char*>(response.get_data());
+								// serialize the data
+								size = response.get_size();
+								const char *data_ptr = static_cast<const char*>(response.get_data());
 
-							// send the data 
-							logger.add("         size of response (empty resoponse): ").add(size).add("\n");
-							saftbus::write(client_fd, saftbus::METHOD_REPLY);
-							saftbus::write(client_fd, size);
-							saftbus::write_all(client_fd, data_ptr, size);
-							logger.add("         response was sent\n");
+								// send the data 
+								logger.add("         size of response (empty resoponse): ").add(size).add("\n");
+								saftbus::write(client_fd, saftbus::METHOD_REPLY);
+								saftbus::write(client_fd, size);
+								saftbus::write_all(client_fd, data_ptr, size);
+								logger.add("         response was sent\n");
+							} catch (const saftbus::Error& error) {
+								saftbus::write(client_fd, saftbus::METHOD_ERROR);
+								saftbus::write(client_fd, saftbus::Error::FAILED);
+								saftbus::write(client_fd, error.what());
+							}
 						}
 					}
 					else // normal method calls 

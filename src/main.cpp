@@ -157,8 +157,26 @@ static void on_sigint(int)
   SAFTd::get().loop()->quit();
 }
 
+static bool saftd_already_running() 
+{
+  // if a SAFTd_Proxy can be created, another SAFTd is already running
+  try {
+    std::shared_ptr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
+    return true;
+  } catch (...) {
+    return false;
+  }
+  return false;
+}
+
 int main(int argc, char** argv)
 {
+  // check if another saftd is already running
+  if (saftd_already_running()) {
+    std::cerr << "saftd already running" << std::endl;
+    exit(1);
+  }
+
   // Hook a stack tracer up to exceptions
   std::set_terminate(my_terminate);
   

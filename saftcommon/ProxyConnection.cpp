@@ -1,3 +1,20 @@
+/** Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
 #include "ProxyConnection.h"
 #include "Proxy.h"
 #include "saftbus.h"
@@ -41,7 +58,6 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 	strcpy(_address.sun_path, socketname.c_str());
 	int connect_result = connect( server_socket, (struct sockaddr *)&_address , sizeof(_address));
 	if (connect_result != 0) {
-		std::cerr << "throwing" << std::endl;
 		throw std::runtime_error("Cannot connect to socket. Possible reasons: all sockets busy, saftd not running, or wrong socket permissions");
 	}
 
@@ -100,6 +116,16 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 	saftbus::write(get_fd(), global_id);
 }
 
+std::string ProxyConnection::introspect(const std::string &object_path, const std::string &interface_name)
+{
+	saftbus::write(get_fd(), saftbus::SAFTBUS_CTL_INTROSPECT);
+	saftbus::write(get_fd(), object_path);
+	saftbus::write(get_fd(), interface_name);
+	std::string xml;
+	saftbus::read(get_fd(), xml);
+	return xml;
+}
+
 Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                const std::string& object_path, 
 	                                const std::string& interface_name, 
@@ -152,11 +178,12 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 			throw saftbus::Error(saftbus::Error::FAILED, msg.str());
 		}
 	} catch(std::exception &e) {
-		std::cerr << "ProxyConnection::call_sync() exception: " << e.what() << std::endl;
-		std::cerr << object_path << std::endl;
-		std::cerr << interface_name << std::endl;
-		std::cerr << name << std::endl;
-		throw saftbus::Error(saftbus::Error::FAILED, e.what());
+		std::ostringstream msg;
+		msg << "ProxyConnection::call_sync() exception: " << e.what() << std::endl;
+		msg << object_path << std::endl;
+		msg << interface_name << std::endl;
+		msg << name << std::endl;
+		throw saftbus::Error(saftbus::Error::FAILED, msg.str().c_str());
 	}
 
 }
