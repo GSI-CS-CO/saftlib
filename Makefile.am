@@ -17,6 +17,7 @@ BUILT_SOURCES = version.h
 .PHONY: version.h debian # causes build.cpp to be rebuilt every run
 
 saftd_SOURCES = version.h \
+    src/PluginLoader.cpp    src/PluginLoader.h      \
 	src/Device.cpp			src/Device.h			\
 	src/OpenDevice.cpp		src/OpenDevice.h		\
 	src/Driver.cpp			src/Driver.h			\
@@ -59,7 +60,7 @@ saftd_SOURCES = version.h \
 	src/globals.cpp			src/main.cpp
 
 saftd_LDADD = $(EB_LIBS) $(SAFTLIBS)
-saftd_LDFLAGS = -lpthread -lrt -rdynamic # needed for shared memory, stack trace
+saftd_LDFLAGS = -lpthread -lrt -rdynamic -ldl # needed for shared memory, stack trace
 
 client_SOURCES = src/client.cpp
 client_LDADD   = $(SAFTLIBS)

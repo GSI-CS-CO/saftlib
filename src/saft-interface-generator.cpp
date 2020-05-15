@@ -41,14 +41,21 @@ std::string strip_leading_whitespaces(const std::string &input) {
 	std::string result;
 	bool non_space_found = false;
 	for (auto ch: input) {
-		if (ch != ' ' || non_space_found) {
+		if (!isspace(ch) || non_space_found) {
 			non_space_found = true;
 			result.push_back(ch);
 		}
 	}
 	return result;
 }
-
+std::string strip_trailing_whitespaces(const std::string &input) {
+	std::string result(input);
+	if (!input.size()) return input;
+	while(isspace(result.back())) {
+		result.pop_back();
+	}
+	return result;
+}
 
 class MiniCppTokenizer
 {
@@ -56,6 +63,7 @@ public:
 	enum TokenType {
 		Other,
 		Preprocessor,
+		Class,
 		SaftbusMethod,
 		SaftbusProperty,
 		SaftbusSignal,
@@ -108,16 +116,7 @@ public:
 				if (current_string.size()) break;
 				return false;
 			}
-			// if in some form of comment
-			// if (line_comment) {
-			// 	//std::cerr << ch;
-			// 	if (ch == '\n') {
-			// 		// std::cerr << " <== end of line commment" << std::endl;
-			// 		line_comment = false;
-			// 		current_string = "";
-			// 	}
-			// 	continue;
-			// } else 
+			// if inside block comment
 			if (block_comment) {
 				if (ch == '/' && current_string.back()=='*') {
 					// std::cerr << "=========> end of block comment" << std::endl;
@@ -199,10 +198,13 @@ public:
 		}
 	}
 	std::string get_token_string() {
-		return current_string;
+		return strip_trailing_whitespaces(current_string);
 	}
 
 	TokenType get_token_type() {
+		if (current_string == "class") {
+			return Class;
+		}
 		return current_type;
 	}
 
@@ -225,23 +227,31 @@ private:
 	struct Scope {
 		std::string name;
 		int open_braces;
-		Scope(const std::string &n) : name(n), open_braces(0) {	}
+		bool is_class;
+		Scope(const std::string &n, bool isclass = false) : name(strip_trailing_whitespaces(n)), open_braces(0), is_class(isclass) {}
 	};
 
 	std::vector<Scope> scope;
-	bool read_namespace;
+	bool read_name;
+	bool read_class_name;
 
 public:
 	ScopeManager() 
 		: scope(1, Scope("")) 
-		, read_namespace(false)
+		, read_name(false)
+		, read_class_name(false)
 		{}
 	void take_into_account(const std::string &token) {
 		if (token == "namespace") {
-			read_namespace = true;
-		} else if (read_namespace) {
+			read_name = true;
+		} else if (token == "class") {
+			read_class_name = true;
+		} else if (read_name) {
 			scope.push_back(Scope(token));
-			read_namespace = false;
+			read_name = false;
+		} else if (read_class_name) {
+			scope.push_back(Scope(token,true));
+			read_class_name = false;
 		} else if (token == "{") {
 			++scope.back().open_braces;
 		} else if (token == "}") {
@@ -254,9 +264,15 @@ public:
 		}
 	}
 	std::string get_current_name() {
-		std::string full_name("::");
-		for (auto part: scope) {
-			full_name.append(part.name);
+		std::string full_name;
+		for (int i = 0; i < scope.size(); ++i) {
+			full_name.append(scope[i].name);
+			if (scope[i].is_class) {
+				full_name.append("*");
+			}
+			if (i != scope.size()-1) {
+				full_name.append("::");
+			}
 		}
 		return full_name;
 	}
@@ -302,7 +318,11 @@ struct Method
 		for (auto type_and_name: split(comma_separated_parameter_list,',')) {
 			parameters.push_back(MethodParameter(type_and_name));
 		}
-		std::vector<std::string> type_name(split(return_space_name,' '));
+		std::vector<std::string> type_name;
+		auto pos = return_space_name.find_last_of(" ");
+		type_name.push_back(return_space_name.substr(0,pos));
+		type_name.push_back(return_space_name.substr(pos+1));
+		//std::cerr << "\'" << return_space_name << "\' type_name.size()=" << type_name.size() << std::endl;
 		assert(type_name.size() == 2);
 		name             = type_name[1];
 		std::string type = type_name[0];
@@ -316,7 +336,7 @@ struct Method
 std::ostream& operator<<(std::ostream &out, const Method &m) {
 	out << "saftbus method: " << m.name << std::endl;
 	for (auto parameter: m.parameters) {
-		out << parameter << std::endl;
+		out << "      " << parameter << std::endl;
 	}
 	return out;
 }
@@ -325,6 +345,8 @@ struct SignalParameter
 {
 	std::string type;
 	std::string name;
+	SignalParameter(const std::string &t, const std::string &n) 
+		: type(t), name(n) {}
 };
 
 struct Signal
@@ -332,7 +354,13 @@ struct Signal
 	std::vector<SignalParameter> parameters;
 	std::string name;
 };
-
+std::ostream& operator<<(std::ostream& out, const Signal &s) {
+	out << "  saftbus signal: " << s.name << std::endl;
+	for (auto par: s.parameters) {
+		out << "      " << par.type << " " << par.name << std::endl;
+	}
+	return out;
+}
 
 struct Property
 {
@@ -350,30 +378,63 @@ struct Property
 	std::string name;
 };
 std::ostream &operator<<(std::ostream &out, const Property& p) {
-	out << ((p.inout==InOut)?"readwrite":((p.inout==Out)?"read":"write")) << " " << p.type << " " << p.name;
+	out << "  saftbus property: " << ((p.inout==InOut)?"readwrite":((p.inout==Out)?"read":"write")) << " " << p.type << " " << p.name;
 	return out;
 }
 
+struct Interface 
+{
+	std::string              name;
+	std::vector<std::string> parents; // parent classes
+	std::vector<Method>      methods;
+	std::vector<Signal>      signals;
+	std::vector<Property>    properties;
+	Interface(const std::string &interface_name, const std::vector<std::string> &interface_parents) 
+		: name(interface_name)
+		, parents(interface_parents)
+		{}
+};
+std::ostream& operator<<(std::ostream& out, Interface &interface) {
+	out << "saftbus interface "  << interface.name;
+	if (interface.parents.size() > 0) { 
+		out << " : ";
+		for (auto parent: interface.parents) {
+			out << parent << " ";
+		}
+	}
+	out << std::endl;
+	out << "  saftbus methods:" << std::endl;
+	for (auto method: interface.methods) {
+		out << "    " << method << std::endl;
+	}
+	out << "  saftbus properties:" << std::endl;
+	for (auto property: interface.properties) {
+		out << "    " << property << std::endl;
+	}
+	out << "  saftbus signals:" << std::endl;
+	for (auto signal: interface.signals) {
+		out << "    " << signal << std::endl;
+	}
+	return out;
+}
 
-class Interface
+class InterfaceManager
 {
 private:
-	std::vector<Method> methods;
-	std::vector<Signal> signals;
-	std::vector<Property> properties;
+	std::vector<Interface> interfaces;
 	ScopeManager scope_manager;
 public:
-	Interface(std::istream &in)
+	void scan_file(std::istream &in)
 	{
 		MiniCppTokenizer::TokenType type;
 		MiniCppTokenizer minitok(in);
 		ScopeManager scopeman;
 		while(minitok.next_token()) {
-			//std::cerr << scopeman.get_current_name() << "  TOKEN: " << minitok.get_token_string() ;
-			//std::cerr << std::endl;
+			std::cerr << scopeman.get_current_name() << "  TOKEN: " << minitok.get_token_string() << std::endl;
 
 			switch(minitok.get_token_type()) {
 				case MiniCppTokenizer::SaftbusMethod: {
+					assert(interfaces.size()>0);
 					std::string return_and_name = minitok.get_token_string();
 					minitok.next_token(); // '('
 					minitok.next_token(); // the (comma separated) list of arguments
@@ -382,8 +443,30 @@ public:
 						method_args = ""; 
 					}
 					// std::cerr << " SAFTBUS METHOD: " << return_and_name << "(" << method_args << ")" << std::endl;
-					methods.push_back(Method(return_and_name, method_args));
-					std::cerr << "------> " << methods.back() << std::endl;
+					interfaces.back().methods.push_back(Method(return_and_name, method_args));
+					// std::cerr << methods.back() << std::endl;
+				}
+				break;
+				case MiniCppTokenizer::SaftbusSignal: {
+					assert(interfaces.size()>0);
+					std::string signal_and_name = minitok.get_token_string(); // sigc::signal< ... , ...  > name
+					auto pos_type_begin = signal_and_name.find_first_of('<')+1;
+					auto pos_type_end   = signal_and_name.find_last_of('>');
+					auto pos_name_begin = signal_and_name.find_last_of(' ');
+
+					std::string signal_type = signal_and_name.substr(pos_type_begin, pos_type_end-pos_type_begin);
+					std::cerr << "signal_type=" << signal_type << std::endl;
+					std::string signal_name = strip_leading_whitespaces(signal_and_name.substr(pos_name_begin));
+					std::cerr << "signal_name=" << signal_name << std::endl;
+					std::vector<std::string> parameter_list = split(signal_type, ',');
+					assert (parameter_list.size()>1);
+					interfaces.back().signals.push_back(Signal());
+					interfaces.back().signals.back().name = signal_name;
+					for (int i = 1; i < parameter_list.size(); ++i) {
+						std::ostringstream parameter_name;
+						parameter_name << "par" << i-1;
+						interfaces.back().signals.back().parameters.push_back(SignalParameter(parameter_list[i], parameter_name.str()));
+					}
 				}
 				break;
 				case MiniCppTokenizer::SaftbusProperty: {
@@ -395,20 +478,54 @@ public:
 						method_args = ""; 
 					}
 					// std::cerr << " SAFTBUS PROPERTY: " << return_and_name << "(" << method_args << ")" << std::endl;
-					properties.push_back(Property(return_and_name, method_args));
+					interfaces.back().properties.push_back(Property(return_and_name, method_args));
 					bool found_duplicate = false;
-					for (int i = 0; i < properties.size()-1; ++i) {
-						if (properties[i].name  == properties.back().name) {
-							if (properties[i].inout != properties.back().inout) {
-								properties[i].inout = InOut;
+					for (int i = 0; i < interfaces.back().properties.size()-1; ++i) {
+						if (interfaces.back().properties[i].name  == interfaces.back().properties.back().name) {
+							if (interfaces.back().properties[i].inout != interfaces.back().properties.back().inout) {
+								interfaces.back().properties[i].inout = InOut;
 							}
 							found_duplicate = true;
 						}
 					}
 					if (found_duplicate) {
-						properties.pop_back();
+						interfaces.back().properties.pop_back();
 					}
-					std::cerr << "-------> " << properties.back() << std::endl;
+					// std::cerr << properties.back() << std::endl;
+				}
+				break;
+				case MiniCppTokenizer::Class: {
+					minitok.next_token(); // classname
+					std::string classname = minitok.get_token_string();
+					std::cerr << "************ classname=\"" << classname << "\"" << std::endl;
+					minitok.next_token(); // ':' or '{' or ';'
+					if (minitok.get_token_string() == ":") {
+						// read parent classes
+						minitok.next_token(); // parent classes
+						std::string parents = minitok.get_token_string();
+						std::vector<std::string> parent_list = split(parents,',');
+						std::vector<std::string> interface_parents;
+
+						// std::cerr << "=========> CLASS " << classname << " : ";
+						for (auto parent: parent_list) {
+							std::vector<std::string> parts = split(parent, ' ');
+							if (parts.size() > 1) {
+								interface_parents.push_back(parts[1]);
+								//std::cerr << parts[1] << " ";
+							}
+						}
+						interfaces.push_back(Interface(scopeman.get_current_name() + "::" + classname, interface_parents));
+						// std::cerr << std::endl;
+						minitok.next_token(); // '{'
+						scopeman.take_into_account("class");
+						scopeman.take_into_account(classname);
+					}
+					else if (minitok.get_token_string() == "{") {
+						std::vector<std::string> interface_parents;
+						interfaces.push_back(Interface(scopeman.get_current_name() + "::" + classname, interface_parents));
+						scopeman.take_into_account("class");
+						scopeman.take_into_account(classname);
+					}
 				}
 				break;
 				default:;
@@ -417,17 +534,27 @@ public:
 			scopeman.take_into_account(minitok.get_token_string());
 		}
 	}
-
+	friend std::ostream& operator<<(std::ostream& out, InterfaceManager &interfacemanager);
 };
+std::ostream& operator<<(std::ostream& out, InterfaceManager &interfacemanager) 
+{
+	for (auto interface: interfacemanager.interfaces) {
+		out << interface << std::endl;
+	}
+	return out;
+}
+
 
 
 int main(int argc, char *argv[])
 {
+	InterfaceManager interfaces;
 	for (int i = 1; i < argc; ++i) {
-		std::cout << "generating saftbus glue code for " << argv[i] << std::endl;
+		std::cout << "extracting saftbus interface from " << argv[i] << std::endl;
 		std::ifstream sourcefile(argv[i]);
-		Interface interface(sourcefile);
+		interfaces.scan_file(sourcefile);
 	}
+	std::cout << interfaces << std::endl;
 
 	return 0;
 }
