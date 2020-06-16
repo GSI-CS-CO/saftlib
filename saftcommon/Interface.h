@@ -1,3 +1,20 @@
+/** Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
 #ifndef SAFTBUS_INTERFACE_H_
 #define SAFTBUS_INTERFACE_H_
 
@@ -49,10 +66,12 @@ namespace saftbus
 	class InterfaceInfo /*: public Glib::Object*/ //Base
 	{
 	public:
-		InterfaceInfo(const std::string &interface_name);
+		InterfaceInfo(const std::string &interface_name, const std::string &xml);
 		const std::string &get_interface_name();
+		const std::string &get_introspection_xml();
 	private:
 		std::string _interface_name;
+		std::string _xml;
 	};
 
 
@@ -62,10 +81,13 @@ namespace saftbus
 		using SlotInterfaceGetProperty = sigc::slot< void, Serial&, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string& >;
 		using SlotInterfaceMethodCall = sigc::slot< void, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial&, const std::shared_ptr<MethodInvocation>& >;
 		using SlotInterfaceSetProperty = sigc::slot< bool, const std::shared_ptr<Connection>&, const std::string&, const std::string&, const std::string&, const std::string&, const Serial& >;
-		InterfaceVTable 	( 	const SlotInterfaceMethodCall&  	slot_method_call,
+		InterfaceVTable 	( 	
+								const std::string &introspection_xml,
+								const SlotInterfaceMethodCall&  	slot_method_call,
 								const SlotInterfaceGetProperty&  	slot_get_property = SlotInterfaceGetProperty(),
-								const SlotInterfaceSetProperty&  	slot_set_property = SlotInterfaceSetProperty() 
+								const SlotInterfaceSetProperty&  	slot_set_property = SlotInterfaceSetProperty()
 			); 	
+		std::string _introspection_xml;
 		SlotInterfaceGetProperty get_property;
 		SlotInterfaceSetProperty set_property;
 		SlotInterfaceMethodCall  method_call;
@@ -74,7 +96,7 @@ namespace saftbus
 	class NodeInfo /*: public Glib::Object*/ //Base
 	{
 	public:
-		NodeInfo(const std::string &interface_name);
+		NodeInfo(const std::string &interface_name, const std::string &xml);
 		static std::shared_ptr<NodeInfo> create_for_xml(const std::string&  xml_data);
 		std::shared_ptr<InterfaceInfo> lookup_interface();
 	private:

@@ -695,7 +695,7 @@
         <xsl:value-of select="@name"/>
         <xsl:text>))),&#10;</xsl:text>
       </xsl:for-each>
-      <xsl:text>  interface_vtable(&#10;</xsl:text>
+      <xsl:text>  interface_vtable(xml,&#10;</xsl:text>
       <xsl:text>    sigc::mem_fun(this, &amp;i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_method_call),&#10;</xsl:text>
