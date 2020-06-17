@@ -85,7 +85,7 @@ std::string tr_formatActionEvent(uint64_t id, uint32_t pmode)
       full << " BPID: "  << fmt << std::setw(5) << ((id >> 10) & 0x3fff);
       full << " RES: "   << fmt << std::setw(4) << (id & 0x3ff);
     } // if fid==0
-    if (fid == 1) {
+    else if (fid == 1) {
       full << " FLAGS: " << fmt << std::setw(1) << ((id >> 32) & 0xf);
       full << " BPC: "   << fmt << std::setw(1) << ((id >> 34) & 0x1);
       full << " SID: "   << fmt << std::setw(4) << ((id >> 20) & 0xfff);
