@@ -54,20 +54,35 @@ class FunctionGenerator : public Owned, public iFunctionGenerator
     static std::shared_ptr<FunctionGenerator> create(const ConstructorType& args);
     
     // iFunctionGenerator overrides
+    // saftbus method
     void Arm();
+    // saftbus method
     void Abort();
+    // saftbus method
     uint64_t ReadFillLevel();
+    // saftbus method
     bool AppendParameterSet(const std::vector< int16_t >& coeff_a, const std::vector< int16_t >& coeff_b, const std::vector< int32_t >& coeff_c, const std::vector< unsigned char >& step, const std::vector< unsigned char >& freq, const std::vector< unsigned char >& shift_a, const std::vector< unsigned char >& shift_b);
+    // saftbus method
     void Flush();
+    // saftbus property
     uint32_t getVersion() const;
+    // saftbus property
     unsigned char getSCUbusSlot() const;
+    // saftbus property
     unsigned char getDeviceNumber() const;
+    // saftbus property
     unsigned char getOutputWindowSize() const;
+    // saftbus property
     bool getEnabled() const;
+    // saftbus property
     bool getArmed() const;
+    // saftbus property
     bool getRunning() const;
+    // saftbus property
     uint32_t getStartTag() const;
+    // saftbus method
     uint32_t ReadExecutedParameterCount();
+    // saftbus property
     void setStartTag(uint32_t val);
     
   protected:

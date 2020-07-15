@@ -16,6 +16,7 @@
 #include "Logger.h"
 #include "PollFD.h"
 #include "core.h"
+#include "PluginLoader.h"
 
 
 namespace saftbus
@@ -83,6 +84,8 @@ namespace saftbus
 		int _saftbus_signal_handle_counter; // log signal subscriptions
 
 		std::set<int> _sockets;
+
+		std::map<std::string, std::shared_ptr<saftbus::PluginLoader > > _plugins;
 
 
 		// 	     // handle    // signal

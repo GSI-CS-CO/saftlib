@@ -1,5 +1,5 @@
 SUBDIRS = interfaces saftcommon
-SAFTLIBS = interfaces/libsaftlib.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS)
+SAFTLIBS = interfaces/libsaftlib.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS) -ldl
 
 sbin_PROGRAMS = saftd
 bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-wbm-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-uni saft-eb-fwd saft-interface-generator
@@ -17,7 +17,6 @@ BUILT_SOURCES = version.h
 .PHONY: version.h debian # causes build.cpp to be rebuilt every run
 
 saftd_SOURCES = version.h \
-    src/PluginLoader.cpp    src/PluginLoader.h      \
 	src/Device.cpp			src/Device.h			\
 	src/OpenDevice.cpp		src/OpenDevice.h		\
 	src/Driver.cpp			src/Driver.h			\

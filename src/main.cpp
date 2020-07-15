@@ -34,7 +34,6 @@
 #include "MainContext.h"
 #include "saftbus.h"
 
-#include "PluginLoader.h"
 
 // #include "SAFTd.h"
 // #include "clog.h"
@@ -144,14 +143,11 @@ int main(int argc, char** argv)
     sigc::bind(sigc::bind(sigc::ptr_fun(&on_name_acquired), argv), argc),
     sigc::ptr_fun(&on_name_lost));
 
-  // Load a plugin
-  saftlib::PluginLoader("./testplugin.so");
 
   // run the main loop
   while(true) {
-    std::cerr << "bla" << std::endl;
+    std::cerr << "iteration" << std::endl;
     Slib::MainContext::get_default()->iteration(true);
-    std::cerr << "blub" << std::endl;
   }
 
   // clean up

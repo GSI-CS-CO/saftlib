@@ -31,10 +31,15 @@ class Owned : public BaseObject, public iOwned
     Owned(const std::string& objectPath, sigc::slot<void> destroy_ = sigc::slot<void>());
     ~Owned();
     
+    // saftbus method
     void Disown();
+    // saftbus method
     void Own();
+    // saftbus method
     void Destroy();
+    // saftbus property
     std::string getOwner() const;
+    // saftbus property
     bool getDestructible() const;
     
     // use this at the start of protected methods

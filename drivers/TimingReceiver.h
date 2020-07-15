@@ -54,21 +54,39 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     std::string getName() const;
     
     // iTimingReceiver
+    // saftbus method
     std::string NewSoftwareActionSink(const std::string& name);
+    // saftbus method
     void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
+    // saftbus method
     void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time);
+    // saftbus method
     uint64_t ReadCurrentTime();
+    // saftbus method
     saftlib::Time CurrentTime();
     std::map< std::string, std::string > getGatewareInfo() const;
     std::string getGatewareVersion() const;
+    // saftbus property
     bool getLocked() const;
+    // saftbus property
+    void setLocked(bool l);
     bool getTemperatureSensorAvail() const;
+    // saftbus method
     int32_t CurrentTemperature();
+    // saftbus property
     std::map< std::string, std::string > getSoftwareActionSinks() const;
+    // saftbus property
     std::map< std::string, std::string > getOutputs() const;
+    // saftbus property
     std::map< std::string, std::string > getInputs() const;
+    // saftbus property
     std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
     uint32_t getFree() const;
+
+    // saftbus signal
+    sigc::signal< void , uint64_t , uint64_t , uint64_t , uint64_t , uint16_t > MySignal;
+    // saftbus signal
+    sigc::signal< void , std::string , uint64_t , uint64_t , uint64_t , uint16_t > MySignal2;
     
     // Compile the condition table
     void compile();
@@ -123,7 +141,8 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
     void setupGatewareInfo(uint32_t address);
     void do_remove(SinkKey key);
-    void setHandler(unsigned channel, bool enable, eb_address_t address);
+    void setHandler(unsigned channel, bool enable, 
+                    eb_address_t address);
     void msiHandler(eb_data_t msi, unsigned channel);
     uint16_t updateMostFull(unsigned channel); // returns current fill
     void resetMostFull(unsigned channel);
@@ -131,7 +150,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
   
   friend class ActionSink;
 };
-
+// hallo welt
 }
 
 #endif

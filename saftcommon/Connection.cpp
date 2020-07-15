@@ -739,6 +739,22 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					}
 				}
 				break;
+				case SAFTBUS_LOAD_PLUGIN:
+				{
+					std::cerr << "saftbus plugin request" << std::endl;
+					std::string so_filename;
+					saftbus::read(client_fd, so_filename);
+					std::cerr << so_filename << std::endl;
+					if (_plugins.find(so_filename) == _plugins.end()) {
+						std::cerr << "loading plugin " << so_filename << std::endl;
+						try {
+							_plugins[so_filename] = std::make_shared<saftbus::PluginLoader>(so_filename, Slib::MainContext::get_default());
+						} catch (std::runtime_error &e) {
+							std::cerr << "error loading plugin " << so_filename << ": " << e.what() << std::endl;
+						}
+					}
+				}
+				break;
 				default:
 					logger.add("      unknown message type\n");
 					logger.log();

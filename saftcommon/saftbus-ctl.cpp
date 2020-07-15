@@ -501,6 +501,7 @@ int main(int argc, char *argv[])
 		bool get_property                 = false;
 		bool set_property                 = false;
 		bool call_method                  = false;
+		bool load_plugin                  = false;
 
 		std::string interface_name;
 		std::string object_path;
@@ -510,6 +511,8 @@ int main(int argc, char *argv[])
 		std::string property_value;
 		std::string method_name;
 		std::vector<std::string> method_arguments;
+
+		std::string plugin_name;
 
 		std::string timing_stats_filename = "saftbus_timing.dat";
 
@@ -591,6 +594,13 @@ int main(int argc, char *argv[])
 						method_arguments.push_back(argv[++i]);
 					}
 				}
+			} else if (argvi == "--plugin") {
+				if (argc - i <= 1) {
+					std::cerr << "expect 1 argument after --plugin: libraryname" << std::endl;
+				} else {
+					load_plugin = true;
+					plugin_name = argv[++i];
+				}
 			} else {
 				std::cerr << "unknown argument: " << argvi << std::endl;
 				return 1;
@@ -652,6 +662,11 @@ int main(int argc, char *argv[])
 			} catch(saftbus::Error &e) {
 				std::cerr << "exepction retured from method call: " << e.what() << std::endl;
 			}
+		}
+
+		if (load_plugin) {
+			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_LOAD_PLUGIN);
+			saftbus::write(connection->get_fd(), plugin_name);
 		}
 
 		connection.reset();

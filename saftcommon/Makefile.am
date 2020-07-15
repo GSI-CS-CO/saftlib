@@ -18,6 +18,7 @@ saftcommon_HEADERS =         \
 	MainLoop.h         \
 	Source.h           \
 	PollFD.h	       \
+	PluginLoader.h     \
 	saftbus.h          
 
 leapseconddir = $(datadir)/saftlib
@@ -45,9 +46,10 @@ libsaftcommon_la_SOURCES =     \
 	MainContext.cpp            \
 	MainLoop.cpp               \
 	Source.cpp                 \
+	PluginLoader.cpp           \
 	PollFD.cpp     		        
 
 bin_PROGRAMS = saftbus-ctl
 
 saftbus_ctl_SOURCES = saftbus-ctl.cpp
-saftbus_ctl_LDADD   = libsaftcommon.la $(SIGCPP_LIBS)
+saftbus_ctl_LDADD   = libsaftcommon.la $(SIGCPP_LIBS) -ldl
