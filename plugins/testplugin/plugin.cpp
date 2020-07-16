@@ -5,45 +5,73 @@
 #include <sigc++/sigc++.h>
 #include <saftbus.h>
 #include <MainContext.h>
+#include <Connection.h>
 
 #include "Driver1.h"
 
 extern "C" {
-	std::vector<std::string> get_interface_names()
-	{
-		std::vector<std::string> result;
-		result.push_back("Driver1");
-		result.push_back("Super");
-		return result;
-	}
 
-	void *create_driver(const std::shared_ptr<Slib::MainContext> &context)
-	{
-		std::cerr << "creating a Driver1 instance" << std::endl;
-		//context->iteration(false);
-		// the driver plugin can attach sources to the context here
-		return reinterpret_cast<void*>(new testplugin::Driver1(context));
-	}
+	std::shared_ptr<testplugin::Driver1> instance;
 
-	void destroy_driver(void *driver)
-	{
-		std::cerr << "destroying a Driver1 instance" << std::endl;
-		delete reinterpret_cast<testplugin::Driver1*>(driver);
-	}
-
-	void method_call(const std::string &method_name, const saftbus::Serial &parameters, saftbus::Serial &response)
+	void method_call(const std::shared_ptr<saftbus::Connection>&, 
+		             const std::string&, 
+		             const std::string&, 
+		             const std::string&, 
+		             const std::string&, 
+		             const saftbus::Serial&, 
+		             const std::shared_ptr<saftbus::MethodInvocation>& )
 	{
 		std::cerr << "Driver1 method_call" << std::endl;
 	}
 
-	void property_get(const std::string &property_name, saftbus::Serial &value)
+	void get_property(saftbus::Serial& property, 
+		              const std::shared_ptr<saftbus::Connection>&, 
+		              const std::string&, 
+		              const std::string&, 
+		              const std::string&, 
+		              const std::string& )
 	{
-
+		uint64_t value = 42;
+		property.put(value);
+		std::cerr << "Driver1 get_property" << std::endl;
 	}
 
-	void property_set(const std::string &property_name, const saftbus::Serial &value)
+	bool set_property(const std::shared_ptr<saftbus::Connection>&, 
+		              const std::string&, 
+		              const std::string&, 
+		              const std::string&, 
+		              const std::string&, 
+		              const saftbus::Serial& )
 	{
+		std::cerr << "Driver1 set_property" << std::endl;
 
+		return true;
 	}
+
+
+	saftbus::InterfaceVTable vtable(sigc::ptr_fun(method_call ), 
+		                            sigc::ptr_fun(get_property), 
+		                            sigc::ptr_fun(set_property));
+
+	void initialize(const std::shared_ptr<Slib::MainContext> &context,
+		            saftbus::Connection &connection)
+	{
+		std::cerr << "creating a Driver1 instance" << std::endl;
+		//context->iteration(false);
+		// the driver plugin can attach sources to the context here
+		instance = std::make_shared<testplugin::Driver1>(context);
+
+		connection.register_object(
+			"/bla/Driver1", 
+			std::make_shared< saftbus::InterfaceInfo >("de.saftlib.blub.Driver1"),
+			vtable);
+	}
+
+	void cleanup()
+	{
+		std::cerr << "destroying a Driver1 instance" << std::endl;
+		instance.reset();
+	}
+
 
 }

@@ -748,9 +748,24 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					if (_plugins.find(so_filename) == _plugins.end()) {
 						std::cerr << "loading plugin " << so_filename << std::endl;
 						try {
-							_plugins[so_filename] = std::make_shared<saftbus::PluginLoader>(so_filename, Slib::MainContext::get_default());
+							_plugins[so_filename] = std::make_shared<saftbus::PluginLoader>(so_filename, Slib::MainContext::get_default(), *this);
 						} catch (std::runtime_error &e) {
 							std::cerr << "error loading plugin " << so_filename << ": " << e.what() << std::endl;
+						}
+					}
+				}
+				case SAFTBUS_REMOVE_PLUGIN:
+				{
+					std::cerr << "saftbus plugin remove request" << std::endl;
+					std::string so_filename;
+					saftbus::read(client_fd, so_filename);
+					std::cerr << so_filename << std::endl;
+					if (_plugins.find(so_filename) != _plugins.end()) {
+						std::cerr << "removing plugin " << so_filename << std::endl;
+						try {
+							_plugins.erase(so_filename);
+						} catch (std::runtime_error &e) {
+							std::cerr << "error removing plugin " << so_filename << ": " << e.what() << std::endl;
 						}
 					}
 				}

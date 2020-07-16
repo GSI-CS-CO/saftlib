@@ -18,6 +18,7 @@ namespace testplugin
 	private:
 		sigc::connection con;
 	};
+
 }
 
 #endif

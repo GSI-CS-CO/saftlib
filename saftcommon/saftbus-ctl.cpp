@@ -502,6 +502,7 @@ int main(int argc, char *argv[])
 		bool set_property                 = false;
 		bool call_method                  = false;
 		bool load_plugin                  = false;
+		bool remove_plugin                = false;
 
 		std::string interface_name;
 		std::string object_path;
@@ -601,6 +602,13 @@ int main(int argc, char *argv[])
 					load_plugin = true;
 					plugin_name = argv[++i];
 				}
+			} else if (argvi == "--plugout") {
+				if (argc - i <= 1) {
+					std::cerr << "expect 1 argument after --plugout: libraryname" << std::endl;
+				} else {
+					remove_plugin = true;
+					plugin_name = argv[++i];
+				}
 			} else {
 				std::cerr << "unknown argument: " << argvi << std::endl;
 				return 1;
@@ -666,6 +674,10 @@ int main(int argc, char *argv[])
 
 		if (load_plugin) {
 			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_LOAD_PLUGIN);
+			saftbus::write(connection->get_fd(), plugin_name);
+		}
+		if (remove_plugin) {
+			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_REMOVE_PLUGIN);
 			saftbus::write(connection->get_fd(), plugin_name);
 		}
 
