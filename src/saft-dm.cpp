@@ -62,7 +62,8 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  -h                   display this help and exit" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
-  std::cout << "  -p                   schedule will be added to next full second (option -p) or current time (option unused)" << std::endl; 
+  std::cout << "  -p                   schedule will be added to next full second (option -p) or current time (option unused)" << std::endl;
+  std::cout << "  -v                   print sleep time, inject time, scheduled time for each event" << std::endl;
   std::cout << std::endl;
   std::cout << "  -n N                 N (1..) is number of iterations of the schedule. If unspecified, N is set to 1" << std::endl;
   std::cout << std::endl;
@@ -70,7 +71,7 @@ static void help(void) {
   std::cout << "  The file must contain exactly one message per line. Each line must have the following format:" << std::endl;
   std::cout << "  '<eventID> <param> <time>', example: '0x1111000000000000 0x0 123000000', time [ns] and decimal." << std::endl;
   std::cout << std::endl;
-  std::cout << "This tool provides a primitve Data Master for local operations in the FEC. Timing messages are injected" << std::endl;
+  std::cout << "This tool provides a primitive Data Master for local operations in the FEC. Timing messages are injected" << std::endl;
   std::cout << "at the input of the ECA. This allows for scheduling actions in hard real-time down to ns. This tool might" << std::endl;
   std::cout << "be useful when a central Data Master is not available, for rapid prototyping or tests." << std::endl << std::endl;
 
@@ -86,11 +87,12 @@ int main(int argc, char** argv)
   int  opt;
   bool ppsAlign       = false;
   bool useFirstDev    = false;
+  bool verboseMode    = false;
   unsigned int nIter  = 1;
 
   // variables inject event
   uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
+  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the timing message
   uint64_t eventTime   = 0x0;     // time for event (this value is added to the current time or the next PPS, see option -p
   saftlib::Time startTime;        // time for start of schedule in PTP time
   saftlib::Time nextTimeWR;       // time for event (in units of WR time)
@@ -108,7 +110,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "n:phf")) != -1) {
+  while ((opt = getopt(argc, argv, "n:phfv")) != -1) {
     switch (opt) {
 	case 'n' :
 	  nIter = atoi(optarg);
@@ -118,6 +120,9 @@ int main(int argc, char** argv)
       break;
     case 'p':
       ppsAlign = true;
+      break;
+    case 'v':
+      verboseMode = true;
       break;
     case 'h':
       help();
@@ -165,6 +170,22 @@ int main(int argc, char** argv)
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     } //if useFirstDevice;
 
+    // print headline
+    uint8_t width = 53;
+	std::cout << std::setfill(' ')
+			<< std::setw(15) << "Event time"
+			<< std::setw(19) << "Event ID"
+			<< std::setw(19) << "Parameter";
+	if (verboseMode) {
+		std::cout << std::setfill(' ')
+				<< std::setw(15) << "Sleep time"
+				<< std::setw(20) << "Inject event"
+				<< std::setw(20) << "Scheduled time";
+		width = 108;
+	}
+	std::cout << std::endl << std::setfill('-') << std::setw(width) << "-" << std::endl;
+	std::cout << std::setfill(' ');
+	// Iterate the schedule nIter times.
 	for (i=0; i<nIter; i++) {
 	  wrTime    = receiver->CurrentTime();
 	  if (ppsAlign) startTime = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;  //align schedule to next PPS
@@ -178,18 +199,29 @@ int main(int argc, char** argv)
 		  stream >> std::hex >> eventID;
 		  stream >> std::hex >> eventParam;
 		  stream >> std::dec >> eventTime;
-		  std::cout << std::dec << eventTime << std::hex << " 0x" << eventID << " 0x" << eventParam << std::endl;
-
-		  // inject event
+		  std::cout << std::dec << std::setfill(' ') << std::setw(15) << eventTime
+				<< std::hex << " 0x" << std::setw(16) << eventID
+				<< " 0x" << std::setfill('0') << std::setw(16) << eventParam;
+		  // scheduled time for next inject
 		  nextTimeWR = startTime + eventTime;
-		  receiver->InjectEvent(eventID, eventParam, nextTimeWR);
-
-		  // lets sleep until event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
+		  // sleep before injecting: keep the queue inside ECA short.
+		  // lets sleep until 100ms before event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
 		  wrTime    = receiver->CurrentTime();
 		  if (nextTimeWR > (wrTime + 100000000)) {                       //only sleep if injected event "was" more than 100ms in the future
 			sleepTime = (int64_t)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event			
 			usleep(sleepTime);
 		  } // if next time
+		  // set current time, only used for printing in verbose mode.
+		  wrTime = receiver->CurrentTime();
+		  // inject event
+		  receiver->InjectEvent(eventID, eventParam, nextTimeWR);
+		  if (verboseMode) {
+			std::cout << std::dec << std::setfill(' ') << std::setw(15) << sleepTime * 1000
+				  << " " << std::setw(19) << wrTime.getTAI()
+				  << " " << std::setw(19) << nextTimeWR.getTAI();
+		  }
+		  std::cout << std::endl;
+		  sleepTime = 0;
 		} // while getline
 		myfile.close();
 	  }
