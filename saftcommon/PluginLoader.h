@@ -14,10 +14,11 @@
 namespace saftbus
 {
 	class Connection; 
-	
+
 
 	typedef std::vector<std::string> get_interface_names_t();
-	typedef void                     initialize_t(const std::shared_ptr<Slib::MainContext> &loop, saftbus::Connection &connection);
+	typedef void                     initialize_t(const std::shared_ptr<Slib::MainContext> &loop, 
+		                                          const std::shared_ptr<saftbus::Connection> &connection);
 	typedef void                     cleanup_t();
 
 
@@ -26,7 +27,9 @@ namespace saftbus
 	class PluginLoader
 	{
 		public:
-			PluginLoader(const std::string &filename, const std::shared_ptr<Slib::MainContext> &context, saftbus::Connection &connection);
+			PluginLoader(const std::string &filename, 
+				         const std::shared_ptr<Slib::MainContext> &context, 
+				         const std::shared_ptr<saftbus::Connection> &connection);
 			~PluginLoader();
 
 		private:

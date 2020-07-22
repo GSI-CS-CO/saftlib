@@ -91,6 +91,9 @@ unsigned Connection::register_object (const std::string& object_path,
 								   const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
+	std::cerr << "register_object " << object_path 
+	          << " interface name " << interface_info->get_interface_name()
+	          << std::endl;
 	//logger.newMsg(1).add("Connection::register_object(").add(object_path).add(")\n");
 	unsigned saftbus_object_id = _saftbus_object_id_counter;
 	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
@@ -748,12 +751,14 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					if (_plugins.find(so_filename) == _plugins.end()) {
 						std::cerr << "loading plugin " << so_filename << std::endl;
 						try {
-							_plugins[so_filename] = std::make_shared<saftbus::PluginLoader>(so_filename, Slib::MainContext::get_default(), *this);
+							auto connection = std::shared_ptr<saftbus::Connection>(this);
+							_plugins[so_filename] = std::make_shared<saftbus::PluginLoader>(so_filename, Slib::MainContext::get_default(), connection);
 						} catch (std::runtime_error &e) {
 							std::cerr << "error loading plugin " << so_filename << ": " << e.what() << std::endl;
 						}
 					}
 				}
+				break;
 				case SAFTBUS_REMOVE_PLUGIN:
 				{
 					std::cerr << "saftbus plugin remove request" << std::endl;

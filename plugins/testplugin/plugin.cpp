@@ -11,8 +11,9 @@
 
 extern "C" {
 
-	std::shared_ptr<testplugin::Driver1> instance;
-
+	// std::shared_ptr<testplugin::Driver1> instance;
+	static int id;
+	static std::shared_ptr<saftbus::Connection> connection_ptr;
 	void method_call(const std::shared_ptr<saftbus::Connection>&, 
 		             const std::string&, 
 		             const std::string&, 
@@ -49,19 +50,20 @@ extern "C" {
 	}
 
 
-	saftbus::InterfaceVTable vtable(sigc::ptr_fun(method_call ), 
+	static saftbus::InterfaceVTable vtable(sigc::ptr_fun(method_call ), 
 		                            sigc::ptr_fun(get_property), 
 		                            sigc::ptr_fun(set_property));
 
 	void initialize(const std::shared_ptr<Slib::MainContext> &context,
-		            saftbus::Connection &connection)
+		            const std::shared_ptr<saftbus::Connection> &connection)
 	{
 		std::cerr << "creating a Driver1 instance" << std::endl;
 		//context->iteration(false);
 		// the driver plugin can attach sources to the context here
-		instance = std::make_shared<testplugin::Driver1>(context);
+		// instance = std::make_shared<testplugin::Driver1>(context);
 
-		connection.register_object(
+		connection_ptr = connection;
+		id = connection->register_object(
 			"/bla/Driver1", 
 			std::make_shared< saftbus::InterfaceInfo >("de.saftlib.blub.Driver1"),
 			vtable);
@@ -69,8 +71,9 @@ extern "C" {
 
 	void cleanup()
 	{
+		connection_ptr->unregister_object(id);
 		std::cerr << "destroying a Driver1 instance" << std::endl;
-		instance.reset();
+		//instance.reset();
 	}
 
 
