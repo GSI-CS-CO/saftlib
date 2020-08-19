@@ -303,6 +303,9 @@ static void help(void) {
   std::cout << "  snoop  <type>        snoop events from WR-UNIPZ @ UNILAC,  <type> may be one of the following" << std::endl;
   std::cout << "            '0'        event display, but limited to GIDs of UNILAC and a subset of event numbers" << std::endl;
   std::cout << "            '1'        shows virtual accelerator executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
+  std::cout << "                       additional shown are warming pulses for ion sources '(IQ)'," << std::endl;
+  std::cout << "                       'warming pulses' for rf systems '(HFW)' and" << std::endl;
+  std::cout << "                       'conditioning pulses' for rf systems '(HFC)' and" << std::endl;
   std::cout << "            '2'        shows virtual accelerator executed at the seven PZs, similar to 'eOverview'" << std::endl;
   std::cout << std::endl;
   std::cout << "This tool snoops and diplays UNILAC specific info." <<std::endl;
@@ -317,8 +320,8 @@ static void help(void) {
   std::cout << "Beams are defined by 'Virtual Acceleratores' (vacc):" <<std::endl;
   std::cout << "vacc 0..13 are used for standard operaton." <<std::endl;
   std::cout << "vacc 14 is used for rf-conditioning or standalone ion-source operation." <<std::endl;
-  std::cout << "vacc 15 is used for warming pulses." <<std::endl;
-  std::cout << std::endl;    
+  std::cout << "vacc 15 is used for otherpurposes." <<std::endl;  
+  std::cout << std::endl;
   std::cout << "Shown are flags indicating special modes of operation: N(o chopper), S(hort chopper), R(igid beam)," << std::endl; 
   std::cout << "D(ry 'beam') and H(igh current beam); warming pulses are shown in brackets" << std::endl;
   std::cout << std::endl;
