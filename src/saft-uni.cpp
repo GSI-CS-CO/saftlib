@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2019-oct-25
+// version: 2020-Aug-19
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -140,9 +140,12 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
 
   sVacc = "";
   // special cases
-  if (evtNo == NXTRF) sVacc = "(HF)";
+  if (evtNo == NXTRF) sVacc = "(HFW)";
   if (evtNo == NXTACC) {
-    if (((gid == QR) || (gid == QL) || (gid == QN)) && (vacc == 14)) sVacc = "(IQ)";
+    if (vacc == 14) {
+      if ((gid == QR) || (gid == QL) || (gid == QN)) sVacc = "(IQ)";
+      else                                           sVacc = "(HFC)";
+    } // if vacc 14
     else {
       special = "";
       if (flagNochop)    special  = "N";
@@ -238,7 +241,7 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
         for (i=0; i<NPZ; i++) {
           if (nExe[i][j] > 0) {
             std::cout    << "    X";
-            rate = 50.0 * (double)(nExe[i][j])/(double)OBSCYCLES;
+            rate = 50.0 * (double)(nExe[i][j])/(double)OBSCYCLES; // this assumes UNILAC runs at 50Hz which might not be true always
           } // if nExe
           else std::cout << "     ";
         } // for PZs
@@ -274,9 +277,9 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   (nExe[gid - QR][vacc])++;                            // increase run counter
   if ((flagsSPZ & 0x1) != 0) flagNochop[vacc]    = 1;     // set flags ...
   if ((flagsSPZ & 0x2) != 0) flagShortchop[vacc] = 1;
-  if ((flagsPZ  & 0x2) != 0) flagHighC[vacc]     = 1;
-  if ((flagsPZ  & 0x4) != 0) flagRigid[vacc]     = 1;
-  if ((flagsPZ  & 0x8) != 0) flagDry[vacc]       = 1;
+  if ((flagsPZ  & 0x2) != 0) flagRigid[vacc]     = 1;
+  if ((flagsPZ  & 0x4) != 0) flagDry[vacc]     = 1;
+  if ((flagsPZ  & 0x8) != 0) flagHighC[vacc]       = 1;
 
   return;
 } // on_action_uni_vacc
