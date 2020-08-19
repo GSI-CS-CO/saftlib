@@ -304,8 +304,8 @@ static void help(void) {
   std::cout << "            '0'        event display, but limited to GIDs of UNILAC and a subset of event numbers" << std::endl;
   std::cout << "            '1'        shows virtual accelerator executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
   std::cout << "                       additionally shown are warming pulses for ion sources '(IQ)'," << std::endl;
-  std::cout << "                       'warming pulses' for rf systems '(HFW)' and" << std::endl;
-  std::cout << "                       'conditioning pulses' for rf systems '(HFC)'" << std::endl;
+  std::cout << "                       'warming pulses' for rf-systems '(HFW)' and" << std::endl;
+  std::cout << "                       'conditioning pulses' for-rf systems '(HFC)'" << std::endl;
   std::cout << "            '2'        shows virtual accelerator executed at the seven PZs, similar to 'eOverview'" << std::endl;
   std::cout << std::endl;
   std::cout << "This tool snoops and diplays UNILAC specific info." <<std::endl;
