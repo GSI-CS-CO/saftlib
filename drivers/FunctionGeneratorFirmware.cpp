@@ -78,7 +78,7 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(const ConstructorType& args
       cycle.read(fgb + SHM_BASE + FG_MAGIC_NUMBER, EB_DATA32, &magic);
       cycle.read(fgb + SHM_BASE + FG_VERSION,      EB_DATA32, &version);
       cycle.close();
-      if (magic == 0xdeadbeef && version == 3) 
+      if (magic == 0xdeadbeef && (version == 3 || version == 4)) 
       {
         have_fg_firmware = true;
         break;
@@ -139,13 +139,15 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
 
 void FunctionGeneratorFirmware::firmware_rescan(eb_address_t swi)
 {
-  // initiate firmware rescan and wait until firmware is done 
-  tr->getDevice().write(fgb + SHM_BASE + FG_SCAN_DONE, EB_DATA32, 1);
+  // initiate firmware rescan and wait until firmware is done
+  if (version == 3) tr->getDevice().write(fgb + SHM_BASE + FG_SCAN_DONE, EB_DATA32, 1); 
+  if (version == 4) tr->getDevice().write(fgb + SHM_BASE + FG_BUSY, EB_DATA32, 1);
   tr->getDevice().write(swi, EB_DATA32, SWI_SCAN);
   // wait until firmware is done scanning
   for (int i = 0;; ++i) {
     eb_data_t done; 
-    tr->getDevice().read(fgb + SHM_BASE + FG_SCAN_DONE, EB_DATA32, &done);
+    if (version == 3) tr->getDevice().read(fgb + SHM_BASE + FG_SCAN_DONE, EB_DATA32, &done);
+    if (version == 4) tr->getDevice().read(fgb + SHM_BASE + FG_BUSY, EB_DATA32, &done);
     if (done==0) {
       break;
     }
