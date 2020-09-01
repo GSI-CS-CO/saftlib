@@ -41,7 +41,7 @@
 #define EXT_TEMP          0x1c
 #define BACKPLACE_TEMP    0x20
 #define FG_MAGIC_NUMBER   0x24  // 0xdeadbeef
-#define FG_VERSION        0x28  // expect v3
+#define FG_VERSION        0x28  // expect version 3 or 4
 #define FG_MB_SLOT        0x2c  // mb slot for host=>lm32
 #define FG_NUM_CHANNELS   0x30
 #define FG_BUFFER_SIZE    0x34
