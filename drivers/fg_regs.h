@@ -41,12 +41,13 @@
 #define EXT_TEMP          0x1c
 #define BACKPLACE_TEMP    0x20
 #define FG_MAGIC_NUMBER   0x24  // 0xdeadbeef
-#define FG_VERSION        0x28  // expect v3
+#define FG_VERSION        0x28  // expect version 3 or 4
 #define FG_MB_SLOT        0x2c  // mb slot for host=>lm32
 #define FG_NUM_CHANNELS   0x30
 #define FG_BUFFER_SIZE    0x34
 #define FG_MACROS         0x38  // 256 entries of (hi..lo): slot, device, version, output-bits
-#define FG_SCAN_DONE      0x100c0  // firmware writes 0 here if scan of channels is done
+#define FG_BUSY           0x60b8 // firmware writes 0 here if scan of channels is done (fw-version 4)
+#define FG_SCAN_DONE      0x100c0 // firmware writes 0 here if scan of channels is done (fw-version 3)
 
 #define FG_MACROS_SIZE  256
 
