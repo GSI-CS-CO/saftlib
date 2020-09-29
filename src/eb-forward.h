@@ -19,7 +19,7 @@ namespace saftlib {
 
 	class EB_Forward {
 	public:
-		EB_Forward(const std::string & eb_name); 
+		EB_Forward(const std::string& eb_name); 
 		~EB_Forward();
 
 		bool accept_connection(Slib::IOCondition condition);

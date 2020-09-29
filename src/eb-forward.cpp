@@ -23,11 +23,20 @@ namespace saftlib {
 		Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 	}
 
-	EB_Forward::EB_Forward(const std::string & eb_name)
-	{
-		_eb_device_fd = open(eb_name.c_str(), O_RDWR);
-		if (_eb_device_fd == -1) {
-			return;
+	EB_Forward::EB_Forward(const std::string& eb_name)
+	{	
+		if (eb_name.size()) {
+			if (eb_name[0] == '/') {
+				_eb_device_fd = open(eb_name.c_str(), O_RDWR);
+			} else {
+				std::string name = "/";
+				name.append(eb_name);
+				_eb_device_fd = open(name.c_str(), O_RDWR);
+			}
+			if (_eb_device_fd > 0) {
+				open_pts();
+				return;
+			}
 		}
 		open_pts();
 	} 
@@ -38,7 +47,6 @@ namespace saftlib {
 
 	bool EB_Forward::accept_connection(Slib::IOCondition condition)
 	{
-		// std::cerr << "EB_Forward::accept_connection()" << std::endl;
 		static std::vector<uint8_t> request;  // data from eb-tool
 		static std::vector<uint8_t> response; // data from device
 		request.clear();
