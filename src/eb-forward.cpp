@@ -69,7 +69,7 @@ namespace saftlib {
 					if (request[0]     == 0x4e && // test for Etherbone magic word
 						request[1]     == 0x6f &&
 						request[2]     == 0x11 &&
-						request[3]     == 0xff) 
+						(request[3]     == 0xff || request[3] == 0x77)) 
 					{
 						response.push_back(0x4e);
 						response.push_back(0x6f);
@@ -159,11 +159,10 @@ namespace saftlib {
 		}
 	}
 
-
 	std::string EB_Forward::saft_eb_devide()
 	{
 		return std::string(ptsname(_pts_fd));
 	}
 
-
 }
+
