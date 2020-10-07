@@ -193,11 +193,14 @@ void SAFTd::RemoveDevice(const std::string& name)
 
 std::string SAFTd::EbForward(const std::string& saftlib_device)
 {
-  std::cerr << "SAFTd::EbForward(" << saftlib_device << ") called" << std::endl;
   if (m_eb_forward.find(saftlib_device) != m_eb_forward.end()) {
     return m_eb_forward[saftlib_device]->saft_eb_devide().substr(1);
   }
-  return std::string("non-forwarded-device");
+  auto od = devs.find(saftlib_device);
+  if (od != devs.end()) {
+    return od->second.etherbonePath;
+  }
+  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device " + saftlib_device + " unknown");
 }
 
 
