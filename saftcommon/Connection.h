@@ -85,12 +85,11 @@ namespace saftbus
 
 	private:
 		void handle_disconnect(int client_fd);
+		void garbage_collection();
 
 		void print_all_fds();
 		bool proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, SignalFD pp);
 		void clean_all_fds_from_socket(int client_fd);
-
-		void list_all_resources();
 
 				// interface_name       // object_path
 		std::map<std::string, std::map<std::string, int> > _saftbus_object_ids; 

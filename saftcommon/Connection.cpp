@@ -121,13 +121,14 @@ unsigned Connection::register_object (const std::string& object_path,
 bool Connection::unregister_object (unsigned saftbus_object_id)
 {
 	logger.newMsg(0).add("Connection::unregister_object(").add(saftbus_object_id).add(")\n").log();
+
 	_saftbus_objects.erase(saftbus_object_id);
+	garbage_collection();
 	return true;
-	//list_all_resources();
 }
 
 
-// subscribe to local signal (local inside the saftbus process)
+// subscribe to local signal (local within the saftbus process)
 // all registered signals will be redirected to the saftbus_objects. These are of type Owned. 
 // slot is the function that will be the disconnection handler of the saftlib object
 // sender, interface_name, member, and object_path are not used here
@@ -227,30 +228,8 @@ void Connection::handle_disconnect(int client_fd)
 		_id_handles_map.erase(saftbus_id);
 
 
-		// "garbage collection" : remove all inactive objects
-		std::vector<std::pair<std::string, std::string> > objects_to_be_erased;
-		for (auto saftbus_index: _saftbus_object_ids) {
-			std::string interface_name = saftbus_index.first;
-			for (auto object_path: saftbus_index.second) {
-				if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
-					objects_to_be_erased.push_back(std::make_pair(interface_name, object_path.first));
-					//std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
-				}
-			}
-		}
-		for (auto erase: objects_to_be_erased) {
-			std::string &interface_name = erase.first;
-			std::string &object_path    = erase.second;
-			_saftbus_object_ids[interface_name].erase(object_path);
-			if (_saftbus_object_ids[interface_name].size() == 0) {
-				_saftbus_object_ids.erase(interface_name);
-			}
-			for (auto pp: _signal_fds[interface_name][object_path]) {
-				close(pp.fd);
-				pp.con.disconnect();
-			}
-			_signal_fds[interface_name].erase(object_path);
-		}
+		// remove all inactive objects
+		garbage_collection();
 
 		// remove socket file descriptor
 		_socket_owner.erase(client_fd);
@@ -262,6 +241,32 @@ void Connection::handle_disconnect(int client_fd)
 	}
 }
 
+void Connection::garbage_collection() {
+	// "garbage collection" : remove all inactive objects
+	std::vector<std::pair<std::string, std::string> > objects_to_be_erased;
+	for (auto saftbus_index: _saftbus_object_ids) {
+		std::string interface_name = saftbus_index.first;
+		for (auto object_path: saftbus_index.second) {
+			if (_saftbus_objects.find(object_path.second) == _saftbus_objects.end()) {
+				objects_to_be_erased.push_back(std::make_pair(interface_name, object_path.first));
+				//std::cerr << "erasing " << interface_name << " " << object_path.first << std::endl;
+			}
+		}
+	}
+	for (auto erase: objects_to_be_erased) {
+		std::string &interface_name = erase.first;
+		std::string &object_path    = erase.second;
+		_saftbus_object_ids[interface_name].erase(object_path);
+		if (_saftbus_object_ids[interface_name].size() == 0) {
+			_saftbus_object_ids.erase(interface_name);
+		}
+		for (auto pp: _signal_fds[interface_name][object_path]) {
+			close(pp.fd);
+			pp.con.disconnect();
+		}
+		_signal_fds[interface_name].erase(object_path);
+	}
+}
 
 // send a signal to all connected sockets
 // I think I would be possible to filter the signals and send them only to sockets where they are actually expected
@@ -493,10 +498,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					for (auto object_path_index: owned_object_paths) {
 						std::string obj_path = object_path_index.first;
 						int idx              = object_path_index.second;
-						//std::cerr << obj_path << " " << idx << std::endl;
 						Serial result;
-						// const std::string &sender = _saftbus_objects[idx]->getSender();
-						// const std::string &op     = _saftbus_objects[idx]->getObjectPath();
 						_saftbus_objects[idx]->get_property(result, saftbus::connection, "", "", "", "Owner");
 						std::string owner;
 						result.get_init();
