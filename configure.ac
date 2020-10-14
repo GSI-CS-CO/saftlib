@@ -49,6 +49,11 @@ AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OS"], [The operating system of t
 AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the build system])
 AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
 
+AC_CHECK_HEADER([boost/interprocess/managed_shared_memory.hpp], [], [AC_MSG_ERROR([boost/interprocess/managed_shared_memory.hpp required])])
+AC_CHECK_HEADER([boost/interprocess/allocators/allocator.hpp], [], [AC_MSG_ERROR([boost/interprocess/allocators/allocator.hpp required])])
+AC_CHECK_HEADER([boost/interprocess/containers/vector.hpp], [], [AC_MSG_ERROR([boost/interprocess/containers/vector.hpp required])])
+AC_CHECK_HEADER([boost/interprocess/containers/map.hpp], [], [AC_MSG_ERROR([boost/interprocess/containers/map.hpp required])])
+
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])
 PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
