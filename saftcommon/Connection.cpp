@@ -755,6 +755,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						logger.add("         ... done \n");
 
 						if (method_invocation_rptr->has_error()) {
+							logger.add(method_invocation_rptr->get_return_error().what());
 							logger.add("         return an error \n");
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().type());

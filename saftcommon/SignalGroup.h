@@ -22,6 +22,8 @@
 
 #include <saftbus.h>
 
+#include <mutex>
+
 namespace saftlib
 {
 
@@ -39,6 +41,8 @@ namespace saftlib
 		std::vector<struct pollfd> _fds;
 
 		bool _sender_alive;
+
+		static thread_local std::mutex _m1, _m2;
 	};
 
 	// Block until a signal of a connected saftbus::Proxy arrives.
