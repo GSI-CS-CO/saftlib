@@ -42,7 +42,7 @@ namespace saftlib
 
 		bool _sender_alive;
 
-		static thread_local std::mutex _m1, _m2;
+		std::mutex _m1, _m2;
 	};
 
 	// Block until a signal of a connected saftbus::Proxy arrives.

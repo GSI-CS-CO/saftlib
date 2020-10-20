@@ -24,9 +24,6 @@ namespace saftlib
 	SignalGroup globalSignalGroup;
 	SignalGroup noSignals;
 
-	thread_local std::mutex SignalGroup::_m1;
-	thread_local std::mutex SignalGroup::_m2;
-
 	int wait_for_signal(int timeout_ms) 
 	{
 		return globalSignalGroup.wait_for_signal(timeout_ms);
@@ -36,21 +33,18 @@ namespace saftlib
 	{
 		std::lock_guard<std::mutex> lock2(_m2);
 		std::lock_guard<std::mutex> lock1(_m1);
-		// std::cerr << "SignalGroup::add" << std::endl;
 		_signal_group.push_back(automatic_dispatch?proxy:nullptr);
 		struct pollfd pfd;
 		pfd.fd = proxy->get_reading_end_of_signal_pipe();
 		pfd.events = POLLIN | POLLHUP | POLLERR | POLLNVAL;
 		_fds.push_back(pfd);
 		_sender_alive = true;
-		// std::cerr << "SignalGroup::add done" << std::endl;
 	}
 
 	void SignalGroup::remove(saftbus::Proxy *proxy) 
 	{
 		std::lock_guard<std::mutex> lock2(_m2);
 		std::lock_guard<std::mutex> lock1(_m1);
-		// std::cerr << "SignalGroup::remove" << std::endl;
 		int idx = 0;
 		std::vector<saftbus::Proxy*> new_signal_group;
 		std::vector<struct pollfd>   new_fds;
@@ -63,7 +57,6 @@ namespace saftlib
 		}
 		_fds          = new_fds;
 		_signal_group = new_signal_group;
-		// std::cerr << "SignalGroup::remove done" << std::endl;
 	}
 
 	int SignalGroup::wait_for_signal(int timeout_ms)
