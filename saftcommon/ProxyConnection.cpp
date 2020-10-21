@@ -36,9 +36,11 @@
 namespace saftbus
 {
 
+std::mutex ProxyConnection::_socket_mutex;
+
 ProxyConnection::ProxyConnection(const std::string &base_name)
 {
-	std::unique_lock<std::mutex> lock(_socket_mutex);
+	std::lock_guard<std::mutex> lock(_socket_mutex);
 
 	char *socketname_env = getenv(saftbus_socket_environment_variable_name);
 	std::string socketname = base_name;
@@ -77,7 +79,7 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 
 int ProxyConnection::get_saftbus_index(const std::string &object_path, const std::string &interface_name)
 {
-	std::unique_lock<std::mutex> lock(_socket_mutex);
+	std::lock_guard<std::mutex> lock(_socket_mutex);
 	saftbus::write(get_fd(), saftbus::GET_SAFTBUS_INDEX);
 	saftbus::write(get_fd(), object_path);
 	saftbus::write(get_fd(), interface_name);
@@ -89,7 +91,7 @@ int ProxyConnection::get_saftbus_index(const std::string &object_path, const std
 
 int ProxyConnection::get_connection_id()
 {
-	std::unique_lock<std::mutex> lock(_socket_mutex);
+	std::lock_guard<std::mutex> lock(_socket_mutex);
 	std::istringstream id_in(_saftbus_id.substr(1));
 	int id;
 	id_in >> id;
@@ -97,7 +99,7 @@ int ProxyConnection::get_connection_id()
 }
 
 void ProxyConnection::send_signal_flight_time(double signal_flight_time) {
-	std::unique_lock<std::mutex> lock(_socket_mutex);
+	std::lock_guard<std::mutex> lock(_socket_mutex);
 	saftbus::write(get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
 	saftbus::write(get_fd(), signal_flight_time);
 }
@@ -108,7 +110,7 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 	                                       std::string interface_name,
 	                                       int global_id) 
 {
-	std::unique_lock<std::mutex> lock(_socket_mutex);
+	std::lock_guard<std::mutex> lock(_socket_mutex);
 	saftbus::write(get_fd(), saftbus::SIGNAL_FD);
 	saftbus::sendfd(get_fd(), pipe_fd);	
 	saftbus::write(get_fd(), object_path);
@@ -118,6 +120,7 @@ void ProxyConnection::send_proxy_signal_fd(int pipe_fd,
 
 std::string ProxyConnection::introspect(const std::string &object_path, const std::string &interface_name)
 {
+	std::lock_guard<std::mutex> lock(_socket_mutex);
 	saftbus::write(get_fd(), saftbus::SAFTBUS_CTL_INTROSPECT);
 	saftbus::write(get_fd(), object_path);
 	saftbus::write(get_fd(), interface_name);
@@ -134,8 +137,8 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                const std::string& bus_name, 
 	                                int timeout_msec)
 {
+	std::lock_guard<std::mutex> lock(_socket_mutex);
 	try {
-		std::unique_lock<std::mutex> lock(_socket_mutex);
 
 		Serial message;
 		message.put(saftbus_index);

@@ -31,6 +31,8 @@ namespace saftlib
 
 	void SignalGroup::add(saftbus::Proxy *proxy, bool automatic_dispatch) 
 	{
+		std::lock_guard<std::mutex> lock2(_m2);
+		std::lock_guard<std::mutex> lock1(_m1);
 		_signal_group.push_back(automatic_dispatch?proxy:nullptr);
 		struct pollfd pfd;
 		pfd.fd = proxy->get_reading_end_of_signal_pipe();
@@ -41,6 +43,8 @@ namespace saftlib
 
 	void SignalGroup::remove(saftbus::Proxy *proxy) 
 	{
+		std::lock_guard<std::mutex> lock2(_m2);
+		std::lock_guard<std::mutex> lock1(_m1);
 		int idx = 0;
 		std::vector<saftbus::Proxy*> new_signal_group;
 		std::vector<struct pollfd>   new_fds;
@@ -58,40 +62,46 @@ namespace saftlib
 	int SignalGroup::wait_for_signal(int timeout_ms)
 	{
 		int result;
-		if ((result = poll(&_fds[0], _fds.size(), timeout_ms)) > 0) {
-			int idx = 0;
-			for (auto fd: _fds) {
-				if (fd.revents & POLLNVAL || fd.revents & POLLERR || fd.revents & POLLHUP) {
-					// saftbus object was removed or saftd was closed or suffered a crash
-					throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "saftbus object diappeared");
-				} else {
-					if (fd.revents & POLLIN) {
-						if (_signal_group[idx] != nullptr) {
-							_signal_group[idx]->dispatch(Slib::IOCondition());
+		{
+			std::lock_guard<std::mutex> lock1(_m1);
+			if ((result = poll(&_fds[0], _fds.size(), timeout_ms)) > 0) {
+				int idx = 0;
+				for (auto fd: _fds) {
+					if (fd.revents & POLLNVAL || fd.revents & POLLERR || fd.revents & POLLHUP) {
+						// saftbus object was removed or saftd was closed or suffered a crash
+						// ignore it 
+					} else {
+						if (fd.revents & POLLIN) {
+							if (_signal_group[idx] != nullptr) {
+								_signal_group[idx]->dispatch(Slib::IOCondition());
+							}
 						}
 					}
+					++idx;
 				}
-				++idx;
+			} else if (result < 0) {
+				// error 
+				int errno_ = errno;
+				switch(errno_) {
+					case EFAULT:
+						std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EFAULT: " << strerror(errno_) << std::endl;
+					break;
+					case EINTR:
+						std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EINTR: " << strerror(errno_) << std::endl;
+					break;
+					case EINVAL:
+						std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EINVAL: " << strerror(errno_) << std::endl;
+					break;
+					case ENOMEM:
+						std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error ENOMEM: " << strerror(errno_) << std::endl;
+					break;
+				}
+			} else {
+				// timeout was hit. do nothing
 			}
-		} else if (result < 0) {
-			// error 
-			int errno_ = errno;
-			switch(errno_) {
-				case EFAULT:
-					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EFAULT: " << strerror(errno_) << std::endl;
-				break;
-				case EINTR:
-					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EINTR: " << strerror(errno_) << std::endl;
-				break;
-				case EINVAL:
-					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error EINVAL: " << strerror(errno_) << std::endl;
-				break;
-				case ENOMEM:
-					std::cerr << "saftlib::SignalGroup::wait_for_signal() poll error ENOMEM: " << strerror(errno_) << std::endl;
-				break;
-			}
-		} else {
-			// timeout was hit. do nothing
+		}
+		{
+			std::lock_guard<std::mutex> lock2(_m2);
 		}
 		return result;
 	}

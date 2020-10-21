@@ -83,6 +83,7 @@ namespace saftbus
 		bool dispatch(Slib::IOCondition condition);
 
 	private:
+		static std::mutex _connection_mutex;
 		static std::shared_ptr<saftbus::ProxyConnection> _connection;
 
 		static int _global_id_counter;

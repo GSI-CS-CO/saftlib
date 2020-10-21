@@ -497,11 +497,13 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						Serial result;
 						// const std::string &sender = _saftbus_objects[idx]->getSender();
 						// const std::string &op     = _saftbus_objects[idx]->getObjectPath();
-						_saftbus_objects[idx]->get_property(result, saftbus::connection, "", "", "", "Owner");
-						std::string owner;
-						result.get_init();
-						result.get(owner);
-						owners[obj_path] = owner;
+						if (_saftbus_objects.find(idx) != _saftbus_objects.end()) {
+							_saftbus_objects[idx]->get_property(result, saftbus::connection, "", "", "", "Owner");
+							std::string owner;
+							result.get_init();
+							result.get(owner);
+							owners[obj_path] = owner;
+						}
 					}
 					saftbus::write(client_fd, owners);
 
