@@ -32,8 +32,8 @@ namespace saftbus
 
 std::shared_ptr<saftbus::ProxyConnection> Proxy::_connection;
 
+std::mutex proxy_mutex; // is not used here, but in the auto generated *_Proxy methods
 
-std::mutex Proxy::_connection_mutex;
 int Proxy::_global_id_counter = 0;
 std::mutex Proxy::_id_counter_mutex;
 

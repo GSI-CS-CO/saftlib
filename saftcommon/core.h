@@ -36,7 +36,6 @@
 namespace saftbus 
 {
 
-
 	extern int _debug_level;
 
 	void init();

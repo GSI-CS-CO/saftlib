@@ -35,6 +35,7 @@
 
 namespace saftbus
 {
+
 	int _debug_level = 0;
 
 	void block_signal(int signal_to_block /* i.e. SIGPIPE */ )
@@ -54,9 +55,6 @@ namespace saftbus
 	}
 	void init()
 	{
-		//if (_debug_level > 5) std::cerr << "ignoring SIGPIPE" << std::endl;
-		//signal(SIGPIPE, SIG_IGN);
-		block_signal(SIGPIPE);
 	}
 
 	int write_all(int fd, const void *buffer, int size)
