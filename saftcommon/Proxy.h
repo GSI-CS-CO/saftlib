@@ -45,6 +45,7 @@ namespace saftbus
 
 	class ProxyConnection;
 
+	extern std::mutex proxy_mutex;
 
 
 	// This class mimics the Gio::DBus::Proxy class interface. It is different from the Gio::DBus::Proxy 

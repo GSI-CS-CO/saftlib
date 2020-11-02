@@ -32,6 +32,8 @@ namespace saftbus
 
 std::shared_ptr<saftbus::ProxyConnection> Proxy::_connection;
 
+std::mutex proxy_mutex; // is not used here, but in the auto generated *_Proxy methods
+
 int Proxy::_global_id_counter = 0;
 std::mutex Proxy::_id_counter_mutex;
 
@@ -48,13 +50,15 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	, _saftbus_index(-1)
 	, _signal_group(signalGroup)
 {
+	// std::lock_guard<std::mutex> lock(_connection_mutex);
+
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
 		_connection = std::shared_ptr<saftbus::ProxyConnection>(new ProxyConnection);
 	}
 
 	// generate unique proxy id (unique for all running saftlib programs)
-	{	std::unique_lock<std::mutex> lock(_id_counter_mutex);
+	{	std::lock_guard<std::mutex> lock(_id_counter_mutex);
 		++_global_id_counter;
 		// thjs assumes there are no more than 100 saftbus sockets available ever
 		// (connection_id is the socket number XX in the socket filename "/tmp/saftbus_XX")
@@ -193,6 +197,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			// report the measured signal flight time to saftd
 		    try {
 		    	if (create_statistics) { // do this only if switched on
+					// std::lock_guard<std::mutex> lock(_connection_mutex);
 			    	_connection->send_signal_flight_time(signal_flight_time);
 			    }
 			    // deliver the signal: call the signal handler of the derived class 
@@ -260,6 +265,7 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 	// 	                                      query)).get_child(0));
 	// return _result;
 
+	// std::lock_guard<std::mutex> lock(_connection_mutex);
 	const Serial &result = _connection->call_sync(
 		                          _saftbus_index, 
 		                          _object_path, 

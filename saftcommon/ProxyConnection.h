@@ -93,7 +93,7 @@ namespace saftbus
 
 		int _connection_id;
 
-		std::mutex _socket_mutex;
+		static std::mutex _socket_mutex;
 	};
 
 }
