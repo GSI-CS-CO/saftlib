@@ -195,6 +195,9 @@ namespace saftlib
 		bool operator==(const Time& rhs) const {
 			return TAI == rhs.TAI;
 		}
+		bool operator!=(const Time& rhs) const {
+			return TAI != rhs.TAI;
+		}
 		int isLeapUTC() const {
 			return TAI_is_UTCleap(TAI);
 		}
