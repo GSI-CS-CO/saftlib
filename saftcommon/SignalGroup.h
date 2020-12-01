@@ -31,6 +31,7 @@ namespace saftlib
 	class SignalGroup
 	{
 	public:
+		SignalGroup();
 		void add(saftbus::Proxy *proxy, bool automatic_dispatch = true);
 		void remove(saftbus::Proxy *proxy);
 		int wait_for_signal(int timeout_ms = -1);
@@ -43,6 +44,7 @@ namespace saftlib
 		bool _sender_alive;
 
 		std::mutex _m1, _m2;
+		int _fd_stop_wait;// writing to this will interrupt the poll in wait_for_signal()
 	};
 
 	// Block until a signal of a connected saftbus::Proxy arrives.

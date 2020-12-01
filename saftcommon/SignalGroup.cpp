@@ -18,11 +18,26 @@
 #include "SignalGroup.h"
 #include <iostream>
 #include <time.h>
+#include <unistd.h>
 
 namespace saftlib
 {
 	SignalGroup globalSignalGroup;
 	SignalGroup noSignals;
+
+	SignalGroup::SignalGroup() 
+	{
+		int pipe_fd[2];
+		if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, pipe_fd) != 0) {
+			throw std::runtime_error("SignalGroup: could not create socketpair");
+		}
+		_fd_stop_wait = pipe_fd[1]; // the writing end
+		struct pollfd pfd;
+		pfd.fd = pipe_fd[0]; // reading end is allways in the set of fds to poll() for
+		pfd.events = POLLIN | POLLHUP | POLLERR | POLLNVAL;
+		_fds.push_back(pfd);
+	}
+
 
 	int wait_for_signal(int timeout_ms) 
 	{
@@ -31,6 +46,8 @@ namespace saftlib
 
 	void SignalGroup::add(saftbus::Proxy *proxy, bool automatic_dispatch) 
 	{
+		int x;
+		write(_fd_stop_wait, &x, sizeof(x));
 		std::lock_guard<std::mutex> lock2(_m2);
 		std::lock_guard<std::mutex> lock1(_m1);
 		_signal_group.push_back(automatic_dispatch?proxy:nullptr);
@@ -43,6 +60,8 @@ namespace saftlib
 
 	void SignalGroup::remove(saftbus::Proxy *proxy) 
 	{
+		int x;
+		write(_fd_stop_wait, &x, sizeof(x));
 		std::lock_guard<std::mutex> lock2(_m2);
 		std::lock_guard<std::mutex> lock1(_m1);
 		int idx = 0;
@@ -71,9 +90,14 @@ namespace saftlib
 						// saftbus object was removed or saftd was closed or suffered a crash
 						// ignore it 
 					} else {
-						if (fd.revents & POLLIN) {
-							if (_signal_group[idx] != nullptr) {
-								_signal_group[idx]->dispatch(Slib::IOCondition());
+						if (idx == 0 && (fd.revents & POLLIN)) { // index 0 is the pipe we use to terminate the poll from outside (the add and remove functions in this case)
+							int x;
+							read(fd.fd, &x, sizeof(int));
+						} else {
+							if (fd.revents & POLLIN) {
+								if (_signal_group[idx] != nullptr) {
+									_signal_group[idx]->dispatch(Slib::IOCondition());
+								}
 							}
 						}
 					}
