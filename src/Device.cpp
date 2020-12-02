@@ -36,8 +36,8 @@ namespace saftlib {
 // Device::irqMap Device::irqs;   // this is in globals.cpp
 // Device::msiQueue Device::msis; // this is in globals.cpp
 
-Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll)
- : etherbone::Device(d), base(first), mask(last-first), activate_msi_polling(poll)
+Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll, unsigned piv)
+ : etherbone::Device(d), base(first), mask(last-first), activate_msi_polling(poll), polling_interval_ms(piv)
 {
 }
 
@@ -74,7 +74,7 @@ eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sig
   }
 
   if (activate_msi_polling) {
-    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), 1);
+    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), polling_interval_ms);
     activate_msi_polling = false;
   }
   
@@ -96,8 +96,10 @@ bool Device::poll_msi() {
   eb_data_t msi_adr = 0;
   eb_data_t msi_dat = 0;
   eb_data_t msi_cnt = 0;
+  int msi_count = 0;
   const int MAX_MSIS_IN_ONE_GO = 1024;
   for (int i = 0; i < MAX_MSIS_IN_ONE_GO; ++i) { // never more this many MSIs in one go
+    msi_count = i;
     cycle.open(*(etherbone::Device*)this);
     cycle.read_config(0x40, EB_DATA32, &msi_adr);
     cycle.read_config(0x44, EB_DATA32, &msi_dat);
@@ -110,16 +112,24 @@ bool Device::poll_msi() {
       Device::msis.push_back(msi);
     }
     if (!(msi_cnt & 2)) {
-      if (i) {
-        //std::cerr << i << " msis popped" << std::endl;
-      }
+      // if (i) {
+      //   //std::cerr << i << " msis popped" << std::endl;
+      // }
       break; // normal end 
     }
-    if (i == MAX_MSIS_IN_ONE_GO-1) {
-      //std::cerr << "reached MAX_MSIS_IN_ONE_GO" << std::endl;
-    }
+    // if (i == MAX_MSIS_IN_ONE_GO-1) {
+    //   //std::cerr << "reached MAX_MSIS_IN_ONE_GO" << std::endl;
+    // }
   }
-  return true;
+  if (msi_count) {
+    // if there was at least one MSI present, we have to schedule the next check immediately because the 
+    // MSI we just polled may cause actions that trigger other MSIs.
+    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), 0);
+  } else {
+    // if there was no MSI present we continue with the normal polling schedule
+    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), polling_interval_ms);
+  }
+  return false;
 }
 
 struct IRQ_Handler : public etherbone::Handler
