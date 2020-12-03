@@ -38,6 +38,9 @@ namespace saftlib
 		bool sender_alive();
 
 	private:
+		void add_impl(saftbus::Proxy *proxy, bool automatic_dispatch);
+		void remove_impl(saftbus::Proxy *proxy);
+
 		std::vector<saftbus::Proxy* > _signal_group;
 		std::vector<struct pollfd> _fds;
 

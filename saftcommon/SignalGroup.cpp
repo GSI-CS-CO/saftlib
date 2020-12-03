@@ -46,10 +46,19 @@ namespace saftlib
 
 	void SignalGroup::add(saftbus::Proxy *proxy, bool automatic_dispatch) 
 	{
-		int x;
-		write(_fd_stop_wait, &x, sizeof(x));
 		std::lock_guard<std::mutex> lock2(_m2);
-		std::lock_guard<std::mutex> lock1(_m1);
+		if (_m1.try_lock()) {
+			add_impl(proxy, automatic_dispatch);
+			_m1.unlock();			
+		} else {
+			int x = 0;
+			write(_fd_stop_wait, &x, sizeof(x));
+			std::lock_guard<std::mutex> lock1(_m1);
+			add_impl(proxy, automatic_dispatch);
+		}
+	}
+	void SignalGroup::add_impl(saftbus::Proxy *proxy, bool automatic_dispatch)
+	{
 		_signal_group.push_back(automatic_dispatch?proxy:nullptr);
 		struct pollfd pfd;
 		pfd.fd = proxy->get_reading_end_of_signal_pipe();
@@ -60,10 +69,19 @@ namespace saftlib
 
 	void SignalGroup::remove(saftbus::Proxy *proxy) 
 	{
-		int x;
-		write(_fd_stop_wait, &x, sizeof(x));
 		std::lock_guard<std::mutex> lock2(_m2);
-		std::lock_guard<std::mutex> lock1(_m1);
+		if (_m1.try_lock()) {
+			remove_impl(proxy);
+			_m1.unlock();
+		} else {
+			int x = 0;
+			write(_fd_stop_wait, &x, sizeof(x));
+			std::lock_guard<std::mutex> lock1(_m1);
+			remove_impl(proxy);
+		}
+	}
+	void SignalGroup::remove_impl(saftbus::Proxy *proxy)
+	{
 		int idx = 0;
 		std::vector<saftbus::Proxy*> new_signal_group;
 		std::vector<struct pollfd>   new_fds;
