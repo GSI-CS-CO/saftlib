@@ -36,6 +36,7 @@ namespace saftlib
 		pfd.fd = pipe_fd[0]; // reading end is allways in the set of fds to poll() for
 		pfd.events = POLLIN | POLLHUP | POLLERR | POLLNVAL;
 		_fds.push_back(pfd);
+		_signal_group.push_back(nullptr);
 	}
 
 
