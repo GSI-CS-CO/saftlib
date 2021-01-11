@@ -22,9 +22,15 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <error.h>
+#include <string.h>
 
-#include <string>
 
+#include <sstream>
+#include <algorithm>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -44,6 +50,8 @@ namespace saftbus
 
 	int write_all(int fd, const void *buffer, int size);
 	int read_all(int fd, void *buffer, int size);
+
+	int write_all_signal(int fd, const void *buffer, int size);
 
 	int sendfd(int socket, int fd);
 	int recvfd(int socket);
@@ -283,6 +291,7 @@ namespace saftbus
 		void get(std::string &std_string) const {
 			size_t size;
 			get(size);
+			//std::cerr << " got size " << size << std::endl;
 			const char* begin = &(*_iter);
 			const char* end   = begin + size;
 			std_string.clear();
@@ -357,6 +366,242 @@ namespace saftbus
 	};
 
 
+
+
+// 	// WriteBuffer class provides a flat memory area for serialization 
+// 	// of high-level data types. The memory is managed like a ring buffer
+// 	// that grows on demand. It can dump the serialized data into a file
+// 	// descriptor using a function that is provided via a function pointer 
+// 	// template parameter. It assumes that the function signature is like 
+// 	// the POSIX write function. Write functions with the same signature 
+// 	// can be provided for testing purposes. 
+// 	typedef ssize_t write_fn_type(int fd, const void *buf, size_t count);
+// 	template<write_fn_type write_fn>
+// 	class WriteBuffer
+// 	{
+// 	public:
+// 		// initialize with a file descriptor
+// 		WriteBuffer(int fd, unsigned initial_size = 16) : _fd(fd), _w_idx(0), _r_idx(0), _buffer(initial_size)	{
+// 			// make sure that _fd is non blocking
+// 			if (write_fn == &::write) { // only if POSIX write function is used 
+// 				int flags = fcntl(_fd, F_GETFL, 0);
+// 				fcntl(_fd, F_SETFL, flags | O_NONBLOCK);
+// 			}
+// 		}
+// 		WriteBuffer(const WriteBuffer &wb) {
+// 			_fd = wb._fd; // file descriptor
+// 			_w_idx = wb._w_idx;
+// 			_r_idx = wb._r_idx;
+// 			_buffer = wb._buffer;			
+// 		}
+
+// 		int get_fd() const {return _fd;}
+// 		void set_fd(int fd) {_fd = fd;}
+
+// 		// return true if no data is in the ring buffer
+// 		bool empty() {
+// 			return _w_idx == _r_idx;
+// 		}
+
+// 		// return true if 
+// 		bool full() {
+// 			//*****wr***** full is like this
+// 			//r**********w or like this
+// 			return (_w_idx == _r_idx-1) ||
+// 			       (_w_idx == _buffer.size()-1 && _r_idx == 0);
+// 		}
+
+// 		unsigned used() {
+// 			if (_w_idx == _r_idx) {
+// 				return 0;
+// 			} 
+// 			if (_w_idx > _r_idx) {
+// 				return _w_idx - _r_idx;
+// 			}
+// 			return _buffer.size() + _w_idx - _r_idx;
+// 		}
+// 		unsigned unused() {
+// 			return _buffer.size() - used() - 1;
+// 		}
+
+// 		// POD struct and build-in types
+// 		template<typename T>
+// 		void put(const T &val) {
+// 			const unsigned char* ptr = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(&val));
+// 			unsigned size = sizeof(val);
+// 			put_buffer(ptr,size);
+// 		}
+// 		// // std::vector and nested std::vector
+// 		// template<typename T>
+// 		// void put(const std::vector<T>& std_vector) {
+// 		// 	size_t size = std_vector.size();
+// 		// 	put(size);
+// 		// 	const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_vector[0]));
+// 		// 	put_buffer(begin, size);
+// 		// }
+// 		// template<typename T>
+// 		// void put(const std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
+// 		// 	size_t size = std_vector_vector.size();
+// 		// 	put(size);
+// 		// 	for (size_t i = 0; i < size; ++i) {
+// 		// 		put(std_vector_vector[i]);
+// 		// 	}
+// 		// }
+// 		// // std::string 
+// 		// void put(const std::string& std_string) {
+// 		// 	size_t size = std_string.size();
+// 		// 	put(size);
+// 		// 	const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
+// 		// 	put_buffer(begin, size);
+// 		// }
+// 		// // std::vector<std::string>
+// 		// void put(const std::vector<std::string>& vector_string) {
+// 		// 	size_t size = vector_string.size();
+// 		// 	put(size);
+// 		// 	for (size_t i = 0; i < size; ++i) {
+// 		// 		put(vector_string[i]);
+// 		// 	}
+// 		// }
+// 		// // std::map
+// 		// template<typename K, typename V>
+// 		// void put(const std::map<K,V> &std_map) {
+// 		// 	size_t size = std_map.size();
+// 		// 	put(size);
+// 		// 	for (typename std::map<K,V>::const_iterator it = std_map.begin(); it != std_map.end(); ++it) {
+// 		// 		put(it->first);
+// 		// 		put(it->second);
+// 		// 	}
+// 		// }
+
+
+// 		enum WriteResult
+// 		{
+// 			WRITE_FAILURE = -1,
+// 			WRITE_RESCHEDULE = 0,
+// 			WRITE_SUCCESS = 1,
+// 		};
+// 		int write() {
+// 			//std::cerr << "write start: ";
+// 			std::cerr << "write( " << _fd << " )" << std::endl;
+// 			for (int idx = _r_idx; idx != _w_idx; ++idx) {
+// 				if (idx == _buffer.size()) {
+// 					idx = 0;
+// 				}
+// 				std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)_buffer[idx] << " ";
+// 			}
+// 			std::cerr << "  <- content " << std::dec << std::endl;
+// 			while (!empty()) {
+// 				std::cerr << "  _buffer.size()=" << _buffer.size() << "   _r_idx=" << _r_idx << "   _w_idx=" << _w_idx << std::endl;
+// 				if (_r_idx < _w_idx) {
+// 					//std::cerr << "r<w" << std::endl;
+// 					// write data between _r_idx and _w_idx
+// 					//       <---->
+// 					// *********************
+// 					//      |      |
+// 					// _r_idx     _w_idx
+// 					unsigned write_size = _w_idx-_r_idx;
+// 					write_size = std::min<unsigned>(max_write_size, write_size);
+// 					int result = write_fn(_fd, &_buffer[_r_idx], write_size);
+// 					if (result < 0) {
+// 						//std::cerr << "write failure: _buffer.size()=" << _buffer.size() << "   _r_idx=" << _r_idx << "   _w_idx=" << _w_idx << std::endl;
+// 						return write_failure(result);
+// 					} 
+// 					_r_idx += result;				
+// 				} else {
+// 					//std::cerr << "w<r" << std::endl;
+// 					// write part at the end of the _buffer
+// 					//              <------>
+// 					// *********************
+// 					//      |      |        |
+// 					// _w_idx     _r_idx   _buffer.size()
+// 					int write_size = std::min<unsigned>(max_write_size, _buffer.size()-_r_idx);
+// 					int result = write_fn(_fd, &_buffer[_r_idx], write_size);
+// 					if (result <= 0) {
+// 						//std::cerr << "write failure: _buffer.size()=" << _buffer.size() << "   _r_idx=" << _r_idx << "   _w_idx=" << _w_idx << std::endl;
+// 						return write_failure(result);
+// 					} 
+// 					_r_idx += result;
+// 					if (_r_idx == _buffer.size()) {
+// 						_r_idx = 0;
+// 					}
+// 				}
+// 			}
+// 			std::cerr << "write success: _buffer.size()=" << _buffer.size() << "   _r_idx=" << _r_idx << "   _w_idx=" << _w_idx << std::endl;
+// 			return WRITE_SUCCESS;
+// 		}
+
+
+// 		void put_buffer(const unsigned char* ptr, unsigned size) {
+// 			std::cerr << "put buffer" << size << std::endl;
+// 			for (int idx = 0; idx < size; ++idx) {
+// 				std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)ptr[idx] << " ";
+// 			}
+// 			std::cerr << "  <- add this" << std::dec << std::endl;
+
+// 			while (size > unused()) {
+// 				std::cerr << " _r_idx=" << _r_idx << "  _w_idx=" << _w_idx << std::endl;
+// 				std::cerr << "resizing ";
+// 				unsigned old_buffer_size = _buffer.size();
+// 				_buffer.resize(2*_buffer.size());
+// 				if (_w_idx < _r_idx) {
+// 					memcpy(&_buffer[old_buffer_size], &_buffer[0], _w_idx);
+// 					_w_idx += old_buffer_size;
+// 				}
+// 				std::cerr << " _r_idx=" << _r_idx << "  _w_idx=" << _w_idx << std::endl;
+// 			}
+// 			// from this point there is enough unused space and data can be put into _buffer
+// 			// the only special case to handle is when _w_idx is too close to _buffer's end
+// 			if (_w_idx+size >= _buffer.size()) {
+// 				unsigned first_half = _buffer.size() - _w_idx;
+// 				unsigned second_half = size - first_half;
+// 				memcpy(&_buffer[_w_idx], ptr, first_half);
+// 				memcpy(&_buffer[0], ptr+first_half, second_half);
+// 				_w_idx = second_half;
+// 			} else {
+// 				memcpy(&_buffer[_w_idx], ptr, size);
+// 				_w_idx += size;
+// 			}
+// 			for (int idx = _r_idx; idx != _w_idx; ++idx) {
+// 				if (idx == _buffer.size()) {
+// 					idx = 0;
+// 				}
+// 				std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)_buffer[idx] << " ";
+// 			}
+// 			std::cerr << "  <- content " << std::dec << std::endl;
+// 		}
+
+// 	private:
+// 		// to be called when write_fn returns -1
+// 		// evaluates errno to decide how to handle it
+// 		// returns WRITE_RESCHEDULE if there is still data (errno == EAGAIN or EWOULDBLOCK)
+// 		// returns WRITE_FAILURE if the socket is broken, i.e. peer hung up (TODO: not implemented yet)
+// 		// throws if the error is unknown/not handled explicitely
+// 		int write_failure(int write_result) {
+// 			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+// 				return WRITE_RESCHEDULE;
+// 			} else {
+// 				std::ostringstream msg;
+// 				msg << "WriteBuffer::write() unknown errno: " << errno << " = " << strerror(errno) << std::endl;
+// 				throw std::runtime_error(msg.str());
+// 			}
+// 		}
+
+// 		int _fd; // file descriptor
+// 		unsigned _w_idx, _r_idx;
+// 		const unsigned max_write_size = 16384;
+// 		std::vector<unsigned char> _buffer;
+// 	};
+
+
+// 	ssize_t write_write(int fd, const void *buf, size_t count);
+// 	// {
+// 	// 	for (unsigned i = 0; i < count; ++i) {
+// 	// 		std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)*(unsigned char*)buf << " " << std::dec;
+// 	// 	}
+// 	// 	return ::write(fd, buf, count);
+// 	// }	
+
+// 	typedef WriteBuffer<write_write> SerialBuffer;
 
 }
 

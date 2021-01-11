@@ -27,6 +27,7 @@
 
 #include <map>
 #include <set>
+#include <memory>
 
 #include "Interface.h"
 #include "saftbus.h"
@@ -43,6 +44,9 @@ namespace saftbus
 		int fd, fd_back;
 		int socket_fd;
 		sigc::connection con;
+		// std::shared_ptr<SerialBuffer> sb;
+		// SignalFD() : id(-1), fd(-1), socket_fd(-1) {};
+		// SignalFD(int proxy_id, int signal_fd, int socket) : id(proxy_id), fd(signal_fd), fd_back(-1), socket_fd(socket), sb(signal_fd) {}
 		bool operator<(const SignalFD& rhs) const {
 			return id < rhs.id;
 		}
@@ -80,6 +84,7 @@ namespace saftbus
 			                 const std::string& signal_name, 
 			                 const std::string& destination_bus_name=std::string(), 
 			                 const Serial& parameters=Serial());
+		// bool rescheduled_emit(std::shared_ptr<SerialBuffer> sb);
 
 		bool dispatch(Slib::IOCondition condition, int client_fd);
 

@@ -119,18 +119,31 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		// read type and size of signal
 		saftbus::MessageTypeS2C type;
 		uint32_t                 size;
-		saftbus::read(_pipe_fd[0], type);
-		saftbus::read(_pipe_fd[0], size);
+		// std::cerr << "receive signal ";
+		int result;
+		// std::cerr << result << " " << size << std::endl;
+		// result = -1;
+		result = saftbus::read(_pipe_fd[0], type);
+		// std::cerr << result << " " << type << "      " ;
+		// result = -1;
+		result = saftbus::read(_pipe_fd[0], size);
+		// std::cerr << result << " " << size << std::endl;
 
 		// prepare buffer of the right size for the incoming data
 		//std::vector<char> buffer(size);
 		//saftbus::read_all(_pipe_fd[0], &buffer[0], size);
 
 		// de-serialize using saftbus::Serial
-		//std::cerr << "Proxy::dispatch() read payload" << std::endl;
+		// std::cerr << "Proxy::dispatch() read payload" << std::endl;
 		Serial payload;
 		payload.data().resize(size);
 		saftbus::read_all(_pipe_fd[0], &payload.data()[0], size);
+		// std::cerr << "Proxy received : ";
+		// const unsigned char *ptr = (const unsigned char*)&payload.data()[0];
+		// for (unsigned i = 0; i < size; ++i) {
+		// 	std::cerr << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)*ptr++ << " " << std::dec;
+		// }
+
 		//std::cerr << "Proxy::dispatch() payload size = " << payload.get_size() << std::endl;
 		std::string object_path;
 		std::string interface_name;
@@ -138,6 +151,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 	    struct timespec start_time;
 		bool create_statistics;
 		Serial parameters;
+		try {
 		payload.get_init();
 		payload.get(object_path);
 		payload.get(interface_name);
@@ -146,6 +160,10 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		payload.get(start_time.tv_nsec);
 		payload.get(create_statistics);
 		payload.get(parameters);
+		} catch (...) {
+			std::cerr << "exception while payload unpacking" << std::endl;
+			throw std::string("payload unpacking");
+		}
 
 
 		// if we don't get the expected _object path, saftd probably messed up the pipe lookup
@@ -215,6 +233,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		std::cerr << "Proxy::dispatch() : exception : " << e.what() << std::endl;
 	}
 
+	// std::cerr << "done" << std::endl << std::endl;
 
 	return true;
 }

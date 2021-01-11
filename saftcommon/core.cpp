@@ -18,6 +18,7 @@
 #include "core.h"
 #include <stdexcept>
 #include <iostream>
+#include <queue>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -30,6 +31,7 @@
 #include <string.h>
 #include <signal.h>
 
+#include "MainContext.h"
 
 #include <sys/file.h> // for flock()
 
@@ -57,8 +59,47 @@ namespace saftbus
 	{
 	}
 
+	std::map<int, std::queue<char> > pending_buffer;
+	static bool write_pending_signal(int fd)
+	{
+		// std::cerr << "write_pending_signal( " << std::dec << fd << " )" << std::endl;
+
+		std::queue<char> &pb = pending_buffer[fd];
+		int written = 0;
+		while (pb.size()) {
+			int result = ::write(fd,&pb.front(),1);
+			if (result == 1) {
+				// std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)*(unsigned char*)&pb.front() << " ";
+				pb.pop();
+				++written;
+			}
+			else {
+				// std::cerr << std::dec << std::endl;
+				break;
+			}
+		}
+		if (pb.size()) {
+			Slib::signal_timeout().connect(sigc::bind(sigc::ptr_fun(write_pending_signal), fd), 1); // try again in 1 ms;
+		}
+		return false;
+	}
+
+	int write_all_signal(int fd, const void *buffer, int size) 
+	{
+		const char *ptr = static_cast<const char*>(buffer);
+		std::queue<char> &pb = pending_buffer[fd];
+		for (int i = 0; i < size; ++i) {
+			pb.push(ptr[i]);
+		}
+		write_pending_signal(fd);
+		return size;
+	}
+
+
 	int write_all(int fd, const void *buffer, int size)
 	{
+		//std::cerr << "write_all(" << size << ")" << std::endl;
+
 		const char *ptr = static_cast<const char*>(buffer);
 		int n_written;
 		do {
@@ -69,17 +110,26 @@ namespace saftbus
 			size -= size_chunk;
 			n_written = 0;
 			do {
-				int result = ::write(fd, ptr, size_chunk-n_written);
+				int result;
+				bool again;
+				result = ::write(fd, ptr, size_chunk-n_written);
+				again = (result == -1) && (errno == EAGAIN);
+				//std::cerr << "write result = " << result;
+
 				if (result > 0)
 				{
 					ptr       += result;
 					n_written += result;
+				} else if (again) {
+					std::cerr << "    EAGAIN";
+					std::cerr << std::endl;
 				}
 				else
 				{
 					if (result == 0) { 
 						throw std::runtime_error("saftbus write_all: could not write to pipe");
 					} else {
+						std::cerr << (std::string("saftbus write_all: ") + std::string(strerror(errno))).c_str() << std::endl;
 						throw std::runtime_error((std::string("saftbus write_all: ") + std::string(strerror(errno))).c_str());
 					} 
 				}
@@ -92,7 +142,7 @@ namespace saftbus
 
 	int read_all(int fd, void *buffer, int size)
 	{
-		//std::cerr << "read_all(buffer, " << size << ") called " << std::endl;
+		//std::cerr << "read_all(" << size << ")" << std::endl;
 		char* ptr = static_cast<char*>(buffer);
 		int n_read = 0;
 		do { 
@@ -229,5 +279,16 @@ int recvfd(int socket) {
 
 
 
+	// ssize_t write_write(int fd, const void *buf, size_t count)
+	// {
+	// 	std::cerr << "write_write(" << fd << ", " << buf << ", " << count << ") : ";
+	// 	const unsigned char *ptr = (const unsigned char*)buf;
+	// 	for (unsigned i = 0; i < count; ++i) {
+	// 		std::cerr << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)*ptr++ << " " << std::dec;
+	// 	}
+	// 	auto result =  ::write(fd, buf, count);
+	// 	std::cerr << "write result = " << result;
+	// 	return count;
+	// }	
 
 }

@@ -262,7 +262,7 @@ void Connection::handle_disconnect(int client_fd)
 	}
 }
 
-
+int signal_cnt;
 // send a signal to all connected sockets
 // I think I would be possible to filter the signals and send them only to sockets where they are actually expected
 void Connection::emit_signal(const std::string& object_path, 
@@ -271,6 +271,7 @@ void Connection::emit_signal(const std::string& object_path,
 	                         const std::string& destination_bus_name, 
 	                         const Serial&      parameters)
 {
+	// std::cerr << "signal nr " << signal_cnt++ << std::endl;
 	try {
 		// get the time when saftbus started processing the signal
 	    struct timespec start_time;
@@ -306,9 +307,24 @@ void Connection::emit_signal(const std::string& object_path,
 			for (auto i = setSignalFD.begin(); i != setSignalFD.end(); ++i) {
 				try {
 					logger.add("            writing to pipe: fd=").add(i->fd).add("    ");
-					saftbus::write(i->fd, saftbus::SIGNAL);
-					saftbus::write(i->fd, size);
-					saftbus::write_all(i->fd, data_ptr, size);
+					// std::cerr << "sending signal " << std::dec << size << "    sb->fd=" << i->sb->get_fd() << " i->fd=" << i->fd << std::endl;
+					MessageTypeS2C sig = saftbus::SIGNAL;
+					// i->sb->put_buffer(reinterpret_cast<const unsigned char*>(&sig), sizeof(saftbus::SIGNAL));
+					// i->sb->write();
+					// i->sb->put_buffer(reinterpret_cast<const unsigned char*>(&size), sizeof(size));
+					// i->sb->write();
+					// i->sb->put_buffer(reinterpret_cast<const unsigned char*>(data_ptr), size);
+					// int result;
+					// std::cerr << "write buffer fd = " << i->fd << std::endl;
+					// if ((result=i->sb->write()) == SerialBuffer::WRITE_RESCHEDULE) {
+					// 	std::cerr << "rescheduling write" << std::endl;
+					// 	Slib::signal_timeout().connect(sigc::bind(sigc::mem_fun(*this, &saftbus::Connection::rescheduled_emit), i->sb), 1); // try again in 1 ms;
+					// }
+					// std::cerr << "result = " << result << std::endl;
+					saftbus::write_all_signal(i->fd, &sig, sizeof(saftbus::SIGNAL));
+					saftbus::write_all_signal(i->fd, &size, sizeof(size));
+					saftbus::write_all_signal(i->fd, data_ptr, size);
+					//std::cerr << "done" << std::endl << std::endl;
 				} catch(std::exception &e) {
 					logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
 					logger.add("    setSignalFD.size() = ").add(setSignalFD.size()).add("\n");
@@ -325,6 +341,15 @@ void Connection::emit_signal(const std::string& object_path,
 		std::cerr << "Connection::emit_signal() exception : " << e.what() << std::endl;
 	}
 }
+
+// bool Connection::rescheduled_emit(std::shared_ptr<SerialBuffer> sb) {
+// 	int result = sb->write();
+// 	if (result == SerialBuffer::WRITE_SUCCESS) {
+// 		return false; // timeout signal will be removed, function will not be called again
+// 	}
+// 	return true; // will be called again
+// }
+
 
 bool Connection::proxy_pipe_closed(Slib::IOCondition condition, std::string interface_name, std::string object_path, SignalFD pp) 
 {
@@ -574,6 +599,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					pp.id = proxy_id;
 					pp.fd = fd;
 					pp.socket_fd = client_fd;
+					// pp.sb = std::make_shared<SerialBuffer>(fd);
 					//std::cerr << "got signal fd (socketpair)" << std::endl;
 					pp.con = Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::proxy_pipe_closed), interface_name, object_path, pp), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 					_signal_fds[interface_name][object_path].insert(pp);
