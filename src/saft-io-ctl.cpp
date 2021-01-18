@@ -415,7 +415,7 @@ static void io_help (void)
   std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
   std::cout << "Arguments/[OPTIONS]:" << std::endl;
-  std::cout << "  -n <name>:                                     Specify IO name or leave blank (to see all IOs/conditions)" << std::endl;
+  std::cout << "  -n <name>:                                     Specify IO name (or leave out this option to see all IOs/conditions, see -i/-l)" << std::endl;
   std::cout << std::endl;
   std::cout << "  -o 0/1:                                        Toggle output enable" << std::endl;
   std::cout << "  -t 0/1:                                        Toggle termination/resistor" << std::endl;
