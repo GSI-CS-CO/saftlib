@@ -258,10 +258,10 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
       bool hardwareMacroUnderflow = (msi != IRQ_DAT_STOP_EMPTY) && !abort;
       bool microControllerUnderflow = fifo.size() != filled && !hardwareMacroUnderflow && !abort;
       // if (!abort && !hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
-      if (!hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
+      // if (!hardwareMacroUnderflow && !microControllerUnderflow) { // success => empty FIFO
         fillLevel = 0;
         fifo.clear();
-      }
+      // }
       executedParameterCount = ReadExecutedParameterCount();
       running = false;
       signal_running.emit(running);
@@ -356,7 +356,7 @@ void FunctionGeneratorImpl::flush()
   // if (enabled)
   //   throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot Flush");
     
-  assert (channel == -1);
+  // assert (channel == -1);
   
   fillLevel = 0;
   fifo.clear();
