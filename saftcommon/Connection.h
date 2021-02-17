@@ -125,6 +125,7 @@ namespace saftbus
 
 		bool _create_signal_flight_time_statistics;
 
+		int _proxy_token;
 
 		int _listen_fd;
 		struct sockaddr_un _listen_sockaddr_un;

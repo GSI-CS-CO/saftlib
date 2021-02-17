@@ -37,7 +37,7 @@ Connection::Connection(const std::string& base_name)
 	: _saftbus_object_id_counter(1)
 	, _saftbus_signal_handle_counter(1)
 	, logger("/tmp/saftbus_connection.log")
-	, _create_signal_flight_time_statistics(false)
+	, _create_signal_flight_time_statistics(true)
 {
 	char *socketname_env = getenv(saftbus_socket_environment_variable_name);
 	std::string socketname = base_name;
@@ -535,7 +535,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					double dt;
 					saftbus::read(client_fd, dt);
 					int dt_us = dt;
-					++_signal_flight_times[dt_us];
+					//++_signal_flight_times[dt_us];
 					logger.add(dt).add(" us\n");
 				}
 				break;
@@ -578,9 +578,10 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					pp.con = Slib::signal_io().connect(sigc::bind(sigc::mem_fun(this, &Connection::proxy_pipe_closed), interface_name, object_path, pp), fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 					_signal_fds[interface_name][object_path].insert(pp);
 
-					char ch = 'x';
+					//char ch = 'x';
 					//std::cerr << "writing ping: " << ch << std::endl;
-					saftbus::write(fd, ch);
+					// use the integer value of fd as a unique proxy id and send it back to the proxy
+					saftbus::write(fd, pp.fd);
 				}
 				break;
 				case saftbus::SIGNAL_REMOVE_FD: 
@@ -664,8 +665,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						}
 						logger.add("    found saftbus object at saftd_object_id=").add(saftd_object_id).add("\n");
 						if (name == "Get") {
-							logger.add("      Get the property\n");
 							saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_GetProperty"]);
+							logger.add("      Get the property\n");
 
 							// call auto-generated get_porperty handler using the vtable
 							Serial result;
@@ -680,7 +681,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_REPLY);
 							saftbus::write(client_fd, size);
 							saftbus::write_all(client_fd, data_ptr, size);
-							logger.add("         property was sent\n");
+							logger.add("         property was sent after ");
+							logger.add(f_time.delta_t()).add(" us");
 
 						} else if (name == "Set") {
 							logger.add("      Set the property\n");
@@ -707,7 +709,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 								saftbus::write(client_fd, saftbus::METHOD_REPLY);
 								saftbus::write(client_fd, size);
 								saftbus::write_all(client_fd, data_ptr, size);
-								logger.add("         response was sent\n");
+								logger.add("         response was sent after ");
+								logger.add(f_time.delta_t()).add(" us");
 							} catch (const saftbus::Error& error) {
 								saftbus::write(client_fd, saftbus::METHOD_ERROR);
 								saftbus::write(client_fd, saftbus::Error::FAILED);
@@ -760,7 +763,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().type());
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().what());
 						} else {
-							logger.add("         regular return \n");
+							logger.add("         regular return after ");
+							logger.add(f_time.delta_t()).add(" us");
 
 							// get the result and pack it in a way that 
 							//   can be digested by the auto-generated saftlib code

@@ -24,10 +24,11 @@ namespace saftbus
 {
 
 	Logger::Logger(const std::string &filename, bool flush_often) 
-		: enabled(false)
+		: enabled(true)
 		, flush_after_log(flush_often)
 		, file(filename.c_str())
 	{
+		clock_gettime(CLOCK_MONOTONIC, &last);
 		newMsg(0).add("logger up and running").log();
 	}
 
@@ -66,8 +67,11 @@ namespace saftbus
 	{
 		struct timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
+		double delta = (1.0e6*now.tv_sec   + 1.0e-3*now.tv_nsec) 
+		         - (1.0e6*last.tv_sec   + 1.0e-3*last.tv_nsec);
+		last = now;
 		std::ostringstream timestamp_out;
-		timestamp_out << now.tv_sec << "." << now.tv_nsec << " | ";
+		timestamp_out << delta << "us:   " << now.tv_sec << "." << now.tv_nsec << " | ";
 		time_t rawtime;
 		struct tm * timeinfo;
 		time(&rawtime);

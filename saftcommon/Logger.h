@@ -58,6 +58,8 @@ private:
 	std::ostringstream msg;
 	std::ofstream file;
 
+	struct timespec last;
+
 
 };
 
