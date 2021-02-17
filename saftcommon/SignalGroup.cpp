@@ -31,8 +31,8 @@ namespace saftlib
 
 	void SignalGroup::add(saftbus::Proxy *proxy, bool automatic_dispatch) 
 	{
-		std::lock_guard<std::mutex> lock2(_m2);
-		std::lock_guard<std::mutex> lock1(_m1);
+		// std::lock_guard<std::mutex> lock2(_m2);
+		// std::lock_guard<std::mutex> lock1(_m1);
 		_signal_group.push_back(automatic_dispatch?proxy:nullptr);
 		struct pollfd pfd;
 		pfd.fd = proxy->get_reading_end_of_signal_pipe();
@@ -43,8 +43,8 @@ namespace saftlib
 
 	void SignalGroup::remove(saftbus::Proxy *proxy) 
 	{
-		std::lock_guard<std::mutex> lock2(_m2);
-		std::lock_guard<std::mutex> lock1(_m1);
+		// std::lock_guard<std::mutex> lock2(_m2);
+		// std::lock_guard<std::mutex> lock1(_m1);
 		int idx = 0;
 		std::vector<saftbus::Proxy*> new_signal_group;
 		std::vector<struct pollfd>   new_fds;
@@ -63,7 +63,7 @@ namespace saftlib
 	{
 		int result;
 		{
-			std::lock_guard<std::mutex> lock1(_m1);
+			// std::lock_guard<std::mutex> lock1(_m1);
 			if ((result = poll(&_fds[0], _fds.size(), timeout_ms)) > 0) {
 				int idx = 0;
 				for (auto fd: _fds) {
@@ -101,7 +101,7 @@ namespace saftlib
 			}
 		}
 		{
-			std::lock_guard<std::mutex> lock2(_m2);
+			// std::lock_guard<std::mutex> lock2(_m2);
 		}
 		return result;
 	}
