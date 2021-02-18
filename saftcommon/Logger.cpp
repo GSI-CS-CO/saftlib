@@ -71,7 +71,7 @@ namespace saftbus
 		         - (1.0e6*last.tv_sec   + 1.0e-3*last.tv_nsec);
 		last = now;
 		std::ostringstream timestamp_out;
-		timestamp_out << now.tv_sec << "." << now.tv_nsec << " " << delta << " us ";
+		timestamp_out << now.tv_sec << "." << std::setw(9) << std::setfill('0') << now.tv_nsec << " " << delta << " us ";
 		time_t rawtime;
 		struct tm * timeinfo;
 		time(&rawtime);

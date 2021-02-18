@@ -145,7 +145,7 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 			proxy_log.open("/tmp/ProxyConnection.log");
 			struct timespec start,stop;
 			clock_gettime( CLOCK_REALTIME, &start);
-			proxy_log << start.tv_sec << "." << start.tv_nsec << " property " << name << std::endl;
+			proxy_log << start.tv_sec << "." << std::setw(9) << std::setfill('0') << start.tv_nsec << " property " << name << std::endl;
 		}
 
 		Serial message;
@@ -171,7 +171,7 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 		if (interface_name == "org.freedesktop.DBus.Properties") {
 			struct timespec start,stop;
 			clock_gettime( CLOCK_REALTIME, &start);
-			proxy_log << start.tv_sec << "." << start.tv_nsec << " property " << name << " done "<< std::endl;
+			proxy_log << start.tv_sec << "." << std::setw(9) << std::setfill('0') << start.tv_nsec << " property " << name << " done "<< std::endl;
 			proxy_log.close();
 		}
 

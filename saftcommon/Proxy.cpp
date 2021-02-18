@@ -104,7 +104,7 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	std::ofstream proxy_log(proxy_logfilename.str().c_str());
 	struct timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	proxy_log << now.tv_sec << "." << now.tv_nsec << " Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " created" << std::endl;
+	proxy_log << now.tv_sec << "." << std::setw(9) << std::setfill('0') << now.tv_nsec << " Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " created" << std::endl;
 	proxy_log.close();
 	// clock_gettime(CLOCK_REALTIME, &log_stop);
 	// double delta = (1.0e6*log_stop.tv_sec   + 1.0e-3*log_stop.tv_nsec) 
@@ -125,7 +125,7 @@ Proxy::~Proxy()
 	std::ofstream proxy_log(proxy_logfilename.str().c_str(), std::ofstream::app);
 	struct timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	proxy_log << now.tv_sec << "." << now.tv_nsec << " Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " destroyed " << std::endl;
+	proxy_log << now.tv_sec << "." << std::setw(9) << std::setfill('0') << now.tv_nsec << " Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " destroyed " << std::endl;
 	proxy_log.close();
 
 	//std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
@@ -229,7 +229,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			std::ostringstream proxy_logfilename;
 			proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(8) << std::setfill('0') << std::hex << _pipe_fd[1] << std::dec << "_" << _interface_name << ".log";
 			std::ofstream proxy_log(proxy_logfilename.str().c_str(), std::ofstream::app);
-			proxy_log << stop.tv_sec << "." << stop.tv_nsec << " got signal " << object_path << " " << interface_name << " " << signal_name << " flight_time " << signal_flight_time << " us" << std::endl;
+			proxy_log << stop.tv_sec << "." << std::setw(9) << std::setfill('0') << stop.tv_nsec << " got signal " << object_path << " " << interface_name << " " << signal_name << " flight_time " << signal_flight_time << " us" << std::endl;
 			proxy_log.close();
 
 		    // if (create_statistics && signal_read_time > 200) { // if reading takes more than 200 us => Report!
@@ -313,7 +313,7 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 
 	struct timespec start,stop;
 	clock_gettime( CLOCK_REALTIME, &start);
-	proxy_log << start.tv_sec << "." << start.tv_nsec << " call function " << _object_path << " " << _interface_name << " " << function_name << std::endl;
+	proxy_log << start.tv_sec << "." << std::setw(9) << std::setfill('0') << start.tv_nsec << " call function " << _object_path << " " << _interface_name << " " << function_name << std::endl;
 
 	// std::lock_guard<std::mutex> lock(_connection_mutex);
 	const Serial &result = _connection->call_sync(
@@ -326,7 +326,7 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 	clock_gettime( CLOCK_REALTIME, &stop);
     double delta = (1.0e6*stop.tv_sec  + 1.0e-3*stop.tv_nsec) 
                  - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
-	proxy_log << stop.tv_sec << "." << stop.tv_nsec << " function returned after " << delta << " us" << std::endl;
+	proxy_log << stop.tv_sec << "." << std::setw(9) << std::setfill('0') << stop.tv_nsec << " function returned after " << delta << " us" << std::endl;
 	proxy_log.close();
 
 
