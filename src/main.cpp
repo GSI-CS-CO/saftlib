@@ -176,6 +176,7 @@ int main(int argc, char** argv)
     std::cerr << "saftd already running" << std::endl;
     exit(1);
   }
+  system("rm -f /tmp/Proxy_*.log /tmp/saftbus_connection.log /tmp/ProxyConnection.log");
 
   // Hook a stack tracer up to exceptions
   std::set_terminate(my_terminate);

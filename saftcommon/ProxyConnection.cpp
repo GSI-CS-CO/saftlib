@@ -140,6 +140,14 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 	std::lock_guard<std::mutex> lock(_socket_mutex);
 	try {
 
+		std::ofstream proxy_log;
+		if (interface_name == "org.freedesktop.DBus.Properties") {
+			proxy_log.open("/tmp/ProxyConnection.log");
+			struct timespec start,stop;
+			clock_gettime( CLOCK_REALTIME, &start);
+			proxy_log << start.tv_sec << "." << start.tv_nsec << " property " << name << std::endl;
+		}
+
 		Serial message;
 		message.put(saftbus_index);
 		message.put(object_path);
@@ -159,6 +167,15 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 		// receive response from socket
 		saftbus::MessageTypeS2C type;
 		saftbus::read(get_fd(), type);
+
+		if (interface_name == "org.freedesktop.DBus.Properties") {
+			struct timespec start,stop;
+			clock_gettime( CLOCK_REALTIME, &start);
+			proxy_log << start.tv_sec << "." << start.tv_nsec << " property " << name << " done "<< std::endl;
+			proxy_log.close();
+		}
+
+
 		if (type == saftbus::METHOD_ERROR) {
 			// this was an error which will be converted into an exception
 			saftbus::Error::Type type;

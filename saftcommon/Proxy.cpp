@@ -98,19 +98,19 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		signalGroup.add(this);
 	}
 	struct timespec log_start, log_stop;
-	clock_gettime(CLOCK_MONOTONIC, &log_start);
+	clock_gettime(CLOCK_REALTIME, &log_start);
 	std::ostringstream proxy_logfilename;
-	proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << ".log";
+	proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(8) << std::setfill('0') << std::hex << _pipe_fd[1] << std::dec << "_" << _interface_name << ".log";
 	std::ofstream proxy_log(proxy_logfilename.str().c_str());
 	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	proxy_log << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " created: " << now.tv_sec << "." << now.tv_nsec << std::endl;
+	clock_gettime(CLOCK_REALTIME, &now);
+	proxy_log << now.tv_sec << "." << now.tv_nsec << " Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " created" << std::endl;
 	proxy_log.close();
-	clock_gettime(CLOCK_MONOTONIC, &log_stop);
-	double delta = (1.0e6*log_stop.tv_sec   + 1.0e-3*log_stop.tv_nsec) 
-	         - (1.0e6*log_start.tv_sec   + 1.0e-3*log_start.tv_nsec);
+	// clock_gettime(CLOCK_REALTIME, &log_stop);
+	// double delta = (1.0e6*log_stop.tv_sec   + 1.0e-3*log_stop.tv_nsec) 
+	//          - (1.0e6*log_start.tv_sec   + 1.0e-3*log_start.tv_nsec);
 
-	std::cerr <<  "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " log took " << delta << "us" << std::endl;
+	// std::cerr <<  "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " log took " << delta << "us" << std::endl;
 
 
 	if (_saftbus_index <= 0 || _saftbus_index != _connection->get_saftbus_index(object_path, interface_name)) {
@@ -121,11 +121,11 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 Proxy::~Proxy() 
 {
 	std::ostringstream proxy_logfilename;
-	proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << ".log";
+	proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(8) << std::setfill('0') << std::hex << _pipe_fd[1] << std::dec << "_" << _interface_name << ".log";
 	std::ofstream proxy_log(proxy_logfilename.str().c_str(), std::ofstream::app);
 	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	proxy_log << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " destroyed: " << now.tv_sec << "." << now.tv_nsec << std::endl;
+	clock_gettime(CLOCK_REALTIME, &now);
+	proxy_log << now.tv_sec << "." << now.tv_nsec << " Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " destroyed " << std::endl;
 	proxy_log.close();
 
 	//std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
@@ -142,9 +142,6 @@ int Proxy::get_reading_end_of_signal_pipe()
 
 bool Proxy::dispatch(Slib::IOCondition condition)
 {
-	std::ostringstream proxy_logfilename;
-	proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << ".log";
-	std::ofstream proxy_log(proxy_logfilename.str().c_str(), std::ofstream::app);
 
 	// this method is called from the Glib::MainLoop whenever there is signal data in the pipe
 	try {
@@ -205,6 +202,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		}
 		else // all other signals
 		{
+
 			//std::cerr << "Proxy::dispatch() a normal signal" << std::endl;
 			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
 			//if (_interface_name != interface_name.get()) {
@@ -218,6 +216,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 				throw std::runtime_error(msg.str());
 			}
 			// get the signal flight stop time right before we call the signal handler from the Proxy object
+
 		    struct timespec stop;
 		    clock_gettime( CLOCK_REALTIME, &stop);
 		    signal_flight_time = (1.0e6*stop.tv_sec       + 1.0e-3*stop.tv_nsec) 
@@ -226,18 +225,23 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		    signal_read_time = (1.0e6*stop.tv_sec            + 1.0e-3*stop.tv_nsec) 
 		                     - (1.0e6*start_read_time.tv_sec + 1.0e-3*start_read_time.tv_nsec);
 
+
+			std::ostringstream proxy_logfilename;
+			proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(8) << std::setfill('0') << std::hex << _pipe_fd[1] << std::dec << "_" << _interface_name << ".log";
+			std::ofstream proxy_log(proxy_logfilename.str().c_str(), std::ofstream::app);
+			proxy_log << stop.tv_sec << "." << stop.tv_nsec << " got signal " << object_path << " " << interface_name << " " << signal_name << " flight_time " << signal_flight_time << " us" << std::endl;
+			proxy_log.close();
+
 		    // if (create_statistics && signal_read_time > 200) { // if reading takes more than 200 us => Report!
 		    	//std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;
 		    // }
 		    // std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;
-			proxy_log << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " received signal " << signal_name << " after " << signal_flight_time << "  at " << stop.tv_sec << "." << stop.tv_nsec << std::endl;
-
 			// report the measured signal flight time to saftd
 		    try {
-		    	if (create_statistics) { // do this only if switched on
-					// std::lock_guard<std::mutex> lock(_connection_mutex);
-			    	_connection->send_signal_flight_time(signal_flight_time);
-			    }
+		   //  	if (create_statistics) { // do this only if switched on
+					// // std::lock_guard<std::mutex> lock(_connection_mutex);
+			  //   	//_connection->send_signal_flight_time(signal_flight_time);
+			  //   }
 			    // deliver the signal: call the signal handler of the derived class 
 			    //std::cerr << "Proxy::dispatch() call on_signal" << std::endl;
 				on_signal("de.gsi.saftlib", signal_name, parameters);
@@ -302,6 +306,14 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 	// 	                                      function_name,
 	// 	                                      query)).get_child(0));
 	// return _result;
+	std::ostringstream proxy_logfilename;
+	proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(8) << std::setfill('0') << std::hex << _pipe_fd[1] << std::dec << "_" << _interface_name << ".log";
+	std::ofstream proxy_log(proxy_logfilename.str().c_str(), std::ofstream::app);
+
+
+	struct timespec start,stop;
+	clock_gettime( CLOCK_REALTIME, &start);
+	proxy_log << start.tv_sec << "." << start.tv_nsec << " call function " << _object_path << " " << _interface_name << " " << function_name << std::endl;
 
 	// std::lock_guard<std::mutex> lock(_connection_mutex);
 	const Serial &result = _connection->call_sync(
@@ -310,6 +322,13 @@ const Serial& Proxy::call_sync(std::string function_name, const Serial &query)
 		                          _interface_name,
 		                          function_name,
 		                          query);
+
+	clock_gettime( CLOCK_REALTIME, &stop);
+    double delta = (1.0e6*stop.tv_sec  + 1.0e-3*stop.tv_nsec) 
+                 - (1.0e6*start.tv_sec + 1.0e-3*start.tv_nsec);
+	proxy_log << stop.tv_sec << "." << stop.tv_nsec << " function returned after " << delta << " us" << std::endl;
+	proxy_log.close();
+
 
 	// std::cerr << "Proxy::call_sync(" << function_name << ") received Serial" << std::endl;
 	// result.print();
