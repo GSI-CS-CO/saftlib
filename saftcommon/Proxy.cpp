@@ -97,6 +97,8 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 		// saftlib::globalSignalGroup is the default
 		signalGroup.add(this);
 	}
+	struct timespec log_start, log_stop;
+	clock_gettime(CLOCK_MONOTONIC, &log_start);
 	std::ostringstream proxy_logfilename;
 	proxy_logfilename << "/tmp/" << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << ".log";
 	std::ofstream proxy_log(proxy_logfilename.str().c_str());
@@ -104,6 +106,12 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	proxy_log << "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " created: " << now.tv_sec << "." << now.tv_nsec << std::endl;
 	proxy_log.close();
+	clock_gettime(CLOCK_MONOTONIC, &log_stop);
+	double delta = (1.0e6*log_stop.tv_sec   + 1.0e-3*log_stop.tv_nsec) 
+	         - (1.0e6*log_start.tv_sec   + 1.0e-3*log_start.tv_nsec);
+
+	std::cerr <<  "Proxy_" << std::setw(4) << std::setfill('0') << _pipe_fd[1] << "_" << _interface_name << " log took " << delta << "us" << std::endl;
+
 
 	if (_saftbus_index <= 0 || _saftbus_index != _connection->get_saftbus_index(object_path, interface_name)) {
 		throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "Proxy: inconsistent saftbus index");
