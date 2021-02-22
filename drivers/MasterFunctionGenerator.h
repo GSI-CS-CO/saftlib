@@ -78,6 +78,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     void ResetActiveFunctionGenerators();
     void SetActiveFunctionGenerators(const std::vector<std::string>&);
 
+
   protected:
     MasterFunctionGenerator(const ConstructorType& args);
     ~MasterFunctionGenerator();
@@ -110,6 +111,7 @@ class MasterFunctionGenerator : public Owned, public iMasterFunctionGenerator
     std::unique_ptr<boost::interprocess::managed_shared_memory> shm_params;
     boost::interprocess::interprocess_mutex* shm_mutex;
     std::map<std::string,ParameterVector*> paramVectors;
+    saftbus::Logger logger;
 };
 
 }

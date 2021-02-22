@@ -41,7 +41,8 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
    tr(args.tr),
    allFunctionGenerators(args.functionGenerators),
    activeFunctionGenerators(args.functionGenerators),
-   generateIndividualSignals(false)   
+   generateIndividualSignals(false),
+   logger("/tmp/MasterFunctionGeneratorDriver.log")   
 {
   for (auto fg : allFunctionGenerators)
   {
@@ -72,23 +73,28 @@ MasterFunctionGenerator::~MasterFunctionGenerator()
 
 void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImpl>& fg, bool running)
 {
+  logger.newMsg(0).add("on_fg_running(").add(fg->GetName()).add(",").add(running).add(")").log();
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Running(fg->GetName(), running);
   }
+  logger.newMsg(0).add("on_fg_running done").log();
 }
 
 void MasterFunctionGenerator::on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg)
 {
+  logger.newMsg(0).add("on_fg_refill(").add(fg->GetName()).add(")").log();
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Refill(fg->GetName());
   }
+  logger.newMsg(0).add("on_fg_refill done").log();
 }
 // watches armed notifications of individual FGs
 // sends AllArmed signal when all fgs with data have signaled armed(true)
 void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>& fg, bool armed)
 {
+  logger.newMsg(0).add("on_fg_armed(").add(fg->GetName()).add(",").add(armed).add(")").log();
 
   if (generateIndividualSignals)
   {
@@ -108,29 +114,36 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
       AllArmed();
     }
   }
+  logger.newMsg(0).add("on_fg_armed done").log();
+
 }
 
 void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImpl>& fg, bool enabled)
 {
+  logger.newMsg(0).add("on_fg_enabled(").add(fg->GetName()).add(",").add(enabled).add(")").log();
   if (generateIndividualSignals)
   {
     Enabled(fg->GetName(), enabled);
   }
+  logger.newMsg(0).add("on_fg_enabled done").log();
 }
 
 void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time)
 {
+  logger.newMsg(0).add("on_fg_started(").add(fg->GetName()).add(",").add(time).add(")").log();
 
   if (generateIndividualSignals)
   {
     Started(fg->GetName(), time);
     SigStarted(fg->GetName(), saftlib::makeTimeTAI(time));
   }
+  logger.newMsg(0).add("on_fg_started done").log();
 }
 
 // Forward Stopped signal 
 void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
+  logger.newMsg(0).add("on_fg_stopped(").add(fg->GetName()).add(",").add(time).add(",").add(abort).add(hardwareUnderflow).add(microcontrollerUnderflow).add(")").log();
   if (generateIndividualSignals)
   {
     Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
@@ -147,6 +160,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
     AllStopped(time);
     SigAllStopped(saftlib::makeTimeTAI(time));
   }
+  logger.newMsg(0).add("on_fg_stopped done").log();
 }
 
 std::shared_ptr<MasterFunctionGenerator> MasterFunctionGenerator::create(const ConstructorType& args)
@@ -156,6 +170,7 @@ std::shared_ptr<MasterFunctionGenerator> MasterFunctionGenerator::create(const C
 
 void MasterFunctionGenerator::InitializeSharedMemory(const std::string& shared_memory_name)
 {
+  logger.newMsg(0).add("InitializeSharedMemory()").log();
   try 
   {
     shm_params.reset( new boost::interprocess::managed_shared_memory(boost::interprocess::open_only, shared_memory_name.c_str()));
@@ -191,11 +206,13 @@ void MasterFunctionGenerator::InitializeSharedMemory(const std::string& shared_m
   {
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Unsupported shared memory format version");
   }
+  logger.newMsg(0).add("InitializeSharedMemory done").log();
 }
 
 
 void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack)
 {
+  logger.newMsg(0).add("AppendParameterTuplesForBeamProcess(").add(beam_process).add(",").add(arm).add(",").add(wait_for_arm_ack).add(")").log();
 
   if (!shm_params)
   {
@@ -269,6 +286,7 @@ void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_proce
   } catch (boost::interprocess::interprocess_exception& e) {
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, e.what());
   }
+  logger.newMsg(0).add("AppendParameterTuplesForBeamProcess done").log();
 }
 
 
@@ -284,6 +302,7 @@ bool MasterFunctionGenerator::AppendParameterSets(
 	bool arm,
   bool wait_for_arm_ack)
 {
+  logger.newMsg(0).add("AppendParameterSets(").add(coeff_a.size()).add(")").log();
 
   ownerOnly();
 
@@ -319,11 +338,14 @@ bool MasterFunctionGenerator::AppendParameterSets(
     }
   }
   return lowFill;
+  logger.newMsg(0).add("AppendParameterSets done").log();
+
 }
 
 
 void MasterFunctionGenerator::Flush()
 {
+  logger.newMsg(0).add("Flush()").log();
   std::string error_msg;
   ownerOnly();
 	for (auto fg : activeFunctionGenerators)
@@ -341,6 +363,7 @@ void MasterFunctionGenerator::Flush()
   {
       throw saftbus::Error(saftbus::Error::INVALID_ARGS, error_msg);
   }
+  logger.newMsg(0).add("Flush done").log();
 }
 
 
@@ -351,6 +374,7 @@ uint32_t MasterFunctionGenerator::getStartTag() const
 
 void MasterFunctionGenerator::setGenerateIndividualSignals(bool newvalue)
 {
+  logger.newMsg(0).add("setGenerateIndividualSignals(").add(newvalue).add(")").log();
   generateIndividualSignals=newvalue;
 }
 
@@ -362,6 +386,7 @@ bool MasterFunctionGenerator::getGenerateIndividualSignals() const
 
 void MasterFunctionGenerator::arm_all()
 {
+  logger.newMsg(0).add("arm_all()").log();
   std::string error_msg;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -381,43 +406,53 @@ void MasterFunctionGenerator::arm_all()
   {
       throw saftbus::Error(saftbus::Error::INVALID_ARGS, error_msg);
   }
+  logger.newMsg(0).add("arm_all done").log();
 }
 
 
 void MasterFunctionGenerator::Arm()
 {
+  logger.newMsg(0).add("Arm()").log();
   ownerOnly();
   arm_all();
+  logger.newMsg(0).add("Arm done").log();
 }
 
 
 void MasterFunctionGenerator::reset_all()
 {
+  logger.newMsg(0).add("reset_all()").log();
 	for (auto fg : activeFunctionGenerators)
 	{
 		fg->Reset();
 	}
+  logger.newMsg(0).add("reset_all done").log();
 }
 
 void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
 {
+  logger.newMsg(0).add("Abort(").add(wait_for_abort_ack).add(")").log();
   ownerOnly();
   reset_all();
   if (wait_for_abort_ack)
   {
     waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
   }
+  logger.newMsg(0).add("Abort done").log();
 }
 
 void MasterFunctionGenerator::ownerQuit()
 {
+  logger.newMsg(0).add("ownerQuit()").log();
   // owner quit without Disown? probably a crash => turn off all the function generators
   reset_all();
   activeFunctionGenerators = allFunctionGenerators;
+  logger.newMsg(0).add("ownerQuit done").log();
 }
 
 void MasterFunctionGenerator::setStartTag(uint32_t val)
 {
+  logger.newMsg(0).add("setStartTag(").add(val).add(")").log();
   ownerOnly();
 
  	for (auto fg : activeFunctionGenerators)  
@@ -433,89 +468,121 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
 			fg->startTag=startTag;
 		}
   }
+  logger.newMsg(0).add("setStartTag done").log();
 }
 
 
 std::vector<uint32_t> MasterFunctionGenerator::ReadExecutedParameterCounts()
 {
+  logger.newMsg(0).add("ReadExecutedParameterCounts(): ");
 	std::vector<uint32_t> counts;
 	for (auto fg : activeFunctionGenerators)
 	{
 		counts.push_back(fg->executedParameterCount);
+    logger.add(fg->executedParameterCount).add(" ");
 	}
+  logger.log();
+  logger.newMsg(0).add("ReadExecutedParameterCounts done").log();
 	return counts;
 }
 
 std::vector<uint64_t> MasterFunctionGenerator::ReadFillLevels()
 {
+  logger.newMsg(0).add("ReadFillLevels(): ");
 	std::vector<uint64_t> levels;
 	for (auto fg : activeFunctionGenerators)
 	{
 		levels.push_back(fg->ReadFillLevel());
+    logger.add(fg->ReadFillLevel()).add(" ");
 	}
+  logger.log();
+  logger.newMsg(0).add("ReadFillLevels done").log();
 	return levels;
 }
 
 std::vector<std::string> MasterFunctionGenerator::ReadAllNames()
 {
+  logger.newMsg(0).add("ReadAllNames(): ");
 	std::vector<std::string> names;
 	for (auto fg : allFunctionGenerators)
 	{
 		names.push_back(fg->GetName());
+    logger.add(fg->GetName()).add(" ");
 	}
+  logger.log();
+  logger.newMsg(0).add("ReadAllNames done").log();
 	return names;
 }
 
 std::vector<std::string> MasterFunctionGenerator::ReadNames()
 {
+  logger.newMsg(0).add("ReadNames(): ");
 	std::vector<std::string> names;
 	for (auto fg : activeFunctionGenerators)
 	{
 		names.push_back(fg->GetName());
+    logger.add(fg->GetName()).add(" ");
 	}
+  logger.log();
+  logger.newMsg(0).add("ReadNames done").log();
 	return names;
 }
 
 // vector<bool> as used in glib 2.50 requires c++14 
 std::vector<int> MasterFunctionGenerator::ReadArmed()
 {
+  logger.newMsg(0).add("ReadArmed(): ");
 	std::vector<int> armed_states;
 	for (auto fg : activeFunctionGenerators)
 	{
 	  armed_states.push_back(fg->getArmed() ? 1 : 0);
+    logger.add(fg->getArmed()).add(" ");
 	}
+  logger.log();
+  logger.newMsg(0).add("ReadArmed done").log();
 	return armed_states;
 }
 
 std::vector<int> MasterFunctionGenerator::ReadEnabled()
 {
+  logger.newMsg(0).add("ReadEnabled(): ");
 	std::vector<int> enabled_states;
 	for (auto fg : activeFunctionGenerators)
 	{
 	  enabled_states.push_back(fg->getEnabled() ? 1 : 0);
+    logger.add(fg->getEnabled()).add(" ");
 	}
+  logger.log();
+  logger.newMsg(0).add("ReadEnabled done").log();
 	return enabled_states;
 }
 
 std::vector<int> MasterFunctionGenerator::ReadRunning()
 {
+  logger.newMsg(0).add("ReadRunning(): ");
 	std::vector<int> running_states;
 	for (auto fg : activeFunctionGenerators)
 	{
 	  running_states.push_back(fg->getRunning() ? 1 : 0);
+    logger.add(fg->getRunning()).add(" ");
 	}
+  logger.log();
+  logger.newMsg(0).add("ReadRunning done").log();
 	return running_states;
 }
 
 void MasterFunctionGenerator::ResetActiveFunctionGenerators()
 {
+  logger.newMsg(0).add("ResetActiveFunctionGenerators(): ").log();
   ownerOnly();
   activeFunctionGenerators = allFunctionGenerators;
   generateIndividualSignals=false;
+  logger.newMsg(0).add("ResetActiveFunctionGenerators done").log();
 }
 
 void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std::string>& names)
 {
+  logger.newMsg(0).add("SetActiveFunctionGenerators(): ").log();
   ownerOnly();
   if (names.size()==0)
   {
@@ -540,40 +607,50 @@ void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std:
           [name](std::shared_ptr<FunctionGeneratorImpl> fg){ return name==fg->GetName();});
     activeFunctionGenerators.push_back(*fg_it);
   }
+  logger.newMsg(0).add("SetActiveFunctionGenerators done").log();
 }
 
 
 bool MasterFunctionGenerator::WaitTimeout()
 {
+  logger.newMsg(0).add("WaitTimeout(): ").log();
   clog << "MasterFG Timed out waiting" << std::endl;
   waitTimeout.disconnect();
+  logger.newMsg(0).add("WaitTimeout done").log();
   return false;
 }
 
 bool MasterFunctionGenerator::all_armed()
 {
+  logger.newMsg(0).add("all_armed(): ");
   bool all_armed=true;
   for (auto fg : activeFunctionGenerators)
   {
     if (fg->fillLevel>0)
       all_armed &= fg->armed;
   }
+  logger.add(all_armed).log();
+  logger.newMsg(0).add("all_armed done").log();
   return all_armed;
 }
 
 bool MasterFunctionGenerator::all_stopped()
 {
+  logger.newMsg(0).add("all_stopped(): ");
   bool all_stopped=false;
   all_stopped=true;
   for (auto fg : activeFunctionGenerators)
   {
     all_stopped &= !fg->running;
   }
+  logger.add(all_stopped).log();
+  logger.newMsg(0).add("all_stopped done").log();
   return all_stopped; 
 }
 
 void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
 {
+  logger.newMsg(0).add("waitForCondition(): ").log();
   struct timespec start, now;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -588,6 +665,7 @@ void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, 
       throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for condition");
     }              
   } while (condition() == false) ;
+  logger.newMsg(0).add("waitForCondition done").log();
 }
 
 
