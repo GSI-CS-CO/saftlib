@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <ctime>
 #include <cstdlib>
+#include <time.h>
 
 #include <unistd.h>
 //#include <giomm/dbuserror.h>
@@ -137,6 +138,8 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                const std::string& bus_name, 
 	                                int timeout_msec)
 {
+	struct timespec now;
+	clock_gettime(CLOCK_REALTIME, &now);
 	std::lock_guard<std::mutex> lock(_socket_mutex);
 	try {
 
@@ -147,6 +150,8 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 		message.put(interface_name);
 		message.put(name);
 		message.put(parameters);
+		message.put(now.tv_sec);
+		message.put(now.tv_nsec);
 
 		// serialize into a byte stream
 		uint32_t size = message.get_size();

@@ -17,6 +17,7 @@
  */
 #include "Connection.h"
 #include "core.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <iomanip>
@@ -114,6 +115,7 @@ unsigned Connection::register_object (const std::string& object_path,
 	std::string interface_name = interface_info->get_interface_name();
 	//logger.add(" interface_name:").add(interface_name).add(" -> id:").add(saftbus_object_id).log();
 
+	fc_logger.dict[saftbus_object_id] = interface_name;
 	// fill the lookup table to map interface_name and object path to saftbus_object_id
 	_saftbus_object_ids[interface_name][object_path] = saftbus_object_id;
 	return saftbus_object_id;
@@ -369,6 +371,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					logger.newMsg(0).add("saftbus logging disabled").log();
 					logger.disable();
+					fc_logger.dump();
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_ENABLE_STATS:
@@ -589,13 +592,9 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				break;
 				case saftbus::METHOD_CALL: 
 				{
-					saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL"]);
-					logger.add("           METHOD_CALL received: ");
-					
 					// read the size of serialized data
 					uint32_t size;
 					saftbus::read(client_fd, size);
-					logger.add(" message size=").add(size);
 
 					// read the serialized data
 					Serial payload;
@@ -609,6 +608,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					std::string interface_name;
 					std::string name;
 					Serial parameters;
+					struct timespec sent_time;
 
 					payload.get_init();
 					payload.get(saftbus_object_id);
@@ -617,27 +617,22 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					payload.get(interface_name);
 					payload.get(name);
 					payload.get(parameters);
+					payload.get(sent_time.tv_sec);
+					payload.get(sent_time.tv_nsec);
 
-					logger.add(" sender=").add(sender)
-					      .add(" name=").add(name)
-					      .add(" object_path=").add(object_path)
-					      .add(" interface_name=").add(interface_name)
-					      .add(" \n");
+					PROXY_LOGT(sent_time,"remote_call",name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 
 					if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
-						logger.add("       Set/Get was called: ");
 						std::string derived_interface_name;
 						std::string property_name;
 						parameters.get_init();
 						parameters.get(derived_interface_name);
 						parameters.get(property_name);
-						logger.add(" derived_interface_name=").add(derived_interface_name)
-						      .add(" property_name=").add(property_name)
-						      .add("\n");
 				
 						// saftbus object lookup
 						int saftd_object_id = _saftbus_object_ids[derived_interface_name][object_path];
 						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found or wrong check saftd_object_id
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
 							// this causes an exception on the proxy side
 							std::string what;
 							if (saftd_object_id == 0) {
@@ -649,50 +644,44 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
-							logger.add(what);
-							logger.log();
 							break;
 						}
-						if (_saftbus_objects.find(saftd_object_id) == _saftbus_objects.end()) {
+						auto saftbus_object = _saftbus_objects.find(saftd_object_id);
+						if (saftbus_object == _saftbus_objects.end()) {
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
 							std::string what;
 							what.append("unknown object path: ");
 							what.append(object_path);
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
+							fc_logger.dump(); // dump log on exeption
 							break;
 						}
-						logger.add("    found saftbus object at saftd_object_id=").add(saftd_object_id).add("\n");
 						if (name == "Get") {
-							logger.add("      Get the property\n");
-							saftbus::Timer f_time(_function_run_times["Connection::dispatch_METHOD_CALL_GetProperty"]);
-
+							SAFTD_LOGT("GetProperty",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 							// call auto-generated get_porperty handler using the vtable
 							Serial result;
-							_saftbus_objects[saftd_object_id]->get_property(result, saftbus::connection, sender, object_path, derived_interface_name, property_name);
+							saftbus_object->second->get_property(result, saftbus::connection, sender, object_path, derived_interface_name, property_name);
 
 							// prepare response data
 							// serialize response data
 							size = result.get_size();
 							const char *data_ptr = static_cast<const char*>(result.get_data());
 							// write data to socket
-							logger.add("         size of response (serialized property): ").add(size).add("\n");
+							SAFTD_LOGT("done",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 							saftbus::write(client_fd, saftbus::METHOD_REPLY);
 							saftbus::write(client_fd, size);
 							saftbus::write_all(client_fd, data_ptr, size);
-							logger.add("         property was sent\n");
 
 						} else if (name == "Set") {
-							logger.add("      Set the property\n");
-							std::ostringstream function_name;
-							function_name << "Connection::dispatch_METHOD_CALL_SetProperty_" << derived_interface_name << "_" << property_name;
-							saftbus::Timer f_time(_function_run_times[function_name.str().c_str()]);
+							SAFTD_LOGT("SetProperty",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 							
 							// set the value using the set_property handler from auto-generated saftlib code
 							Serial par2;
 							parameters.get(par2);
 							try {
-								bool result = _saftbus_objects[saftd_object_id]->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
+								bool result = saftbus_object->second->set_property(saftbus::connection, sender, object_path, derived_interface_name, property_name, par2);
 
 								// even the set property has a response ...
 								Serial response;
@@ -703,11 +692,10 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 								const char *data_ptr = static_cast<const char*>(response.get_data());
 
 								// send the data 
-								logger.add("         size of response (empty resoponse): ").add(size).add("\n");
+								SAFTD_LOGT("done",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 								saftbus::write(client_fd, saftbus::METHOD_REPLY);
 								saftbus::write(client_fd, size);
 								saftbus::write_all(client_fd, data_ptr, size);
-								logger.add("         response was sent\n");
 							} catch (const saftbus::Error& error) {
 								saftbus::write(client_fd, saftbus::METHOD_ERROR);
 								saftbus::write(client_fd, saftbus::Error::FAILED);
@@ -717,14 +705,12 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					}
 					else // normal method calls 
 					{
-						logger.add("         regular method call\n");
-						std::ostringstream function_name;
-						function_name << "Connection::dispatch_METHOD_CALL_" << name;
-						saftbus::Timer f_time(_function_run_times[function_name.str().c_str()]);
+						SAFTD_LOGT("call",name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 
 						// saftbus object lookup
 						int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
 						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
 							// this causes an exception on the proxy side
 							std::string what;
 							if (saftd_object_id == 0) {
@@ -736,60 +722,53 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
-							logger.add(what);
-							logger.log();
+							fc_logger.dump(); // dump log on exeption
 							break;
 						}
 
+						// call the driver method
 						std::shared_ptr<MethodInvocation> method_invocation_rptr(new MethodInvocation);
-
-						logger.add("         calling the driver function ...\n");
-						if (_saftbus_objects.find(saftd_object_id) != _saftbus_objects.end()) {
-							_saftbus_objects[saftd_object_id]->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
+						auto saftbus_object = _saftbus_objects.find(saftd_object_id);
+						if (saftbus_object != _saftbus_objects.end()) {
+							saftbus_object->second->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
 						} else {
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
 							std::string what;
 							what.append("unknown object path: ");
 							what.append(object_path);
 							method_invocation_rptr->return_error(saftbus::Error(saftbus::Error::ACCESS_DENIED, what));
 						}
-						logger.add("         ... done \n");
 
 						if (method_invocation_rptr->has_error()) {
-							logger.add("         return an error \n");
+							SAFTD_LOGT("throw",method_invocation_rptr->get_return_error().what().c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().type());
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().what());
+							fc_logger.dump(); // dump log on exeption
 						} else {
-							logger.add("         regular return \n");
-
+							SAFTD_LOGT("return",name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
 							// get the result and pack it in a way that 
 							//   can be digested by the auto-generated saftlib code
  							Serial &result = method_invocation_rptr->get_return_value();
-
 							// serialize
 							size = result.get_size();
 							const char *data_ptr = static_cast<const char*>(result.get_data());
-							logger.add("         size of response (return value): ").add(size).add("\n");
-
 							//send 
 							saftbus::write(client_fd, saftbus::METHOD_REPLY);
 							saftbus::write(client_fd, size);
 							if (size > 0) {
 								saftbus::write_all(client_fd, data_ptr, size);
 							}
-							logger.add("         response was sent\n");
 						}
 					}
 				}
 				break;
 				default:
-					logger.add("      unknown message type\n");
-					logger.log();
+					SAFTD_LOG("unknown_message_type",type); // set 31-th bit to indicate it's a dict enty;
 					handle_disconnect(client_fd);
 					return false;
 				break;				
 			}
-			logger.log();
 
 			return true;
 		}

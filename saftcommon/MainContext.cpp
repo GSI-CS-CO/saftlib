@@ -18,6 +18,7 @@
 
 #include "MainContext.h"
 #include "Source.h"
+#include "Logger.h"
 
 #include <algorithm>
 #include <iostream>
@@ -54,6 +55,7 @@ namespace Slib
 					source_pfds_ptr.push_back(pfd);
 				}
 			}
+			//MAINCONTEXT_LOG("poll_recursive ", source_pfds.size());
 			poll(&source_pfds[0], source_pfds.size(), 0); // poll with timeout of 0
 			for (unsigned idx = 0; idx < source_pfds.size(); ++idx) {
 				source_pfds_ptr[idx]->pfd.revents = source_pfds[idx].revents;
@@ -61,7 +63,9 @@ namespace Slib
 			for (auto &id_source: sources) {
 				//auto id     = id_source.first;
 				auto source = id_source.second;
+				//MAINCONTEXT_LOG("poll_recursive_check", 0);
 				if (source->check()) {
+					//MAINCONTEXT_LOG("poll_recursive_dispatch", 0);
 					source->dispatch(&source->_slot);
 				}
 			}
@@ -136,7 +140,9 @@ namespace Slib
 
 			std::vector<unsigned> signal_io_removed_indices;
 			int poll_result;
+			//MAINCONTEXT_LOG("poll", timeout_ms);
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
+			//MAINCONTEXT_LOG("poll_fd", poll_result);
 				// during check of results, signal_io_pfds and fds from sources
 				//  are distinguished using the index.
 				unsigned idx = 0;
@@ -181,6 +187,8 @@ namespace Slib
 					// std::cerr << "timeout " << i << "  :  " << signal_timeout_time_left[i] << std::endl;
 				}
 
+			} else {
+				//MAINCONTEXT_LOG("poll_timeout", poll_result);
 			}
 			bool any_timeout_is_0 = false;
 			for (unsigned i = 0; i < signal_timeouts.size(); ++i) {
