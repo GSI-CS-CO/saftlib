@@ -125,7 +125,7 @@ namespace saftbus
 
 	void FCLogger::dumpline(std::ostream &out, int idx) {
 		out << std::dec;
-		out << buffer[idx].t.tv_sec << "." << std::setw(9) << std::setfill('0') << buffer[idx].t.tv_nsec << " " 
+		out << idx << " " << buffer[idx].t.tv_sec << "." << std::setw(9) << std::setfill('0') << buffer[idx].t.tv_nsec << " " 
 			<< buffer[idx].who << " "
 		    << buffer[idx].file << ":" 
 		    << buffer[idx].line << ":"
@@ -142,7 +142,7 @@ namespace saftbus
 		    if (buffer[idx].param >= 0) {
 		    	out << ":" << buffer[idx].param;
 		    } 
-		    out <<"\n";
+		    out << std::endl;
 	}
 
 	void FCLogger::dump() {
