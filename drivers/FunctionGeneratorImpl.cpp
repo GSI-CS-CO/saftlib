@@ -60,6 +60,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), executedParameterCount(0), fillLevel(0), filled(0)
 {
+  DRIVER_LOG("",-1, -1);
   eb_address_t mb_base = args.mbx.sdb_component.addr_first;
   eb_data_t mb_value;
   unsigned slot = 0;
@@ -87,6 +88,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
+  DRIVER_LOG("",-1, -1);
   resetTimeout.disconnect(); // do not run ResetFailed
   tr->getDevice().release_irq(irq);
   tr->getDevice().write(mailbox_slot_address, EB_DATA32, 0xffffffff);
@@ -113,11 +115,13 @@ static unsigned wrapping_add(unsigned a, unsigned b, unsigned buffer_size)
 
 bool FunctionGeneratorImpl::lowFill() const
 {
+  DRIVER_LOG("",-1, -1);
   return fifo.size() < buffer_size * 2;
 }
 
 void FunctionGeneratorImpl::refill()
 {
+  DRIVER_LOG("",-1, -1);
   etherbone::Cycle cycle;
   eb_data_t write_offset_d, read_offset_d;
   
@@ -189,6 +193,7 @@ void FunctionGeneratorImpl::refill()
 
 void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
 {
+  DRIVER_LOG("msi",-1, msi);
   // ignore spurious interrupt
   if (channel == -1) {
     clog << kLogErr << "FunctionGenerator: received unsolicited IRQ on index " << std::dec << index << std::endl;
@@ -291,6 +296,7 @@ uint64_t ParameterTuple::duration() const
 
 bool FunctionGeneratorImpl::appendParameterTuples(std::vector<ParameterTuple> parameters)
 {
+  DRIVER_LOG("tuples",-1, parameters.size());
   for (ParameterTuple p : parameters)
   {
     fifo.push_back(p);
@@ -312,6 +318,7 @@ bool FunctionGeneratorImpl::appendParameterSet(
   const std::vector< unsigned char >& shift_b )
 
 {
+  DRIVER_LOG("coefficients",-1, coeff_a.size());
 
   // confirm lengths match
   unsigned len = coeff_a.size();
@@ -352,8 +359,11 @@ bool FunctionGeneratorImpl::appendParameterSet(
 
 void FunctionGeneratorImpl::flush()
 {
-  if (enabled)
+    DRIVER_LOG("channel",-1,channel);
+  if (enabled) {
+    DRIVER_LOG("enabled_flush_impossible",-1,-1);
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot Flush");
+  }
     
   assert (channel == -1);
   
@@ -413,18 +423,22 @@ uint64_t FunctionGeneratorImpl::ReadFillLevel()
 
 uint32_t FunctionGeneratorImpl::ReadExecutedParameterCount()
 {
+  DRIVER_LOG("",-1,channel);
   if (running) {
     eb_data_t count;
     eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
     tr->getDevice().read(regs + FG_RAMP_COUNT, EB_DATA32, &count);
+    DRIVER_LOG("count",-1,count);
     return count;
   } else {
+    DRIVER_LOG("count",-1,executedParameterCount);
     return executedParameterCount;
   }
 }
 
 void FunctionGeneratorImpl::acquireChannel()
 {
+  DRIVER_LOG("",-1,-1);
   assert (channel == -1);
   
   unsigned i;
@@ -453,11 +467,13 @@ void FunctionGeneratorImpl::acquireChannel()
   allocation->operator[](i) = index;
   channel = i;
   enabled = true;
+  DRIVER_LOG("",-1,channel);
   signal_enabled.emit(enabled);
 }
 
 void FunctionGeneratorImpl::releaseChannel()
 {
+  DRIVER_LOG("",-1,channel);
   assert (channel != -1);
   
   resetTimeout.disconnect();
@@ -470,10 +486,15 @@ void FunctionGeneratorImpl::releaseChannel()
 
 void FunctionGeneratorImpl::arm()
 {
-  if (enabled)
+  DRIVER_LOG("",-1,channel);
+  if (enabled) {
+    DRIVER_LOG("throw_enabled_cannot_rearm",-1,-1);
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot re-Arm");
-  if (fillLevel == 0)
+  }
+  if (fillLevel == 0) {
+    DRIVER_LOG("throw_filllevel_zero",-1,-1);
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "FillLevel is zero, cannot Arm");
+  }
   
   // !enabled, so:
   assert(!armed);
@@ -483,10 +504,10 @@ void FunctionGeneratorImpl::arm()
   abort = false;
   acquireChannel();
   try {
-
     refill();
     tr->getDevice().write(swi, EB_DATA32, SWI_ENABLE | channel);
   } catch (...) {
+    DRIVER_LOG("failed_to_fill_buffers",-1,-1);
     clog << kLogErr << "FunctionGenerator: failed to fill buffers and send enabled SWI on channel " << std::dec << channel << " for index " << index << std::endl;
     tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
     throw;
@@ -495,11 +516,13 @@ void FunctionGeneratorImpl::arm()
 
 void FunctionGeneratorImpl::Arm()
 {
+  DRIVER_LOG("",-1,channel);
   arm();
 }
 
 bool FunctionGeneratorImpl::ResetFailed()
 {
+  DRIVER_LOG("",-1,channel);
   assert(enabled);
   clog << kLogErr << "FunctionGenerator: failed to reset on index " << std::dec << index << std::endl;
   
@@ -522,6 +545,7 @@ bool FunctionGeneratorImpl::ResetFailed()
 
 void FunctionGeneratorImpl::Reset()
 {
+  DRIVER_LOG("",-1,channel);
   if (channel == -1) return; // nothing to abort
   if (resetTimeout.connected()) return; // reset already in progress
   tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
@@ -532,17 +556,20 @@ void FunctionGeneratorImpl::Reset()
 
 void FunctionGeneratorImpl::Abort()
 {
+  DRIVER_LOG("",-1,channel);
   Reset();
 }
 
 void FunctionGeneratorImpl::ownerQuit()
 {
   // owner quit without Disown? probably a crash => turn off the function generator
+  DRIVER_LOG("",-1,channel);
   Reset();
 }
 
 void FunctionGeneratorImpl::setStartTag(uint32_t val)
 {
+  DRIVER_LOG("",-1,channel);
   if (enabled)
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot set StartTag");
   
@@ -553,6 +580,7 @@ void FunctionGeneratorImpl::setStartTag(uint32_t val)
 
 std::string FunctionGeneratorImpl::GetName()
 {
+  DRIVER_LOG("",-1,channel);
     std::ostringstream ss;
     ss << "fg-" << (int)getSCUbusSlot() << "-" << (int)getDeviceNumber();
 //    ss << "-" << index ;

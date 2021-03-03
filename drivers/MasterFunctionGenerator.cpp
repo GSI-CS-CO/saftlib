@@ -72,6 +72,7 @@ MasterFunctionGenerator::~MasterFunctionGenerator()
 
 void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImpl>& fg, bool running)
 {
+  DRIVER_LOG("",-1,running);
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Running(fg->GetName(), running);
@@ -80,6 +81,7 @@ void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImp
 
 void MasterFunctionGenerator::on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg)
 {
+  DRIVER_LOG("",-1,-1);
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Refill(fg->GetName());
@@ -90,6 +92,7 @@ void MasterFunctionGenerator::on_fg_refill(std::shared_ptr<FunctionGeneratorImpl
 void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>& fg, bool armed)
 {
 
+  DRIVER_LOG("",-1,armed);
   if (generateIndividualSignals)
   {
     Armed(fg->GetName(), armed);
@@ -105,6 +108,7 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
     }
     if (all_armed)
     {
+      DRIVER_LOG("all_armed",-1,-1);
       AllArmed();
     }
   }
@@ -112,6 +116,7 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
 
 void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImpl>& fg, bool enabled)
 {
+  DRIVER_LOG("",-1,-1);
   if (generateIndividualSignals)
   {
     Enabled(fg->GetName(), enabled);
@@ -121,6 +126,7 @@ void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImp
 void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time)
 {
 
+  DRIVER_LOG("",-1,-1);
   if (generateIndividualSignals)
   {
     Started(fg->GetName(), time);
@@ -131,6 +137,7 @@ void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImp
 // Forward Stopped signal 
 void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
+  DRIVER_LOG("",-1,-1);
   if (generateIndividualSignals)
   {
     Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
@@ -144,6 +151,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
 	}
   if (all_stopped)
   {
+    DRIVER_LOG("all_stopped",-1,-1);
     AllStopped(time);
     SigAllStopped(saftlib::makeTimeTAI(time));
   }
@@ -197,6 +205,7 @@ void MasterFunctionGenerator::InitializeSharedMemory(const std::string& shared_m
 void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack)
 {
 
+  DRIVER_LOG("",-1,-1);
   if (!shm_params)
   {
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Shared memory not initialized");
@@ -260,9 +269,11 @@ void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_proce
 // if requested wait for all fgs to arm
   	if (arm)
     {
+      DRIVER_LOG("arm",-1,-1);
       arm_all();
       if (wait_for_arm_ack)
       {
+        DRIVER_LOG("wait_for_arm_ack",-1,-1);
         waitForCondition(std::bind(&MasterFunctionGenerator::all_armed, this), 2000);
       }
     }
@@ -285,6 +296,7 @@ bool MasterFunctionGenerator::AppendParameterSets(
   bool wait_for_arm_ack)
 {
 
+  DRIVER_LOG("",-1,coeff_a.size());
   ownerOnly();
 
   // confirm equal number of FGs
@@ -311,10 +323,12 @@ bool MasterFunctionGenerator::AppendParameterSets(
 	// if requested wait for all fgs to arm
 	if (arm)
   {
+      DRIVER_LOG("arm",-1,-1);
     arm_all();
     // wait for arm response ...
     if (wait_for_arm_ack)
     {
+        DRIVER_LOG("wait_for_arm_ack",-1,-1);
       waitForCondition(std::bind(&MasterFunctionGenerator::all_armed, this), 2000);
     }
   }
@@ -324,6 +338,7 @@ bool MasterFunctionGenerator::AppendParameterSets(
 
 void MasterFunctionGenerator::Flush()
 {
+  DRIVER_LOG("",-1,-1);
   std::string error_msg;
   ownerOnly();
 	for (auto fg : activeFunctionGenerators)
@@ -362,6 +377,7 @@ bool MasterFunctionGenerator::getGenerateIndividualSignals() const
 
 void MasterFunctionGenerator::arm_all()
 {
+  DRIVER_LOG("",-1,-1);
   std::string error_msg;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -386,6 +402,7 @@ void MasterFunctionGenerator::arm_all()
 
 void MasterFunctionGenerator::Arm()
 {
+  DRIVER_LOG("",-1,-1);
   ownerOnly();
   arm_all();
 }
@@ -393,6 +410,7 @@ void MasterFunctionGenerator::Arm()
 
 void MasterFunctionGenerator::reset_all()
 {
+  DRIVER_LOG("",-1,-1);
 	for (auto fg : activeFunctionGenerators)
 	{
 		fg->Reset();
@@ -401,6 +419,7 @@ void MasterFunctionGenerator::reset_all()
 
 void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
 {
+  DRIVER_LOG("",-1,-1);
   ownerOnly();
   reset_all();
   if (wait_for_abort_ack)
@@ -411,6 +430,7 @@ void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
 
 void MasterFunctionGenerator::ownerQuit()
 {
+  DRIVER_LOG("",-1,-1);
   // owner quit without Disown? probably a crash => turn off all the function generators
   reset_all();
   activeFunctionGenerators = allFunctionGenerators;
@@ -418,6 +438,7 @@ void MasterFunctionGenerator::ownerQuit()
 
 void MasterFunctionGenerator::setStartTag(uint32_t val)
 {
+  DRIVER_LOG("",-1,-1);
   ownerOnly();
 
  	for (auto fg : activeFunctionGenerators)  
@@ -438,6 +459,7 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
 
 std::vector<uint32_t> MasterFunctionGenerator::ReadExecutedParameterCounts()
 {
+  DRIVER_LOG("",-1,-1);
 	std::vector<uint32_t> counts;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -448,6 +470,7 @@ std::vector<uint32_t> MasterFunctionGenerator::ReadExecutedParameterCounts()
 
 std::vector<uint64_t> MasterFunctionGenerator::ReadFillLevels()
 {
+  DRIVER_LOG("",-1,-1);
 	std::vector<uint64_t> levels;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -458,6 +481,7 @@ std::vector<uint64_t> MasterFunctionGenerator::ReadFillLevels()
 
 std::vector<std::string> MasterFunctionGenerator::ReadAllNames()
 {
+  DRIVER_LOG("",-1,-1);
 	std::vector<std::string> names;
 	for (auto fg : allFunctionGenerators)
 	{
@@ -468,6 +492,7 @@ std::vector<std::string> MasterFunctionGenerator::ReadAllNames()
 
 std::vector<std::string> MasterFunctionGenerator::ReadNames()
 {
+  DRIVER_LOG("",-1,-1);
 	std::vector<std::string> names;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -479,6 +504,7 @@ std::vector<std::string> MasterFunctionGenerator::ReadNames()
 // vector<bool> as used in glib 2.50 requires c++14 
 std::vector<int> MasterFunctionGenerator::ReadArmed()
 {
+  DRIVER_LOG("",-1,-1);
 	std::vector<int> armed_states;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -489,6 +515,7 @@ std::vector<int> MasterFunctionGenerator::ReadArmed()
 
 std::vector<int> MasterFunctionGenerator::ReadEnabled()
 {
+  DRIVER_LOG("",-1,-1);
 	std::vector<int> enabled_states;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -499,6 +526,7 @@ std::vector<int> MasterFunctionGenerator::ReadEnabled()
 
 std::vector<int> MasterFunctionGenerator::ReadRunning()
 {
+  DRIVER_LOG("",-1,-1);
 	std::vector<int> running_states;
 	for (auto fg : activeFunctionGenerators)
 	{
@@ -509,6 +537,7 @@ std::vector<int> MasterFunctionGenerator::ReadRunning()
 
 void MasterFunctionGenerator::ResetActiveFunctionGenerators()
 {
+  DRIVER_LOG("",-1,-1);
   ownerOnly();
   activeFunctionGenerators = allFunctionGenerators;
   generateIndividualSignals=false;
@@ -516,6 +545,7 @@ void MasterFunctionGenerator::ResetActiveFunctionGenerators()
 
 void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std::string>& names)
 {
+  DRIVER_LOG("",-1,-1);
   ownerOnly();
   if (names.size()==0)
   {
@@ -545,6 +575,7 @@ void MasterFunctionGenerator::SetActiveFunctionGenerators(const std::vector<std:
 
 bool MasterFunctionGenerator::WaitTimeout()
 {
+  DRIVER_LOG("",-1,-1);
   clog << "MasterFG Timed out waiting" << std::endl;
   waitTimeout.disconnect();
   return false;
@@ -552,6 +583,7 @@ bool MasterFunctionGenerator::WaitTimeout()
 
 bool MasterFunctionGenerator::all_armed()
 {
+  DRIVER_LOG("",-1,-1);
   bool all_armed=true;
   for (auto fg : activeFunctionGenerators)
   {
@@ -563,6 +595,7 @@ bool MasterFunctionGenerator::all_armed()
 
 bool MasterFunctionGenerator::all_stopped()
 {
+  DRIVER_LOG("",-1,-1);
   bool all_stopped=false;
   all_stopped=true;
   for (auto fg : activeFunctionGenerators)
@@ -574,6 +607,7 @@ bool MasterFunctionGenerator::all_stopped()
 
 void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
 {
+  DRIVER_LOG("",-1,-1);
   struct timespec start, now;
   clock_gettime(CLOCK_MONOTONIC, &start);
 

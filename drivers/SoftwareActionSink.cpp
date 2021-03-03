@@ -50,6 +50,7 @@ const char *SoftwareActionSink::getInterfaceName() const
 
 void SoftwareActionSink::receiveMSI(uint8_t code)
 {
+  DRIVER_LOG("MSI",-1, code);
   // Intercept valid action counter increase
   if (code == ECA_VALID) {
     updateAction(0); // increase the counter, rearming the MSI
@@ -106,6 +107,8 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
       return;
     }
     
+    DRIVER_LOG("deadline",-1, deadline);
+    DRIVER_LOG("id",      -1, id);
     // Inform clients
     softwareCondition->Action(id, param, deadline, executed, flags & 0xF);
     softwareCondition->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);

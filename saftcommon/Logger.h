@@ -89,8 +89,8 @@ public:
 		const char * what;
 		int          who; // PROXY=0, SAFTD=1, DRIVER=2
 		char         text[32];
-		int          param;
-		int          dict;
+		int64_t          param;
+		int64_t          dict;
 
 	};
 
@@ -101,8 +101,8 @@ public:
 	unsigned idx;
 
 	FCLogger(std::string n, int size);
-	void log(const char *file, int line, const char* func, const char* what, int who, const char *text, int dict, int param);
-	void log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int dict, int param);
+	void log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);
+	void log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);
 	void dumpline(std::ostream &out, int idx);
 	void dump();
 	void dump(std::ostream &out);

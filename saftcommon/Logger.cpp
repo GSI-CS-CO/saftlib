@@ -90,7 +90,7 @@ namespace saftbus
 		, idx(0) 
 	{}
 
-	void FCLogger::log(const char *file, int line, const char* func, const char* what, int who, const char *text, int dict, int param) {
+	void FCLogger::log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
 		clock_gettime(CLOCK_REALTIME, &buffer[idx].t);
 		buffer[idx].file  = file;
 		buffer[idx].line  = line;
@@ -106,7 +106,7 @@ namespace saftbus
 		idx %= buffer.size(); // warp around
 		full |= !idx;         // set full to true when idx wraps around the first time
 	}
-	void FCLogger::log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int dict, int param) {
+	void FCLogger::log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
 		buffer[idx].t     = ts;
 		buffer[idx].file  = file;
 		buffer[idx].line  = line;
@@ -195,4 +195,4 @@ namespace saftbus
 
 }
 
-saftbus::FCLogger fc_logger("saftd",10000);
+saftbus::FCLogger fc_logger("saftd",1000);

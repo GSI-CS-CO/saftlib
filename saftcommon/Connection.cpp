@@ -355,6 +355,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 			{
 				case saftbus::SAFTBUS_CTL_ENABLE_LOGGING:
 				{
+					(*logstream) << "# logdump on request" << std::endl;
+					fc_logger.dump(*logstream);
 					// logger.enable();
 					// logger.newMsg(0).add("saftbus logging enabled").log();
 				}
@@ -363,7 +365,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					// logger.newMsg(0).add("saftbus logging disabled").log();
 					// logger.disable();
-					(*logstream) << "logdump" << std::endl;
+					(*logstream) << "# logdump on request" << std::endl;
 					fc_logger.dump(*logstream);
 				}
 				break;
@@ -629,7 +631,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						// saftbus object lookup
 						int saftd_object_id = _saftbus_object_ids[derived_interface_name][object_path];
 						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found or wrong check saftd_object_id
-							SAFTD_LOGT("unknown_object_id",object_path.c_str(),-1,saftbus_object_id);
+							SAFTD_LOGT("throw:inconsistent_object_id",object_path.c_str(),-1,-1);
 							// this causes an exception on the proxy side
 							std::string what;
 							if (saftd_object_id == 0) {
@@ -641,11 +643,12 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
+							fc_logger.dump(*logstream); // dump log on exeption
 							break;
 						}
 						auto saftbus_object = _saftbus_objects.find(saftd_object_id);
 						if (saftbus_object == _saftbus_objects.end()) {
-							SAFTD_LOGT("unknown_object_id",object_path.c_str(),-1,saftbus_object_id);
+							SAFTD_LOGT("throw:unknown_object_path",object_path.c_str(),-1,-1);
 							std::string what;
 							what.append("unknown object path: ");
 							what.append(object_path);
@@ -666,7 +669,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							size = result.get_size();
 							const char *data_ptr = static_cast<const char*>(result.get_data());
 							// write data to socket
-							SAFTD_LOGT("done",property_name.c_str(),saftbus_object_id,-1); 
+							SAFTD_LOGT("return",property_name.c_str(),saftbus_object_id,-1); 
 							saftbus::write(client_fd, saftbus::METHOD_REPLY);
 							saftbus::write(client_fd, size);
 							saftbus::write_all(client_fd, data_ptr, size);
@@ -689,25 +692,27 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 								const char *data_ptr = static_cast<const char*>(response.get_data());
 
 								// send the data 
-								SAFTD_LOGT("done",property_name.c_str(),saftbus_object_id,-1); 
+								SAFTD_LOGT("return",property_name.c_str(),saftbus_object_id,-1); 
 								saftbus::write(client_fd, saftbus::METHOD_REPLY);
 								saftbus::write(client_fd, size);
 								saftbus::write_all(client_fd, data_ptr, size);
 							} catch (const saftbus::Error& error) {
+							    SAFTD_LOGT("throw",error.what().c_str(),-1,-1);
 								saftbus::write(client_fd, saftbus::METHOD_ERROR);
 								saftbus::write(client_fd, saftbus::Error::FAILED);
 								saftbus::write(client_fd, error.what());
+								fc_logger.dump(*logstream); // dump log on exeption
 							}
 						}
 					}
 					else // normal method calls 
 					{
-						SAFTD_LOGT("call",name.c_str(),saftbus_object_id,-1); 
+						SAFTD_LOGT("function",name.c_str(),saftbus_object_id,-1); 
 
 						// saftbus object lookup
 						int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
 						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found
-							SAFTD_LOGT("unknown_object_id",object_path.c_str(),-1,saftbus_object_id);
+							SAFTD_LOGT("throw:inconsistent_object_id",object_path.c_str(),-1,-1);
 							// this causes an exception on the proxy side
 							std::string what;
 							if (saftd_object_id == 0) {
@@ -763,6 +768,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				default:
 					SAFTD_LOG("unknown_message_type",-1,type); 
 					handle_disconnect(client_fd);
+					fc_logger.dump(*logstream); // dump log on exeption
 					return false;
 				break;				
 			}
@@ -770,14 +776,17 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 			return true;
 		}
 	} catch(std::exception &e) {
-		SAFTD_LOGT("exception",e.what(),-1,-1); 
+		SAFTD_LOGT("stdexception",e.what(),-1,-1); 
 		//std::cerr << "exception in Connection::dispatch(): " << e.what() << std::endl;
 		// logger.add("           exception in Connection::dispatch()").add(e.what()).log();
 		//if (_debug_level > 5) print_all_fds();
 		handle_disconnect(client_fd);
+		fc_logger.dump(*logstream); // dump log on exeption
 		//if (_debug_level > 5) print_all_fds();
 	} catch (saftbus::Error &e) {
+		SAFTD_LOGT("saftbuserror",e.what().c_str(),-1,-1); 
 		std::cerr << "saftbus::Error " << e.what() << std::endl;
+		fc_logger.dump(*logstream); // dump log on exeption
 	}
 	return false;
 }
