@@ -89,7 +89,8 @@ public:
 		const char * what;
 		int          who; // PROXY=0, SAFTD=1, DRIVER=2
 		char         text[32];
-		uint64_t     param;
+		int          param;
+		int          dict;
 
 	};
 
@@ -100,10 +101,11 @@ public:
 	unsigned idx;
 
 	FCLogger(std::string n, int size);
-	void log(const char *file, int line, const char* func, const char* what, int who, const char *text, uint64_t param);
-	void log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, uint64_t param);
-	void dumpline(std::ofstream &out, int idx);
+	void log(const char *file, int line, const char* func, const char* what, int who, const char *text, int dict, int param);
+	void log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int dict, int param);
+	void dumpline(std::ostream &out, int idx);
 	void dump();
+	void dump(std::ostream &out);
 
 	std::map<int, std::string> dict;
 
@@ -118,14 +120,14 @@ public:
 }
 
 extern saftbus::FCLogger fc_logger;
-#define PROXY_LOGT(ts,w,txt,p) fc_logger.log_ts(ts,__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_PROXY,txt,p)
-#define SAFTD_LOGT(w,txt,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_SAFTD,txt,p)
-#define DRIVER_LOGT(w,txt,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_DRIVER,txt,p)
-#define MAINCONTEXT_LOGT(w,txt,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_MAINCONTEXT,txt,p)
+#define PROXY_LOGT(ts,w,txt,d,p) fc_logger.log_ts(ts,__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_PROXY,txt,d,p)
+#define SAFTD_LOGT(w,txt,d,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_SAFTD,txt,d,p)
+#define DRIVER_LOGT(w,txt,d,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_DRIVER,txt,d,p)
+#define MAINCONTEXT_LOGT(w,txt,d,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_MAINCONTEXT,txt,d,p)
 
-#define PROXY_LOG(ts,w,p) fc_logger.log_ts(ts,__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_PROXY,"",p)
-#define SAFTD_LOG(w,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_SAFTD,"",p)
-#define DRIVER_LOG(w,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_DRIVER,"",p)
-#define MAINCONTEXT_LOG(w,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_MAINCONTEXT,"",p)
+#define PROXY_LOG(ts,w,d,p) fc_logger.log_ts(ts,__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_PROXY,"",d,p)
+#define SAFTD_LOG(w,d,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_SAFTD,"",d,p)
+#define DRIVER_LOG(w,d,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_DRIVER,"",d,p)
+#define MAINCONTEXT_LOG(w,d,p) fc_logger.log(__FILE__, __LINE__, __FUNCTION__,w,WHO_LOG_MAINCONTEXT,"",d,p)
 
 #endif 

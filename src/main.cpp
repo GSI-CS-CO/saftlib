@@ -100,7 +100,7 @@ static void on_bus_acquired(const std::shared_ptr<saftbus::Connection>& connecti
   }
 }
 
-static void on_name_acquired(const std::shared_ptr<saftbus::Connection>& /* connection */, const std::string& /* name */, int argc, char** argv)
+static void on_name_acquired(const std::shared_ptr<saftbus::Connection>& connection, const std::string& /* name */, int argc, char** argv)
 {
   for (int i = 1; i < argc; ++i) {
     // parse the string
@@ -143,6 +143,7 @@ static void on_name_acquired(const std::shared_ptr<saftbus::Connection>& /* conn
   clog << kLogNotice << "started" << std::endl;
   clog << kLogInfo << "sourceVersion: " << sourceVersion << std::endl;
   clog << kLogInfo << buildInfo << std::endl;
+  connection->set_logstream(&clog);
 }
 
 static void on_name_lost(const std::shared_ptr<saftbus::Connection>& connection, const std::string& /* name */)

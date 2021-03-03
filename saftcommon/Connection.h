@@ -83,6 +83,8 @@ namespace saftbus
 
 		bool dispatch(Slib::IOCondition condition, int client_fd);
 
+		void set_logstream(std::ostream *log);
+
 	private:
 		void handle_disconnect(int client_fd);
 
@@ -91,6 +93,8 @@ namespace saftbus
 		void clean_all_fds_from_socket(int client_fd);
 
 		void list_all_resources();
+
+		std::ostream *logstream;
 
 				// interface_name       // object_path
 		std::map<std::string, std::map<std::string, int> > _saftbus_object_ids; 
@@ -121,7 +125,7 @@ namespace saftbus
 
 		std::map<std::string, std::map<int, int> > _function_run_times;
 
-		Logger logger;
+		// Logger logger;
 
 		bool _create_signal_flight_time_statistics;
 

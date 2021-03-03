@@ -35,9 +35,10 @@ namespace saftbus
 int Connection::_saftbus_id_counter = 0;
 
 Connection::Connection(const std::string& base_name)
-	: _saftbus_object_id_counter(1)
+	: logstream(&std::cerr)
+	, _saftbus_object_id_counter(1)
 	, _saftbus_signal_handle_counter(1)
-	, logger("/tmp/saftbus_connection.log")
+	//, logger("/tmp/saftbus_connection.log")
 	, _create_signal_flight_time_statistics(false)
 {
 	char *socketname_env = getenv(saftbus_socket_environment_variable_name);
@@ -81,6 +82,10 @@ Connection::Connection(const std::string& base_name)
 		                     S_IROTH | S_IWOTH );
 	Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), _listen_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 }
+void Connection::set_logstream(std::ostream *log)
+{
+	logstream = log;
+}
 
 bool Connection::accept_client(Slib::IOCondition condition) 
 {
@@ -93,7 +98,6 @@ bool Connection::accept_client(Slib::IOCondition condition)
 Connection::~Connection()
 {
 	close(_listen_fd);
-	logger.newMsg(1).add("Connection::~Connection()\n").log();
 }
 
 // Add an object to the set of saftbus controlled objects. 
@@ -109,11 +113,9 @@ unsigned Connection::register_object (const std::string& object_path,
 								   const InterfaceVTable& vtable)
 {
 	++_saftbus_object_id_counter;
-	//logger.newMsg(1).add("Connection::register_object(").add(object_path).add(")\n");
 	unsigned saftbus_object_id = _saftbus_object_id_counter;
 	_saftbus_objects[_saftbus_object_id_counter] = std::shared_ptr<InterfaceVTable>(new InterfaceVTable(vtable));
 	std::string interface_name = interface_info->get_interface_name();
-	//logger.add(" interface_name:").add(interface_name).add(" -> id:").add(saftbus_object_id).log();
 
 	fc_logger.dict[saftbus_object_id] = interface_name;
 	// fill the lookup table to map interface_name and object path to saftbus_object_id
@@ -122,10 +124,8 @@ unsigned Connection::register_object (const std::string& object_path,
 }
 bool Connection::unregister_object (unsigned saftbus_object_id)
 {
-	logger.newMsg(0).add("Connection::unregister_object(").add(saftbus_object_id).add(")\n").log();
 	_saftbus_objects.erase(saftbus_object_id);
 	return true;
-	//list_all_resources();
 }
 
 
@@ -144,14 +144,14 @@ unsigned Connection::signal_subscribe(const SlotSignal& slot,
 								   const std::string& saftbus_id)
 {
 	try {
-		saftbus::Timer f_time(_function_run_times["Connection::signal_subscribe"]);
-		logger.newMsg(1).add("Connection::signal_subscribe(")
-		                .add(sender).add(",")
-		                .add(interface_name).add(",")
-		                .add(member).add(",")
-		                .add(object_path).add(",")
-		                .add(saftbus_id)
-		                .add(")\n");
+		// saftbus::Timer f_time(_function_run_times["Connection::signal_subscribe"]);
+		// logger.newMsg(1).add("Connection::signal_subscribe(")
+		//                 .add(sender).add(",")
+		//                 .add(interface_name).add(",")
+		//                 .add(member).add(",")
+		//                 .add(object_path).add(",")
+		//                 .add(saftbus_id)
+		//                 .add(")\n");
 
 		// save the slot (the function object) under a unique subscription_id.
 		// the id is created by incrementing a counter
@@ -160,12 +160,12 @@ unsigned Connection::signal_subscribe(const SlotSignal& slot,
 
 		_id_handles_map[saftbus_id].insert(subscription_id);
 
-		for(auto it: _id_handles_map) {
-			for (auto i: it.second) {
-				logger.add("     _id_handles_map[").add(it.first).add("]: ").add(i).add("\n");
-			}
-		}
-		logger.add("            return signal handle ").add(subscription_id).log();
+		// for(auto it: _id_handles_map) {
+		// 	for (auto i: it.second) {
+		// 		logger.add("     _id_handles_map[").add(it.first).add("]: ").add(i).add("\n");
+		// 	}
+		// }
+		// logger.add("            return signal handle ").add(subscription_id).log();
 		return subscription_id;
 	} catch(std::exception &e) {
 		std::cerr << "Connection::signal_subscribe() exception : " << e.what() << std::endl;
@@ -180,14 +180,15 @@ void Connection::signal_unsubscribe(unsigned subscription_id)
 		return;
 	}
 	try {
-		logger.newMsg(1).add("signal_unsubscribe(").add(subscription_id).add(")\n");
-		saftbus::Timer f_time(_function_run_times["Connection::signal_unsubscribe"]);
-		for(auto it: _handle_to_signal_map) {
-			logger.add("       _owned_signals[").add(it.first).add("]\n");
-		}
-		logger.log();
+		// logger.newMsg(1).add("signal_unsubscribe(").add(subscription_id).add(")\n");
+		// saftbus::Timer f_time(_function_run_times["Connection::signal_unsubscribe"]);
+		// for(auto it: _handle_to_signal_map) {
+		// 	logger.add("       _owned_signals[").add(it.first).add("]\n");
+		// }
+		// logger.log();
 		_erased_handles.insert(subscription_id);
 	} catch (std::exception &e) {
+		SAFTD_LOGT("exception",e.what(),-1,-1); 
 		std::cerr << "Connection::signal_unsubscribe() exception : " << e.what() << std::endl;
 	}
 }
@@ -195,14 +196,14 @@ void Connection::signal_unsubscribe(unsigned subscription_id)
 void Connection::handle_disconnect(int client_fd)
 {
 	try {
-		saftbus::Timer f_time(_function_run_times["Connection::handle_disconnect"]);
-		logger.newMsg(1).add("Connection::handle_disconnect()\n");
+		// saftbus::Timer f_time(_function_run_times["Connection::handle_disconnect"]);
+		// logger.newMsg(1).add("Connection::handle_disconnect()\n");
 		Serial dummy_arg;
 		std::string& saftbus_id = _socket_owner[client_fd];
 
 		close(client_fd);
 
-		logger.add("   collect unsubscription handles:\n");
+		// logger.add("   collect unsubscription handles:\n");
 		if (_id_handles_map.find(saftbus_id) != _id_handles_map.end()) { 
 			// We have a signal subscription with this saftbus_id, so we have to emit signals.
 			// This will cause the saftlib device to remove itself and free all resources.
@@ -211,21 +212,21 @@ void Connection::handle_disconnect(int client_fd)
 				// A signal should only be sent if (subscription_id) is not in the list of _erased_handles. 
 				// I.e. don't emit signals to already erased saftlib services.
 				if (_erased_handles.find(id_handles) == _erased_handles.end()) {
-					logger.add("   sending signal to clean up: ").add(id_handles).add("\n").log();
+					// logger.add("   sending signal to clean up: ").add(id_handles).add("\n").log();
 					_handle_to_signal_map[id_handles].emit(saftbus::connection, "", "", "", "" , dummy_arg);
 				}
 			}
 		}
 
 
-		logger.newMsg(1).add("   delete unsubscription handles\n");
+		// logger.newMsg(1).add("   delete unsubscription handles\n");
 		// go through the list of subscribtion_ids  that were marked as erased and actually erase them
 		//for (auto it = _erased_handles.begin(); it != _erased_handles.end(); ++it) {
 		for (auto erased_handle: _erased_handles) {
 			_handle_to_signal_map.erase(erased_handle);
 		}
 		_erased_handles.clear();
-		logger.add("  _id_handles_map.erase(saftbus_id)\n");
+		// logger.add("  _id_handles_map.erase(saftbus_id)\n");
 		_id_handles_map.erase(saftbus_id);
 
 
@@ -258,7 +259,7 @@ void Connection::handle_disconnect(int client_fd)
 		_socket_owner.erase(client_fd);
 		_sockets.erase(client_fd);
 
-		logger.log();
+		// logger.log();
 	} catch (std::exception &e) {
 		std::cerr << "Connection::handle_disconnect() exception : " << e.what() << std::endl;
 	}
@@ -279,13 +280,8 @@ void Connection::emit_signal(const std::string& object_path,
 	    clock_gettime( CLOCK_REALTIME, &start_time);
 
 	    //std::cerr << "emit signal " << object_path << " " << interface_name << " " << signal_name << std::endl;
-
-		saftbus::Timer f_time(_function_run_times["Connection::emit_signal"]);
-		logger.newMsg(0).add("Connection::emit_signal(").add(object_path).add(",")
-		                                                .add(interface_name).add(",")
-		                                                .add(signal_name).add(",")
-		                                                .add(destination_bus_name).add(",")
-		                                                .add("parameters)\n");
+	    double random_signal_id = rand();
+		SAFTD_LOGT("sent",signal_name.c_str(),_saftbus_object_ids[interface_name][object_path], random_signal_id);
 
 		// use saftbus::Serial to serialize the signal data
 		Serial signal_msg;
@@ -294,7 +290,8 @@ void Connection::emit_signal(const std::string& object_path,
 		signal_msg.put(signal_name);
 		signal_msg.put(start_time.tv_sec);
 		signal_msg.put(start_time.tv_nsec);
-		signal_msg.put(_create_signal_flight_time_statistics);
+		// signal_msg.put(_create_signal_flight_time_statistics);
+		signal_msg.put(random_signal_id); 
 		signal_msg.put(parameters);
 		unsigned    size     = signal_msg.get_size();
 		const char* data_ptr = signal_msg.get_data();
@@ -307,21 +304,16 @@ void Connection::emit_signal(const std::string& object_path,
 			std::set<SignalFD> &setSignalFD = _signal_fds[interface_name][object_path];
 			for (auto i = setSignalFD.begin(); i != setSignalFD.end(); ++i) {
 				try {
-					logger.add("            writing to pipe: fd=").add(i->fd).add("    ");
 					saftbus::write(i->fd, saftbus::SIGNAL);
 					saftbus::write(i->fd, size);
 					saftbus::write_all(i->fd, data_ptr, size);
 				} catch(std::exception &e) {
-					logger.add("\n   exception while writing to fd=").add(i->fd).add(" : ").add(e.what()).add("\n");
-					logger.add("    setSignalFD.size() = ").add(setSignalFD.size()).add("\n");
 				}
 			}
 			//std::cerr << "Connection::emit_signal(" << object_path << ", " << interface_name << ", " << signal_name << ") done" << std::endl;
 		} catch(std::exception &e) {
 			// just continue, if something fails with this proxy, we still have other ones to care about
-			logger.add("           exception in Connection::emit_signal() ").add(e.what()).log();
 		}
-		logger.log();
 	} catch (std::exception &e) {
 		// just continue, if something fails with this proxy, we still have other ones to care about
 		std::cerr << "Connection::emit_signal() exception : " << e.what() << std::endl;
@@ -345,7 +337,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 {
 	// handle a request coming from one of the sockets
 	try {
-		logger.newMsg(0).add("Connection::dispatch(condition, ").add(client_fd).add(")\n");
+		// logger.newMsg(0).add("Connection::dispatch(condition, ").add(client_fd).add(")\n");
 
 		if (condition & Slib::IO_HUP) {
 			handle_disconnect(client_fd);
@@ -355,7 +347,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 		MessageTypeC2S type;
 		int result = saftbus::read(client_fd, type);
 		if (result == -1) {
-			logger.add("       client disconnected\n");
+			// logger.add("       client disconnected\n");
 			handle_disconnect(client_fd);
 			return false;
 		} else {
@@ -363,45 +355,46 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 			{
 				case saftbus::SAFTBUS_CTL_ENABLE_LOGGING:
 				{
-					logger.enable();
-					logger.newMsg(0).add("saftbus logging enabled").log();
+					// logger.enable();
+					// logger.newMsg(0).add("saftbus logging enabled").log();
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_DISABLE_LOGGING:
 				{
-					logger.newMsg(0).add("saftbus logging disabled").log();
-					logger.disable();
-					fc_logger.dump();
+					// logger.newMsg(0).add("saftbus logging disabled").log();
+					// logger.disable();
+					(*logstream) << "logdump" << std::endl;
+					fc_logger.dump(*logstream);
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_ENABLE_STATS:
 				{
 					_create_signal_flight_time_statistics = true;
-					std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
+					// std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_DISABLE_STATS:
 				{
 					_create_signal_flight_time_statistics = false;
-					std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
+					// std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_GET_STATS:
 				{
 					saftbus::write(client_fd, _signal_flight_times);
-					std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
+					// std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_HELLO:
 				{
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SAFTBUS_CTL_HELLO"]);
-					logger.add("   got ping from saftbus-ctl\n");
+					// logger.add("   got ping from saftbus-ctl\n");
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_STATUS:
 				{
 					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SAFTBUS_CTL_STATUS"]);
-					logger.add("   got stats request from saftbus-ctl\n");
+					// logger.add("   got stats request from saftbus-ctl\n");
 					saftbus::write(client_fd, _saftbus_object_ids);
 					std::vector<int> indices;
 					for (auto it: _saftbus_objects) {
@@ -417,11 +410,11 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					std::string object_path, interface_name;
 					saftbus::read(client_fd, object_path);
 					saftbus::read(client_fd, interface_name);
-					logger.add("   introspect from saftbus-ctl: object_path \'");
-					logger.add(object_path);
-					logger.add("\' interface_name \'");
-					logger.add(interface_name);
-					logger.add("\'\n");
+					// logger.add("   introspect from saftbus-ctl: object_path \'");
+					// logger.add(object_path);
+					// logger.add("\' interface_name \'");
+					// logger.add(interface_name);
+					// logger.add("\'\n");
 					int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
 					if (_saftbus_objects.find(saftd_object_id) == _saftbus_objects.end()) {
 						saftbus::write(client_fd, std::string("unknown object path"));
@@ -514,8 +507,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				break;
 				case saftbus::SENDER_ID:
 				{
-					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SENDER_ID"]);
-					logger.add("     SENDER_ID received\n");
+					// saftbus::Timer f_time(_function_run_times["Connection::dispatch_SENDER_ID"]);
+					// logger.add("     SENDER_ID received\n");
 					// std::string sender_id;
 					// generate a new id value (increasing numbers)
 					++_saftbus_id_counter; 
@@ -532,20 +525,24 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				case saftbus::SIGNAL_FLIGHT_TIME: 
 				{
 					// after receiving a signal, the ProxyConnection will report
-					// the signal flight time so that we can make a histogram
-					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_FLIGHT_TIME"]);
-					logger.add("     SIGNAL_FLIGHT_TIME received: ");
-					double dt;
-					saftbus::read(client_fd, dt);
-					int dt_us = dt;
-					++_signal_flight_times[dt_us];
-					logger.add(dt).add(" us\n");
+					double random_signal_id;
+					struct timespec received;
+					saftbus::read(client_fd, received.tv_sec);
+					saftbus::read(client_fd, received.tv_nsec);
+					saftbus::read(client_fd, random_signal_id);
+					// SAFTD_LOGT("signal_interface",interface_name.c_str(),random_signal_id);
+					// SAFTD_LOGT("signal_name",signal_name.c_str(),random_signal_id);
+					PROXY_LOG(received,"received",-1,random_signal_id); 
+
+					// int dt_us = dt;
+					// ++_signal_flight_times[dt_us];
+					// logger.add(dt).add(" us\n");
 				}
 				break;
 				case saftbus::GET_SAFTBUS_INDEX: 
 				{
-					saftbus::Timer f_time(_function_run_times["Connection::GET_SAFTBUS_INDEX"]);
-					logger.add("     GET_SAFTBUS_INDEX received: ");
+					// saftbus::Timer f_time(_function_run_times["Connection::GET_SAFTBUS_INDEX"]);
+					// logger.add("     GET_SAFTBUS_INDEX received: ");
 					std::string object_path, interface_name;
 					saftbus::read(client_fd, object_path);
 					saftbus::read(client_fd, interface_name);
@@ -556,8 +553,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					// each Proxy constructor will send the reading end of a pipe
 					// to us as a fast path for signals
-					saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_FD"]);
-					logger.add("     SIGNAL_FD received: ");
+					// saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_FD"]);
+					// logger.add("     SIGNAL_FD received: ");
 					int fd = saftbus::recvfd(client_fd);
 					std::string name, object_path, interface_name;
 					int proxy_id;
@@ -565,10 +562,10 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					saftbus::read(client_fd, interface_name);
 					saftbus::read(client_fd, proxy_id);
 
-					logger.add("for object_path=").add(object_path)
-					      .add(" interface_name=").add(interface_name)
-					      .add(" proxy_id=").add(proxy_id)
-					      .add(" fd=").add(fd).add("\n");
+					// logger.add("for object_path=").add(object_path)
+					//       .add(" interface_name=").add(interface_name)
+					//       .add(" proxy_id=").add(proxy_id)
+					//       .add(" fd=").add(fd).add("\n");
 
 					int flags = fcntl(fd, F_GETFL, 0);
 					fcntl(fd, F_SETFL, flags | O_NONBLOCK);
@@ -620,7 +617,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					payload.get(sent_time.tv_sec);
 					payload.get(sent_time.tv_nsec);
 
-					PROXY_LOGT(sent_time,"remote_call",name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+					PROXY_LOGT(sent_time,"remote_call",name.c_str(),saftbus_object_id,-1); 
 
 					if (interface_name == "org.freedesktop.DBus.Properties") { // property get/set method call
 						std::string derived_interface_name;
@@ -632,7 +629,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						// saftbus object lookup
 						int saftd_object_id = _saftbus_object_ids[derived_interface_name][object_path];
 						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found or wrong check saftd_object_id
-							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),-1,saftbus_object_id);
 							// this causes an exception on the proxy side
 							std::string what;
 							if (saftd_object_id == 0) {
@@ -648,18 +645,18 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						}
 						auto saftbus_object = _saftbus_objects.find(saftd_object_id);
 						if (saftbus_object == _saftbus_objects.end()) {
-							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),-1,saftbus_object_id);
 							std::string what;
 							what.append("unknown object path: ");
 							what.append(object_path);
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
-							fc_logger.dump(); // dump log on exeption
+							fc_logger.dump(*logstream); // dump log on exeption
 							break;
 						}
 						if (name == "Get") {
-							SAFTD_LOGT("GetProperty",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+							SAFTD_LOGT("GetProperty",property_name.c_str(),saftbus_object_id,-1); 
 							// call auto-generated get_porperty handler using the vtable
 							Serial result;
 							saftbus_object->second->get_property(result, saftbus::connection, sender, object_path, derived_interface_name, property_name);
@@ -669,13 +666,13 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							size = result.get_size();
 							const char *data_ptr = static_cast<const char*>(result.get_data());
 							// write data to socket
-							SAFTD_LOGT("done",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+							SAFTD_LOGT("done",property_name.c_str(),saftbus_object_id,-1); 
 							saftbus::write(client_fd, saftbus::METHOD_REPLY);
 							saftbus::write(client_fd, size);
 							saftbus::write_all(client_fd, data_ptr, size);
 
 						} else if (name == "Set") {
-							SAFTD_LOGT("SetProperty",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+							SAFTD_LOGT("SetProperty",property_name.c_str(),saftbus_object_id,-1); 
 							
 							// set the value using the set_property handler from auto-generated saftlib code
 							Serial par2;
@@ -692,7 +689,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 								const char *data_ptr = static_cast<const char*>(response.get_data());
 
 								// send the data 
-								SAFTD_LOGT("done",property_name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+								SAFTD_LOGT("done",property_name.c_str(),saftbus_object_id,-1); 
 								saftbus::write(client_fd, saftbus::METHOD_REPLY);
 								saftbus::write(client_fd, size);
 								saftbus::write_all(client_fd, data_ptr, size);
@@ -705,12 +702,12 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					}
 					else // normal method calls 
 					{
-						SAFTD_LOGT("call",name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+						SAFTD_LOGT("call",name.c_str(),saftbus_object_id,-1); 
 
 						// saftbus object lookup
 						int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
 						if (saftd_object_id == 0 || saftd_object_id != saftbus_object_id) {// == not found
-							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),-1,saftbus_object_id);
 							// this causes an exception on the proxy side
 							std::string what;
 							if (saftd_object_id == 0) {
@@ -722,7 +719,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
-							fc_logger.dump(); // dump log on exeption
+							fc_logger.dump(*logstream); // dump log on exeption
 							break;
 						}
 
@@ -732,7 +729,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						if (saftbus_object != _saftbus_objects.end()) {
 							saftbus_object->second->method_call(saftbus::connection, sender, object_path, interface_name, name, parameters, method_invocation_rptr);
 						} else {
-							SAFTD_LOGT("unknown_object_id",object_path.c_str(),saftbus_object_id);
+							SAFTD_LOGT("unknown_object_id",object_path.c_str(),-1,saftbus_object_id);
 							std::string what;
 							what.append("unknown object path: ");
 							what.append(object_path);
@@ -740,13 +737,13 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						}
 
 						if (method_invocation_rptr->has_error()) {
-							SAFTD_LOGT("throw",method_invocation_rptr->get_return_error().what().c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+							SAFTD_LOGT("throw",method_invocation_rptr->get_return_error().what().c_str(),saftbus_object_id,-1); 
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().type());
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().what());
-							fc_logger.dump(); // dump log on exeption
+							fc_logger.dump(*logstream); // dump log on exeption
 						} else {
-							SAFTD_LOGT("return",name.c_str(),(saftbus_object_id|0x80000000)); // set 31-th bit to indicate it's a dict enty;
+							SAFTD_LOGT("return",name.c_str(),saftbus_object_id,-1); 
 							// get the result and pack it in a way that 
 							//   can be digested by the auto-generated saftlib code
  							Serial &result = method_invocation_rptr->get_return_value();
@@ -764,7 +761,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				}
 				break;
 				default:
-					SAFTD_LOG("unknown_message_type",type); // set 31-th bit to indicate it's a dict enty;
+					SAFTD_LOG("unknown_message_type",-1,type); 
 					handle_disconnect(client_fd);
 					return false;
 				break;				
@@ -773,8 +770,9 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 			return true;
 		}
 	} catch(std::exception &e) {
+		SAFTD_LOGT("exception",e.what(),-1,-1); 
 		//std::cerr << "exception in Connection::dispatch(): " << e.what() << std::endl;
-		logger.add("           exception in Connection::dispatch()").add(e.what()).log();
+		// logger.add("           exception in Connection::dispatch()").add(e.what()).log();
 		//if (_debug_level > 5) print_all_fds();
 		handle_disconnect(client_fd);
 		//if (_debug_level > 5) print_all_fds();

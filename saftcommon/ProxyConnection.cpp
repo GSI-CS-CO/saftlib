@@ -99,10 +99,14 @@ int ProxyConnection::get_connection_id()
 	return id;
 }
 
-void ProxyConnection::send_signal_flight_time(double signal_flight_time) {
+void ProxyConnection::send_signal_flight_time(double random_signal_id) {
 	std::lock_guard<std::mutex> lock(_socket_mutex);
+	struct timespec received;
+	clock_gettime( CLOCK_REALTIME, &received);
 	saftbus::write(get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
-	saftbus::write(get_fd(), signal_flight_time);
+	saftbus::write(get_fd(), received.tv_sec);
+	saftbus::write(get_fd(), received.tv_nsec);
+	saftbus::write(get_fd(), random_signal_id);
 }
 
 
