@@ -84,12 +84,9 @@ namespace saftbus
 
 	FCLogger::FCLogger(std::string n, int size) 
 		: name(n)
-		, buffer(size,LogEntry())
-		, full(false)
-		, missing(0)
-		, idx(0) 
-		, file_idx(0)
-	{}
+	{
+		resize(size);
+	}
 
 	void FCLogger::log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
 		clock_gettime(CLOCK_REALTIME, &buffer[idx].t);
@@ -206,6 +203,15 @@ namespace saftbus
 		// idx     = 0;
 	}
 
+	void FCLogger::resize(unsigned new_size) {
+		buffer.resize(new_size,LogEntry());
+		full = false;
+		missing = 0;
+		idx = 0;
+		file_idx = 0;
+	}
+
+
 }
 
-saftbus::FCLogger fc_logger("saftd",5000);
+saftbus::FCLogger fc_logger("saftd",500);

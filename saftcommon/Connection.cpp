@@ -355,8 +355,9 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 			{
 				case saftbus::SAFTBUS_CTL_ENABLE_LOGGING:
 				{
-					(*logstream) << "# logdump on request" << std::endl;
-					fc_logger.dump(*logstream);
+					int new_size;
+					saftbus::read(client_fd, new_size);
+					fc_logger.resize(new_size);
 					// logger.enable();
 					// logger.newMsg(0).add("saftbus logging enabled").log();
 				}

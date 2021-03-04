@@ -109,6 +109,8 @@ public:
 	void dump();
 	void dump(std::ostream &out);
 
+	void resize(unsigned new_size);
+
 	std::map<int, std::string> dict;
 
 };
