@@ -175,8 +175,8 @@ namespace saftbus
 			missing = 0;
 			idx     = 0;
 
-			if (file_idx == 100) {
-				file_idx = 0;
+			if (file_idx == 200) {
+				file_idx = 100;
 			}
 	}
 	void FCLogger::dump(std::ostream &out) {
