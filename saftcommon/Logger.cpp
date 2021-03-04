@@ -148,7 +148,7 @@ namespace saftbus
 
 	void FCLogger::dump() {
 			std::ostringstream filename;
-			filename << "/tmp/" << name << "_" << std::setw(3) << std::setfill('0') << file_idx++ << "_" << ".fc_log";
+			filename << "/tmp/" << name << "_" << std::setw(3) << std::setfill('0') << file_idx++ << ".fc_log";
 			std::ofstream out(filename.str().c_str());
 
 			struct timespec now;
