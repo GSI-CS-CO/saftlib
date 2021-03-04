@@ -100,6 +100,8 @@ public:
 	long missing; // count the dropped log entries
 	unsigned idx;
 
+	int file_idx;
+
 	FCLogger(std::string n, int size);
 	void log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);
 	void log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);

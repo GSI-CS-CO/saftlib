@@ -88,6 +88,7 @@ namespace saftbus
 		, full(false)
 		, missing(0)
 		, idx(0) 
+		, file_idx(0)
 	{}
 
 	void FCLogger::log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
@@ -125,7 +126,7 @@ namespace saftbus
 
 	void FCLogger::dumpline(std::ostream &out, int idx) {
 		out << std::dec;
-		out << idx << " " << buffer[idx].t.tv_sec << "." << std::setw(9) << std::setfill('0') << buffer[idx].t.tv_nsec << " " 
+		out << buffer[idx].t.tv_sec << "." << std::setw(9) << std::setfill('0') << buffer[idx].t.tv_nsec << " " 
 			<< buffer[idx].who << " "
 		    << buffer[idx].file << ":" 
 		    << buffer[idx].line << ":"
@@ -146,53 +147,65 @@ namespace saftbus
 	}
 
 	void FCLogger::dump() {
-		struct timespec now;
-		clock_gettime(CLOCK_REALTIME, &now);
-		std::ostringstream filename;
-		filename << "/tmp/" << name << "_" << now.tv_sec << "." << std::setw(9) << std::setfill('0') << now.tv_nsec
-		     << "_" << ".fc_log";
-		std::ofstream out(filename.str().c_str());
-		if (missing) {
-			out << "# " << std::dec << missing << " missing entries\n";
-		}
-		if (full) {
-			for (int i = idx; i < buffer.size(); ++i) {
+			std::ostringstream filename;
+			filename << "/tmp/" << name << "_" << std::setw(3) << std::setfill('0') << file_idx++ << "_" << ".fc_log";
+			std::ofstream out(filename.str().c_str());
+
+			struct timespec now;
+			clock_gettime(CLOCK_REALTIME, &now);
+			if (missing) {
+				out << "# " << std::dec << missing << " missing entries\n";
+			}
+			if (full) {
+				for (int i = idx; i < buffer.size(); ++i) {
+					dumpline(out, i);
+				}
+			}
+			for (int i = 0; i < idx; ++i) {
 				dumpline(out, i);
 			}
-		}
-		for (int i = 0; i < idx; ++i) {
-			dumpline(out, i);
-		}
-		full    = false;
-		missing = 0;
-		idx     = 0;
+			struct timespec start = now;
+			clock_gettime(CLOCK_REALTIME, &now);
+			double dt = now.tv_sec-start.tv_sec;
+			dt *= 1000;
+			dt += (now.tv_nsec-start.tv_nsec)/1e6;
+			out << "# logdump took " << dt << " ms" << std::endl;
+			
+			full    = false;
+			missing = 0;
+			idx     = 0;
+
+			if (file_idx == 100) {
+				file_idx = 0;
+			}
 	}
 	void FCLogger::dump(std::ostream &out) {
-		struct timespec now;
-		clock_gettime(CLOCK_REALTIME, &now);
-		if (missing) {
-			out << "# " << std::dec << missing << " missing entries\n";
-		}
-		if (full) {
-			for (int i = idx; i < buffer.size(); ++i) {
-				dumpline(out, i);
-			}
-		}
-		for (int i = 0; i < idx; ++i) {
-			dumpline(out, i);
-		}
-		struct timespec start = now;
-		clock_gettime(CLOCK_REALTIME, &now);
-		double dt = now.tv_sec-start.tv_sec;
-		dt *= 1000;
-		dt += (now.tv_nsec-start.tv_nsec)/1e6;
-		out << "# logdump took " << dt << " ms" << std::endl;
+		dump();
+		// struct timespec now;
+		// clock_gettime(CLOCK_REALTIME, &now);
+		// if (missing) {
+		// 	out << "# " << std::dec << missing << " missing entries\n";
+		// }
+		// if (full) {
+		// 	for (int i = idx; i < buffer.size(); ++i) {
+		// 		dumpline(out, i);
+		// 	}
+		// }
+		// for (int i = 0; i < idx; ++i) {
+		// 	dumpline(out, i);
+		// }
+		// struct timespec start = now;
+		// clock_gettime(CLOCK_REALTIME, &now);
+		// double dt = now.tv_sec-start.tv_sec;
+		// dt *= 1000;
+		// dt += (now.tv_nsec-start.tv_nsec)/1e6;
+		// out << "# logdump took " << dt << " ms" << std::endl;
 		
-		full    = false;
-		missing = 0;
-		idx     = 0;
+		// full    = false;
+		// missing = 0;
+		// idx     = 0;
 	}
 
 }
 
-saftbus::FCLogger fc_logger("saftd",1000);
+saftbus::FCLogger fc_logger("saftd",5000);

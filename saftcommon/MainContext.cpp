@@ -140,9 +140,9 @@ namespace Slib
 
 			std::vector<unsigned> signal_io_removed_indices;
 			int poll_result;
-			//MAINCONTEXT_LOG("poll", timeout_ms);
+			MAINCONTEXT_LOG("poll", -1,-1);
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
-			//MAINCONTEXT_LOG("poll_fd", poll_result);
+			MAINCONTEXT_LOG("poll_fd", -1,-1);
 				// during check of results, signal_io_pfds and fds from sources
 				//  are distinguished using the index.
 				unsigned idx = 0;
@@ -188,7 +188,7 @@ namespace Slib
 				}
 
 			} else {
-				//MAINCONTEXT_LOG("poll_timeout", poll_result);
+				MAINCONTEXT_LOG("poll_timeout", -1,-1);
 			}
 			bool any_timeout_is_0 = false;
 			for (unsigned i = 0; i < signal_timeouts.size(); ++i) {
