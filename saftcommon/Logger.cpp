@@ -112,7 +112,11 @@ namespace saftbus
 		buffer[idx].who   = who;
 		buffer[idx].param = param;
 		buffer[idx].dict  = dict;
-		strncpy(buffer[idx].text, text, 32);
+		//strncpy(buffer[idx].text, text, 32);
+		for (int i = 0; i<32; ++i) {
+			buffer[idx].text[i] = text[i];
+			if (!text[i]) break;
+		}
 		buffer[idx].text[31] = '\0';
 		missing += full;      // count up missing entries if full is true
 		++idx;                // incerment
@@ -128,7 +132,10 @@ namespace saftbus
 		buffer[idx].who   = who;
 		buffer[idx].param = param;
 		buffer[idx].dict  = dict;
-		strncpy(buffer[idx].text, text, 32);
+		for (int i = 0; i<32; ++i) {
+			buffer[idx].text[i] = text[i];
+			if (!text[i]) break;
+		}
 		buffer[idx].text[31] = '\0';
 		missing += full;      // count up missing entries if full is true
 		++idx;                // incerment
