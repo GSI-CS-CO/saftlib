@@ -251,4 +251,4 @@ namespace saftbus
 
 }
 
-saftbus::FCLogger fc_logger("saftd",200);
+saftbus::FCLogger fc_logger("saftd",999);
