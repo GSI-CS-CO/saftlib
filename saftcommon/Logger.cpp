@@ -16,9 +16,12 @@
  *******************************************************************************
  */
 #include "Logger.h"
+#include "GELF.hpp"
 
 #include <iostream>
 #include <time.h>
+#include <unistd.h>
+#include <limits.h>
 
 namespace saftbus 
 {
@@ -83,9 +86,21 @@ namespace saftbus
 
 
 	FCLogger::FCLogger(std::string n, int size) 
-		: name(n)
+		: name(n), message(gelf::Severity::Warning, "nothing")//, saftdlog("/tmp/saftdddd.log")
 	{
+		char hostn[HOST_NAME_MAX];
+		gethostname(hostn, HOST_NAME_MAX);
+		hostname = hostn;
+
 		resize(size);
+		gelf::initialize();
+		if (hostname.substr(0,3)=="scu") {
+			gelf::configure("graylog.acc.gsi.de", 12201);
+		} else {
+			gelf::configure("localhost", 12201);
+		}
+
+
 	}
 
 	void FCLogger::log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
@@ -140,41 +155,62 @@ namespace saftbus
 		    if (buffer[idx].param >= 0) {
 		    	out << ":" << buffer[idx].param;
 		    } 
-		    out << std::endl;
+		    out << "\n";
+	}
+
+
+	void FCLogger::gelf_post(bool force) {
+		if (message_lines == 100 || force) {
+			message.fullMessage(fullmsg.str());
+			fullmsg.str("");
+			gelf::post(message.build());
+			// saftdlog << message.build().getMessage() << std::endl << std::endl;
+			message_lines = 0;
+		}
 	}
 
 	void FCLogger::dump() {
-			std::ostringstream filename;
-			filename << "/tmp/" << name << "_" << std::setw(3) << std::setfill('0') << file_idx++ << ".fc_log";
-			std::ofstream out(filename.str().c_str());
+			// std::ostringstream filename;
+			// filename << "/tmp/" << name << "_" << std::setw(3) << std::setfill('0') << file_idx++ << ".fc_log";
+			// std::ofstream fout(filename.str().c_str());
+
+			message = gelf::MessageBuilder(gelf::Severity::Error, "SAFTd Logdump");
+			message.setHost(hostname);
 
 			struct timespec now;
 			clock_gettime(CLOCK_REALTIME, &now);
 			if (missing) {
-				out << "# " << std::dec << missing << " missing entries\n";
+				fullmsg << "# " << std::dec << missing << " missing entries\n";
 			}
 			if (full) {
 				for (int i = idx; i < buffer.size(); ++i) {
-					dumpline(out, i);
+					dumpline(fullmsg, i);
+					++message_lines;
+					gelf_post();
 				}
 			}
 			for (int i = 0; i < idx; ++i) {
-				dumpline(out, i);
+				dumpline(fullmsg, i);
+				++message_lines;
+				gelf_post();
 			}
+
 			struct timespec start = now;
 			clock_gettime(CLOCK_REALTIME, &now);
 			double dt = now.tv_sec-start.tv_sec;
 			dt *= 1000;
 			dt += (now.tv_nsec-start.tv_nsec)/1e6;
-			out << "# logdump took " << dt << " ms" << std::endl;
+			fullmsg << "# logdump took " << dt << " ms\n" << std::endl;
+
+			gelf_post(true);
 			
 			full    = false;
 			missing = 0;
 			idx     = 0;
 
-			if (file_idx == 200) {
-				file_idx = 100;
-			}
+			// if (file_idx == 200) {
+			// 	file_idx = 100;
+			// }
 	}
 	void FCLogger::dump(std::ostream &out) {
 		dump();
@@ -209,9 +245,10 @@ namespace saftbus
 		missing = 0;
 		idx = 0;
 		file_idx = 0;
+		message_lines = 0;
 	}
 
 
 }
 
-saftbus::FCLogger fc_logger("saftd",2000);
+saftbus::FCLogger fc_logger("saftd",200);

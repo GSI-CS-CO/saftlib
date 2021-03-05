@@ -31,6 +31,8 @@
 #include <vector>
 #include <map>
 
+#include "GELF.hpp"
+
 namespace saftbus 
 {
 
@@ -108,10 +110,19 @@ public:
 	void dumpline(std::ostream &out, int idx);
 	void dump();
 	void dump(std::ostream &out);
+	void gelf_post(bool force = false);
 
 	void resize(unsigned new_size);
 
 	std::map<int, std::string> dict;
+
+	gelf::MessageBuilder message;
+	int message_lines;
+
+	// std::ofstream saftdlog;
+	std::ostringstream fullmsg;
+
+	std::string hostname;
 
 };
 
