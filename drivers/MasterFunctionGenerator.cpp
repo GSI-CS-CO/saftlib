@@ -108,7 +108,7 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
     }
     if (all_armed)
     {
-      DRIVER_LOG("all_armed",-1,-1);
+      DRIVER_LOG("AllArmed",-1,-1);
       AllArmed();
     }
   }
