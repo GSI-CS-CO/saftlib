@@ -129,7 +129,7 @@ void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImp
   DRIVER_LOG("",-1,-1);
   if (generateIndividualSignals)
   {
-    Started(fg->GetName(), time);
+    // Started(fg->GetName(), time);
     SigStarted(fg->GetName(), saftlib::makeTimeTAI(time));
   }
 }
@@ -140,7 +140,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
   DRIVER_LOG("",-1,-1);
   if (generateIndividualSignals)
   {
-    Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
+    // Stopped(fg->GetName(), time, abort, hardwareUnderflow, microcontrollerUnderflow);
     SigStopped(fg->GetName(), saftlib::makeTimeTAI(time), abort, hardwareUnderflow, microcontrollerUnderflow);
   }
 
@@ -152,7 +152,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
   if (all_stopped)
   {
     DRIVER_LOG("all_stopped",-1,-1);
-    AllStopped(time);
+    // AllStopped(time);
     SigAllStopped(saftlib::makeTimeTAI(time));
   }
 }

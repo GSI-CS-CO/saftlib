@@ -416,7 +416,7 @@ bool ActionSink::updateLate(uint64_t time)
   if (!r.count) clog << kLogErr << "Received LATE MSI, but FAILED_COUNT was 0" << std::endl;
   lateCount += r.count;
   lateUpdate = time;
-  Late(lateCount, r.event, r.param, r.deadline, r.executed);
+  // Late(lateCount, r.event, r.param, r.deadline, r.executed);
   SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
@@ -427,7 +427,7 @@ bool ActionSink::updateEarly(uint64_t time)
   if (!r.count) clog << kLogErr << "Received EARLY MSI, but FAILED_COUNT was 0" << std::endl;
   earlyCount += r.count;
   earlyUpdate = time;
-  Early(earlyCount, r.event, r.param, r.deadline, r.executed);
+  // Early(earlyCount, r.event, r.param, r.deadline, r.executed);
   SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
@@ -438,7 +438,7 @@ bool ActionSink::updateConflict(uint64_t time)
   if (!r.count) clog << kLogErr << "Received CONFLICT MSI, but FAILED_COUNT was 0" << std::endl;
   conflictCount += r.count;
   conflictUpdate = time;
-  Conflict(conflictCount, r.event, r.param, r.deadline, r.executed);
+  // Conflict(conflictCount, r.event, r.param, r.deadline, r.executed);
   SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
@@ -449,7 +449,7 @@ bool ActionSink::updateDelayed(uint64_t time)
   if (!r.count) clog << kLogErr << "Received DELAYED MSI, but FAILED_COUNT was 0" << std::endl;
   delayedCount += r.count;
   delayedUpdate = time;
-  Delayed(delayedCount, r.event, r.param, r.deadline, r.executed);
+  // Delayed(delayedCount, r.event, r.param, r.deadline, r.executed);
   SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
