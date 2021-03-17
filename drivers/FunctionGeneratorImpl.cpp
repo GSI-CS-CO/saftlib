@@ -119,20 +119,23 @@ bool FunctionGeneratorImpl::lowFill() const
   return fifo.size() < buffer_size * 2;
 }
 
-void FunctionGeneratorImpl::refill()
+void FunctionGeneratorImpl::refill(bool first)
 {
   DRIVER_LOG("",-1, -1);
   etherbone::Cycle cycle;
-  eb_data_t write_offset_d, read_offset_d;
+  eb_data_t write_offset_d = 0, read_offset_d = 0;
   
   assert (channel != -1);
   
   eb_address_t regs = shm + FG_REGS_BASE(channel, num_channels);
   
-  cycle.open(tr->getDevice());
-  cycle.read(regs + FG_WPTR, EB_DATA32, &write_offset_d);
-  cycle.read(regs + FG_RPTR, EB_DATA32, &read_offset_d);
-  cycle.close();
+  // if refill is called for the first time, there is no need for checking the offsets. they are 0 
+  if (first == false) {
+    cycle.open(tr->getDevice());
+    cycle.read(regs + FG_WPTR, EB_DATA32, &write_offset_d);
+    cycle.read(regs + FG_RPTR, EB_DATA32, &read_offset_d);
+    cycle.close();
+  }
   
   unsigned write_offset = write_offset_d % buffer_size;
   unsigned read_offset  = read_offset_d  % buffer_size;
@@ -221,7 +224,7 @@ void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
     if (!running) {
       clog << kLogErr << "FunctionGenerator: received refill while not running on index " << std::dec << index << std::endl;
     } else {
-      refill();
+      refill(false);
     }
   } else if (msi == IRQ_DAT_ARMED) {
     if (running) {
@@ -303,7 +306,7 @@ bool FunctionGeneratorImpl::appendParameterTuples(std::vector<ParameterTuple> pa
     fillLevel += p.duration();
   }
 
-  if (channel != -1) refill();
+  if (channel != -1) refill(false);
   return lowFill();
 }
 
@@ -352,7 +355,7 @@ bool FunctionGeneratorImpl::appendParameterSet(
     fillLevel += tuple.duration();
   }
   
-  if (channel != -1) refill();
+  if (channel != -1) refill(false);
   return lowFill();
 
 }
@@ -504,7 +507,7 @@ void FunctionGeneratorImpl::arm()
   abort = false;
   acquireChannel();
   try {
-    refill();
+    refill(true);
     tr->getDevice().write(swi, EB_DATA32, SWI_ENABLE | channel);
   } catch (...) {
     DRIVER_LOG("failed_to_fill_buffers",-1,-1);
