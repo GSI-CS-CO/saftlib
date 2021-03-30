@@ -267,6 +267,7 @@ void ActionSink::receiveMSI(uint8_t code)
 
   switch (code) {
   case ECA_OVERFLOW:
+    DRIVER_LOG("ECA_OVERFLOW",-1, -1);
     if (overflowUpdate > time || time - overflowUpdate >= signalRate) {
       updateOverflow(time);
     } else {
@@ -278,6 +279,7 @@ void ActionSink::receiveMSI(uint8_t code)
     }
     break;
   case ECA_VALID:
+    DRIVER_LOG("ECA_VALID",-1, -1);
     if (actionUpdate > time || time - actionUpdate >= signalRate) {
       updateAction(time);
     } else {
@@ -289,6 +291,7 @@ void ActionSink::receiveMSI(uint8_t code)
     }
     break;
   case ECA_LATE:
+    DRIVER_LOG("ECA_LATE",-1, -1);
     if (lateUpdate > time || time - lateUpdate >= signalRate) {
       updateLate(time);
     } else {
@@ -300,6 +303,7 @@ void ActionSink::receiveMSI(uint8_t code)
     }
     break;
   case ECA_EARLY:
+    DRIVER_LOG("ECA_EARLY",-1, -1);
     if (earlyUpdate > time || time - earlyUpdate >= signalRate) {
       updateEarly(time);
     } else {
@@ -311,6 +315,7 @@ void ActionSink::receiveMSI(uint8_t code)
     }
     break;
   case ECA_CONFLICT:
+    DRIVER_LOG("ECA_CONFLICT",-1, -1);
     if (conflictUpdate > time || time - conflictUpdate >= signalRate) {
       updateConflict(time);
     } else {
@@ -322,6 +327,7 @@ void ActionSink::receiveMSI(uint8_t code)
     }
     break;
   case ECA_DELAYED:
+    DRIVER_LOG("ECA_DELAYED",-1, -1);
     if (delayedUpdate > time || time - delayedUpdate >= signalRate) {
       updateDelayed(time);
     } else {

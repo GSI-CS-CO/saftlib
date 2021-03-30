@@ -50,9 +50,9 @@ const char *SoftwareActionSink::getInterfaceName() const
 
 void SoftwareActionSink::receiveMSI(uint8_t code)
 {
-  DRIVER_LOG("MSI",-1, code);
   // Intercept valid action counter increase
   if (code == ECA_VALID) {
+    DRIVER_LOG("MSI-ECA_VALID",-1, code);
     updateAction(0); // increase the counter, rearming the MSI
     
     eb_data_t flags, rawNum, event_hi, event_lo, param_hi, param_lo, 
@@ -114,6 +114,7 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
     softwareCondition->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);
     
   } else {
+    DRIVER_LOG("MSI-ECA_NOT_VALID",-1, code);
     // deal with the MSI the normal way
     ActionSink::receiveMSI(code);
   }

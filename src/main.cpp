@@ -143,7 +143,6 @@ static void on_name_acquired(const std::shared_ptr<saftbus::Connection>& connect
   clog << kLogNotice << "started" << std::endl;
   clog << kLogInfo << "sourceVersion: " << sourceVersion << std::endl;
   clog << kLogInfo << buildInfo << std::endl;
-  connection->set_logstream(&clog);
 }
 
 static void on_name_lost(const std::shared_ptr<saftbus::Connection>& connection, const std::string& /* name */)

@@ -85,7 +85,7 @@ namespace saftbus
 
 
 
-	FCLogger::FCLogger(std::string n, int size) 
+	FCLogger::FCLogger(std::string n, int size, int level) 
 		: name(n), message(gelf::Severity::Warning, "nothing")//, saftdlog("/tmp/saftdddd.log")
 	{
 		char hostn[HOST_NAME_MAX];
@@ -93,6 +93,7 @@ namespace saftbus
 		hostname = hostn;
 
 		resize(size);
+		log_level = level;
 		gelf::initialize();
 		if (hostname.substr(0,3)=="scu") {
 			gelf::configure("graylog.acc.gsi.de", 12201);
@@ -104,6 +105,7 @@ namespace saftbus
 	}
 
 	void FCLogger::log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
+		if (who >= log_level) return; // loglevel 0 effectively disables logging 
 		clock_gettime(CLOCK_REALTIME, &buffer[idx].t);
 		buffer[idx].file  = file;
 		buffer[idx].line  = line;
@@ -124,6 +126,7 @@ namespace saftbus
 		full |= !idx;         // set full to true when idx wraps around the first time
 	}
 	void FCLogger::log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
+		if (who >= log_level) return; // loglevel 0 effectively disables logging 
 		buffer[idx].t     = ts;
 		buffer[idx].file  = file;
 		buffer[idx].line  = line;
@@ -176,7 +179,8 @@ namespace saftbus
 		}
 	}
 
-	void FCLogger::dump() {
+	void FCLogger::dump_gelf() {
+			std::cerr << "dump_gelf" << std::endl;
 			// std::ostringstream filename;
 			// filename << "/tmp/" << name << "_" << std::setw(3) << std::setfill('0') << file_idx++ << ".fc_log";
 			// std::ofstream fout(filename.str().c_str());
@@ -214,13 +218,45 @@ namespace saftbus
 			full    = false;
 			missing = 0;
 			idx     = 0;
-
-			// if (file_idx == 200) {
-			// 	file_idx = 100;
-			// }
 	}
-	void FCLogger::dump(std::ostream &out) {
-		dump();
+	void FCLogger::dump_file(std::ostream &out) {
+		std::cerr << "dump_file" << std::endl;
+		out << "\"timestamp\",\"source\",\"message\",\"full_message\"" << std::endl;
+
+		time_t timer;
+		char time_buffer[26];
+		struct tm* tm_info;
+		timer = time(NULL);
+		tm_info = localtime(&timer);
+		strftime(time_buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+
+		fullmsg.str("");
+		if (missing) {
+			fullmsg << "# " << std::dec << missing << " missing entries\n";
+		}
+		if (full) {
+			for (int i = idx; i < buffer.size(); ++i) {
+				dumpline(fullmsg, i);
+			}
+		}
+		for (int i = 0; i < idx; ++i) {
+			dumpline(fullmsg, i);
+		}
+
+		std::string fullmsgstr = fullmsg.str();
+		if (fullmsgstr.size() && fullmsgstr.back()=='\n') fullmsgstr.pop_back();
+		out << "\"" << time_buffer << "\",\"" << "hostname" << "\",\"SAFTd Logdump\",\"" << fullmsgstr << "\"" << std::endl;
+	}
+
+	void FCLogger::dump() {
+		if (log_level == 0) return;
+
+		if (logfilename.size() > 2) {
+			std::ofstream out(logfilename.c_str(), std::ios::app);
+			dump_file(out);
+		} else {
+			dump_gelf();
+		}
 		// struct timespec now;
 		// clock_gettime(CLOCK_REALTIME, &now);
 		// if (missing) {
@@ -254,8 +290,11 @@ namespace saftbus
 		file_idx = 0;
 		message_lines = 0;
 	}
+	void FCLogger::set_level(unsigned new_level) {
+		log_level = new_level;
+	}
 
 
 }
 
-saftbus::FCLogger fc_logger("saftd",999);
+saftbus::FCLogger fc_logger("saftd",999,4);

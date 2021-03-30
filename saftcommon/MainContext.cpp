@@ -55,7 +55,7 @@ namespace Slib
 					source_pfds_ptr.push_back(pfd);
 				}
 			}
-			// MAINCONTEXT_LOG("poll_recursive ", -1, -1);
+			MAINCONTEXT_LOG("poll_recursive ", -1, -1);
 			poll(&source_pfds[0], source_pfds.size(), 0); // poll with timeout of 0
 			for (unsigned idx = 0; idx < source_pfds.size(); ++idx) {
 				source_pfds_ptr[idx]->pfd.revents = source_pfds[idx].revents;
@@ -140,9 +140,9 @@ namespace Slib
 
 			std::vector<unsigned> signal_io_removed_indices;
 			int poll_result;
-			// MAINCONTEXT_LOG("poll", -1,-1);
+			MAINCONTEXT_LOG("poll", -1,-1);
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
-			// MAINCONTEXT_LOG("poll_fd", -1,-1);
+			MAINCONTEXT_LOG("poll_fd", -1,-1);
 				// during check of results, signal_io_pfds and fds from sources
 				//  are distinguished using the index.
 				unsigned idx = 0;
@@ -188,13 +188,13 @@ namespace Slib
 				}
 
 			} else {
-				// MAINCONTEXT_LOG("poll_timeout", -1,-1);
+				MAINCONTEXT_LOG("poll_timeout", -1,-1);
 			}
 			bool any_timeout_is_0 = false;
 			for (unsigned i = 0; i < signal_timeouts.size(); ++i) {
 				if (signal_timeouts[i].time_left == 0) {
 					any_timeout_is_0 = true;
-					// MAINCONTEXT_LOG("a_timeout_is_0", -1,-1);
+					MAINCONTEXT_LOG("a_timeout_is_0", -1,-1);
 					break;
 				}
 			}
@@ -222,11 +222,11 @@ namespace Slib
 
 						if (!signal_timeouts[i].connection.empty()) {
 							try {
-								// MAINCONTEXT_LOG("call_timout_slot", -1,-1);
+								MAINCONTEXT_LOG("call_timout_slot", -1,-1);
 								callback_result = (*signal_timeouts[i].slot)(); 
 							} catch (...) {
 								// if this threw any exception, it the source will be removed
-								// MAINCONTEXT_LOG("call_timout_slot_failed", -1,-1);
+								MAINCONTEXT_LOG("call_timout_slot_failed", -1,-1);
 								callback_result = false; 
 							}
 						}
@@ -241,7 +241,7 @@ namespace Slib
 					// std::cerr << "timeout " << i << "  :  " << signal_timeout_time_left[i] << std::endl;
 				}
 				if (need_cleanup) {
-					// MAINCONTEXT_LOG("timout_cleanup", -1,-1);
+					MAINCONTEXT_LOG("timout_cleanup", -1,-1);
 					//std::cerr << "cleaning up: size = " << signal_timeouts.size() << std::endl;
 					signal_timeouts.erase(
 						remove_if(signal_timeouts.begin(), signal_timeouts.end(),
@@ -263,7 +263,7 @@ namespace Slib
 
 			// remove all signal_ios whose callbacks returned false
 			if (signal_io_removed_indices.size() > 0) {
-				// MAINCONTEXT_LOG("remove_signal_io_sources", -1,-1);
+				MAINCONTEXT_LOG("remove_signal_io_sources", -1,-1);
 				std::vector<struct pollfd>                  new_signal_io_pfds;
 				std::vector<sigc::slot<bool, IOCondition> > new_signal_io_slots;
 				for (unsigned i = 0; i < signal_io_pfds.size(); ++i) {
@@ -284,7 +284,7 @@ namespace Slib
 			}
 
 			if (added_signal_timeouts.size() > 0) {
-				// MAINCONTEXT_LOG("insert_new_timout", -1,-1);
+				MAINCONTEXT_LOG("insert_new_timout", -1,-1);
 				signal_timeouts.insert(signal_timeouts.end(), added_signal_timeouts.begin(), added_signal_timeouts.end());
 				added_signal_timeouts.clear();
 			}
@@ -292,7 +292,7 @@ namespace Slib
 			// add the newly created signal_ios
 			if (added_signal_io_pfds.size() > 0) {
 				for (unsigned i = 0; i < added_signal_io_pfds.size(); ++i) {
-					// MAINCONTEXT_LOG("insert_new_io_source", -1,-1);
+					MAINCONTEXT_LOG("insert_new_io_source", -1,-1);
 					signal_io_pfds.push_back(added_signal_io_pfds[i]);
 					signal_io_slots.push_back(added_signal_io_slots[i]);
 				}

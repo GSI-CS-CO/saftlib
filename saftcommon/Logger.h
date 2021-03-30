@@ -103,16 +103,20 @@ public:
 	unsigned idx;
 
 	int file_idx;
+	unsigned log_level;
+	std::string logfilename;
 
-	FCLogger(std::string n, int size);
+	FCLogger(std::string n, int size, int level);
 	void log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);
 	void log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);
 	void dumpline(std::ostream &out, int idx);
+	void dump_gelf();
+	void dump_file(std::ostream &out);
 	void dump();
-	void dump(std::ostream &out);
 	void gelf_post(bool force = false);
 
 	void resize(unsigned new_size);
+	void set_level(unsigned new_level);
 
 	std::map<int, std::string> dict;
 

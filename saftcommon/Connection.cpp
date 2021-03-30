@@ -35,8 +35,7 @@ namespace saftbus
 int Connection::_saftbus_id_counter = 0;
 
 Connection::Connection(const std::string& base_name)
-	: logstream(&std::cerr)
-	, _saftbus_object_id_counter(1)
+	: _saftbus_object_id_counter(1)
 	, _saftbus_signal_handle_counter(1)
 	//, logger("/tmp/saftbus_connection.log")
 	, _create_signal_flight_time_statistics(false)
@@ -82,10 +81,7 @@ Connection::Connection(const std::string& base_name)
 		                     S_IROTH | S_IWOTH );
 	Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), _listen_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 }
-void Connection::set_logstream(std::ostream *log)
-{
-	logstream = log;
-}
+
 
 bool Connection::accept_client(Slib::IOCondition condition) 
 {
@@ -356,8 +352,19 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				case saftbus::SAFTBUS_CTL_ENABLE_LOGGING:
 				{
 					int new_size;
+					int new_level;
+					std::string logfile_name;
 					saftbus::read(client_fd, new_size);
-					fc_logger.resize(new_size);
+					saftbus::read(client_fd, new_level);
+					saftbus::read(client_fd, logfile_name);
+					if (new_size >= 0)  fc_logger.resize(new_size);
+					if (new_level >= 0) fc_logger.set_level(new_level);
+					if (logfile_name.size() > 2) {
+						fc_logger.logfilename = logfile_name;
+					} else {
+						fc_logger.logfilename = "";
+					}
+
 					// logger.enable();
 					// logger.newMsg(0).add("saftbus logging enabled").log();
 				}
@@ -366,8 +373,8 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					// logger.newMsg(0).add("saftbus logging disabled").log();
 					// logger.disable();
-					(*logstream) << "# logdump on request" << std::endl;
-					fc_logger.dump(*logstream);
+					std::cerr << "# logdump on request" << std::endl;
+					fc_logger.dump();
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_ENABLE_STATS:
@@ -644,7 +651,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
-							fc_logger.dump(*logstream); // dump log on exeption
+							fc_logger.dump(); // dump log on exeption
 							break;
 						}
 						auto saftbus_object = _saftbus_objects.find(saftd_object_id);
@@ -656,7 +663,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
-							fc_logger.dump(*logstream); // dump log on exeption
+							fc_logger.dump(); // dump log on exeption
 							break;
 						}
 						if (name == "Get") {
@@ -702,7 +709,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 								saftbus::write(client_fd, saftbus::METHOD_ERROR);
 								saftbus::write(client_fd, saftbus::Error::FAILED);
 								saftbus::write(client_fd, error.what());
-								fc_logger.dump(*logstream); // dump log on exeption
+								fc_logger.dump(); // dump log on exeption
 							}
 						}
 					}
@@ -725,7 +732,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, saftbus::Error::FAILED);
 							saftbus::write(client_fd, what);
-							fc_logger.dump(*logstream); // dump log on exeption
+							fc_logger.dump(); // dump log on exeption
 							break;
 						}
 
@@ -747,7 +754,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().type());
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().what());
-							fc_logger.dump(*logstream); // dump log on exeption
+							fc_logger.dump(); // dump log on exeption
 						} else {
 							SAFTD_LOGT("return",name.c_str(),saftbus_object_id,-1); 
 							// get the result and pack it in a way that 
@@ -769,7 +776,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				default:
 					SAFTD_LOG("unknown_message_type",-1,type); 
 					handle_disconnect(client_fd);
-					fc_logger.dump(*logstream); // dump log on exeption
+					fc_logger.dump(); // dump log on exeption
 					return false;
 				break;				
 			}
@@ -782,12 +789,12 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 		// logger.add("           exception in Connection::dispatch()").add(e.what()).log();
 		//if (_debug_level > 5) print_all_fds();
 		handle_disconnect(client_fd);
-		fc_logger.dump(*logstream); // dump log on exeption
+		fc_logger.dump(); // dump log on exeption
 		//if (_debug_level > 5) print_all_fds();
 	} catch (saftbus::Error &e) {
 		SAFTD_LOGT("saftbuserror",e.what().c_str(),-1,-1); 
 		std::cerr << "saftbus::Error " << e.what() << std::endl;
-		fc_logger.dump(*logstream); // dump log on exeption
+		fc_logger.dump(); // dump log on exeption
 	}
 	return false;
 }
