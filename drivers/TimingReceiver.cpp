@@ -260,6 +260,7 @@ void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t addr
 
 bool TimingReceiver::poll()
 {
+  DRIVER_LOG("",-1,-1);
   getLocked();
   device.write(watchdog, EB_DATA32, watchdog_value);
   return true;
