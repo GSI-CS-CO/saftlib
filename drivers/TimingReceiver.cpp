@@ -688,6 +688,7 @@ struct WalkEntry {
 
 void TimingReceiver::compile()
 {
+  DRIVER_LOG("",-1, -1);
   // Store all active conditions into a vector for processing
   typedef std::vector<ECA_OpenClose> ID_Space;
   ID_Space id_space;

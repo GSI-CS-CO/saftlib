@@ -92,7 +92,7 @@ void Device::release_irq(eb_address_t irq)
 }
 
 bool Device::poll_msi() {
-  SAFTD_LOG("USB-poll-for-MSIs",-1,-1); 
+  DRIVER_LOG("USB-poll-for-MSIs",-1,-1); 
   //std::cerr << "polling for msi" << std::endl;
   etherbone::Cycle cycle;
   eb_data_t msi_adr = 0;
@@ -110,10 +110,10 @@ bool Device::poll_msi() {
     if (msi_cnt & 1) {
       Device::MSI msi;
       msi.address = msi_adr-msi_first;
-      SAFTD_LOG("polled-MSI-adr",-1,msi.address); 
+      DRIVER_LOG("polled-MSI-adr",-1,msi.address); 
       msi.data    = msi_dat;
       Device::msis.push_back(msi);
-      SAFTD_LOG("polled-MSI-dat",-1,msi.data); 
+      DRIVER_LOG("polled-MSI-dat",-1,msi.data); 
     }
     if (!(msi_cnt & 2)) {
       // if (i) {

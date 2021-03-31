@@ -38,8 +38,10 @@ namespace Slib
 
 		void MainContext::iteration_recursive() 
 		{
-			std::vector<struct pollfd> source_pfds;
-			std::vector<PollFD*>  source_pfds_ptr;
+			// std::vector<struct pollfd> source_pfds;
+			// std::vector<PollFD*>  source_pfds_ptr;
+			source_pfds.clear();
+			source_pfds_ptr.clear();
 			for(auto &id_source: sources) {
 				//auto id     = id_source.first;
 				auto source = id_source.second;
@@ -99,9 +101,15 @@ namespace Slib
 
 			// poll all fds from all sources
 			bool result = false;
-			std::vector<struct pollfd> all_pfds(signal_io_pfds.begin(), signal_io_pfds.end()); // copy all signal_io_pfds
-			std::vector<PollFD*>  all_pfds_ptr;
-			std::vector<unsigned> all_ids;
+			// std::vector<struct pollfd> all_pfds(signal_io_pfds.begin(), signal_io_pfds.end()); // copy all signal_io_pfds
+			all_pfds.resize(signal_io_pfds.size());
+			std::copy(signal_io_pfds.begin(), signal_io_pfds.end(), all_pfds.begin());
+			// std::vector<PollFD*>  all_pfds_ptr;
+			all_pfds_ptr.clear();
+			// std::vector<unsigned> all_ids;
+			all_ids.clear();
+
+			
 			int timeout_ms = -1;
 			// prepare sources and calculate timeout
 			for(auto &id_source: sources) {
@@ -138,7 +146,8 @@ namespace Slib
 				timeout_ms = 0;
 			}
 
-			std::vector<unsigned> signal_io_removed_indices;
+			// std::vector<unsigned> signal_io_removed_indices;
+			signal_io_removed_indices.clear();
 			int poll_result;
 			MAINCONTEXT_LOG("poll", -1,-1);
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
@@ -273,8 +282,10 @@ namespace Slib
 			// remove all signal_ios whose callbacks returned false
 			if (signal_io_removed_indices.size() > 0) {
 				MAINCONTEXT_LOG("remove_signal_io_sources", -1,-1);
-				std::vector<struct pollfd>                  new_signal_io_pfds;
-				std::vector<sigc::slot<bool, IOCondition> > new_signal_io_slots;
+				//std::vector<struct pollfd>                  new_signal_io_pfds;
+				//std::vector<sigc::slot<bool, IOCondition> > new_signal_io_slots;
+				new_signal_io_pfds.clear();
+				new_signal_io_slots.clear();
 				for (unsigned i = 0; i < signal_io_pfds.size(); ++i) {
 					bool found_in_removal_list = false;
 					for (unsigned n = 0; n < signal_io_removed_indices.size(); ++n) {
@@ -345,6 +356,16 @@ namespace Slib
 				default_context->id_counter = 0;
 				default_context->during_iteration = false;
 				default_context->timeouts_pending = false;
+				// reserve enough space in the following vectors such that hopefully no allocation happens during runtime
+				const unsigned Nreserve = 10000;
+				default_context->all_pfds.reserve(Nreserve);     
+				default_context->all_pfds_ptr.reserve(Nreserve); 
+				default_context->all_ids.reserve(Nreserve);      
+				default_context->signal_io_removed_indices.reserve(Nreserve);
+				default_context->new_signal_io_pfds.reserve(Nreserve);
+				default_context->new_signal_io_slots.reserve(Nreserve);
+				default_context->source_pfds.reserve(Nreserve);
+				default_context->source_pfds_ptr.reserve(Nreserve);
 				default_created = true;
 			}
 			return default_context;

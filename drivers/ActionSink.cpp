@@ -399,6 +399,7 @@ ActionSink::Record ActionSink::fetchError(uint8_t code)
 
 bool ActionSink::updateLate()
 {
+  DRIVER_LOG("",-1, -1);
   Record r = fetchError(ECA_LATE);
   if (!r.count) clog << kLogErr << "Received LATE MSI, but FAILED_COUNT was 0" << std::endl;
   lateCount += r.count;
@@ -411,6 +412,7 @@ bool ActionSink::updateLate()
 
 bool ActionSink::updateEarly()
 {
+  DRIVER_LOG("",-1, -1);
   Record r = fetchError(ECA_EARLY);
   if (!r.count) clog << kLogErr << "Received EARLY MSI, but FAILED_COUNT was 0" << std::endl;
   earlyCount += r.count;
@@ -423,6 +425,7 @@ bool ActionSink::updateEarly()
 
 bool ActionSink::updateConflict()
 {
+  DRIVER_LOG("",-1, -1);
   Record r = fetchError(ECA_CONFLICT);
   if (!r.count) clog << kLogErr << "Received CONFLICT MSI, but FAILED_COUNT was 0" << std::endl;
   conflictCount += r.count;
@@ -435,6 +438,7 @@ bool ActionSink::updateConflict()
 
 bool ActionSink::updateDelayed()
 {
+  DRIVER_LOG("",-1, -1);
   Record r = fetchError(ECA_DELAYED);
   if (!r.count) clog << kLogErr << "Received DELAYED MSI, but FAILED_COUNT was 0" << std::endl;
   delayedCount += r.count;

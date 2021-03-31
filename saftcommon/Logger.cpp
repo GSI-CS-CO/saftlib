@@ -262,29 +262,6 @@ namespace saftbus
 		} else {
 			dump_gelf();
 		}
-		// struct timespec now;
-		// clock_gettime(CLOCK_REALTIME, &now);
-		// if (missing) {
-		// 	out << "# " << std::dec << missing << " missing entries\n";
-		// }
-		// if (full) {
-		// 	for (int i = idx; i < buffer.size(); ++i) {
-		// 		dumpline(out, i);
-		// 	}
-		// }
-		// for (int i = 0; i < idx; ++i) {
-		// 	dumpline(out, i);
-		// }
-		// struct timespec start = now;
-		// clock_gettime(CLOCK_REALTIME, &now);
-		// double dt = now.tv_sec-start.tv_sec;
-		// dt *= 1000;
-		// dt += (now.tv_nsec-start.tv_nsec)/1e6;
-		// out << "# logdump took " << dt << " ms" << std::endl;
-		
-		// full    = false;
-		// missing = 0;
-		// idx     = 0;
 	}
 
 	void FCLogger::resize(unsigned new_size) {
