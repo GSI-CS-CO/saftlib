@@ -99,7 +99,7 @@ bool Device::poll_msi() {
   eb_data_t msi_dat = 0;
   eb_data_t msi_cnt = 0;
   int msi_count = 0;
-  const int MAX_MSIS_IN_ONE_GO = 1024;
+  const int MAX_MSIS_IN_ONE_GO = 4; // not too many MSIs at one to not block saftd 
   for (int i = 0; i < MAX_MSIS_IN_ONE_GO; ++i) { // never more this many MSIs in one go
     msi_count = i;
     cycle.open(*(etherbone::Device*)this);
