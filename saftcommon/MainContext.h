@@ -71,6 +71,7 @@ namespace Slib
 		static std::shared_ptr< MainContext > default_context;
 		static bool default_created;
 		bool during_iteration;
+		bool timeouts_pending;
 
 		std::vector<struct pollfd>                  signal_io_pfds;
 		std::vector<sigc::slot<bool, IOCondition> > signal_io_slots;

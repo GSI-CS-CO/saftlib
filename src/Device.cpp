@@ -92,6 +92,7 @@ void Device::release_irq(eb_address_t irq)
 }
 
 bool Device::poll_msi() {
+  SAFTD_LOG("USB-poll-for-MSIs",-1,-1); 
   //std::cerr << "polling for msi" << std::endl;
   etherbone::Cycle cycle;
   eb_data_t msi_adr = 0;

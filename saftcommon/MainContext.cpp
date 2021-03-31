@@ -134,7 +134,7 @@ namespace Slib
 					timeout_ms = signal_timeouts[i].time_left;
 				}
 			}
-			if (may_block == false) {
+			if (may_block == false || timeouts_pending) {
 				timeout_ms = 0;
 			}
 
@@ -201,6 +201,8 @@ namespace Slib
 			if (poll_result == 0 || any_timeout_is_0) { // poll timed out
 				//std::cerr << "poll timed out" << std::endl;
 				bool need_cleanup = false;
+				bool one_timeout_executed = false;
+				timeouts_pending = false;
 				for (unsigned i = 0; i < signal_timeouts.size(); ++i) {
 					// subtract the timeout_ms as used in the poll call
 					if (poll_result == 0) { // if poll resulted in timeout, the timeout value must be subtracted
@@ -221,6 +223,10 @@ namespace Slib
 						bool callback_result = false;
 
 						if (!signal_timeouts[i].connection.empty()) {
+							if (one_timeout_executed) {
+								timeouts_pending = true;
+								break;
+							}
 							try {
 								MAINCONTEXT_LOG("call_timout_slot", -1,-1);
 								callback_result = (*signal_timeouts[i].slot)(); 
@@ -237,6 +243,9 @@ namespace Slib
 							signal_timeouts[i].remove = true;
 							need_cleanup = true;
 						}
+						// do not more than one timeout at once to give fds a chance to be serviced in between
+						// this basically gives timeouts a lower priority
+						one_timeout_executed = true;
 					}
 					// std::cerr << "timeout " << i << "  :  " << signal_timeout_time_left[i] << std::endl;
 				}
@@ -335,6 +344,7 @@ namespace Slib
 				default_context = std::shared_ptr<MainContext>(new MainContext);
 				default_context->id_counter = 0;
 				default_context->during_iteration = false;
+				default_context->timeouts_pending = false;
 				default_created = true;
 			}
 			return default_context;
