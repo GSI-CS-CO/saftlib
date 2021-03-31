@@ -246,6 +246,11 @@ namespace saftbus
 		std::string fullmsgstr = fullmsg.str();
 		if (fullmsgstr.size() && fullmsgstr.back()=='\n') fullmsgstr.pop_back();
 		out << "\"" << time_buffer << "\",\"" << "hostname" << "\",\"SAFTd Logdump\",\"" << fullmsgstr << "\"" << std::endl;
+
+		full    = false;
+		missing = 0;
+		idx     = 0;
+
 	}
 
 	void FCLogger::dump() {
