@@ -53,7 +53,7 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
   // Intercept valid action counter increase
   if (code == ECA_VALID) {
     DRIVER_LOG("MSI-ECA_VALID",-1, code);
-    updateAction(0); // increase the counter, rearming the MSI
+    updateAction(); // increase the counter, rearming the MSI
     
     eb_data_t flags, rawNum, event_hi, event_lo, param_hi, param_lo, 
               tag, tef, deadline_hi, deadline_lo, executed_hi, executed_lo;

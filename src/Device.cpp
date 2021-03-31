@@ -30,6 +30,7 @@
 #include <memory>
 
 #include "Source.h"
+#include "Logger.h"
 
 namespace saftlib {
 
@@ -106,8 +107,10 @@ bool Device::poll_msi() {
     if (msi_cnt & 1) {
       Device::MSI msi;
       msi.address = msi_adr-msi_first;
+      SAFTD_LOG("polled-MSI-adr",-1,msi.address); 
       msi.data    = msi_dat;
       Device::msis.push_back(msi);
+      SAFTD_LOG("polled-MSI-dat",-1,msi.data); 
     }
     if (!(msi_cnt & 2)) {
       if (i) {

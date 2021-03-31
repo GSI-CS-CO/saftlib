@@ -263,80 +263,55 @@ void ActionSink::setDelayedCount(uint64_t val)
 
 void ActionSink::receiveMSI(uint8_t code)
 {
-  uint64_t time = dev->ReadRawCurrentTime();
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  //uint64_t time = dev->ReadRawCurrentTime();
+  uint64_t time = now.tv_sec*1000000000+now.tv_nsec;
+  uint64_t exec;
+  unsigned interval = 0;
 
   switch (code) {
   case ECA_OVERFLOW:
     DRIVER_LOG("ECA_OVERFLOW",-1, -1);
-    if (overflowUpdate > time || time - overflowUpdate >= signalRate) {
-      updateOverflow(time);
-    } else {
-      overflowPending.disconnect(); // just to be safe
-      uint64_t exec = overflowUpdate + signalRate;
-      overflowPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateOverflow), exec),
-        (exec - time) / 1000000);
-    }
+    overflowPending.disconnect(); // just to be safe
+    exec = overflowUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    overflowPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateOverflow),interval);
     break;
   case ECA_VALID:
     DRIVER_LOG("ECA_VALID",-1, -1);
-    if (actionUpdate > time || time - actionUpdate >= signalRate) {
-      updateAction(time);
-    } else {
-      actionPending.disconnect(); // just to be safe
-      uint64_t exec = actionUpdate + signalRate;
-      actionPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateAction), exec),
-        (exec - time) / 1000000);
-    }
+    actionPending.disconnect(); // just to be safe
+    exec = actionUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    actionPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateAction),interval);
     break;
   case ECA_LATE:
     DRIVER_LOG("ECA_LATE",-1, -1);
-    if (lateUpdate > time || time - lateUpdate >= signalRate) {
-      updateLate(time);
-    } else {
-      latePending.disconnect(); // just to be safe
-      uint64_t exec = lateUpdate + signalRate;
-      latePending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateLate), exec),
-        (exec - time) / 1000000);
-    }
+    latePending.disconnect(); // just to be safe
+    exec = lateUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    latePending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateLate),interval);
     break;
   case ECA_EARLY:
     DRIVER_LOG("ECA_EARLY",-1, -1);
-    if (earlyUpdate > time || time - earlyUpdate >= signalRate) {
-      updateEarly(time);
-    } else {
-      earlyPending.disconnect(); // just to be safe
-      uint64_t exec = earlyUpdate + signalRate;
-      earlyPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateEarly), exec),
-        (exec - time) / 1000000);
-    }
+    earlyPending.disconnect(); // just to be safe
+    exec = earlyUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    earlyPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateEarly),interval);
     break;
   case ECA_CONFLICT:
     DRIVER_LOG("ECA_CONFLICT",-1, -1);
-    if (conflictUpdate > time || time - conflictUpdate >= signalRate) {
-      updateConflict(time);
-    } else {
-      conflictPending.disconnect(); // just to be safe
-      uint64_t exec = conflictUpdate + signalRate;
-      conflictPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateConflict), exec),
-        (exec - time) / 1000000);
-    }
+    conflictPending.disconnect(); // just to be safe
+    exec = conflictUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    conflictPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateConflict),interval);
     break;
   case ECA_DELAYED:
     DRIVER_LOG("ECA_DELAYED",-1, -1);
-    if (delayedUpdate > time || time - delayedUpdate >= signalRate) {
-      updateDelayed(time);
-    } else {
-      delayedPending.disconnect(); // just to be safe
-      uint64_t exec = delayedUpdate + signalRate;
-      delayedPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateDelayed), exec),
-        (exec - time) / 1000000);
-    }
+    delayedPending.disconnect(); // just to be safe
+    exec = delayedUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    delayedPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateDelayed),interval);
     break;
   default:
     clog << kLogErr << "Asked to handle an invalid MSI condition code in ActionSink.cpp" << std::endl;
@@ -344,7 +319,7 @@ void ActionSink::receiveMSI(uint8_t code)
   }
 }
 
-bool ActionSink::updateOverflow(uint64_t time)
+bool ActionSink::updateOverflow()
 {
   eb_data_t overflow;
 
@@ -359,11 +334,15 @@ bool ActionSink::updateOverflow(uint64_t time)
   if (!overflow) clog << kLogErr << "Received OVERFLOW MSI, but OVERFLOW_COUNT was 0" << std::endl;
 
   overflowCount += overflow;
-  overflowUpdate = time;
+
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  overflowUpdate = now.tv_sec*1000000000+now.tv_nsec;
+  
   return false;
 }
 
-bool ActionSink::updateAction(uint64_t time)
+bool ActionSink::updateAction()
 {
   eb_data_t valid;
 
@@ -378,7 +357,9 @@ bool ActionSink::updateAction(uint64_t time)
   if (!valid) clog << kLogErr << "Received VALID MSI, but VALID_COUNT was 0" << std::endl;
 
   actionCount += valid;
-  actionUpdate = time;
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  actionUpdate = now.tv_sec*1000000000+now.tv_nsec;
   return false;
 }
 
@@ -416,46 +397,50 @@ ActionSink::Record ActionSink::fetchError(uint8_t code)
   return out;
 }
 
-bool ActionSink::updateLate(uint64_t time)
+bool ActionSink::updateLate()
 {
   Record r = fetchError(ECA_LATE);
   if (!r.count) clog << kLogErr << "Received LATE MSI, but FAILED_COUNT was 0" << std::endl;
   lateCount += r.count;
-  lateUpdate = time;
-  // Late(lateCount, r.event, r.param, r.deadline, r.executed);
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  lateUpdate = now.tv_sec*1000000000+now.tv_nsec;
   SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
 
-bool ActionSink::updateEarly(uint64_t time)
+bool ActionSink::updateEarly()
 {
   Record r = fetchError(ECA_EARLY);
   if (!r.count) clog << kLogErr << "Received EARLY MSI, but FAILED_COUNT was 0" << std::endl;
   earlyCount += r.count;
-  earlyUpdate = time;
-  // Early(earlyCount, r.event, r.param, r.deadline, r.executed);
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  earlyUpdate = now.tv_sec*1000000000+now.tv_nsec;
   SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
 
-bool ActionSink::updateConflict(uint64_t time)
+bool ActionSink::updateConflict()
 {
   Record r = fetchError(ECA_CONFLICT);
   if (!r.count) clog << kLogErr << "Received CONFLICT MSI, but FAILED_COUNT was 0" << std::endl;
   conflictCount += r.count;
-  conflictUpdate = time;
-  // Conflict(conflictCount, r.event, r.param, r.deadline, r.executed);
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  conflictUpdate = now.tv_sec*1000000000+now.tv_nsec;
   SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }
 
-bool ActionSink::updateDelayed(uint64_t time)
+bool ActionSink::updateDelayed()
 {
   Record r = fetchError(ECA_DELAYED);
   if (!r.count) clog << kLogErr << "Received DELAYED MSI, but FAILED_COUNT was 0" << std::endl;
   delayedCount += r.count;
-  delayedUpdate = time;
-  // Delayed(delayedCount, r.event, r.param, r.deadline, r.executed);
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  delayedUpdate = now.tv_sec*1000000000+now.tv_nsec;
   SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   return false;
 }

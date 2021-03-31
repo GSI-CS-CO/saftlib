@@ -132,12 +132,12 @@ class ActionSink : public Owned, public iActionSink
     };
     Record fetchError(uint8_t code);
     
-    bool updateOverflow(uint64_t time);
-    bool updateAction(uint64_t time);
-    bool updateLate(uint64_t time);
-    bool updateEarly(uint64_t time);
-    bool updateConflict(uint64_t time);
-    bool updateDelayed(uint64_t time);
+    bool updateOverflow();
+    bool updateAction();
+    bool updateLate();
+    bool updateEarly();
+    bool updateConflict();
+    bool updateDelayed();
     
     // conditions must come after dev to ensure safe cleanup on ~Condition
     Conditions conditions;
