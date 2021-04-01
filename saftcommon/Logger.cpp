@@ -85,7 +85,7 @@ namespace saftbus
 
 
 
-	FCLogger::FCLogger(std::string n, int size, int level) 
+	FCLogger::FCLogger(std::string n, int size, int level, int num) 
 		: name(n), message(gelf::Severity::Warning, "nothing")//, saftdlog("/tmp/saftdddd.log")
 	{
 		char hostn[HOST_NAME_MAX];
@@ -94,6 +94,7 @@ namespace saftbus
 
 		resize(size);
 		log_level = level;
+		num_dumps = num;
 		gelf::initialize();
 		if (hostname.substr(0,3)=="scu") {
 			gelf::configure("graylog.acc.gsi.de", 12201);
@@ -253,8 +254,10 @@ namespace saftbus
 
 	}
 
-	void FCLogger::dump() {
+	void FCLogger::dump(bool force) {
+		// if the force variable is true, checking and manipulating num_dumps is disabled
 		if (log_level == 0) return;
+		if (num_dumps == 0 && !force) return;
 
 		if (logfilename.size() > 2) {
 			std::ofstream out(logfilename.c_str(), std::ios::app);
@@ -262,6 +265,7 @@ namespace saftbus
 		} else {
 			dump_gelf();
 		}
+		if (num_dumps > 0 && !force) --num_dumps;
 	}
 
 	void FCLogger::resize(unsigned new_size) {
@@ -275,8 +279,11 @@ namespace saftbus
 	void FCLogger::set_level(unsigned new_level) {
 		log_level = new_level;
 	}
+	void FCLogger::set_num_dumps(int new_num_dumps) {
+		num_dumps = new_num_dumps;
+	}
 
 
 }
 
-saftbus::FCLogger fc_logger("saftd",999,4);
+saftbus::FCLogger fc_logger("saftd",999,3,10);

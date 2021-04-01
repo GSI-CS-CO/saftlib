@@ -353,12 +353,15 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					int new_size;
 					int new_level;
+					int new_num_dumps;
 					std::string logfile_name;
 					saftbus::read(client_fd, new_size);
 					saftbus::read(client_fd, new_level);
+					saftbus::read(client_fd, new_num_dumps);
 					saftbus::read(client_fd, logfile_name);
 					if (new_size >= 0)  fc_logger.resize(new_size);
 					if (new_level >= 0) fc_logger.set_level(new_level);
+					if (new_num_dumps >= 0) fc_logger.set_num_dumps(new_num_dumps);
 					if (logfile_name.size() > 2) {
 						fc_logger.logfilename = logfile_name;
 					} else {
@@ -374,7 +377,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					// logger.newMsg(0).add("saftbus logging disabled").log();
 					// logger.disable();
 					std::cerr << "# logdump on request" << std::endl;
-					fc_logger.dump();
+					fc_logger.dump(true);
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_ENABLE_STATS:

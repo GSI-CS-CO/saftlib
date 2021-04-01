@@ -104,19 +104,21 @@ public:
 
 	int file_idx;
 	unsigned log_level;
+	int num_dumps; // -1 means unlimited number of logdumps
 	std::string logfilename;
 
-	FCLogger(std::string n, int size, int level);
+	FCLogger(std::string n, int size, int level, int num);
 	void log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);
 	void log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param);
 	void dumpline(std::ostream &out, int idx);
 	void dump_gelf();
 	void dump_file(std::ostream &out);
-	void dump();
+	void dump(bool force = false); // force = true ignores num_dumps variable
 	void gelf_post(bool force = false);
 
 	void resize(unsigned new_size);
 	void set_level(unsigned new_level);
+	void set_num_dumps(int new_num_dumps);
 
 	std::map<int, std::string> dict;
 

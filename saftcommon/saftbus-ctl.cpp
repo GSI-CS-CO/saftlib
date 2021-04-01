@@ -48,7 +48,7 @@ static void show_help(const char *argv0)
 	std::cout << "          the type signature for all other types matches the DBus specification" << std::endl;
 	std::cout << "   --list-methods <interface-name> <object-path>" << std::endl;
 	std::cout << "   --introspect <interface-name> <object-path>" << std::endl;
-	std::cout << "   --config-log-buffer <size> <level> <filename>" << std::endl;
+	std::cout << "   --config-log-buffer <size> <level> <num> <filename>" << std::endl;
 	std::cout << "   --trigger-logdump                  " << std::endl;
 	std::cout << "   --enable-signal-timing-stats       " << std::endl;
 	std::cout << "   --disable-signal-timing-stats      " << std::endl;
@@ -490,6 +490,7 @@ int main(int argc, char *argv[])
 
 		int new_logbuffer_size      = -1;
 		int new_loglevel            = -1;
+		int num_dumps               = -1;
 		std::string new_logfilename = "x";
 
 		std::string timing_stats_filename = "saftbus_timing.dat";
@@ -516,8 +517,20 @@ int main(int argc, char *argv[])
 				disable_signal_stats = true;
 			} else if (argvi == "--config-log-buffer") {
 				resize_log_buffer = true;
-				if (argc - i < 4) {
-					std::cerr << "expect 3 arguments after --config-log-buffer" << std::endl;
+				if (argc - i < 5) {
+					std::cerr << "expect 4 arguments after --config-log-buffer <size> <level> <num> <filename>" << std::endl;
+					std::cerr << "        size:     the amount of log-messages that can be stored" << std::endl;
+					std::cerr << "        level:    number form 0 (disable logging) up to 4 (log everything)" << std::endl;
+					std::cerr << "                    0 : disable logging" << std::endl;
+					std::cerr << "                    1 : log proxy actions" << std::endl;
+					std::cerr << "                    2 : log proxy and safd actions" << std::endl;
+					std::cerr << "                    3 : log proxy, saftd, and driver actions" << std::endl;
+					std::cerr << "                    4 : log proxy, saftd, driver, and main-loop actions" << std::endl;
+					std::cerr << "        num:      Log dumps are generated when an exception occurs" << std::endl;
+					std::cerr << "                  This number specifies the number of log dumps that can happen" << std::endl;
+					std::cerr << "                  before the log is disabled. 0 means inifnite" << std::endl;
+					std::cerr << "        filename: if filename is -1 dump logbuffer into graylog" << std::endl;
+					std::cerr << "                  otherwise dump logbuffer into the file (append mode)"  << std::endl;
 					return 1;
 				} else {
 					std::istringstream in(argv[++i]);
@@ -530,6 +543,12 @@ int main(int argc, char *argv[])
 					in2 >> new_loglevel;
 					if (!in) {
 						std::cerr << "cannot read loglevel: " << argv[i] << std::endl;
+						return 1;
+					}
+					std::istringstream in3(argv[++i]);
+					in3 >> num_dumps;
+					if (!in) {
+						std::cerr << "cannot read num-dumps: " << argv[i] << std::endl;
 						return 1;
 					}
 					new_logfilename = std::string(argv[++i]);
@@ -643,6 +662,7 @@ int main(int argc, char *argv[])
 			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_ENABLE_LOGGING);
 			saftbus::write(connection->get_fd(), new_logbuffer_size);
 			saftbus::write(connection->get_fd(), new_loglevel);
+			saftbus::write(connection->get_fd(), num_dumps);
 			saftbus::write(connection->get_fd(), new_logfilename);
 		}
 		if (trigger_logdump) {
