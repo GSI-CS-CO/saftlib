@@ -49,6 +49,18 @@ static void show_help(const char *argv0)
 	std::cout << "   --list-methods <interface-name> <object-path>" << std::endl;
 	std::cout << "   --introspect <interface-name> <object-path>" << std::endl;
 	std::cout << "   --config-log-buffer <size> <level> <num> <filename>" << std::endl;
+	std::cerr << "        size:     the amount of log-messages that can be stored" << std::endl;
+	std::cerr << "        level:    number form 0 (disable logging) up to 4 (log everything)" << std::endl;
+	std::cerr << "                    0 : disable logging" << std::endl;
+	std::cerr << "                    1 : log proxy actions" << std::endl;
+	std::cerr << "                    2 : log proxy and safd actions" << std::endl;
+	std::cerr << "                    3 : log proxy, saftd, and driver actions" << std::endl;
+	std::cerr << "                    4 : log proxy, saftd, driver, and main-loop actions" << std::endl;
+	std::cerr << "        num:      Log dumps are generated when an exception occurs" << std::endl;
+	std::cerr << "                  This number specifies the number of log dumps that can happen" << std::endl;
+	std::cerr << "                  before the log is disabled. -1 means inifnite" << std::endl;
+	std::cerr << "        filename: if filename is -1 dump logbuffer into graylog" << std::endl;
+	std::cerr << "                  otherwise dump logbuffer into the file (append mode)"  << std::endl;
 	std::cout << "   --trigger-logdump                  " << std::endl;
 	std::cout << "   --enable-signal-timing-stats       " << std::endl;
 	std::cout << "   --disable-signal-timing-stats      " << std::endl;
@@ -106,6 +118,15 @@ static std::string print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConn
 
 	std::map<std::string, std::string> owners;
 	saftbus::read(connection->get_fd(), owners);
+
+	unsigned    size;
+	unsigned    level;
+	int         num;;
+	std::string filename;
+	saftbus::read(connection->get_fd(),size);
+	saftbus::read(connection->get_fd(),level);
+	saftbus::read(connection->get_fd(),num);
+	saftbus::read(connection->get_fd(),filename);
 
 	std::ostringstream oss;
 
@@ -167,6 +188,9 @@ static std::string print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConn
 	for (auto owner: socket_owner) {
 		oss << std::setw(7) << owner.first << std::setw(7) << owner.second << std::endl;
 	}
+
+	oss << std::endl;
+	oss << "logger status: size=" << size << ", level=" << level << ", dumps-left=" << num << " filename=" << filename << std::endl;
 	return oss.str();
 }
 
@@ -519,18 +543,6 @@ int main(int argc, char *argv[])
 				resize_log_buffer = true;
 				if (argc - i < 5) {
 					std::cerr << "expect 4 arguments after --config-log-buffer <size> <level> <num> <filename>" << std::endl;
-					std::cerr << "        size:     the amount of log-messages that can be stored" << std::endl;
-					std::cerr << "        level:    number form 0 (disable logging) up to 4 (log everything)" << std::endl;
-					std::cerr << "                    0 : disable logging" << std::endl;
-					std::cerr << "                    1 : log proxy actions" << std::endl;
-					std::cerr << "                    2 : log proxy and safd actions" << std::endl;
-					std::cerr << "                    3 : log proxy, saftd, and driver actions" << std::endl;
-					std::cerr << "                    4 : log proxy, saftd, driver, and main-loop actions" << std::endl;
-					std::cerr << "        num:      Log dumps are generated when an exception occurs" << std::endl;
-					std::cerr << "                  This number specifies the number of log dumps that can happen" << std::endl;
-					std::cerr << "                  before the log is disabled. 0 means inifnite" << std::endl;
-					std::cerr << "        filename: if filename is -1 dump logbuffer into graylog" << std::endl;
-					std::cerr << "                  otherwise dump logbuffer into the file (append mode)"  << std::endl;
 					return 1;
 				} else {
 					std::istringstream in(argv[++i]);

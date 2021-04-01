@@ -116,6 +116,8 @@ public:
 	void dump(bool force = false); // force = true ignores num_dumps variable
 	void gelf_post(bool force = false);
 
+	void get_status(unsigned &size, unsigned &level, int &num, std::string &filename);
+
 	void resize(unsigned new_size);
 	void set_level(unsigned new_level);
 	void set_num_dumps(int new_num_dumps);

@@ -361,7 +361,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					saftbus::read(client_fd, logfile_name);
 					if (new_size >= 0)  fc_logger.resize(new_size);
 					if (new_level >= 0) fc_logger.set_level(new_level);
-					if (new_num_dumps >= 0) fc_logger.set_num_dumps(new_num_dumps);
+					if (new_level >= -1) fc_logger.set_num_dumps(new_num_dumps);
 					if (logfile_name.size() > 2) {
 						fc_logger.logfilename = logfile_name;
 					} else {
@@ -515,6 +515,17 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						}
 					}
 					saftbus::write(client_fd, owners);
+
+					// report logger status
+					unsigned    size;
+					unsigned    level;
+					int         num;;
+					std::string filename;
+					fc_logger.get_status(size,level,num,filename);
+					saftbus::write(client_fd,size);
+					saftbus::write(client_fd,level);
+					saftbus::write(client_fd,num);
+					saftbus::write(client_fd,filename);
 
 				}
 				break;

@@ -283,6 +283,14 @@ namespace saftbus
 		num_dumps = new_num_dumps;
 	}
 
+	void FCLogger::get_status(unsigned &size, unsigned &level, int &num, std::string &filename)
+	{
+		size = buffer.size();
+		level = log_level;
+		num = num_dumps;
+		filename = logfilename;
+	}
+
 
 }
 
