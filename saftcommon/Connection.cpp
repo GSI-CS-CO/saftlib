@@ -376,8 +376,10 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					// logger.newMsg(0).add("saftbus logging disabled").log();
 					// logger.disable();
+					SAFTD_LOG("logdump request",-1,-1);
 					std::cerr << "# logdump on request" << std::endl;
 					fc_logger.dump(true);
+					SAFTD_LOG("logdump done",-1,-1);
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_ENABLE_STATS:

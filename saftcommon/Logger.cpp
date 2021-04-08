@@ -106,7 +106,7 @@ namespace saftbus
 	}
 
 	void FCLogger::log(const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
-		if (who >= log_level) return; // loglevel 0 effectively disables logging 
+		if ((unsigned)who >= log_level) return; // loglevel 0 effectively disables logging 
 		clock_gettime(CLOCK_REALTIME, &buffer[idx].t);
 		buffer[idx].file  = file;
 		buffer[idx].line  = line;
@@ -127,7 +127,7 @@ namespace saftbus
 		full |= !idx;         // set full to true when idx wraps around the first time
 	}
 	void FCLogger::log_ts(struct timespec ts, const char *file, int line, const char* func, const char* what, int who, const char *text, int64_t dict, int64_t param) {
-		if (who >= log_level) return; // loglevel 0 effectively disables logging 
+		if ((unsigned)who >= log_level) return; // loglevel 0 effectively disables logging 
 		buffer[idx].t     = ts;
 		buffer[idx].file  = file;
 		buffer[idx].line  = line;
@@ -195,13 +195,13 @@ namespace saftbus
 				fullmsg << "# " << std::dec << missing << " missing entries\n";
 			}
 			if (full) {
-				for (int i = idx; i < buffer.size(); ++i) {
+				for (unsigned i = idx; i < buffer.size(); ++i) {
 					dumpline(fullmsg, i);
 					++message_lines;
 					gelf_post();
 				}
 			}
-			for (int i = 0; i < idx; ++i) {
+			for (unsigned i = 0; i < idx; ++i) {
 				dumpline(fullmsg, i);
 				++message_lines;
 				gelf_post();
@@ -236,11 +236,11 @@ namespace saftbus
 			fullmsg << "# " << std::dec << missing << " missing entries\n";
 		}
 		if (full) {
-			for (int i = idx; i < buffer.size(); ++i) {
+			for (unsigned i = idx; i < buffer.size(); ++i) {
 				dumpline(fullmsg, i);
 			}
 		}
-		for (int i = 0; i < idx; ++i) {
+		for (unsigned i = 0; i < idx; ++i) {
 			dumpline(fullmsg, i);
 		}
 

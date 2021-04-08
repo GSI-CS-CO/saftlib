@@ -269,6 +269,7 @@ void ActionSink::setDelayedCount(uint64_t val)
 
 void ActionSink::receiveMSI(uint8_t code)
 {
+  DRIVER_LOG("do nothing ",-1, code);
   return; // do nothing!!! 
   // struct timespec now;
   // clock_gettime(CLOCK_REALTIME, &now);
