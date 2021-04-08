@@ -166,31 +166,37 @@ uint64_t ActionSink::getSignalRate() const
 
 uint64_t ActionSink::getOverflowCount() const
 {
+  updateOverflow();
   return overflowCount;
 }
 
 uint64_t ActionSink::getActionCount() const
 {
+  updateAction();
   return actionCount;
 }
 
 uint64_t ActionSink::getLateCount() const
 {
+  updateLate();
   return lateCount;
 }
 
 uint64_t ActionSink::getEarlyCount() const
 {
+  updateEarly();
   return earlyCount;
 }
 
 uint64_t ActionSink::getConflictCount() const
 {
+  updateConflict();
   return conflictCount;
 }
 
 uint64_t ActionSink::getDelayedCount() const
 {
+  updateDelayed();
   return delayedCount;
 }
 
@@ -319,7 +325,7 @@ void ActionSink::receiveMSI(uint8_t code)
   }
 }
 
-bool ActionSink::updateOverflow()
+bool ActionSink::updateOverflow() const
 {
   DRIVER_LOG("start",-1,-1);
   eb_data_t overflow;
@@ -344,7 +350,7 @@ bool ActionSink::updateOverflow()
   return false;
 }
 
-bool ActionSink::updateAction()
+bool ActionSink::updateAction() const
 {
   DRIVER_LOGT("start",name.c_str(),-1,channel);
   eb_data_t valid;
@@ -367,7 +373,7 @@ bool ActionSink::updateAction()
   return false;
 }
 
-ActionSink::Record ActionSink::fetchError(uint8_t code)
+ActionSink::Record ActionSink::fetchError(uint8_t code) const
 {
   DRIVER_LOG("start",-1,-1);
   eb_data_t event_hi, event_lo, param_hi, param_lo, tag, tef,
@@ -403,7 +409,7 @@ ActionSink::Record ActionSink::fetchError(uint8_t code)
   return out;
 }
 
-bool ActionSink::updateLate()
+bool ActionSink::updateLate() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_LATE);
@@ -412,12 +418,12 @@ bool ActionSink::updateLate()
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   lateUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  //SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
 
-bool ActionSink::updateEarly()
+bool ActionSink::updateEarly() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_EARLY);
@@ -426,12 +432,12 @@ bool ActionSink::updateEarly()
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   earlyUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  //SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
 
-bool ActionSink::updateConflict()
+bool ActionSink::updateConflict() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_CONFLICT);
@@ -440,12 +446,12 @@ bool ActionSink::updateConflict()
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   conflictUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  //SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
 
-bool ActionSink::updateDelayed()
+bool ActionSink::updateDelayed() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_DELAYED);
@@ -454,7 +460,7 @@ bool ActionSink::updateDelayed()
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   delayedUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  //SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
