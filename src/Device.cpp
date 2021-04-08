@@ -98,10 +98,9 @@ bool Device::poll_msi() {
   eb_data_t msi_adr = 0;
   eb_data_t msi_dat = 0;
   eb_data_t msi_cnt = 0;
-  int msi_count = 0;
+  bool found_msi = false;
   const int MAX_MSIS_IN_ONE_GO = 1; // not too many MSIs at one to not block saftd 
   for (int i = 0; i < MAX_MSIS_IN_ONE_GO; ++i) { // never more this many MSIs in one go
-    msi_count = i;
     cycle.open(*(etherbone::Device*)this);
     cycle.read_config(0x40, EB_DATA32, &msi_adr);
     cycle.read_config(0x44, EB_DATA32, &msi_dat);
@@ -113,20 +112,18 @@ bool Device::poll_msi() {
       DRIVER_LOG("polled-MSI-adr",-1,msi.address); 
       msi.data    = msi_dat;
       Device::msis.push_back(msi);
+      found_msi = true;
       DRIVER_LOG("polled-MSI-dat",-1,msi.data); 
     }
     if (!(msi_cnt & 2)) {
-      // if (i) {
-      //   //std::cerr << i << " msis popped" << std::endl;
-      // }
-      break; // normal end 
+      // no more msi to poll
+      break; 
     }
-    // if (i == MAX_MSIS_IN_ONE_GO-1) {
-    //   //std::cerr << "reached MAX_MSIS_IN_ONE_GO" << std::endl;
-    // }
   }
-  if (msi_count) {
-    // if there was at least one MSI present, we have to schedule the next check immediately because the 
+  if ((msi_cnt & 2) || found_msi) {
+    // if we polled MAX_MSIS_IN_ONE_GO but there are more MSIs
+    // OR if there was at least one MSI present 
+    // we have to schedule the next check immediately because the 
     // MSI we just polled may cause actions that trigger other MSIs.
     Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), 0);
   } else {

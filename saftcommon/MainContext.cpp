@@ -149,7 +149,7 @@ namespace Slib
 			// std::vector<unsigned> signal_io_removed_indices;
 			signal_io_removed_indices.clear();
 			int poll_result;
-			MAINCONTEXT_LOG("poll", -1,-1);
+			MAINCONTEXT_LOG("poll", -1,timeout_ms);
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
 			MAINCONTEXT_LOG("poll_fd", -1,-1);
 				// during check of results, signal_io_pfds and fds from sources
