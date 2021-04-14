@@ -338,8 +338,6 @@ bool ActionSink::updateOverflow() const
   cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
   cycle.close();
 
-  if (!overflow) clog << kLogErr << "Received OVERFLOW MSI, but OVERFLOW_COUNT was 0" << std::endl;
-
   overflowCount += overflow;
 
   struct timespec now;
@@ -362,8 +360,6 @@ bool ActionSink::updateAction() const
   // reading VALID_COUNT clears the count and rearms the MSI
   cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &valid);
   cycle.close();
-
-  if (!valid) clog << kLogErr << "Received VALID MSI, but VALID_COUNT was 0" << std::endl;
 
   actionCount += valid;
   struct timespec now;
@@ -413,12 +409,10 @@ bool ActionSink::updateLate() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_LATE);
-  if (!r.count) clog << kLogErr << "Received LATE MSI, but FAILED_COUNT was 0" << std::endl;
   lateCount += r.count;
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   lateUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  //SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
@@ -427,12 +421,10 @@ bool ActionSink::updateEarly() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_EARLY);
-  if (!r.count) clog << kLogErr << "Received EARLY MSI, but FAILED_COUNT was 0" << std::endl;
   earlyCount += r.count;
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   earlyUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  //SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
@@ -441,12 +433,10 @@ bool ActionSink::updateConflict() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_CONFLICT);
-  if (!r.count) clog << kLogErr << "Received CONFLICT MSI, but FAILED_COUNT was 0" << std::endl;
   conflictCount += r.count;
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   conflictUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  //SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
@@ -455,12 +445,10 @@ bool ActionSink::updateDelayed() const
 {
   DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_DELAYED);
-  if (!r.count) clog << kLogErr << "Received DELAYED MSI, but FAILED_COUNT was 0" << std::endl;
   delayedCount += r.count;
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   delayedUpdate = now.tv_sec*1000000000+now.tv_nsec;
-  //SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
   DRIVER_LOG("done",-1, -1);
   return false;
 }
