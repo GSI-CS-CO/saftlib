@@ -41,6 +41,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
       eb_address_t watchdog;
       eb_address_t pps;
       eb_address_t ats;
+      eb_address_t reset;
     };
     typedef TimingReceiver_Service ServiceType;
     
@@ -92,6 +93,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     eb_address_t watchdog;
     eb_address_t pps;
     eb_address_t ats;
+    eb_address_t reset;
     uint64_t sas_count;
     eb_address_t arrival_irq;
     eb_address_t generator_irq;
