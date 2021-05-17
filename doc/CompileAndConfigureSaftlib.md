@@ -77,19 +77,6 @@ Solution:
 Resources:
 * https://github.com/GSI-CS-CO/saftlib/issues/1
 
-### Application: "Unable to acquire name---dbus saftlib.conf installed?"
-
-If you tried to start the saftlib daemon (i.e. saftd baseboard:dev/wbm0) and this error occurs make sure saftlib.conf is placed in the right directory.
-
-Solution (Debian-based distribution):
-
-By default the saftlib.conf is copied to "/usr/local/etc/dbus-1/system.d/", but Debian is expecting the file in "/etc/dbus-1/system.d/".
-
-1. $_ `./configure --prefix=/usr --sysconfdir=/etc`
-2. $_ `make install`
-
-You should now find the file in "/etc/dbus-1/system.d/".
-
 ### Compilation: "./configure: line 16708: syntax error near unexpected token `0.23' and ./configure: line 16708: `PKG_PROG_PKG_CONFIG(0.23)'"
 
 You need the pkgconfig/pkg-config package to proceed.
@@ -97,14 +84,6 @@ You need the pkgconfig/pkg-config package to proceed.
 Solution:
 
 1. $_ `sudo apt-get install pkgconfig`
-
-### Compilation: "configure: error: Package requirements (giomm-2.4 >= 2.28.2) were not met: and No package 'giomm-2.4' found"
-
-You need to install the missing package.
-
-Solution:
-
-1. $_ `sudo apt-get install libglibmm-2.4-dev`
 
 ### Compilation: "configure: error: could not find xsltproc -- needed to processs interfaces"
 

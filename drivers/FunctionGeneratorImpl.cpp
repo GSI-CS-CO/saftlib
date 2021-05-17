@@ -58,8 +58,26 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
    outputWindowSize((args.macro >>  0) & 0xFF),
    irq(args.tr->getDevice().request_irq(args.base, sigc::mem_fun(*this, &FunctionGeneratorImpl::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
-   startTag(0), executedParameterCount(0), fillLevel(0), filled(0)
+   startTag(0), executedParameterCount(0), fillLevel(0), filled(0),
+   fifo(131072) // a fifo entry is 12 bytes long. 
+                // Make it long enough so that realloction is hopefully not needed 
+                // (initial size is 1.5 Megabytes for fifo size of 131072)
 {
+
+  char *fg_fifo_max_size_env = getenv("SAFTLIB_FG_FIFO_MAX_SIZE");
+  if (fg_fifo_max_size_env != nullptr) {
+    std::istringstream in(fg_fifo_max_size_env);
+    long new_size;
+    in >> new_size;
+    if (!in) {
+      // reading new size didn't work
+      // ... error?
+    } else {
+      std::cerr << "set fifo capacity based on environmet variable to " << new_size << std::endl;
+      fifo.set_capacity(new_size);
+    }
+  }
+
   eb_address_t mb_base = args.mbx.sdb_component.addr_first;
   eb_data_t mb_value;
   unsigned slot = 0;
@@ -293,6 +311,12 @@ bool FunctionGeneratorImpl::appendParameterTuples(std::vector<ParameterTuple> pa
 {
   for (ParameterTuple p : parameters)
   {
+    if (saftbus::fg_fifo_max_size < fifo.size()) {
+      saftbus::fg_fifo_max_size = fifo.size();
+    }
+    if (fifo.size() == fifo.capacity()) {
+      fifo.set_capacity(fifo.capacity()*2);
+    }
     fifo.push_back(p);
     fillLevel += p.duration();
   }
@@ -341,6 +365,12 @@ bool FunctionGeneratorImpl::appendParameterSet(
     tuple.freq    = freq[i];
     tuple.shift_a = shift_a[i];
     tuple.shift_b = shift_b[i];
+    if (saftbus::fg_fifo_max_size < fifo.size()) {
+      saftbus::fg_fifo_max_size = fifo.size();
+    }
+    if (fifo.size() == fifo.capacity()) {
+      fifo.set_capacity(fifo.capacity()*2);
+    }
     fifo.push_back(tuple);
     fillLevel += tuple.duration();
   }

@@ -33,6 +33,9 @@ namespace saftbus
 	extern const std::string socket_base_name;
 	extern const char* saftbus_socket_environment_variable_name;
 
+	extern unsigned long device_msi_max_size;
+	extern unsigned long fg_fifo_max_size;
+
 	enum BusType
 	{
 		BUS_TYPE_SESSION,

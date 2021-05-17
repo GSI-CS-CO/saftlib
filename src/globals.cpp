@@ -31,7 +31,7 @@ namespace saftlib {
 
 CLogStream clog("saftd", LOG_DAEMON);
 Device::irqMap Device::irqs;
-Device::msiQueue Device::msis;
+Device::msiQueue Device::msis(2048);
 SAFTd SAFTd::saftd;
 
 }

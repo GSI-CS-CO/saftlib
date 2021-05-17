@@ -507,6 +507,9 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					}
 					saftbus::write(client_fd, owners);
 
+					saftbus::write(client_fd, device_msi_max_size);
+					saftbus::write(client_fd, fg_fifo_max_size);
+
 				}
 				break;
 				case saftbus::SENDER_ID:

@@ -107,6 +107,12 @@ static std::string print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConn
 	std::map<std::string, std::string> owners;
 	saftbus::read(connection->get_fd(), owners);
 
+	int device_msi_max_size;
+	int fg_fifo_max_size;
+
+	saftbus::read(connection->get_fd(), device_msi_max_size);
+	saftbus::read(connection->get_fd(), fg_fifo_max_size);
+
 	std::ostringstream oss;
 
 
@@ -167,6 +173,10 @@ static std::string print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConn
 	for (auto owner: socket_owner) {
 		oss << std::setw(7) << owner.first << std::setw(7) << owner.second << std::endl;
 	}
+
+	oss << std::endl;
+	oss << "Max MSI buffer size: " << device_msi_max_size << "    Max FG fifo size: " << fg_fifo_max_size << std::endl;
+
 	return oss.str();
 }
 

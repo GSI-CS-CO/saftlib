@@ -53,6 +53,7 @@ AC_CHECK_HEADER([boost/interprocess/managed_shared_memory.hpp], [], [AC_MSG_ERRO
 AC_CHECK_HEADER([boost/interprocess/allocators/allocator.hpp], [], [AC_MSG_ERROR([boost/interprocess/allocators/allocator.hpp required])])
 AC_CHECK_HEADER([boost/interprocess/containers/vector.hpp], [], [AC_MSG_ERROR([boost/interprocess/containers/vector.hpp required])])
 AC_CHECK_HEADER([boost/interprocess/containers/map.hpp], [], [AC_MSG_ERROR([boost/interprocess/containers/map.hpp required])])
+AC_CHECK_HEADER([boost/circular_buffer.hpp], [], [AC_MSG_ERROR([boost/circular_buffer.hpp required])])
 
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])

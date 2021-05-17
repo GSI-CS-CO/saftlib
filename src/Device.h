@@ -24,6 +24,7 @@
 #include <memory>
 #include <etherbone.h>
 #include <sigc++/sigc++.h>
+#include <boost/circular_buffer.hpp>
 #include "MainLoop.h"
 
 namespace saftlib {
@@ -38,6 +39,8 @@ class Device : public etherbone::Device {
     
     static void hook_it_all(etherbone::Socket s);
     static sigc::connection attach(const std::shared_ptr<Slib::MainLoop>& loop);
+
+    static void set_msi_buffer_capacity(size_t capacity);
     
   private:
     eb_address_t base;
@@ -47,7 +50,7 @@ class Device : public etherbone::Device {
     static irqMap irqs;
 
     struct MSI { eb_address_t address, data; };
-    typedef std::deque<MSI> msiQueue;
+    typedef boost::circular_buffer<MSI> msiQueue;
     static msiQueue msis;
     
     bool activate_msi_polling;
