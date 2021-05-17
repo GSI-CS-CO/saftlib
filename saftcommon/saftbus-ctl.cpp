@@ -127,6 +127,11 @@ static std::string print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConn
 	saftbus::read(connection->get_fd(),level);
 	saftbus::read(connection->get_fd(),num);
 	saftbus::read(connection->get_fd(),filename);
+	int device_msi_max_size;
+	int fg_fifo_max_size;
+
+	saftbus::read(connection->get_fd(), device_msi_max_size);
+	saftbus::read(connection->get_fd(), fg_fifo_max_size);
 
 	std::ostringstream oss;
 
@@ -191,6 +196,8 @@ static std::string print_saftbus_object_table(std::shared_ptr<saftbus::ProxyConn
 
 	oss << std::endl;
 	oss << "logger status: size=" << size << ", level=" << level << ", dumps-left=" << num << " filename=" << filename << std::endl;
+	oss << "Max MSI buffer size: " << device_msi_max_size << "    Max FG fifo size: " << fg_fifo_max_size << std::endl;
+
 	return oss.str();
 }
 

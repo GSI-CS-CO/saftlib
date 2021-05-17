@@ -24,6 +24,8 @@ namespace saftbus
 
 	const std::string socket_base_name = "/var/run/saftbus/saftbus";
 	const char* saftbus_socket_environment_variable_name = "SAFTBUS_SOCKET_PATH";
+	unsigned long device_msi_max_size = 0;
+	unsigned long fg_fifo_max_size = 0;
 
 	SlotBusAcquired   bus_acquired;
 	SlotNameAcquired  name_acquired;

@@ -31,6 +31,7 @@
 
 #include "Source.h"
 #include "Logger.h"
+#include "saftbus.h"
 
 namespace saftlib {
 
@@ -111,6 +112,13 @@ bool Device::poll_msi() {
       msi.address = msi_adr-msi_first;
       DRIVER_LOG("polled-MSI-adr",-1,msi.address); 
       msi.data    = msi_dat;
+      if (saftbus::device_msi_max_size < Device::msis.size()) {
+        saftbus::device_msi_max_size = Device::msis.size();
+      }
+      // make sure the circular buffer is large enough
+      if (Device::msis.size() == Device::msis.capacity()) {
+        Device::msis.set_capacity(Device::msis.capacity()*2);
+      }
       Device::msis.push_back(msi);
       found_msi = true;
       DRIVER_LOG("polled-MSI-dat",-1,msi.data); 
@@ -154,6 +162,10 @@ eb_status_t IRQ_Handler::write(eb_address_t address, eb_width_t width, eb_data_t
   Device::MSI msi;
   msi.address = address;
   msi.data = data;
+  // make sure the circular buffer is large enough
+  if (Device::msis.size() == Device::msis.capacity()) {
+    Device::msis.set_capacity(Device::msis.capacity()*2);
+  }
   Device::msis.push_back(msi);
   return EB_OK;
 }
@@ -176,6 +188,11 @@ void Device::hook_it_all(etherbone::Socket socket)
   memcpy(everything.sdb_component.product.name, "SAFTLIB           ", 19);
   
   socket.attach(&everything, &handler);
+}
+
+void Device::set_msi_buffer_capacity(size_t capacity)
+{
+  msis.set_capacity(capacity);
 }
 
 class MSI_Source : public Slib::Source

@@ -22,6 +22,7 @@
 
 #include <deque>
 #include <memory>
+#include <boost/circular_buffer.hpp>
 
 namespace saftlib {
 
@@ -159,7 +160,7 @@ class FunctionGeneratorImpl //: public Glib::Object
     // These 3 variables must be kept in sync:
     uint64_t fillLevel;
     unsigned filled; // # of fifo entries currently on LM32
-    std::deque<ParameterTuple> fifo;
+    boost::circular_buffer<ParameterTuple> fifo;
 };
 
 }
