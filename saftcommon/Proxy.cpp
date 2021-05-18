@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <time.h>
 
 #include "saftbus.h"
 #include "core.h"
@@ -136,7 +137,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		std::string interface_name;
 		std::string signal_name;
 	    struct timespec start_time;
-		bool create_statistics;
+		double random_signal_id;
 		Serial parameters;
 		payload.get_init();
 		payload.get(object_path);
@@ -144,7 +145,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		payload.get(signal_name);
 		payload.get(start_time.tv_sec);
 		payload.get(start_time.tv_nsec);
-		payload.get(create_statistics);
+		payload.get(random_signal_id);
 		payload.get(parameters);
 
 
@@ -190,16 +191,13 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		    signal_read_time = (1.0e6*stop.tv_sec            + 1.0e-3*stop.tv_nsec) 
 		                     - (1.0e6*start_read_time.tv_sec + 1.0e-3*start_read_time.tv_nsec);
 
-		    if (create_statistics && signal_read_time > 200) { // if reading takes more than 200 us => Report!
-		    	std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;
-		    }
+		    // if (create_statistics && signal_read_time > 200) { // if reading takes more than 200 us => Report!
+		    // 	std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;
+		    // }
 
 			// report the measured signal flight time to saftd
 		    try {
-		    	if (create_statistics) { // do this only if switched on
-					// std::lock_guard<std::mutex> lock(_connection_mutex);
-			    	_connection->send_signal_flight_time(signal_flight_time);
-			    }
+		    	_connection->send_signal_flight_time(random_signal_id);
 			    // deliver the signal: call the signal handler of the derived class 
 			    //std::cerr << "Proxy::dispatch() call on_signal" << std::endl;
 				on_signal("de.gsi.saftlib", signal_name, parameters);

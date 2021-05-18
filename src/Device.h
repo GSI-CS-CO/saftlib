@@ -32,7 +32,7 @@ namespace saftlib {
 // Saftlib devices just add IRQs
 class Device : public etherbone::Device {
   public:
-    Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll = false);
+    Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll = false, unsigned piv = 1);
     
     eb_address_t request_irq(const etherbone::sdb_msi_device& sdb, const sigc::slot<void,eb_data_t>& slot);
     void release_irq(eb_address_t);
@@ -54,6 +54,7 @@ class Device : public etherbone::Device {
     static msiQueue msis;
     
     bool activate_msi_polling;
+    unsigned polling_interval_ms;
     bool poll_msi();
     eb_address_t msi_first;
 

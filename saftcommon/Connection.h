@@ -121,7 +121,7 @@ namespace saftbus
 
 		std::map<std::string, std::map<int, int> > _function_run_times;
 
-		Logger logger;
+		// Logger logger;
 
 		bool _create_signal_flight_time_statistics;
 

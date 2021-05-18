@@ -18,7 +18,17 @@ saftcommon_HEADERS =         \
 	MainLoop.h         \
 	Source.h           \
 	PollFD.h	       \
-	saftbus.h          
+	saftbus.h          \
+	Data.hpp              \
+	GELFConfig.hpp        \
+	InternalGELF.hpp      \
+	PackageBuilder.hpp    \
+	PackageCompressor.hpp \
+	UDPProtocol.hpp       \
+	DllDefines.hpp        \
+	GELF.hpp              \
+	MessageBuilder.hpp    
+
 
 leapseconddir = $(datadir)/saftlib
 leapsecond_DATA = leap-seconds.list
@@ -27,7 +37,7 @@ EXTRA_DIST = leap-seconds.list
 # saftcommondir = $(includedir)/saftlib
 # saftcommon_DATA = leap-seconds.list
 
-libsaftcommon_la_LIBADD = 
+libsaftcommon_la_LIBADD =  
 libsaftcommon_la_LDFLAGS = -version-info @SAFTLIB_API@:@SAFTLIB_REVISION@:@SAFTLIB_MINOR@ # @SAFTLIB_SONAME@
 
 libsaftcommon_la_SOURCES =     \
@@ -45,9 +55,15 @@ libsaftcommon_la_SOURCES =     \
 	MainContext.cpp            \
 	MainLoop.cpp               \
 	Source.cpp                 \
-	PollFD.cpp     		        
+	PollFD.cpp     		       \
+	GELF.cpp                   \
+	MessageBuilder.cpp         \
+	PackageBuilder.cpp         \
+	PackageCompressor.cpp      \
+	UDPProtocol.cpp            
 
 bin_PROGRAMS = saftbus-ctl
 
 saftbus_ctl_SOURCES = saftbus-ctl.cpp
-saftbus_ctl_LDADD   = libsaftcommon.la $(SIGCPP_LIBS)
+saftbus_ctl_LDADD   = libsaftcommon.la $(SIGCPP_LIBS) -lz
+

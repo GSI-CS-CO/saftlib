@@ -31,14 +31,15 @@
 
 #include "Source.h"
 #include "saftbus.h"
+#include "Logger.h"
 
 namespace saftlib {
 
 // Device::irqMap Device::irqs;   // this is in globals.cpp
 // Device::msiQueue Device::msis; // this is in globals.cpp
 
-Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll)
- : etherbone::Device(d), base(first), mask(last-first), activate_msi_polling(poll)
+Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll, unsigned piv)
+ : etherbone::Device(d), base(first), mask(last-first), activate_msi_polling(poll), polling_interval_ms(piv)
 {
 }
 
@@ -75,7 +76,7 @@ eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sig
   }
 
   if (activate_msi_polling) {
-    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), 1);
+    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), polling_interval_ms);
     activate_msi_polling = false;
   }
   
@@ -92,12 +93,14 @@ void Device::release_irq(eb_address_t irq)
 }
 
 bool Device::poll_msi() {
+  DRIVER_LOG("USB-poll-for-MSIs",-1,-1); 
   //std::cerr << "polling for msi" << std::endl;
   etherbone::Cycle cycle;
   eb_data_t msi_adr = 0;
   eb_data_t msi_dat = 0;
   eb_data_t msi_cnt = 0;
-  const int MAX_MSIS_IN_ONE_GO = 1024;
+  bool found_msi = false;
+  const int MAX_MSIS_IN_ONE_GO = 1; // not too many MSIs at one to not block saftd 
   for (int i = 0; i < MAX_MSIS_IN_ONE_GO; ++i) { // never more this many MSIs in one go
     cycle.open(*(etherbone::Device*)this);
     cycle.read_config(0x40, EB_DATA32, &msi_adr);
@@ -107,6 +110,7 @@ bool Device::poll_msi() {
     if (msi_cnt & 1) {
       Device::MSI msi;
       msi.address = msi_adr-msi_first;
+      DRIVER_LOG("polled-MSI-adr",-1,msi.address); 
       msi.data    = msi_dat;
       if (saftbus::device_msi_max_size < Device::msis.size()) {
         saftbus::device_msi_max_size = Device::msis.size();
@@ -116,18 +120,27 @@ bool Device::poll_msi() {
         Device::msis.set_capacity(Device::msis.capacity()*2);
       }
       Device::msis.push_back(msi);
+      found_msi = true;
+      DRIVER_LOG("polled-MSI-dat",-1,msi.data); 
     }
     if (!(msi_cnt & 2)) {
-      if (i) {
-        //std::cerr << i << " msis popped" << std::endl;
-      }
-      break; // normal end 
-    }
-    if (i == MAX_MSIS_IN_ONE_GO-1) {
-      //std::cerr << "reached MAX_MSIS_IN_ONE_GO" << std::endl;
+      // no more msi to poll
+      break; 
     }
   }
-  return true;
+  if ((msi_cnt & 2) || found_msi) {
+    // if we polled MAX_MSIS_IN_ONE_GO but there are more MSIs
+    // OR if there was at least one MSI present 
+    // we have to schedule the next check immediately because the 
+    // MSI we just polled may cause actions that trigger other MSIs.
+    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), 0);
+  } else {
+    // if there was no MSI present we continue with the normal polling schedule
+    Slib::signal_timeout().connect(sigc::mem_fun(this, &Device::poll_msi), polling_interval_ms);
+  }
+  DRIVER_LOG("USB-poll-for-MSIs done",-1,-1); 
+
+  return false;
 }
 
 struct IRQ_Handler : public etherbone::Handler

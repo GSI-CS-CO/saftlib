@@ -166,31 +166,37 @@ uint64_t ActionSink::getSignalRate() const
 
 uint64_t ActionSink::getOverflowCount() const
 {
+  updateOverflow();
   return overflowCount;
 }
 
 uint64_t ActionSink::getActionCount() const
 {
+  updateAction();
   return actionCount;
 }
 
 uint64_t ActionSink::getLateCount() const
 {
+  updateLate();
   return lateCount;
 }
 
 uint64_t ActionSink::getEarlyCount() const
 {
+  updateEarly();
   return earlyCount;
 }
 
 uint64_t ActionSink::getConflictCount() const
 {
+  updateConflict();
   return conflictCount;
 }
 
 uint64_t ActionSink::getDelayedCount() const
 {
+  updateDelayed();
   return delayedCount;
 }
 
@@ -263,74 +269,55 @@ void ActionSink::setDelayedCount(uint64_t val)
 
 void ActionSink::receiveMSI(uint8_t code)
 {
-  uint64_t time = dev->ReadRawCurrentTime();
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  //uint64_t time = dev->ReadRawCurrentTime();
+  uint64_t time = now.tv_sec*1000000000+now.tv_nsec;
+  uint64_t exec;
+  unsigned interval = 0;
 
   switch (code) {
   case ECA_OVERFLOW:
-    if (overflowUpdate > time || time - overflowUpdate >= signalRate) {
-      updateOverflow(time);
-    } else {
-      overflowPending.disconnect(); // just to be safe
-      uint64_t exec = overflowUpdate + signalRate;
-      overflowPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateOverflow), exec),
-        (exec - time) / 1000000);
-    }
+    DRIVER_LOG("ECA_OVERFLOW",-1, -1);
+    overflowPending.disconnect(); // just to be safe
+    exec = overflowUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    overflowPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateOverflow),interval);
     break;
   case ECA_VALID:
-    if (actionUpdate > time || time - actionUpdate >= signalRate) {
-      updateAction(time);
-    } else {
-      actionPending.disconnect(); // just to be safe
-      uint64_t exec = actionUpdate + signalRate;
-      actionPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateAction), exec),
-        (exec - time) / 1000000);
-    }
+    DRIVER_LOG("ECA_VALID",-1, -1);
+    actionPending.disconnect(); // just to be safe
+    exec = actionUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    actionPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateAction),interval);
     break;
   case ECA_LATE:
-    if (lateUpdate > time || time - lateUpdate >= signalRate) {
-      updateLate(time);
-    } else {
-      latePending.disconnect(); // just to be safe
-      uint64_t exec = lateUpdate + signalRate;
-      latePending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateLate), exec),
-        (exec - time) / 1000000);
-    }
+    DRIVER_LOG("ECA_LATE",-1, -1);
+    latePending.disconnect(); // just to be safe
+    exec = lateUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    latePending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateLate),interval);
     break;
   case ECA_EARLY:
-    if (earlyUpdate > time || time - earlyUpdate >= signalRate) {
-      updateEarly(time);
-    } else {
-      earlyPending.disconnect(); // just to be safe
-      uint64_t exec = earlyUpdate + signalRate;
-      earlyPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateEarly), exec),
-        (exec - time) / 1000000);
-    }
+    DRIVER_LOG("ECA_EARLY",-1, -1);
+    earlyPending.disconnect(); // just to be safe
+    exec = earlyUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    earlyPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateEarly),interval);
     break;
   case ECA_CONFLICT:
-    if (conflictUpdate > time || time - conflictUpdate >= signalRate) {
-      updateConflict(time);
-    } else {
-      conflictPending.disconnect(); // just to be safe
-      uint64_t exec = conflictUpdate + signalRate;
-      conflictPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateConflict), exec),
-        (exec - time) / 1000000);
-    }
+    DRIVER_LOG("ECA_CONFLICT",-1, -1);
+    conflictPending.disconnect(); // just to be safe
+    exec = conflictUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    conflictPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateConflict),interval);
     break;
   case ECA_DELAYED:
-    if (delayedUpdate > time || time - delayedUpdate >= signalRate) {
-      updateDelayed(time);
-    } else {
-      delayedPending.disconnect(); // just to be safe
-      uint64_t exec = delayedUpdate + signalRate;
-      delayedPending = Slib::signal_timeout().connect(
-        sigc::bind(sigc::mem_fun(*this, &ActionSink::updateDelayed), exec),
-        (exec - time) / 1000000);
-    }
+    DRIVER_LOG("ECA_DELAYED",-1, -1);
+    delayedPending.disconnect(); // just to be safe
+    exec = delayedUpdate + signalRate;
+    if (exec > time) interval = (exec-time)/1000000;
+    delayedPending = Slib::signal_timeout().connect(sigc::mem_fun(*this, &ActionSink::updateDelayed),interval);
     break;
   default:
     clog << kLogErr << "Asked to handle an invalid MSI condition code in ActionSink.cpp" << std::endl;
@@ -338,8 +325,9 @@ void ActionSink::receiveMSI(uint8_t code)
   }
 }
 
-bool ActionSink::updateOverflow(uint64_t time)
+bool ActionSink::updateOverflow() const
 {
+  DRIVER_LOG("start",-1,-1);
   eb_data_t overflow;
 
   etherbone::Cycle cycle;
@@ -350,15 +338,19 @@ bool ActionSink::updateOverflow(uint64_t time)
   cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
   cycle.close();
 
-  if (!overflow) clog << kLogErr << "Received OVERFLOW MSI, but OVERFLOW_COUNT was 0" << std::endl;
-
   overflowCount += overflow;
-  overflowUpdate = time;
+
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  overflowUpdate = now.tv_sec*1000000000+now.tv_nsec;
+  
+  DRIVER_LOG("done",-1, -1);
   return false;
 }
 
-bool ActionSink::updateAction(uint64_t time)
+bool ActionSink::updateAction() const
 {
+  DRIVER_LOGT("start",name.c_str(),-1,channel);
   eb_data_t valid;
 
   etherbone::Cycle cycle;
@@ -369,15 +361,17 @@ bool ActionSink::updateAction(uint64_t time)
   cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &valid);
   cycle.close();
 
-  if (!valid) clog << kLogErr << "Received VALID MSI, but VALID_COUNT was 0" << std::endl;
-
   actionCount += valid;
-  actionUpdate = time;
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  actionUpdate = now.tv_sec*1000000000+now.tv_nsec;
+  DRIVER_LOG("done",-1,channel);
   return false;
 }
 
-ActionSink::Record ActionSink::fetchError(uint8_t code)
+ActionSink::Record ActionSink::fetchError(uint8_t code) const
 {
+  DRIVER_LOG("start",-1,-1);
   eb_data_t event_hi, event_lo, param_hi, param_lo, tag, tef,
             deadline_hi, deadline_lo, executed_hi, executed_lo, failed;
 
@@ -407,50 +401,55 @@ ActionSink::Record ActionSink::fetchError(uint8_t code)
   out.executed = uint64_t(executed_hi) << 32 | executed_lo;
   out.count    = failed;
 
+  DRIVER_LOG("done",-1,failed);
   return out;
 }
 
-bool ActionSink::updateLate(uint64_t time)
+bool ActionSink::updateLate() const
 {
+  DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_LATE);
-  if (!r.count) clog << kLogErr << "Received LATE MSI, but FAILED_COUNT was 0" << std::endl;
   lateCount += r.count;
-  lateUpdate = time;
-  Late(lateCount, r.event, r.param, r.deadline, r.executed);
-  SigLate(lateCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  lateUpdate = now.tv_sec*1000000000+now.tv_nsec;
+  DRIVER_LOG("done",-1, -1);
   return false;
 }
 
-bool ActionSink::updateEarly(uint64_t time)
+bool ActionSink::updateEarly() const
 {
+  DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_EARLY);
-  if (!r.count) clog << kLogErr << "Received EARLY MSI, but FAILED_COUNT was 0" << std::endl;
   earlyCount += r.count;
-  earlyUpdate = time;
-  Early(earlyCount, r.event, r.param, r.deadline, r.executed);
-  SigEarly(earlyCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  earlyUpdate = now.tv_sec*1000000000+now.tv_nsec;
+  DRIVER_LOG("done",-1, -1);
   return false;
 }
 
-bool ActionSink::updateConflict(uint64_t time)
+bool ActionSink::updateConflict() const
 {
+  DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_CONFLICT);
-  if (!r.count) clog << kLogErr << "Received CONFLICT MSI, but FAILED_COUNT was 0" << std::endl;
   conflictCount += r.count;
-  conflictUpdate = time;
-  Conflict(conflictCount, r.event, r.param, r.deadline, r.executed);
-  SigConflict(conflictCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  conflictUpdate = now.tv_sec*1000000000+now.tv_nsec;
+  DRIVER_LOG("done",-1, -1);
   return false;
 }
 
-bool ActionSink::updateDelayed(uint64_t time)
+bool ActionSink::updateDelayed() const
 {
+  DRIVER_LOG("start",-1, -1);
   Record r = fetchError(ECA_DELAYED);
-  if (!r.count) clog << kLogErr << "Received DELAYED MSI, but FAILED_COUNT was 0" << std::endl;
   delayedCount += r.count;
-  delayedUpdate = time;
-  Delayed(delayedCount, r.event, r.param, r.deadline, r.executed);
-  SigDelayed(delayedCount, r.event, r.param, saftlib::makeTimeTAI(r.deadline), saftlib::makeTimeTAI(r.executed));
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  delayedUpdate = now.tv_sec*1000000000+now.tv_nsec;
+  DRIVER_LOG("done",-1, -1);
   return false;
 }
 

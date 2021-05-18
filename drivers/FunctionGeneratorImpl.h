@@ -78,7 +78,7 @@ class FunctionGeneratorImpl //: public Glib::Object
         fillLevel += (*it).duration();
       }
 
-      if (channel != -1) refill();
+      if (channel != -1) refill(false);
       return lowFill();
     }
 
@@ -119,7 +119,7 @@ class FunctionGeneratorImpl //: public Glib::Object
   protected:
     bool lowFill() const;
     void irq_handler(eb_data_t msi);
-    void refill();
+    void refill(bool);
     void releaseChannel();
     void acquireChannel();
 

@@ -95,20 +95,20 @@ class ActionSink : public Owned, public iActionSink
     uint64_t signalRate;
     
     // cached counters
-    uint64_t overflowCount;
-    uint64_t actionCount;
-    uint64_t lateCount;
-    uint64_t earlyCount;
-    uint64_t conflictCount;
-    uint64_t delayedCount;
+    mutable uint64_t overflowCount;
+    mutable uint64_t actionCount;
+    mutable uint64_t lateCount;
+    mutable uint64_t earlyCount;
+    mutable uint64_t conflictCount;
+    mutable uint64_t delayedCount;
     
     // last update of counters (for throttled)
-    uint64_t overflowUpdate;
-    uint64_t actionUpdate;
-    uint64_t lateUpdate;
-    uint64_t earlyUpdate;
-    uint64_t conflictUpdate;
-    uint64_t delayedUpdate;
+    mutable uint64_t overflowUpdate;
+    mutable uint64_t actionUpdate;
+    mutable uint64_t lateUpdate;
+    mutable uint64_t earlyUpdate;
+    mutable uint64_t conflictUpdate;
+    mutable uint64_t delayedUpdate;
     
     // constant hardware values
     uint64_t latency;
@@ -130,14 +130,14 @@ class ActionSink : public Owned, public iActionSink
       uint64_t executed;
       uint64_t count;
     };
-    Record fetchError(uint8_t code);
+    Record fetchError(uint8_t code) const;
     
-    bool updateOverflow(uint64_t time);
-    bool updateAction(uint64_t time);
-    bool updateLate(uint64_t time);
-    bool updateEarly(uint64_t time);
-    bool updateConflict(uint64_t time);
-    bool updateDelayed(uint64_t time);
+    bool updateOverflow() const;
+    bool updateAction() const;
+    bool updateLate() const;
+    bool updateEarly() const;
+    bool updateConflict() const;
+    bool updateDelayed() const;
     
     // conditions must come after dev to ensure safe cleanup on ~Condition
     Conditions conditions;

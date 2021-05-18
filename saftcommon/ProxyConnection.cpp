@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <ctime>
 #include <cstdlib>
+#include <time.h>
 
 #include <unistd.h>
 //#include <giomm/dbuserror.h>
@@ -98,10 +99,14 @@ int ProxyConnection::get_connection_id()
 	return id;
 }
 
-void ProxyConnection::send_signal_flight_time(double signal_flight_time) {
+void ProxyConnection::send_signal_flight_time(double random_signal_id) {
 	std::lock_guard<std::mutex> lock(_socket_mutex);
+	struct timespec received;
+	clock_gettime( CLOCK_REALTIME, &received);
 	saftbus::write(get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
-	saftbus::write(get_fd(), signal_flight_time);
+	saftbus::write(get_fd(), received.tv_sec);
+	saftbus::write(get_fd(), received.tv_nsec);
+	saftbus::write(get_fd(), random_signal_id);
 }
 
 
@@ -137,6 +142,8 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 	                                const std::string& bus_name, 
 	                                int timeout_msec)
 {
+	struct timespec now;
+	clock_gettime(CLOCK_REALTIME, &now);
 	std::lock_guard<std::mutex> lock(_socket_mutex);
 	try {
 
@@ -147,6 +154,8 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 		message.put(interface_name);
 		message.put(name);
 		message.put(parameters);
+		message.put(now.tv_sec);
+		message.put(now.tv_nsec);
 
 		// serialize into a byte stream
 		uint32_t size = message.get_size();

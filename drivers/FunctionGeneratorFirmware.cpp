@@ -107,11 +107,13 @@ std::shared_ptr<FunctionGeneratorFirmware> FunctionGeneratorFirmware::create(con
 
 uint32_t FunctionGeneratorFirmware::getVersion() const
 {
+  DRIVER_LOG("",-1,-1);
   return static_cast<uint32_t>(version);
 }
 
 bool FunctionGeneratorFirmware::nothing_runs()
 {
+  DRIVER_LOG("",-1,-1);
   for (auto fgs: fgs_owned) {
     auto fg = std::dynamic_pointer_cast<FunctionGenerator>(fgs.second);
     if (fg->getRunning()) {
@@ -134,11 +136,13 @@ bool FunctionGeneratorFirmware::nothing_runs()
 
 std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
 {
+  DRIVER_LOG("",-1,-1);
   return ScanMasterFg();
 }
 
 void FunctionGeneratorFirmware::firmware_rescan(eb_address_t swi)
 {
+  DRIVER_LOG("",-1,-1);
   // initiate firmware rescan and wait until firmware is done
   if (version == 3) tr->getDevice().write(fgb + SHM_BASE + FG_SCAN_DONE, EB_DATA32, 1); 
   if (version == 4) tr->getDevice().write(fgb + SHM_BASE + FG_BUSY, EB_DATA32, 1);
@@ -152,6 +156,7 @@ void FunctionGeneratorFirmware::firmware_rescan(eb_address_t swi)
       break;
     }
     if (i == 200) { // wait at least 20 seconds before timeout
+      DRIVER_LOG("hit_20s_timeout",-1,-1);
       throw saftbus::Error(saftbus::Error(saftbus::Error::FAILED,"timeout while waiting for fg-firmware scan"));
     }
     usleep(100000); // 100 ms 
@@ -163,6 +168,7 @@ void FunctionGeneratorFirmware::firmware_rescan(eb_address_t swi)
 // to reduce traffic only generate signals if we have an owner
 std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
 {
+  DRIVER_LOG("",-1,-1);
   ownerOnly();
   if (!nothing_runs()) {
     throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "FunctionGeneratorFirmware::Scan is not allowed if any channel is active");
@@ -247,6 +253,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
 
 std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
 {
+  DRIVER_LOG("",-1,-1);
   ownerOnly();
   if (!nothing_runs()) {
     throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "FunctionGeneratorFirmware::Scan is not allowed if any channel is active");

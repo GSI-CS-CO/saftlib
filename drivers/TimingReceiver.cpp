@@ -129,6 +129,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   
   // Create the IOs (channel 0)
   InoutImpl::probe(this, actionSinks, eventSources);
+  std::vector<int> channel_is_software(channels, 0);
   
   // Configure the non-IO action sinks, creating objects and clearing status
   for (unsigned i = 1; i < channels; ++i) {
@@ -150,6 +151,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
         case ECA_LINUX: {
           // defer construction till demanded by NewSoftwareActionSink, but setup the keys
           actionSinks[SinkKey(i, num)].reset();
+          channel_is_software[i]=1;
           // clear any stale valid count
           popMissingQueue(i, num);
           break;
@@ -213,7 +215,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
       args.base,
       sigc::bind(sigc::mem_fun(*this, &TimingReceiver::msiHandler), i)));
     // Hook MSI to hardware
-    setHandler(i, true, channel_msis.back());
+    setHandler(i, channel_is_software[i], channel_msis.back());
     // Wipe out old global state for the channel => will generate an MSI => updateMostFull
     resetMostFull(i);
   }
@@ -261,6 +263,7 @@ void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t addr
 
 bool TimingReceiver::poll()
 {
+  DRIVER_LOG("",-1,-1);
   getLocked();
   // retrigger the ECA watchdog
   device.write(watchdog, EB_DATA32, watchdog_value);
@@ -693,6 +696,7 @@ struct WalkEntry {
 
 void TimingReceiver::compile()
 {
+  DRIVER_LOG("",-1, -1);
   // Store all active conditions into a vector for processing
   typedef std::vector<ECA_OpenClose> ID_Space;
   ID_Space id_space;

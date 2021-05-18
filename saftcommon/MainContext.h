@@ -71,11 +71,23 @@ namespace Slib
 		static std::shared_ptr< MainContext > default_context;
 		static bool default_created;
 		bool during_iteration;
+		bool timeouts_pending;
 
 		std::vector<struct pollfd>                  signal_io_pfds;
 		std::vector<sigc::slot<bool, IOCondition> > signal_io_slots;
 		std::vector<struct pollfd>                  added_signal_io_pfds;
 		std::vector<sigc::slot<bool, IOCondition> > added_signal_io_slots;
+
+		// only used during iteration()
+		std::vector<struct pollfd>                  all_pfds;
+		std::vector<PollFD*>                        all_pfds_ptr;
+		std::vector<unsigned>                       all_ids;
+		std::vector<unsigned>                       signal_io_removed_indices;
+		std::vector<struct pollfd>                  new_signal_io_pfds;
+		std::vector<sigc::slot<bool, IOCondition> > new_signal_io_slots;
+		// only used during iteration_recursive()
+		std::vector<struct pollfd>                  source_pfds;
+		std::vector<PollFD*>                        source_pfds_ptr;
 
 		struct Timeout {
 			int interval;
