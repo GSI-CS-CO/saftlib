@@ -103,22 +103,49 @@ static void on_bus_acquired(const std::shared_ptr<saftbus::Connection>& connecti
 static void on_name_acquired(const std::shared_ptr<saftbus::Connection>& connection, const std::string& /* name */, int argc, char** argv)
 {
   for (int i = 1; i < argc; ++i) {
-    // parse the string
-    std::string command = argv[i];
-    std::string::size_type pos = command.find_first_of(':');
-    if (pos == std::string::npos) {
-      std::cerr << "Argument '" << command << "' is not of form <logical-name>:<etherbone-path>" << std::endl;
-      exit(1);
-    }
-    
-    std::string name = command.substr(0, pos);
-    std::string path = command.substr(pos+1, std::string::npos);
-    
-    try {
-      SAFTd::get().AttachDevice(name, path);
-    } catch (...) {
-      print_backtrace(std::cerr, ("Attaching " + name + "(" + path + ")").c_str());
-      throw;
+    // options
+    if (argv[i][0] == '-') {
+      switch(argv[i][1]) {
+        case 'b':
+        {
+          ++i;
+          if (i == argc) {
+            std::cerr << "expecting positive integer after \'-b\' specifying the default msi ring buffer size" << std::endl;
+            exit(1);
+          }
+          std::istringstream is(argv[i]);
+          int size;
+          is >> size;
+          if (!is) {
+            std::cerr << "Cannot read default msi ring buffer size \'" << argv[i] << "\'" << std::endl;
+            exit(1);
+          }
+          Device::set_msi_buffer_capacity(size);
+        }
+        break;
+        case '\0': // fall through
+        default:
+          std::cerr << "Invalid Option '" << argv[i] << std::endl;
+          exit(1);
+      }
+    } else {
+      // parse the string
+      std::string command = argv[i];
+      std::string::size_type pos = command.find_first_of(':');
+      if (pos == std::string::npos) {
+        std::cerr << "Argument '" << command << "' is not of form <logical-name>:<etherbone-path>" << std::endl;
+        exit(1);
+      }
+      
+      std::string name = command.substr(0, pos);
+      std::string path = command.substr(pos+1, std::string::npos);
+      
+      try {
+        SAFTd::get().AttachDevice(name, path);
+      } catch (...) {
+        print_backtrace(std::cerr, ("Attaching " + name + "(" + path + ")").c_str());
+        throw;
+      }
     }
   }
   

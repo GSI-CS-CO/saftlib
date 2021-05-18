@@ -100,7 +100,7 @@ bool Device::poll_msi() {
   eb_data_t msi_dat = 0;
   eb_data_t msi_cnt = 0;
   bool found_msi = false;
-  const int MAX_MSIS_IN_ONE_GO = 1; // not too many MSIs at one to not block saftd 
+  const int MAX_MSIS_IN_ONE_GO = 3; // not too many MSIs at once to not block saftd 
   for (int i = 0; i < MAX_MSIS_IN_ONE_GO; ++i) { // never more this many MSIs in one go
     cycle.open(*(etherbone::Device*)this);
     cycle.read_config(0x40, EB_DATA32, &msi_adr);
@@ -112,14 +112,15 @@ bool Device::poll_msi() {
       msi.address = msi_adr-msi_first;
       DRIVER_LOG("polled-MSI-adr",-1,msi.address); 
       msi.data    = msi_dat;
-      if (saftbus::device_msi_max_size < Device::msis.size()) {
-        saftbus::device_msi_max_size = Device::msis.size();
-      }
       // make sure the circular buffer is large enough
       if (Device::msis.size() == Device::msis.capacity()) {
         Device::msis.set_capacity(Device::msis.capacity()*2);
+        // std::cerr << "set Device::msis.set_capacity to  " << Device::msis.capacity() << std::endl;
       }
       Device::msis.push_back(msi);
+      if (saftbus::device_msi_max_size < Device::msis.size()) {
+        saftbus::device_msi_max_size = Device::msis.size();
+      }
       found_msi = true;
       DRIVER_LOG("polled-MSI-dat",-1,msi.data); 
     }
@@ -167,6 +168,9 @@ eb_status_t IRQ_Handler::write(eb_address_t address, eb_width_t width, eb_data_t
     Device::msis.set_capacity(Device::msis.capacity()*2);
   }
   Device::msis.push_back(msi);
+  if (saftbus::device_msi_max_size < Device::msis.size()) {
+    saftbus::device_msi_max_size = Device::msis.size();
+  }
   return EB_OK;
 }
 
