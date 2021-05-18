@@ -2,7 +2,7 @@
 // @brief Command-line interface for saftlib. This tool focuses on the software part.
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
-// Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+// Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 //
 // Have a chat with saftlib
 //
@@ -16,7 +16,7 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
@@ -112,10 +112,10 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
   saftlib::Time   wrTime;
   int           width;
   string        fmt;
-  
+
   map<std::string, std::string> allSinks;
   std::shared_ptr<SoftwareActionSink_Proxy> aSink;
-  
+
   map<std::string, std::string>::iterator i;
   vector<std::string>::iterator j;
 
@@ -181,7 +181,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
 static void displayInfoSW(std::shared_ptr<SAFTd_Proxy> saftd) {
   std::string sourceVersion;
   std::string buildInfo;
-  
+
   sourceVersion   = saftd->getSourceVersion();
   buildInfo       = saftd->getBuildInfo();
 
@@ -194,15 +194,15 @@ static void displayInfoSW(std::shared_ptr<SAFTd_Proxy> saftd) {
 static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
   std::string sourceVersion;
   std::string buildInfo;
-  std::string ebDevice;  
+  std::string ebDevice;
   std::string devName;
   map< std::string, std::string > allDevices;
   map<std::string, std::string>::iterator i;
   std::shared_ptr<TimingReceiver_Proxy> aDevice;
-  
+
   map< std::string, std::string > gatewareInfo;
   map<std::string, std::string>::iterator j;
-  
+
   allDevices      = saftd->getDevices();
 
   std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
@@ -258,14 +258,14 @@ int main(int argc, char** argv)
   uint64_t snoopID     = 0x0;
   uint64_t snoopMask   = 0x0;
   int64_t  snoopOffset = 0x0;
-  
+  int64_t snoopSeconds = 0x7FFFFFFFFFFFFFFF; // maximum value
 
   // variables inject event
   uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
   uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the timing message
   uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
   saftlib::Time eventTime;     // time for next event in PTP time
-  saftlib::Time ppsNext;     // time for next PPS 
+  saftlib::Time ppsNext;     // time for next PPS
   saftlib::Time wrTime;     // current WR time
 
   // variables attach, remove
@@ -345,8 +345,8 @@ int main(int argc, char** argv)
   // parse for commands
   if (optind + 1< argc) {
     command = argv[optind+1];
-    
-    // "inject" 
+
+    // "inject"
     if (strcasecmp(command, "inject") == 0) {
       if (optind+5  != argc) {
         std::cerr << program << ": expecting exactly three arguments: send <eventID> <param> <time>" << std::endl;
@@ -374,8 +374,8 @@ int main(int argc, char** argv)
     } // "inject"
 
     else if (strcasecmp(command, "snoop") == 0) {
-      if (optind+5  != argc) {
-        std::cerr << program << ": expecting exactly three arguments: snoop <eventID> <mask> <offset>" << std::endl;
+      if (optind+5  != argc && optind+6 != argc) {
+        std::cerr << program << ": expecting three or four arguments: snoop <eventID> <mask> <offset> [<seconds>]" << std::endl;
         return 1;
       }
       snoopID     = strtoull(argv[optind+2], &value_end, 0);
@@ -396,7 +396,14 @@ int main(int argc, char** argv)
         std::cerr << program << ": invalid offset -- " << argv[optind+4] << std::endl;
         return 1;
       } // offset
-      
+      if (optind+6 == argc) {
+        snoopSeconds = strtoll(argv[optind+5], &value_end, 0);
+        if (*value_end != 0) {
+          std::cerr << program << ": invalid seconds for snoop -- " << argv[optind+5] << std::endl;
+          return 1;
+        } // seconds
+      }
+
       eventSnoop = true;
     } // "snoop"
 
@@ -471,7 +478,7 @@ int main(int argc, char** argv)
 
     // quit !!!
     if (saftdQuit) {
-      // exit the program in a second thread, because the main 
+      // exit the program in a second thread, because the main
       // thread will be stuck waiting for the response from saftd
       // which will never be sent after calling the quit() method
       std::thread t( [](){usleep(100000);exit(1);} );
@@ -535,7 +542,7 @@ int main(int argc, char** argv)
 
     // snoop
     if (eventSnoop) {
-      std::shared_ptr<SoftwareCondition_Proxy> condition 
+      std::shared_ptr<SoftwareCondition_Proxy> condition
         = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, snoopOffset));
       // Accept all errors
       condition->setAcceptLate(true);
@@ -544,8 +551,11 @@ int main(int argc, char** argv)
       condition->setAcceptDelayed(true);
       condition->SigAction.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
+      time_t t1;
+      time_t startTime = time(&t1);
       while(true) {
         saftlib::wait_for_signal();
+        if (time(&t1) - startTime >= snoopSeconds) break;
       }
     } // eventSnoop (without UNILAC option)
 
