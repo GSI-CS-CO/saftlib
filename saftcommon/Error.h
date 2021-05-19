@@ -18,13 +18,14 @@
 #ifndef SAFTBUS_ERROR_H_
 #define SAFTBUS_ERROR_H_
 
+#include <stdexcept>
 #include <sigc++/sigc++.h>
 #include <string>
 
 namespace saftbus
 {
 
-	class Error
+	class Error : public std::runtime_error
 	{
 	public:
 		enum Type
@@ -41,11 +42,11 @@ namespace saftbus
 		Error(Type type, const std::string &msg);
 		Error(const Error& error);
 
-		std::string what() const;
+		// std::string what() const;
 		Type type() const;
 
 	private:
-		std::string msg_;
+		// std::string msg_;
 		Type type_;
 	};
 

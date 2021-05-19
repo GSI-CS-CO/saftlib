@@ -45,10 +45,10 @@ static void print_backtrace(std::ostream& stream, const char *where)
   
   try {
     throw;
-  } catch (const std::exception &ex) {
-    stream << "std::exception: " << ex.what() << "\n";
   } catch(const saftbus::Error& ex) {
     stream << "saftbus::Error: " << ex.what() << "\n";
+  } catch (const std::exception &ex) {
+    stream << "std::exception: " << ex.what() << "\n";
   } catch(const etherbone::exception_t& ex) {
     stream << "etherbone::exception_t: " << ex << "\n";
   } catch(...) {

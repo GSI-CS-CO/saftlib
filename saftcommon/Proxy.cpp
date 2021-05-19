@@ -159,8 +159,8 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			throw std::runtime_error(msg.str());
 		}
 
-		double signal_flight_time;
-		double signal_read_time;
+		// double signal_flight_time;
+		// double signal_read_time;
 
 		// special treatment for property changes
 		//if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
@@ -185,11 +185,11 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			// get the signal flight stop time right before we call the signal handler from the Proxy object
 		    struct timespec stop;
 		    clock_gettime( CLOCK_REALTIME, &stop);
-		    signal_flight_time = (1.0e6*stop.tv_sec       + 1.0e-3*stop.tv_nsec) 
-		                       - (1.0e6*start_time.tv_sec + 1.0e-3*start_time.tv_nsec);
+		    // signal_flight_time = (1.0e6*stop.tv_sec       + 1.0e-3*stop.tv_nsec) 
+		    //                    - (1.0e6*start_time.tv_sec + 1.0e-3*start_time.tv_nsec);
 
-		    signal_read_time = (1.0e6*stop.tv_sec            + 1.0e-3*stop.tv_nsec) 
-		                     - (1.0e6*start_read_time.tv_sec + 1.0e-3*start_read_time.tv_nsec);
+		    // signal_read_time = (1.0e6*stop.tv_sec            + 1.0e-3*stop.tv_nsec) 
+		    //                  - (1.0e6*start_read_time.tv_sec + 1.0e-3*start_read_time.tv_nsec);
 
 		    // if (create_statistics && signal_read_time > 200) { // if reading takes more than 200 us => Report!
 		    // 	std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;

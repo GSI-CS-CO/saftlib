@@ -22,28 +22,28 @@ namespace saftbus
 {
 
 	Error::Error()
-		: msg_("no error")
+		: std::runtime_error("no error")
 		, type_(Error::NO_ERROR)
 	{
 	}
 
 	Error::Error(Type type, const std::string &msg)
-		: msg_(msg)
+		: std::runtime_error(msg)
 		, type_(type)
 	{
 	}
 
 	Error::Error(const Error& error)
-		: msg_(error.msg_)
+		: std::runtime_error(error)
 		, type_(error.type_)
 	{
 	}
 
 
-	std::string Error::what() const
-	{
-		return msg_;
-	}
+	// std::string Error::what() const
+	// {
+	// 	return msg_;
+	// }
 	Error::Type Error::type() const
 	{
 		return type_;

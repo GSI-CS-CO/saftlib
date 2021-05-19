@@ -333,7 +333,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 {
 	// handle a request coming from one of the sockets
 	try {
-		// logger.newMsg(0).add("Connection::dispatch(condition, ").add(client_fd).add(")\n");
 
 		if (condition & Slib::IO_HUP) {
 			handle_disconnect(client_fd);
@@ -343,7 +342,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 		MessageTypeC2S type;
 		int result = saftbus::read(client_fd, type);
 		if (result == -1) {
-			// logger.add("       client disconnected\n");
 			handle_disconnect(client_fd);
 			return false;
 		} else {
@@ -368,14 +366,10 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						fc_logger.logfilename = "";
 					}
 
-					// logger.enable();
-					// logger.newMsg(0).add("saftbus logging enabled").log();
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_DISABLE_LOGGING:
 				{
-					// logger.newMsg(0).add("saftbus logging disabled").log();
-					// logger.disable();
 					SAFTD_LOG("logdump request",-1,-1);
 					std::cerr << "# logdump on request" << std::endl;
 					fc_logger.dump(true);
@@ -425,11 +419,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					std::string object_path, interface_name;
 					saftbus::read(client_fd, object_path);
 					saftbus::read(client_fd, interface_name);
-					// logger.add("   introspect from saftbus-ctl: object_path \'");
-					// logger.add(object_path);
-					// logger.add("\' interface_name \'");
-					// logger.add(interface_name);
-					// logger.add("\'\n");
 					int saftd_object_id = _saftbus_object_ids[interface_name][object_path];
 					if (_saftbus_objects.find(saftd_object_id) == _saftbus_objects.end()) {
 						saftbus::write(client_fd, std::string("unknown object path"));
@@ -535,9 +524,6 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				break;
 				case saftbus::SENDER_ID:
 				{
-					// saftbus::Timer f_time(_function_run_times["Connection::dispatch_SENDER_ID"]);
-					// logger.add("     SENDER_ID received\n");
-					// std::string sender_id;
 					// generate a new id value (increasing numbers)
 					++_saftbus_id_counter; 
 					std::ostringstream id_out;
@@ -562,15 +548,10 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 					// SAFTD_LOGT("signal_name",signal_name.c_str(),random_signal_id);
 					PROXY_LOG(received,"received",-1,random_signal_id); 
 
-					// int dt_us = dt;
-					// ++_signal_flight_times[dt_us];
-					// logger.add(dt).add(" us\n");
 				}
 				break;
 				case saftbus::GET_SAFTBUS_INDEX: 
 				{
-					// saftbus::Timer f_time(_function_run_times["Connection::GET_SAFTBUS_INDEX"]);
-					// logger.add("     GET_SAFTBUS_INDEX received: ");
 					std::string object_path, interface_name;
 					saftbus::read(client_fd, object_path);
 					saftbus::read(client_fd, interface_name);
@@ -581,19 +562,12 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					// each Proxy constructor will send the reading end of a pipe
 					// to us as a fast path for signals
-					// saftbus::Timer f_time(_function_run_times["Connection::dispatch_SIGNAL_FD"]);
-					// logger.add("     SIGNAL_FD received: ");
 					int fd = saftbus::recvfd(client_fd);
 					std::string name, object_path, interface_name;
 					int proxy_id;
 					saftbus::read(client_fd, object_path);
 					saftbus::read(client_fd, interface_name);
 					saftbus::read(client_fd, proxy_id);
-
-					// logger.add("for object_path=").add(object_path)
-					//       .add(" interface_name=").add(interface_name)
-					//       .add(" proxy_id=").add(proxy_id)
-					//       .add(" fd=").add(fd).add("\n");
 
 					int flags = fcntl(fd, F_GETFL, 0);
 					fcntl(fd, F_SETFL, flags | O_NONBLOCK);
@@ -723,7 +697,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 								saftbus::write(client_fd, size);
 								saftbus::write_all(client_fd, data_ptr, size);
 							} catch (const saftbus::Error& error) {
-							    SAFTD_LOGT("throw",error.what().c_str(),-1,-1);
+							    SAFTD_LOGT("throw",error.what(),-1,-1);
 								saftbus::write(client_fd, saftbus::METHOD_ERROR);
 								saftbus::write(client_fd, saftbus::Error::FAILED);
 								saftbus::write(client_fd, error.what());
@@ -768,7 +742,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						}
 
 						if (method_invocation_rptr->has_error()) {
-							SAFTD_LOGT("throw",method_invocation_rptr->get_return_error().what().c_str(),saftbus_object_id,-1); 
+							SAFTD_LOGT("throw",method_invocation_rptr->get_return_error().what(),saftbus_object_id,-1); 
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().type());
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().what());
@@ -803,17 +777,9 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 		}
 	} catch(std::exception &e) {
 		SAFTD_LOGT("stdexception",e.what(),-1,-1); 
-		//std::cerr << "exception in Connection::dispatch(): " << e.what() << std::endl;
-		// logger.add("           exception in Connection::dispatch()").add(e.what()).log();
-		//if (_debug_level > 5) print_all_fds();
 		handle_disconnect(client_fd);
 		fc_logger.dump(); // dump log on exeption
-		//if (_debug_level > 5) print_all_fds();
-	} catch (saftbus::Error &e) {
-		SAFTD_LOGT("saftbuserror",e.what().c_str(),-1,-1); 
-		std::cerr << "saftbus::Error " << e.what() << std::endl;
-		fc_logger.dump(); // dump log on exeption
-	}
+	} 
 	return false;
 }
 
