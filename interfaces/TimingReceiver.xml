@@ -70,15 +70,6 @@
       <arg  direction="out" type="i" name="result"/>
     </method>
 
-    <!-- ReadCurrentTime: This method is deprecaded, use CurrentTime instead. 
-         @result:         Nanoseconds since 1970.
-         The current time in nanoseconds since 1970.
-         Due to delays in software, the returned value is probably several
-         milliseconds behind the true time.
-      -->
-    <method name="ReadCurrentTime" deprecated="yes">
-      <arg direction="out" type="t" name="result"/>
-    </method>
     <!-- CurrentTime: The current time of the timingreceiver.
          @result:     the current time of the timingreceiver
          The result type is saftlib::Time, which can be used to obtain 
@@ -147,21 +138,7 @@
          This allows software to test that configured conditions lead to the
          desired behaviour without needing the data master to send anything.
       -->
-    <method name="InjectEvent" deprecated="yes">
-      <arg direction="in" type="t" name="event"/>
-      <arg direction="in" type="t" name="param"/>
-      <arg direction="in" type="t" name="time"/>
-    </method>
-    <!-- InjectEvent: Simulate the receipt of a timing event
 
-         @event: The event identifier which is matched against Conditions
-         @param: The parameter field, whose meaning depends on the event ID.
-         @time:  The execution time for the event, added to condition offsets.
-         
-         Sometimes it is useful to simulate the receipt of a timing event. 
-         This allows software to test that configured conditions lead to the
-         desired behaviour without needing the data master to send anything.
-      -->
     <method name="InjectEvent">
       <arg direction="in" type="t" name="event"/>
       <arg direction="in" type="t" name="param"/>

@@ -91,7 +91,6 @@ void FunctionGenerator::on_fg_started(uint64_t time)
 {
   if (!getOwner().empty())
   {
-    // Started(time);
     SigStarted(saftlib::makeTimeTAI(time));
   }
 }
@@ -100,7 +99,6 @@ void FunctionGenerator::on_fg_stopped(uint64_t time, bool abort, bool hardwareUn
 {
   if (!getOwner().empty())
   {
-    // Stopped(time, abort, hardwareUnderflow, microcontrollerUnderflow);
     SigStopped(saftlib::makeTimeTAI(time), abort, hardwareUnderflow, microcontrollerUnderflow);
   }
 }

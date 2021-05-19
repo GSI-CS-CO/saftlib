@@ -56,9 +56,7 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     
     // iTimingReceiver
     std::string NewSoftwareActionSink(const std::string& name);
-    void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
     void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time);
-    uint64_t ReadCurrentTime();
     saftlib::Time CurrentTime();
     std::map< std::string, std::string > getGatewareInfo() const;
     std::string getGatewareVersion() const;

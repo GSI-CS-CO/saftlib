@@ -454,11 +454,6 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
   return path;
 }
 
-void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
-{
-  InjectEvent(event,param,makeTimeTAI(time));
-}
-
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time)
 {
   etherbone::Cycle cycle;
@@ -491,10 +486,6 @@ uint64_t TimingReceiver::ReadRawCurrentTime()
   return uint64_t(time1) << 32 | time0;
 }
 
-uint64_t TimingReceiver::ReadCurrentTime()
-{
-  return CurrentTime().getTAI();
-}
 saftlib::Time TimingReceiver::CurrentTime()
 {
   if (!locked)

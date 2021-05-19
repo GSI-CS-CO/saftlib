@@ -36,10 +36,10 @@ static uint64_t mask(int i) {
 }
 
 // format date string 
-static std::string formatDate(uint64_t time)
+static std::string formatDate(saftlib::Time time)
 {
-  uint64_t ns    = time % 1000000000;
-  time_t  s     = time / 1000000000;
+  uint64_t ns    = time.getTAI() % 1000000000;
+  time_t  s     = time.getTAI() / 1000000000;
   struct tm *tm = gmtime(&s);
   char date[40];
   static char full[80];
@@ -79,7 +79,7 @@ static void onLateCount(uint64_t count)
   std::cout << "LateCount: " << count << std::endl;
 }
 
-static void onLate(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
+static void onLate(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed)
 {
   std::cout
    << "Late #" << count << ": 0x" << std::hex << event << " " << param << " at " 
@@ -91,7 +91,7 @@ static void onEarlyCount(uint64_t count)
   std::cout << "EarlyCount: " << count << std::endl;
 }
 
-static void onEarly(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
+static void onEarly(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed)
 {
   std::cout
    << "Early #" << count << ": 0x" << std::hex << event << " " << param << " at " 
@@ -103,7 +103,7 @@ static void onConflictCount(uint64_t count)
   std::cout << "ConflictCount: " << count << std::endl;
 }
 
-static void onConflict(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
+static void onConflict(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed)
 {
   std::cout
    << "Conflict #" << count << ": 0x" << std::hex << event << " " << param << " at " 
@@ -115,14 +115,14 @@ static void onDelayedCount(uint64_t count)
   std::cout << "DelayedCount: " << count << std::endl;
 }
 
-static void onDelayed(uint64_t count, uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed)
+static void onDelayed(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed)
 {
   std::cout
    << "Delayed #" << count << ": 0x" << std::hex << event << " " << param << " at " 
    << formatDate(executed) << " (should be " << formatDate(deadline) << ")" << std::endl;
 }
 
-static void onAction(uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags, int rule)
+static void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule)
 {
   std::cout
     << "Condition #" << rule << ": 0x" << std::hex << event << " " << param << " at " 
@@ -174,13 +174,13 @@ int main(int, char**)
     sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
     sink->ActionCount.connect(sigc::ptr_fun(&onActionCount));
     sink->LateCount.connect(sigc::ptr_fun(&onLateCount));
-    sink->Late.connect(sigc::ptr_fun(&onLate));
+    sink->SigLate.connect(sigc::ptr_fun(&onLate));
     sink->EarlyCount.connect(sigc::ptr_fun(&onEarlyCount));
-    sink->Early.connect(sigc::ptr_fun(&onEarly));
+    sink->SigEarly.connect(sigc::ptr_fun(&onEarly));
     sink->ConflictCount.connect(sigc::ptr_fun(&onConflictCount));
-    sink->Conflict.connect(sigc::ptr_fun(&onConflict));
+    sink->SigConflict.connect(sigc::ptr_fun(&onConflict));
     sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
-    sink->Delayed.connect(sigc::ptr_fun(&onDelayed));
+    sink->SigDelayed.connect(sigc::ptr_fun(&onDelayed));
     
     // Create an active(true) condition, watching events 64-127 delayed by 100 nanoseconds
     // When NewCondition is run on a SoftwareActionSink, result is a SoftwareCondition.
@@ -188,7 +188,7 @@ int main(int, char**)
     std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, 64, mask(58), 0));
     
     // Call on_action whenever the condition above matches incoming events.
-    condition->Action.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
+    condition->SigAction.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
     
     // Generate an event that matches
     receiver->InjectEvent(88, 0xdeadbeef, receiver->CurrentTime() + 1000000000L);
