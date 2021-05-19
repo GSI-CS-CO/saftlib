@@ -86,7 +86,8 @@ static void help(void) {
   std::cout << "  -L                   used with command 'inject' and -U: if injected UTC second is ambiguous choose the later one" << std::endl;
   std::cout << std::endl;
   std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
-  std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
+  std::cout << "  snoop   <eventID> <mask> <offset> [<seconds>] snoop events from DM, offset is in ns, " << std::endl;
+  std::cout << "                                   snoop for <seconds> or use CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
   std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
