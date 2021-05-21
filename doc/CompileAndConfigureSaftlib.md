@@ -11,6 +11,8 @@ You need to have installed the following packages (debian) before you configure 
 * autotools-dev
 * autoconf
 * libtool (glibtoolize)
+* libsigc++
+* libboost-dev
 
 ## Compilation
 

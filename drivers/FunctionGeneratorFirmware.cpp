@@ -78,7 +78,7 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(const ConstructorType& args
       cycle.read(fgb + SHM_BASE + FG_MAGIC_NUMBER, EB_DATA32, &magic);
       cycle.read(fgb + SHM_BASE + FG_VERSION,      EB_DATA32, &version);
       cycle.close();
-      if (magic == 0xdeadbeef && version == 3) 
+      if (magic == 0xdeadbeef && (version == 3 || version == 4)) 
       {
         have_fg_firmware = true;
         break;
@@ -86,9 +86,14 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(const ConstructorType& args
     }
 
     if (!have_fg_firmware) throw saftbus::Error(saftbus::Error::FAILED, "no FunctionGeneratorFirmware found");
-    clog << kLogDebug << " WR-MIL-Gateway found" << std::endl;
 
-    Scan(); // do the initial scan
+    try {
+      Scan(); // do the initial scan. If there's a timeout here, the 
+              //  FunctionGeneratorFirmware driver should still be loaded 
+              //  that's why this is in a try catch block
+    } catch (saftbus::Error &e) {
+      clog << kLogDebug << "Scan FG-channels timeout" << std::endl;
+    }
 }
 
 FunctionGeneratorFirmware::~FunctionGeneratorFirmware()
@@ -132,6 +137,28 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
   return ScanMasterFg();
 }
 
+void FunctionGeneratorFirmware::firmware_rescan(eb_address_t swi)
+{
+  // initiate firmware rescan and wait until firmware is done
+  if (version == 3) tr->getDevice().write(fgb + SHM_BASE + FG_SCAN_DONE, EB_DATA32, 1); 
+  if (version == 4) tr->getDevice().write(fgb + SHM_BASE + FG_BUSY, EB_DATA32, 1);
+  tr->getDevice().write(swi, EB_DATA32, SWI_SCAN);
+  // wait until firmware is done scanning
+  for (int i = 0;; ++i) {
+    eb_data_t done; 
+    if (version == 3) tr->getDevice().read(fgb + SHM_BASE + FG_SCAN_DONE, EB_DATA32, &done);
+    if (version == 4) tr->getDevice().read(fgb + SHM_BASE + FG_BUSY, EB_DATA32, &done);
+    if (done==0) {
+      break;
+    }
+    if (i == 200) { // wait at least 20 seconds before timeout
+      throw saftbus::Error(saftbus::Error(saftbus::Error::FAILED,"timeout while waiting for fg-firmware scan"));
+    }
+    usleep(100000); // 100 ms 
+  }
+}
+
+
 // pass sigc signals from impl class to dbus
 // to reduce traffic only generate signals if we have an owner
 std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
@@ -163,9 +190,8 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
     clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
     eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
     
-    tr->getDevice().write(swi, EB_DATA32, SWI_SCAN);
-    sleep(1); // this is to make sure that scanning is done when we proceed.
-              //   -> should be replaced by an MSI from the LM32 in the future.
+    // firmware scan and wait until it is done
+    firmware_rescan(swi);
 
     // Probe the configuration and hardware macros
     cycle.open(device);
@@ -248,9 +274,8 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
     clog << kLogDebug << "mailbox address for swi is 0x" << std::hex << swi << std::endl;
     eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
     
-    tr->getDevice().write(swi, EB_DATA32, SWI_SCAN);
-    sleep(1); // this is to make sure that scanning is done when we proceed.
-              //   -> should be replaced by an MSI from the LM32 in the future.
+    // firmware scan and wait until it is done
+    firmware_rescan(swi);
 
     // Probe the configuration and hardware macros
     cycle.open(device);

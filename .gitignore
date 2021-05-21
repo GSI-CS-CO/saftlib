@@ -2,6 +2,7 @@
 saftd
 client
 saft-ctl
+saft-uni
 saft-fg-ctl
 saft-mfg-ctl
 saft-io-ctl
@@ -12,7 +13,9 @@ saft-clk-gen
 saft-dm
 saft-gmt-check
 saft-lcd
-saftbus/saftbus-ctl
+saft-eb-fwd
+saft-wbm-ctl
+saftcommon/saftbus-ctl
 # Automake junk dirs
 tools
 m4

@@ -52,17 +52,13 @@ namespace saftlib {
 
 WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
-   poll_period(1000), // [ms]
-   max_time_without_mil_events(10000), // 10 seconds
+   poll_period(100), // [ms]
+   max_time_without_mil_events(16000), // 16 seconds
    time_without_mil_events(max_time_without_mil_events),
    device(args.device),
-   sdb_msi_base(args.sdb_msi_base),
-   mailbox(args.mailbox),
-   irq(args.device.request_irq(args.sdb_msi_base, sigc::mem_fun(*this, &WrMilGateway::irq_handler))),
-   have_wrmilgw(false)
+   have_wrmilgw(false),
+   idle(false)
 {
-
-
   // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
   std::vector<struct sdb_device> lm32_devices;
   device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), lm32_devices);
@@ -89,53 +85,11 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
   if (!firmwareRunning()) {
     throw saftbus::Error(saftbus::Error::FAILED, "WR-MIL-Gateway not running");
   }
-
-
-  // configure MSI that triggers our irq_handler
-  eb_address_t mailbox_base = args.mailbox.sdb_component.addr_first;
-  eb_data_t mailbox_value;
-  unsigned slot = 0;
-
-  device.read(mailbox_base, EB_DATA32, &mailbox_value);
-  while((mailbox_value != 0xffffffff) && slot < 128) {
-    device.read(mailbox_base + slot * 4 * 2, EB_DATA32, &mailbox_value);
-    // std::cerr << "looking for free slot("<<slot<<"): mailbox_value = 0x" 
-    //           << std::hex << std::setw(8) << std::setfill('0') << mailbox_value 
-    //           << std::dec << std::endl;
-    slot++;
-  }
-
-  if (slot < 128)
-    mbx_slot = --slot;
-  else
-    clog << kLogErr << "WrMilGateway: no free slot in mailbox left"  << std::endl;
-
-  //save the irq address in the odd mailbox slot
-  //keep postal address to free later
-  mailbox_slot_address = mailbox_base + slot * 4 * 2 + 4;
-  device.write(mailbox_slot_address, EB_DATA32, (eb_data_t)irq);
-  // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << irq << " in mailbox slot " << std::dec << slot << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
-  // done with MSI configuration
-
-  // configure mailbox for MSI to Saftlib
-  // get mailbox slot number for swi host=>lm32
-  // eb_data_t mb_slot;
-  // mb_slot = readRegisterContent(WR_MIL_GW_REG_MSI_SLOT);
-  // std::cerr << "mb_slot = " << mb_slot << std::endl;
-
-  // tell the LM32 which slot in mailbox is ours
-  writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, slot);
-  // std::cerr << "lm32 slot configured to = " << slot << std::endl;
-
-  // reset WR-MIL Gateway in case the firmware is already running. 
-  //  This prevents resetting the CPU in the middle of a WB cycle
   // reset all other LM32 CPUs to make sure that no other firmware disturbs our actions
   // (in particular the function generator firmware)
   std::vector<struct sdb_device> reset_devices;
   device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), reset_devices);
-  // std::cerr << "WrMilGateway: reset the CPUs" << std::endl;
-  // writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
-  // std::cerr << "WrMilGateway: put firmware in reset state" << std::endl;
+  writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
 
   for (auto reset_device: reset_devices) {
     // use the first reset device
@@ -152,54 +106,94 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
     break;
   } 
 
-  //std::cerr << "WrMilGateway: check if firmware is running" << std::endl;
   firmware_running = firmwareRunning();
   firmware_state   = readRegisterContent(WR_MIL_GW_REG_STATE);
   event_source     = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
   num_late_events  = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
 
-  
   // poll some registers periodically
   pollConnection = Slib::signal_timeout().connect(sigc::mem_fun(*this, &WrMilGateway::poll), poll_period);
+
+  // find oled device
+  uint64_t OLED_SDB_VENDOR_ID = UINT64_C(0x651);
+  uint32_t OLED_SDB_DEVICE_ID = UINT32_C(0x93a6f3c4);
+
+  // OLED_RESET_OWR    0x0   //wo,  1 b, Resets the OLED display
+  // OLED_COL_OFFS_RW  0x4   //rw,  8 b, first visible pixel column. 0x23 for old, 0x30 for new controllers. default is 0x30
+  // OLED_UART_OWR     0x8   //wo,  8 b, UART input FIFO. Ascii b7..0
+  // OLED_CHAR_OWR     0xc   //wo, 20 b, Char input FIFO. Row b14..12, Col b11..8, Ascii b7..0
+  // OLED_RAW_OWR      0x10  //wo, 20 b, Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0
+  std::vector<struct sdb_device> oled_devices;
+  device.sdb_find_by_identity(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID, oled_devices);
+  if (!oled_devices.empty()) {
+    oled_reset = oled_devices.front().sdb_component.addr_first + 0x0;
+    oled_char = oled_devices.front().sdb_component.addr_first + 0xc;
+  }
+  device.write(oled_reset, EB_DATA32, (eb_data_t)1); // reset the oled
+  oledUpdate();
+
+  // find MIL piggy device
+  uint64_t MIL_SDB_VENDOR_ID = UINT64_C(0x651);
+  uint32_t MIL_SDB_DEVICE_ID = UINT32_C(0x35aa6b96);
+  std::vector<struct sdb_device> mil_devices;
+  device.sdb_find_by_identity(MIL_SDB_VENDOR_ID, MIL_SDB_DEVICE_ID, mil_devices);
+  if (!oled_devices.empty()) {
+    mil_events_present     = mil_devices.front().sdb_component.addr_first + 0x1008; 
+    mil_event_read_and_pop = mil_devices.front().sdb_component.addr_first + 0x1014;
+  }
+
+}
+
+void WrMilGateway::oledUpdate()
+{
+  std::ostringstream lines[6];
+
+  lines[0] << "WRMIL ";
+  switch(event_source) {
+    case WR_MIL_GW_EVENT_SOURCE_SIS:
+      lines[0] << "SIS18";
+    break;
+    case WR_MIL_GW_EVENT_SOURCE_ESR:
+      lines[0] << "ESR";
+    break;
+    default:
+      lines[0] << "???";
+  }
+
+  if (readRegisterContent(WR_MIL_GW_REG_SET_OP_READY)) {
+    lines[1] << "OP_READY";
+  } 
+
+  lines[2] << "#"     << std::setw(9) << num_mil_events;
+  //lines[3] << "#late" << std::setw(5)  << num_late_events;
+
+  
+  if (idle) {
+    lines[5] << "IDLE";
+  }
+
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  for (unsigned row = 0; row < 6; ++row) {
+    std::string line = lines[row].str();
+    for (unsigned col = 0; col < 11; ++col) {
+      char ch = ' ';
+      if (col < line.size()) {
+        ch = line[col];
+      }
+      cycle.write(oled_char, EB_DATA32, (eb_data_t)((row<<12) | (col<<8) | ch));
+    }
+  }
+  cycle.close();
 }
 
 WrMilGateway::~WrMilGateway()
 {
-
-  writeRegisterContent(WR_MIL_GW_REG_MSI_SLOT, 0xffffffff);
-
-  // std::cerr << "WrMilGateway::~WrMilGateway()" << std::endl;
-  // clean the mailbox
-  device.write(mailbox_slot_address, EB_DATA32, 0xffffffff);
-  device.write(mailbox_slot_address-4, EB_DATA32, 0xffffffff);
-  //eb_data_t mailbox_value;
-  // device.read(mailbox_slot_address, EB_DATA32, &mailbox_value);
-  // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << mailbox_value 
-  //           << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address << std::endl;
-  // device.read(mailbox_slot_address-4, EB_DATA32, &mailbox_value);
-  // std::cerr << "WrMilGateway: saved irq 0x" << std::hex << mailbox_value 
-  //           << "   slot adr 0x" << std::hex << std::setw(8) << std::setfill('0') << mailbox_slot_address-4 << std::endl;
-
-/*  // clear all CPU reset bits (as they were before)
-  std::vector<struct sdb_device> devices;
-  device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x3a362063), devices);
-  writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
-  for (auto reset_device: devices) {
-    const int CLR = 0xc;
-    device.write(reset_device.sdb_component.addr_first + CLR, 
-                          EB_DATA32, 
-                          0xffffffff);
-    break;
-  }*/
-
   pollConnection.disconnect();
-  device.release_irq(irq);
-
 }
 
 bool WrMilGateway::firmwareRunning() const
 {
-  // std::cerr << "WrMilGateway::firmwareRunning()" << std::endl;
   // intentionally cast away the constness, because this is a temporary modification of a register
   // and saft daemon makes sure that this method is not called by two instances simultaneously
   WrMilGateway *nonconst = const_cast<WrMilGateway*>(this);
@@ -229,7 +223,6 @@ bool WrMilGateway::getFirmwareRunning()  const
 
 uint32_t WrMilGateway::readRegisterContent(uint32_t reg_offset) const
 {
-  // std::cerr << "WrMilGateway::readRegisterContent()" << std::endl;
   eb_data_t value;
   device.read(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, &value);
   return value;
@@ -237,13 +230,11 @@ uint32_t WrMilGateway::readRegisterContent(uint32_t reg_offset) const
 
 void WrMilGateway::writeRegisterContent(uint32_t reg_offset, uint32_t value)
 {
-  // std::cerr << "WrMilGateway::writeRegisterContent()" << std::endl;
   device.write(base_addr + WR_MIL_GW_SHARED_OFFSET + reg_offset, EB_DATA32, (eb_data_t)value);
 }
 
 std::shared_ptr<WrMilGateway> WrMilGateway::create(const ConstructorType& args)
 {
-  // std::cerr << "WrMilGateway::create()" << std::endl;
   return RegisteredObject<WrMilGateway>::create(args.objectPath, args);
 }
 
@@ -271,8 +262,7 @@ std::vector< uint32_t > WrMilGateway::getMilHistogram() const
 
 bool WrMilGateway::getInUse() const
 {
-  // std::cerr << "WrMilGateway::getInUse()" << std::endl;
-  return time_without_mil_events <= max_time_without_mil_events;
+  return !idle;
 }
 
 
@@ -286,31 +276,45 @@ bool WrMilGateway::poll()
   getFirmwareRunning();
 
   // these three checks are done on MSI base now (no polling needed)
-  // getFirmwareState();
-  // getEventSource();
-  // getNumLateMilEvents();
+  firmware_state   = readRegisterContent(WR_MIL_GW_REG_STATE);
+  event_source     = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
+  num_late_events  = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
 
   // check if the gateway is used (translates events)
   uint64_t new_num_mil_events = getNumMilEvents();
   if (num_mil_events != new_num_mil_events) {
-    if (!getInUse()) {
+    if (idle) {
       // in this case we change back to being "in use"
+      idle = false;
       SigInUse(true);
     }
     time_without_mil_events = 0;
     num_mil_events = new_num_mil_events;
   } else {
-    bool inUse = getInUse();
     time_without_mil_events += poll_period;
-    bool new_inUse = getInUse();
-    if (inUse && !new_inUse) {
-      // Not seen a MIL event for too long... 
-      //  ... that counts as not being used because
-      //  we expect event 255 (EVT_COMMAND) 
-      //  every second in normal operation.
-      // This signal is only produced only once
-      //  if the status changes.
+  }
+
+  if (time_without_mil_events >= max_time_without_mil_events/2) {
+    RequestFillEvent();
+    time_without_mil_events = 0;
+    if (!idle) {
       SigInUse(false);
+      idle = true;
+    }
+  } 
+
+  oledUpdate();
+
+  // look for MIl events caputred by the MIL piggy;
+  for (;;) {
+    eb_data_t value;
+    device.read(mil_events_present, EB_DATA32, &value);
+    if (value & 0x8) {
+      // we have mil events
+      device.read(mil_event_read_and_pop, EB_DATA32, &value);
+      SigReceivedMilEvent(value); // send signal to Proxies
+    } else {
+      break;
     }
   }
 
@@ -319,21 +323,18 @@ bool WrMilGateway::poll()
 
 void WrMilGateway::StartSIS18()
 {
-  // std::cerr << "WrMilGateway::StartSIS18()" << std::endl;
   // configure WR-MIL Gateway firmware to start operation as SIS18 Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_SIS);
   clog << kLogInfo << "WR-MIL-Gateway: configured as SIS18 Pulszentrale" << std::endl;
 }
 void WrMilGateway::StartESR()
 {
-  // std::cerr << "WrMilGateway::StartESR()" << std::endl;
   // configure WR-MIL Gateway firmware to start operation as ESR Pulszentrale
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_CONFIG_ESR);
   clog << kLogInfo << "WR-MIL-Gateway: configured as ESR Pulszentrale" << std::endl;
 }
 void WrMilGateway::ClearStatistics()
 {
-  // std::cerr << "WrMilGateway::ClearStatistics()" << std::endl;
   for (int i = 0; i < (WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_NUM_EVENTS_HI)/4+256; ++i) {
     writeRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI + i*4, 0x0);
   }
@@ -341,13 +342,11 @@ void WrMilGateway::ClearStatistics()
 
 void WrMilGateway::ResetGateway()
 {
-  // std::cerr << "WrMilGateway::ResetGateway()" << std::endl;
   ClearStatistics();
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_RESET);
 }
 void WrMilGateway::KillGateway()
 {
-  // std::cerr << "WrMilGateway::KillGateway()" << std::endl;
   ClearStatistics();
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_KILL);
 }
@@ -356,17 +355,18 @@ void WrMilGateway::UpdateOLED()
   writeRegisterContent(WR_MIL_GW_REG_COMMAND, WR_MIL_GW_CMD_UPDATE_OLED);
 }
 
+void WrMilGateway::RequestFillEvent()
+{
+  writeRegisterContent(WR_MIL_GW_REG_REQUEST_FILL_EVT, 1);
+}
+
 
 uint32_t WrMilGateway::getWrMilMagic() const
 {
-  // std::cerr << "WrMilGateway::getWrMilMagic()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_MAGIC_NUMBER);
 }
 uint32_t WrMilGateway::getFirmwareState() const
 {
-  // std::cerr << "WrMilGateway::getFirmwareState()" << std::endl;
-
   auto new_firmware_state = readRegisterContent(WR_MIL_GW_REG_STATE);
   if (firmware_state != new_firmware_state) {
     firmware_state = new_firmware_state;
@@ -379,8 +379,6 @@ uint32_t WrMilGateway::getFirmwareState() const
 }
 uint32_t WrMilGateway::getEventSource() const
 {
-  // std::cerr << "WrMilGateway::getEventSource()" << std::endl;
-
   auto new_event_source = readRegisterContent(WR_MIL_GW_REG_EVENT_SOURCE);
   if (event_source != new_event_source) {
     event_source = new_event_source;
@@ -390,31 +388,22 @@ uint32_t WrMilGateway::getEventSource() const
 }
 unsigned char WrMilGateway::getUtcTrigger() const
 {
-  // std::cerr << "WrMilGateway::getUtcTrigger()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_UTC_TRIGGER);
 }
 uint32_t WrMilGateway::getEventLatency() const
 {
-  // std::cerr << "WrMilGateway::getEventLatency()" << std::endl;
   return readRegisterContent(WR_MIL_GW_REG_LATENCY);
 }
 uint32_t WrMilGateway::getUtcUtcDelay() const
 {
-  // std::cerr << "WrMilGateway::getUtcUtcDelay()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_UTC_DELAY);
 }
 uint32_t WrMilGateway::getTriggerUtcDelay() const
 {
-  // std::cerr << "WrMilGateway::getTriggerUtcDelay()" << std::endl;
-
   return readRegisterContent(WR_MIL_GW_REG_TRIG_UTC_DELAY);
 }
 uint64_t WrMilGateway::getUtcOffset() const
 {
-    // std::cerr << "WrMilGateway::getUtcOffset()" << std::endl;
-
   uint64_t result = readRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_HI);
   result <<= 32;
   result |= readRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_LO);
@@ -422,8 +411,6 @@ uint64_t WrMilGateway::getUtcOffset() const
 }
 uint64_t WrMilGateway::getNumMilEvents() const
 {
-    // std::cerr << "WrMilGateway::getNumMilEvents()" << std::endl;
-
   uint64_t result = readRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_HI);
   result <<= 32;
   result |= readRegisterContent(WR_MIL_GW_REG_NUM_EVENTS_LO);
@@ -431,8 +418,6 @@ uint64_t WrMilGateway::getNumMilEvents() const
 }
 uint32_t WrMilGateway::getNumLateMilEvents() const
 {
-    // std::cerr << "WrMilGateway::getNumMilEvents()" << std::endl;
-
   uint32_t new_num_late_events = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
   if (num_late_events != new_num_late_events) {
     // send the current number and the ones since last signal
@@ -447,44 +432,32 @@ uint32_t WrMilGateway::getNumLateMilEvents() const
 }
 std::vector< uint32_t > WrMilGateway::getLateHistogram() const
 {
-    // std::cerr << "WrMilGateway::getLateHistogram()" << std::endl;
-
   std::vector<uint32_t> lateHistogram((WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_LATE_HISTOGRAM) / 4, 0);
   for (unsigned i = 0; i < lateHistogram.size(); ++i) {
     lateHistogram[i] = readRegisterContent(WR_MIL_GW_REG_LATE_HISTOGRAM + 4*i);
   }
   return lateHistogram;
-
 }
 
 
 void WrMilGateway::setUtcTrigger(unsigned char val)
 {
-    // std::cerr << "WrMilGateway::setUtcTrigger()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_UTC_TRIGGER, val);
 }
 void WrMilGateway::setEventLatency(uint32_t val)
 {
-    // std::cerr << "WrMilGateway::setEventLatency()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_LATENCY, val);
 }
 void WrMilGateway::setUtcUtcDelay(uint32_t val)
 {
-    // std::cerr << "WrMilGateway::setUtcUtcDelay()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_UTC_DELAY, val);
 }
 void WrMilGateway::setTriggerUtcDelay(uint32_t val)
 {
-    // std::cerr << "WrMilGateway::setTriggerUtcDelay()" << std::endl;
   writeRegisterContent(WR_MIL_GW_REG_TRIG_UTC_DELAY, val);
 }
 void WrMilGateway::setUtcOffset(uint64_t val)
 {
-    // std::cerr << "WrMilGateway::setUtcOffset()" << std::endl;
-
   writeRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_LO, val & 0x00000000ffffffff);
   val >>= 32;
   writeRegisterContent(WR_MIL_GW_REG_UTC_OFFSET_HI, val & 0x00000000ffffffff);
@@ -504,47 +477,6 @@ void WrMilGateway::ownerQuit()
 {
       // std::cerr << "WrMilGateway::ownerQuit()" << std::endl;
 }
-
-
-void WrMilGateway::irq_handler(eb_data_t msg) const 
-{
-   // std::cerr << "WrMilGateway::irq_handler(" << msg << ") called" << std::endl;
-
-  switch(msg) {
-    case WR_MIL_GW_MSI_LATE_EVENT:
-      clog << kLogErr << "WR-MIL-Gateway: late MIL event " << std::endl;
-
-        // std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_LATE_EVENT)" << std::endl;
-      getNumLateMilEvents(); 
-    break;
-    case WR_MIL_GW_MSI_STATE_CHANGED:
-      //clog << kLogInfo << "WR-MIL-Gateway: firmware state changed" << std::endl;
-        // std::cerr << "WrMilGateway::irq_handler(WR_MIL_GW_MSI_STATE_CHANGED)" << std::endl;
-      switch(getFirmwareState()) {
-        case WR_MIL_GW_STATE_INIT:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to INIT" << std::endl;
-        break;
-        case WR_MIL_GW_STATE_UNCONFIGURED:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to UNCONFIGURED" << std::endl;
-        break;
-        case WR_MIL_GW_STATE_CONFIGURED:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to CONFIGURED" << std::endl;
-        break;
-        case WR_MIL_GW_STATE_PAUSED:
-          clog << kLogInfo << "WR-MIL-Gateway: firmware state changed to PAUSED" << std::endl;
-        break;
-        default:
-          clog << kLogErr << "WR-MIL-Gateway: firmware state changed to UNKNOWN" << std::endl;
-        break;
-      }
-    break;
-    default:;
-      // std::cerr << "WrMilGateway::irq_handler() unknown Interrupt: " << std::dec << msg << std::endl; 
-  }
-  // std::cerr << "WrMilGateway::irq_handler() done" << std::endl;
-}
-
-
 
 
 }

@@ -32,7 +32,7 @@ struct OpenDevice {
   std::string etherbonePath;
   std::shared_ptr<BaseObject> ref;
   
-  OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last);
+  OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll = false);
 };
 
 }

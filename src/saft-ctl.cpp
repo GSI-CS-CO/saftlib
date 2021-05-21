@@ -46,26 +46,11 @@
 using namespace std;
 
 static const char* program;
-static uint32_t pmode = PMODE_NONE;    // how data are printed (hex, dec, verbosity)
+static uint32_t pmode = PMODE_NONE;   // how data are printed (hex, dec, verbosity)
 bool absoluteTime   = false;
-bool UTC            = false; // show UTC instead of TAI
+bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
 
-// GID
-#define QR       0x1c0                // 'PZ1, Quelle Rechts'
-#define QL       0x1c1                // 'PZ2, PQuelle Links'
-#define QN       0x1c2                // 'PZ3, Quelle Hochladungsinjektor UN (HLI)'
-#define HLI      0x1c3                // 'PZ4, Hochladungsinjektor UN (HLI)'
-#define HSI      0x1c4                // 'PZ5, Hochstrominjektor UH (HSI)'
-#define AT       0x1c5                // 'PZ6, Alvarez'
-#define TK       0x1c6                // 'PZ7, Transferkanal'
-
-// EVTNO
-#define NXTACC   0x10                 // EVT_PREP_NEXT_ACC
-#define NXTRF    0x12                 // EVT_RF_PREP_NXT_ACC
-
-#define NPZ      7                    // # of UNILAC 'Pulszentralen'
-#define FID      0x1
 
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
@@ -77,85 +62,6 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
   std::cout << std::endl;
 } // on_action
 
-// this will be called, in case we are snooping for events
-static void on_action_uni(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
-{
-  uint32_t gid;
-  uint32_t evtNo;
-  uint32_t vacc;
-  string   sVacc;
-  string   rf;
-  
-  static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
-  static saftlib::Time prevDeadline = deadline;
-  static uint32_t nCycle            = 0x0;
-
-  gid   = ((id & 0x0fff000000000000) >> 48);
-  evtNo = ((id & 0x0000fff000000000) >> 36);
-  vacc  = ((id & 0x00000000fff00000) >> 20);
-  
-  if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
-    switch (nCycle) {
-    case 0 :        // print header
-      std::cout << "   # cycle:   QR   QL   QN  HLI  HSI   AT   TK" << std::endl;
-      break;
-    case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
-      break;
-    default :       // default
-      std::cout << std::setw(10) << nCycle << ":"
-                << std::setw( 5) << pz1
-                << std::setw( 5) << pz2
-                << std::setw( 5) << pz3
-                << std::setw( 5) << pz4
-                << std::setw( 5) << pz5
-                << std::setw( 5) << pz6 
-                << std::setw( 5) << pz7 
-                << std::endl;
-      break;
-    } // switch nCycle
-    pz1 = pz2 = pz3 = pz4 = pz5 = pz6 = pz7 = "";
-    prevDeadline = deadline;
-    nCycle++;
-  } // if deadline
-
-  if (evtNo == NXTRF) rf = "RF";
-  else                rf = "";
-  sVacc = rf + std::to_string(vacc);
-
-  switch (gid) {
-  case QR : 
-    pz1 = sVacc;
-    break;
-  case QL :
-    pz2 = sVacc;
-    break;
-  case QN :
-    pz3 = sVacc;
-    break;
-  case HLI :
-    pz4 = sVacc;
-    break;
-  case HSI :
-    pz5 = sVacc;
-    break;
-  case AT :
-    pz6 = sVacc;
-    break;
-  case TK :
-    pz7 = sVacc;
-    break;
-  default :
-    break;
-  }
-
-/*  
-
-  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
-  std::cout << tr_formatActionEvent(id, pmode);
-  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
-  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
-  std::cout << std::endl; */
-} // on_action_uni
 
 using namespace saftlib;
 using namespace std;
@@ -181,9 +87,6 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "  inject  <eventID> <param> <time>  inject event locally, time [ns] is relative (see option -p for precise timing)" << std::endl;
   std::cout << "  snoop   <eventID> <mask> <offset> snoop events from DM, offset is in ns, CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
-  std::cout << "  usnoop  <type>       (experimental feature) snoop events from DM @ UNILAC,  <type> may be one of the following" << std::endl;
-  std::cout << "            '0'        event display, but limited to GIDs of UNILAC and special event numbers" << std::endl;
-  std::cout << "            '1'        shows virt acc executed at the seven PZs, similar to 'rsupcycle'" << std::endl;
   std::cout << std::endl;
   std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
   std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
@@ -338,8 +241,6 @@ int main(int argc, char** argv)
   // variables and flags for command line parsing
   int  opt;
   bool eventSnoop     = false;
-  bool uniSnoop       = false;
-  int  uniSnoopType   = 0;
   bool statusDisp     = false;
   bool infoDispSW     = false;
   bool infoDispHW     = false;
@@ -361,7 +262,7 @@ int main(int argc, char** argv)
 
   // variables inject event
   uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
-  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the tming message
+  uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the timing message
   uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
   saftlib::Time eventTime;     // time for next event in PTP time
   saftlib::Time ppsNext;     // time for next PPS 
@@ -379,57 +280,57 @@ int main(int argc, char** argv)
   program = argv[0];
   while ((opt = getopt(argc, argv, "dxsvapijkhftUL")) != -1) {
     switch (opt) {
-    case 'f' :
-      useFirstDev = true;
-      break;
-    case 's':
-      statusDisp = true;
-      break;
-    case 't':
-      currentTemp = true;
-      break;
-    case 'i':
-      infoDispSW = true;
-      break;
-    case 'a':
-      absoluteTime = true;
-      break;
-    case 'j':
-      infoDispHW = true;
-      break;
-    case 'k':
-      infoDispGW = true;
-      break;
-    case 'p':
-      ppsAlign = true;
-      break;
-    case 'U':
-      UTC = true;
-      pmode = pmode + PMODE_UTC;
-      break;
-    case 'L':
-      if (UTC) {
-        UTCleap = true;
-      } else {
-        std::cerr << "-L only works with -U" << std::endl;
-        return -1;
-      }
-      break;
-    case 'd':
-      pmode = pmode + PMODE_DEC;
-      break;
-    case 'x':
-      pmode = pmode + PMODE_HEX;
-      break;
-    case 'v':
-      pmode = pmode + PMODE_VERBOSE;
-      break;
-    case 'h':
-      help();
-      return 0;
-    default:
-      std::cerr << program << ": bad getopt result" << std::endl;
-      return 1;
+      case 'f' :
+        useFirstDev = true;
+        break;
+      case 's':
+        statusDisp = true;
+        break;
+      case 't':
+        currentTemp = true;
+        break;
+      case 'i':
+        infoDispSW = true;
+        break;
+      case 'a':
+        absoluteTime = true;
+        break;
+      case 'j':
+        infoDispHW = true;
+        break;
+      case 'k':
+        infoDispGW = true;
+        break;
+      case 'p':
+        ppsAlign = true;
+        break;
+      case 'U':
+        UTC = true;
+        pmode = pmode + PMODE_UTC;
+        break;
+      case 'L':
+        if (UTC) {
+          UTCleap = true;
+        } else {
+          std::cerr << "-L only works with -U" << std::endl;
+          return -1;
+        } // else 'L'
+        break;
+      case 'd':
+        pmode = pmode + PMODE_DEC;
+        break;
+      case 'x':
+        pmode = pmode + PMODE_HEX;
+        break;
+      case 'v':
+        pmode = pmode + PMODE_VERBOSE;
+        break;
+      case 'h':
+        help();
+        return 0;
+      default:
+        std::cerr << program << ": bad getopt result" << std::endl;
+        return 1;
     } // switch opt
   }   // while opt
 
@@ -498,25 +399,6 @@ int main(int argc, char** argv)
       
       eventSnoop = true;
     } // "snoop"
-
-    else if (strcasecmp(command, "usnoop") == 0) {
-      if (optind+3  != argc) {
-        std::cerr << program << ": expecting exactly one argument: usnoop <type>" << std::endl;
-        return 1;
-      }
-      uniSnoopType = strtoull(argv[optind+2], &value_end, 0);
-      //std::cout << std::hex << snoopID << std::endl;
-      if (*value_end != 0) {
-        std::cerr << program << ": invalid type -- " << argv[optind+2] << std::endl;
-        return 1;
-      } // uniSnoopType
-      if ((uniSnoopType < 0) || (uniSnoopType > 1)) {
-        std::cerr << program << ": invalid value -- " << uniSnoopType << std::endl;
-        return 1;
-      } // range of uniSnoopType
-
-      uniSnoop = true;
-    } // "usnoop"
 
     else if (strcasecmp(command, "attach") == 0) {
       if (optind+3  != argc) {
@@ -592,7 +474,7 @@ int main(int argc, char** argv)
       // exit the program in a second thread, because the main 
       // thread will be stuck waiting for the response from saftd
       // which will never be sent after calling the quit() method
-      std::thread t( [](){sleep(1);exit(1);} );
+      std::thread t( [](){usleep(100000);exit(1);} );
       saftd->Quit();
       t.join();
     }
@@ -666,87 +548,6 @@ int main(int argc, char** argv)
         saftlib::wait_for_signal();
       }
     } // eventSnoop (without UNILAC option)
-
-    // snoop for UNILAC
-    if (uniSnoop) {
-      snoopMask = 0xfffffff000000000;
-
-      std::shared_ptr<SoftwareCondition_Proxy> condition[NPZ * 2];
-      int nPz = 0;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTACC << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTACC << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTACC << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-      snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48) | ((uint64_t)NXTRF << 36);
-      condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      nPz++;
-
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
-
-      for (int i=0; i<nPz; i++) {
-        condition[i]->setAcceptLate(true);
-        condition[i]->setAcceptEarly(true);
-        condition[i]->setAcceptConflict(true);
-        condition[i]->setAcceptDelayed(true);
-        switch (uniSnoopType) {
-        case 1:
-          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni));
-          break;
-        default : 
-          condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
-          break;
-        }
-        condition[i]->setActive(true);    
-      } // for i
-
-      while(true) {
-        saftlib::wait_for_signal();
-      }
-    } // eventSnoop (with UNILAC option)
 
   } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;

@@ -32,6 +32,7 @@
 #include "interfaces/SCUbusActionSink.h"
 #include "interfaces/SCUbusCondition.h"
 #include "interfaces/FunctionGenerator.h" 
+#include "interfaces/MasterFunctionGenerator.h" 
 #include "interfaces/FunctionGeneratorFirmware.h" 
 #include "CommonFunctions.h"
 
@@ -125,6 +126,41 @@ static void slow_warning(int sig)
   std::cerr << "warning: no input data received via stdin within 2s, run with '-h' for help. continuing to wait ..." << std::endl;
 }
 
+// throws if any channel is already owned
+static bool nothing_owned(std::shared_ptr<TimingReceiver_Proxy> receiver)  
+{
+  try {
+    // Get a list of function generators on the receiver
+    map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];
+    if (!fgs.empty())
+      for (auto itr = fgs.begin(); itr != fgs.end(); ++itr) {
+        std::cerr << "trying to own fg " << itr->first << " " << itr->second << std::endl;
+        auto fg = FunctionGenerator_Proxy::create(itr->second);
+        fg->Own();
+        fg->Disown();
+      }
+  } catch (saftbus::Error &e) {
+    std::cerr << "fg channel: " << e.what() << std::endl;
+    return false;
+  }
+  try {
+    // Get a list of master function generators on the receiver
+    map<std::string, std::string> mfgs = receiver->getInterfaces()["MasterFunctionGenerator"];
+    if (!mfgs.empty())
+      for (auto itr = mfgs.begin(); itr != mfgs.end(); ++itr) {
+        auto mfg = MasterFunctionGenerator_Proxy::create(itr->second);
+        std::cerr << "trying to own mfg " << itr->first << " " << itr->second << std::endl;
+        mfg->Own();
+        mfg->Disown();
+      }
+  } catch (saftbus::Error &e) {
+    std::cerr << "masterfg: " << e.what() << std::endl;
+    return false;
+  }
+  return true;
+}
+
+
 int main(int argc, char** argv)
 {
   try {
@@ -139,7 +175,7 @@ int main(int argc, char** argv)
     bool repeat = false;
     bool generate = false;
     bool scan = false; 
-    char i_or_m;
+    char i_or_m = 0;
     
     // Process command-line
     int opt, error = 0;
@@ -253,18 +289,21 @@ int main(int argc, char** argv)
         std::cerr << "No FunctionGenerator firmware found" << std::endl;
         return 1;
       }
+
       std::shared_ptr<FunctionGeneratorFirmware_Proxy> fg_firmware = FunctionGeneratorFirmware_Proxy::create(fg_fw.begin()->second);
       std::cout << "Scanning for fg-channels ... " << std::flush;
-      try {
-        std::map<std::string, std::string> scanning_result;
-        if (i_or_m == 'i') scanning_result = fg_firmware->ScanFgChannels();
-        if (i_or_m == 'm') scanning_result = fg_firmware->ScanMasterFg();
-        std::cout << "done, found " << std::endl;
-        for (auto &pair: scanning_result) {
-          std::cout << "  " << pair.first << " " << pair.second << std::endl;
+      if (nothing_owned(receiver)) {
+        try {
+          std::map<std::string, std::string> scanning_result;
+          if (i_or_m == 'i') scanning_result = fg_firmware->ScanFgChannels();
+          if (i_or_m == 'm') scanning_result = fg_firmware->ScanMasterFg();
+          std::cout << "done, found " << std::endl;
+          for (auto &pair: scanning_result) {
+            std::cout << "  " << pair.first << " " << pair.second << std::endl;
+          }
+        } catch (saftbus::Error &e) {
+          std::cerr << "could not scan: " << e.what() << std::endl;
         }
-      } catch (saftbus::Error &e) {
-        std::cerr << "could not scan: " << e.what() << std::endl;
       }
       return 0;
     }

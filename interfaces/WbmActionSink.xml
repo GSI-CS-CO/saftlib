@@ -1,0 +1,85 @@
+<node xmlns:xi="http://www.w3.org/2001/XInclude" name="WbmActionSink">
+  <annotation name="de.gsi.saftlib.name" value="de.gsi.saftlib"/>
+  
+  <!-- Include base interfaces -->
+  <xi:include href="Owned.xml"/>
+  <xi:include href="ActionSink.xml"/>
+  
+  <!-- de.gsi.saftlib.WbmActionSink:
+      @short_description: An output through which Wbm actions flow.
+      
+      This inteface allows the generation of SCU timing events.
+      A WbmActionSink is also an ActionSink and Owned.
+      
+      If two SoftwareConditions are created on the same SoftwareActionSink
+      which require simultaneous delivery of two Actions, then they will be
+      delivered in arbitrary order, both having the 'conflict' flag set.
+   -->
+  <interface name="de.gsi.saftlib.WbmActionSink">
+    <!-- NewCondition: Create a condition to match incoming events
+         @active: Should the condition be immediately active
+         @id:     Event ID to match incoming event IDs against
+         @mask:   Set of bits for which the event ID and id must agree
+         @offset: Delay in nanoseconds between event and action
+         @tag:    The  32-bit value to send on the Wbm
+         @result: Object path to the created WbmCondition
+
+         This method creates a new condition that matches events whose
+         identifier lies in the range [id &amp; mask, id | ~mask].  The offset
+         acts as a delay which is added to the event's execution timestamp
+         to determine the timestamp when the matching condition fires its
+         action.  The returned object path is a SCUBUSCondition object.
+      -->
+    <method name="NewCondition">
+      <arg direction="in" type="b" name="active"/>
+      <arg direction="in" type="t" name="id"/>
+      <arg direction="in" type="t" name="mask"/>
+      <arg direction="in" type="x" name="offset"/>
+      <arg direction="in" type="u" name="tag"/>
+      <arg direction="out" type="s" name="result"/>
+    </method>
+
+    <!-- Status: Shows if the device is rdy/busy -->
+    <property name="Status"       type="y" access="read"/>
+    <!-- MaxMacros: Shows maximum number of macros -->
+    <property name="MaxMacros" type="u" access="read"/> 
+    <!-- MaxSpace: Shows maximum memory space -->
+    <property name="MaxSpace" type="u" access="read"/> 
+    <!-- Enable: Macro execution on/off -->
+    <property name="Enable" type="b" access="readwrite"/> 
+
+    <!-- ExecuteMacro: Executes macro at idx 
+        @idx: index of macro that should be executed
+    -->
+    <method name="ExecuteMacro"> 
+      <arg direction="in" type="u" name="idx"/>
+    </method>
+
+    <!-- LastExecutedIdx: Shows idx of last executed macro -->
+    <property name="LastExecutedIdx" type="u" access="read"/>
+
+    <!-- RecordMacro: Records a macro at idx 
+         @idx: index at which the macro is recorded
+         @commans: an array of commands where each command is an array of three uint_32 values 
+    -->
+    <method name="RecordMacro"> 
+      <arg direction="in" type="u" name="idx"/>
+      <arg direction="in" type="aau" name="commands"/>
+    </method>
+
+    <!-- LastRecordedIdx: Shows idx of last recorded macro -->
+    <property name="LastRecordedIdx" type="u" access="read"/>
+
+    <!-- ClearMacro: Clear macro at idx 
+        @idx: index of macro that should be cleared
+    -->
+    <method name="ClearMacro"> 
+      <arg direction="in" type="u" name="idx"/>
+    </method>
+
+    <!-- ClearAllMacros: Clears all macros -->
+    <method name="ClearAllMacros"> 
+    </method>
+    
+  </interface>
+</node>

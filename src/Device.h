@@ -24,14 +24,14 @@
 #include <memory>
 #include <etherbone.h>
 #include <sigc++/sigc++.h>
-#include "saftbus/MainLoop.h"
+#include "MainLoop.h"
 
 namespace saftlib {
 
 // Saftlib devices just add IRQs
 class Device : public etherbone::Device {
   public:
-    Device(etherbone::Device d, eb_address_t first, eb_address_t last);
+    Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll = false);
     
     eb_address_t request_irq(const etherbone::sdb_msi_device& sdb, const sigc::slot<void,eb_data_t>& slot);
     void release_irq(eb_address_t);
@@ -45,10 +45,14 @@ class Device : public etherbone::Device {
     
     typedef std::map<eb_address_t, sigc::slot<void, eb_data_t> > irqMap;
     static irqMap irqs;
-    
+
     struct MSI { eb_address_t address, data; };
     typedef std::deque<MSI> msiQueue;
     static msiQueue msis;
+    
+    bool activate_msi_polling;
+    bool poll_msi();
+    eb_address_t msi_first;
 
   friend class IRQ_Handler;
   friend class MSI_Source;

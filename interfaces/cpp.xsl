@@ -41,6 +41,7 @@
     <xsl:text>_Proxy::create(&#10;</xsl:text>
     <xsl:text>  const std::string&amp; object_path,&#10;</xsl:text>
     <xsl:text>   saftlib::SignalGroup &amp;signalGroup)&#10;{&#10;</xsl:text>
+    <xsl:text>  std::lock_guard&lt;std::mutex&gt; lock(saftbus::proxy_mutex);&#10;</xsl:text>
     <xsl:text>  saftlib::init();&#10;</xsl:text>
     <xsl:text>  return std::shared_ptr&lt;</xsl:text>
     <xsl:value-of select="$name"/>
@@ -110,6 +111,7 @@
     <xsl:text>void </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::register_self(const std::shared_ptr&lt;saftbus::Connection&gt;&amp; con, const std::string&amp; path)&#10;{&#10;</xsl:text>
+    <xsl:text>  std::lock_guard&lt;std::mutex&gt; lock(saftbus::proxy_mutex);&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -121,6 +123,7 @@
     <xsl:text>void </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::unregister_self()&#10;{&#10;</xsl:text>
+    <xsl:text>  std::lock_guard&lt;std::mutex&gt; lock(saftbus::proxy_mutex);&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  </xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -132,6 +135,7 @@
     <xsl:text>bool </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::isActive() const&#10;{&#10;</xsl:text>
+    <xsl:text>  std::lock_guard&lt;std::mutex&gt; lock(saftbus::proxy_mutex);&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  if (</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -144,6 +148,7 @@
     <xsl:text>const std::string&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getSender() const&#10;{&#10;</xsl:text>
+    <xsl:text>  std::lock_guard&lt;std::mutex&gt; lock(saftbus::proxy_mutex);&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  if (</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -158,6 +163,7 @@
     <xsl:text>const std::string&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getObjectPath() const&#10;{&#10;</xsl:text>
+    <xsl:text>  std::lock_guard&lt;std::mutex&gt; lock(saftbus::proxy_mutex);&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  if (</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -172,6 +178,7 @@
     <xsl:text>const std::shared_ptr&lt;saftbus::Connection&gt;&amp; </xsl:text>
     <xsl:value-of select="$name"/>
     <xsl:text>_Service::getConnection() const&#10;{&#10;</xsl:text>
+    <xsl:text>  std::lock_guard&lt;std::mutex&gt; lock(saftbus::proxy_mutex);&#10;</xsl:text>
     <xsl:for-each select="interface">
       <xsl:text>  if (</xsl:text>
       <xsl:apply-templates mode="iface-name" select="."/>
@@ -695,7 +702,7 @@
         <xsl:value-of select="@name"/>
         <xsl:text>))),&#10;</xsl:text>
       </xsl:for-each>
-      <xsl:text>  interface_vtable(&#10;</xsl:text>
+      <xsl:text>  interface_vtable(xml,&#10;</xsl:text>
       <xsl:text>    sigc::mem_fun(this, &amp;i</xsl:text>
       <xsl:value-of select="$iface"/>
       <xsl:text>_Service::on_method_call),&#10;</xsl:text>

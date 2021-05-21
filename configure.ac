@@ -1,7 +1,7 @@
 dnl Set these variables before each release:
 m4_define(MAJOR,2)    dnl Increment if removed/changed properties/signals/methods since previous release
-m4_define(MINOR,1)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
-m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
+m4_define(MINOR,2)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
+m4_define(REVISION,5) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
 m4_define(SONAME,4)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 AC_PREREQ(2.63)
@@ -49,6 +49,11 @@ AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OS"], [The operating system of t
 AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the build system])
 AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
 
+AC_CHECK_HEADER([boost/interprocess/managed_shared_memory.hpp], [], [AC_MSG_ERROR([boost/interprocess/managed_shared_memory.hpp required])])
+AC_CHECK_HEADER([boost/interprocess/allocators/allocator.hpp], [], [AC_MSG_ERROR([boost/interprocess/allocators/allocator.hpp required])])
+AC_CHECK_HEADER([boost/interprocess/containers/vector.hpp], [], [AC_MSG_ERROR([boost/interprocess/containers/vector.hpp required])])
+AC_CHECK_HEADER([boost/interprocess/containers/map.hpp], [], [AC_MSG_ERROR([boost/interprocess/containers/map.hpp required])])
+
 PKG_PROG_PKG_CONFIG([0.23])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0])
 PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
@@ -64,9 +69,9 @@ AC_PATH_PROGS([GDBUS_CODEGEN], [gdbus-codegen])
 AC_PATH_PROGS([DOCBOOK2MAN], [docbook2man])
 AC_PATH_PROGS([GIT], [git])
 
-AC_ARG_ENABLE([pdf-doc], 
-              [AS_HELP_STRING([--enable-pdf-doc], [generate pdf documentation of interfaces])], 
-              [ENABLE_PDF_DOC=yes], 
+AC_ARG_ENABLE([pdf-doc],
+              [AS_HELP_STRING([--enable-pdf-doc], [generate pdf documentation of interfaces])],
+              [ENABLE_PDF_DOC=yes],
               []
              )
 
@@ -83,5 +88,5 @@ AC_SUBST([SAFTLIB_REVISION], REVISION)
 AC_SUBST([SAFTLIB_API], [$((SONAME+MINOR))]) dnl API incremented on every change
 AC_SUBST([SAFTLIB_SONAME], SONAME)
 
-AC_CONFIG_FILES([Makefile saftcommon/Makefile saftbus/Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
+AC_CONFIG_FILES([Makefile saftcommon/Makefile interfaces/Makefile interfaces/h.xsl saftlib.pc])
 AC_OUTPUT

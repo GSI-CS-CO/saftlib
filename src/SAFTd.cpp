@@ -139,14 +139,28 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
       if ((first & size) != 0)
         throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
     
-      struct OpenDevice od(edev, first, last);
+      bool poll_msis = false;
+      std::string path_prefix = path.substr(0,7);
+      if (path_prefix == "dev/tty") {
+        poll_msis = true;
+        //std::cerr << "polling msi enabled" << std::endl;
+      }
+      struct OpenDevice od(edev, first, last, poll_msis);
       od.name = name;
       od.objectPath = "/de/gsi/saftlib/" + name;
       od.etherbonePath = path;
+
+
     
       Drivers::probe(od);
       if (od.ref) {
         devs.insert(std::make_pair(name, od));
+
+        if (poll_msis) {
+          // create a special socket for eb-tools to attach to.
+          m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(path));
+        }
+
         return od.objectPath;
       } else {
         throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no driver available for this device");
@@ -167,11 +181,28 @@ void SAFTd::RemoveDevice(const std::string& name)
   std::map< std::string, OpenDevice >::iterator elem = devs.find(name);
   if (elem == devs.end())
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
-  
+
+  // remove special socket for eb-tools  
+  m_eb_forward.erase(name);
+  ///////////////////////////
+
   elem->second.ref.reset();
   elem->second.device.close();
   devs.erase(elem);
 }
+
+std::string SAFTd::EbForward(const std::string& saftlib_device)
+{
+  if (m_eb_forward.find(saftlib_device) != m_eb_forward.end()) {
+    return m_eb_forward[saftlib_device]->saft_eb_devide().substr(1);
+  }
+  auto od = devs.find(saftlib_device);
+  if (od != devs.end()) {
+    return od->second.etherbonePath;
+  }
+  throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device " + saftlib_device + " unknown");
+}
+
 
 std::string SAFTd::getSourceVersion() const
 {

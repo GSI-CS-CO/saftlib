@@ -46,8 +46,6 @@ class WrMilGateway : public Owned, public iWrMilGateway
     struct ConstructorType {
       std::string                objectPath;
       Device &                   device;
-      etherbone::sdb_msi_device  sdb_msi_base;
-      sdb_device                 mailbox;
     };
     
     static std::shared_ptr<WrMilGateway> create(const ConstructorType& args);
@@ -59,6 +57,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void ResetGateway();
     void KillGateway();
     void UpdateOLED();
+    void RequestFillEvent();
 
     std::vector< uint32_t > getRegisterContent()  const;
     std::vector< uint32_t > getMilHistogram()     const;
@@ -89,6 +88,8 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void Reset();
     void ownerQuit();
 
+    void oledUpdate();
+
     // Polling method
     bool poll();
     const int poll_period; // [ms]
@@ -98,7 +99,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void    writeRegisterContent(uint32_t reg_offset, uint32_t value);
     bool    firmwareRunning() const;
 
-    void irq_handler(eb_data_t msg) const;
+    // void irq_handler(eb_data_t msg) const;
 
 
     mutable bool    firmware_running;
@@ -111,6 +112,11 @@ class WrMilGateway : public Owned, public iWrMilGateway
 
     sigc::connection pollConnection;
 
+    eb_address_t  oled_reset;
+    eb_address_t  oled_char;
+    eb_address_t  mil_events_present;
+    eb_address_t  mil_event_read_and_pop;
+
 
     //std::shared_ptr<TimingReceiver> receiver;
     Device &                  device;
@@ -121,6 +127,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     sdb_device                mailbox;
     eb_address_t              irq;
     bool                      have_wrmilgw;
+    bool                      idle;
 
     eb_address_t              mailbox_slot_address;
     unsigned mbx_slot;

@@ -1,3 +1,21 @@
+/** Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
+
 //////////////////////////////////////////////////////////////////////////////
 // Conversion functions between UTC and TAI values 
 //   (TAI epoch is 01/01/1970 within this library) 
@@ -138,10 +156,10 @@ namespace saftlib
 		}
 		Time(const Time& t) : TAI(t.TAI) {
 		}
-		uint64_t getUTC() {
+		uint64_t getUTC() const {
 			return TAI_to_UTC(TAI);
 		}
-		uint64_t getTAI() {
+		uint64_t getTAI() const {
 			return TAI;
 		}
 		Time& operator=(const Time& t) {
@@ -156,28 +174,31 @@ namespace saftlib
 			TAI -= duration;
 			return *this;
 		}
-		int64_t operator-(const Time& rhs) {
+		int64_t operator-(const Time& rhs) const {
 			return TAI - rhs.TAI;
 		}
-		int64_t getUTCOffset() {
+		int64_t getUTCOffset() const {
 			return UTC_offset_TAI(TAI);
 		}
-		bool operator>(const Time& rhs) {
+		bool operator>(const Time& rhs) const {
 			return TAI > rhs.TAI;
 		}
-		bool operator<(const Time& rhs) {
+		bool operator<(const Time& rhs) const {
 			return TAI < rhs.TAI;
 		}
-		bool operator>=(const Time& rhs) {
+		bool operator>=(const Time& rhs) const {
 			return TAI >= rhs.TAI;
 		}
-		bool operator<=(const Time& rhs) {
+		bool operator<=(const Time& rhs) const {
 			return TAI <= rhs.TAI;
 		}
-		bool operator==(const Time& rhs) {
+		bool operator==(const Time& rhs) const {
 			return TAI == rhs.TAI;
 		}
-		int isLeapUTC() {
+		bool operator!=(const Time& rhs) const {
+			return TAI != rhs.TAI;
+		}
+		int isLeapUTC() const {
 			return TAI_is_UTCleap(TAI);
 		}
 
