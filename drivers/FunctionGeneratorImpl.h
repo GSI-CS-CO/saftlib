@@ -74,7 +74,7 @@ class FunctionGeneratorImpl //: public Glib::Object
     {
       for (; it != end; ++it)
       {
-        fifo.push_back(*it);
+        fifo_push_back(*it);
         fillLevel += (*it).duration();
       }
 
@@ -125,6 +125,8 @@ class FunctionGeneratorImpl //: public Glib::Object
 
     bool ResetFailed();
     void ownerQuit();
+
+    void fifo_push_back(const ParameterTuple& tuple);
 
             
             
