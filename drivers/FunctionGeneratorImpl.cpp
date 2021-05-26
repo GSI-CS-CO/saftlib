@@ -131,6 +131,19 @@ static unsigned wrapping_add(unsigned a, unsigned b, unsigned buffer_size)
   }
 }
 
+void FunctionGeneratorImpl::fifo_push_back(const ParameterTuple& tuple)
+{
+  if (fifo.size() == fifo.capacity()) {
+    clog << kLogErr << "FunctionGeneratorImpl: change fifo capacity from " << std::dec << fifo.size() << " to " << 2*fifo.size() << std::endl;
+    fifo.set_capacity(fifo.capacity()*2);
+  }
+  fifo.push_back(tuple);
+  if (saftbus::fg_fifo_max_size < fifo.size()) {
+    saftbus::fg_fifo_max_size = fifo.size();
+  }  
+}
+
+
 bool FunctionGeneratorImpl::lowFill() const
 {
   DRIVER_LOG("",-1, -1);
@@ -320,14 +333,7 @@ bool FunctionGeneratorImpl::appendParameterTuples(std::vector<ParameterTuple> pa
   DRIVER_LOG("tuples",-1, parameters.size());
   for (ParameterTuple p : parameters)
   {
-    if (saftbus::fg_fifo_max_size < fifo.size()) {
-      saftbus::fg_fifo_max_size = fifo.size();
-    }
-    if (fifo.size() == fifo.capacity()) {
-      clog << kLogErr << "FunctionGeneratorImpl: change fifo capacity from " << std::dec << fifo.size() << " to " << 2*fifo.size() << std::endl;
-      fifo.set_capacity(fifo.capacity()*2);
-    }
-    fifo.push_back(p);
+    fifo_push_back(p);
     fillLevel += p.duration();
   }
 
@@ -376,13 +382,7 @@ bool FunctionGeneratorImpl::appendParameterSet(
     tuple.freq    = freq[i];
     tuple.shift_a = shift_a[i];
     tuple.shift_b = shift_b[i];
-    if (saftbus::fg_fifo_max_size < fifo.size()) {
-      saftbus::fg_fifo_max_size = fifo.size();
-    }
-    if (fifo.size() == fifo.capacity()) {
-      fifo.set_capacity(fifo.capacity()*2);
-    }
-    fifo.push_back(tuple);
+    fifo_push_back(tuple);
     fillLevel += tuple.duration();
   }
   
