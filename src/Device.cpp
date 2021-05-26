@@ -32,6 +32,7 @@
 #include "Source.h"
 #include "Logger.h"
 #include "saftbus.h"
+#include "clog.h"
 
 namespace saftlib {
 
@@ -114,6 +115,7 @@ bool Device::poll_msi() {
       msi.data    = msi_dat;
       // make sure the circular buffer is large enough
       if (Device::msis.size() == Device::msis.capacity()) {
+        clog << kLogErr << "Device: change msi fifo capacity from " << std::dec << Device::msis.size() << " to " << 2*Device::msis.size() << std::endl;
         Device::msis.set_capacity(Device::msis.capacity()*2);
         // std::cerr << "set Device::msis.set_capacity to  " << Device::msis.capacity() << std::endl;
       }

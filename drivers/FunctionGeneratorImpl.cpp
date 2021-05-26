@@ -324,6 +324,7 @@ bool FunctionGeneratorImpl::appendParameterTuples(std::vector<ParameterTuple> pa
       saftbus::fg_fifo_max_size = fifo.size();
     }
     if (fifo.size() == fifo.capacity()) {
+      clog << kLogErr << "FunctionGeneratorImpl: change fifo capacity from " << std::dec << fifo.size() << " to " << 2*fifo.size() << std::endl;
       fifo.set_capacity(fifo.capacity()*2);
     }
     fifo.push_back(p);
