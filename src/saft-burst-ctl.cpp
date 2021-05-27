@@ -417,7 +417,7 @@ static int parse_options(int optc, char* optv[], const char* optstr)
                   else                        { std::cerr << "Error: Missing signal period (u32)!" << std::endl; return -1; }
                   if (optv[optind+1] != NULL) { bg_t_b = strtoll(optv[optind+1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing burst period (i64)!" << std::endl; return -1; }
-                  if (bg_t_b > 0 && bg_t_b < BG_BURST_PERIOD) { std::cerr << "Error: Burst period exceeds the lower limit of " << BG_BURST_PERIOD << " ns!" << std::endl; return -1; }
+                  if (bg_t_b > 0 && (uint64_t)bg_t_b < BG_BURST_PERIOD) { std::cerr << "Error: Burst period exceeds the lower limit of " << BG_BURST_PERIOD << " ns!" << std::endl; return -1; }
                   if (bg_t_high > bg_t_p)     { std::cerr << "Error: Invalid signal parameters, t_high > t_p" << std::endl; return -1; }
                   if (bg_t_b > 0 && bg_t_p > bg_t_b) { std::cerr << "Error: Invalid burst parameters, t_p > t_b" << std::endl; return -1; }
                   if (optv[optind+2] != NULL) { bg_b_delay = strtoull(optv[optind+2], &pEnd, 0); }
