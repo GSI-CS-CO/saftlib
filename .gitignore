@@ -15,6 +15,7 @@ saft-gmt-check
 saft-lcd
 saft-eb-fwd
 saft-wbm-ctl
+saft-burst-ctl
 saftcommon/saftbus-ctl
 # Automake junk dirs
 tools
