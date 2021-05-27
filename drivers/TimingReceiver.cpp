@@ -66,6 +66,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
    watchdog(args.watchdog),
    pps(args.pps),
    ats(args.ats),
+   reset(args.reset),
    sas_count(0),
    locked(false),
    temperature(0)
@@ -262,7 +263,11 @@ void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t addr
 bool TimingReceiver::poll()
 {
   getLocked();
+  // retrigger the ECA watchdog
   device.write(watchdog, EB_DATA32, watchdog_value);
+  // retrigger the reset-watchdog
+  const eb_address_t FPGA_RESET_WATCHDOG_TRG = 0x0010;
+  device.write(reset + FPGA_RESET_WATCHDOG_TRG, EB_DATA32, (eb_data_t)0xcafebabe);
   return true;
 }
 
@@ -818,7 +823,7 @@ void TimingReceiver::probe(OpenDevice& od)
   od.device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
   od.device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi);
   
-  std::vector<sdb_device> streams, infos, watchdogs, scubus, pps, mbx, ats;
+  std::vector<sdb_device> streams, infos, watchdogs, scubus, pps, mbx, ats, reset;
 
   eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
 
@@ -829,13 +834,14 @@ void TimingReceiver::probe(OpenDevice& od)
   od.device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
   od.device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats);
   od.device.sdb_find_by_identity(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx);
+  od.device.sdb_find_by_identity(0x0651, 0x3a362063, reset);
 
   if (ats.size())
     ats_addr = (eb_address_t)ats[0].sdb_component.addr_first;
   
   // only support super basic hardware for now
   if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || watchdogs.size() != 1 
-	|| pps.size() != 1 || mbx.size() != 1 || mbx_msi.size() != 1) {
+	|| pps.size() != 1 || mbx.size() != 1 || mbx_msi.size() != 1 || reset.size() != 1) {
     return;
   }
   
@@ -850,6 +856,7 @@ void TimingReceiver::probe(OpenDevice& od)
     (eb_address_t)watchdogs[0].sdb_component.addr_first,
     (eb_address_t)pps[0].sdb_component.addr_first,
     ats_addr,
+    (eb_address_t)reset[0].sdb_component.addr_first
   };
   std::shared_ptr<TimingReceiver> tr = RegisteredObject<TimingReceiver>::create(od.objectPath, args);
   od.ref = tr;
