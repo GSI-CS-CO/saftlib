@@ -2,7 +2,7 @@ SUBDIRS = interfaces saftcommon
 SAFTLIBS = interfaces/libsaftlib.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS)
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-wbm-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-uni saft-eb-fwd
+bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-wbm-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-uni saft-eb-fwd saft-burst-ctl
 noinst_PROGRAMS = client
 
 pkgdir = @libdir@/pkgconfig
@@ -56,6 +56,7 @@ saftd_SOURCES = version.h \
 	drivers/Input.cpp		drivers/Input.h			\
 	drivers/TimingReceiver.cpp	drivers/TimingReceiver.h	\
 	drivers/WrMilGateway.cpp drivers/WrMilGateway.h \
+	drivers/BurstGenerator.cpp drivers/BurstGenerator.h \
 	src/globals.cpp			src/main.cpp
 
 saftd_LDADD = $(EB_LIBS) $(SAFTLIBS)
@@ -106,6 +107,8 @@ saft_lcd_LDADD   = $(SAFTLIBS)
 saft_eb_fwd_SOURCES = src/saft-eb-fwd.cpp
 saft_eb_fwd_LDADD   = $(SAFTLIBS)
 
+saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp
+saft_burst_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
 if GIT_TREE
 version.h:

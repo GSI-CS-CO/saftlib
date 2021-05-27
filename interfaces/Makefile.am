@@ -17,6 +17,7 @@ NODES =				\
 	WbmActionSink.xml	\
 	WbmCondition.xml	\
 	TimingReceiver.xml      \
+	BurstGenerator.xml \
 	WrMilGateway.xml
 INTERFACES =			\
 	ActionSink.xml		\
@@ -65,6 +66,7 @@ nodist_saftlib_HEADERS = 	\
 	iSoftwareActionSink.h	\
 	iSoftwareCondition.h	\
 	iTimingReceiver.h	\
+	iBurstGenerator.h \
 	iWrMilGateway.h     \
 	MILbusActionSink.h	\
 	MILbusCondition.h	\
@@ -79,6 +81,7 @@ nodist_saftlib_HEADERS = 	\
 	SoftwareActionSink.h	\
 	SoftwareCondition.h	    \
 	TimingReceiver.h        \
+	BurstGenerator.h \
 	WrMilGateway.h
 
 
@@ -107,6 +110,7 @@ doc_DATA = 			\
 	SoftwareActionSink.pdf	\
 	SoftwareCondition.pdf	\
 	TimingReceiver.pdf     \
+	BurstGenerator.pdf \
 	WrMilGateway.pdf     \
 	Types.pdf
 
@@ -148,6 +152,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	iSoftwareActionSink.cpp	\
 	iSoftwareCondition.cpp	\
 	iTimingReceiver.cpp	\
+	iBurstGenerator.cpp \
 	iWrMilGateway.cpp   \
 	MILbusActionSink.cpp	\
 	MILbusCondition.cpp	\
@@ -162,6 +167,7 @@ nodist_libsaftlib_la_SOURCES =	\
 	SoftwareActionSink.cpp	\
 	SoftwareCondition.cpp	\
 	TimingReceiver.cpp     \
+	BurstGenerator.cpp \
 	WrMilGateway.cpp
 
 
@@ -171,11 +177,11 @@ $(doc_DATA:.pdf=.doc-xml) $(nodist_libsaftlib_la_SOURCES) $(nodist_saftlib_HEADE
 	$(XSLTPROC) --path $(srcdir) --xinclude $(srcdir)/doc.xsl $(NODES)
 
 .doc-xml.pdf:
-	rm -f docfoo-*.$*.* 
+	rm -f docfoo-*.$*.*
 	$(GDBUS_CODEGEN) --generate-docbook=docfoo --interface-prefix=de.gsi.saftlib $<
 	$(XSLTPROC) --path $(srcdir) fix-docbook.xsl docfoo-de.gsi.saftlib.$*.xml > docfoo-fix.$*.xml
 	$(DOCBOOK2TEXI) --string-param output-file=docfoo-fix.$* docfoo-fix.$*.xml
-	$(TEXI2PDF) docfoo-fix.$*.texi	
+	$(TEXI2PDF) docfoo-fix.$*.texi
 	mv docfoo-*.$*.pdf $@
-	rm -f docfoo-de.gsi.saftlib.$*.xml docfoo-fix.$*.* 
+	rm -f docfoo-de.gsi.saftlib.$*.xml docfoo-fix.$*.*
 
