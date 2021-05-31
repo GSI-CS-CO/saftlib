@@ -59,7 +59,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
    irq(args.tr->getDevice().request_irq(args.base, sigc::mem_fun(*this, &FunctionGeneratorImpl::irq_handler))),
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), executedParameterCount(0), fillLevel(0), filled(0),
-   fifo(131072) // a fifo entry is 12 bytes long. 
+   fifo(16384) // a fifo entry is 12 bytes long. 
                 // Make it long enough so that realloction is hopefully not needed 
                 // (initial size is 1.5 Megabytes for fifo size of 131072)
 {
