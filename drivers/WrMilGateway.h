@@ -58,7 +58,9 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void KillGateway();
     void UpdateOLED();
     void RequestFillEvent();
-
+    void IncrementLateMilEvents();
+    void ResetLateMilEvents();
+    
     std::vector< uint32_t > getRegisterContent()  const;
     std::vector< uint32_t > getMilHistogram()     const;
     uint32_t                getWrMilMagic()       const;

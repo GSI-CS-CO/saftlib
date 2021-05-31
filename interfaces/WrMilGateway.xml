@@ -121,21 +121,16 @@
          than the anticipated WR event deadline -->
     <property name="NumLateMilEvents"   type="u" access="read">
     </property>
-    <!-- SigNumLateMilEvents: signal emitted if number of late events increases -->
-    <signal name="SigNumLateMilEvents">
-      <arg name="total" type="u"/>
-      <arg name="since_last_signal" type="u"/>
-    </signal>
-
+    
     <!-- SigReceivedMilEvent: received a MIL signal on the MIL piggy -->
     <signal name="SigReceivedMilEvent">
       <arg name="message" type="u"/>
     </signal>
 
-
     <!-- InUse: indicates if the gateway is translating any events -->
     <property name="InUse"   type="b" access="read">
     </property>
+
     <!-- SigInUse: signal emitted if number of events increases -->
     <signal name="SigInUse">
       <arg name="inUse" type="b"/>
@@ -165,6 +160,12 @@
 
     <!-- RequestFillEvent: The gatway is instructed to send a MIL fill event if possible -->
     <method name="RequestFillEvent"/>
+
+    <!-- IncrementLateMilEvents: increment the number in the late mil register -->
+    <method name="IncrementLateMilEvents"/>
+
+    <!-- ResetLateMilEvents: set the number in the late mil register to zero-->
+    <method name="ResetLateMilEvents"/>
 
   </interface>
 </node>

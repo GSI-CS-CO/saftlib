@@ -418,18 +418,9 @@ uint64_t WrMilGateway::getNumMilEvents() const
 }
 uint32_t WrMilGateway::getNumLateMilEvents() const
 {
-  uint32_t new_num_late_events = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
-  if (num_late_events != new_num_late_events) {
-    // send the current number and the ones since last signal
-    uint32_t difference = 0;
-    if (new_num_late_events >= num_late_events) {
-      difference = new_num_late_events - num_late_events;
-    }
-    SigNumLateMilEvents(new_num_late_events, difference);
-    num_late_events = new_num_late_events;
-  }
-  return num_late_events;
+  return readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
 }
+
 std::vector< uint32_t > WrMilGateway::getLateHistogram() const
 {
   std::vector<uint32_t> lateHistogram((WR_MIL_GW_REG_MIL_HISTOGRAM-WR_MIL_GW_REG_LATE_HISTOGRAM) / 4, 0);
@@ -477,6 +468,19 @@ void WrMilGateway::ownerQuit()
 {
       // std::cerr << "WrMilGateway::ownerQuit()" << std::endl;
 }
+
+void WrMilGateway::IncrementLateMilEvents()
+{
+  uint32_t num_late = readRegisterContent(WR_MIL_GW_REG_LATE_EVENTS);
+  ++num_late;
+  writeRegisterContent(WR_MIL_GW_REG_LATE_EVENTS, num_late);
+}
+
+void WrMilGateway::ResetLateMilEvents()
+{
+  writeRegisterContent(WR_MIL_GW_REG_LATE_EVENTS, 0);
+}
+
 
 
 }
