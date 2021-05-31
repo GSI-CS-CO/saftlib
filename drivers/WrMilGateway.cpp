@@ -55,8 +55,7 @@ WrMilGateway::WrMilGateway(const ConstructorType& args)
    poll_period(100), // [ms]
    num_late_events(0),
    num_mil_events(0),
-   max_time_without_mil_events(14000), // 14 seconds
-   time_without_mil_events(max_time_without_mil_events),
+   max_time_without_mil_events(14), // 14 seconds
    device(args.device),
    have_wrmilgw(false),
    idle(false)
@@ -293,23 +292,20 @@ bool WrMilGateway::poll()
       SigInUse(true);
     }
     clock_gettime(CLOCK_REALTIME, &time_of_last_mil_event);
-    time_without_mil_events = 0;
     num_mil_events = new_num_mil_events;
   } else {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
-    time_without_mil_events = now.tv_sec - time_of_last_mil_event.tv_sec;
+    uint32_t time_without_mil_events = now.tv_sec - time_of_last_mil_event.tv_sec;
+    if (time_without_mil_events >= max_time_without_mil_events) {
+      RequestFillEvent();
+      clock_gettime(CLOCK_REALTIME, &time_of_last_mil_event);
+      if (!idle) {
+        SigInUse(false);
+        idle = true;
+      }
+    } 
   }
-
-  if (time_without_mil_events >= max_time_without_mil_events) {
-    RequestFillEvent();
-    clock_gettime(CLOCK_REALTIME, &time_of_last_mil_event);
-    time_without_mil_events = 0;
-    if (!idle) {
-      SigInUse(false);
-      idle = true;
-    }
-  } 
 
   oledUpdate();
 

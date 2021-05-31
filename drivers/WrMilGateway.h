@@ -110,7 +110,6 @@ class WrMilGateway : public Owned, public iWrMilGateway
     mutable uint32_t num_late_events;
     uint64_t num_mil_events;
     const uint32_t max_time_without_mil_events; // if time_without_events exceeds this, we conclude the gateway isn't used
-    uint32_t time_without_mil_events;
     struct timespec time_of_last_mil_event;
 
 
