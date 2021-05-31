@@ -53,12 +53,16 @@ namespace saftlib {
 WrMilGateway::WrMilGateway(const ConstructorType& args)
  : Owned(args.objectPath),
    poll_period(100), // [ms]
-   max_time_without_mil_events(16000), // 16 seconds
+   num_late_events(0),
+   num_mil_events(0),
+   max_time_without_mil_events(14000), // 14 seconds
    time_without_mil_events(max_time_without_mil_events),
    device(args.device),
    have_wrmilgw(false),
    idle(false)
 {
+  // initialize the time marker
+  clock_gettime(CLOCK_REALTIME, &time_of_last_mil_event);
   // get all LM32 devices and see if any of them has the WR-MIL-Gateway magic number
   std::vector<struct sdb_device> lm32_devices;
   device.sdb_find_by_identity(UINT64_C(0x651), UINT32_C(0x54111351), lm32_devices);
@@ -288,14 +292,18 @@ bool WrMilGateway::poll()
       idle = false;
       SigInUse(true);
     }
+    clock_gettime(CLOCK_REALTIME, &time_of_last_mil_event);
     time_without_mil_events = 0;
     num_mil_events = new_num_mil_events;
   } else {
-    time_without_mil_events += poll_period;
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    time_without_mil_events = now.tv_sec - time_of_last_mil_event.tv_sec;
   }
 
-  if (time_without_mil_events >= max_time_without_mil_events/2) {
+  if (time_without_mil_events >= max_time_without_mil_events) {
     RequestFillEvent();
+    clock_gettime(CLOCK_REALTIME, &time_of_last_mil_event);
     time_without_mil_events = 0;
     if (!idle) {
       SigInUse(false);

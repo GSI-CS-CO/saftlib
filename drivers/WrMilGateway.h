@@ -60,7 +60,7 @@ class WrMilGateway : public Owned, public iWrMilGateway
     void RequestFillEvent();
     void IncrementLateMilEvents();
     void ResetLateMilEvents();
-    
+
     std::vector< uint32_t > getRegisterContent()  const;
     std::vector< uint32_t > getMilHistogram()     const;
     uint32_t                getWrMilMagic()       const;
@@ -111,6 +111,8 @@ class WrMilGateway : public Owned, public iWrMilGateway
     uint64_t num_mil_events;
     const uint32_t max_time_without_mil_events; // if time_without_events exceeds this, we conclude the gateway isn't used
     uint32_t time_without_mil_events;
+    struct timespec time_of_last_mil_event;
+
 
     sigc::connection pollConnection;
 
