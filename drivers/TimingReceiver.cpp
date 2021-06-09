@@ -42,6 +42,7 @@
 #include "FunctionGeneratorImpl.h"
 #include "MasterFunctionGenerator.h"
 #include "WrMilGateway.h"
+#include "BurstGenerator.h"
 #include "eca_regs.h"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
@@ -891,6 +892,25 @@ void TimingReceiver::probe(OpenDevice& od)
     }
 
 
+  }
+
+  std::vector<sdb_device> ecpu;
+  od.device.sdb_find_by_identity(0x00000651, 0x10041000, ecpu);
+  if (ecpu.size() == 1) {
+    // check if a firmware for burst generator is running
+    try {
+      const std::string bg_fw_str("bg_firmware");
+      BurstGenerator::ConstructorType bg_fw_args = { od.objectPath + "/" + bg_fw_str,
+                                                     tr.operator->(),
+						     tr->getDevice(),
+						     mbx_msi[0],
+						     mbx[0] };
+      tr->otherStuff["BurstGenerator"][bg_fw_str] = BurstGenerator::create(bg_fw_args);
+      clog << kLogDebug << "TimingReceiver: BurstGenerator firmware found" << std::endl;
+    } catch (saftbus::Error &e) {
+      clog << kLogDebug << "TimingReceiver: " << e.what() << std::endl;
+      clog << kLogDebug << "TimingReceiver: no BurstGenerator firmware found" << std::endl;
+    }
   }
 }
 
