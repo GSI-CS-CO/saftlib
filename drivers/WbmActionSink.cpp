@@ -82,7 +82,6 @@ void WbmActionSink::RecordMacro(uint32_t idx, const std::vector< std::vector< ui
     for (unsigned elm_idx = 0; elm_idx < 3; ++elm_idx) {
       data = commands[cmd_idx][elm_idx];
       cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, data);
-      std::cerr << "macro recording (" << idx << ") " << std::hex << (acwbm + SLAVE_REC_FIFO_OWR) << "    " << commands[cmd_idx][elm_idx] << std::dec << std::endl;
     }
     cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, data); // stop recording
   }
@@ -90,7 +89,6 @@ void WbmActionSink::RecordMacro(uint32_t idx, const std::vector< std::vector< ui
 }
 void WbmActionSink::ClearMacro(uint32_t idx) {
   eb_data_t data = idx;
-  std::cerr << std::hex << acwbm << std::dec << std::endl;
   dev->getDevice().write(acwbm + SLAVE_CLEAR_IDX_OWR, EB_DATA32, data);
 }
 void WbmActionSink::ClearAllMacros() {

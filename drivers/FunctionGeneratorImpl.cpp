@@ -60,8 +60,8 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
    channel(-1), enabled(false), armed(false), running(false), abort(false), resetTimeout(),
    startTag(0), executedParameterCount(0), fillLevel(0), filled(0),
    fifo(16384) // a fifo entry is 12 bytes long. 
-                // Make it long enough so that realloction is hopefully not needed 
-                // (initial size is 1.5 Megabytes for fifo size of 131072)
+                // Make the circular buffer large enough so that re-alloction is hopefully not needed 
+                // (initial size is 192 KiB for buffer size of 16384)
 {
   DRIVER_LOG("",-1, -1);
 
@@ -72,9 +72,9 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(const ConstructorType& args)
     in >> new_size;
     if (!in) {
       // reading new size didn't work
-      // ... error?
+      clog << kLogErr <<  " cannot read initial capacity from environment variable: \'" << fg_fifo_max_size_env << "\'" << std::endl;
     } else {
-      std::cerr << "set fifo capacity based on environmet variable to " << new_size << std::endl;
+      clog << kLogErr <<  "set fifo capacity based on environment variable to " << new_size << std::endl;
       fifo.set_capacity(new_size);
     }
   }

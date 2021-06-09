@@ -95,7 +95,6 @@ void Device::release_irq(eb_address_t irq)
 
 bool Device::poll_msi() {
   DRIVER_LOG("USB-poll-for-MSIs",-1,-1); 
-  //std::cerr << "polling for msi" << std::endl;
   etherbone::Cycle cycle;
   eb_data_t msi_adr = 0;
   eb_data_t msi_dat = 0;
@@ -117,7 +116,6 @@ bool Device::poll_msi() {
       if (Device::msis.size() == Device::msis.capacity()) {
         clog << kLogErr << "Device: change msi fifo capacity from " << std::dec << Device::msis.size() << " to " << 2*Device::msis.size() << std::endl;
         Device::msis.set_capacity(Device::msis.capacity()*2);
-        // std::cerr << "set Device::msis.set_capacity to  " << Device::msis.capacity() << std::endl;
       }
       Device::msis.push_back(msi);
       if (saftbus::device_msi_max_size < Device::msis.size()) {
@@ -154,14 +152,12 @@ struct IRQ_Handler : public etherbone::Handler
 
 eb_status_t IRQ_Handler::read(eb_address_t address, eb_width_t width, eb_data_t* data)
 {
-  //std::cerr << "IRQ_Handler::read() " << std::endl;
   *data = 0;
   return EB_OK;
 }
 
 eb_status_t IRQ_Handler::write(eb_address_t address, eb_width_t width, eb_data_t data)
 {
-  //std::cerr << "IRQ_Handler::write() " << std::endl;
   Device::MSI msi;
   msi.address = address;
   msi.data = data;
@@ -234,7 +230,6 @@ MSI_Source::MSI_Source()
 
 bool MSI_Source::prepare(int& timeout_ms)
 {
-  //std::cerr << "MSI_Source::prepare" << std::endl;
   // returning true means immediately ready
   bool result;
   if (Device::msis.empty()) {
@@ -243,20 +238,17 @@ bool MSI_Source::prepare(int& timeout_ms)
     timeout_ms = 0;
     result = true;
   }
-  //std::cerr << "MSI_Source::prepare(" << timeout_ms << ") " << this << " " << result << std::endl;
   return result;
 }
 
 bool MSI_Source::check()
 {
   bool result = !Device::msis.empty(); // true means ready after glib's poll
-  //std::cerr << "MSI_Source::check()    "<< result << std::endl;
   return result;
 }
 
 bool MSI_Source::dispatch(sigc::slot_base* slot)
 {
-  //std::cerr << "MSI_Source::dispatch() " << std::endl;
   // Don't process more than 10 MSIs in one go (must give dbus some service too)
   int limit = 10;
   
@@ -268,23 +260,19 @@ bool MSI_Source::dispatch(sigc::slot_base* slot)
     Device::irqMap::iterator i = Device::irqs.find(msi.address);
     if (i != Device::irqs.end()) {
       try {
-        //std::cerr  << "MSI_Source::dispatch() -> execute MSI " << msi.address << " " << msi.data << std::endl;
         i->second(msi.data);
       } catch (const etherbone::exception_t& ex) {
-        std::cerr << "Unhandled etherbone exception in MSI handler for 0x" 
+        clog << kLogErr << "Unhandled etherbone exception in MSI handler for 0x" 
              << std::hex << msi.address << ": " << ex << std::endl;
-      // } catch (const saftbus::Error& ex) {
-      //   std::cerr << "Unhandled Glib exception in MSI handler for 0x" 
-      //        << std::hex << msi.address << ": " << ex.what() << std::endl;
       } catch (std::exception& ex) {
-        std::cerr << "Unhandled std::exception exception in MSI handler for 0x" 
+        clog << kLogErr << "Unhandled std::exception exception in MSI handler for 0x" 
              << std::hex << msi.address << ": " << ex.what() << std::endl;
       } catch (...) {
-        std::cerr << "Unhandled unknown exception in MSI handler for 0x" 
+        clog << kLogErr << "Unhandled unknown exception in MSI handler for 0x" 
              << std::hex << msi.address << std::endl;
       }
     } else {
-      std::cerr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
+      clog << kLogErr << "No handler for MSI 0x" << std::hex << msi.address << std::endl;
     }
   }
   
