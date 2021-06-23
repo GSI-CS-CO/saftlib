@@ -884,7 +884,8 @@ void TimingReceiver::probe(OpenDevice& od)
       const std::string wrmilgw_str("wrmilgateway");
       WrMilGateway::ConstructorType wrmil_args = { od.objectPath + "/" + wrmilgw_str, 
                                                    tr->getDevice()};
-      tr->otherStuff["WrMilGateway"][wrmilgw_str] = WrMilGateway::create(wrmil_args);
+      auto wrmilgw_firmware = WrMilGateway::create(wrmil_args);
+      tr->otherStuff["WrMilGateway"][wrmilgw_str] = wrmilgw_firmware;
       clog << kLogDebug << "TimingReceiver: WR-MIL-Gateway firmware found" << std::endl;
     } catch (saftbus::Error &e) {
       // send log message if firmware was not found ?
@@ -905,7 +906,8 @@ void TimingReceiver::probe(OpenDevice& od)
 						     tr->getDevice(),
 						     mbx_msi[0],
 						     mbx[0] };
-      tr->otherStuff["BurstGenerator"][bg_fw_str] = BurstGenerator::create(bg_fw_args);
+      auto bg_firmware = BurstGenerator::create(bg_fw_args);
+      tr->otherStuff["BurstGenerator"][bg_fw_str] = bg_firmware;
       clog << kLogDebug << "TimingReceiver: BurstGenerator firmware found" << std::endl;
     } catch (saftbus::Error &e) {
       clog << kLogDebug << "TimingReceiver: " << e.what() << std::endl;
