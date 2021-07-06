@@ -93,7 +93,7 @@ namespace saftlib {
       device.read(ram_base + SHM_FW_ID, EB_DATA32, &data);
       bg_id = static_cast<uint32_t>(data);
 
-      if (bg_id == 0)
+      if (bg_id != BG_FW_ID)
       {
         continue;
       }

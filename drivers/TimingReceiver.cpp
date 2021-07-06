@@ -914,6 +914,7 @@ void TimingReceiver::probe(OpenDevice& od)
       clog << kLogDebug << "TimingReceiver: no BurstGenerator firmware found" << std::endl;
     }
   }
+
 }
 
 static Driver<TimingReceiver> timingReceiver;
