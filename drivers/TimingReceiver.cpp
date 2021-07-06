@@ -895,29 +895,26 @@ void TimingReceiver::probe(OpenDevice& od)
 
   }
 
-  // look fur burst generator only if there is no WrMilGateway running... it somehow conflicts
-  if (tr->otherStuff.find("WrMilGateway") == tr->otherStuff.end()) {
-	  std::vector<sdb_device> ecpu;
-	  od.device.sdb_find_by_identity(0x00000651, 0x10041000, ecpu);
-	  if (ecpu.size() == 1) {
-	    // check if a firmware for burst generator is running
-	    try {
-	      const std::string bg_fw_str("bg_firmware");
-	      BurstGenerator::ConstructorType bg_fw_args = { od.objectPath + "/" + bg_fw_str,
-	                                                     tr.operator->(),
-							     tr->getDevice(),
-							     mbx_msi[0],
-							     mbx[0] };
-	      auto bg_firmware = BurstGenerator::create(bg_fw_args);
-	      tr->otherStuff["BurstGenerator"][bg_fw_str] = bg_firmware;
-	      clog << kLogDebug << "TimingReceiver: BurstGenerator firmware found" << std::endl;
-	    } catch (saftbus::Error &e) {
-	      clog << kLogDebug << "TimingReceiver: " << e.what() << std::endl;
-	      clog << kLogDebug << "TimingReceiver: no BurstGenerator firmware found" << std::endl;
-	    }
-	  }
-
+  std::vector<sdb_device> ecpu;
+  od.device.sdb_find_by_identity(0x00000651, 0x10041000, ecpu);
+  if (ecpu.size() == 1) {
+    // check if a firmware for burst generator is running
+    try {
+      const std::string bg_fw_str("bg_firmware");
+      BurstGenerator::ConstructorType bg_fw_args = { od.objectPath + "/" + bg_fw_str,
+                                                     tr.operator->(),
+						     tr->getDevice(),
+						     mbx_msi[0],
+						     mbx[0] };
+      auto bg_firmware = BurstGenerator::create(bg_fw_args);
+      tr->otherStuff["BurstGenerator"][bg_fw_str] = bg_firmware;
+      clog << kLogDebug << "TimingReceiver: BurstGenerator firmware found" << std::endl;
+    } catch (saftbus::Error &e) {
+      clog << kLogDebug << "TimingReceiver: " << e.what() << std::endl;
+      clog << kLogDebug << "TimingReceiver: no BurstGenerator firmware found" << std::endl;
+    }
   }
+
 }
 
 static Driver<TimingReceiver> timingReceiver;
