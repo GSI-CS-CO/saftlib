@@ -25,6 +25,7 @@
 
 #include <sigc++/sigc++.h>
 //#include <giomm/asyncresult.h>
+#include <boost/circular_buffer.hpp>
 
 #include <thread>
 #include <mutex>
@@ -94,6 +95,9 @@ namespace saftbus
 		int _connection_id;
 
 		static std::mutex _socket_mutex;
+
+		void send_signal_flight_time_buffer();
+		boost::circular_buffer<std::pair<struct timespec, double> > _signal_flight_time_buffer;
 	};
 
 }

@@ -51,8 +51,6 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	, _saftbus_index(-1)
 	, _signal_group(signalGroup)
 {
-	// std::lock_guard<std::mutex> lock(_connection_mutex);
-
 	// if there is no ProxyConnection for this process yet we need to create one
 	if (!static_cast<bool>(_connection)) {
 		_connection = std::shared_ptr<saftbus::ProxyConnection>(new ProxyConnection);
@@ -67,7 +65,6 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 	}
 
 	_saftbus_index = _connection->get_saftbus_index(object_path, interface_name);
-	// std::cerr << "saftbus index of objec: " << _saftbus_index << std::endl;
 
 	// create a pipe through which we will receive signals from the saftd
 	if (&signalGroup != &saftlib::noSignals) {
@@ -97,7 +94,6 @@ Proxy::Proxy(saftbus::BusType  	   bus_type,
 
 Proxy::~Proxy() 
 {
-	//std::cerr << "saftbus::Proxy::~Proxy(" << _object_path << ")" << std::endl;
 	_signal_connection_handle.disconnect();
 	_signal_group.remove(this);
 	close(_pipe_fd[0]);
@@ -116,7 +112,6 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 	    struct timespec start_read_time;
 	    clock_gettime( CLOCK_REALTIME, &start_read_time);
 
-		//std::cerr << "Proxy::dispatch() called" << std::endl;
 		// read type and size of signal
 		saftbus::MessageTypeS2C type;
 		uint32_t                 size;
@@ -124,15 +119,10 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		saftbus::read(_pipe_fd[0], size);
 
 		// prepare buffer of the right size for the incoming data
-		//std::vector<char> buffer(size);
-		//saftbus::read_all(_pipe_fd[0], &buffer[0], size);
-
 		// de-serialize using saftbus::Serial
-		//std::cerr << "Proxy::dispatch() read payload" << std::endl;
 		Serial payload;
 		payload.data().resize(size);
 		saftbus::read_all(_pipe_fd[0], &payload.data()[0], size);
-		//std::cerr << "Proxy::dispatch() payload size = " << payload.get_size() << std::endl;
 		std::string object_path;
 		std::string interface_name;
 		std::string signal_name;
@@ -159,8 +149,6 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 			throw std::runtime_error(msg.str());
 		}
 
-		// double signal_flight_time;
-		// double signal_read_time;
 
 		// special treatment for property changes
 		//if (interface_name.get() == "org.freedesktop.DBus.Properties" && signal_name.get() == "PropertiesChanged")
@@ -170,9 +158,7 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 		}
 		else // all other signals
 		{
-			//std::cerr << "Proxy::dispatch() a normal signal" << std::endl;
 			// if we don't get the expected _interface_name, saftd probably messed up the pipe lookup		
-			//if (_interface_name != interface_name.get()) {
 			if (_interface_name != interface_name) {
 				std::ostringstream msg;
 				msg << "Proxy::dispatch() : signal with wrong interface name: expected " 
@@ -182,19 +168,6 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 				    << interface_name;
 				throw std::runtime_error(msg.str());
 			}
-			// get the signal flight stop time right before we call the signal handler from the Proxy object
-		    struct timespec stop;
-		    clock_gettime( CLOCK_REALTIME, &stop);
-		    // signal_flight_time = (1.0e6*stop.tv_sec       + 1.0e-3*stop.tv_nsec) 
-		    //                    - (1.0e6*start_time.tv_sec + 1.0e-3*start_time.tv_nsec);
-
-		    // signal_read_time = (1.0e6*stop.tv_sec            + 1.0e-3*stop.tv_nsec) 
-		    //                  - (1.0e6*start_read_time.tv_sec + 1.0e-3*start_read_time.tv_nsec);
-
-		    // if (create_statistics && signal_read_time > 200) { // if reading takes more than 200 us => Report!
-		    // 	std::cerr << "Proxy::dispatch() " << _name << " " << _interface_name << " " << _object_path << "  unusual long reading time for signal of " << signal_read_time << " us" << std::endl;
-		    // }
-
 			// report the measured signal flight time to saftd
 		    try {
 		    	_connection->send_signal_flight_time(random_signal_id);
@@ -212,7 +185,6 @@ bool Proxy::dispatch(Slib::IOCondition condition)
 	} catch (std::exception &e) {
 		std::cerr << "Proxy::dispatch() : exception : " << e.what() << std::endl;
 	}
-
 
 	return true;
 }
