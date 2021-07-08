@@ -39,7 +39,7 @@ namespace saftbus
 
 std::mutex ProxyConnection::_socket_mutex;
 
-ProxyConnection::ProxyConnection(const std::string &base_name)
+ProxyConnection::ProxyConnection(const std::string &base_name) : _signal_flight_time_buffer(8)
 {
 	std::lock_guard<std::mutex> lock(_socket_mutex);
 
@@ -76,6 +76,7 @@ ProxyConnection::ProxyConnection(const std::string &base_name)
 
 	saftbus::write(get_fd(), saftbus::SENDER_ID);  // ask the saftd for an ID on the saftbus
 	saftbus::read(get_fd(), _saftbus_id);  
+
 }
 
 int ProxyConnection::get_saftbus_index(const std::string &object_path, const std::string &interface_name)
@@ -99,14 +100,24 @@ int ProxyConnection::get_connection_id()
 	return id;
 }
 
+void ProxyConnection::send_signal_flight_time_buffer() {
+	while (!_signal_flight_time_buffer.empty()) {
+		saftbus::write(get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
+		saftbus::write(get_fd(), _signal_flight_time_buffer.front().first.tv_sec);
+		saftbus::write(get_fd(), _signal_flight_time_buffer.front().first.tv_nsec);
+		saftbus::write(get_fd(), _signal_flight_time_buffer.front().second);
+		_signal_flight_time_buffer.pop_front();
+	}
+}
+
 void ProxyConnection::send_signal_flight_time(double random_signal_id) {
-	std::lock_guard<std::mutex> lock(_socket_mutex);
 	struct timespec received;
 	clock_gettime( CLOCK_REALTIME, &received);
-	saftbus::write(get_fd(), saftbus::SIGNAL_FLIGHT_TIME);
-	saftbus::write(get_fd(), received.tv_sec);
-	saftbus::write(get_fd(), received.tv_nsec);
-	saftbus::write(get_fd(), random_signal_id);
+	_signal_flight_time_buffer.push_back(std::make_pair(received,random_signal_id));
+	if (_socket_mutex.try_lock()) {
+		send_signal_flight_time_buffer();
+		_socket_mutex.unlock();
+	}
 }
 
 
@@ -146,7 +157,10 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 	clock_gettime(CLOCK_REALTIME, &now);
 	std::lock_guard<std::mutex> lock(_socket_mutex);
 	try {
+		// first send pending signal flight times back to saftd
+		send_signal_flight_time_buffer();
 
+		// now send the actual function call request
 		Serial message;
 		message.put(saftbus_index);
 		message.put(object_path);
