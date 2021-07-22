@@ -103,6 +103,7 @@ TimingReceiver::TimingReceiver(const ConstructorType& args)
   channels = raw_channels;
   search_size = raw_search;
   walker_size = raw_walker;
+  active_search_table = 0;
 
   // Worst-case assumption
   max_conditions = std::min(search_size/2, walker_size);
@@ -669,12 +670,6 @@ static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
   return false;
 }
 
-struct SearchEntry {
-  uint64_t event;
-  int16_t  index;
-  SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
-};
-
 struct WalkEntry {
   int16_t   next;
   int64_t   offset;
@@ -780,14 +775,21 @@ void TimingReceiver::compile()
   for (unsigned i = 0; i < search_size; ++i) {
     /* Duplicate last entry to fill out the table */
     const SearchEntry& se = (i<search.size())?search[i]:search.back();
-    
-    cycle.open(device);
-    cycle.write(base + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
-    cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
-    cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
-    cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
-    cycle.write(base + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
-    cycle.close();
+
+    bool need_to_write_to_hw = true;
+    if (search_entries[active_search_table].size() <= i) search_entries[active_search_table].push_back(se);
+    else if (search_entries[active_search_table][i] == se) need_to_write_to_hw = false;
+    search_entries[active_search_table][i] = se;
+
+    if (need_to_write_to_hw) {
+      cycle.open(device);
+      cycle.write(base + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
+      cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
+      cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
+      cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
+      cycle.write(base + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
+      cycle.close();
+    }
   }
   
   for (unsigned i = 0; i < walk.size(); ++i) {
@@ -808,6 +810,7 @@ void TimingReceiver::compile()
   
   // Flip the tables
   device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
+  active_search_table=(active_search_table+1)%2;
   
   used_conditions = id_space.size()/2;
 }

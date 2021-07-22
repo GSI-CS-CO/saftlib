@@ -128,6 +128,21 @@ class TimingReceiver : public BaseObject, public iTimingReceiver, public iDevice
     uint16_t updateMostFull(unsigned channel); // returns current fill
     void resetMostFull(unsigned channel);
     void popMissingQueue(unsigned channel, unsigned num);
+
+
+    struct SearchEntry {
+      uint64_t event;
+      int16_t  index;
+      SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
+      void operator=(const SearchEntry& rhs) {event = rhs.event; index = rhs.index;}
+      bool operator==(const SearchEntry& rhs) {return event==rhs.event && index==rhs.index;}
+    };
+
+    // A search entry buffer to save what was written to hardware table. It can be used
+    // to prevent writing to hardware if the value at that position would not change.
+    std::vector<SearchEntry> search_entries[2];
+    int active_search_table;
+
   
   friend class ActionSink;
 };
