@@ -51,7 +51,6 @@ bool absoluteTime   = false;
 bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
 
-
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
@@ -107,7 +106,7 @@ static void help(void) {
 
 // display status
 static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
-						  std::shared_ptr<SoftwareActionSink_Proxy> sink) {
+                          std::shared_ptr<SoftwareActionSink_Proxy> sink) {
   uint32_t       nFreeConditions;
   bool          wrLocked;
   saftlib::Time   wrTime;
@@ -165,10 +164,10 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
         if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
         else           {std::cout << std::hex; width = 16; fmt = "0x";}
-        std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "  	<< fmt << std::setw(width) << std::setfill('0') << condition->getID()
-                  << ", mask: "     	<< fmt << std::setw(width) << std::setfill('0') << condition->getMask()
-                  << ", offset: "   	<< fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
-                  << ", active: "   	<< std::dec << condition->getActive()
+        std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "   << fmt << std::setw(width) << std::setfill('0') << condition->getID()
+                  << ", mask: "         << fmt << std::setw(width) << std::setfill('0') << condition->getMask()
+                  << ", offset: "       << fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
+                  << ", active: "       << std::dec << condition->getActive()
                   << ", destructible: " << condition->getDestructible()
                   << ", owner: "        << condition->getOwner()
                   << std::endl;
@@ -552,12 +551,25 @@ int main(int argc, char** argv)
       condition->setAcceptDelayed(true);
       condition->SigAction.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
-      time_t t1;
-      time_t startTime = time(&t1);
-      while(true) {
-        saftlib::wait_for_signal();
-        if (time(&t1) - startTime >= snoopSeconds) break;
+      // set up new thread to snoop for the given number of seconds
+      bool runSnoop = true;
+      std::thread tSnoop( [snoopSeconds, &runSnoop]()
+        {
+          sleep(snoopSeconds);
+          runSnoop = false;
+        }
+      );
+      int64_t snoopMilliSeconds;
+      if (snoopSeconds < (0x7FFFFFFFFFFFFFFF / 1000)) {
+        snoopMilliSeconds = snoopSeconds * 1000;
+      } else {
+        // This is a workaround to avoid an overflow when calculating snoopSeconds * 1000.
+        snoopMilliSeconds = snoopSeconds;
       }
+      while(runSnoop) {
+        saftlib::wait_for_signal(snoopMilliSeconds);
+      }
+      tSnoop.join();
     } // eventSnoop (without UNILAC option)
 
   } catch (const saftbus::Error& error) {
