@@ -50,6 +50,7 @@ class Output : public ActionSink, public iOutputActionSink
     std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on);
     void WriteOutput(bool value);
     bool ReadOutput();
+    bool ReadCombinedOutput();
     bool StartClock(double high_phase, double low_phase, uint64_t phase_offset);
     bool StopClock();
 

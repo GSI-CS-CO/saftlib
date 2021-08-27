@@ -905,6 +905,10 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         if (output_proxy->ReadOutput())             { std::cout << "  Output:           High" << std::endl; }
         else                                        { std::cout << "  Output:           Low" << std::endl; }
 
+        /* Display combined output */
+        if (output_proxy->ReadCombinedOutput())     { std::cout << "  CombinedOutput:   High" << std::endl; }
+        else                                        { std::cout << "  CombinedOutput:   Low" << std::endl; }
+
         /* Display output enable state */
         if (output_proxy->getOutputEnableAvailable())
         {

@@ -66,6 +66,11 @@ bool Output::ReadOutput()
   return impl->ReadOutput();
 }
 
+bool Output::ReadCombinedOutput()
+{
+  return impl->ReadCombinedOutput();
+}
+
 bool Output::getOutputEnable() const
 {
   return impl->getOutputEnable();

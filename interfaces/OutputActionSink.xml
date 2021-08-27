@@ -73,6 +73,13 @@
     <arg direction="out" type="b" name="value"/>
   </method>
 
+  <!-- ReadCombinedOutput: Read the combined output state.
+       Every output IO has multiple sources, one or more can be active at the same time. This property shows the real (combined) output state.
+    -->
+  <method name="ReadCombinedOutput">
+    <arg direction="out" type="b" name="value"/>
+  </method>
+
   <!-- StartClock: Starts the clock generator with given parameters.
        All parameters expect the value in nanoseconds.
     -->
