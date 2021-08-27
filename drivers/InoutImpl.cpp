@@ -92,6 +92,30 @@ bool InoutImpl::ReadOutput()
   else           { return false; }
 }
 
+bool InoutImpl::ReadCombinedOutput()
+{
+  etherbone::Cycle cycle;
+  eb_data_t readCombinedOutput;
+  eb_data_t inputOffset;
+  unsigned inputRegOffset = 0;
+
+  cycle.open(tr->getDevice());
+  if (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eGPIO_Info, EB_DATA32, &inputOffset); }
+  if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eLVDS_Info, EB_DATA32, &inputOffset); }
+  else                                   { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  cycle.close();
+  inputOffset = ((unsigned) inputOffset)*4;
+  
+  cycle.open(tr->getDevice());
+  if      (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eGet_GPIO_In_Begin+inputRegOffset+(io_index*4), EB_DATA32, &readCombinedOutput); }
+  else if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eGet_LVDS_In_Begin+inputRegOffset+(io_index*4), EB_DATA32, &readCombinedOutput); }
+  else                                        { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
+  cycle.close();
+
+  if(readCombinedOutput) { return true; }
+  else           { return false; }
+}
+
 bool InoutImpl::getOutputEnable() const
 {
   unsigned access_position = 0;

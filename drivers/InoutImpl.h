@@ -50,6 +50,7 @@ class InoutImpl
     uint32_t getIndexIn() const;
     void WriteOutput(bool value);
     bool ReadOutput();
+    bool ReadCombinedOutput();
     bool getOutputEnable() const;
     void setOutputEnable(bool val);
     bool getOutputEnableAvailable() const;
