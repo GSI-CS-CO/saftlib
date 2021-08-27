@@ -6,7 +6,6 @@
 * Saftlib: (Types).   Types used in Saftlib interfaces.
 @end direntry
 
-@node Top
 @top Saftlib
 @chapheading Types
 
@@ -27,4 +26,6 @@ s        std::string
 aX       std::vector<X> where X is can be any type
 a@{KV@}    std::map<K,V> K and V are are key and value types
 
+@end example
 @bye
+
