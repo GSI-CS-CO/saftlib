@@ -1,3 +1,23 @@
+/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *  @author M. Reese <m.reese@gsi.de>
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
+
 // Software emulation of a TimingReceiver ECA
 //
 // The first part of this program consists of an Etherbone slave implementation that was 
@@ -1176,6 +1196,16 @@ public:
     		break;
     		case ECA_TIME_LO_GET: result = SoftwareECA::get_time_ns()&0xffffffff;
     		break;
+			case ECA_CHANNEL_MOSTFULL_ACK_GET:   result = 0;
+			break;
+			case ECA_CHANNEL_MOSTFULL_CLEAR_GET: result = 0;
+			break;
+			case ECA_CHANNEL_VALID_COUNT_GET:    result = 0;
+			break;
+			case ECA_CHANNEL_OVERFLOW_COUNT_GET: result = 0;
+			break;
+			case ECA_CHANNEL_FAILED_COUNT_GET:   result = 0;
+			break;
     		default: return false;
 		}
 		std::cerr << "Eca control read access at " << std::hex << adr << " = " << std::dec << result << std::endl;
@@ -1709,43 +1739,33 @@ static void read_sdb(std::map<uint32_t, std::pair<uint32_t, uint32_t> > &result,
 	}
 }
 
-static bool extract_sdb(const char *devicename) {
-	std::cerr << "extract_sdb from " << devicename << std::endl;
-	try {
-		etherbone::Socket socket;
-		socket.open();
+static void extract_sdb(const char *devicename) {
+	etherbone::Socket socket;
+	socket.open();
 
-		etherbone::Device device;
-		device.open(socket, devicename);
+	etherbone::Device device;
+	device.open(socket, devicename);
 
-		eb_data_t sdb_start_adr;
-		etherbone::Cycle cycle;
-		cycle.open(device);
-		cycle.read_config(0xc, EB_DATAX, &sdb_start_adr);
-		cycle.close();
+	eb_data_t sdb_start_adr;
+	etherbone::Cycle cycle;
+	cycle.open(device);
+	cycle.read_config(0xc, EB_DATAX, &sdb_start_adr);
+	cycle.close();
 
-		// the value has a literal value and a modified value
-		// where the literal vale is what was read from the hardware device
-		// while the modified value is the same value plus the recursively 
-		// added offset address of the interconnect
-		std::map<uint32_t, std::pair<uint32_t, uint32_t> > memory;
-		read_sdb(memory, device, (eb_address_t)sdb_start_adr);
-		for(auto &pair: memory) {
-			std::cout << std::hex << std::setw(8) << std::setfill('0') << pair.first;
-			std::cout << " => ";
-			std::cout << std::hex << std::setw(8) << std::setfill('0') << pair.second.first;
-			std::cout << " => ";
-			std::cout << std::hex << std::setw(8) << std::setfill('0') << pair.second.second;
-			std::cout << std::endl;
-		}
-
-	} catch (std::runtime_error &e) {
-		std::cerr << "error: " << e.what() << std::endl;
-		return false;
-	} catch (etherbone::exception_t &e) {
-		std::cerr << "eb error: " << e << std::endl;
+	// the value has a literal value and a modified value
+	// where the literal vale is what was read from the hardware device
+	// while the modified value is the same value plus the recursively 
+	// added offset address of the interconnect
+	std::map<uint32_t, std::pair<uint32_t, uint32_t> > memory;
+	read_sdb(memory, device, (eb_address_t)sdb_start_adr);
+	for(auto &pair: memory) {
+		std::cout << std::hex << std::setw(8) << std::setfill('0') << pair.first;
+		std::cout << " => ";
+		std::cout << std::hex << std::setw(8) << std::setfill('0') << pair.second.first;
+		std::cout << " => ";
+		std::cout << std::hex << std::setw(8) << std::setfill('0') << pair.second.second;
+		std::cout << std::endl;
 	}
-	return true;
 }
 
 ///////////////////////////////////////////////////////
@@ -1774,8 +1794,8 @@ int main(int argc, char *argv[]) {
 					++i;
 					if (i < argc) {
 						// end the program after successful extration of sdb-records
-						if (extract_sdb(argv[i])) return 0; 
-						return 1;
+						extract_sdb(argv[i]); 
+						return 0;
 					} else {
 						std::cerr << "expecting device name after --extract-sdb" << std::endl;
 						return 1;
