@@ -42,6 +42,12 @@
 //
 // Besides parts of the ECA, not much of the hardware behavior is currently implemented. 
 
+// global variable that controls the amout of output created by all parts of the program
+// verbosity = -1: output only error messages
+// verbosity =  0: output program status information
+// verbosity =  1: output register access
+int verbosity = 0;
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -218,7 +224,7 @@ void EBslave::init() {
 		if (tcsetattr(pfds[0].fd,TCSAFLUSH,&raw) < 0) 
 		{
 			int err = errno;
-			printf("Error, cant set raw mode: %s\n", strerror(err));
+			std::cerr << "Error, cant set raw mode: " << strerror(err) << std::endl;
 			return;
 		}
 	}
@@ -228,18 +234,21 @@ void EBslave::init() {
 	state = EB_SLAVE_STATE_IDLE;
 	std::ofstream tmpfile("/tmp/simbridge-eb-device");
 	tmpfile << pts_name().substr(1) << std::endl;
-	std::cerr << "eb-device: " << pts_name() << std::endl;
-	if (_stop_until_connected) {
-		std::cerr << "waiting for client, simulation stopped ... ";
-	} else {
-		std::cerr << "device is ready, simulation is running" << std::endl;
+	if (verbosity >= 0) {
+		std::cout << "eb-device: " << pts_name() << std::endl;
+		if (_stop_until_connected) {
+			std::cout << "waiting for client, simulation stopped ... ";
+		} else {
+			std::cout << "device is ready, simulation is running" << std::endl;
+		}
 	}
 	if (_stop_until_connected)
 	{
 		pfds[0].events = POLLIN;
 		poll(pfds,1,-1);
-		std::cerr << " connected, simulation continues" << std::endl;
-		// _stop_until_connected = false;
+		if (verbosity >= 0) {
+			std::cout << " connected, simulation continues" << std::endl;
+		}
 	}
 	error_shift_reg = 0;
 
@@ -467,12 +476,10 @@ int EBslave::master_out(std_logic_t *cyc, std_logic_t *stb, std_logic_t *we, int
 							wb_stbs.back().end_cyc = eb_flag_cyc;
 						break;
 						case 0x34:
-							std::cerr << "access eb_msi_adr_first" << std::endl;
 							wb_stbs.push_back(wb_stb(eb_msi_adr_first,eb_msi_adr_first,false,true)); // not a real strobe, just a pass-through
 							wb_stbs.back().end_cyc = eb_flag_cyc;
 						break;
 						case 0x3c:
-							std::cerr << "access eb_msi_adr_last" << std::endl;
 							wb_stbs.push_back(wb_stb(eb_msi_adr_last,eb_msi_adr_last,false,true)); // not a real strobe, just a pass-through
 							wb_stbs.back().end_cyc = eb_flag_cyc;
 						break;
@@ -652,8 +659,6 @@ void EBslave::send_output_buffer()
 
 // should be called on falling_edge(clk)
 int EBslave::master_in(std_logic_t ack, std_logic_t err, std_logic_t rty, std_logic_t stall, int dat) {
-	// std::cerr << "in" << std::endl;
-	// std::cerr << "control_in wb_stbs.size() = " << std::dec << (int)wb_stbs.size() << std::endl;
 	int end_cyc = 0;
 	if (handle_pass_through()) end_cyc = 1;
 	if (wb_stbs.size() > 0 && (strobe && stall == STD_LOGIC_0)) {
@@ -802,12 +807,16 @@ public:
 	}
 	template<class Dev>
 	std::vector<std::shared_ptr<Dev> > create_devices() {
-		std::cerr << "looking for device_id " << std::hex << Dev::product_id << std::endl;
+		if (verbosity >= 0) {
+			std::cout << "looking for device_id " << std::hex << Dev::product_id << std::endl;
+		}
 		std::vector<std::shared_ptr<Dev> > result;
 		for (auto &block: blocks) {
 			for (uint32_t block_adr = block.first; block_adr < block.second; block_adr += 16*4) {
 				if (block_matches_ids(block_adr, Dev::vendor_id, Dev::product_id)) {
-					std::cerr << "found device 0x" << std::hex << Dev::product_id << std::endl;
+					if (verbosity >= 0) {
+						std::cout << "found device 0x" << std::hex << Dev::product_id << std::endl;
+					}
 					result.push_back(std::make_shared<Dev>(block_device_adr_first(block_adr), result.size()));
 				}
 			}
@@ -821,7 +830,6 @@ public:
 		return false;
 	}
 	uint32_t block_device_adr_first(uint32_t block_adr) {
-		//std::cerr << "adr_first  " << memory_absolute[block_adr+4*3] << std::endl;
 		return memory_absolute[block_adr+4*3];
 	}
 private:
@@ -845,12 +853,16 @@ public:
 		return adr == _adr_first; // WatchdogMutex has only one register
 	}
 	bool read_access(uint32_t adr, int sel, uint32_t *dat_out) {
-		std::cerr << "WatchdogMutex read access "  << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "WatchdogMutex read access "  << std::endl;
+		}
 		*dat_out = 0x0;
 		return true; 
 	}
 	bool write_access(uint32_t adr, int sel, uint32_t dat) {
-		std::cerr << "WatchdogMutex write access "  << std::hex << dat << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "WatchdogMutex write access "  << std::hex << dat << std::endl;
+		}
 		return true; 
 	}
 private:
@@ -924,7 +936,9 @@ struct SoftwareECA {
 	}
 
 	void inject() {
-		std::cerr << ">>>>>>>>>>>>>>  EVENT INJECTED <<<<<<<<<<<<<<<" << std::endl;
+		if (verbosity >= 1) {
+			std::cout << ">>>>>>>>>>>>>>  EVENT INJECTED <<<<<<<<<<<<<<<" << std::endl;
+		}
 		uint64_t id = in_buffer[0];
 		id <<= 32;
 		id |= in_buffer[1];
@@ -934,18 +948,26 @@ struct SoftwareECA {
 		uint64_t deadline = in_buffer[6];
 		deadline <<= 32;
 		deadline |= in_buffer[7];
-		std::cerr << "search.size() = " << searches.size() << std::endl;
-		std::cerr << "walkers:" << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "search.size() = " << searches.size() << std::endl;
+			std::cout << "walkers:" << std::endl;
+		}
 		for (auto &walk: walker) {
 			walk.second.fired = false;
-			std::cerr << "  " << std::dec << walk.first << " tag = " << walk.second.tag << "  next = " << walk.second.next << std::endl;
+			if (verbosity >= 1) {
+				std::cout << "  " << std::dec << walk.first << " tag = " << walk.second.tag << "  next = " << walk.second.next << std::endl;
+			}
 		}
 		for (auto &search: searches) {
-			std::cerr << "id = " << std::hex << id << " search.id = " << std::hex << search.id << " search.mask = " << std::hex << search.mask << std::endl;
+			if (verbosity >= 1) {
+				std::cout << "id = " << std::hex << id << " search.id = " << std::hex << search.id << " search.mask = " << std::hex << search.mask << std::endl;
+			}
 			if ((id&search.mask) == (search.id&search.mask)) {
 				int walker_idx = search.first;
 				do {
-					std::cerr << "Condition matches walker " << std::dec << walker_idx << " with tag=" << std::dec << walker[walker_idx].tag << std::endl;
+					if (verbosity >= 1) {
+						std::cout << "Condition matches walker " << std::dec << walker_idx << " with tag=" << std::dec << walker[walker_idx].tag << std::endl;
+					}
 					uint64_t offset_deadline = deadline+walker[walker_idx].offset;
 					uint32_t msi_data = ECA_VALID<<16; 
 					////// late flag doesn't work yet. TODO: make it work!
@@ -959,8 +981,10 @@ struct SoftwareECA {
 						std::lock_guard<std::mutex> lock(events_mutex);
 						events.push_back(new_event);
 						std::sort(events.begin(), events.end());
-						std::cerr << "create event with id=" << std::hex << id << " param=" << param << " deadline=" << deadline << std::dec << " num=" << walker_idx << " tag=" << walker[walker_idx].tag << std::endl;
-						std::cerr << "event.size() = " << events.size() << std::endl;
+						if (verbosity >= 1) {
+							std::cout << "create event with id=" << std::hex << id << " param=" << param << " deadline=" << deadline << std::dec << " num=" << walker_idx << " tag=" << walker[walker_idx].tag << std::endl;
+							std::cout << "event.size() = " << events.size() << std::endl;
+						}
 					}
 					walker[walker_idx].fired = true;
 					walker_idx = walker[walker_idx].next;
@@ -987,9 +1011,13 @@ struct SoftwareECA {
 	void push_search(const Search& s) {
 		if (std::find(searches.begin(), searches.end(), s) == searches.end()) {
 			searches.push_back(s);
-			std::cerr << " pushed -> search: " << std::hex << searches.back().id << " " << searches.back().mask << " " << std::dec << searches.back().first;
+			if (verbosity >= 1) {
+				std::cout << " pushed -> search: " << std::hex << searches.back().id << " " << searches.back().mask << " " << std::dec << searches.back().first;
+			}
 		} else {
-			std::cerr << " NOT pushed -> search: " << std::hex << s.id << " " << s.mask << " " << std::dec << s.first;
+			if (verbosity >= 1) {
+				std::cout << " NOT pushed -> search: " << std::hex << s.id << " " << s.mask << " " << std::dec << s.first;
+			}
 		}
 
 	}
@@ -1015,24 +1043,25 @@ struct SoftwareECA {
 			uint64_t mask2 = ~(s1-s_open-1);
 			uint64_t id_open  = s_open&mask2;
 
-			std::cerr << std::dec << w1 << " " << std::hex << s1
-			          << " => mask1=" << std::hex <<std::setw(16)<<std::setfill('0') << mask1 
-			          << " => mask2=" << std::hex <<std::setw(16)<<std::setfill('0') << mask2 
-			          << " is_prefix_mask(" << is_prefix_mask(mask1) << ") w1=" << w1 << " id1=" << id1
-			          << " id_open=" << id_open
-			          ;
+			if (verbosity >= 1) {
+				std::cout << std::dec << w1 << " " << std::hex << s1
+				          << " => mask1=" << std::hex <<std::setw(16)<<std::setfill('0') << mask1 
+				          << " => mask2=" << std::hex <<std::setw(16)<<std::setfill('0') << mask2 
+				          << " is_prefix_mask(" << is_prefix_mask(mask1) << ") w1=" << w1 << " id1=" << id1
+				          << " id_open=" << id_open;
+			}
 
 			if (is_prefix_mask(mask1) && i) {
 				if (w0 == -1) w0 = 0;
 				     if (id0) push_search(Search(id0,mask1,w0));
 				else if (id1) push_search(Search(id1,mask1,w0));	
-				// std::cerr << "   -> search: " << std::hex << searches.back().id << " " << searches.back().mask << " " << std::dec << searches.back().first;
 			} else if (is_prefix_mask(mask2) && i) {
 				if (w0 == -1) w0 = 0;
 		    	if (id_open) push_search(Search(id_open,mask2,w0));
-				// std::cerr << "   -> search: " << std::hex << searches.back().id << " " << searches.back().mask << " " << std::dec << searches.back().first;
 			}
-			std::cerr << std::endl;
+			if (verbosity >= 1) {
+				std::cout << std::endl;
+			}
 		}
 	}
 
@@ -1057,15 +1086,16 @@ struct SoftwareECA {
 			uint64_t mask2 = ~(s1-s_open-1);
 			uint64_t id_open  = s_open&mask2;
 
-			std::cerr << std::dec << w1 << " " << std::hex << s1
-			          << " => mask1=" << std::hex <<std::setw(16)<<std::setfill('0') << mask1 
-			          << " => mask2=" << std::hex <<std::setw(16)<<std::setfill('0') << mask2 
-			          << " is_prefix_mask(" << is_prefix_mask(mask1) << ") w1=" << w1 << " id1=" << id1
-			          << " id_open=" << id_open
-			          ;
+			if (verbosity >= 1) {
+				std::cout << std::dec << w1 << " " << std::hex << s1
+				          << " => mask1=" << std::hex <<std::setw(16)<<std::setfill('0') << mask1 
+				          << " => mask2=" << std::hex <<std::setw(16)<<std::setfill('0') << mask2 
+				          << " is_prefix_mask(" << is_prefix_mask(mask1) << ") w1=" << w1 << " id1=" << id1
+				          << " id_open=" << id_open;
+			}
 
 			if (i == 0) {
-				push_search(Search(0,0,0));
+				push_search(Search(0,0,w1));
 			} else {
 				if (w0 != 0) {
 					if (w1 > w0) {
@@ -1079,20 +1109,24 @@ struct SoftwareECA {
 					}
 				}
 			}
-			std::cerr << std::endl;
+			if (verbosity >= 1) {
+				std::cout << std::endl;
+			}
 		}
 	}
 
 
 	void analyse_search_candidates() {
-		if (search_candidates.size() && search_candidates[0].first_walker == 0 && search_candidates[0].search_event == 0) {
+		if (search_candidates.size() /*&& search_candidates[0].first_walker == 0*/ && search_candidates[0].search_event == 0) {
 			analyse_search_candidates_zero();
 		} else {
 			analyse_search_candidates_normal();
 		}
-		std::cerr << ">>>>> searches >>>> " << std::endl;
-		for (unsigned i = 0; i < searches.size(); ++i) {
-			std::cerr << "   -> search: " << std::hex << searches[i].id << " " << searches[i].mask << " " << std::dec << searches[i].first << std::endl;
+		if (verbosity >= 1) {
+			std::cerr << ">>>>> searches >>>> " << std::endl;
+			for (unsigned i = 0; i < searches.size(); ++i) {
+				std::cout << "   -> search: " << std::hex << searches[i].id << " " << searches[i].mask << " " << std::dec << searches[i].first << std::endl;
+			}
 		}
 	}
 
@@ -1136,7 +1170,9 @@ struct SoftwareECA {
 				uint64_t now = SoftwareECA::get_time_ns();
 				std::lock_guard<std::mutex> lock_events(software_eca->events_mutex);
 				if (!software_eca->events.empty() && software_eca->events.front().deadline <= now) {
-					std::cerr << "creating action: now=" << std::dec << now << " deadline=" << software_eca->events.front().deadline << std::endl;
+					if (verbosity >= 1) {
+						std::cout << "creating action: now=" << std::dec << now << " deadline=" << software_eca->events.front().deadline << std::endl;
+					}
 					std::lock_guard<std::mutex> lock_actions(software_eca->actions_mutex);
 					// take an event from the event queue and insert it into 
 					//   action queue where it can be read from the ECA_QUEUE Device
@@ -1168,7 +1204,9 @@ public:
 		: _adr_first(adr_first) 
 		, _instance(instance) 
 	{
-		std::cerr << "EcaUnitControl " << std::hex << _adr_first << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "EcaUnitControl " << std::hex << _adr_first << std::endl;
+		}
 	}
 	bool contains(uint32_t adr) {
 		return (adr >= _adr_first) && (adr < _adr_first + 0x100); 
@@ -1208,7 +1246,9 @@ public:
 			break;
     		default: return false;
 		}
-		std::cerr << "Eca control read access at " << std::hex << adr << " = " << std::dec << result << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "Eca control read access at " << std::hex << adr << " = " << std::dec << result << std::endl;
+		}
 		*dat_out = result;
 		return true;
 	}
@@ -1239,7 +1279,9 @@ public:
 				// std::cerr << "ECA_SEARCH_SELECT_RW " << std::hex << dat << std::endl;
 				select_first = false;
 				if (dat == 0) {
-					std::cerr << ">>>>>>>>clear software_eca searches" << std::endl;
+					if (verbosity >= 1) {
+						std::cout << ">>>>>>>>clear software_eca searches" << std::endl;
+					}
 					software_eca.searches.clear();
 					software_eca.search_candidates.clear();
 					prev_first_walker = -1;
@@ -1280,13 +1322,16 @@ public:
 				prev_search_event = search_event;
 				return true;
 
-	    	case ECA_CHANNEL_SELECT_RW: std::cerr << "selected channel: " << dat << std::endl;
-	    								if (_selected_channel >= 0 || _selected_channel <= 1) {
-	    									_selected_channel = dat; 
-	    									return true;
-	    								} else {
-	    									return false;
-	    								}
+	    	case ECA_CHANNEL_SELECT_RW: 
+	    		if (verbosity >= 1) {
+		    		std::cout << "selected channel: " << dat << std::endl;
+	    		}
+				if (_selected_channel >= 0 || _selected_channel <= 1) {
+					_selected_channel = dat; 
+					return true;
+				} else {
+					return false;
+				}
 			case ECA_CHANNEL_MSI_SET_ENABLE_OWR: return true;
 			case ECA_CHANNEL_MSI_SET_TARGET_OWR: 
 				eca_msi_target_adr = dat; 
@@ -1331,13 +1376,15 @@ public:
 				return true;
 			case ECA_WALKER_WRITE_OWR:          
 				//std::cerr << "write walker tags " << std::hex << dat << std::endl; /*_walker_tags = _walker_tags_tmp; _walker_tags_tmp.clear();*/ 
-				std::cerr << "walker " << std::dec << selected_walker 
-							<< " next=" << software_eca.walker[selected_walker].next 
-							<< " tag=" << software_eca.walker[selected_walker].tag
-							<< " flags=" << std::hex << software_eca.walker[selected_walker].flags
-							<< " channel=" << std::dec << software_eca.walker[selected_walker].channel
-							<< " num=" << std::dec << software_eca.walker[selected_walker].num
-							<< std::endl;
+				if (verbosity >= 1) {
+					std::cout << "walker " << std::dec << selected_walker 
+								<< " next=" << software_eca.walker[selected_walker].next 
+								<< " tag=" << software_eca.walker[selected_walker].tag
+								<< " flags=" << std::hex << software_eca.walker[selected_walker].flags
+								<< " channel=" << std::dec << software_eca.walker[selected_walker].channel
+								<< " num=" << std::dec << software_eca.walker[selected_walker].num
+								<< std::endl;
+				}
 				return true;
 		}
 		return false; 
@@ -1361,7 +1408,9 @@ public:
 		: _adr_first(adr_first) 
 		, _instance(instance) 
 	{
-		std::cerr << "EcaQueue " << std::hex << _adr_first << std::endl;
+		if (verbosity >= 0) {
+			std::cout << "EcaQueue " << std::hex << _adr_first << std::endl;
+		}
 	}
 	bool contains(uint32_t adr) {
 		return (adr >= _adr_first) && (adr < _adr_first + 0x40); 
@@ -1396,7 +1445,9 @@ public:
 		std::lock_guard<std::mutex> lock(software_eca.actions_mutex);
 		if (adr-_adr_first == ECA_QUEUE_POP_OWR) {
 			if (!software_eca.actions.empty()) software_eca.actions.pop_front(); 
-			std::cerr << "ECA_QUEUE_POP_OWR actions.size()=" << software_eca.actions.size() << std::endl; 
+			if (verbosity >= 1) {
+				std::cout << "ECA_QUEUE_POP_OWR actions.size()=" << software_eca.actions.size() << std::endl; 
+			}
 			return true;
 		}
 		return false;
@@ -1419,19 +1470,25 @@ public:
 		, _instance(instance) 
 		, _write_count(0)
 	{
-		std::cerr << "EcaEventsIn " << std::hex << _adr_first << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "EcaEventsIn " << std::hex << _adr_first << std::endl;
+		}
 	}
 	bool contains(uint32_t adr) {
 		return adr == _adr_first; 
 	}
 	bool write_access(uint32_t adr, int sel, uint32_t dat) {
-		std::cerr << "eca_event_in " << std::hex << adr << " " << dat << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "eca_event_in " << std::hex << adr << " " << dat << std::endl;
+		}
 		eca_in_buffer[_write_count] = dat;
 		software_eca.in_buffer[_write_count] = dat;
 		++_write_count;
 		if (_write_count == 8) {
 			_write_count = 0;
-			std::cerr << "====> injection of event" << std::endl;
+			if (verbosity >= 1) {
+				std::cout << "====> injection of event" << std::endl;
+			}
 			software_eca.inject();
 			//eb_slave->push_msi(eca_msi_target_adr, 0x40000);
 		}
@@ -1462,14 +1519,9 @@ public:
 		: _adr_first(adr_first) 
 		, _instance(instance) 
 	{
-		// std::cerr << "reading build-id.txt" << std::endl;
-		// std::ifstream in("build-id.txt");
-		// for (;;) {
-		// 	uint32_t value;
-		// 	in >> std::hex >> value;
-		// 	if (!in) break;
-		// 	_rom.push_back(value);
-		// }
+		if (verbosity >= 1) {
+			std::cout << "BuildIdRom" << std::endl;
+		}
 		std::string build_id_text(
 			"Project     : software timing receiver\n"
 			"Platform    : emulator on host system\n"
@@ -1534,7 +1586,9 @@ public:
 		: _adr_first(adr_first) 
 		, _instance(instance) 
 	{
-		std::cerr << "WrPpsGenerator " << std::hex << _adr_first << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "WrPpsGenerator " << std::hex << _adr_first << std::endl;
+		}
 	}
 	bool contains(uint32_t adr) {
 		return (adr >= _adr_first) && (adr < _adr_first + 0x100); 
@@ -1568,7 +1622,9 @@ public:
 		: _adr_first(adr_first) 
 		, _instance(instance) 
 	{
-		std::cerr << "IoControl " << std::hex << _adr_first << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "IoControl " << std::hex << _adr_first << std::endl;
+		}
 	}
 	bool contains(uint32_t adr) {
 		return (adr >= _adr_first) && (adr < _adr_first + 0x10000); 
@@ -1603,7 +1659,9 @@ public:
 		: _adr_first(adr_first) 
 		, _instance(instance) 
 	{
-		std::cerr << "FpgaReset " << std::hex << _adr_first << std::endl;
+		if (verbosity >= 0) {
+			std::cout << "FpgaReset " << std::hex << _adr_first << std::endl;
+		}
 	}
 	bool contains(uint32_t adr) {
 
@@ -1641,13 +1699,17 @@ public:
 		, _write_count(0)
 		, _slots(2*128, 0xffffffff)
 	{
-		std::cerr << "MsiMailbox " << std::hex << _adr_first << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "MsiMailbox " << std::hex << _adr_first << std::endl;
+		}
 	}
 	bool contains(uint32_t adr) {
 		return adr >= _adr_first && adr <= _adr_first + 2*128*4;
 	}
 	bool write_access(uint32_t adr, int sel, uint32_t dat) {
-		std::cerr << "mailbox write access: " << std::hex << adr << " " << dat << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "mailbox write access: " << std::hex << adr << " " << dat << std::endl;
+		}
 		int idx = (adr-_adr_first)/4;
 		_slots[idx] = dat;
 		if (!(idx%2)) {
@@ -1657,7 +1719,9 @@ public:
 	}
 	bool read_access(uint32_t adr, int sel, uint32_t *dat_out) {
 		*dat_out = _slots[(adr-_adr_first)/4];
-		std::cerr << "mailbox read access: " << std::hex << adr << " " << *dat_out << std::endl;
+		if (verbosity >= 1) {
+			std::cout << "mailbox read access: " << std::hex << adr << " " << *dat_out << std::endl;
+		}
 		return true;
 	}
 
@@ -1811,6 +1875,12 @@ int main(int argc, char *argv[]) {
 						return 1;
 					}
 				}
+				if (argvi == "--verbose" || argvi == "-v") {
+					++verbosity;
+				}
+				if (argvi == "--quiet" || argvi == "-q") {
+					--verbosity;
+				}
 			}
 		}
 
@@ -1876,9 +1946,11 @@ int main(int argc, char *argv[]) {
 					}
 				} 
 				if (!found_adr) {
-					std::cerr << "address not mapped: 0x" 
-				              << std::hex << std::setw(8) << std::setfill('0') << adr
-					          << std::endl;
+					if (verbosity >= 0) {
+						std::cout << "address not mapped: 0x" 
+					              << std::hex << std::setw(8) << std::setfill('0') << adr
+						          << std::endl;
+					}
 					ack = STD_LOGIC_0;
 					err = STD_LOGIC_1;
 				}
@@ -1887,10 +1959,10 @@ int main(int argc, char *argv[]) {
 			eb_slave->master_in(stb,  ack, err, STD_LOGIC_0, dat_out);
 		}
 	} catch (std::runtime_error &e) {
-		std::cerr << "error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		return false;
 	} catch (etherbone::exception_t &e) {
-		std::cerr << "eb error: " << e << std::endl;
+		std::cerr << "Etherbone Error: " << e << std::endl;
 	}
 
 	return 0;
