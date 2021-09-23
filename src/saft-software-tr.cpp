@@ -1151,10 +1151,10 @@ struct SoftwareECA {
 		uint32_t msi_adr;
 		uint32_t msi_dat;
 		Event(uint64_t _id, uint64_t _param, uint64_t _deadline, uint32_t _num, int32_t _tag, uint32_t _msi_adr, uint32_t _msi_dat) : id(_id), param(_param), deadline(_deadline), num(_num), tag(_tag), msi_adr(_msi_adr), msi_dat(_msi_dat) {}
-		bool operator==(const Event &rhs) {
+		bool operator==(const Event &rhs) const {
 			return id == rhs.id && param == rhs.param && deadline == rhs.deadline /*&& num == rhs.num*/ && tag == rhs.tag && msi_adr == rhs.msi_adr && msi_dat == rhs.msi_dat;
 		}
-		bool operator<(const Event& rhs) {
+		bool operator<(const Event& rhs) const {
 			return deadline < rhs.deadline;
 		}
 	};
