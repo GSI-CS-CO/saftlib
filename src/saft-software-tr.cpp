@@ -907,13 +907,15 @@ public:
 		}
 	}
 	bool write_access(uint32_t adr, int sel, uint32_t dat) {
-		std::cerr << "write access to FpgaReset => quit" << std::endl;
-		_reset_was_triggered = true;
-		return false;
+		if (dat == 0xdeadbeef) {
+			std::cerr << "write access to FpgaReset => quit" << std::endl;
+			_reset_was_triggered = true;
+		}
+		return true;
 	}
 	bool read_access(uint32_t adr, int sel, uint32_t *dat_out) {
 
-		return false;
+		return true;
 	}
 
 	static bool _reset_was_triggered;
