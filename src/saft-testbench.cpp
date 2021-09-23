@@ -51,7 +51,19 @@ static int test_attach_device(const std::string &device) {
 	std::cerr << "TEST ATTACH DEVICE:" << std::endl;
 	auto saftd = saftlib::SAFTd_Proxy::create();
 	try {
-		saftd->AttachDevice("tr0", device);
+		std::string logic_name = "tr0";
+		saftd->AttachDevice(logic_name, device);
+		auto devices = saftd->getDevices();
+		if (devices.find(logic_name) != devices.end()) {
+			std::cerr << "SUCCESS! Attached Device tr0 under object_path " << devices["tr0"] << std::endl;
+		} else {
+			std::cerr << "ERRROR! Device not attached under the expected name. Attached devices are: ";
+			for (auto device: devices) {
+				std::cerr << device.first << ":" << device.second << " ";
+			}
+			std::cerr << std::endl;
+			++number_of_failures;
+		}
 	} catch (saftbus::Error &e) {
 		std::cerr << "ERRROR! AttachDevice threw an error: " << e.what() << std::endl;
 		++number_of_failures;
