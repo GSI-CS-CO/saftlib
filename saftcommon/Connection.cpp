@@ -700,7 +700,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							    SAFTD_LOGT("throw",error.what(),-1,-1);
 								saftbus::write(client_fd, saftbus::METHOD_ERROR);
 								saftbus::write(client_fd, saftbus::Error::FAILED);
-								saftbus::write(client_fd, error.what());
+								saftbus::write(client_fd, std::string(error.what()));
 								fc_logger.dump(); // dump log on exeption
 							}
 						}
@@ -745,7 +745,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							SAFTD_LOGT("throw",method_invocation_rptr->get_return_error().what(),saftbus_object_id,-1); 
 							saftbus::write(client_fd, saftbus::METHOD_ERROR);
 							saftbus::write(client_fd, method_invocation_rptr->get_return_error().type());
-							saftbus::write(client_fd, method_invocation_rptr->get_return_error().what());
+							saftbus::write(client_fd, std::string(method_invocation_rptr->get_return_error().what()));
 							fc_logger.dump(); // dump log on exeption
 						} else {
 							SAFTD_LOGT("return",name.c_str(),saftbus_object_id,-1); 
