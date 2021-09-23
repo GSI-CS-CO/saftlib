@@ -113,7 +113,7 @@ saft_burst_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 saft_software_sdb_DATA = src/saft-software-tr.sdb
 saft_software_sdbdir = $(datadir)/saftlib
 saft_software_tr_SOURCES = src/saft-software-tr.cpp
-saft_software_tr_CPPFLAGS = -DDATADIR='"$(datadir)"'
+saft_software_tr_CPPFLAGS = -DDATADIR='"$(datadir)"' $(EB_CFLAGS)
 saft_software_tr_LDADD   = $(GIOMM_LIBS) $(EB_LIBS) $(EB_CFLAGS) -lpthread
 
 if GIT_TREE
