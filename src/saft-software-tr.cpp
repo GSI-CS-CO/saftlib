@@ -83,8 +83,14 @@ class EBslave
 {
 public:
 	void init();
+	void shutdown();
 
 	EBslave(bool stop_until_connected, uint32_t sdb_adr, uint32_t msi_addr_first, uint32_t msi_addr_last); 
+	~EBslave() {
+		std::cerr << "closing fd" << std::endl;
+		close(pfds[0].fd);
+		std::cerr << "destructor done" << std::endl;
+	}
 	std::string pts_name();
 
 
@@ -183,8 +189,12 @@ private:
 	std::deque<wb_stb> wb_wait_for_acks;
 
 	bool _stop_until_connected;
+	bool _shutdown;
 };
 
+void EBslave::shutdown() {
+	_shutdown = true;
+}
 
 void EBslave::init() {
 	wb_stbs.clear();
@@ -192,6 +202,8 @@ void EBslave::init() {
 	input_word_buffer.clear();
 	input_word_buffer2.clear();
 	output_word_buffer.clear();
+
+	if (_shutdown) return; // dont open the device if shutdown was initiated;
 
 	pfds[0].fd = open("/dev/ptmx", O_RDWR );//| O_NONBLOCK);
 
@@ -258,6 +270,7 @@ void EBslave::init() {
 EBslave::EBslave(bool stop_until_connected, uint32_t sdb_adr, uint32_t msi_addr_first, uint32_t msi_addr_last) 
 {
 	_stop_until_connected = stop_until_connected;
+	_shutdown = false;
 	eb_sdb_adr       = sdb_adr;
 	eb_msi_adr_first = msi_addr_first;
 	eb_msi_adr_last  = msi_addr_last;
@@ -872,6 +885,45 @@ private:
 
 
 
+class FpgaReset : public Device {
+public:
+	enum {
+		vendor_id = 0x651,
+		product_id = 0x3a362063,
+	};
+	FpgaReset(uint32_t adr_first, int instance) 
+		: _adr_first(adr_first) 
+		, _instance(instance) 
+	{
+		if (verbosity >= 0) {
+			std::cout << "FpgaReset " << std::hex << _adr_first << std::endl;
+		}
+	}
+	bool contains(uint32_t adr) {
+		if ( (adr >= _adr_first) && (adr < _adr_first + 0x100) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	bool write_access(uint32_t adr, int sel, uint32_t dat) {
+		std::cerr << "write access to FpgaReset => quit" << std::endl;
+		_reset_was_triggered = true;
+		return false;
+	}
+	bool read_access(uint32_t adr, int sel, uint32_t *dat_out) {
+
+		return false;
+	}
+
+	static bool _reset_was_triggered;
+private:
+	uint32_t _adr_first;
+	int      _instance;
+};
+bool FpgaReset::_reset_was_triggered = false;
+
+
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 // BEGINNING OF ECA RELATED CLASSES
@@ -1165,7 +1217,7 @@ struct SoftwareECA {
 
 
 	static void eca_events_to_actions(SoftwareECA *software_eca) {
-		for(;;usleep(100)) {
+		for(; !FpgaReset::_reset_was_triggered; usleep(100)) {
 			for (;;) {
 				uint64_t now = SoftwareECA::get_time_ns();
 				std::lock_guard<std::mutex> lock_events(software_eca->events_mutex);
@@ -1649,42 +1701,6 @@ private:
 
 
 
-class FpgaReset : public Device {
-public:
-	enum {
-		vendor_id = 0x651,
-		product_id = 0x3a362063,
-	};
-	FpgaReset(uint32_t adr_first, int instance) 
-		: _adr_first(adr_first) 
-		, _instance(instance) 
-	{
-		if (verbosity >= 0) {
-			std::cout << "FpgaReset " << std::hex << _adr_first << std::endl;
-		}
-	}
-	bool contains(uint32_t adr) {
-
-		if ( (adr >= _adr_first) && (adr < _adr_first + 0x100) ) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	bool write_access(uint32_t adr, int sel, uint32_t *dat_out) {
-		exit(1);
-		return false;
-	}
-	bool read_access(uint32_t adr, int sel, uint32_t *dat_out) {
-
-		return false;
-	}
-
-private:
-	uint32_t _adr_first;
-	int      _instance;
-};
-
 
 
 class MsiMailbox : public Device {
@@ -1920,7 +1936,12 @@ int main(int argc, char *argv[]) {
 
 		std::thread eca_thread(SoftwareECA::eca_events_to_actions, &software_eca);
 
-		while(true){
+		int ending_countdown = 3; // after reset, 3 more eb_slave cycles are needed to end the eb_master transaction
+		while(FpgaReset::_reset_was_triggered == false || ending_countdown > 0){
+			if (FpgaReset::_reset_was_triggered) {
+				eb_slave->shutdown();
+				std::cerr << --ending_countdown << std::endl;
+			}
 			eb_slave->master_out(&cyc,&stb,&we,&adr,&dat,&sel);
 			if (cyc==STD_LOGIC_1 && stb==STD_LOGIC_1) {
 				bool found_adr = false;
@@ -1958,6 +1979,8 @@ int main(int argc, char *argv[]) {
 
 			eb_slave->master_in(stb,  ack, err, STD_LOGIC_0, dat_out);
 		}
+		eca_thread.join();
+		delete eb_slave;
 	} catch (std::runtime_error &e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 		return false;
