@@ -46,15 +46,34 @@ static int test_exceptions() {
 	return number_of_failures;
 }
 
-int main() {
-	std::cout << "starting saftlib tests" << std::endl;
+static int test_attach_device(const std::string &device) {
+	int number_of_failures = 0;
+	std::cerr << "TEST ATTACH DEVICE:" << std::endl;
+	auto saftd = saftlib::SAFTd_Proxy::create();
+	try {
+		saftd->AttachDevice("tr0", device);
+	} catch (saftbus::Error &e) {
+		std::cerr << "ERRROR! AttachDevice threw an error: " << e.what() << std::endl;
+		++number_of_failures;
+	}
+	return number_of_failures;
+}
+
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		std::cerr << "ERROR! need etherbone device as command line argument to run the tests" << std::endl;
+		std::cerr << "usage: " << argv[0] << " <eb-device>" << std::endl;
+		return 1;
+	}
 
 	int number_of_failures = 0;
+	std::cout << "Starting saftlib tests" << std::endl;
 
 	number_of_failures += test_exceptions();
+	number_of_failures += test_attach_device(argv[1]);
 
 	if (number_of_failures == 0) {
-		std::cerr << "ALL TESTS SUCCSEDED! " << std::endl;
+		std::cerr << "ALL TESTS SUCCESSFUL! " << std::endl;
 	}
 
 	return number_of_failures;
