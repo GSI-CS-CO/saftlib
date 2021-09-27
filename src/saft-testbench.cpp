@@ -16,10 +16,10 @@
 #include "interfaces/iOwned.h"
 #include "CommonFunctions.h"
 
-static void timeout_thread_function(bool *success, int timeout) {
+static void timeout_thread_function(bool *success, const char *testname, int timeout) {
 	sleep(timeout);
 	if (*success) return;
-	std::cerr << "FAILURE! Test exeeded timeout of " << timeout << " sec!" << std::endl;
+	std::cerr << "FAILURE! Test \"" << testname << "\" exeeded timeout of " << timeout << " sec!" << std::endl;
 	exit(1);
 }
 
@@ -28,7 +28,7 @@ static int test_exceptions() {
 	std::cerr << "TEST EXCEPTIONS:" << std::endl;
 	// start a second thread which will terminate the programm with an error if the test takes too long (=> timout)
 	bool success = false;
-	std::thread timeout_thread( &timeout_thread_function, &success, 1);
+	std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 1);
 
 	auto saftd = saftlib::SAFTd_Proxy::create();
 	try {
@@ -53,7 +53,7 @@ static int test_attach_device(const std::string &device) {
 	std::cerr << "TEST ATTACH DEVICE:" << std::endl;
 	// start a second thread which will terminate the programm with an error if the test takes too long (=> timout)
 	bool success = false;
-	std::thread timeout_thread( &timeout_thread_function, &success, 1);
+	std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 1);
 
 	auto saftd = saftlib::SAFTd_Proxy::create();
 	try {
@@ -92,7 +92,7 @@ static int test_get_property(const std::string &device) {
 	std::cerr << "TEST GET PROERTY" << std::endl;
 	// start a second thread which will terminate the programm with an error if the test takes too long (=> timout)
 	bool success = false;
-	std::thread timeout_thread( &timeout_thread_function, &success, 1);
+	std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 1);
 
 	try {
 		auto saftd = saftlib::SAFTd_Proxy::create();
