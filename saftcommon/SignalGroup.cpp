@@ -64,7 +64,7 @@ namespace saftlib
 		int result = wait_for_one_signal(timeout_ms);
 		if (result) {
 			// there was a signal, timeout was not hit. In this case look for other pending signals using a timeout of 0
-			while(globalSignalGroup.wait_for_one_signal(0)); // this loop will end if the timeout was hit (if no further signals are present)
+			while(wait_for_one_signal(0)); // this loop will end if the timeout was hit (if no further signals are present)
 		}
 		return result;
 	}
