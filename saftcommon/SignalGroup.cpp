@@ -61,6 +61,15 @@ namespace saftlib
 
 	int SignalGroup::wait_for_signal(int timeout_ms)
 	{
+		int result = wait_for_one_signal(timeout_ms);
+		if (result) {
+			// there was a signal, timeout was not hit. In this case look for other pending signals using a timeout of 0
+			while(globalSignalGroup.wait_for_one_signal(0)); // this loop will end if the timeout was hit (if no further signals are present)
+		}
+		return result;
+	}
+	int SignalGroup::wait_for_one_signal(int timeout_ms)
+	{
 		int result;
 		{
 			std::lock_guard<std::mutex> lock1(_m1);
