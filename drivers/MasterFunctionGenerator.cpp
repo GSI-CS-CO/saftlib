@@ -43,6 +43,7 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
    activeFunctionGenerators(args.functionGenerators),
    generateIndividualSignals(false)   
 {
+  tr=nullptr;
   for (auto fg : allFunctionGenerators)
   {
     fg->signal_running.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_running),fg)); 
@@ -73,7 +74,6 @@ MasterFunctionGenerator::~MasterFunctionGenerator()
 void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImpl>& fg, bool running)
 {
   DRIVER_LOG("",-1,running);
-    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Running(fg->GetName(), running);
@@ -83,7 +83,6 @@ void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImp
 void MasterFunctionGenerator::on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg)
 {
   DRIVER_LOG("",-1,-1);
-    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Refill(fg->GetName());
@@ -95,7 +94,6 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
 {
 
   DRIVER_LOG("",-1,armed);
-    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals)
   {
     Armed(fg->GetName(), armed);
@@ -120,7 +118,6 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
 void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImpl>& fg, bool enabled)
 {
   DRIVER_LOG("",-1,-1);
-  startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals)
   {
     Enabled(fg->GetName(), enabled);
@@ -131,7 +128,7 @@ void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImp
 {
 
   DRIVER_LOG("",-1,-1);
-  startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
+  tr=nullptr;  // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals)
   {
     SigStarted(fg->GetName(), saftlib::makeTimeTAI(time));
@@ -154,7 +151,6 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
 	}
   if (all_stopped)
   {
-    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
     DRIVER_LOG("all_stopped",-1,-1);
     SigAllStopped(saftlib::makeTimeTAI(time));
   }
@@ -364,7 +360,7 @@ void MasterFunctionGenerator::Flush()
 
 uint32_t MasterFunctionGenerator::getStartTag() const
 {
-  return startTag&0x0fffffff;
+  return startTag;
 }
 
 void MasterFunctionGenerator::setGenerateIndividualSignals(bool newvalue)
@@ -423,10 +419,10 @@ void MasterFunctionGenerator::reset_all()
 void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
 {
   DRIVER_LOG("",-1,-1);
-  if ((startTag & 0x80000000)==0) { // prevent second execution of Abort if the flag is still set (it gets cleared once all fg channels are stopped)
+  if (tr==nullptr) { // prevent second execution of Abort if the flag is still set (it gets cleared once all fg channels are stopped)
     ownerOnly();
     reset_all();
-    startTag |= 0x80000000;
+    tr=(TimingReceiver*)(0xffff0000);
     // sleep(5);
     // if (wait_for_abort_ack)
     // {
@@ -456,12 +452,11 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
 	    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "FG Enabled, cannot set StartTag");
 	}
   
-  if (val != (startTag&0x0fffffff)) {
-    startTag &= 0xf0000000;
-    startTag |= (val&0x0fffffff);
+  if (val != startTag) {
+    startTag = val;
   	for (auto fg : activeFunctionGenerators)
 		{
-			fg->startTag = (startTag&0x0fffffff);
+			fg->startTag = startTag;
 		}
   }
 }
