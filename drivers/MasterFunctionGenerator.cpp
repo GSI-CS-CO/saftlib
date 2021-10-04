@@ -419,10 +419,11 @@ void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
   DRIVER_LOG("",-1,-1);
   ownerOnly();
   reset_all();
-  if (wait_for_abort_ack)
-  {
-    waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
-  }
+  sleep(5);
+  // if (wait_for_abort_ack)
+  // {
+  //   waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
+  // }
 }
 
 void MasterFunctionGenerator::ownerQuit()

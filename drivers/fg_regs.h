@@ -74,9 +74,10 @@
 
 
 // Software interrupt numbers; host=>lm32
-#define SWI_ENABLE  0x00020000UL
-#define SWI_DISABLE 0x00030000UL
-#define SWI_SCAN    0x00040000UL // cause firmware to scan all busses for fg channels
+#define SWI_INIT_BUFFERS 0x00000000UL
+#define SWI_ENABLE       0x00020000UL
+#define SWI_DISABLE      0x00030000UL
+#define SWI_SCAN         0x00040000UL // cause firmware to scan all busses for fg channels
 
 // interrupt payload; lm32=>host
 #define IRQ_DAT_REFILL          0

@@ -583,6 +583,7 @@ void FunctionGeneratorImpl::Reset()
   if (channel == -1) return; // nothing to abort
   if (resetTimeout.connected()) return; // reset already in progress
   tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
+  tr->getDevice().write(swi, EB_DATA32, SWI_INIT_BUFFERS | channel);
   // expect disarm or started+stopped, but if not ... timeout:
   resetTimeout = Slib::signal_timeout().connect(
     sigc::mem_fun(*this, &FunctionGeneratorImpl::ResetFailed), 250); // 250ms
