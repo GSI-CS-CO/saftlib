@@ -73,6 +73,7 @@ MasterFunctionGenerator::~MasterFunctionGenerator()
 void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImpl>& fg, bool running)
 {
   DRIVER_LOG("",-1,running);
+    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Running(fg->GetName(), running);
@@ -82,6 +83,7 @@ void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImp
 void MasterFunctionGenerator::on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg)
 {
   DRIVER_LOG("",-1,-1);
+    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Refill(fg->GetName());
@@ -93,6 +95,7 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
 {
 
   DRIVER_LOG("",-1,armed);
+    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals)
   {
     Armed(fg->GetName(), armed);
@@ -117,6 +120,7 @@ void MasterFunctionGenerator::on_fg_armed(std::shared_ptr<FunctionGeneratorImpl>
 void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImpl>& fg, bool enabled)
 {
   DRIVER_LOG("",-1,-1);
+  startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals)
   {
     Enabled(fg->GetName(), enabled);
@@ -127,6 +131,7 @@ void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImp
 {
 
   DRIVER_LOG("",-1,-1);
+  startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals)
   {
     SigStarted(fg->GetName(), saftlib::makeTimeTAI(time));
@@ -149,6 +154,7 @@ void MasterFunctionGenerator::on_fg_stopped(std::shared_ptr<FunctionGeneratorImp
 	}
   if (all_stopped)
   {
+    startTag &= 0x7fffffff; // clear the flag that prevents new calls to abort    
     DRIVER_LOG("all_stopped",-1,-1);
     SigAllStopped(saftlib::makeTimeTAI(time));
   }
@@ -358,7 +364,7 @@ void MasterFunctionGenerator::Flush()
 
 uint32_t MasterFunctionGenerator::getStartTag() const
 {
-  return startTag;
+  return startTag&0x0fffffff;
 }
 
 void MasterFunctionGenerator::setGenerateIndividualSignals(bool newvalue)
@@ -417,13 +423,18 @@ void MasterFunctionGenerator::reset_all()
 void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
 {
   DRIVER_LOG("",-1,-1);
-  ownerOnly();
-  reset_all();
-  sleep(5);
-  // if (wait_for_abort_ack)
-  // {
-  //   waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
-  // }
+  if ((startTag & 0x80000000)==0) { // prevent second execution of Abort if the flag is still set (it gets cleared once all fg channels are stopped)
+    ownerOnly();
+    reset_all();
+    startTag |= 0x80000000;
+    // sleep(5);
+    // if (wait_for_abort_ack)
+    // {
+    //   // waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
+    // }
+  } else {
+    DRIVER_LOG("prevent extra Abort",-1,-1);
+  }
 }
 
 void MasterFunctionGenerator::ownerQuit()
@@ -445,11 +456,12 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
 	    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "FG Enabled, cannot set StartTag");
 	}
   
-  if (val != startTag) {
-    startTag = val;
+  if (val != (startTag&0x0fffffff)) {
+    startTag &= 0xf0000000;
+    startTag |= (val&0x0fffffff);
   	for (auto fg : activeFunctionGenerators)
 		{
-			fg->startTag=startTag;
+			fg->startTag = (startTag&0x0fffffff);
 		}
   }
 }
@@ -613,6 +625,7 @@ void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, 
   do
   {
     context->iteration(false);
+    usleep(1000);
     clock_gettime(CLOCK_MONOTONIC, &now);
     int dt_ms = (now.tv_sec - start.tv_sec)*1000 
               + (now.tv_nsec - start.tv_nsec)/1000000;
