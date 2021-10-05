@@ -112,9 +112,26 @@ static int test_get_property(const std::string &device) {
 }
 
 int main(int argc, char** argv) {
-	if (argc != 2) {
-		std::cerr << "ERROR! need etherbone device as command line argument to run the tests" << std::endl;
-		std::cerr << "usage: " << argv[0] << " <eb-device>" << std::endl;
+	// if (argc != 2) {
+	// 	std::cerr << "ERROR! need etherbone device as command line argument to run the tests" << std::endl;
+	// 	std::cerr << "usage: " << argv[0] << " <eb-device>" << std::endl;
+	// 	return 1;
+	// }
+
+
+	system("saft-software-tr&");
+	system("saftd&");
+	sleep(1);
+	std::ifstream eb_device_name_in("/tmp/simbridge-eb-device");
+	if (!eb_device_name_in) {
+		std::cerr << "ERROR! cannot start software timing receiver" << std::endl;
+		return 1;
+	}
+
+	std::string eb_device_name;
+	eb_device_name_in >> eb_device_name;
+	if (!eb_device_name_in) {
+		std::cerr << "ERROR! cannot read eb device name from file" << std::endl;
 		return 1;
 	}
 
@@ -122,13 +139,16 @@ int main(int argc, char** argv) {
 	std::cout << "Starting saftlib tests" << std::endl;
 
 	number_of_failures += test_exceptions();
-	number_of_failures += test_attach_device(argv[1]);
-	number_of_failures += test_get_property(argv[1]);
+	number_of_failures += test_attach_device(eb_device_name.c_str());
+	number_of_failures += test_get_property(eb_device_name.c_str());
 
 
 	if (number_of_failures == 0) {
 		std::cerr << "ALL TESTS SUCCESSFUL! " << std::endl;
 	}
+
+	system("killall -9 saftd");
+	system("killall saft-software-tr");
 
 	return number_of_failures;
 }
