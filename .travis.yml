@@ -48,7 +48,7 @@ before_script:
 - git clone https://github.com/GSI-CS-CO/bel_projects.git
 - cd bel_projects
 - git checkout master
-- ./fix-git.sh
+- make
 - sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
 - cd ip_cores/saftlib
 - "if [ \"$TRAVIS_PULL_REQUEST\" != \"false\" ]; then

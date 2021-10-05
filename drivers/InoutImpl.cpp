@@ -98,13 +98,16 @@ bool InoutImpl::ReadCombinedOutput()
   eb_data_t readCombinedOutput;
   eb_data_t inputOffset;
   unsigned inputRegOffset = 0;
+  unsigned totalInputs = 0;
 
   cycle.open(tr->getDevice());
   if (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eGPIO_Info, EB_DATA32, &inputOffset); }
   if (io_channel == IO_CFG_CHANNEL_LVDS) { cycle.read(io_control_addr+eLVDS_Info, EB_DATA32, &inputOffset); }
   else                                   { throw saftbus::Error(saftbus::Error::INVALID_ARGS, "IO channel unknown!"); }
   cycle.close();
-  inputOffset = ((unsigned) inputOffset)*4;
+  totalInputs = (unsigned) inputOffset;
+  totalInputs = ((totalInputs&IO_INFO_IN_COUNT_MASK) >> IO_INFO_IN_SHIFT) + ((totalInputs&IO_INFO_INOUT_COUNT_MASK) >> IO_INFO_INOUT_SHIFT);
+  inputRegOffset = totalInputs*4;
   
   cycle.open(tr->getDevice());
   if      (io_channel == IO_CFG_CHANNEL_GPIO) { cycle.read(io_control_addr+eGet_GPIO_In_Begin+inputRegOffset+(io_index*4), EB_DATA32, &readCombinedOutput); }
@@ -113,7 +116,7 @@ bool InoutImpl::ReadCombinedOutput()
   cycle.close();
 
   if(readCombinedOutput) { return true; }
-  else           { return false; }
+  else                   { return false; }
 }
 
 bool InoutImpl::getOutputEnable() const
