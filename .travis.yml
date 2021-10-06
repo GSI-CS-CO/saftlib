@@ -40,11 +40,15 @@ install:
 - sudo apt-get install libglib2.0 -y
 - sudo apt-get install xsltproc -y
 - sudo apt-get install libboost-dev -y
+- sudo update-ca-certificates
 
 # saftlib depends on bel_projects
 # - build bel_projects first (master branch only) and
 # - build saftlib project (override built-in checkout by Travis)
 before_script:
+- export GIT_SSL_NO_VERIFY=true
+- git config http.sslVerify false
+- git config --global http.sslverify "false"
 - git clone https://github.com/GSI-CS-CO/bel_projects.git
 - cd bel_projects
 - git checkout master
