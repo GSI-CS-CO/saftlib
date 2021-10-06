@@ -68,10 +68,8 @@ before_script:
 - make driver
 - sudo make install
 
-# make and install saftlib
+# make and install saftlib and run the testbench
 script:
 - make saftlib -j$(nproc)
-
-after_success:
 - sudo make saftlib-install
-- saft-testbench
+- SAFTBUS_SOCKET_PATH=`pwd`/saftbus_socket LD_LIBRARY_PATH=/usr/local/lib saft-testbench
