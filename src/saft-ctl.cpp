@@ -481,7 +481,7 @@ int main(int argc, char** argv)
       // exit the program in a second thread, because the main
       // thread will be stuck waiting for the response from saftd
       // which will never be sent after calling the quit() method
-      std::thread t( [](){usleep(100000);exit(1);} );
+      std::thread t( [](){usleep(100000);exit(0);} );
       saftd->Quit();
       t.join();
     }

@@ -70,3 +70,4 @@ script:
 
 after_success:
 - sudo make saftlib-install
+- saft-testbench
