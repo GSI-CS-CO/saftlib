@@ -43,7 +43,6 @@ MasterFunctionGenerator::MasterFunctionGenerator(const ConstructorType& args)
    activeFunctionGenerators(args.functionGenerators),
    generateIndividualSignals(false)   
 {
-  tr=nullptr;
   for (auto fg : allFunctionGenerators)
   {
     fg->signal_running.connect(sigc::bind<0>(sigc::mem_fun(*this, &MasterFunctionGenerator::on_fg_running),fg)); 
@@ -126,9 +125,7 @@ void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImp
 
 void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time)
 {
-
   DRIVER_LOG("",-1,-1);
-  tr=nullptr;  // clear the flag that prevents new calls to abort    
   if (generateIndividualSignals)
   {
     SigStarted(fg->GetName(), saftlib::makeTimeTAI(time));
@@ -419,17 +416,11 @@ void MasterFunctionGenerator::reset_all()
 void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
 {
   DRIVER_LOG("",-1,-1);
-  if (tr==nullptr) { // prevent second execution of Abort if the flag is still set (it gets cleared once all fg channels are stopped)
-    ownerOnly();
-    reset_all();
-    tr=(TimingReceiver*)(0xffff0000);
-    // sleep(5);
-    // if (wait_for_abort_ack)
-    // {
-    //   // waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
-    // }
-  } else {
-    DRIVER_LOG("prevent extra Abort",-1,-1);
+  ownerOnly();
+  reset_all();
+  if (wait_for_abort_ack)
+  {
+    waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
   }
 }
 
