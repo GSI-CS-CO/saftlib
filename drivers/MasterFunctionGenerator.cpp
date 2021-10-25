@@ -125,7 +125,6 @@ void MasterFunctionGenerator::on_fg_enabled(std::shared_ptr<FunctionGeneratorImp
 
 void MasterFunctionGenerator::on_fg_started(std::shared_ptr<FunctionGeneratorImpl>& fg, uint64_t time)
 {
-
   DRIVER_LOG("",-1,-1);
   if (generateIndividualSignals)
   {
@@ -448,7 +447,7 @@ void MasterFunctionGenerator::setStartTag(uint32_t val)
     startTag = val;
   	for (auto fg : activeFunctionGenerators)
 		{
-			fg->startTag=startTag;
+			fg->startTag = startTag;
 		}
   }
 }
@@ -612,6 +611,7 @@ void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, 
   do
   {
     context->iteration(false);
+    usleep(1000);
     clock_gettime(CLOCK_MONOTONIC, &now);
     int dt_ms = (now.tv_sec - start.tv_sec)*1000 
               + (now.tv_nsec - start.tv_nsec)/1000000;

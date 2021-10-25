@@ -393,14 +393,14 @@ bool FunctionGeneratorImpl::appendParameterSet(
 
 void FunctionGeneratorImpl::flush()
 {
-    DRIVER_LOG("channel",-1,channel);
+  DRIVER_LOG("channel",-1,channel);
   if (enabled) {
     DRIVER_LOG("enabled_flush_impossible",-1,-1);
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Enabled, cannot Flush");
   }
     
   assert (channel == -1);
-  
+  DRIVER_LOG("clear fifos",-1,-1);
   fillLevel = 0;
   fifo.clear();
 }
@@ -508,14 +508,22 @@ void FunctionGeneratorImpl::acquireChannel()
 void FunctionGeneratorImpl::releaseChannel()
 {
   DRIVER_LOG("",-1,channel);
+  int previous_channel = channel;
   assert (channel != -1);
-  
   resetTimeout.disconnect();
+  if (abort) {
+    DRIVER_LOG("SWI_INIT_BUFFERS",-1,previous_channel);
+    tr->getDevice().write(swi, EB_DATA32, SWI_INIT_BUFFERS | channel);
+  }
   allocation->operator[](channel) = -1;
   channel = -1;
   filled = 0;
   enabled = false;
   signal_enabled.emit(enabled);
+  if (abort) {
+    DRIVER_LOG("calling flush()",-1,previous_channel);
+    flush();
+  }
 }
 
 void FunctionGeneratorImpl::arm()
@@ -581,11 +589,17 @@ void FunctionGeneratorImpl::Reset()
 {
   DRIVER_LOG("",-1,channel);
   if (channel == -1) return; // nothing to abort
-  if (resetTimeout.connected()) return; // reset already in progress
+  if (abort) {
+    DRIVER_LOG("abort alreay in progress",-1,channel);
+    return; // abort alreay in progress
+  }
+  abort = true;
   tr->getDevice().write(swi, EB_DATA32, SWI_DISABLE | channel);
   // expect disarm or started+stopped, but if not ... timeout:
-  resetTimeout = Slib::signal_timeout().connect(
-    sigc::mem_fun(*this, &FunctionGeneratorImpl::ResetFailed), 250); // 250ms
+  if (!resetTimeout.connected()) {
+    resetTimeout = Slib::signal_timeout().connect(
+      sigc::mem_fun(*this, &FunctionGeneratorImpl::ResetFailed), 1000); // 1 sec
+  }
 }
 
 void FunctionGeneratorImpl::Abort()
