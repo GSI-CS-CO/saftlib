@@ -141,9 +141,9 @@ std::string SAFTd::AttachDevice(const std::string& name, const std::string& path
     
       bool poll_msis = false;
       std::string path_prefix = path.substr(0,7);
-      if (path_prefix == "dev/tty") {
+      // enable polling MSIs for USB and pseudo-terminal devices
+      if (path_prefix == "dev/tty" || path_prefix == "dev/pts") {
         poll_msis = true;
-        //std::cerr << "polling msi enabled" << std::endl;
       }
       struct OpenDevice od(edev, first, last, poll_msis);
       od.name = name;

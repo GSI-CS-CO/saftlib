@@ -2,13 +2,13 @@ SUBDIRS = interfaces saftcommon
 SAFTLIBS = interfaces/libsaftlib.la saftcommon/libsaftcommon.la $(SIGCPP_LIBS) -lz
 
 sbin_PROGRAMS = saftd
-bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-wbm-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-uni saft-eb-fwd saft-burst-ctl
+bin_PROGRAMS = saft-ctl saft-fg-ctl saft-mfg-ctl saft-io-ctl saft-pps-gen saft-ecpu-ctl saft-wbm-ctl saft-scu-ctl saft-clk-gen saft-dm saft-gmt-check saft-lcd saft-uni saft-eb-fwd saft-burst-ctl saft-software-tr saft-testbench
 noinst_PROGRAMS = client
 
 pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftlib.pc
 
-EXTRA_DIST = saftlib.pc.in
+EXTRA_DIST = saftlib.pc.in src/saft-software-tr.sdb
 
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = $(EB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir) -I $(top_builddir)/saftbus -I $(top_builddir)/saftcommon
@@ -109,6 +109,15 @@ saft_eb_fwd_LDADD   = $(SAFTLIBS)
 
 saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp
 saft_burst_ctl_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
+
+saft_software_sdb_DATA = src/saft-software-tr.sdb
+saft_software_sdbdir = $(datadir)/saftlib
+saft_software_tr_SOURCES = src/saft-software-tr.cpp
+saft_software_tr_CPPFLAGS = -DDATADIR='"$(datadir)"' $(EB_CFLAGS)
+saft_software_tr_LDADD   = $(GIOMM_LIBS) $(EB_LIBS) $(EB_CFLAGS) -lpthread
+
+saft_testbench_SOURCES = src/saft-testbench.cpp
+saft_testbench_LDADD   = $(GIOMM_LIBS) $(SAFTLIBS) -lpthread
 
 if GIT_TREE
 version.h:

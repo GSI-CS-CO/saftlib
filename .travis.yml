@@ -40,15 +40,19 @@ install:
 - sudo apt-get install libglib2.0 -y
 - sudo apt-get install xsltproc -y
 - sudo apt-get install libboost-dev -y
+- sudo update-ca-certificates
 
 # saftlib depends on bel_projects
 # - build bel_projects first (master branch only) and
 # - build saftlib project (override built-in checkout by Travis)
 before_script:
+- export GIT_SSL_NO_VERIFY=true
+- git config http.sslVerify false
+- git config --global http.sslverify "false"
 - git clone https://github.com/GSI-CS-CO/bel_projects.git
 - cd bel_projects
 - git checkout master
-- ./fix-git.sh
+- make
 - sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
 - cd ip_cores/saftlib
 - "if [ \"$TRAVIS_PULL_REQUEST\" != \"false\" ]; then
@@ -64,9 +68,8 @@ before_script:
 - make driver
 - sudo make install
 
-# make and install saftlib
+# make and install saftlib and run the testbench
 script:
 - make saftlib -j$(nproc)
-
-after_success:
 - sudo make saftlib-install
+- SAFTBUS_SOCKET_PATH=`pwd`/saftbus_socket LD_LIBRARY_PATH=/usr/local/lib saft-testbench
