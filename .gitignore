@@ -17,6 +17,8 @@ saft-eb-fwd
 saft-wbm-ctl
 saft-burst-ctl
 saftcommon/saftbus-ctl
+saft-software-tr
+saft-testbench
 # Automake junk dirs
 tools
 m4
