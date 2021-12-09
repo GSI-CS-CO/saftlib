@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <thread>
 #include <iostream>
+#include <cstring>
 
 #include <poll.h>
 
@@ -17,7 +18,6 @@ namespace mini_saftlib {
 			return pfds;
 		}
 	};
-
 
 	Source::Source() 
 		: d(std::make_unique<Impl>())
@@ -71,9 +71,11 @@ namespace mini_saftlib {
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 
 		//////////////////
-		// preparation
+		// preparation 
+		// (find the earliest timeout)
 		//////////////////
 		d->pfds.clear();
+		d->source_pfds.clear();
 		auto timeout = no_timeout; 
 		for(auto &source: d->sources) {
 			auto timeout_source = no_timeout;
@@ -86,7 +88,9 @@ namespace mini_saftlib {
 				}
 			}
 			for(auto it = source->d->get_pfds().cbegin(); it != source->d->get_pfds().cend(); ++it) {
+				// create a packed array of pfds that can be passed to poll()
 				d->pfds.push_back(**it);
+				// also create an array of pointers to pfds to where the poll() results can be copied back
 				d->source_pfds.push_back(*it);
 			}
 		}
@@ -103,6 +107,8 @@ namespace mini_saftlib {
 					// copy the results back to the owners of the pfds
 					d->source_pfds[i]->revents = d->pfds[i].revents;
 				}
+			} else if (poll_result < 0) {
+				std::cerr << "poll error: " << strerror(errno) << std::endl;
 			} 
 		} else if (timeout > std::chrono::milliseconds(0)) {
 			std::this_thread::sleep_for(timeout);
@@ -213,24 +219,27 @@ namespace mini_saftlib {
 		sigc::slot<bool, int, int> slot;
 		struct pollfd pfd;
 		int destroy_condition;
-		Impl(sigc::slot<bool, int, int> s, int fd, int condition, int destroy_cond) 
-			: slot(s)
-		{
-			pfd.fd = fd;
-			pfd.events = condition;
-			pfd.revents = 0;
-			destroy_condition = destroy_cond;
-		}
+		int id;
+		static int id_source;
 	};
+	int IoSource::Impl::id_source = 0;
 
 	IoSource::IoSource(sigc::slot<bool, int, int> slot, int fd, int condition, int destroy_condition) 
-		: d(std::make_unique<Impl>(slot, fd, condition, destroy_condition))
+		: d(std::make_unique<Impl>())
 	{
+		d->slot              = slot;
+		d->pfd.fd            = fd;
+		d->pfd.events        = condition;
+		d->pfd.revents       = 0;
+		d->destroy_condition = destroy_condition;
+		d->id = d->id_source++;
+		// std::cerr << "IoSource(" << d->id << ")" << std::endl;
 		add_poll(d->pfd);
 	}
 	IoSource::~IoSource() = default;
 
 	bool IoSource::prepare(std::chrono::milliseconds &timeout_ms) {
+		// std::cerr << "prepare IoSource(" << d->id << ")" << std::endl;
 		if (d->pfd.revents & d->pfd.events) {
 			return true;
 		}
@@ -242,6 +251,7 @@ namespace mini_saftlib {
 	}
 
 	bool IoSource::check() {
+		// std::cerr << "check IoSource(" << d->id << ") " << d->pfd.revents << " "<< d->pfd.events << std::endl;
 		if (d->pfd.revents & d->pfd.events) {
 			return true;
 		}
@@ -249,11 +259,13 @@ namespace mini_saftlib {
 	}
 
 	bool IoSource::dispatch() {
+		// std::cerr << "dispatch IoSource(" << d->id << ")" << std::endl;
 		auto result = d->slot(d->pfd.fd, d->pfd.revents);
 		if (!result) {
 			remove_poll(d->pfd);
 			destroy();
 		}
+		d->pfd.revents = 0; // clear the events after  the dispactching
 		return result;
 	}
 

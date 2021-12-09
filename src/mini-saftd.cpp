@@ -1,4 +1,6 @@
 #include <loop.hpp>
+#include <server_connection.hpp>
+
 #include <iostream>
 
 #include <fcntl.h>  // open()
@@ -16,15 +18,15 @@ bool timeout_callback() {
 
 bool timeout_callback2(mini_saftlib::Loop *loop) {
 	static int i = 0;
-	static int j = 0;
+	// static int j = 0;
 	std::cout << "  tock" << std::endl;
 	if (++i == 6) {
 		i = 0;
 		loop->connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_callback),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)));
 	}
-	if (++j == 10) {
-		loop->quit();
-	}
+	// if (++j == 10) {
+	// 	loop->quit();
+	// }
 	return true;
 }
 
@@ -39,9 +41,11 @@ int main() {
 
 	mini_saftlib::Loop loop;
 
-	int fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
+	mini_saftlib::ServerConnection server_connection(loop);
 
-	loop.connect(std::make_shared<mini_saftlib::IoSource>(sigc::ptr_fun(fd_callback), fd, POLLIN));
+	// int fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
+
+	// loop.connect(std::make_shared<mini_saftlib::IoSource>(sigc::ptr_fun(fd_callback), fd, POLLIN));
 	loop.connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_callback ), std::chrono::milliseconds(1000)));
 	loop.connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::bind(sigc::ptr_fun(timeout_callback2),&loop), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)));
 	loop.run();
