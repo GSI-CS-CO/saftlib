@@ -9,9 +9,9 @@
 
 namespace mini_saftlib {
 
+
 	class Source {
 	friend class Loop;
-	friend bool operator==(std::shared_ptr<Source> lhs, const Source *rhs);
 	public:
 		Source();
 		virtual ~Source();
@@ -23,8 +23,7 @@ namespace mini_saftlib {
 		void remove_poll(struct pollfd &pfd);
 		void destroy();
 	private:
-		struct Impl;
-		std::unique_ptr<Impl> d;
+		struct Impl; std::unique_ptr<Impl> d;
 	};
 
 	class Loop {
@@ -33,13 +32,21 @@ namespace mini_saftlib {
 		~Loop();
 		bool iteration(bool may_block);
 		void run();
+		void quit();
 		bool connect(std::shared_ptr<Source> source);
 		void remove(Source *s);
 	private:
-		struct Impl;
-		std::unique_ptr<Impl> d;
+		struct Impl; std::unique_ptr<Impl> d;
 	};
 
+    /////////////////////////////////////
+	// Define two useful Source types
+    /////////////////////////////////////
+
+
+    // call <slot> whenever <interval> amount of time has passed.
+    // fist execution starts at <inteval>+<offset>
+    // source is destroyed if <slot> returns false
 	class TimeoutSource : public Source {
 	public:
 		TimeoutSource(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset = std::chrono::milliseconds(0));
@@ -48,20 +55,20 @@ namespace mini_saftlib {
 		bool check() override;
 		bool dispatch() override;
 	private:
-		struct Impl;
-		std::unique_ptr<Impl> d;
+		struct Impl; std::unique_ptr<Impl> d;
 	};
 
+	// call <slot> whenever <fd> fulfills <condition> (usually POLLIN or POLLOUT)
+	// source is destroyed if POLLHP is seen on <fd>
 	class IoSource : public Source {
 	public:
-		IoSource(sigc::slot<bool, int, int> slot, int fd, int condition);
+		IoSource(sigc::slot<bool, int, int> slot, int fd, int condition, int destroy_condition = 0);
 		~IoSource();
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;
 		bool dispatch() override;
 	private:
-		struct Impl;
-		std::unique_ptr<Impl> d;
+		struct Impl; std::unique_ptr<Impl> d;
 	};
 
 }

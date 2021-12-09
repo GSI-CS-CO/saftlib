@@ -50,15 +50,29 @@ namespace mini_saftlib {
 		std::vector<std::shared_ptr<Source> > sources;
 		std::vector<struct pollfd>  pfds;
 		std::vector<struct pollfd*> source_pfds;
+		bool run;
 	};
 
 	Loop::Loop() 
 		: d(std::make_unique<Impl>())
-	{}
+	{
+		// reserve all the vectors with enough space to avoid 
+		// dynamic allocation in normal operation
+		const size_t revserve_that_much = 1024;
+		d->removed_sources.reserve(revserve_that_much);
+		d->sources.reserve(revserve_that_much);
+		d->pfds.reserve(revserve_that_much);
+		d->source_pfds.reserve(revserve_that_much);
+		d->run = true;
+	}
 	Loop::~Loop() = default;
 
 	bool Loop::iteration(bool may_block) {
 		static const auto no_timeout = std::chrono::milliseconds(-1);
+
+		//////////////////
+		// preparation
+		//////////////////
 		d->pfds.clear();
 		auto timeout = no_timeout; 
 		for(auto &source: d->sources) {
@@ -79,6 +93,9 @@ namespace mini_saftlib {
 		if (!may_block) {
 			timeout = std::chrono::milliseconds(0);
 		}
+		//////////////////
+		// polling / waiting
+		//////////////////
 		if (d->pfds.size() > 0) {
 			int poll_result = 0;
 			if ((poll_result = poll(&d->pfds[0], d->pfds.size(), timeout.count())) > 0) {
@@ -90,15 +107,20 @@ namespace mini_saftlib {
 		} else if (timeout > std::chrono::milliseconds(0)) {
 			std::this_thread::sleep_for(timeout);
 		}
+
+		//////////////////
+		// dispatching
+		//////////////////
 		for (auto &source: d->sources) {
 			if (source->check()) {
 				source->dispatch();
 			}
 		}
 
-		// remove all sources that called remove
+		//////////////////
+		// cleanup (if needed)
+		//////////////////
 		for (auto removed_source: d->removed_sources) {
-			std::cerr << "removing a source" << std::endl;
 			d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
 				          d->sources.end());			
 		}
@@ -108,11 +130,15 @@ namespace mini_saftlib {
 	}
 
 	void Loop::run() {
-		for (;;) {
+		while (d->run) {
 			if (!iteration(true)) {
 				break;
 			}
 		}
+	}
+
+	void Loop::quit() {
+		d->run = false;
 	}
 
 	bool Loop::connect(std::shared_ptr<Source> source) {
@@ -186,28 +212,29 @@ namespace mini_saftlib {
 	struct IoSource::Impl {
 		sigc::slot<bool, int, int> slot;
 		struct pollfd pfd;
-		Impl(sigc::slot<bool, int, int> s, int fd, int condition) 
+		int destroy_condition;
+		Impl(sigc::slot<bool, int, int> s, int fd, int condition, int destroy_cond) 
 			: slot(s)
 		{
 			pfd.fd = fd;
 			pfd.events = condition;
 			pfd.revents = 0;
+			destroy_condition = destroy_cond;
 		}
 	};
 
-	IoSource::IoSource(sigc::slot<bool, int, int> slot, int fd, int condition) 
-		: d(std::make_unique<Impl>(slot, fd, condition))
+	IoSource::IoSource(sigc::slot<bool, int, int> slot, int fd, int condition, int destroy_condition) 
+		: d(std::make_unique<Impl>(slot, fd, condition, destroy_condition))
 	{
 		add_poll(d->pfd);
 	}
 	IoSource::~IoSource() = default;
 
 	bool IoSource::prepare(std::chrono::milliseconds &timeout_ms) {
-		if (d->pfd.revents & POLLIN) {
+		if (d->pfd.revents & d->pfd.events) {
 			return true;
 		}
-		if (d->pfd.revents & POLLHUP) {
-			std::cerr << "HUP" << std::endl;
+		if (d->pfd.revents & d->destroy_condition) {
 			remove_poll(d->pfd);
 			destroy();
 		}
@@ -215,7 +242,7 @@ namespace mini_saftlib {
 	}
 
 	bool IoSource::check() {
-		if (d->pfd.revents & POLLIN) {
+		if (d->pfd.revents & d->pfd.events) {
 			return true;
 		}
 		return false;
@@ -223,6 +250,10 @@ namespace mini_saftlib {
 
 	bool IoSource::dispatch() {
 		auto result = d->slot(d->pfd.fd, d->pfd.revents);
+		if (!result) {
+			remove_poll(d->pfd);
+			destroy();
+		}
 		return result;
 	}
 
