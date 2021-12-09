@@ -5,8 +5,9 @@
 #include <unistd.h> // read()
 
 bool timeout_callback() {
+	static int i = 3;
 	std::cout << "tick" << std::endl;
-	return true;
+	return --i;
 }
 
 bool timeout_callback2() {
@@ -27,11 +28,10 @@ int main() {
 
 	int fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
 
-	loop.connect_io(sigc::ptr_fun(fd_callback), fd, POLLIN);
-	loop.connect_timeout(sigc::ptr_fun(timeout_callback ), std::chrono::milliseconds(1000));
-	loop.connect_timeout(sigc::ptr_fun(timeout_callback2), std::chrono::milliseconds(1000), std::chrono::milliseconds(500));
+	loop.connect(std::make_shared<mini_saftlib::IoSource>(sigc::ptr_fun(fd_callback), fd, POLLIN));
+	loop.connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_callback ), std::chrono::milliseconds(1000)));
+	loop.connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_callback2), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)));
 	loop.run();
-
 
 	return 0;
 }

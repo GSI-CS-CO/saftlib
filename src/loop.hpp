@@ -9,20 +9,9 @@
 
 namespace mini_saftlib {
 
-	class Loop {
-	public:
-		Loop();
-		~Loop();
-		bool iteration(bool may_block);
-		void run();
-		bool connect_io(sigc::slot<bool, int, int> slot, int fd, int condition);
-		bool connect_timeout(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset = std::chrono::milliseconds(0));
-	private:
-		struct Impl;
-		std::unique_ptr<Impl> d;
-	};
-
 	class Source {
+	friend class Loop;
+	friend bool operator==(std::shared_ptr<Source> lhs, const Source *rhs);
 	public:
 		Source();
 		virtual ~Source();
@@ -32,17 +21,28 @@ namespace mini_saftlib {
 	protected:
 		void add_poll(struct pollfd &pfd);
 		void remove_poll(struct pollfd &pfd);
+		void destroy();
 	private:
 		struct Impl;
 		std::unique_ptr<Impl> d;
+	};
 
-		const std::vector<struct pollfd*> &get_pfds() const ;
-		friend class Loop;
+	class Loop {
+	public:
+		Loop();
+		~Loop();
+		bool iteration(bool may_block);
+		void run();
+		bool connect(std::shared_ptr<Source> source);
+		void remove(Source *s);
+	private:
+		struct Impl;
+		std::unique_ptr<Impl> d;
 	};
 
 	class TimeoutSource : public Source {
 	public:
-		TimeoutSource(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset);
+		TimeoutSource(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset = std::chrono::milliseconds(0));
 		~TimeoutSource();
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;

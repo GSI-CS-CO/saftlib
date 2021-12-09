@@ -9,96 +9,15 @@
 
 namespace mini_saftlib {
 
-	struct Loop::Impl {
-		std::vector<std::shared_ptr<Source> > sources;
-		std::vector<struct pollfd>  pfds;
-		std::vector<struct pollfd*> source_pfds;
-	};
-
-	Loop::Loop() 
-		: d(std::make_unique<Impl>())
-	{
-	}
-	Loop::~Loop() = default;
-
-	bool Loop::iteration(bool may_block) {
-		d->pfds.clear();
-		auto timeout = std::chrono::milliseconds(-1); // this value will be passed to the poll system call, -1 means no timeout
-		int i = 0;
-		for(auto &source: d->sources) {
-			auto timeout_source = std::chrono::milliseconds(-1);
-			source->prepare(timeout_source);
-			if (timeout_source >= std::chrono::milliseconds(0)) {
-				if (timeout == std::chrono::milliseconds(-1)) {
-					timeout = timeout_source;
-				} else {
-					timeout = std::min(timeout, timeout_source);
-				}
-			}
-			for(auto it = source->get_pfds().cbegin(); it != source->get_pfds().cend(); ++it) {
-				d->pfds.push_back(**it);
-				d->source_pfds.push_back(*it);
-			}
-		}
-		if (!may_block) {
-			timeout = std::chrono::milliseconds(0);
-		}
-		if (d->pfds.size() > 0) {
-			int poll_result = 0;
-			if ((poll_result = poll(&d->pfds[0], d->pfds.size(), timeout.count())) > 0) {
-				for (unsigned i = 0; i < d->pfds.size();++i) {
-					// copy the results back to the owners of the pfds
-					d->source_pfds[i]->revents = d->pfds[i].revents;
-				}
-			} else {
-				// timeout hit
-			}
-		} else if (timeout > std::chrono::milliseconds(0)) {
-			std::this_thread::sleep_for(timeout);
-		}
-		i = 0;
-		for (auto &source: d->sources) {
-			if (source->check()) {
-				source->dispatch();
-			}
-			++i;
-		}
-
-		return true;
-	}
-
-	void Loop::run() {
-		for (;;) {
-			if (!iteration(true)) {
-				break;
-			}
-		}
-	}
-
-	bool Loop::connect_timeout(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset)
-	{
-		d->sources.push_back(std::make_shared<TimeoutSource>(slot, interval, offset));
-		return true;
-	}
-
-	bool Loop::connect_io(sigc::slot<bool, int, int> slot, int fd, int condition) {
-		d->sources.push_back(std::make_shared<IoSource>(slot,fd,condition));
-		return true;
-	}
-
-
-
-	//////////////////////////////
-	//////////////////////////////
-	//////////////////////////////
 
 	struct Source::Impl {
+		Loop *loop;
 		std::vector<struct pollfd*> pfds;
+		const std::vector<struct pollfd*> &get_pfds() const {
+			return pfds;
+		}
 	};
 
-	const std::vector<struct pollfd*> &Source::get_pfds() const {
-		return d->pfds;
-	}
 
 	Source::Source() 
 		: d(std::make_unique<Impl>())
@@ -114,6 +33,98 @@ namespace mini_saftlib {
 		d->pfds.erase(std::remove(d->pfds.begin(), d->pfds.end(), &pfd), 
 			          d->pfds.end());
 	}
+	void Source::destroy() {
+		d->loop->remove(this);
+	}
+	bool operator==(std::shared_ptr<Source> lhs, const Source *rhs)
+	{
+		return &*lhs == rhs;
+	}
+
+	//////////////////////////////
+	//////////////////////////////
+	//////////////////////////////
+
+	struct Loop::Impl {
+		std::vector<Source*> removed_sources;
+		std::vector<std::shared_ptr<Source> > sources;
+		std::vector<struct pollfd>  pfds;
+		std::vector<struct pollfd*> source_pfds;
+	};
+
+	Loop::Loop() 
+		: d(std::make_unique<Impl>())
+	{}
+	Loop::~Loop() = default;
+
+	bool Loop::iteration(bool may_block) {
+		static const auto no_timeout = std::chrono::milliseconds(-1);
+		d->pfds.clear();
+		auto timeout = no_timeout; 
+		for(auto &source: d->sources) {
+			auto timeout_source = no_timeout;
+			source->prepare(timeout_source);
+			if (timeout_source != no_timeout) {
+				if (timeout == no_timeout) {
+					timeout = timeout_source;
+				} else {
+					timeout = std::min(timeout, timeout_source);
+				}
+			}
+			for(auto it = source->d->get_pfds().cbegin(); it != source->d->get_pfds().cend(); ++it) {
+				d->pfds.push_back(**it);
+				d->source_pfds.push_back(*it);
+			}
+		}
+		if (!may_block) {
+			timeout = std::chrono::milliseconds(0);
+		}
+		if (d->pfds.size() > 0) {
+			int poll_result = 0;
+			if ((poll_result = poll(&d->pfds[0], d->pfds.size(), timeout.count())) > 0) {
+				for (unsigned i = 0; i < d->pfds.size();++i) {
+					// copy the results back to the owners of the pfds
+					d->source_pfds[i]->revents = d->pfds[i].revents;
+				}
+			} 
+		} else if (timeout > std::chrono::milliseconds(0)) {
+			std::this_thread::sleep_for(timeout);
+		}
+		for (auto &source: d->sources) {
+			if (source->check()) {
+				source->dispatch();
+			}
+		}
+
+		// remove all sources that called remove
+		for (auto removed_source: d->removed_sources) {
+			std::cerr << "removing a source" << std::endl;
+			d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
+				          d->sources.end());			
+		}
+		d->removed_sources.clear();
+
+		return true;
+	}
+
+	void Loop::run() {
+		for (;;) {
+			if (!iteration(true)) {
+				break;
+			}
+		}
+	}
+
+	bool Loop::connect(std::shared_ptr<Source> source) {
+		source->d->loop = this;
+		d->sources.push_back(source);
+		return true;
+	}
+
+	void Loop::remove(Source *s) {
+		d->removed_sources.push_back(s);
+	}
+
 
 	//////////////////////////////
 	//////////////////////////////
@@ -147,7 +158,7 @@ namespace mini_saftlib {
 	bool TimeoutSource::check() {
 		auto now = std::chrono::steady_clock::now();
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(d->next_time - now); 
-		if (ms == std::chrono::milliseconds(0)) {
+		if (ms <= std::chrono::milliseconds(0)) {
 			return true;
 		}
 		return false;
@@ -158,7 +169,11 @@ namespace mini_saftlib {
 		do {
 			d->next_time += d->interval;
 		} while (now >= d->next_time);
-		return d->slot();
+		auto result = d->slot();
+		if (!result) {
+			destroy();
+		}
+		return result;
 	}
 
 
@@ -192,7 +207,9 @@ namespace mini_saftlib {
 			return true;
 		}
 		if (d->pfd.revents & POLLHUP) {
+			std::cerr << "HUP" << std::endl;
 			remove_poll(d->pfd);
+			destroy();
 		}
 		return false;
 	}
@@ -205,7 +222,8 @@ namespace mini_saftlib {
 	}
 
 	bool IoSource::dispatch() {
-		return d->slot(d->pfd.fd, d->pfd.revents);
+		auto result = d->slot(d->pfd.fd, d->pfd.revents);
+		return result;
 	}
 
 
