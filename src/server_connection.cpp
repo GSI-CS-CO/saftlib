@@ -4,6 +4,8 @@
 
 #include <sstream>
 #include <iostream>
+#include <algorithm>
+#include <vector>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,9 +18,29 @@
 
 namespace mini_saftlib {
 
+	// Client represents the entity that sent us a file descritor
+	// of a socket pair.
+	// In our books it gets a unique id which is saved togther with that file descriptor 
+	struct Client {
+		int socket_fd;
+		int client_id;
+		Client(int fd, int id) : socket_fd(fd), client_id(id) {}
+	};
+	bool operator==(Client lhs, int rhs) // compare Clients by using the socket_fd
+	{
+		return lhs.socket_fd == rhs;
+	}
 	struct ServerConnection::Impl {
 		Loop &loop;
-		Impl(Loop &l) : loop(l) {}
+		int client_id_generator;
+		std::vector<Client> clients;
+		Impl(Loop &l) 
+			: loop(l) 
+			, client_id_generator(0)
+		{
+			// make this big enough to avoid allocation in normal operation
+			clients.reserve(1024);
+		}
 		bool accept_client(int fd, int condition);
 		bool accept_call_from_client(int fd, int condition);
 	};
@@ -30,6 +52,11 @@ namespace mini_saftlib {
 				std::cerr << "cannot receive socket fd" << std::endl;
 			}
 			loop.connect(std::make_shared<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::accept_call_from_client), client_socket_fd, POLLIN | POLLHUP));
+			// give the client a unique ID.
+			clients.push_back(Client(client_socket_fd, client_id_generator));
+			// send the ID back to client
+			write(client_socket_fd, &client_id_generator, sizeof(client_id_generator));
+			++client_id_generator;
 		}
 		return true;
 	}
@@ -37,7 +64,10 @@ namespace mini_saftlib {
 	bool ServerConnection::Impl::accept_call_from_client(int fd, int condition) {
 		if (condition & POLLHUP) {
 			std::cerr << "client hung up" << std::endl;
+			std::cerr << "clients.size() " << clients.size() << std::endl;
+			clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
 			close(fd);
+			std::cerr << "clients.size() " << clients.size() << std::endl;
 			return false;
 		}
 		if (condition & POLLIN) {

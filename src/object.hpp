@@ -7,6 +7,7 @@ namespace mini_saftlib {
 
 	class Object {
 		Object();
+		~Object();
 	private:
 		struct Impl;
 		std::unique_ptr<Impl> d;

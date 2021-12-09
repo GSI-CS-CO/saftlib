@@ -43,9 +43,9 @@ int main() {
 
 	mini_saftlib::ServerConnection server_connection(loop);
 
-	// int fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
+	int fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
 
-	// loop.connect(std::make_shared<mini_saftlib::IoSource>(sigc::ptr_fun(fd_callback), fd, POLLIN));
+	loop.connect(std::make_shared<mini_saftlib::IoSource>(sigc::ptr_fun(fd_callback), fd, POLLIN));
 	loop.connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_callback ), std::chrono::milliseconds(1000)));
 	loop.connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::bind(sigc::ptr_fun(timeout_callback2),&loop), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)));
 	loop.run();

@@ -16,6 +16,7 @@ namespace mini_saftlib {
 
 	struct ClientConnection::Impl {
 		int socket_fd;
+		int client_id;
 	};
 
 
@@ -57,17 +58,24 @@ namespace mini_saftlib {
 			throw std::runtime_error(msg.str());
 		}
 		if (sendfd(base_socket_fd, fd_pair[0]) == -1) {
-			msg << "cnnot send socket pair: " << strerror(errno);
+			msg << "cannot send socket pair: " << strerror(errno);
 			throw std::runtime_error(msg.str());
 		}
 		close(fd_pair[0]);
 		d->socket_fd = fd_pair[1];
 
+		if (read(d->socket_fd, &d->client_id, sizeof(d->client_id)) != sizeof(d->client_id)) {
+			msg << "cannot read client id" << strerror(errno) << std::endl;
+			throw std::runtime_error(msg.str());
+		}
+		std::cerr << "got client id " << d->client_id << std::endl;
 		char ch = '1';
 		std::cerr << "write " << write(d->socket_fd, &ch, sizeof(ch)) << std::endl;
 		std::cerr << "read "  <<  read(d->socket_fd, &ch, sizeof(ch)) << std::endl;
 		std::cerr << "got " << ch << std::endl;
 
+
+		sleep(10);
 		// saftbus::write(get_fd(), saftbus::SENDER_ID);  // ask the saftd for an ID on the saftbus
 		// saftbus::read(get_fd(), _saftbus_id);  
 	}
