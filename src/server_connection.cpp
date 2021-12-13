@@ -22,27 +22,25 @@ namespace mini_saftlib {
 	// of a socket pair.
 	// In our books it gets a unique id which is saved togther with that file descriptor 
 	struct Client {
-		int socket_fd;
-		int client_id;
-		Client(int fd, int id) : socket_fd(fd), client_id(id) {}
+		int socket_fd; // the file descriptor is a unique number and is used as a client id
+		Client(int fd) : socket_fd(fd) {}
 	};
-	bool operator==(Client lhs, int rhs) // compare Clients by using the socket_fd
+	bool operator==(Client lhs, int rhs) // compare Clients by using their socket_fd
 	{
 		return lhs.socket_fd == rhs;
 	}
 	struct ServerConnection::Impl {
 		Loop &loop;
-		int client_id_generator;
 		std::vector<Client> clients;
+		SerDes serdes;
 		Impl(Loop &l) 
 			: loop(l) 
-			, client_id_generator(0)
 		{
 			// make this big enough to avoid allocation in normal operation
 			clients.reserve(1024);
 		}
 		bool accept_client(int fd, int condition);
-		bool accept_call_from_client(int fd, int condition);
+		bool handle_client_request(int fd, int condition);
 	};
 
 	bool ServerConnection::Impl::accept_client(int fd, int condition) {
@@ -51,17 +49,16 @@ namespace mini_saftlib {
 			if (client_socket_fd == -1) {
 				std::cerr << "cannot receive socket fd" << std::endl;
 			}
-			loop.connect(std::make_shared<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::accept_call_from_client), client_socket_fd, POLLIN | POLLHUP));
-			// give the client a unique ID.
-			clients.push_back(Client(client_socket_fd, client_id_generator));
-			// send the ID back to client
-			write(client_socket_fd, &client_id_generator, sizeof(client_id_generator));
-			++client_id_generator;
+			loop.connect(std::make_shared<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP));
+			// register the client
+			clients.push_back(Client(client_socket_fd));
+			// send the ID back to client (the file descriptor integer number is used as ID)
+			write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
 		}
 		return true;
 	}
 
-	bool ServerConnection::Impl::accept_call_from_client(int fd, int condition) {
+	bool ServerConnection::Impl::handle_client_request(int fd, int condition) {
 		if (condition & POLLHUP) {
 			std::cerr << "client hung up" << std::endl;
 			std::cerr << "clients.size() " << clients.size() << std::endl;
@@ -71,10 +68,15 @@ namespace mini_saftlib {
 			return false;
 		}
 		if (condition & POLLIN) {
-			char ch;
-			read(fd, &ch, 1);
-			++ch;
-			write(fd, &ch, 1);
+			bool result = serdes.read_from(fd);
+			if (!result) {
+				std::cerr << "failed to read data from fd " << fd << std::endl;
+				return false;
+			}
+			MsgType type;
+			serdes.get(type);
+			if (type == CALL) {std::cerr << "CALL request from client" << std::endl;}
+			if (type == DISCONNECT) {std::cerr << "DISCONNECT from client" << std::endl;}
 		}
 		return true;
 	}

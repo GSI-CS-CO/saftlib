@@ -10,6 +10,10 @@ namespace mini_saftlib {
 
 	class ServerConnection {
 	public:
+		enum MsgType {
+			CALL,
+			DISCONNECT
+		};
 		ServerConnection(Loop &loop, const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
 	private:

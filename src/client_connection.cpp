@@ -1,5 +1,6 @@
 #include "client_connection.hpp"
 
+#include <server_connection.hpp>
 #include <saftbus.hpp>
 
 #include <sstream>
@@ -11,12 +12,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <poll.h>
 
 namespace mini_saftlib {
 
 	struct ClientConnection::Impl {
-		int socket_fd;
-		int client_id;
+		struct pollfd pfd; // file descriptor used to talk to the server
+		int client_id; // the unique id of this client connection on the server
 	};
 
 
@@ -62,26 +64,49 @@ namespace mini_saftlib {
 			throw std::runtime_error(msg.str());
 		}
 		close(fd_pair[0]);
-		d->socket_fd = fd_pair[1];
+		d->pfd.fd = fd_pair[1];
 
-		if (read(d->socket_fd, &d->client_id, sizeof(d->client_id)) != sizeof(d->client_id)) {
+		if (read(d->pfd.fd, &d->client_id, sizeof(d->client_id)) != sizeof(d->client_id)) {
 			msg << "cannot read client id" << strerror(errno) << std::endl;
 			throw std::runtime_error(msg.str());
 		}
 		std::cerr << "got client id " << d->client_id << std::endl;
-		char ch = '1';
-		std::cerr << "write " << write(d->socket_fd, &ch, sizeof(ch)) << std::endl;
-		std::cerr << "read "  <<  read(d->socket_fd, &ch, sizeof(ch)) << std::endl;
-		std::cerr << "got " << ch << std::endl;
+		// char ch = '1';
+		// std::cerr << "write " << write(d->pfd.fd, &ch, sizeof(ch)) << std::endl;
+		// std::cerr << "read "  <<  read(d->pfd.fd, &ch, sizeof(ch)) << std::endl;
+		// std::cerr << "got " << ch << std::endl;
 
 
-		sleep(10);
+		// sleep(10);
 		// saftbus::write(get_fd(), saftbus::SENDER_ID);  // ask the saftd for an ID on the saftbus
 		// saftbus::read(get_fd(), _saftbus_id);  
 	}
 
-	ClientConnection::~ClientConnection() {
-		close(d->socket_fd);
+	void ClientConnection::send_call()
+	{
+		serdes.put(ServerConnection::CALL);
+		serdes.write_to(d->pfd.fd);
+	}
+	void ClientConnection::send_disconnect()
+	{
+		serdes.put(ServerConnection::DISCONNECT);
+		serdes.write_to(d->pfd.fd);
+	}
+
+
+	ClientConnection::~ClientConnection() 
+	{
+		close(d->pfd.fd);
+	}
+
+	bool ClientConnection::send(int saftlib_object_id, int interface_id, int timeout_ms)
+	{
+		return true;
+	}
+
+	bool ClientConnection::receive(int timeout_ms) 
+	{
+		return true;
 	}
 
 
