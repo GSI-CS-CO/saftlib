@@ -32,7 +32,7 @@ namespace mini_saftlib {
 	struct ServerConnection::Impl {
 		Loop &loop;
 		std::vector<Client> clients;
-		SerDes serdes;
+		SerDes send, received;
 		Impl(Loop &l) 
 			: loop(l) 
 		{
@@ -68,15 +68,32 @@ namespace mini_saftlib {
 			return false;
 		}
 		if (condition & POLLIN) {
-			bool result = serdes.read_from(fd);
+			bool result = received.read_from(fd);
 			if (!result) {
 				std::cerr << "failed to read data from fd " << fd << std::endl;
 				return false;
 			}
 			MsgType type;
-			serdes.get(type);
-			if (type == CALL) {std::cerr << "CALL request from client" << std::endl;}
-			if (type == DISCONNECT) {std::cerr << "DISCONNECT from client" << std::endl;}
+			received.get(type);
+			switch(type) {
+				case CALL: {
+					std::vector<int> data;
+					received.get(data);
+					std::cerr << "CALL request from client" << data.size() << " integers " << std::endl;
+				}
+				break;
+				case GET_SAFTLIB_OBJECT_ID: {
+					std::cerr << "GET_SAFTLIB_OBJECT_ID received" << std::endl;
+					std::string object_path;
+					received.get(object_path);
+					std::cerr << "request from client " << fd << " whants the saftlib_object_id for " << object_path << std::endl;
+					int saftlib_object_id = 42;
+					send.put(saftlib_object_id);
+					send.write_to(fd);
+				}
+				break;
+			}
+
 		}
 		return true;
 	}

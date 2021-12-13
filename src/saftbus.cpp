@@ -17,7 +17,6 @@
 
 namespace mini_saftlib {
 
-
 	int write_all(int fd, const char *buffer, int size)
 	{
 		const char *ptr = buffer;
@@ -44,7 +43,6 @@ namespace mini_saftlib {
 		return written_total;
 	}
 
-
 	int read_all(int fd, char *buffer, int size)
 	{
 		char* ptr = buffer;
@@ -70,6 +68,7 @@ namespace mini_saftlib {
 			std::cerr << "write_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
+		std::cerr << "write_to " << fd << " so many bytes " << size << std::endl;
 		result = write_all(fd, (char*)&_data[0], size);
 		if (result < size) {
 			std::cerr << "write_all returned " << result << ". Expected result " << size << ". errno: " << strerror(errno) << std::endl;
@@ -83,6 +82,7 @@ namespace mini_saftlib {
 		int size;
 		int result;
 		result = read_all(fd, (char*)&size, sizeof(size));
+		std::cerr << "read_from " << fd << " so many bytes: " << size << std::endl;
 		if (result < (int)sizeof(size)) {
 			std::cerr << "read_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
 			return false;

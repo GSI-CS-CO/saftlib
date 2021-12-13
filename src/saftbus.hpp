@@ -12,8 +12,9 @@ namespace mini_saftlib {
 	int write_all(int fd, const char *buffer, int size);
 	int read_all(int fd, char *buffer, int size);
 
-
+	// send a file descriptor 
 	int sendfd(int socket, int fd);
+	// receive a file descriptor
 	int recvfd(int socket);
 
 
@@ -21,6 +22,18 @@ namespace mini_saftlib {
 	// without storing type information, i.e. de-serialization 
 	// only works if the type composition is known (but this 
 	// is the case in all saftlib transfers)
+	// sending data works like this:
+	//   serdes.put(value1);
+	//   serdes.put(value2);
+	//   ...
+	//   serdes.write_to(fd);
+	//
+	// receiving data works like this:
+	//   serdes.read_from(fd);
+	//   serdes.get(value1);
+	//   serdes.get(value2);
+	//   ...
+
 	class SerDes
 	{
 	public:
@@ -29,28 +42,12 @@ namespace mini_saftlib {
 			_data.reserve(reserve);
 			_iter = _data.begin();
 		}
-		// std::vector<char>& data(){
-		// 	return _data;
-		// }
-		// const char* get_data() const {
-		// 	return &_data[0];
-		// }
-		// unsigned get_size() const {
-		// 	return _data.size();
-		// }
-		// void print() const {
-		// 	std::cerr << _data.size() << std::endl;
-		// 	for (auto ch: _data) {
-		// 		std::cerr << std::hex << std::setw(2) << std::setfill('0') << (int)ch << std::dec << std::endl;
-		// 	}
-		// }
+
+		// write the length of the serdes data buffer and the buffer content to file descriptor fd
 		bool write_to(int fd);
+		// fill the serdes data buffer by reading data from the file descriptor fd
 		bool read_from(int fd);
 
-		// has to be called before first call to put()
-		void put_init();
-		// has to be called before first call to get()
-		void get_init() const;
 
 		// POD struct and build-in types
 		template<typename T>
@@ -157,15 +154,23 @@ namespace mini_saftlib {
 			}
 		}
 		// nested SerDes
-		void put(const SerDes &ser) {
+		void put(SerDes &ser) {
 			put(ser._data);
+			ser.put_init();
 		}
 		void get(SerDes &ser) const {
 			get(ser._data);
+			ser.get_init();
 		}
 
 
 	private:
+
+		// has to be called before first call to put()
+		void put_init();
+		// has to be called before first call to get()
+		void get_init() const;
+
 		std::vector<char> _data;
 		mutable std::vector<char>::const_iterator _iter;
 	};

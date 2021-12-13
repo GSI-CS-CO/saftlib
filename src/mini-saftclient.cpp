@@ -4,13 +4,11 @@
 
 int main()
 {
-	mini_saftlib::ClientConnection connection;
-	connection.send_call();
-	connection.send_disconnect();
+	// mini_saftlib::ClientConnection connection;
+	// connection.send_call();
 
+	mini_saftlib::Proxy saftd("/de/gsi/saftlib");
 
-	int ch;
-	std::cin >> ch;
 
 
 	return 0;

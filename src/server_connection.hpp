@@ -12,7 +12,7 @@ namespace mini_saftlib {
 	public:
 		enum MsgType {
 			CALL,
-			DISCONNECT
+			GET_SAFTLIB_OBJECT_ID,
 		};
 		ServerConnection(Loop &loop, const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();

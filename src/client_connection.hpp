@@ -11,22 +11,46 @@
 namespace mini_saftlib {
 
 	class ClientConnection {
+	friend class SignalGroup;
+	friend class Proxy;
 	public:
 		ClientConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ClientConnection();
 
-		// buffer to serialize arguments and de-serialize return values
-		SerDes serdes; 
 		// send whatever data is in serial buffer to the server
-		bool send(int saftlib_object_id, int interface_id, int timeout_ms = -1); 
+		int send(SerDes &serdes, int timeout_ms = -1); 
 		// wait for data to arrive from the server
-		bool receive(int timeout_ms = -1);
+		int receive(SerDes &serdes, int timeout_ms = -1);
 
 		void send_call();
-		void send_disconnect();
 
 	private:
 		struct Impl; std::unique_ptr<Impl> d;		
+	};
+
+
+	class SignalGroup {
+	public:
+		SignalGroup();
+		~SignalGroup();
+
+		int wait_for_signal(int timeout_ms = -1);
+		int wait_for_one_signal(int timeout_ms = -1);
+	private:
+		struct Impl; std::unique_ptr<Impl> d;
+	};
+	extern SignalGroup globalSignalGroup;
+
+	class Proxy {
+	friend class SignalGroup;
+	public:
+		Proxy(const std::string &object_path, SignalGroup &signal_group = globalSignalGroup);
+		virtual ~Proxy();
+		virtual bool signal_dispatch(int interface, SerDes &signal_content) {return true;};
+		static std::shared_ptr<ClientConnection> connection();
+	protected:
+	private:
+		struct Impl; std::unique_ptr<Impl> d;
 	};
 
 }
