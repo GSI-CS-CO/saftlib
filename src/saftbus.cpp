@@ -60,7 +60,7 @@ namespace mini_saftlib {
 		return read_total;
 	}
 
-	bool SerDes::write_to(int fd) {
+	bool Serializer::write_to(int fd) {
 		int size = _data.size();
 		int result;
 		result = write_all(fd, (char*)&size, sizeof(size));
@@ -78,7 +78,7 @@ namespace mini_saftlib {
 		put_init();
 		return true;
 	}
-	bool SerDes::read_from(int fd) {
+	bool Deserializer::read_from(int fd) {
 		int size;
 		int result;
 		result = read_all(fd, (char*)&size, sizeof(size));
@@ -97,12 +97,12 @@ namespace mini_saftlib {
 		// std::cerr << "read " << size << " bytes from fd " << fd << std::endl;
 		return true;
 	}
-	void SerDes::put_init()
+	void Serializer::put_init()
 	{
 		_data.clear();
 	}
 	// has to be called before any call to get()
-	void SerDes::get_init() const
+	void Deserializer::get_init() const
 	{
 		_iter = _data.begin();
 	}

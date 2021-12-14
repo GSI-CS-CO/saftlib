@@ -23,21 +23,21 @@ namespace mini_saftlib {
 	// only works if the type composition is known (but this 
 	// is the case in all saftlib transfers)
 	// sending data works like this:
-	//   serdes.put(value1);
-	//   serdes.put(value2);
+	//   serializer.put(value1);
+	//   serializer.put(value2);
 	//   ...
-	//   serdes.write_to(fd);
+	//   serializer.write_to(fd);
 	//
 	// receiving data works like this:
-	//   serdes.read_from(fd);
-	//   serdes.get(value1);
-	//   serdes.get(value2);
+	//   deserializer.read_from(fd);
+	//   deserializer.get(value1);
+	//   deserializer.get(value2);
 	//   ...
 
-	class SerDes
+	class Serializer
 	{
 	public:
-		SerDes(int reserve = 4096)
+		Serializer(int reserve = 4096)
 		{
 			_data.reserve(reserve);
 			_iter = _data.begin();
@@ -45,8 +45,6 @@ namespace mini_saftlib {
 
 		// write the length of the serdes data buffer and the buffer content to file descriptor fd
 		bool write_to(int fd);
-		// fill the serdes data buffer by reading data from the file descriptor fd
-		bool read_from(int fd);
 
 		// POD struct and build-in types
 		template<typename T>
@@ -54,11 +52,6 @@ namespace mini_saftlib {
 			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
 			const char* end   = begin + sizeof(val);
 			_data.insert(_data.end(), begin, end);
-		}
-		template<typename T>
-		void get(T &val) const {
-			val    = *const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
-			_iter += sizeof(val);
 		}
 		// std::vector and nested std::vector
 		template<typename T>
@@ -77,6 +70,67 @@ namespace mini_saftlib {
 				put(std_vector_vector[i]);
 			}
 		}
+		// std::string 
+		void put(const std::string& std_string) {
+			size_t size = std_string.size();
+			put(size);
+			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
+			const char* end   = begin + size*sizeof(std_string[0]);
+			_data.insert(_data.end(), begin, end);
+		}
+		// std::vector<std::string>
+		void put(const std::vector<std::string>& vector_string) {
+			size_t size = vector_string.size();
+			put(size);
+			for (size_t i = 0; i < size; ++i) {
+				put(vector_string[i]);
+			}
+		}
+		// std::map
+		template<typename K, typename V>
+		void put(const std::map<K,V> &std_map) {
+			size_t size = std_map.size();
+			put(size);
+			for (typename std::map<K,V>::const_iterator it = std_map.begin(); it != std_map.end(); ++it) {
+				put(it->first);
+				put(it->second);
+			}
+		}
+		// nested Serializer
+		void put(Serializer &ser) {
+			put(ser._data);
+			ser.put_init();
+		}
+
+	private:
+
+		// has to be called before first call to put()
+		void put_init();
+
+		std::vector<char> _data;
+		mutable std::vector<char>::const_iterator _iter;
+	};
+
+
+	class Deserializer
+	{
+	public:
+		Deserializer(int reserve = 4096)
+		{
+			_data.reserve(reserve);
+			_iter = _data.begin();
+		}
+
+		// fill the serdes data buffer by reading data from the file descriptor fd
+		bool read_from(int fd);
+
+		// POD struct and build-in types
+		template<typename T>
+		void get(T &val) const {
+			val    = *const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
+			_iter += sizeof(val);
+		}
+		// std::vector and nested std::vector
 		template<typename T>
 		void get(std::vector<T> &std_vector) const {
 			size_t size;
@@ -97,13 +151,6 @@ namespace mini_saftlib {
 			}
 		}
 		// std::string 
-		void put(const std::string& std_string) {
-			size_t size = std_string.size();
-			put(size);
-			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
-			const char* end   = begin + size*sizeof(std_string[0]);
-			_data.insert(_data.end(), begin, end);
-		}
 		void get(std::string &std_string) const {
 			size_t size;
 			get(size);
@@ -114,13 +161,6 @@ namespace mini_saftlib {
 			_iter += size;
 		}
 		// std::vector<std::string>
-		void put(const std::vector<std::string>& vector_string) {
-			size_t size = vector_string.size();
-			put(size);
-			for (size_t i = 0; i < size; ++i) {
-				put(vector_string[i]);
-			}
-		}
 		void get(std::vector<std::string> &vector_string) const {
 			size_t size;
 			get(size);
@@ -130,15 +170,6 @@ namespace mini_saftlib {
 			}
 		}
 		// std::map
-		template<typename K, typename V>
-		void put(const std::map<K,V> &std_map) {
-			size_t size = std_map.size();
-			put(size);
-			for (typename std::map<K,V>::const_iterator it = std_map.begin(); it != std_map.end(); ++it) {
-				put(it->first);
-				put(it->second);
-			}
-		}
 		template<typename K, typename V>
 		void get(std::map<K,V> &std_map) {
 			std_map.clear();
@@ -152,27 +183,21 @@ namespace mini_saftlib {
 				std_map.insert(std::make_pair(key,value));
 			}
 		}
-		// nested SerDes
-		void put(SerDes &ser) {
-			put(ser._data);
-			ser.put_init();
-		}
-		void get(SerDes &ser) const {
+		// nested Deserializer
+		void get(Deserializer &ser) const {
 			get(ser._data);
 			ser.get_init();
 		}
-
-
 	private:
 
-		// has to be called before first call to put()
-		void put_init();
 		// has to be called before first call to get()
 		void get_init() const;
 
 		std::vector<char> _data;
 		mutable std::vector<char>::const_iterator _iter;
 	};
+
+
 
 
 }

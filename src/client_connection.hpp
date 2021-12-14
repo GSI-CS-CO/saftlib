@@ -18,9 +18,9 @@ namespace mini_saftlib {
 		~ClientConnection();
 
 		// send whatever data is in serial buffer to the server
-		int send(SerDes &serdes, int timeout_ms = -1); 
+		int send(Serializer &serdes, int timeout_ms = -1); 
 		// wait for data to arrive from the server
-		int receive(SerDes &serdes, int timeout_ms = -1);
+		int receive(Deserializer &serdes, int timeout_ms = -1);
 
 		void send_call();
 
@@ -30,7 +30,7 @@ namespace mini_saftlib {
 
 
 	class Proxy;
-	
+
 	class SignalGroup {
 	public:
 		SignalGroup();
@@ -50,7 +50,7 @@ namespace mini_saftlib {
 	public:
 		Proxy(const std::string &object_path, SignalGroup &signal_group = globalSignalGroup);
 		virtual ~Proxy();
-		virtual bool signal_dispatch(int interface, SerDes &signal_content) {return true;};
+		virtual bool signal_dispatch(int interface, Deserializer &signal_content) {return true;};
 		static std::shared_ptr<ClientConnection> connection();
 	protected:
 	private:

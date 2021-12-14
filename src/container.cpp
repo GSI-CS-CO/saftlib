@@ -20,6 +20,11 @@ namespace mini_saftlib {
 
 	}
 
+	void Container::remote_call(int saftlib_object_id, int interface, Deserializer &received)
+	{
+
+	}
+
 
 
 }

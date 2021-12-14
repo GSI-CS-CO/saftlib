@@ -5,7 +5,7 @@ mini_saftd_LDADD = $(EB_LIBS) $(SIGC_LIBS)
 mini_saftd_SOURCES = \
 	src/mini-saftd.cpp                                   \
 	src/container.cpp          src/container.hpp         \
-	src/object.cpp             src/object.hpp            \
+	src/service.cpp            src/service.hpp           \
 	src/loop.cpp               src/loop.hpp              \
 	src/saftbus.cpp            src/saftbus.hpp           \
 	src/server_connection.cpp  src/server_connection.hpp

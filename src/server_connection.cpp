@@ -32,7 +32,8 @@ namespace mini_saftlib {
 	struct ServerConnection::Impl {
 		Loop &loop;
 		std::vector<Client> clients;
-		SerDes send, received;
+		Serializer   send;
+		Deserializer received;
 		Impl(Loop &l) 
 			: loop(l) 
 		{
@@ -77,9 +78,11 @@ namespace mini_saftlib {
 			received.get(type);
 			switch(type) {
 				case CALL: {
-					std::vector<int> data;
-					received.get(data);
-					std::cerr << "CALL request from client" << data.size() << " integers " << std::endl;
+					std::cerr << "CALL request from client" << std::endl;
+					int saftlib_object_id, interface;
+					received.get(saftlib_object_id);
+					received.get(interface);
+
 				}
 				break;
 				case GET_SAFTLIB_OBJECT_ID: {

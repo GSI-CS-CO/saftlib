@@ -96,7 +96,7 @@ namespace mini_saftlib {
 	}
 
 
-	int ClientConnection::send(SerDes &serdes, int timeout_ms)
+	int ClientConnection::send(Serializer &serdes, int timeout_ms)
 	{
 		std::lock_guard<std::mutex> lock(d->m_client_socket);
 		d->pfd.events = POLLOUT;
@@ -108,7 +108,7 @@ namespace mini_saftlib {
 		}
 		return result; // 0 in case of timeout
 	}
-	int ClientConnection::receive(SerDes &serdes, int timeout_ms)
+	int ClientConnection::receive(Deserializer &serdes, int timeout_ms)
 	{
 		std::lock_guard<std::mutex> lock(d->m_client_socket);
 		int result;
@@ -128,15 +128,15 @@ namespace mini_saftlib {
 	struct SignalGroup::Impl {
 		struct pollfd pfd;
 		int fd_pair[2];
-		SerDes serdes;
-		SerDes signal_content;
+		Deserializer received;
 		std::vector<std::shared_ptr<Proxy> > proxies;
 		std::mutex m1, m2;
 	};
 
 	struct Proxy::Impl {
 		int saftlib_object_id;
-		SerDes send, received;
+		Serializer   send;
+		Deserializer received;
 		static std::shared_ptr<ClientConnection> connection;
 	};
 	std::shared_ptr<ClientConnection> Proxy::Impl::connection;
@@ -184,19 +184,18 @@ namespace mini_saftlib {
 			std::lock_guard<std::mutex> lock1(d->m1);
 			if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 				if (d->pfd.revents & POLLIN) {
-					bool result = d->serdes.read_from(d->pfd.fd);
+					bool result = d->received.read_from(d->pfd.fd);
 					if (!result) {
 						std::cerr << "failed to read data from fd " << d->pfd.fd << std::endl;
 						return -1;
 					} 
 					int saftlib_object_id;
 					int interface;
-					d->serdes.get(saftlib_object_id);
-					d->serdes.get(interface);
-					d->serdes.get(d->signal_content);
+					d->received.get(saftlib_object_id);
+					d->received.get(interface);
 					for (auto &proxy: d->proxies) {
 						if (proxy->d->saftlib_object_id == saftlib_object_id) {
-							proxy->signal_dispatch(interface, d->signal_content);
+							proxy->signal_dispatch(interface, d->received);
 						}
 					}
 				}

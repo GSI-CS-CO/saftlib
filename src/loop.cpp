@@ -270,7 +270,7 @@ namespace mini_saftlib {
 			remove_poll(d->pfd);
 			destroy();
 		}
-		d->pfd.revents = 0; // clear the events after  the dispactching
+		d->pfd.revents = 0; // clear the events after  the dispatching
 		return result;
 	}
 
