@@ -149,19 +149,20 @@ namespace mini_saftlib {
 			msg << "cannot create socket pair: " << strerror(errno);
 			throw std::runtime_error(msg.str());
 		}
-		// send one of the two socket ends to the server
-		std::cerr << "sending socket pair for signals " << std::endl;
-		if (sendfd(Proxy::connection()->d->pfd.fd, d->fd_pair[0]) == -1) {
-			msg << "cannot send socket pair: " << strerror(errno);
-			throw std::runtime_error(msg.str());
-		}
-		close(d->fd_pair[0]);
+		// close(d->fd_pair[0]);
 		// keep the other socket end in order to listen for events
 		d->pfd.fd = d->fd_pair[1];
 		d->pfd.events = POLLIN | POLLHUP | POLLERR;
 	}
 
 	SignalGroup::~SignalGroup() = default;
+
+	int SignalGroup::send_fd(Proxy &proxy) 
+	{
+		// send one of the two socket ends to the server
+		std::cerr << "sending socket pair for signals " << std::endl;
+		return sendfd(Proxy::connection()->d->pfd.fd, d->fd_pair[0]);
+	}
 
 
 	int SignalGroup::wait_for_signal(int timeout_ms)
@@ -236,16 +237,16 @@ namespace mini_saftlib {
 			// std::mutex &m = d->get_connection()->d->m_client_socket;
 			d->send.put(ServerConnection::GET_SAFTLIB_OBJECT_ID);
 			d->send.put(object_path);
-			connection()->send(d->send);
-			connection()->receive(d->received);
-			// {
-			// 	// client connection is shared amongh threads
-			// 	// only one thread cann access the connection at a time
-			// 	std::lock_guard<std::mutex> lock(m);
-				// d->send.write_to(fd);
-				// d->received.read_from(fd);
-			// }
+			{
+				// client connection is shared amongh threads
+				// only one thread cann access the connection at a time
+				std::lock_guard<std::mutex> lock(connection()->d->m_client_socket);
+				connection()->send(d->send);
+				signal_group.send_fd(*this);
+				connection()->receive(d->received);
+			}
 			d->received.get(d->saftlib_object_id);
+			std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
 		}
 	Proxy::~Proxy() = default;
 

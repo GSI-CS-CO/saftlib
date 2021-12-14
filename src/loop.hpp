@@ -62,7 +62,7 @@ namespace mini_saftlib {
 	// source is destroyed if POLLHP is seen on <fd>
 	class IoSource : public Source {
 	public:
-		IoSource(sigc::slot<bool, int, int> slot, int fd, int condition, int destroy_condition = 0);
+		IoSource(sigc::slot<bool, int, int> slot, int fd, int condition);
 		~IoSource();
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;

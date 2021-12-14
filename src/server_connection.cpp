@@ -18,9 +18,9 @@
 
 namespace mini_saftlib {
 
-	// Client represents the entity that sent us a file descritor
-	// of a socket pair.
-	// In our books it gets a unique id which is saved togther with that file descriptor 
+	// Client represents the program (running in another process)
+	// that sent us a file descriptor of a socket pair.
+	// The file descriptor itself serves as a unique id to identify this other process.
 	struct Client {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
 		Client(int fd) : socket_fd(fd) {}
@@ -86,7 +86,9 @@ namespace mini_saftlib {
 					std::cerr << "GET_SAFTLIB_OBJECT_ID received" << std::endl;
 					std::string object_path;
 					received.get(object_path);
-					std::cerr << "request from client " << fd << " whants the saftlib_object_id for " << object_path << std::endl;
+					int signal_fd = recvfd(fd);
+					// safe the signal_fd somewhere...
+					std::cerr << "request from client " << fd << " wants the saftlib_object_id for " << object_path << std::endl;
 					int saftlib_object_id = 42;
 					send.put(saftlib_object_id);
 					send.write_to(fd);
@@ -97,14 +99,6 @@ namespace mini_saftlib {
 		}
 		return true;
 	}
-
-
-
-
-
-
-
-
 
 
 	ServerConnection::ServerConnection(Loop &loop, const std::string &socket_name) 

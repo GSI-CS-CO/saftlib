@@ -29,10 +29,14 @@ namespace mini_saftlib {
 	};
 
 
+	class Proxy;
+	
 	class SignalGroup {
 	public:
 		SignalGroup();
 		~SignalGroup();
+
+		int send_fd(Proxy &proxy);
 
 		int wait_for_signal(int timeout_ms = -1);
 		int wait_for_one_signal(int timeout_ms = -1);

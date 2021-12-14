@@ -68,13 +68,13 @@ namespace mini_saftlib {
 			std::cerr << "write_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
-		std::cerr << "write_to " << fd << " so many bytes " << size << std::endl;
+		// std::cerr << "write_to " << fd << " so many bytes " << size << std::endl;
 		result = write_all(fd, (char*)&_data[0], size);
 		if (result < size) {
 			std::cerr << "write_all returned " << result << ". Expected result " << size << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
-		std::cerr << "wrote " << size << " bytes to fd " << fd << std::endl;
+		// std::cerr << "wrote " << size << " bytes to fd " << fd << std::endl;
 		put_init();
 		return true;
 	}
@@ -82,7 +82,7 @@ namespace mini_saftlib {
 		int size;
 		int result;
 		result = read_all(fd, (char*)&size, sizeof(size));
-		std::cerr << "read_from " << fd << " so many bytes: " << size << std::endl;
+		// std::cerr << "read_from " << fd << " so many bytes: " << size << std::endl;
 		if (result < (int)sizeof(size)) {
 			std::cerr << "read_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
 			return false;
@@ -94,7 +94,7 @@ namespace mini_saftlib {
 			return false;
 		}
 		get_init();
-		std::cerr << "read " << size << " bytes from fd " << fd << std::endl;
+		// std::cerr << "read " << size << " bytes from fd " << fd << std::endl;
 		return true;
 	}
 	void SerDes::put_init()

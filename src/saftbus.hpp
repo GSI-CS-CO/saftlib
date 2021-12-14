@@ -48,7 +48,6 @@ namespace mini_saftlib {
 		// fill the serdes data buffer by reading data from the file descriptor fd
 		bool read_from(int fd);
 
-
 		// POD struct and build-in types
 		template<typename T>
 		void put(const T &val) {
