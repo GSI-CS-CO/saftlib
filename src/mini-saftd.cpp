@@ -1,6 +1,7 @@
 #include <loop.hpp>
 #include <server_connection.hpp>
 #include <loop.hpp>
+#include <make_unique.hpp>
 
 #include <iostream>
 #include <memory>
@@ -27,7 +28,7 @@ bool timeout_tock() {
 		i = 0;
 		mini_saftlib::Loop::get_default().connect(
 			std::move(
-				std::make_unique<mini_saftlib::TimeoutSource>(
+				std2::make_unique<mini_saftlib::TimeoutSource>(
 					sigc::ptr_fun(timeout_tick),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
 				)
 			)
@@ -42,7 +43,7 @@ void init_fd(){
 	int fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
 	mini_saftlib::Loop::get_default().connect(
 		std::move(
-			std::make_unique<mini_saftlib::IoSource>(
+			std2::make_unique<mini_saftlib::IoSource>(
 				sigc::ptr_fun(fd_callback), fd, POLLIN | POLLHUP
 			)
 		)
@@ -68,7 +69,7 @@ int main() {
 
 	init_fd();
 
-	mini_saftlib::Loop::get_default().connect(std::move(std::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
+	mini_saftlib::Loop::get_default().connect(std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
 	mini_saftlib::Loop::get_default().run();
 
 	return 0;

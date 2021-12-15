@@ -1,4 +1,5 @@
 #include "container.hpp"
+#include "make_unique.hpp"
 
 #include <map>
 #include <string>
@@ -31,7 +32,7 @@ namespace mini_saftlib {
 	}
 
 	Container::Container() 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 	}
 
@@ -40,7 +41,7 @@ namespace mini_saftlib {
 	unsigned Container::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
 		unsigned saftlib_object_id = d->generate_saftlib_object_id();
-		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std::make_unique<Impl::Object>()));
+		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std2::make_unique<Impl::Object>()));
 		// insertion_result is a pair, where the 'first' member is an iterator to the inserted element,
 		// and the 'second' member is a bool that is true if the insertion took place and false if the insertion failed.
 		auto  insertion_took_place  = insertion_result.second;

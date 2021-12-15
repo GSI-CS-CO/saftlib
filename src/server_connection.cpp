@@ -2,6 +2,7 @@
 #include "container.hpp"
 #include "saftbus.hpp"
 #include "saftd.hpp"
+#include "make_unique.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -50,7 +51,7 @@ namespace mini_saftlib {
 			if (client_socket_fd == -1) {
 				std::cerr << "cannot receive socket fd" << std::endl;
 			}
-			Loop::get_default().connect(std::move(std::make_unique<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP)));
+			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP)));
 			// register the client
 			clients.push_back(Client(client_socket_fd));
 			// send the ID back to client (the file descriptor integer number is used as ID)
@@ -102,7 +103,7 @@ namespace mini_saftlib {
 
 
 	ServerConnection::ServerConnection(const std::string &socket_name) 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 		std::ostringstream msg;
 		msg << "ServerConnection constructor : ";
@@ -150,12 +151,12 @@ namespace mini_saftlib {
 			                   S_IRGRP | S_IWGRP | 
 			                   S_IROTH | S_IWOTH );
 
-		Loop::get_default().connect(std::move(std::make_unique<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN)));
+		Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN)));
 		// Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), base_socket_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);			
 
 		// the initialization for inter-process-communication is done now.
 		// last thing to do: register a Service
-		std::unique_ptr<Service> service = std::make_unique<SAFTd_Service>();
+		std::unique_ptr<Service> service = std2::make_unique<SAFTd_Service>();
 		d->container.create_object("/de/gsi/saftlib", std::move(service));
 	}
 

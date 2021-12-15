@@ -1,4 +1,5 @@
 #include "loop.hpp"
+#include "make_unique.hpp"
 
 #include <chrono>
 #include <algorithm>
@@ -22,7 +23,7 @@ namespace mini_saftlib {
 	};
 
 	Source::Source() 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 		d->pfds_size = 0;
 	}
@@ -58,7 +59,7 @@ namespace mini_saftlib {
 	};
 
 	Loop::Loop() 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 		// reserve all the vectors with enough space to avoid 
 		// dynamic allocation in normal operation
@@ -162,7 +163,7 @@ namespace mini_saftlib {
 	bool Loop::quit_in(std::chrono::milliseconds wait_ms) {
 		wait_ms = std::max(wait_ms, std::chrono::milliseconds(1)); // no less then 1 ms
 		connect(std::move(
-				std::make_unique<mini_saftlib::TimeoutSource>
+				std2::make_unique<mini_saftlib::TimeoutSource>
 					(sigc::mem_fun(this, &Loop::quit), wait_ms)
 			)
 		);
@@ -194,7 +195,7 @@ namespace mini_saftlib {
 	};
 
 	TimeoutSource::TimeoutSource(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset) 
-		: d(std::make_unique<Impl>(slot, interval, offset))
+		: d(std2::make_unique<Impl>(slot, interval, offset))
 	{}
 
 	TimeoutSource::~TimeoutSource() = default;
@@ -246,7 +247,7 @@ namespace mini_saftlib {
 	int IoSource::Impl::id_source = 0;
 
 	IoSource::IoSource(sigc::slot<bool, int, int> slot, int fd, int condition) 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 		d->slot              = slot;
 		d->pfd.fd            = fd;

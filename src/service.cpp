@@ -1,4 +1,5 @@
 #include "service.hpp"
+#include "make_unique.hpp"
 
 #include <string>
 
@@ -12,7 +13,7 @@ namespace mini_saftlib {
 	};
 
 	Service::Service(std::vector<std::string> interface_names, service_call call) 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 		d->owner = -1;
 		d->call  = call;

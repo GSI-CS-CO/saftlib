@@ -1,4 +1,5 @@
 #include "client_connection.hpp"
+#include <make_unique.hpp>
 
 #include <server_connection.hpp>
 #include <saftbus.hpp>
@@ -27,7 +28,7 @@ namespace mini_saftlib {
 
 
 	ClientConnection::ClientConnection(const std::string &socket_name) 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 		std::lock_guard<std::mutex> lock1(d->m_base_socket);
 
@@ -142,7 +143,7 @@ namespace mini_saftlib {
 	};
 
 	SignalGroup::SignalGroup() 
-		: d(std::make_unique<Impl>())
+		: d(std2::make_unique<Impl>())
 	{
 		std::ostringstream msg;
 		if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, d->fd_pair) != 0) {
@@ -221,7 +222,7 @@ namespace mini_saftlib {
 	/////////////////////////////
 
 	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group) 
-		: d(std::make_unique<Impl>()) 
+		: d(std2::make_unique<Impl>()) 
 		{
 			d->signal_group = &signal_group;
 			// the Proxy constructor calls the server for 

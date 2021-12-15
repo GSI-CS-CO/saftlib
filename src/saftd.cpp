@@ -1,6 +1,7 @@
 #include "saftd.hpp"
 #include "saftbus.hpp"
 #include "server_connection.hpp"
+#include "make_unique.hpp"
 
 #include <iostream>
 
