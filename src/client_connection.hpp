@@ -11,6 +11,7 @@
 namespace mini_saftlib {
 
 	class ClientConnection {
+		struct Impl; std::unique_ptr<Impl> d;		
 	friend class SignalGroup;
 	friend class Proxy;
 	public:
@@ -23,15 +24,13 @@ namespace mini_saftlib {
 		int receive(Deserializer &serdes, int timeout_ms = -1);
 
 		void send_call();
-
-	private:
-		struct Impl; std::unique_ptr<Impl> d;		
 	};
 
 
 	class Proxy;
 
 	class SignalGroup {
+		struct Impl; std::unique_ptr<Impl> d;
 	public:
 		SignalGroup();
 		~SignalGroup();
@@ -42,11 +41,10 @@ namespace mini_saftlib {
 		int wait_for_one_signal(int timeout_ms = -1);
 
 		static SignalGroup &get_global();
-	private:
-		struct Impl; std::unique_ptr<Impl> d;
 	};
 
 	class Proxy {
+		struct Impl; std::unique_ptr<Impl> d;
 	friend class SignalGroup;
 	public:
 		Proxy(const std::string &object_path, SignalGroup &signal_group);
@@ -57,8 +55,6 @@ namespace mini_saftlib {
 		Serializer&              get_send();
 		Deserializer&            get_received();
 		int get_saftlib_object_id();
-	private:
-		struct Impl; std::unique_ptr<Impl> d;
 	};
 
 }

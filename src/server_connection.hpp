@@ -9,11 +9,10 @@
 namespace mini_saftlib {
 
 	class ServerConnection {
+		struct Impl; std::unique_ptr<Impl> d;
 	public:
 		ServerConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
-	private:
-		struct Impl; std::unique_ptr<Impl> d;
 	};
 
 }

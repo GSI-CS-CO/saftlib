@@ -18,7 +18,7 @@ namespace mini_saftlib {
 	int recvfd(int socket);
 
 
-	// Simple class for serialization and de-serialization 
+	// Simple classes for serialization and de-serialization 
 	// without storing type information, i.e. de-serialization 
 	// only works if the type composition is known (but this 
 	// is the case in all saftlib transfers)

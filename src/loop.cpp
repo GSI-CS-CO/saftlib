@@ -259,7 +259,7 @@ namespace mini_saftlib {
 	}
 	IoSource::~IoSource() 
 	{
-		// remove_poll(d->pfd);
+		remove_poll(d->pfd);
 	}
 
 	bool IoSource::prepare(std::chrono::milliseconds &timeout_ms) {
@@ -282,7 +282,7 @@ namespace mini_saftlib {
 		// std::cerr << "dispatch IoSource(" << d->id << ")" << std::endl;
 		auto result = d->slot(d->pfd.fd, d->pfd.revents);
 		if (!result) {
-			remove_poll(d->pfd);
+			// remove_poll(d->pfd);
 			destroy();
 		}
 		d->pfd.revents = 0; // clear the events after  the dispatching
