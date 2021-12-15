@@ -9,7 +9,6 @@
 
 namespace mini_saftlib {
 
-
 	class Source {
 	friend class Loop;
 	public:
@@ -33,8 +32,9 @@ namespace mini_saftlib {
 		bool iteration(bool may_block);
 		void run();
 		void quit();
-		bool connect(std::shared_ptr<Source> source);
+		bool connect(std::unique_ptr<Source> source);
 		void remove(Source *s);
+		static Loop &get_default();
 	private:
 		struct Impl; std::unique_ptr<Impl> d;
 	};
@@ -42,7 +42,6 @@ namespace mini_saftlib {
     /////////////////////////////////////
 	// Define two useful Source types
     /////////////////////////////////////
-
 
     // call <slot> whenever <interval> amount of time has passed.
     // fist execution starts at <inteval>+<offset>

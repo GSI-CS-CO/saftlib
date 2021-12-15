@@ -96,11 +96,11 @@ namespace mini_saftlib {
 				put(it->second);
 			}
 		}
-		// nested Serializer
-		void put(Serializer &ser) {
-			put(ser._data);
-			ser.put_init();
-		}
+		// // nested Serializer
+		// void put(Serializer &ser) {
+		// 	put(ser._data);
+		// 	ser.put_init();
+		// }
 
 	private:
 
@@ -183,11 +183,11 @@ namespace mini_saftlib {
 				std_map.insert(std::make_pair(key,value));
 			}
 		}
-		// nested Deserializer
-		void get(Deserializer &ser) const {
-			get(ser._data);
-			ser.get_init();
-		}
+		// // nested Deserializer
+		// void get(Deserializer &ser) const {
+		// 	get(ser._data);
+		// 	ser.get_init();
+		// }
 	private:
 
 		// has to be called before first call to get()

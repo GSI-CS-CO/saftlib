@@ -14,7 +14,7 @@ namespace mini_saftlib {
 			CALL,
 			GET_SAFTLIB_OBJECT_ID,
 		};
-		ServerConnection(Loop &loop, const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
+		ServerConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
 	private:
 		struct Impl; std::unique_ptr<Impl> d;

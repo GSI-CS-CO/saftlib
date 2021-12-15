@@ -137,9 +137,8 @@ namespace mini_saftlib {
 		int saftlib_object_id;
 		Serializer   send;
 		Deserializer received;
-		static std::shared_ptr<ClientConnection> connection;
+		SignalGroup *signal_group;
 	};
-	std::shared_ptr<ClientConnection> Proxy::Impl::connection;
 
 	SignalGroup::SignalGroup() 
 		: d(std::make_unique<Impl>())
@@ -161,7 +160,7 @@ namespace mini_saftlib {
 	{
 		// send one of the two socket ends to the server
 		std::cerr << "sending socket pair for signals " << std::endl;
-		return sendfd(Proxy::connection()->d->pfd.fd, d->fd_pair[0]);
+		return sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
 	}
 
 
@@ -209,19 +208,20 @@ namespace mini_saftlib {
 		}
 		return result;
 	}
-
-	SignalGroup globalSignalGroup;
+	SignalGroup& SignalGroup::get_global()
+	{
+		static SignalGroup signal_group;
+		return signal_group;
+	}
 
 
 	/////////////////////////////
 	/////////////////////////////
 	/////////////////////////////
 
-	std::shared_ptr<ClientConnection> Proxy::connection() {
-		if (!static_cast<bool>(Proxy::Impl::connection)) {
-			Proxy::Impl::connection = std::make_shared<ClientConnection>();
-		}
-		return Proxy::Impl::connection;
+	ClientConnection& Proxy::get_connection() {
+		static ClientConnection connection;
+		return connection;
 	}
 
 
@@ -229,20 +229,19 @@ namespace mini_saftlib {
 	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group) 
 		: d(std::make_unique<Impl>()) 
 		{
+			d->signal_group = &signal_group;
 			// the Proxy constructor calls the server for 
 			// the saftlib_object_id that was given to this 
 			// particular object_path;
-			// int &fd = d->get_connection()->d->pfd.fd;
-			// std::mutex &m = d->get_connection()->d->m_client_socket;
 			d->send.put(ServerConnection::GET_SAFTLIB_OBJECT_ID);
 			d->send.put(object_path);
 			{
 				// client connection is shared amongh threads
 				// only one thread cann access the connection at a time
-				std::lock_guard<std::mutex> lock(connection()->d->m_client_socket);
-				connection()->send(d->send);
+				std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
+				get_connection().send(d->send);
 				signal_group.send_fd(*this);
-				connection()->receive(d->received);
+				get_connection().receive(d->received);
 			}
 			d->received.get(d->saftlib_object_id);
 			std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;

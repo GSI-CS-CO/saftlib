@@ -40,18 +40,19 @@ namespace mini_saftlib {
 
 		int wait_for_signal(int timeout_ms = -1);
 		int wait_for_one_signal(int timeout_ms = -1);
+
+		static SignalGroup &get_global();
 	private:
 		struct Impl; std::unique_ptr<Impl> d;
 	};
-	extern SignalGroup globalSignalGroup;
 
 	class Proxy {
 	friend class SignalGroup;
 	public:
-		Proxy(const std::string &object_path, SignalGroup &signal_group = globalSignalGroup);
+		Proxy(const std::string &object_path, SignalGroup &signal_group);
 		virtual ~Proxy();
 		virtual bool signal_dispatch(int interface, Deserializer &signal_content) {return true;};
-		static std::shared_ptr<ClientConnection> connection();
+		static ClientConnection& get_connection();
 	protected:
 	private:
 		struct Impl; std::unique_ptr<Impl> d;

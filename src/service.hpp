@@ -9,7 +9,6 @@ namespace mini_saftlib {
 
 	extern "C" {
 		typedef void (*service_call)(int interface_no, int fucntion_no, void *object);
-
 	}
 
 	class Service {

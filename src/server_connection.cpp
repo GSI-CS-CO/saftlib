@@ -30,13 +30,10 @@ namespace mini_saftlib {
 		return lhs.socket_fd == rhs;
 	}
 	struct ServerConnection::Impl {
-		Loop &loop;
 		std::vector<Client> clients;
 		Serializer   send;
 		Deserializer received;
-		Impl(Loop &l) 
-			: loop(l) 
-		{
+		Impl() {
 			// make this big enough to avoid allocation in normal operation
 			clients.reserve(1024);
 		}
@@ -50,7 +47,7 @@ namespace mini_saftlib {
 			if (client_socket_fd == -1) {
 				std::cerr << "cannot receive socket fd" << std::endl;
 			}
-			loop.connect(std::make_shared<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP));
+			Loop::get_default().connect(std::move(std::make_unique<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP)));
 			// register the client
 			clients.push_back(Client(client_socket_fd));
 			// send the ID back to client (the file descriptor integer number is used as ID)
@@ -104,8 +101,8 @@ namespace mini_saftlib {
 	}
 
 
-	ServerConnection::ServerConnection(Loop &loop, const std::string &socket_name) 
-		: d(std::make_unique<Impl>(loop))
+	ServerConnection::ServerConnection(const std::string &socket_name) 
+		: d(std::make_unique<Impl>())
 	{
 		std::ostringstream msg;
 		msg << "ServerConnection constructor : ";
@@ -153,7 +150,7 @@ namespace mini_saftlib {
 			                   S_IRGRP | S_IWGRP | 
 			                   S_IROTH | S_IWOTH );
 
-		loop.connect(std::make_shared<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN));
+		Loop::get_default().connect(std::move(std::make_unique<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN)));
 		// Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), base_socket_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);			
 	}
 

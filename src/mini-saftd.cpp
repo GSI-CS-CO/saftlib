@@ -1,7 +1,10 @@
 #include <loop.hpp>
 #include <server_connection.hpp>
+#include <loop.hpp>
 
 #include <iostream>
+#include <memory>
+
 
 #include <fcntl.h>  // open()
 #include <unistd.h> // read()
@@ -16,47 +19,57 @@ bool timeout_tick() {
 	return true;
 }
 
-bool timeout_tock(mini_saftlib::Loop *loop) {
+bool timeout_tock() {
 	static int i = 0;
 	// static int j = 0;
 	std::cout << "  tock" << std::endl;
 	if (++i == 6) {
 		i = 0;
-		loop->connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tick),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)));
+		mini_saftlib::Loop::get_default().connect(
+			std::move(
+				std::make_unique<mini_saftlib::TimeoutSource>(
+					sigc::ptr_fun(timeout_tick),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
+				)
+			)
+		);
 	}
 	return true;
 }
 
-static bool fd_callback(int fd, int condition, mini_saftlib::Loop *loop);
-
-void init_fd(mini_saftlib::Loop *loop){ 
+static bool fd_callback(int fd, int condition);
+void init_fd(){ 
 	std::cerr << "init_fd" << std::endl;
 	int fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
-	loop->connect(std::make_shared<mini_saftlib::IoSource>(sigc::bind(sigc::ptr_fun(fd_callback), loop), fd, POLLIN | POLLHUP));
+	mini_saftlib::Loop::get_default().connect(
+		std::move(
+			std::make_unique<mini_saftlib::IoSource>(
+				sigc::ptr_fun(fd_callback), fd, POLLIN | POLLHUP
+			)
+		)
+	);
 }
-bool fd_callback(int fd, int condition, mini_saftlib::Loop *loop) {
+bool fd_callback(int fd, int condition) {
 	if (condition & POLLHUP) {
 		std::cerr << "pollhup called" << std::endl;
 		close(fd);
-		init_fd(loop);
+		init_fd();
 		return false;
 	}
-	char ch;
-	read(fd, &ch, 1);
+	const int size = 10;
+	char ch[size] = {0,};
+	read(fd, &ch, size-1);
 	std::cerr << ch;
 	return true;
 }
 
 int main() {
 
-	mini_saftlib::Loop loop;
+	mini_saftlib::ServerConnection server_connection;
 
-	mini_saftlib::ServerConnection server_connection(loop);
+	init_fd();
 
-	init_fd(&loop);
-
-	loop.connect(std::make_shared<mini_saftlib::TimeoutSource>(sigc::bind(sigc::ptr_fun(timeout_tock),&loop), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)));
-	loop.run();
+	mini_saftlib::Loop::get_default().connect(std::move(std::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
+	mini_saftlib::Loop::get_default().run();
 
 	return 0;
 }

@@ -40,7 +40,7 @@ namespace mini_saftlib {
 	void Source::destroy() {
 		d->loop->remove(this);
 	}
-	bool operator==(std::shared_ptr<Source> lhs, const Source *rhs)
+	bool operator==(const std::unique_ptr<Source> &lhs, const Source *rhs)
 	{
 		return &*lhs == rhs;
 	}
@@ -51,7 +51,7 @@ namespace mini_saftlib {
 
 	struct Loop::Impl {
 		std::vector<Source*> removed_sources;
-		std::vector<std::shared_ptr<Source> > sources;
+		std::vector<std::unique_ptr<Source> > sources;
 		std::vector<struct pollfd>  pfds;
 		std::vector<struct pollfd*> source_pfds;
 		bool run;
@@ -70,6 +70,11 @@ namespace mini_saftlib {
 		d->run = true;
 	}
 	Loop::~Loop() = default;
+
+	Loop& Loop::get_default() {
+		static Loop default_loop;
+		return default_loop;
+	}
 
 	bool Loop::iteration(bool may_block) {
 		std::cerr << ".";
@@ -154,9 +159,9 @@ namespace mini_saftlib {
 		d->run = false;
 	}
 
-	bool Loop::connect(std::shared_ptr<Source> source) {
+	bool Loop::connect(std::unique_ptr<Source> source) {
 		source->d->loop = this;
-		d->sources.push_back(source);
+		d->sources.push_back(std::move(source));
 		return true;
 	}
 
