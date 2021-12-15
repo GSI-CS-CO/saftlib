@@ -2,19 +2,25 @@
 #define MINI_SAFTLIB_CONTAINER_
 
 #include "saftbus.hpp"
+#include "service.hpp"
 
 #include <memory>
 
 namespace mini_saftlib {
 
 	// Manage all Objects managed by mini-saftlib.
-	// A typical daemon would have one instance of this class
 	class Container {
+		struct Impl; std::unique_ptr<Impl> d;
+	public:
 		Container();
-		void remote_call(int saftlib_object_id, int interface, Deserializer &received);
-	private:
-		struct Impl;
-		std::unique_ptr<Impl> d;
+		~Container();
+		// insert an object and return the saftlib_object_id for this object
+		// return 0 in case of failure
+		unsigned create_object(const std::string &object_path, Service *service);
+		// return saftlib_object_id if the object_path was found, 0 otherwise
+		unsigned register_proxy(const std::string &object_path, int client_fd, int signal_group_fd);
+		// return the Service pointer to a given saftlib object
+		Service *get_service_for_object(unsigned saftlib_object_id);
 	};
 
 }

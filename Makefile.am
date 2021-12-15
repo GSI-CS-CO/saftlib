@@ -1,6 +1,8 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 AM_CPPFLAGS = -Wall -g $(EB_CFLAGS) $(SIGC_CFLAGS) -I $(top_srcdir)/src
-bin_PROGRAMS = mini-saftd mini-saftclient
+bin_PROGRAMS = mini-saftd      \
+               mini-saftclient 
+               
 mini_saftd_LDADD = $(EB_LIBS) $(SIGC_LIBS)
 mini_saftd_SOURCES = \
 	src/mini-saftd.cpp                                   \

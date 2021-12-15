@@ -1,4 +1,5 @@
 #include "server_connection.hpp"
+#include "container.hpp"
 
 #include <saftbus.hpp>
 
@@ -29,7 +30,9 @@ namespace mini_saftlib {
 	{
 		return lhs.socket_fd == rhs;
 	}
+
 	struct ServerConnection::Impl {
+		Container container; // manages all objects 
 		std::vector<Client> clients;
 		Serializer   send;
 		Deserializer received;
@@ -66,36 +69,23 @@ namespace mini_saftlib {
 			return false;
 		}
 		if (condition & POLLIN) {
-			bool result = received.read_from(fd);
-			if (!result) {
+			bool read_result = received.read_from(fd);
+			if (!read_result) {
 				std::cerr << "failed to read data from fd " << fd << std::endl;
 				return false;
 			}
-			MsgType type;
-			received.get(type);
-			switch(type) {
-				case CALL: {
-					std::cerr << "CALL request from client" << std::endl;
-					int saftlib_object_id, interface;
-					received.get(saftlib_object_id);
-					received.get(interface);
-
-				}
-				break;
-				case GET_SAFTLIB_OBJECT_ID: {
-					std::cerr << "GET_SAFTLIB_OBJECT_ID received" << std::endl;
-					std::string object_path;
-					received.get(object_path);
-					int signal_fd = recvfd(fd);
-					// safe the signal_fd somewhere...
-					std::cerr << "request from client " << fd << " wants the saftlib_object_id for " << object_path << std::endl;
-					int saftlib_object_id = 42;
-					send.put(saftlib_object_id);
-					send.write_to(fd);
-				}
-				break;
+			int saftlib_object_id;
+			received.get(saftlib_object_id);
+			if (saftlib_object_id == 0) { // this means a proxy tries to register itself
+				std::string object_path;
+				received.get(object_path);
+				int signal_fd = recvfd(fd);
+				saftlib_object_id = container.register_proxy(object_path, fd, signal_fd);
+				send.put(saftlib_object_id);
+				send.write_to(fd);
+			} else {
+				// look for object with given saftlib_object_id and hand the received data to the service
 			}
-
 		}
 		return true;
 	}

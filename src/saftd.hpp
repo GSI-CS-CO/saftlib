@@ -8,9 +8,13 @@ namespace mini_saftlib {
 
 	class SAFTd_Proxy : public Proxy {
 		SAFTd_Proxy(SignalGroup &signal_group);
-		// void greet();
+		void greet();
 	};
 
+
+	class SAFTd {
+		void greet();
+	};
 
 
 

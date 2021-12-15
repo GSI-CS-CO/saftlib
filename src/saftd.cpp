@@ -1,4 +1,8 @@
 #include "saftd.hpp"
+#include "saftbus.hpp"
+#include "server_connection.hpp"
+
+#include <iostream>
 
 namespace mini_saftlib {
 
@@ -7,10 +11,10 @@ namespace mini_saftlib {
 	{	
 	}
 
-	// void SAFTd_Proxy::greet() {
 
-	// }
-
+	void SAFTd::greet() {
+		std::cout << "hello from SAFTd" << std::endl;
+	}
 
 
 }

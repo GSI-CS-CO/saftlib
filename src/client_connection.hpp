@@ -52,8 +52,9 @@ namespace mini_saftlib {
 		Proxy(const std::string &object_path, SignalGroup &signal_group);
 		virtual ~Proxy();
 		virtual bool signal_dispatch(int interface, Deserializer &signal_content) {return true;};
-		static ClientConnection& get_connection();
 	protected:
+		static ClientConnection& get_connection();
+		int get_saftlib_object_id();
 	private:
 		struct Impl; std::unique_ptr<Impl> d;
 	};

@@ -10,10 +10,6 @@ namespace mini_saftlib {
 
 	class ServerConnection {
 	public:
-		enum MsgType {
-			CALL,
-			GET_SAFTLIB_OBJECT_ID,
-		};
 		ServerConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
 	private:

@@ -219,13 +219,6 @@ namespace mini_saftlib {
 	/////////////////////////////
 	/////////////////////////////
 
-	ClientConnection& Proxy::get_connection() {
-		static ClientConnection connection;
-		return connection;
-	}
-
-
-
 	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group) 
 		: d(std::make_unique<Impl>()) 
 		{
@@ -233,7 +226,8 @@ namespace mini_saftlib {
 			// the Proxy constructor calls the server for 
 			// the saftlib_object_id that was given to this 
 			// particular object_path;
-			d->send.put(ServerConnection::GET_SAFTLIB_OBJECT_ID);
+			unsigned request_object_id = 0;
+			d->send.put(request_object_id);
 			d->send.put(object_path);
 			{
 				// client connection is shared amongh threads
@@ -244,8 +238,22 @@ namespace mini_saftlib {
 				get_connection().receive(d->received);
 			}
 			d->received.get(d->saftlib_object_id);
+			if (!d->saftlib_object_id) {
+				std::ostringstream msg;
+				msg << "object path \"" << object_path << "\" not found" << std::endl;
+				throw std::runtime_error(msg.str());
+			}
 			std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
 		}
 	Proxy::~Proxy() = default;
+
+	ClientConnection& Proxy::get_connection() {
+		static ClientConnection connection;
+		return connection;
+	}
+
+	int Proxy::get_saftlib_object_id() {
+		return d->saftlib_object_id;
+	}
 
 }
