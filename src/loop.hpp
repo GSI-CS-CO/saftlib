@@ -31,7 +31,8 @@ namespace mini_saftlib {
 		~Loop();
 		bool iteration(bool may_block);
 		void run();
-		void quit();
+		bool quit();
+		bool quit_in(std::chrono::milliseconds wait_ms);
 		bool connect(std::unique_ptr<Source> source);
 		void remove(Source *s);
 		static Loop &get_default();

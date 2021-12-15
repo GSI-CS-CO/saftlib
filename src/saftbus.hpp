@@ -102,6 +102,8 @@ namespace mini_saftlib {
 		// 	ser.put_init();
 		// }
 
+		bool empty();
+
 	private:
 
 		// has to be called before first call to put()

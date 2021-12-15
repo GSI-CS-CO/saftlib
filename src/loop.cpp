@@ -155,8 +155,18 @@ namespace mini_saftlib {
 		}
 	}
 
-	void Loop::quit() {
-		d->run = false;
+	bool Loop::quit() {
+		return d->run = false;
+	}
+
+	bool Loop::quit_in(std::chrono::milliseconds wait_ms) {
+		wait_ms = std::max(wait_ms, std::chrono::milliseconds(1)); // no less then 1 ms
+		connect(std::move(
+				std::make_unique<mini_saftlib::TimeoutSource>
+					(sigc::mem_fun(this, &Loop::quit), wait_ms)
+			)
+		);
+		return false;
 	}
 
 	bool Loop::connect(std::unique_ptr<Source> source) {

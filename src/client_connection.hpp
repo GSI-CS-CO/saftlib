@@ -54,6 +54,8 @@ namespace mini_saftlib {
 		virtual bool signal_dispatch(int interface, Deserializer &signal_content) {return true;};
 	protected:
 		static ClientConnection& get_connection();
+		Serializer&              get_send();
+		Deserializer&            get_received();
 		int get_saftlib_object_id();
 	private:
 		struct Impl; std::unique_ptr<Impl> d;

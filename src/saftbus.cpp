@@ -97,6 +97,10 @@ namespace mini_saftlib {
 		// std::cerr << "read " << size << " bytes from fd " << fd << std::endl;
 		return true;
 	}
+	bool Serializer::empty()
+	{
+		return _data.empty();
+	}
 	void Serializer::put_init()
 	{
 		_data.clear();

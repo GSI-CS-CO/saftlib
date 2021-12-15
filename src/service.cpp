@@ -24,4 +24,12 @@ namespace mini_saftlib {
 		d->signal_group_fds.push_back(fd);
 	}
 
+	void Service::call(Deserializer &received, Serializer &send) {
+		int interface_no, function_no;
+		received.get(interface_no);
+		received.get(function_no);
+		std::cerr << "Service::call got " << interface_no << " " << function_no << std::endl;
+		d->call(interface_no, function_no, this, received, send);
+	}
+
 }

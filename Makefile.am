@@ -19,6 +19,8 @@ mini_saftclient_SOURCES = \
 	src/mini-saftclient.cpp                              \
 	src/saftbus.cpp            src/saftbus.hpp           \
 	src/client_connection.cpp  src/client_connection.hpp \
+	src/service.cpp            src/service.hpp           \
+	src/loop.cpp               src/loop.hpp              \
 	src/saftd.cpp              src/saftd.hpp             
 
 

@@ -11,7 +11,7 @@ namespace mini_saftlib {
 		unsigned generate_saftlib_object_id();
 
 		struct Object {
-			Service *service;
+			std::unique_ptr<Service> service;
 			std::string object_path;
 			std::set<int> client_fds;
 			std::set<int> signal_fds;
@@ -37,7 +37,7 @@ namespace mini_saftlib {
 
 	Container::~Container() = default;
 
-	unsigned Container::create_object(const std::string &object_path, Service *service)
+	unsigned Container::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
 		unsigned saftlib_object_id = d->generate_saftlib_object_id();
 		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std::make_unique<Impl::Object>()));
@@ -46,7 +46,7 @@ namespace mini_saftlib {
 		auto  insertion_took_place  = insertion_result.second;
 		auto &inserted_object       = insertion_result.first->second; 
 		if (insertion_took_place) {
-			inserted_object->service     = service;
+			inserted_object->service     = std::move(service);
 			inserted_object->object_path = object_path;
 			d->object_path_lookup_table[object_path] = saftlib_object_id;
 			return saftlib_object_id;
@@ -76,7 +76,7 @@ namespace mini_saftlib {
 		if (result == d->objects.end()) {
 			return nullptr;
 		}
-		return result->second->service;
+		return result->second->service.get();
 	}
 
 

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <mutex>
+#include <cassert>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -199,7 +200,7 @@ namespace mini_saftlib {
 					}
 				}
 				if (d->pfd.revents & POLLHUP) {
-					std::cerr << __FILE__ << ": " << __LINE__ << ": did server crash? this should not happen" << std::endl;
+					assert(false); // did the server crash? this should never happen
 				}
 			}
 		}
@@ -250,6 +251,14 @@ namespace mini_saftlib {
 	ClientConnection& Proxy::get_connection() {
 		static ClientConnection connection;
 		return connection;
+	}
+	Serializer& Proxy::get_send()
+	{
+		return d->send;
+	}
+	Deserializer& Proxy::get_received()
+	{
+		return d->received;
 	}
 
 	int Proxy::get_saftlib_object_id() {

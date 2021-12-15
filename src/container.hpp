@@ -16,7 +16,7 @@ namespace mini_saftlib {
 		~Container();
 		// insert an object and return the saftlib_object_id for this object
 		// return 0 in case of failure
-		unsigned create_object(const std::string &object_path, Service *service);
+		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
 		// return saftlib_object_id if the object_path was found, 0 otherwise
 		unsigned register_proxy(const std::string &object_path, int client_fd, int signal_group_fd);
 		// return the Service pointer to a given saftlib object

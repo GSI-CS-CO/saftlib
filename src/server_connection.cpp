@@ -1,7 +1,7 @@
 #include "server_connection.hpp"
 #include "container.hpp"
-
-#include <saftbus.hpp>
+#include "saftbus.hpp"
+#include "saftd.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -76,14 +76,24 @@ namespace mini_saftlib {
 			}
 			int saftlib_object_id;
 			received.get(saftlib_object_id);
+			std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
 			if (saftlib_object_id == 0) { // this means a proxy tries to register itself
+				std::cerr << "register a proxy" << std::endl;
 				std::string object_path;
 				received.get(object_path);
 				int signal_fd = recvfd(fd);
 				saftlib_object_id = container.register_proxy(object_path, fd, signal_fd);
+				std::cerr << "registered proxy under saftlib_object_id " << saftlib_object_id << std::endl;
 				send.put(saftlib_object_id);
 				send.write_to(fd);
 			} else {
+				std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
+				std::cerr << "trying to call a function" << std::endl;
+				Service *service = container.get_service_for_object(saftlib_object_id);
+				service->call(received, send);
+				if (!send.empty()) {
+					send.write_to(fd);
+				}
 				// look for object with given saftlib_object_id and hand the received data to the service
 			}
 		}
@@ -142,6 +152,11 @@ namespace mini_saftlib {
 
 		Loop::get_default().connect(std::move(std::make_unique<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN)));
 		// Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), base_socket_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);			
+
+		// the initialization for inter-process-communication is done now.
+		// last thing to do: register a Service
+		std::unique_ptr<Service> service = std::make_unique<SAFTd_Service>();
+		d->container.create_object("/de/gsi/saftlib", std::move(service));
 	}
 
 	ServerConnection::~ServerConnection() = default;
