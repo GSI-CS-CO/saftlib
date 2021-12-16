@@ -10,6 +10,7 @@
 namespace mini_saftlib {
 
 	class Service;
+	class Container;
 
 	// extern "C" {
 	// 	typedef void (*service_call)(int interface_no, int function_no, Service *service, Deserializer &received, Serializer &send);
@@ -32,7 +33,7 @@ namespace mini_saftlib {
 		struct Impl; std::unique_ptr<Impl> d;
 		static std::vector<std::string> gen_interface_names();
 	public:
-		CoreService();
+		CoreService(Container *container);
 		// static CoreService* get_instance();
 		~CoreService();
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);

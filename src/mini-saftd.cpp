@@ -3,6 +3,7 @@
 #include <service.hpp>
 #include <loop.hpp>
 #include <make_unique.hpp>
+#include <container.hpp>
 
 #include <iostream>
 #include <memory>
@@ -70,16 +71,17 @@ int main() {
 	// mini_saftlib::Loop::get_default().connect(std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
 
 	// system setup:
-	// 1) Create the core service object.
-	auto core_service = std2::make_unique<mini_saftlib::CoreService>();
-	// 2) Create the server connection that creates a socket and manages incoming 
-	//    client requests. Client request are redirected to the CoreService, therefore
+	// 1) Creat a container for services
+	mini_saftlib::Container container;
+	// 2) Create one core_service object
+	auto core_service = std2::make_unique<mini_saftlib::CoreService>(&container);
+	// 3) Create the server connection that instantiates a socket and manages incoming 
+	//    client requests. Client request are redirected to the CoreService object, therefore
 	//    a pointer to the core_service object is passed to the ServerConnection constructor.
 	mini_saftlib::ServerConnection server_connection(core_service.get());
-	// 3) put the core service object under its own supervision
-	core_service->create_object("/de/gsi/saftlib", std::move(core_service));
-
-	// run the main loop
+	// 4) insert the core_service object into the container
+	container.create_object("/de/gsi/saftlib", std::move(core_service));	
+	// 5) run the main loop
 	mini_saftlib::Loop::get_default().run();
 
 	return 0;

@@ -34,7 +34,7 @@ namespace mini_saftlib {
 	}
 
 	struct CoreService::Impl {
-		Container container;
+		Container *container;
 	};
 
 
@@ -53,27 +53,28 @@ namespace mini_saftlib {
 	// }
 
 
-	CoreService::CoreService()
+	CoreService::CoreService(Container *container)
 		: Service(gen_interface_names())
 		, d(std2::make_unique<Impl>())
 	{
+		d->container = container;
 		// std::unique_ptr<Service> service = std2::make_unique<CoreService>();
-		// d->container.create_object("/de/gsi/saftlib", std::move(service));
+		// d->container->create_object("/de/gsi/saftlib", std::move(service));
 	}
 	CoreService::~CoreService() = default;
 
 	// just forward the calls to the underlying container object
 	unsigned CoreService::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
-		return d->container.create_object(object_path, std::move(service));
+		return d->container->create_object(object_path, std::move(service));
 	}
 	unsigned CoreService::register_proxy(const std::string &object_path, int client_fd, int signal_group_fd)
 	{
-		return d->container.register_proxy(object_path, client_fd, signal_group_fd);
+		return d->container->register_proxy(object_path, client_fd, signal_group_fd);
 	}
 	bool CoreService::call_service(unsigned saftlib_object_id, Deserializer &received, Serializer &send)
 	{
-		return d->container.call_service(saftlib_object_id, received, send);
+		return d->container->call_service(saftlib_object_id, received, send);
 	}
 
 
@@ -89,14 +90,14 @@ namespace mini_saftlib {
 					received.get(saftlib_object_id);
 					received.get(client_fd);
 					received.get(signal_group_fd);
-					d->container.unregister_proxy(saftlib_object_id, client_fd, signal_group_fd);
+					d->container->unregister_proxy(saftlib_object_id, client_fd, signal_group_fd);
 					bool result;
 					send.put(result = true);
 				}
 				break;
 				case 1: // quit
 					Loop::get_default().quit_in(std::chrono::milliseconds(100));
-					std::cerr << "saftd will quit in 1000 ms" << std::endl;
+					std::cerr << "saftd will quit in 100 ms" << std::endl;
 				break;
 				case 2: {// greet
 					std::string name;
