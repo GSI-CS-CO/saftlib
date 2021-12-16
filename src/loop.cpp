@@ -111,7 +111,7 @@ namespace mini_saftlib {
 		//////////////////
 		// polling / waiting
 		//////////////////
-		// std::cerr << "poll pfds size " << d->pfds.size() << std::endl;
+		std::cerr << "poll pfds size " << d->pfds.size() << std::endl;
 		if (d->pfds.size() > 0) {
 			int poll_result = 0;
 			if ((poll_result = poll(&d->pfds[0], d->pfds.size(), timeout.count())) > 0) {
@@ -161,7 +161,7 @@ namespace mini_saftlib {
 	}
 
 	bool Loop::quit_in(std::chrono::milliseconds wait_ms) {
-		wait_ms = std::max(wait_ms, std::chrono::milliseconds(1)); // no less then 1 ms
+		//wait_ms = std::max(wait_ms, std::chrono::milliseconds(1)); // no less then 1 ms
 		connect(std::move(
 				std2::make_unique<mini_saftlib::TimeoutSource>
 					(sigc::mem_fun(this, &Loop::quit), wait_ms)

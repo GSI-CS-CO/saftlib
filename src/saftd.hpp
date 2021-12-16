@@ -25,6 +25,7 @@ namespace mini_saftlib {
 
 		// saftlib export
 		bool quit();
+	private:
 	};
 
 
@@ -33,11 +34,12 @@ namespace mini_saftlib {
 	public:
 		SAFTd_Service();
 		SAFTd_Driver *impl;
+		void call(int interface_no, int function_no, Deserializer &received, Serializer &send);
 	};
 
-	extern "C" {
-		void SAFTd_service_call(int interface_no, int function_no, Service *service, Deserializer &received, Serializer &send);
-	}
+	// extern "C" {
+	// 	void SAFTd_service_call(int interface_no, int function_no, Service *service, Deserializer &received, Serializer &send);
+	// }
 
 
 

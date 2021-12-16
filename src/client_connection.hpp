@@ -31,6 +31,7 @@ namespace mini_saftlib {
 
 	class SignalGroup {
 		struct Impl; std::unique_ptr<Impl> d;
+	friend class Proxy;
 	public:
 		SignalGroup();
 		~SignalGroup();
@@ -50,6 +51,8 @@ namespace mini_saftlib {
 		Proxy(const std::string &object_path, SignalGroup &signal_group);
 		virtual ~Proxy();
 		virtual bool signal_dispatch(int interface, Deserializer &signal_content) {return true;};
+		static std::shared_ptr<Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
+		void quit();
 	protected:
 		static ClientConnection& get_connection();
 		Serializer&              get_send();

@@ -18,6 +18,8 @@ mini_saftclient_LDADD = $(EB_LIBS) $(SIGC_LIBS)
 mini_saftclient_SOURCES = \
 	src/mini-saftclient.cpp                              \
 	src/saftbus.cpp            src/saftbus.hpp           \
+	src/container.cpp          src/container.hpp         \
+	src/server_connection.cpp  src/server_connection.hpp \
 	src/client_connection.cpp  src/client_connection.hpp \
 	src/service.cpp            src/service.hpp           \
 	src/loop.cpp               src/loop.hpp              \

@@ -131,12 +131,13 @@ namespace mini_saftlib {
 		struct pollfd pfd;
 		int fd_pair[2];
 		Deserializer received;
-		std::vector<std::shared_ptr<Proxy> > proxies;
+		std::vector<Proxy*> proxies;
 		std::mutex m1, m2;
 	};
 
 	struct Proxy::Impl {
 		int saftlib_object_id;
+		int client_id, signal_group_id; // is determined at registration time and needs to be saved for de-registration
 		Serializer   send;
 		Deserializer received;
 		SignalGroup *signal_group;
@@ -226,20 +227,23 @@ namespace mini_saftlib {
 		{
 			d->signal_group = &signal_group;
 			// the Proxy constructor calls the server for 
-			// the saftlib_object_id that was given to this 
-			// particular object_path;
+			// with object_id = 0 (tells the server that we want the object_id for the following object_path)
+			// and the object_path from whaterer object we want to have a Proxy 
 			unsigned request_object_id = 0;
 			d->send.put(request_object_id);
 			d->send.put(object_path);
 			{
-				// client connection is shared amongh threads
-				// only one thread cann access the connection at a time
+				// client connection is shared among threads
+				// only one thread can access the connection at a time
 				std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
 				get_connection().send(d->send);
 				signal_group.send_fd(*this);
 				get_connection().receive(d->received);
 			}
+			// the response is just the object_id
 			d->received.get(d->saftlib_object_id);
+			d->received.get(d->client_id);
+			d->received.get(d->signal_group_id);
 			if (!d->saftlib_object_id) {
 				std::ostringstream msg;
 				msg << "object path \"" << object_path << "\" not found" << std::endl;
@@ -247,7 +251,46 @@ namespace mini_saftlib {
 			}
 			std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
 		}
-	Proxy::~Proxy() = default;
+	Proxy::~Proxy()
+	{
+		std::cerr << "destroy Proxy" << std::endl;
+		// de-register from signal_group
+		// d->signal_group->d->proxies.erase(std::remove(d->signal_group->d->proxies.begin(), d->signal_group->d->proxies.end(), this),
+		// 	                              d->signal_group->d->proxies.end());
+		// de-register from server
+		// client connection is shared among threads
+		// only one thread can access the connection at a time
+		d->send.put(d->saftlib_object_id);
+		unsigned interface_no, function_no;
+		d->send.put(interface_no = 0);
+		d->send.put(function_no = 0); // de-register proxy(saftlib_object_id, clien_fd, signal_group_fd)
+		d->send.put(d->saftlib_object_id);
+		d->send.put(d->client_id);
+		d->send.put(d->signal_group_id);
+		std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
+		get_connection().send(d->send);
+		get_connection().receive(d->received);
+		bool result;
+		std::cerr << "waiting for response from de-register" << std::endl;
+		d->received.get(result);
+		assert(result); // de-registration should always succeed
+		std::cerr << "Proxy de-registration successful" << std::endl;
+	}
+
+	std::shared_ptr<Proxy> Proxy::create(SignalGroup &signal_group)
+	{
+		return std::make_shared<Proxy>("/de/gsi/saftlib", signal_group);
+	}
+
+	void Proxy::quit() 
+	{
+		d->send.put(d->saftlib_object_id);
+		unsigned interface_no, function_no;
+		d->send.put(interface_no = 0);
+		d->send.put(function_no  = 1); // de-register proxy(saftlib_object_id, clien_fd, signal_group_fd)
+		std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
+		get_connection().send(d->send);
+	}
 
 	ClientConnection& Proxy::get_connection() {
 		static ClientConnection connection;

@@ -1,5 +1,6 @@
 #include <loop.hpp>
 #include <server_connection.hpp>
+#include <service.hpp>
 #include <loop.hpp>
 #include <make_unique.hpp>
 
@@ -64,12 +65,21 @@ bool fd_callback(int fd, int condition) {
 }
 
 int main() {
+	// two lines just to play around ... has nothing to do with the saftd functionality.
+	// init_fd();
+	// mini_saftlib::Loop::get_default().connect(std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
 
-	mini_saftlib::ServerConnection server_connection;
+	// system setup:
+	// 1) Create the core service object.
+	auto core_service = std2::make_unique<mini_saftlib::CoreService>();
+	// 2) Create the server connection that creates a socket and manages incoming 
+	//    client requests. Client request are redirected to the CoreService, therefore
+	//    a pointer to the core_service object is passed to the ServerConnection constructor.
+	mini_saftlib::ServerConnection server_connection(core_service.get());
+	// 3) put the core service object under its own supervision
+	core_service->create_object("/de/gsi/saftlib", std::move(core_service));
 
-	init_fd();
-
-	mini_saftlib::Loop::get_default().connect(std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
+	// run the main loop
 	mini_saftlib::Loop::get_default().run();
 
 	return 0;

@@ -19,8 +19,10 @@ namespace mini_saftlib {
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
 		// return saftlib_object_id if the object_path was found, 0 otherwise
 		unsigned register_proxy(const std::string &object_path, int client_fd, int signal_group_fd);
-		// return the Service pointer to a given saftlib object
-		Service *get_service_for_object(unsigned saftlib_object_id);
+		void unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd);
+		// call a Service identified by the saftlib_object_id
+		// return false if the saftlib_object_id is unknown
+		bool call_service(unsigned saftlib_object_id, Deserializer &received, Serializer &send);
 	};
 
 }

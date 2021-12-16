@@ -1,6 +1,7 @@
 #include "saftd.hpp"
 #include "saftbus.hpp"
 #include "server_connection.hpp"
+#include "loop.hpp"
 #include "make_unique.hpp"
 
 #include <iostream>
@@ -52,37 +53,35 @@ namespace mini_saftlib {
 	}
 
 	SAFTd_Service::SAFTd_Service() 
-		: Service(gen_interface_names(), &SAFTd_service_call)
+		: Service(gen_interface_names())
 	{
 	}
 
-
-	extern "C" {
-		void SAFTd_service_call(int interface_no, int function_no, Service *service, Deserializer &received, Serializer &send) {
-			SAFTd_Service *saftd_service = dynamic_cast<SAFTd_Service*>(service);
-			switch(interface_no) {
-				case 0:
-				switch(function_no) {
-					case 0:  {
-						std::string name;
-						received.get(name);
-						saftd_service->impl->greet(name);
-					}
-					break;
-					case 1: {
-						bool result = saftd_service->impl->quit();
-						send.put(result);
-					}
-					break;
-					default:
-						assert(false); // this is a severe error and can only happen if the code generator has a bug
+	void SAFTd_Service::call(int interface_no, int function_no, Deserializer &received, Serializer &send)
+	{
+		switch(interface_no) {
+			case 0:
+			switch(function_no) {
+				case 0:  {
+					std::string name;
+					received.get(name);
+					impl->greet(name);
+				}
+				break;
+				case 1: {
+					bool result = impl->quit();
+					send.put(result);
 				}
 				break;
 				default:
 					assert(false); // this is a severe error and can only happen if the code generator has a bug
 			}
+			break;
+			default:
+				assert(false); // this is a severe error and can only happen if the code generator has a bug
 		}
 	}
+
 
 
 }

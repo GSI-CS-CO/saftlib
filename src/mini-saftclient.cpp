@@ -13,18 +13,11 @@ int main(int argc, char **argv)
 	// mini_saftlib::Proxy saftd1("/de/gsi/saftlib", mini_saftlib::SignalGroup::get_global());
 	// mini_saftlib::Proxy saftd2("/de/gsi/saftlib", mini_saftlib::SignalGroup::get_global());
 
-	auto saftd = mini_saftlib::SAFTd_Proxy::create();
-	saftd->greet("GSI");
-	saftd->greet("R3B");
-	saftd->greet("ACO");
-	saftd->greet("NUSTAR");
-	saftd->greet("Gamma");
-	saftd->greet("APPA");
-	saftd->greet("und den Rest der Menschen");
+	auto saftd = mini_saftlib::Proxy::create();
 
 	std::cerr << "argc = " << argc << std::endl;
 	if (argc > 1) {
-		std::cerr << "quit result = " <<  saftd->quit() << std::endl;
+		saftd->quit();
 	}
 
 	return 0;

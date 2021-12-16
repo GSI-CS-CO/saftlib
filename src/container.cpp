@@ -14,8 +14,9 @@ namespace mini_saftlib {
 		struct Object {
 			std::unique_ptr<Service> service;
 			std::string object_path;
-			std::set<int> client_fds;
+			// std::set<int> client_fds;
 			std::set<int> signal_fds;
+			std::map<int, int> use_count;
 		};
 
 		std::map<unsigned, std::unique_ptr<Object> > objects;
@@ -50,6 +51,7 @@ namespace mini_saftlib {
 			inserted_object->service     = std::move(service);
 			inserted_object->object_path = object_path;
 			d->object_path_lookup_table[object_path] = saftlib_object_id;
+			std::cerr << "created object under object_id " << saftlib_object_id << std::endl;
 			return saftlib_object_id;
 		}
 		return 0;
@@ -59,25 +61,37 @@ namespace mini_saftlib {
 	{
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result != d->object_path_lookup_table.end()) {
-			unsigned object_id = find_result->second;
-			auto find_result = d->objects.find(object_id);
+			unsigned saftlib_object_id = find_result->second;
+			auto find_result = d->objects.find(saftlib_object_id);
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto    &object    = find_result->second;
-			object->client_fds.insert(client_fd);
+			// object->client_fds.insert(client_fd);
 			object->signal_fds.insert(signal_group_fd);
-			return object_id;
+			object->use_count[signal_group_fd]++;
+			return saftlib_object_id;
 		}
 		return 0;
 	}
-
-
-	Service *Container::get_service_for_object(unsigned saftlib_object_id)
+	void Container::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
 	{
+		auto find_result = d->objects.find(saftlib_object_id);
+		assert(find_result != d->objects.end()); 
+		auto    &object    = find_result->second;
+		object->use_count[signal_group_fd]--;
+		if (object->use_count[signal_group_fd] == 0) {
+			// object->client_fds.erase(client_fd);
+			object->signal_fds.erase(signal_group_fd);
+		}
+	}
+
+
+	bool Container::call_service(unsigned saftlib_object_id, Deserializer &received, Serializer &send) {
 		auto result = d->objects.find(saftlib_object_id);
 		if (result == d->objects.end()) {
-			return nullptr;
+			return false;
 		}
-		return result->second->service.get();
+		result->second->service->call(received, send);
+		return true;
 	}
 
 

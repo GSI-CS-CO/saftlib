@@ -1,7 +1,8 @@
 #include "server_connection.hpp"
-#include "container.hpp"
+#include "service.hpp"
 #include "saftbus.hpp"
 #include "saftd.hpp"
+#include "loop.hpp"
 #include "make_unique.hpp"
 
 #include <sstream>
@@ -33,7 +34,7 @@ namespace mini_saftlib {
 	}
 
 	struct ServerConnection::Impl {
-		Container container; // manages all objects 
+		CoreService *core_service;
 		std::vector<Client> clients;
 		Serializer   send;
 		Deserializer received;
@@ -83,28 +84,29 @@ namespace mini_saftlib {
 				std::string object_path;
 				received.get(object_path);
 				int signal_fd = recvfd(fd);
-				saftlib_object_id = container.register_proxy(object_path, fd, signal_fd);
+				saftlib_object_id = core_service->register_proxy(object_path, fd, signal_fd);
 				std::cerr << "registered proxy under saftlib_object_id " << saftlib_object_id << std::endl;
 				send.put(saftlib_object_id);
+				send.put(fd); // fd and signal_fd are used in the proxy de-registration process
+				send.put(signal_fd);
 				send.write_to(fd);
 			} else {
 				std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
 				std::cerr << "trying to call a function" << std::endl;
-				Service *service = container.get_service_for_object(saftlib_object_id);
-				service->call(received, send);
+				core_service->call_service(saftlib_object_id, received, send);
 				if (!send.empty()) {
 					send.write_to(fd);
 				}
-				// look for object with given saftlib_object_id and hand the received data to the service
 			}
 		}
 		return true;
 	}
 
 
-	ServerConnection::ServerConnection(const std::string &socket_name) 
+	ServerConnection::ServerConnection(CoreService *core_service, const std::string &socket_name) 
 		: d(std2::make_unique<Impl>())
 	{
+		d->core_service = core_service;
 		std::ostringstream msg;
 		msg << "ServerConnection constructor : ";
 		char *socketname_env = getenv("SAFTBUS_SOCKET_PATH");
@@ -154,10 +156,10 @@ namespace mini_saftlib {
 		Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN)));
 		// Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), base_socket_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);			
 
-		// the initialization for inter-process-communication is done now.
-		// last thing to do: register a Service
-		std::unique_ptr<Service> service = std2::make_unique<SAFTd_Service>();
-		d->container.create_object("/de/gsi/saftlib", std::move(service));
+		// // the initialization for inter-process-communication is done now.
+		// // last thing to do: register a Service
+		// std::unique_ptr<Service> service = std2::make_unique<SAFTd_Service>();
+		// d->container.create_object("/de/gsi/saftlib", std::move(service));
 	}
 
 	ServerConnection::~ServerConnection() = default;
