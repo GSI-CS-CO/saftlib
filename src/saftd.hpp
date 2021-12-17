@@ -1,7 +1,7 @@
 #ifndef MINI_SAFTLIB_SAFTD_
 #define MINI_SAFTLIB_SAFTD_
 
-#include "client_connection.hpp"
+#include "client.hpp"
 #include "service.hpp"
 #include "saftbus.hpp"
 

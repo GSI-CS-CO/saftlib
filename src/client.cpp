@@ -1,8 +1,6 @@
-#include "client_connection.hpp"
-#include <make_unique.hpp>
-
-#include <server_connection.hpp>
-#include <saftbus.hpp>
+#include "client.hpp"
+#include "make_unique.hpp"
+#include "saftbus.hpp"
 
 #include <sstream>
 #include <iostream>
