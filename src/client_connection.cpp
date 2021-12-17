@@ -227,14 +227,15 @@ namespace mini_saftlib {
 		{
 			d->signal_group = &signal_group;
 			// the Proxy constructor calls the server for 
-			// with object_id = 0 (tells the server that we want the object_id for the following object_path)
-			// and the object_path from whaterer object we want to have a Proxy 
-			unsigned request_object_id = 0;
-			d->send.put(request_object_id);
+			// with object_id = 1 (the CoreService)
+			unsigned core_service_object_id = 1;
+			int interface_no = 0;
+			int function_no = 0; // 0 is register_proxy
+			d->send.put(core_service_object_id);
+			d->send.put(interface_no);
+			d->send.put(function_no);
 			d->send.put(object_path);
 			{
-				// client connection is shared among threads
-				// only one thread can access the connection at a time
 				std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
 				get_connection().send(d->send);
 				signal_group.send_fd(*this);
@@ -244,6 +245,7 @@ namespace mini_saftlib {
 			d->received.get(d->saftlib_object_id);
 			d->received.get(d->client_id);
 			d->received.get(d->signal_group_id);
+			// if we get object_id 0, the object path was not found
 			if (!d->saftlib_object_id) {
 				std::ostringstream msg;
 				msg << "object path \"" << object_path << "\" not found" << std::endl;
@@ -261,15 +263,18 @@ namespace mini_saftlib {
 		// client connection is shared among threads
 		// only one thread can access the connection at a time
 		d->send.put(d->saftlib_object_id);
-		unsigned interface_no, function_no;
-		d->send.put(interface_no = 0);
-		d->send.put(function_no = 0); // de-register proxy(saftlib_object_id, clien_fd, signal_group_fd)
+		int interface_no = 0;
+		int function_no = 1; // 1 is unregister_proxy
+		d->send.put(interface_no);
+		d->send.put(function_no); 
 		d->send.put(d->saftlib_object_id);
 		d->send.put(d->client_id);
 		d->send.put(d->signal_group_id);
-		std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
-		get_connection().send(d->send);
-		get_connection().receive(d->received);
+		{
+			std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
+			get_connection().send(d->send);
+			get_connection().receive(d->received);
+		}
 		bool result;
 		std::cerr << "waiting for response from de-register" << std::endl;
 		d->received.get(result);
@@ -287,7 +292,7 @@ namespace mini_saftlib {
 		d->send.put(d->saftlib_object_id);
 		unsigned interface_no, function_no;
 		d->send.put(interface_no = 0);
-		d->send.put(function_no  = 1); // de-register proxy(saftlib_object_id, clien_fd, signal_group_fd)
+		d->send.put(function_no  = 2); 
 		std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
 		get_connection().send(d->send);
 	}

@@ -13,11 +13,12 @@ int main(int argc, char **argv)
 	// mini_saftlib::Proxy saftd1("/de/gsi/saftlib", mini_saftlib::SignalGroup::get_global());
 	// mini_saftlib::Proxy saftd2("/de/gsi/saftlib", mini_saftlib::SignalGroup::get_global());
 
-	auto saftd = mini_saftlib::Proxy::create();
+	auto core_service_proxy = mini_saftlib::Proxy::create();
+	auto core_service_proxy2= mini_saftlib::Proxy::create();
 
 	std::cerr << "argc = " << argc << std::endl;
 	if (argc > 1) {
-		saftd->quit();
+		core_service_proxy->quit();
 	}
 
 	return 0;

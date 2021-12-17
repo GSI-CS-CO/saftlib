@@ -70,13 +70,13 @@ int main() {
 	// 1) Creat a container for services
 	mini_saftlib::Container container;
 	// 2) Create one core_service object
-	auto core_service = std2::make_unique<mini_saftlib::CoreService>(&container);
+	// auto core_service = std2::make_unique<mini_saftlib::CoreService>(&container);
 	// 3) Create the server connection that instantiates a socket and manages incoming 
 	//    client requests. Client request are redirected to the CoreService object, therefore
 	//    a pointer to the core_service object is passed to the ServerConnection constructor.
-	mini_saftlib::ServerConnection server_connection(core_service.get());
+	mini_saftlib::ServerConnection server_connection(&container);
 	// 4) insert the core_service object into the container
-	container.create_object("/de/gsi/saftlib", std::move(core_service));	
+	// container.create_object("/de/gsi/saftlib", std::move(core_service));	
 	// 5) run the main loop
 	mini_saftlib::Loop::get_default().run();
 

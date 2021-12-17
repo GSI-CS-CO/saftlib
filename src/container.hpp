@@ -22,7 +22,7 @@ namespace mini_saftlib {
 		void unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd);
 		// call a Service identified by the saftlib_object_id
 		// return false if the saftlib_object_id is unknown
-		bool call_service(unsigned saftlib_object_id, Deserializer &received, Serializer &send);
+		bool call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send);
 	};
 
 }

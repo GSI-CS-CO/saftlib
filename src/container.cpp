@@ -24,9 +24,9 @@ namespace mini_saftlib {
 	};
 	// generate a unique object_id != 0
 	unsigned Container::Impl::generate_saftlib_object_id() {
-		static unsigned saftlib_object_id_generator = 0;
+		static unsigned saftlib_object_id_generator = 1;
 		while ((objects.find(saftlib_object_id_generator) != objects.end()) ||
-			   (saftlib_object_id_generator == 0)) {
+		        saftlib_object_id_generator == 0) {
 			++saftlib_object_id_generator;
 		}
 		return saftlib_object_id_generator++;
@@ -35,6 +35,9 @@ namespace mini_saftlib {
 	Container::Container() 
 		: d(std2::make_unique<Impl>())
 	{
+		auto core_service = std2::make_unique<CoreService>(this);
+		unsigned object_id = create_object("/de/gsi/saftlib", std::move(core_service));
+		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
 	}
 
 	Container::~Container() = default;
@@ -85,12 +88,12 @@ namespace mini_saftlib {
 	}
 
 
-	bool Container::call_service(unsigned saftlib_object_id, Deserializer &received, Serializer &send) {
+	bool Container::call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send) {
 		auto result = d->objects.find(saftlib_object_id);
 		if (result == d->objects.end()) {
 			return false;
 		}
-		result->second->service->call(received, send);
+		result->second->service->call(client_fd, received, send);
 		return true;
 	}
 
