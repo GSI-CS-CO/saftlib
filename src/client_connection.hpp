@@ -22,8 +22,6 @@ namespace mini_saftlib {
 		int send(Serializer &serdes, int timeout_ms = -1); 
 		// wait for data to arrive from the server
 		int receive(Deserializer &serdes, int timeout_ms = -1);
-
-		void send_call();
 	};
 
 

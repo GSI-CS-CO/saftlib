@@ -4,7 +4,6 @@
 #include "saftd.hpp"
 #include "loop.hpp"
 #include "make_unique.hpp"
-#include "container.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -35,7 +34,7 @@ namespace mini_saftlib {
 	}
 
 	struct ServerConnection::Impl {
-		Container container;
+		ServiceContainer container_of_services;
 		std::vector<Client> clients;
 		Serializer   send;
 		Deserializer received;
@@ -82,7 +81,7 @@ namespace mini_saftlib {
 			std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
 			std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
 			std::cerr << "trying to call a function" << std::endl;
-			container.call_service(saftlib_object_id, fd, received, send);
+			container_of_services.call_service(saftlib_object_id, fd, received, send);
 			if (!send.empty()) {
 				send.write_to(fd);
 			}

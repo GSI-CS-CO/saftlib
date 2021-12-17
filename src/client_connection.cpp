@@ -80,18 +80,6 @@ namespace mini_saftlib {
 		std::cerr << "got client id " << d->client_id << std::endl;
 	}
 
-	void ClientConnection::send_call()
-	{
-		// std::lock_guard<std::mutex> lock(d->m_client_socket);
-		// std::vector<int> data(1000,0);
-		// SerDes serdes;
-		// serdes.put(ServerConnection::CALL);
-		// serdes.put(data);
-		// serdes.write_to(d->pfd.fd);
-	}
-
-
-
 	ClientConnection::~ClientConnection() 
 	{
 		close(d->pfd.fd);
