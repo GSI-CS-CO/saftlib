@@ -13,19 +13,15 @@
 #include <unistd.h> // read()
 
 bool timeout_tick() {
-	static int i = 3;
 	std::cout << "tick" << std::endl;
-	if (--i == 0) {
-		i = 3;
-		return false;
-	}
-	return true;
+	static int i = 0;
+	return (++i==3)?(i=0):i;
 }
 
 bool timeout_tock() {
+	std::cout << "  tock" << std::endl;
 	static int i = 0;
 	// static int j = 0;
-	std::cout << "  tock" << std::endl;
 	if (++i == 6) {
 		i = 0;
 		mini_saftlib::Loop::get_default().connect(
@@ -67,8 +63,8 @@ bool fd_callback(int fd, int condition) {
 
 int main() {
 	// two lines just to play around ... has nothing to do with the saftd functionality.
-	// init_fd();
-	// mini_saftlib::Loop::get_default().connect(std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
+	init_fd();
+	mini_saftlib::Loop::get_default().connect(std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
 
 	// system setup:
 	// 1) Creat a container for services

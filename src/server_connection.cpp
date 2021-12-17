@@ -89,7 +89,7 @@ namespace mini_saftlib {
 				send.put(saftlib_object_id);
 				send.put(fd); // fd and signal_fd are used in the proxy de-registration process
 				send.put(signal_fd);
-				send.write_to(fd);
+				send.write_to(fd); 
 			} else {
 				std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
 				std::cerr << "trying to call a function" << std::endl;

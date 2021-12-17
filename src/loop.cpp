@@ -55,7 +55,8 @@ namespace mini_saftlib {
 		std::vector<std::unique_ptr<Source> > sources;
 		std::vector<struct pollfd>  pfds;
 		std::vector<struct pollfd*> source_pfds;
-		bool run;
+		bool running;
+		int running_depth; 
 	};
 
 	Loop::Loop() 
@@ -68,7 +69,8 @@ namespace mini_saftlib {
 		d->sources.reserve(revserve_that_much);
 		d->pfds.reserve(revserve_that_much);
 		d->source_pfds.reserve(revserve_that_much);
-		d->run = true;
+		d->running = true;
+		d->running_depth = 0; // 0 means: the loop is not running
 	}
 	Loop::~Loop() = default;
 
@@ -78,6 +80,7 @@ namespace mini_saftlib {
 	}
 
 	bool Loop::iteration(bool may_block) {
+		++d->running_depth;
 		std::cerr << ".";
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 
@@ -111,7 +114,7 @@ namespace mini_saftlib {
 		//////////////////
 		// polling / waiting
 		//////////////////
-		std::cerr << "poll pfds size " << d->pfds.size() << std::endl;
+		// std::cerr << "poll pfds size " << d->pfds.size() << std::endl;
 		if (d->pfds.size() > 0) {
 			int poll_result = 0;
 			if ((poll_result = poll(&d->pfds[0], d->pfds.size(), timeout.count())) > 0) {
@@ -132,24 +135,29 @@ namespace mini_saftlib {
 		//////////////////
 		for (auto &source: d->sources) {
 			if (source->check()) {
+				// this is allowed(?) to make (nested) calls to Loop::iteration
 				source->dispatch();
 			}
 		}
 
 		//////////////////
-		// cleanup (if needed)
+		// cleanup if needed
+		// and only if this is not a nested iteration
 		//////////////////
-		for (auto removed_source: d->removed_sources) {
-			d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
-				          d->sources.end());			
+		if (d->running_depth == 1) {
+			for (auto removed_source: d->removed_sources) {
+				d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
+					          d->sources.end());			
+			}
+			d->removed_sources.clear();
 		}
-		d->removed_sources.clear();
 
+		--d->running_depth;
 		return true;
 	}
 
 	void Loop::run() {
-		while (d->run) {
+		while (d->running) {
 			if (!iteration(true)) {
 				break;
 			}
@@ -157,7 +165,7 @@ namespace mini_saftlib {
 	}
 
 	bool Loop::quit() {
-		return d->run = false;
+		return d->running = false;
 	}
 
 	bool Loop::quit_in(std::chrono::milliseconds wait_ms) {
