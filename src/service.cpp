@@ -44,40 +44,13 @@ namespace mini_saftlib {
 		return interface_names;
 	}
 
-	// CoreService* CoreService::get_instance()
-	// {
-	// 	static auto instance = std2::make_unique<CoreService>();
-	// 	static auto ptr = instance.get();
-	// 	instance->create_object("/de/gsi/saftlib", std::move(instance));
-	// 	return ptr;
-	// }
-
-
 	CoreService::CoreService(Container *container)
 		: Service(gen_interface_names())
 		, d(std2::make_unique<Impl>())
 	{
 		d->container = container;
-		// std::unique_ptr<Service> service = std2::make_unique<CoreService>();
-		// d->container->create_object("/de/gsi/saftlib", std::move(service));
 	}
 	CoreService::~CoreService() = default;
-
-	// just forward the calls to the underlying container object
-	// unsigned CoreService::create_object(const std::string &object_path, std::unique_ptr<Service> service)
-	// {
-	// 	return d->container->create_object(object_path, std::move(service));
-	// }
-	// unsigned CoreService::register_proxy(const std::string &object_path, int client_fd, int signal_group_fd)
-	// {
-	// 	return d->container->register_proxy(object_path, client_fd, signal_group_fd);
-	// }
-	// bool CoreService::call_service(unsigned saftlib_object_id, Deserializer &received, Serializer &send)
-	// {
-	// 	return d->container->call_service(saftlib_object_id, received, send);
-	// }
-
-
 
 	void CoreService::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
 		std::cerr << "CoreService called" << std::endl;

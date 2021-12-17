@@ -4,6 +4,7 @@
 #include "saftd.hpp"
 #include "loop.hpp"
 #include "make_unique.hpp"
+#include "container.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -34,7 +35,7 @@ namespace mini_saftlib {
 	}
 
 	struct ServerConnection::Impl {
-		Container *container;
+		Container container;
 		std::vector<Client> clients;
 		Serializer   send;
 		Deserializer received;
@@ -79,34 +80,20 @@ namespace mini_saftlib {
 			unsigned saftlib_object_id;
 			received.get(saftlib_object_id);
 			std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
-			// if (saftlib_object_id == 0) { // this means a proxy tries to register itself
-			// 	std::cerr << "register a proxy" << std::endl;
-			// 	std::string object_path;
-			// 	received.get(object_path);
-			// 	int signal_fd = recvfd(fd);
-			// 	saftlib_object_id = core_service->register_proxy(object_path, fd, signal_fd);
-			// 	std::cerr << "registered proxy under saftlib_object_id " << saftlib_object_id << std::endl;
-			// 	send.put(saftlib_object_id);
-			// 	send.put(fd); // fd and signal_fd are used in the proxy de-registration process
-			// 	send.put(signal_fd);
-			// 	send.write_to(fd); 
-			// } else {
-				std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
-				std::cerr << "trying to call a function" << std::endl;
-				container->call_service(saftlib_object_id, fd, received, send);
-				if (!send.empty()) {
-					send.write_to(fd);
-				}
-			// }
+			std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
+			std::cerr << "trying to call a function" << std::endl;
+			container.call_service(saftlib_object_id, fd, received, send);
+			if (!send.empty()) {
+				send.write_to(fd);
+			}
 		}
 		return true;
 	}
 
 
-	ServerConnection::ServerConnection(Container *container, const std::string &socket_name) 
+	ServerConnection::ServerConnection(const std::string &socket_name) 
 		: d(std2::make_unique<Impl>())
 	{
-		d->container = container;
 		std::ostringstream msg;
 		msg << "ServerConnection constructor : ";
 		char *socketname_env = getenv("SAFTBUS_SOCKET_PATH");
@@ -154,12 +141,6 @@ namespace mini_saftlib {
 			                   S_IROTH | S_IWOTH );
 
 		Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN)));
-		// Slib::signal_io().connect(sigc::mem_fun(*this, &Connection::accept_client), base_socket_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);			
-
-		// // the initialization for inter-process-communication is done now.
-		// // last thing to do: register a Service
-		// std::unique_ptr<Service> service = std2::make_unique<SAFTd_Service>();
-		// d->container.create_object("/de/gsi/saftlib", std::move(service));
 	}
 
 	ServerConnection::~ServerConnection() = default;
