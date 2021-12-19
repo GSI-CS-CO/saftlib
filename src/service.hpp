@@ -12,12 +12,13 @@ namespace mini_saftlib {
 	class Service {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
-		Service(std::vector<std::string> interface_names);
+		Service(const std::vector<std::string> &interface_names);
 		void call(int client_fd, Deserializer &received, Serializer &send);
 		virtual ~Service();
 		void add_signal_group(int fd);
 	protected:
 		virtual void call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) = 0;
+		void emit(Serializer &send);
 	};
 
 
@@ -43,7 +44,6 @@ namespace mini_saftlib {
 	// mainly Proxy (de-)registration 
 	class ContainerService : public Service {
 		struct Impl; std::unique_ptr<Impl> d;
-		static std::vector<std::string> gen_interface_names();
 	public:
 		ContainerService(ServiceContainer *container);
 		~ContainerService();

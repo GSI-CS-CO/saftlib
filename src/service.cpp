@@ -12,13 +12,16 @@ namespace mini_saftlib {
 	struct Service::Impl {
 		int          owner;
 		std::vector<int> signal_group_fds;
+		std::vector<std::string> interface_names;
+		unsigned object_id;
 	};
 
-	Service::Service(std::vector<std::string> interface_names) 
+	Service::Service(const std::vector<std::string> &interface_names) 
 		: d(std2::make_unique<Impl>())
 	{
 		d->owner = -1;
 		d->signal_group_fds.reserve(128);
+		d->interface_names = interface_names;
 	}
 	Service::~Service() = default;
 
@@ -34,19 +37,26 @@ namespace mini_saftlib {
 		call(interface_no, function_no, client_fd, received, send);
 	}
 
+	void Service::emit(Serializer &send)
+	{
+
+	}
+
+
 	struct ContainerService::Impl {
 		ServiceContainer *container;
+		static std::vector<std::string> gen_interface_names();
 	};
 
 
-	std::vector<std::string> ContainerService::gen_interface_names() {
+	std::vector<std::string> ContainerService::Impl::gen_interface_names() {
 		std::vector<std::string> interface_names;
 		interface_names.push_back("de.gsi.saftlib");
 		return interface_names;
 	}
 
 	ContainerService::ContainerService(ServiceContainer *container)
-		: Service(gen_interface_names())
+		: Service(Impl::gen_interface_names())
 		, d(std2::make_unique<Impl>())
 	{
 		d->container = container;
@@ -61,7 +71,8 @@ namespace mini_saftlib {
 					std::cerr << "register_proxy called" << std::endl;
 					std::string object_path;
 					received.get(object_path);
-					int signal_fd = recvfd(client_fd);
+					// int signal_fd = recvfd(client_fd);
+					int signal_fd = 10;
 					unsigned saftlib_object_id = d->container->register_proxy(object_path, client_fd, signal_fd);
 					std::cerr << "registered proxy under saftlib_object_id " << saftlib_object_id << std::endl;
 					send.put(saftlib_object_id);

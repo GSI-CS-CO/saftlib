@@ -137,7 +137,8 @@ namespace mini_saftlib {
 			msg << "cannot create socket pair: " << strerror(errno);
 			throw std::runtime_error(msg.str());
 		}
-		// close(d->fd_pair[0]);
+		close(d->fd_pair[0]);
+		close(d->fd_pair[1]);
 		// keep the other socket end in order to listen for events
 		d->pfd.fd = d->fd_pair[1];
 		d->pfd.events = POLLIN | POLLHUP | POLLERR;
@@ -149,7 +150,8 @@ namespace mini_saftlib {
 	{
 		// send one of the two socket ends to the server
 		std::cerr << "sending socket pair for signals " << std::endl;
-		return sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
+		// return sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
+		return 0;
 	}
 
 
