@@ -61,6 +61,11 @@ namespace mini_saftlib {
 	}
 
 	bool Serializer::write_to(int fd) {
+		bool result = write_to_no_init(fd);
+		put_init();
+		return result;
+	}
+	bool Serializer::write_to_no_init(int fd) {
 		int size = _data.size();
 		int result;
 		result = write_all(fd, (char*)&size, sizeof(size));
@@ -75,7 +80,7 @@ namespace mini_saftlib {
 			return false;
 		}
 		// std::cerr << "wrote " << size << " bytes to fd " << fd << std::endl;
-		put_init();
+		// put_init();
 		return true;
 	}
 	bool Deserializer::read_from(int fd) {

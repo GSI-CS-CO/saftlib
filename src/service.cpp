@@ -13,7 +13,8 @@ namespace mini_saftlib {
 
 	struct Service::Impl {
 		int          owner;
-		std::vector<int> signal_group_fds;
+		std::set<int> signal_fds;
+		std::map<int, int> use_count;
 		std::vector<std::string> interface_names;
 		unsigned object_id;
 	};
@@ -22,14 +23,9 @@ namespace mini_saftlib {
 		: d(std2::make_unique<Impl>())
 	{
 		d->owner = -1;
-		d->signal_group_fds.reserve(128);
 		d->interface_names = interface_names;
 	}
 	Service::~Service() = default;
-
-	void Service::add_signal_group(int fd) {
-		d->signal_group_fds.push_back(fd);
-	}
 
 	void Service::call(int client_fd, Deserializer &received, Serializer &send) {
 		int interface_no, function_no;
@@ -39,14 +35,31 @@ namespace mini_saftlib {
 		call(interface_no, function_no, client_fd, received, send);
 	}
 
-	void Service::emit(Serializer &send)
+	void Service::remove_signal_fds(const std::vector<int> &signal_fds)
 	{
-
+		for (auto &signal_fd: signal_fds) {
+			d->signal_fds.erase(signal_fd);
+		}
 	}
 
+	void Service::emit(Serializer &send)
+	{
+		std::cerr << "emitting signal" << std::endl;
+		for (auto &fd: d->signal_fds) {
+			std::cerr << "   to " << fd << std::endl;
+			send.write_to_no_init(fd);
+		}
+		send.put_init();
+	}
+
+	int Service::get_object_id() 
+	{
+		return d->object_id;
+	}
 
 	struct ContainerService::Impl {
 		ServiceContainer *container;
+		Serializer serialized_signal;
 		static std::vector<std::string> gen_interface_names();
 	};
 
@@ -62,8 +75,24 @@ namespace mini_saftlib {
 		, d(std2::make_unique<Impl>())
 	{
 		d->container = container;
+		Loop::get_default().connect(
+			std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::mem_fun(this,&ContainerService::emit_periodical_signal),std::chrono::milliseconds(1000)
+				) 
+			)
+		);
+
 	}
 	ContainerService::~ContainerService() = default;
+
+	bool ContainerService::emit_periodical_signal() {
+		static int count = 0;
+		d->serialized_signal.put(get_object_id());
+		int interface_no = 0;
+		d->serialized_signal.put(interface_no);
+		d->serialized_signal.put(count++);
+		emit(d->serialized_signal);
+		return true;
+	}
 
 	void ContainerService::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
 		std::cerr << "ContainerService called" << std::endl;
@@ -125,8 +154,6 @@ namespace mini_saftlib {
 			std::unique_ptr<Service> service;
 			std::string object_path;
 			// std::set<int> client_fds;
-			std::set<int> signal_fds;
-			std::map<int, int> use_count;
 		};
 
 		std::map<unsigned, std::unique_ptr<Object> > objects;
@@ -157,6 +184,7 @@ namespace mini_saftlib {
 	unsigned ServiceContainer::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
 		unsigned saftlib_object_id = d->generate_saftlib_object_id();
+		service->d->object_id = saftlib_object_id;
 		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std2::make_unique<Impl::Object>()));
 		// insertion_result is a pair, where the 'first' member is an iterator to the inserted element,
 		// and the 'second' member is a bool that is true if the insertion took place and false if the insertion failed.
@@ -179,8 +207,8 @@ namespace mini_saftlib {
 			auto find_result = d->objects.find(saftlib_object_id);
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto    &object    = find_result->second;
-			object->signal_fds.insert(signal_group_fd);
-			object->use_count[signal_group_fd]++;
+			object->service->d->signal_fds.insert(signal_group_fd);
+			object->service->d->use_count[signal_group_fd]++;
 			d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 			return saftlib_object_id;
 		}
@@ -191,9 +219,9 @@ namespace mini_saftlib {
 		auto find_result = d->objects.find(saftlib_object_id);
 		assert(find_result != d->objects.end()); 
 		auto    &object    = find_result->second;
-		object->use_count[signal_group_fd]--;
-		if (object->use_count[signal_group_fd] == 0) {
-			object->signal_fds.erase(signal_group_fd);
+		object->service->d->use_count[signal_group_fd]--;
+		if (object->service->d->use_count[signal_group_fd] == 0) {
+			object->service->d->signal_fds.erase(signal_group_fd);
 			d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
 			close(signal_group_fd);
 		}

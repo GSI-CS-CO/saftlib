@@ -25,7 +25,9 @@ namespace mini_saftlib {
 	// The file descriptor itself serves as a unique id to identify this other process.
 	struct Client {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
-		std::vector<int> signal_ids;
+		std::vector<int> signal_ids; // all open signal_fds for a client
+		                             // in case the client doesn't unregister the proxies, this can be used 
+		                             // to close the fds and prevent fd leaks.
 		Client(int fd) : socket_fd(fd) {
 			signal_ids.reserve(16);
 		}
@@ -156,10 +158,13 @@ namespace mini_saftlib {
 
 	void ServerConnection::register_signal_id_for_client(int client_id, int signal_id)
 	{
+		std::cerr << "register signal id " << signal_id << " for client " << client_id << std::endl;
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_id);
 		if (client != d->clients.end()) {
+			std::cerr << "found client_id " << client_id << std::endl;
 			auto signal = std::find(client->signal_ids.begin(), client->signal_ids.end(), signal_id);
 			if (signal == client->signal_ids.end()) {
+				std::cerr << "insert signal_fd " << signal_id << std::endl;
 				client->signal_ids.push_back(signal_id);
 			}
 		} 

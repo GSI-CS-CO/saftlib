@@ -152,14 +152,28 @@ namespace mini_saftlib {
 
 	SignalGroup::~SignalGroup() = default;
 
-	int SignalGroup::send_fd(Proxy &proxy) 
+	int SignalGroup::register_proxy(Proxy *proxy) 
 	{
 		// send one of the two socket ends to the server
 		std::cerr << "sending socket pair for signals " << std::endl;
-		return sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
+
+		int result = sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
+		if (result > 0) {
+			d->proxies.push_back(proxy);
+		}
 		return 0;
 	}
 
+	void SignalGroup::unregister_proxy(Proxy *proxy) 
+	{
+		d->proxies.erase(std::remove(d->proxies.begin(), d->proxies.end(), proxy), d->proxies.end());
+	}
+
+
+	int SignalGroup::get_fd()
+	{
+		return d->pfd.fd;
+	}
 
 	int SignalGroup::wait_for_signal(int timeout_ms)
 	{
@@ -178,8 +192,10 @@ namespace mini_saftlib {
 		int result;
 		{
 			std::lock_guard<std::mutex> lock1(d->m1);
+			std::cerr << "SignalGroup poll call" << std::endl;
 			if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 				if (d->pfd.revents & POLLIN) {
+					std::cerr << "POLLIN" << std::endl;
 					bool result = d->received.read_from(d->pfd.fd);
 					if (!result) {
 						std::cerr << "failed to read data from fd " << d->pfd.fd << std::endl;
@@ -189,7 +205,9 @@ namespace mini_saftlib {
 					int interface;
 					d->received.get(saftlib_object_id);
 					d->received.get(interface);
+					std::cerr << "object_id = " << saftlib_object_id << " inteface = " << interface << " d->proxies.size()=" << d->proxies.size() <<  std::endl;
 					for (auto &proxy: d->proxies) {
+						std::cerr << "proxy object id = " << proxy->d->saftlib_object_id << std::endl;
 						if (proxy->d->saftlib_object_id == saftlib_object_id) {
 							proxy->signal_dispatch(interface, d->received);
 						}
@@ -235,7 +253,7 @@ namespace mini_saftlib {
 				if (send_result <= 0) {
 					throw std::runtime_error("Proxy cannot send data to server");
 				}
-				signal_group.send_fd(*this);
+				signal_group.register_proxy(this);
 				int receive_result = get_connection().receive(d->received);
 				if (receive_result <= 0) {
 					throw std::runtime_error("Proxy cannot receive data from server");
@@ -285,6 +303,7 @@ namespace mini_saftlib {
 		std::cerr << "waiting for response from de-register" << std::endl;
 		d->received.get(result);
 		assert(result); // de-registration should always succeed
+		d->signal_group->unregister_proxy(this);
 		std::cerr << "Proxy de-registration successful" << std::endl;
 	}
 
@@ -324,7 +343,9 @@ namespace mini_saftlib {
 	}
 	bool ContainerService_Proxy::signal_dispatch(int interface, Deserializer &signal_content)
 	{
-		std::cerr << "ContainerService_Proxy received a signal from interface " << interface << std::endl;
+		int counter;
+		signal_content.get(counter);
+		std::cerr << "ContainerService_Proxy received a signal from interface: counter=" << counter << std::endl;
 		return true;
 	}
 

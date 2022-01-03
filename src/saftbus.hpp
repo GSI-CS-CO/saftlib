@@ -45,6 +45,7 @@ namespace mini_saftlib {
 
 		// write the length of the serdes data buffer and the buffer content to file descriptor fd
 		bool write_to(int fd);
+		bool write_to_no_init(int fd);
 
 		// POD struct and build-in types
 		template<typename T>
@@ -104,10 +105,10 @@ namespace mini_saftlib {
 
 		bool empty();
 
-	private:
-
 		// has to be called before first call to put()
 		void put_init();
+	private:
+
 
 		std::vector<char> _data;
 		mutable std::vector<char>::const_iterator _iter;

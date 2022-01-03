@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <algorithm>
 
 namespace mini_saftlib {
 
@@ -35,7 +36,10 @@ namespace mini_saftlib {
 		SignalGroup();
 		~SignalGroup();
 
-		int send_fd(Proxy &proxy);
+		int register_proxy(Proxy *proxy);
+		void unregister_proxy(Proxy *proxy);
+
+		int get_fd();
 
 		int wait_for_signal(int timeout_ms = -1);
 		int wait_for_one_signal(int timeout_ms = -1);
