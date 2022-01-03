@@ -74,7 +74,7 @@ namespace mini_saftlib {
 					// int signal_fd = recvfd(client_fd);
 					int signal_fd = 10;
 					unsigned saftlib_object_id = d->container->register_proxy(object_path, client_fd, signal_fd);
-					std::cerr << "registered proxy under saftlib_object_id " << saftlib_object_id << std::endl;
+					std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
 					send.put(saftlib_object_id);
 					send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
 					send.put(signal_fd);

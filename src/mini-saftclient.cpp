@@ -11,14 +11,14 @@
 bool timeout() {
 	static int i = 0;
 	std::cerr << "#" << i++ << std::endl;
-	auto core_service_proxy = mini_saftlib::Proxy::create();
+	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
 	return true;
 }
 
 int main(int argc, char **argv)
 {
-	auto core_service_proxy = mini_saftlib::Proxy::create();
-	auto core_service_proxy2= mini_saftlib::Proxy::create();
+	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
+	auto core_service_proxy2= mini_saftlib::ContainerService_Proxy::create();
 
 	mini_saftlib::Loop::get_default().connect(
 		std::move(
@@ -27,12 +27,13 @@ int main(int argc, char **argv)
 			) 
 		)
 	);
-	mini_saftlib::Loop::get_default().run();
 
-	// std::cerr << "argc = " << argc << std::endl;
-	// if (argc > 1) {
-	// 	core_service_proxy->quit();
-	// }
+	std::cerr << "argc = " << argc << std::endl;
+	if (argc > 1) {
+		core_service_proxy->quit();
+	} else {
+		mini_saftlib::Loop::get_default().run();
+	}
 
 	return 0;
 }

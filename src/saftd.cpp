@@ -36,6 +36,10 @@ namespace mini_saftlib {
 		get_received().get(result);
 		return result;
 	}
+	bool SAFTd_Proxy::signal_dispatch(int interface, Deserializer &signal_content)
+	{
+		return true;
+	}
 
 	void SAFTd_Driver::greet(const std::string &name) {
 		std::cout << "hello " << name << " from SAFTd" << std::endl;

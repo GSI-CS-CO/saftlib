@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <mutex>
 
 namespace mini_saftlib {
 
@@ -46,16 +47,23 @@ namespace mini_saftlib {
 		struct Impl; std::unique_ptr<Impl> d;
 	friend class SignalGroup;
 	public:
-		Proxy(const std::string &object_path, SignalGroup &signal_group);
 		virtual ~Proxy();
-		virtual bool signal_dispatch(int interface, Deserializer &signal_content) {return true;};
-		static std::shared_ptr<Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
-		void quit();
+		virtual bool signal_dispatch(int interface, Deserializer &signal_content) = 0;
 	protected:
+		Proxy(const std::string &object_path, SignalGroup &signal_group);
 		static ClientConnection& get_connection();
 		Serializer&              get_send();
 		Deserializer&            get_received();
-		int get_saftlib_object_id();
+		int                      get_saftlib_object_id();
+		std::mutex&              get_client_socket();
+	};
+
+	class ContainerService_Proxy : public Proxy {
+	public:
+		ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group);
+		static std::shared_ptr<ContainerService_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
+		bool signal_dispatch(int interface, Deserializer &signal_content);
+		void quit();
 	};
 
 }

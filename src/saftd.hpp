@@ -14,6 +14,7 @@ namespace mini_saftlib {
 	public:
 		SAFTd_Proxy(SignalGroup &signal_group = SignalGroup::get_global());
 		void greet(const std::string &name);
+		bool signal_dispatch(int interface, Deserializer &signal_content);
 		bool quit();
 		static std::shared_ptr<SAFTd_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
 	};

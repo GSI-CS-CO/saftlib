@@ -87,11 +87,14 @@ namespace mini_saftlib {
 	int ClientConnection::send(Serializer &serdes, int timeout_ms)
 	{
 		std::lock_guard<std::mutex> lock(d->m_client_socket);
-		d->pfd.events = POLLOUT;
+		d->pfd.events = POLLOUT | POLLHUP;
 		int result;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 			if (d->pfd.revents & POLLOUT) {
 				serdes.write_to(d->pfd.fd);
+			}
+			if (d->pfd.revents & POLLHUP) {
+				return -1;
 			}
 		}
 		return result; // 0 in case of timeout
@@ -100,10 +103,13 @@ namespace mini_saftlib {
 	{
 		std::lock_guard<std::mutex> lock(d->m_client_socket);
 		int result;
-		d->pfd.events = POLLIN;
+		d->pfd.events = POLLIN | POLLHUP;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 			if (d->pfd.revents & POLLIN) {
 				serdes.read_from(d->pfd.fd);
+			}
+			if (d->pfd.revents & POLLHUP) {
+				return -1;
 			}
 		}
 		return result;
@@ -225,9 +231,15 @@ namespace mini_saftlib {
 			d->send.put(object_path);
 			{
 				std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
-				get_connection().send(d->send);
+				int send_result    = get_connection().send(d->send);
+				if (send_result <= 0) {
+					throw std::runtime_error("Proxy cannot send data to server");
+				}
 				signal_group.send_fd(*this);
-				get_connection().receive(d->received);
+				int receive_result = get_connection().receive(d->received);
+				if (receive_result <= 0) {
+					throw std::runtime_error("Proxy cannot receive data from server");
+				}
 			}
 			// the response is just the object_id
 			d->received.get(d->saftlib_object_id);
@@ -260,8 +272,14 @@ namespace mini_saftlib {
 		d->send.put(d->signal_group_id);
 		{
 			std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
-			get_connection().send(d->send);
-			get_connection().receive(d->received);
+			int send_result    = get_connection().send(d->send);
+			if (send_result <= 0) {
+				return; // if we cannot communicate with server, there is no point doing anything more
+			}
+			int receive_result = get_connection().receive(d->received);
+			if (receive_result <= 0) {
+				return; // if we cannot communicate with server, there is no point doing anything more
+			}
 		}
 		bool result;
 		std::cerr << "waiting for response from de-register" << std::endl;
@@ -270,20 +288,6 @@ namespace mini_saftlib {
 		std::cerr << "Proxy de-registration successful" << std::endl;
 	}
 
-	std::shared_ptr<Proxy> Proxy::create(SignalGroup &signal_group)
-	{
-		return std::make_shared<Proxy>("/de/gsi/saftlib", signal_group);
-	}
-
-	void Proxy::quit() 
-	{
-		d->send.put(d->saftlib_object_id);
-		unsigned interface_no, function_no;
-		d->send.put(interface_no = 0);
-		d->send.put(function_no  = 2); 
-		std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
-		get_connection().send(d->send);
-	}
 
 	ClientConnection& Proxy::get_connection() {
 		static ClientConnection connection;
@@ -302,4 +306,35 @@ namespace mini_saftlib {
 		return d->saftlib_object_id;
 	}
 
+	std::mutex& Proxy::get_client_socket() {
+		return get_connection().d->m_client_socket;
+	}
+
+	//////////////////////////////////////////	
+	//////////////////////////////////////////	
+	//////////////////////////////////////////	
+
+	ContainerService_Proxy::ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group)
+		: Proxy(object_path, signal_group)
+	{}
+
+	std::shared_ptr<ContainerService_Proxy> ContainerService_Proxy::create(SignalGroup &signal_group)
+	{
+		return std::make_shared<ContainerService_Proxy>("/de/gsi/saftlib", signal_group);
+	}
+	bool ContainerService_Proxy::signal_dispatch(int interface, Deserializer &signal_content)
+	{
+		std::cerr << "ContainerService_Proxy received a signal from interface " << interface << std::endl;
+		return true;
+	}
+
+	void ContainerService_Proxy::quit() 
+	{
+		get_send().put(get_saftlib_object_id());
+		unsigned interface_no, function_no;
+		get_send().put(interface_no = 0);
+		get_send().put(function_no  = 2); 
+		std::lock_guard<std::mutex> lock(get_client_socket());
+		get_connection().send(get_send());
+	}
 }
