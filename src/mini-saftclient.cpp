@@ -12,7 +12,8 @@ bool timeout() {
 	static int i = 0;
 	std::cerr << "#" << i++ << std::endl;
 	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-	return true;
+	mini_saftlib::Loop::get_default().quit();
+	return false;
 }
 
 int main(int argc, char **argv)
@@ -23,7 +24,7 @@ int main(int argc, char **argv)
 	mini_saftlib::Loop::get_default().connect(
 		std::move(
 			std2::make_unique<mini_saftlib::TimeoutSource>(
-				sigc::ptr_fun(timeout),std::chrono::milliseconds(5)
+				sigc::ptr_fun(timeout),std::chrono::milliseconds(1000)
 			) 
 		)
 	);

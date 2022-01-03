@@ -25,7 +25,10 @@ namespace mini_saftlib {
 	// The file descriptor itself serves as a unique id to identify this other process.
 	struct Client {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
-		Client(int fd) : socket_fd(fd) {}
+		std::vector<int> signal_ids;
+		Client(int fd) : socket_fd(fd) {
+			signal_ids.reserve(16);
+		}
 	};
 	bool operator==(Client lhs, int rhs) // compare Clients by using their socket_fd
 	{
@@ -37,7 +40,7 @@ namespace mini_saftlib {
 		std::vector<Client> clients;
 		Serializer   send;
 		Deserializer received;
-		Impl() {
+		Impl(ServerConnection *connection) : container_of_services(connection) {
 			// make this big enough to avoid allocation in normal operation
 			clients.reserve(1024);
 		}
@@ -48,6 +51,7 @@ namespace mini_saftlib {
 	bool ServerConnection::Impl::accept_client(int fd, int condition) {
 		if (condition & POLLIN) {
 			int client_socket_fd = recvfd(fd);
+			std::cerr << "got (open) " << client_socket_fd << std::endl;
 			if (client_socket_fd == -1) {
 				std::cerr << "cannot receive socket fd" << std::endl;
 			}
@@ -64,8 +68,15 @@ namespace mini_saftlib {
 		if (condition & POLLHUP) {
 			std::cerr << "client hung up" << std::endl;
 			std::cerr << "clients.size() " << clients.size() << std::endl;
+			auto client = std::find(clients.begin(), clients.end(), fd);
+			if (client != clients.end()) { 
+				// close all signal_fds that are associated with this client_fd
+				for (auto &signal_id: client->signal_ids) {
+					close(signal_id);
+				}
+				close(fd);
+			}
 			clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
-			close(fd);
 			std::cerr << "clients.size() " << clients.size() << std::endl;
 			return false;
 		}
@@ -90,7 +101,7 @@ namespace mini_saftlib {
 
 
 	ServerConnection::ServerConnection(const std::string &socket_name) 
-		: d(std2::make_unique<Impl>())
+		: d(std2::make_unique<Impl>(this))
 	{
 		std::ostringstream msg;
 		msg << "ServerConnection constructor : ";
@@ -142,5 +153,25 @@ namespace mini_saftlib {
 	}
 
 	ServerConnection::~ServerConnection() = default;
+
+	void ServerConnection::register_signal_id_for_client(int client_id, int signal_id)
+	{
+		auto client = std::find(d->clients.begin(), d->clients.end(), client_id);
+		if (client != d->clients.end()) {
+			auto signal = std::find(client->signal_ids.begin(), client->signal_ids.end(), signal_id);
+			if (signal == client->signal_ids.end()) {
+				client->signal_ids.push_back(signal_id);
+			}
+		} 
+	}
+
+	void ServerConnection::unregister_signal_id_for_client(int client_id, int signal_id)
+	{
+		auto client = std::find(d->clients.begin(), d->clients.end(), client_id);
+		if (client != d->clients.end()) {
+			client->signal_ids.erase(std::remove(client->signal_ids.begin(), client->signal_ids.end(), signal_id), client->signal_ids.end());
+		}
+	}
+
 
 }

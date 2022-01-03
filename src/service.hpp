@@ -2,6 +2,7 @@
 #define MINI_SAFTLIB_SERVICE_
 
 #include "saftbus.hpp"
+#include "server.hpp"
 
 #include <memory>
 #include <string>
@@ -27,7 +28,7 @@ namespace mini_saftlib {
 	class ServiceContainer {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
-		ServiceContainer();
+		ServiceContainer(ServerConnection *connection);
 		~ServiceContainer();
 		// insert an object and return the saftlib_object_id for this object
 		// return 0 in case the object_path is unknown

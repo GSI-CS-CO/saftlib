@@ -7,6 +7,8 @@
 #include <set>
 #include <cassert>
 
+#include <unistd.h>
+
 namespace mini_saftlib {
 
 	struct Service::Impl {
@@ -71,8 +73,8 @@ namespace mini_saftlib {
 					std::cerr << "register_proxy called" << std::endl;
 					std::string object_path;
 					received.get(object_path);
-					// int signal_fd = recvfd(client_fd);
-					int signal_fd = 10;
+					int signal_fd = recvfd(client_fd);
+					std::cerr << "got (open) " << signal_fd << std::endl;
 					unsigned saftlib_object_id = d->container->register_proxy(object_path, client_fd, signal_fd);
 					std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
 					send.put(saftlib_object_id);
@@ -117,6 +119,7 @@ namespace mini_saftlib {
 
 	struct ServiceContainer::Impl {
 		unsigned generate_saftlib_object_id();
+		ServerConnection *connection;
 
 		struct Object {
 			std::unique_ptr<Service> service;
@@ -139,9 +142,10 @@ namespace mini_saftlib {
 		return saftlib_object_id_generator++;
 	}
 
-	ServiceContainer::ServiceContainer() 
+	ServiceContainer::ServiceContainer(ServerConnection *connection) 
 		: d(std2::make_unique<Impl>())
 	{
+		d->connection = connection;
 		// create a Service that allows access to ServiceContainer functionality
 		auto container_service = std2::make_unique<ContainerService>(this);
 		unsigned object_id = create_object("/de/gsi/saftlib", std::move(container_service));
@@ -162,7 +166,6 @@ namespace mini_saftlib {
 			inserted_object->service     = std::move(service);
 			inserted_object->object_path = object_path;
 			d->object_path_lookup_table[object_path] = saftlib_object_id;
-			std::cerr << "created object under object_id " << saftlib_object_id << std::endl;
 			return saftlib_object_id;
 		}
 		return 0;
@@ -176,9 +179,9 @@ namespace mini_saftlib {
 			auto find_result = d->objects.find(saftlib_object_id);
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto    &object    = find_result->second;
-			// object->client_fds.insert(client_fd);
 			object->signal_fds.insert(signal_group_fd);
 			object->use_count[signal_group_fd]++;
+			d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 			return saftlib_object_id;
 		}
 		return 0;
@@ -190,8 +193,9 @@ namespace mini_saftlib {
 		auto    &object    = find_result->second;
 		object->use_count[signal_group_fd]--;
 		if (object->use_count[signal_group_fd] == 0) {
-			// object->client_fds.erase(client_fd);
 			object->signal_fds.erase(signal_group_fd);
+			d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
+			close(signal_group_fd);
 		}
 	}
 

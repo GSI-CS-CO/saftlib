@@ -20,9 +20,9 @@ namespace mini_saftlib {
 		~ClientConnection();
 
 		// send whatever data is in serial buffer to the server
-		int send(Serializer &serdes, int timeout_ms = -1); 
+		int send(Serializer &serializer, int timeout_ms = -1); 
 		// wait for data to arrive from the server
-		int receive(Deserializer &serdes, int timeout_ms = -1);
+		int receive(Deserializer &deserializer, int timeout_ms = -1);
 	};
 
 

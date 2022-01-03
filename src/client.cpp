@@ -84,14 +84,14 @@ namespace mini_saftlib {
 	}
 
 
-	int ClientConnection::send(Serializer &serdes, int timeout_ms)
+	int ClientConnection::send(Serializer &serializer, int timeout_ms)
 	{
 		std::lock_guard<std::mutex> lock(d->m_client_socket);
 		d->pfd.events = POLLOUT | POLLHUP;
 		int result;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 			if (d->pfd.revents & POLLOUT) {
-				serdes.write_to(d->pfd.fd);
+				serializer.write_to(d->pfd.fd);
 			}
 			if (d->pfd.revents & POLLHUP) {
 				return -1;
@@ -99,14 +99,14 @@ namespace mini_saftlib {
 		}
 		return result; // 0 in case of timeout
 	}
-	int ClientConnection::receive(Deserializer &serdes, int timeout_ms)
+	int ClientConnection::receive(Deserializer &deserializer, int timeout_ms)
 	{
 		std::lock_guard<std::mutex> lock(d->m_client_socket);
 		int result;
 		d->pfd.events = POLLIN | POLLHUP;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 			if (d->pfd.revents & POLLIN) {
-				serdes.read_from(d->pfd.fd);
+				deserializer.read_from(d->pfd.fd);
 			}
 			if (d->pfd.revents & POLLHUP) {
 				return -1;
@@ -143,8 +143,8 @@ namespace mini_saftlib {
 			msg << "cannot create socket pair: " << strerror(errno);
 			throw std::runtime_error(msg.str());
 		}
-		close(d->fd_pair[0]);
-		close(d->fd_pair[1]);
+		// close(d->fd_pair[0]);
+		// close(d->fd_pair[1]);
 		// keep the other socket end in order to listen for events
 		d->pfd.fd = d->fd_pair[1];
 		d->pfd.events = POLLIN | POLLHUP | POLLERR;
@@ -156,7 +156,7 @@ namespace mini_saftlib {
 	{
 		// send one of the two socket ends to the server
 		std::cerr << "sending socket pair for signals " << std::endl;
-		// return sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
+		return sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
 		return 0;
 	}
 
@@ -222,10 +222,10 @@ namespace mini_saftlib {
 			d->signal_group = &signal_group;
 			// the Proxy constructor calls the server for 
 			// with object_id = 1 (the CoreService)
-			unsigned core_service_object_id = 1;
+			unsigned container_service_object_id = 1;
 			int interface_no = 0;
 			int function_no = 0; // 0 is register_proxy
-			d->send.put(core_service_object_id);
+			d->send.put(container_service_object_id);
 			d->send.put(interface_no);
 			d->send.put(function_no);
 			d->send.put(object_path);
@@ -245,7 +245,7 @@ namespace mini_saftlib {
 			d->received.get(d->saftlib_object_id);
 			d->received.get(d->client_id);
 			d->received.get(d->signal_group_id);
-			// if we get object_id 0, the object path was not found
+			// if we get saftlib_object_id=0, the object path was not found
 			if (!d->saftlib_object_id) {
 				std::ostringstream msg;
 				msg << "object path \"" << object_path << "\" not found" << std::endl;

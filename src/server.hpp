@@ -12,6 +12,9 @@ namespace mini_saftlib {
 	public:
 		ServerConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
+
+		void register_signal_id_for_client(int client_id, int signal_id);
+		void unregister_signal_id_for_client(int client_id, int signal_id);
 	};
 
 }
