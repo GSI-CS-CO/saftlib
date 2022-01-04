@@ -16,6 +16,7 @@ namespace mini_saftlib {
 		std::map<int, int> signal_fds_use_count;
 		std::vector<std::string> interface_names;
 		unsigned object_id;
+		void remove_signal_fd(int fd);
 	};
 
 	Service::Service(const std::vector<std::string> &interface_names) 
@@ -34,12 +35,12 @@ namespace mini_saftlib {
 		call(interface_no, function_no, client_fd, received, send);
 	}
 
-	void Service::remove_signal_fd(int fd)
+	void Service::Impl::remove_signal_fd(int fd)
 	{
-		std::cerr << "Service::remove_signal_fd " << fd << std::endl;
-		auto found_use_count = d->signal_fds_use_count.find(fd);
-		assert(found_use_count != d->signal_fds_use_count.end());
-		d->signal_fds_use_count.erase(fd);
+		std::cerr << "Service::Impl::remove_signal_fd " << fd << std::endl;
+		auto found_use_count = signal_fds_use_count.find(fd);
+		assert(found_use_count != signal_fds_use_count.end());
+		signal_fds_use_count.erase(fd);
 	}
 
 	void Service::emit(Serializer &send)
@@ -248,7 +249,7 @@ namespace mini_saftlib {
 	void ServiceContainer::remove_signal_fd(int fd)
 	{
 		for(auto &object: d->objects) {
-			object.second->service->remove_signal_fd(fd);
+			object.second->service->d->remove_signal_fd(fd);
 		}
 	}
 

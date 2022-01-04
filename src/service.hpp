@@ -11,12 +11,11 @@
 namespace mini_saftlib {
 
 	class Service {
-		friend class ServiceContainer;
 		struct Impl; std::unique_ptr<Impl> d;
+		friend class ServiceContainer;
 	public:
 		Service(const std::vector<std::string> &interface_names);
 		void call(int client_fd, Deserializer &received, Serializer &send);
-		void remove_signal_fd(int fd);
 		virtual ~Service();
 	protected:
 		virtual void call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) = 0;

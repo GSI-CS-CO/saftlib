@@ -294,9 +294,6 @@ namespace mini_saftlib {
 		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
 		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
 		std::cerr << "destroy Proxy" << std::endl;
-		// de-register from signal_group
-		// d->signal_group->d->proxies.erase(std::remove(d->signal_group->d->proxies.begin(), d->signal_group->d->proxies.end(), this),
-		// 	                              d->signal_group->d->proxies.end());
 		// de-register from server
 		// client connection is shared among threads
 		// only one thread can access the connection at a time
@@ -323,6 +320,7 @@ namespace mini_saftlib {
 		std::cerr << "waiting for response from de-register" << std::endl;
 		d->received.get(result);
 		assert(result); // de-registration should always succeed
+		// de-register from signal_group
 		d->signal_group->unregister_proxy(this);
 		std::cerr << "Proxy de-registration successful" << std::endl;
 	}
