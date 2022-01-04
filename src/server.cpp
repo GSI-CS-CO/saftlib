@@ -8,6 +8,8 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <cassert>
+#include <set>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -20,32 +22,77 @@
 
 namespace mini_saftlib {
 
-	// Client represents the program (running in another process)
-	// that sent us a file descriptor of a socket pair.
-	// The file descriptor itself serves as a unique id to identify this other process.
-	struct Client {
-		int socket_fd; // the file descriptor is a unique number and is used as a client id
-		std::vector<int> signal_ids; // all open signal_fds for a client
-		                             // in case the client doesn't unregister the proxies, this can be used 
-		                             // to close the fds and prevent fd leaks.
-		Client(int fd) : socket_fd(fd) {
-			signal_ids.reserve(16);
+	// Represent an open file descriptor for signals
+	// It maintains a use counter that indicates when close(fd) can be called.
+	struct SignalFD {
+		int fd;
+		int use_count;
+		SignalFD(int f) : fd(f), use_count(1) {}
+		~SignalFD() {
+			std::cerr << "SignalFD destructor: close " << fd << std::endl;
+			if (use_count) {
+				std::cerr << "signal fd " << fd << " closed, but still has " << use_count << " users" << std::endl;
+			}
+			close(fd);
+		}
+		void use() { ++use_count; }
+		bool release() { // return true if use count dropped to zero
+			--use_count; 
+			return use_count == 0;
 		}
 	};
-	bool operator==(Client lhs, int rhs) // compare Clients by using their socket_fd
-	{
-		return lhs.socket_fd == rhs;
+	bool operator==(const std::unique_ptr<SignalFD> &lhs, int rhs) {
+		return lhs->fd == rhs;
 	}
+	// bool operator<(std::unique_ptr<SignalFD> lhs, int rhs) {
+	// 	return lhs->fd < rhs;
+	// }
+
+
+	// Client represents the program (running in another process)
+	// that sent us one file descriptor of a socket pair.
+	// The file descriptor integer value serves as a unique id to identify this other process.
+	struct Client {
+		int socket_fd; // the file descriptor is a unique number and is used as a client id
+		std::vector<std::unique_ptr<SignalFD> > signal_fds; 
+		Client(int fd) : socket_fd(fd) {}
+		~Client() {
+			close(socket_fd);
+		}
+		void use_signal_fd(int fd) {
+			// auto signal_fd = signal_fds.find(fd);
+			auto signal_fd = std::find(signal_fds.begin(), signal_fds.end(), fd);
+			if (signal_fd == signal_fds.end()) {
+				signal_fds.push_back(std::move(std2::make_unique<SignalFD>(fd)));
+			} else {
+				(*signal_fd)->use();
+			}
+		}
+		void release_signal_fd(int fd) {
+			//auto signal_fd = signal_fds.find(fd);
+			auto signal_fd = std::find(signal_fds.begin(), signal_fds.end(), fd);
+			if (signal_fd == signal_fds.end()) {
+				assert(false); // should never happen!
+			} else {
+				if ((*signal_fd)->release()) {
+					signal_fds.erase(signal_fd);
+				}
+			}
+		}
+	};
+	bool operator==(const std::unique_ptr<Client> &lhs, int rhs) {
+		return lhs->socket_fd == rhs;
+	}
+	// bool operator<(const Client& lhs, int rhs) {
+	// 	return lhs.socket_fd < rhs;
+	// }
 
 	struct ServerConnection::Impl {
 		ServiceContainer container_of_services;
-		std::vector<Client> clients;
+		std::vector<std::unique_ptr<Client> > clients;
 		Serializer   send;
 		Deserializer received;
-		Impl(ServerConnection *connection) : container_of_services(connection) {
-			// make this big enough to avoid allocation in normal operation
-			clients.reserve(1024);
-		}
+		Impl(ServerConnection *connection) : container_of_services(connection) {}
 		bool accept_client(int fd, int condition);
 		bool handle_client_request(int fd, int condition);
 	};
@@ -59,7 +106,7 @@ namespace mini_saftlib {
 			}
 			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP)));
 			// register the client
-			clients.push_back(Client(client_socket_fd));
+			clients.push_back(std::move(std2::make_unique<Client>(client_socket_fd)));
 			// send the ID back to client (the file descriptor integer number is used as ID)
 			write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
 		}
@@ -70,15 +117,13 @@ namespace mini_saftlib {
 		if (condition & POLLHUP) {
 			std::cerr << "client hung up" << std::endl;
 			std::cerr << "clients.size() " << clients.size() << std::endl;
-			auto client = std::find(clients.begin(), clients.end(), fd);
-			if (client != clients.end()) { 
-				// close all signal_fds that are associated with this client_fd
-				for (auto &signal_id: client->signal_ids) {
-					close(signal_id);
-				}
-				close(fd);
+			// auto client = clients.find(fd);
+			auto remove_result = std::remove(clients.begin(), clients.end(), fd);
+			if (remove_result == clients.end()) { 
+				assert(false);
+			} else {
+				clients.erase(remove_result, clients.end());
 			}
-			clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
 			std::cerr << "clients.size() " << clients.size() << std::endl;
 			return false;
 		}
@@ -156,25 +201,27 @@ namespace mini_saftlib {
 
 	ServerConnection::~ServerConnection() = default;
 
-	void ServerConnection::register_signal_id_for_client(int client_id, int signal_id)
+	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		std::cerr << "register signal id " << signal_id << " for client " << client_id << std::endl;
-		auto client = std::find(d->clients.begin(), d->clients.end(), client_id);
-		if (client != d->clients.end()) {
-			std::cerr << "found client_id " << client_id << std::endl;
-			auto signal = std::find(client->signal_ids.begin(), client->signal_ids.end(), signal_id);
-			if (signal == client->signal_ids.end()) {
-				std::cerr << "insert signal_fd " << signal_id << std::endl;
-				client->signal_ids.push_back(signal_id);
-			}
-		} 
+		std::cerr << "register signal fd " << signal_fd << " for client " << client_fd << std::endl;
+		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
+		if (client == d->clients.end()) {
+			assert(false);
+		} else {
+			(*client)->use_signal_fd(signal_fd);
+		}
 	}
 
-	void ServerConnection::unregister_signal_id_for_client(int client_id, int signal_id)
+	void ServerConnection::unregister_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		auto client = std::find(d->clients.begin(), d->clients.end(), client_id);
-		if (client != d->clients.end()) {
-			client->signal_ids.erase(std::remove(client->signal_ids.begin(), client->signal_ids.end(), signal_id), client->signal_ids.end());
+		std::cerr << "unregister signal fd " << signal_fd << " for client " << client_fd << std::endl;
+
+		// auto client = d->clients.find(client_fd);
+		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
+		if (client == d->clients.end()) {
+			assert(false);
+		} else {
+			(*client)->release_signal_fd(signal_fd);
 		}
 	}
 
