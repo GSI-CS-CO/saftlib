@@ -91,7 +91,7 @@ namespace mini_saftlib {
 		d->serialized_signal.put(get_object_id());
 		int interface_no = 0;
 		d->serialized_signal.put(interface_no);
-		d->serialized_signal.put(count++);
+		d->serialized_signal.put(++count);
 		std::cerr << "emit signal with counter value " << count << std::endl;
 		emit(d->serialized_signal);
 		return true;
