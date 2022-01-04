@@ -191,6 +191,10 @@ namespace mini_saftlib {
 		// 	get(ser._data);
 		// 	ser.get_init();
 		// }
+
+		void save() const;
+		void restore() const;
+
 	private:
 
 		// has to be called before first call to get()
@@ -198,6 +202,7 @@ namespace mini_saftlib {
 
 		std::vector<char> _data;
 		mutable std::vector<char>::const_iterator _iter;
+		mutable std::vector<char>::const_iterator _saved_iter;
 	};
 
 

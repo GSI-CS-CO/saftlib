@@ -90,6 +90,7 @@ namespace mini_saftlib {
 		int interface_no = 0;
 		d->serialized_signal.put(interface_no);
 		d->serialized_signal.put(count++);
+		std::cerr << "emit signal with counter value " << count << std::endl;
 		emit(d->serialized_signal);
 		return true;
 	}
@@ -102,8 +103,14 @@ namespace mini_saftlib {
 					std::cerr << "register_proxy called" << std::endl;
 					std::string object_path;
 					received.get(object_path);
-					int signal_fd = recvfd(client_fd);
-					std::cerr << "got (open) " << signal_fd << std::endl;
+					int signal_fd;
+					received.get(signal_fd);
+					if (signal_fd == -1) {
+						signal_fd = recvfd(client_fd);
+						std::cerr << "got (open) " << signal_fd << std::endl;
+					} else {
+						std::cerr << "reuse " << signal_fd << std::endl;
+					}
 					unsigned saftlib_object_id = d->container->register_proxy(object_path, client_fd, signal_fd);
 					std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
 					send.put(saftlib_object_id);
@@ -209,6 +216,7 @@ namespace mini_saftlib {
 			auto    &object    = find_result->second;
 			object->service->d->signal_fds.insert(signal_group_fd);
 			object->service->d->use_count[signal_group_fd]++;
+			std::cerr << "register_proxy: object use count = " << object->service->d->use_count[signal_group_fd] << std::endl;
 			d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 			return saftlib_object_id;
 		}
@@ -220,6 +228,7 @@ namespace mini_saftlib {
 		assert(find_result != d->objects.end()); 
 		auto    &object    = find_result->second;
 		object->service->d->use_count[signal_group_fd]--;
+		std::cerr << "unregister_proxy: object use count = " << object->service->d->use_count[signal_group_fd] << std::endl;
 		if (object->service->d->use_count[signal_group_fd] == 0) {
 			object->service->d->signal_fds.erase(signal_group_fd);
 			d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);

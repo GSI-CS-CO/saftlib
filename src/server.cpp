@@ -44,9 +44,6 @@ namespace mini_saftlib {
 	bool operator==(const std::unique_ptr<SignalFD> &lhs, int rhs) {
 		return lhs->fd == rhs;
 	}
-	// bool operator<(std::unique_ptr<SignalFD> lhs, int rhs) {
-	// 	return lhs->fd < rhs;
-	// }
 
 
 	// Client represents the program (running in another process)
@@ -83,9 +80,6 @@ namespace mini_saftlib {
 	bool operator==(const std::unique_ptr<Client> &lhs, int rhs) {
 		return lhs->socket_fd == rhs;
 	}
-	// bool operator<(const Client& lhs, int rhs) {
-	// 	return lhs.socket_fd < rhs;
-	// }
 
 	struct ServerConnection::Impl {
 		ServiceContainer container_of_services;

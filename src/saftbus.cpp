@@ -83,6 +83,15 @@ namespace mini_saftlib {
 		// put_init();
 		return true;
 	}
+	bool Serializer::empty()
+	{
+		return _data.empty();
+	}
+	void Serializer::put_init()
+	{
+		_data.clear();
+	}
+
 	bool Deserializer::read_from(int fd) {
 		int size;
 		int result;
@@ -102,13 +111,13 @@ namespace mini_saftlib {
 		// std::cerr << "read " << size << " bytes from fd " << fd << std::endl;
 		return true;
 	}
-	bool Serializer::empty()
+	void Deserializer::save() const
 	{
-		return _data.empty();
+		_saved_iter = _iter;
 	}
-	void Serializer::put_init()
+	void Deserializer::restore() const
 	{
-		_data.clear();
+		_iter = _saved_iter;
 	}
 	// has to be called before any call to get()
 	void Deserializer::get_init() const

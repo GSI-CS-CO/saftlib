@@ -122,6 +122,7 @@ namespace mini_saftlib {
 	struct SignalGroup::Impl {
 		struct pollfd pfd;
 		int fd_pair[2];
+		int signal_group_id; // the integer value of the fd on the server side
 		Deserializer received;
 		std::vector<Proxy*> proxies;
 		std::mutex m1, m2;
@@ -138,6 +139,7 @@ namespace mini_saftlib {
 	SignalGroup::SignalGroup() 
 		: d(std2::make_unique<Impl>())
 	{
+		std::cerr << "SignalGroup constructor" << std::endl;
 		std::ostringstream msg;
 		if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, d->fd_pair) != 0) {
 			msg << "cannot create socket pair: " << strerror(errno);
@@ -148,6 +150,7 @@ namespace mini_saftlib {
 		// keep the other socket end in order to listen for events
 		d->pfd.fd = d->fd_pair[1];
 		d->pfd.events = POLLIN | POLLHUP | POLLERR;
+		d->signal_group_id = -1;
 	}
 
 	SignalGroup::~SignalGroup() = default;
@@ -155,17 +158,25 @@ namespace mini_saftlib {
 	int SignalGroup::register_proxy(Proxy *proxy) 
 	{
 		// send one of the two socket ends to the server
-		std::cerr << "sending socket pair for signals " << std::endl;
+		std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for signals " << std::endl;
 
-		int result = sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
-		if (result > 0) {
-			d->proxies.push_back(proxy);
-		}
+		if (d->signal_group_id == -1) {
+			int fdresult = sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
+			if (fdresult <= 0) {
+				std::cerr << "SignalGroup::register_proxy cannot send file descriptor to server" << std::endl;
+			}
+			bool result = d->received.read_from(d->pfd.fd);
+			if (!result) {
+				std::cerr << "SignalGroup::register_proxy failed to read signal id from server" << std::endl;
+			}
+		} 
+		d->proxies.push_back(proxy);
 		return 0;
 	}
 
 	void SignalGroup::unregister_proxy(Proxy *proxy) 
 	{
+		std::cerr << "unregister_proxy" << std::endl;
 		d->proxies.erase(std::remove(d->proxies.begin(), d->proxies.end(), proxy), d->proxies.end());
 	}
 
@@ -207,9 +218,11 @@ namespace mini_saftlib {
 					d->received.get(interface);
 					std::cerr << "object_id = " << saftlib_object_id << " inteface = " << interface << " d->proxies.size()=" << d->proxies.size() <<  std::endl;
 					for (auto &proxy: d->proxies) {
-						std::cerr << "proxy object id = " << proxy->d->saftlib_object_id << std::endl;
+						std::cerr << "proxy object id = " << proxy->d->saftlib_object_id << "  signal_group_id = " << proxy->d->signal_group_id << std::endl;
 						if (proxy->d->saftlib_object_id == saftlib_object_id) {
+							d->received.save();
 							proxy->signal_dispatch(interface, d->received);
+							d->received.restore();
 						}
 					}
 				}
@@ -249,6 +262,7 @@ namespace mini_saftlib {
 			d->send.put(object_path);
 			{
 				std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
+				d->send.put(signal_group.d->signal_group_id); 
 				int send_result    = get_connection().send(d->send);
 				if (send_result <= 0) {
 					throw std::runtime_error("Proxy cannot send data to server");
@@ -268,6 +282,10 @@ namespace mini_saftlib {
 				std::ostringstream msg;
 				msg << "object path \"" << object_path << "\" not found" << std::endl;
 				throw std::runtime_error(msg.str());
+			}
+			if (signal_group.d->signal_group_id == -1) {
+				std::cerr << "set signal_group_id " << d->signal_group_id << std::endl;
+				signal_group.d->signal_group_id = d->signal_group_id;
 			}
 			std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
 		}
