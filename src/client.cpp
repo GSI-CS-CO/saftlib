@@ -86,7 +86,6 @@ namespace mini_saftlib {
 
 	int ClientConnection::send(Serializer &serializer, int timeout_ms)
 	{
-		std::lock_guard<std::mutex> lock(d->m_client_socket);
 		d->pfd.events = POLLOUT | POLLHUP;
 		int result;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
@@ -101,7 +100,6 @@ namespace mini_saftlib {
 	}
 	int ClientConnection::receive(Deserializer &deserializer, int timeout_ms)
 	{
-		std::lock_guard<std::mutex> lock(d->m_client_socket);
 		int result;
 		d->pfd.events = POLLIN | POLLHUP;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
@@ -249,48 +247,52 @@ namespace mini_saftlib {
 
 	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group) 
 		: d(std2::make_unique<Impl>()) 
+	{
+		d->signal_group = &signal_group;
+		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
+		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
+		// the Proxy constructor calls the server for 
+		// with object_id = 1 (the CoreService)
+		unsigned container_service_object_id = 1;
+		int interface_no = 0;
+		int function_no = 0; // 0 is register_proxy
+		d->send.put(container_service_object_id);
+		d->send.put(interface_no);
+		d->send.put(function_no);
+		d->send.put(object_path);
 		{
-			d->signal_group = &signal_group;
-			// the Proxy constructor calls the server for 
-			// with object_id = 1 (the CoreService)
-			unsigned container_service_object_id = 1;
-			int interface_no = 0;
-			int function_no = 0; // 0 is register_proxy
-			d->send.put(container_service_object_id);
-			d->send.put(interface_no);
-			d->send.put(function_no);
-			d->send.put(object_path);
-			{
-				std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
-				d->send.put(signal_group.d->signal_group_id); 
-				int send_result    = get_connection().send(d->send);
-				if (send_result <= 0) {
-					throw std::runtime_error("Proxy cannot send data to server");
-				}
-				signal_group.register_proxy(this);
-				int receive_result = get_connection().receive(d->received);
-				if (receive_result <= 0) {
-					throw std::runtime_error("Proxy cannot receive data from server");
-				}
+			std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
+			d->send.put(signal_group.d->signal_group_id); 
+			int send_result    = get_connection().send(d->send);
+			if (send_result <= 0) {
+				throw std::runtime_error("Proxy cannot send data to server");
 			}
-			// the response is just the object_id
-			d->received.get(d->saftlib_object_id);
-			d->received.get(d->client_id);
-			d->received.get(d->signal_group_id);
-			// if we get saftlib_object_id=0, the object path was not found
-			if (!d->saftlib_object_id) {
-				std::ostringstream msg;
-				msg << "object path \"" << object_path << "\" not found" << std::endl;
-				throw std::runtime_error(msg.str());
+			signal_group.register_proxy(this);
+			int receive_result = get_connection().receive(d->received);
+			if (receive_result <= 0) {
+				throw std::runtime_error("Proxy cannot receive data from server");
 			}
-			if (signal_group.d->signal_group_id == -1) {
-				std::cerr << "set signal_group_id " << d->signal_group_id << std::endl;
-				signal_group.d->signal_group_id = d->signal_group_id;
-			}
-			std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
 		}
+		// the response is just the object_id
+		d->received.get(d->saftlib_object_id);
+		d->received.get(d->client_id);
+		d->received.get(d->signal_group_id);
+		// if we get saftlib_object_id=0, the object path was not found
+		if (!d->saftlib_object_id) {
+			std::ostringstream msg;
+			msg << "object path \"" << object_path << "\" not found" << std::endl;
+			throw std::runtime_error(msg.str());
+		}
+		if (signal_group.d->signal_group_id == -1) {
+			std::cerr << "set signal_group_id " << d->signal_group_id << std::endl;
+			signal_group.d->signal_group_id = d->signal_group_id;
+		}
+		std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
+	}
 	Proxy::~Proxy()
 	{
+		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
+		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
 		std::cerr << "destroy Proxy" << std::endl;
 		// de-register from signal_group
 		// d->signal_group->d->proxies.erase(std::remove(d->signal_group->d->proxies.begin(), d->signal_group->d->proxies.end(), this),

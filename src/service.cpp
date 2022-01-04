@@ -13,8 +13,7 @@ namespace mini_saftlib {
 
 	struct Service::Impl {
 		int          owner;
-		std::set<int> signal_fds;
-		std::map<int, int> use_count;
+		std::map<int, int> signal_fds_use_count;
 		std::vector<std::string> interface_names;
 		unsigned object_id;
 	};
@@ -38,18 +37,16 @@ namespace mini_saftlib {
 	void Service::remove_signal_fd(int fd)
 	{
 		std::cerr << "Service::remove_signal_fd " << fd << std::endl;
-		auto found = d->signal_fds.find(fd);
-		assert(found != d->signal_fds.end());
-		auto found_use_count = d->use_count.find(fd);
-		assert(found_use_count != d->use_count.end());
-		d->use_count.erase(fd);
-		d->signal_fds.erase(fd);
+		auto found_use_count = d->signal_fds_use_count.find(fd);
+		assert(found_use_count != d->signal_fds_use_count.end());
+		d->signal_fds_use_count.erase(fd);
 	}
 
 	void Service::emit(Serializer &send)
 	{
 		std::cerr << "emitting signal" << std::endl;
-		for (auto &fd: d->signal_fds) {
+		for (auto &fd_use_count: d->signal_fds_use_count) {
+			int fd = fd_use_count.first;
 			std::cerr << "   to " << fd << std::endl;
 			send.write_to_no_init(fd);
 		}
@@ -218,9 +215,8 @@ namespace mini_saftlib {
 			auto find_result = d->objects.find(saftlib_object_id);
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto    &object    = find_result->second;
-			object->service->d->signal_fds.insert(signal_group_fd);
-			object->service->d->use_count[signal_group_fd]++;
-			std::cerr << "register_proxy: object use count = " << object->service->d->use_count[signal_group_fd] << std::endl;
+			object->service->d->signal_fds_use_count[signal_group_fd]++;
+			std::cerr << "register_proxy: object use count = " << object->service->d->signal_fds_use_count[signal_group_fd] << std::endl;
 			d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 			return saftlib_object_id;
 		}
@@ -231,11 +227,11 @@ namespace mini_saftlib {
 		auto find_result = d->objects.find(saftlib_object_id);
 		assert(find_result != d->objects.end()); 
 		auto    &object    = find_result->second;
-		object->service->d->use_count[signal_group_fd]--;
+		object->service->d->signal_fds_use_count[signal_group_fd]--;
 		d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
-		std::cerr << "unregister_proxy: signal fd " << signal_group_fd << " use count = " << object->service->d->use_count[signal_group_fd] << std::endl;
-		if (object->service->d->use_count[signal_group_fd] == 0) {
-			object->service->d->signal_fds.erase(signal_group_fd);
+		std::cerr << "unregister_proxy: signal fd " << signal_group_fd << " use count = " << object->service->d->signal_fds_use_count[signal_group_fd] << std::endl;
+		if (object->service->d->signal_fds_use_count[signal_group_fd] == 0) {
+			object->service->d->signal_fds_use_count.erase(signal_group_fd);
 		}
 	}
 

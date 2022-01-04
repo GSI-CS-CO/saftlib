@@ -114,7 +114,7 @@ namespace mini_saftlib {
 
 			std::cerr << "clients.size() " << clients.size() << std::endl;
 			// auto client = clients.find(fd);
-			auto removed_client = std::remove(clients.begin(), clients.end(), fd);
+			auto removed_client = std::find(clients.begin(), clients.end(), fd);
 			if (removed_client == clients.end()) { 
 				assert(false);
 			} else {
@@ -123,7 +123,7 @@ namespace mini_saftlib {
 					std::cerr << "remove client signal fd " << signal_fd->fd << std::endl;
 					container_of_services.remove_signal_fd(signal_fd->fd);
 				}
-				clients.erase(removed_client, clients.end());
+				clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
 			}
 			std::cerr << "clients.size() " << clients.size() << std::endl;
 			return false;

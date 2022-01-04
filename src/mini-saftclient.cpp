@@ -13,7 +13,7 @@ bool timeout() {
 	std::cerr << "#" << i++ << std::endl;
 	// auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
 	// mini_saftlib::Loop::get_default().quit();
-	if (i == 2) {
+	if (i == 5) {
 		mini_saftlib::Loop::get_default().quit();
 	}
 	return true;
@@ -53,8 +53,8 @@ int main(int argc, char **argv)
 		)
 	);
 
-	char ch;
-	std::cin >> ch; 
+	// char ch;
+	// std::cin >> ch; 
 
 	// std::cerr << "argc = " << argc << std::endl;
 	if (argc > 1) {
