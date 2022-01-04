@@ -22,7 +22,7 @@ bool timeout() {
 bool got_signal(int fd, int condition) {
 	std::cerr << "got_signal" << std::endl;
 	if (condition & POLLIN) {
-		mini_saftlib::SignalGroup::get_global().wait_for_one_signal(0);
+		mini_saftlib::SignalGroup::get_global().wait_for_signal(0);
 	}
 	return true;
 }
@@ -31,6 +31,7 @@ int main(int argc, char **argv)
 {
 	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
 	auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create();
+	auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create();
 	// for(;;) {
 	// 	mini_saftlib::SignalGroup::get_global().wait_for_signal();
 	// }
@@ -52,6 +53,8 @@ int main(int argc, char **argv)
 		)
 	);
 
+	char ch;
+	std::cin >> ch; 
 
 	// std::cerr << "argc = " << argc << std::endl;
 	if (argc > 1) {
@@ -59,6 +62,7 @@ int main(int argc, char **argv)
 	} else {
 		mini_saftlib::Loop::get_default().run();
 	}
+
 
 	return 0;
 }

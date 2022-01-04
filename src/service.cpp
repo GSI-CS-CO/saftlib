@@ -228,10 +228,10 @@ namespace mini_saftlib {
 		assert(find_result != d->objects.end()); 
 		auto    &object    = find_result->second;
 		object->service->d->use_count[signal_group_fd]--;
-		std::cerr << "unregister_proxy: object use count = " << object->service->d->use_count[signal_group_fd] << std::endl;
+		d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
+		std::cerr << "unregister_proxy: signal fd " << signal_group_fd << " use count = " << object->service->d->use_count[signal_group_fd] << std::endl;
 		if (object->service->d->use_count[signal_group_fd] == 0) {
 			object->service->d->signal_fds.erase(signal_group_fd);
-			d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
 		}
 	}
 

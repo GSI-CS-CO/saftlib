@@ -39,7 +39,7 @@ namespace mini_saftlib {
 		int register_proxy(Proxy *proxy);
 		void unregister_proxy(Proxy *proxy);
 
-		int get_fd();
+		int get_fd(); // this can be used to hook the SignalGroup into an event loop
 
 		int wait_for_signal(int timeout_ms = -1);
 		int wait_for_one_signal(int timeout_ms = -1);

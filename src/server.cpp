@@ -37,6 +37,7 @@ namespace mini_saftlib {
 		}
 		void use() { ++use_count; }
 		bool release() { // return true if use count dropped to zero
+			std::cerr << "SignalFD::release called: use count = " << use_count << "->" << (use_count-1) << std::endl;
 			--use_count; 
 			return use_count == 0;
 		}
