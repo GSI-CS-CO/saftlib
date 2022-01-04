@@ -29,7 +29,6 @@ namespace mini_saftlib {
 	private:
 	};
 
-
 	class SAFTd_Service : public Service {
 		static std::vector<std::string> gen_interface_names();
 	public:

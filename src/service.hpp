@@ -16,7 +16,7 @@ namespace mini_saftlib {
 	public:
 		Service(const std::vector<std::string> &interface_names);
 		void call(int client_fd, Deserializer &received, Serializer &send);
-		void remove_signal_fds(const std::vector<int> &signal_fds);
+		void remove_signal_fd(int fd);
 		virtual ~Service();
 	protected:
 		virtual void call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) = 0;
@@ -41,6 +41,7 @@ namespace mini_saftlib {
 		// call a Service identified by the saftlib_object_id
 		// return false if the saftlib_object_id is unknown
 		bool call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send);
+		void remove_signal_fd(int fd);
 	};
 
 	// A Service to access the Container of Services
