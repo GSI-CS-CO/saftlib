@@ -29,6 +29,14 @@ namespace mini_saftlib {
 
 	}
 
-	LibraryLoader::~LibraryLoader() = default;
+	LibraryLoader::~LibraryLoader()
+	{
+		if (d->handle != NULL) {
+			lt_dlclose(d->handle);
+		}		
+		int result = lt_dlexit();
+		assert(result == 0);
+		std::cerr << "lt_dlexit was successful" << std::endl;
+	}
 
 }
