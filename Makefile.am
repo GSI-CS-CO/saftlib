@@ -7,6 +7,7 @@ lib_LTLIBRARIES = libmini-saftlib.la
 libmini_saftlib_la_SOURCES = \
 	src/service.cpp     src/service.hpp   \
 	src/loop.cpp        src/loop.hpp      \
+	src/plugins.cpp     src/plugins.hpp   \
 	src/saftbus.cpp     src/saftbus.hpp   \
 	src/server.cpp      src/server.hpp    \
 	src/client.cpp      src/client.hpp    \
