@@ -3,19 +3,28 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -Wall -g  $(SIGC_CFLAGS) -I $(top_srcdir)/src
 
 lib_LTLIBRARIES = libmini-saftlib.la      \
-                  libtiming-receiver.la
+                  libtimingreceiver_service.la
 
 # libmini_saftlib_la_LDFLAGS = -version-info 0:0:0 
+
+mini_saftlib_includedir    = $(includedir)/mini-saftlib
 libmini_saftlib_la_SOURCES = \
-	src/loop.cpp        src/loop.hpp      \
-	src/saftbus.cpp     src/saftbus.hpp   \
-	src/client.cpp      src/client.hpp    
+	src/loop.cpp      \
+	src/saftbus.cpp   \
+	src/client.cpp    
+mini_saftlib_include_HEADERS = \
+	src/loop.hpp      \
+	src/saftbus.hpp   \
+	src/client.hpp    \
+	src/service.hpp   \
+	src/plugins.hpp   \
+	src/server.hpp    
 
 
-libtiming_receiver_la_CPPADD  = $(EB_CFLAGS)
-libtiming_receiver_la_LIBADD  = $(EB_LIBS)
-libtiming_receiver_la_SOURCES = \
-	tr/driver.cpp       tr/driver.hpp 
+libtimingreceiver_service_la_CPPADD  = $(EB_CFLAGS)
+libtimingreceiver_service_la_LIBADD  = $(EB_LIBS)
+libtimingreceiver_service_la_SOURCES = \
+	timingreceiver/service.cpp 
 
 bin_PROGRAMS = mini-saftd      \
                mini-saftclient 
@@ -24,9 +33,9 @@ mini_saftd_LDFLAGS = -Wl,--export-dynamic # -Wl,--whole-archive,libmini-saftlib.
 mini_saftd_LDADD   = $(SIGC_LIBS) libmini-saftlib.la -lltdl
 mini_saftd_SOURCES = \
     src/mini-saftd.cpp   \
-	src/service.cpp     src/service.hpp   \
-	src/plugins.cpp     src/plugins.hpp   \
-	src/server.cpp      src/server.hpp    
+	src/service.cpp      \
+	src/plugins.cpp      \
+	src/server.cpp        
 
 mini_saftclient_LDADD   = $(SIGC_LIBS) libmini-saftlib.la
 mini_saftclient_SOURCES = src/mini-saftclient.cpp
