@@ -1,4 +1,3 @@
-#include "service.hpp"
 #include "client.hpp"
 #include "loop.hpp"
 #include "make_unique.hpp"
