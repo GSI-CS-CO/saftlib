@@ -1,5 +1,6 @@
 #include "plugins.hpp"
 #include "make_unique.hpp"
+#include "service.hpp"
 
 #include <ltdl.h>
 
@@ -7,6 +8,8 @@
 #include <iostream>
 
 namespace mini_saftlib {
+
+	extern "C" typedef std::unique_ptr<Service> (*create_service_function)();
 
 	struct LibraryLoader::Impl {
 		lt_dlhandle handle;
@@ -27,6 +30,9 @@ namespace mini_saftlib {
 			std::cerr << "successfully opened " << so_filename << std::endl;
 		}
 
+		// // get the create_service function
+		// auto create_service = (create_service_function)lt_dlsym(d->handle,"create_service");
+		// assert(create_service != NULL);
 	}
 
 	LibraryLoader::~LibraryLoader()
