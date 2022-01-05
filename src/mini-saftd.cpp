@@ -1,6 +1,7 @@
 #include "loop.hpp"
 #include "server.hpp"
 #include "service.hpp"
+#include "plugins.hpp"
 #include "make_unique.hpp"
 
 #include <iostream>
@@ -60,6 +61,10 @@ bool fd_callback(int fd, int condition) {
 }
 
 int main() {
+
+	mini_saftlib::LibraryLoader timingreciever_plugin("/home/michael/local/lib/libtiming-receiver.la");
+
+
 	// two lines just to play around ... has nothing to do with the saftd functionality.
 	init_fd();
 	mini_saftlib::Loop::get_default().connect(std::move(std2::make_unique<mini_saftlib::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
