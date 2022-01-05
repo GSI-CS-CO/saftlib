@@ -2,9 +2,10 @@ AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -Wall -g  $(SIGC_CFLAGS) -I $(top_srcdir)/src -I $(top_srcdir)/timingreceiver
 
-lib_LTLIBRARIES = libmini-saftlib.la            \
-                  libtimingreceiver_service.la  \
-                  libtimingreceiver_proxy.la    
+lib_LTLIBRARIES = \
+	libmini-saftlib.la            \
+	libtimingreceiver_service.la  \
+	libtimingreceiver_proxy.la    
 
 # libmini_saftlib_la_LDFLAGS = -version-info 0:0:0 
 
@@ -20,7 +21,6 @@ mini_saftlib_include_HEADERS = \
 	src/service.hpp   \
 	src/plugins.hpp   \
 	src/server.hpp    
-
 
 libtimingreceiver_service_la_CPPADD  = $(EB_CFLAGS)
 libtimingreceiver_service_la_LIBADD  = $(EB_LIBS)
@@ -40,7 +40,7 @@ bin_PROGRAMS = mini-saftd      \
 mini_saftd_LDFLAGS = -Wl,--export-dynamic # -Wl,--whole-archive,libmini-saftlib.la,--no-whole-archive        
 mini_saftd_LDADD   = $(SIGC_LIBS) libmini-saftlib.la -lltdl
 mini_saftd_SOURCES = \
-    src/mini-saftd.cpp   \
+	src/mini-saftd.cpp   \
 	src/service.cpp      \
 	src/plugins.cpp      \
 	src/server.cpp        
