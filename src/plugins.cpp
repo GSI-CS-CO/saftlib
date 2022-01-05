@@ -31,8 +31,9 @@ namespace mini_saftlib {
 		}
 
 		// // get the create_service function
-		// auto create_service = (create_service_function)lt_dlsym(d->handle,"create_service");
-		// assert(create_service != NULL);
+		auto create_service = (create_service_function)lt_dlsym(d->handle,"create_service");
+		assert(create_service != NULL);
+		create_service();
 	}
 
 	LibraryLoader::~LibraryLoader()

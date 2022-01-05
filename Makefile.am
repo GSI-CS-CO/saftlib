@@ -19,7 +19,8 @@ libtiming_receiver_la_SOURCES = \
 
 bin_PROGRAMS = mini-saftd      \
                mini-saftclient 
-               
+
+mini_saftd_LDFLAGS = -Wl,--export-dynamic # -Wl,--whole-archive,libmini-saftlib.la,--no-whole-archive        
 mini_saftd_LDADD   = $(SIGC_LIBS) libmini-saftlib.la -lltdl
 mini_saftd_SOURCES = \
     src/mini-saftd.cpp   \
