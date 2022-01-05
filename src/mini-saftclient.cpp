@@ -1,6 +1,7 @@
 #include "client.hpp"
 #include "loop.hpp"
 #include "make_unique.hpp"
+#include "timingreceiver_proxy.hpp"
 
 #include <iostream>
 #include <thread>
@@ -29,6 +30,8 @@ int main(int argc, char **argv)
 	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
 	auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create();
 	auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create();
+
+	auto timingreceiver_proxy = mini_saftlib::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
 	// for(;;) {
 	// 	mini_saftlib::SignalGroup::get_global().wait_for_signal();
 	// }

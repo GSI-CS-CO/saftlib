@@ -202,6 +202,12 @@ namespace mini_saftlib {
 
 	ServerConnection::~ServerConnection() = default;
 
+	ServiceContainer& ServerConnection::get_service_container()
+	{
+		return d->container_of_services;
+	}
+
+
 	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{
 		std::cerr << "register signal fd " << signal_fd << " for client " << client_fd << std::endl;

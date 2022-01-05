@@ -203,6 +203,7 @@ namespace mini_saftlib {
 			inserted_object->service     = std::move(service);
 			inserted_object->object_path = object_path;
 			d->object_path_lookup_table[object_path] = saftlib_object_id;
+			std::cerr << "inserted object under object_path " << object_path << " with object_id " << saftlib_object_id << std::endl;
 			return saftlib_object_id;
 		}
 		return 0;
@@ -217,7 +218,7 @@ namespace mini_saftlib {
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto    &object    = find_result->second;
 			object->service->d->signal_fds_use_count[signal_group_fd]++;
-			std::cerr << "register_proxy: object use count = " << object->service->d->signal_fds_use_count[signal_group_fd] << std::endl;
+			std::cerr << "register_proxy for object path " << object_path << " . object use count = " << object->service->d->signal_fds_use_count[signal_group_fd] << std::endl;
 			d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 			return saftlib_object_id;
 		}

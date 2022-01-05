@@ -297,7 +297,7 @@ namespace mini_saftlib {
 		// de-register from server
 		// client connection is shared among threads
 		// only one thread can access the connection at a time
-		d->send.put(d->saftlib_object_id);
+		d->send.put(1); // 1 is the special object id that adresses the ContainerService wich provides the unregister_proxy method
 		int interface_no = 0;
 		int function_no = 1; // 1 is unregister_proxy
 		d->send.put(interface_no);

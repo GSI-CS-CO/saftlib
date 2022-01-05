@@ -71,6 +71,8 @@ int main() {
 
 	// create a mini-saftlib-server and let it run
 	mini_saftlib::ServerConnection server_connection;
+
+	server_connection.get_service_container().create_object("/de/gsi/saftlib/tr0", std::move(timingreciever_plugin.create_service()));
 	mini_saftlib::Loop::get_default().run();
 
 	return 0;

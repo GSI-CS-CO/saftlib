@@ -13,6 +13,7 @@ namespace mini_saftlib {
 
 	struct LibraryLoader::Impl {
 		lt_dlhandle handle;
+		create_service_function create_service;
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
@@ -31,9 +32,11 @@ namespace mini_saftlib {
 		}
 
 		// // get the create_service function
-		auto create_service = (create_service_function)lt_dlsym(d->handle,"create_service");
-		assert(create_service != NULL);
-		create_service();
+		d->create_service = (create_service_function)lt_dlsym(d->handle,"create_service");
+		assert(d->create_service != NULL);
+	}
+	std::unique_ptr<Service> LibraryLoader::create_service() {
+		return d->create_service();
 	}
 
 	LibraryLoader::~LibraryLoader()
