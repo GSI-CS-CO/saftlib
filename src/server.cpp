@@ -92,6 +92,20 @@ namespace mini_saftlib {
 		bool handle_client_request(int fd, int condition);
 	};
 
+	std::vector<ServerConnection::ClientInfo> ServerConnection::get_client_info() {
+		std::vector<ClientInfo> result;
+		for (auto &client: d->clients) {
+			result.push_back(ClientInfo());
+			result.back().client_fd = client->socket_fd;
+			for (auto &signal_fd: client->signal_fds) {
+				result.back().signal_fds.push_back(ClientInfo::SignalFD());
+				result.back().signal_fds.back().fd        = signal_fd->fd;
+				result.back().signal_fds.back().use_count = signal_fd->use_count;
+			}
+		}
+		return result;
+	}
+
 	bool ServerConnection::Impl::accept_client(int fd, int condition) {
 		if (condition & POLLIN) {
 			int client_socket_fd = recvfd(fd);

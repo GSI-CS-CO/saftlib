@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace mini_saftlib {
 
@@ -18,6 +19,16 @@ namespace mini_saftlib {
 		ServiceContainer& get_service_container();
 		void register_signal_id_for_client(int client_id, int signal_id);
 		void unregister_signal_id_for_client(int client_id, int signal_id);
+
+		struct ClientInfo {
+			int client_fd;
+			struct SignalFD{
+				int fd;
+				int use_count;
+			};
+			std::vector<SignalFD> signal_fds;
+		};
+		std::vector<ClientInfo> get_client_info();
 	};
 
 }

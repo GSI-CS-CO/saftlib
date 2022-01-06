@@ -14,7 +14,7 @@
 namespace mini_saftlib {
 
 	struct Service::Impl {
-		int          owner;
+		int owner;
 		std::map<int, int> signal_fds_use_count;
 		std::vector<std::string> interface_names;
 		std::string object_path;
@@ -25,7 +25,6 @@ namespace mini_saftlib {
 	struct ServiceContainer::Impl {
 		unsigned generate_saftlib_object_id();
 		ServerConnection *connection;
-
 		std::map<unsigned, std::unique_ptr<Service> > objects;
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
 	};
@@ -80,11 +79,16 @@ namespace mini_saftlib {
 		return d->object_id;
 	}
 
+	std::string &Service::get_object_path()
+	{
+		return d->object_path;
+	}
+
 
 
 	std::vector<std::string> ContainerService::Impl::gen_interface_names() {
 		std::vector<std::string> interface_names;
-		interface_names.push_back("de.gsi.saftlib");
+		interface_names.push_back("saftbus");
 		return interface_names;
 	}
 
@@ -189,6 +193,12 @@ namespace mini_saftlib {
 						send.put(service->d->interface_names);
 						send.put(service->d->signal_fds_use_count);
 						send.put(service->d->owner);
+					}
+					auto client_info = d->container->d->connection->get_client_info();
+					send.put(client_info.size());
+					for (auto &client: client_info) {
+						send.put(client.client_fd);
+						send.put(client.signal_fds);
 					}
 				}
 				break;

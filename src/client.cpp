@@ -196,7 +196,7 @@ namespace mini_saftlib {
 	{
 		int result;
 		{
-			// std::lock_guard<std::mutex> lock1(d->m1);
+			std::lock_guard<std::mutex> lock1(d->m1);
 			std::cerr << "SignalGroup poll call" << std::endl;
 			if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 				if (d->pfd.revents & POLLIN) {
@@ -226,7 +226,7 @@ namespace mini_saftlib {
 			}
 		}
 		{
-			// std::lock_guard<std::mutex> lock2(d->m2);
+			std::lock_guard<std::mutex> lock2(d->m2);
 		}
 		return result;
 	}
@@ -245,8 +245,8 @@ namespace mini_saftlib {
 		: d(std2::make_unique<Impl>()) 
 	{
 		d->signal_group = &signal_group;
-		// std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
-		// std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
+		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
+		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
 		// the Proxy constructor calls the server for 
 		// with object_id = 1 (the CoreService)
 		unsigned container_service_object_id = 1;
@@ -287,8 +287,8 @@ namespace mini_saftlib {
 	}
 	Proxy::~Proxy()
 	{
-		// std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
-		// std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
+		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
+		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
 		std::cerr << "destroy Proxy" << std::endl;
 		// de-register from server
 		// client connection is shared among threads
@@ -379,6 +379,11 @@ namespace mini_saftlib {
 		get_received().get(result);
 		return result;
 	}
+
+	struct SignalFD{
+		int fd;
+		int use_count;
+	};
 	void ContainerService_Proxy::print_status()
 	{
 		get_send().put(get_saftlib_object_id());
@@ -413,6 +418,20 @@ namespace mini_saftlib {
 			std::cerr << std::endl;
 			for (auto &interface_name: interface_names) {
 				std::cerr << "    " << interface_name << std::endl;
+			}
+			std::cerr << std::endl;
+		}
+		std::cerr << std::endl;
+		size_t client_count;
+		get_received().get(client_count);
+		for (unsigned i = 0; i < client_count; ++i) {
+			int client_fd;
+			get_received().get(client_fd);
+			std::vector<SignalFD> signal_fds;
+			get_received().get(signal_fds);
+			std::cerr << "client " << client_fd << " with signal_fds: ";
+			for (auto &signal_fd: signal_fds) {
+				std::cerr << signal_fd.fd << "/" << signal_fd.use_count << " " ;
 			}
 			std::cerr << std::endl;
 		}
