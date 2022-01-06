@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 			if (argvi == "-q") {
 				core_service_proxy->quit();
 			} if (argvi == "-s") {
-				core_service_proxy->print_status();
+				mini_saftlib::SaftbusInfo saftbus_info = core_service_proxy->get_status();
 				return 0;
 			} else if (argvi == "-l") {
 				if ((i+=2) < argc) {

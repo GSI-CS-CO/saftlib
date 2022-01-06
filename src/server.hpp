@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <unistd.h>
+
 namespace mini_saftlib {
 
 	class ServiceContainer;
@@ -21,6 +23,7 @@ namespace mini_saftlib {
 		void unregister_signal_id_for_client(int client_id, int signal_id);
 
 		struct ClientInfo {
+			pid_t process_id;
 			int client_fd;
 			struct SignalFD{
 				int fd;

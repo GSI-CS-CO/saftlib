@@ -52,8 +52,9 @@ namespace mini_saftlib {
 	// The file descriptor integer value serves as a unique id to identify this other process.
 	struct Client {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
+		pid_t process_id; // store the clients pid as additional useful information
 		std::vector<std::unique_ptr<SignalFD> > signal_fds; 
-		Client(int fd) : socket_fd(fd) {}
+		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  {}
 		~Client() {
 			close(socket_fd);
 		}
@@ -96,7 +97,8 @@ namespace mini_saftlib {
 		std::vector<ClientInfo> result;
 		for (auto &client: d->clients) {
 			result.push_back(ClientInfo());
-			result.back().client_fd = client->socket_fd;
+			result.back().process_id = client->process_id;
+			result.back().client_fd  = client->socket_fd;
 			for (auto &signal_fd: client->signal_fds) {
 				result.back().signal_fds.push_back(ClientInfo::SignalFD());
 				result.back().signal_fds.back().fd        = signal_fd->fd;
@@ -113,9 +115,12 @@ namespace mini_saftlib {
 			if (client_socket_fd == -1) {
 				std::cerr << "cannot receive socket fd" << std::endl;
 			}
+			// read process_id from client
+			pid_t pid;
+			read(client_socket_fd, &pid, sizeof(pid));
 			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP)));
 			// register the client
-			clients.push_back(std::move(std2::make_unique<Client>(client_socket_fd)));
+			clients.push_back(std::move(std2::make_unique<Client>(client_socket_fd, pid)));
 			// send the ID back to client (the file descriptor integer number is used as ID)
 			write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
 		}

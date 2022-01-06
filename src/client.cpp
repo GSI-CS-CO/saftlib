@@ -71,6 +71,13 @@ namespace mini_saftlib {
 		close(fd_pair[0]);
 		d->pfd.fd = fd_pair[1];
 
+		// send the process id
+		pid_t pid = getpid();
+		if (write(d->pfd.fd, &pid, sizeof(pid)) != sizeof(pid)) {
+			msg << "cannot read client pid" << strerror(errno) << std::endl;
+			throw std::runtime_error(msg.str());
+		}
+
 		if (read(d->pfd.fd, &d->client_id, sizeof(d->client_id)) != sizeof(d->client_id)) {
 			msg << "cannot read client id" << strerror(errno) << std::endl;
 			throw std::runtime_error(msg.str());
@@ -380,12 +387,9 @@ namespace mini_saftlib {
 		return result;
 	}
 
-	struct SignalFD{
-		int fd;
-		int use_count;
-	};
-	void ContainerService_Proxy::print_status()
+	SaftbusInfo ContainerService_Proxy::get_status()
 	{
+		SaftbusInfo result;
 		get_send().put(get_saftlib_object_id());
 		unsigned interface_no, function_no;
 		get_send().put(interface_no = 0);
@@ -399,24 +403,21 @@ namespace mini_saftlib {
 		get_received().get(object_count);
 		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
 		for (unsigned i = 0; i < object_count; ++i) {
-			unsigned object_id;
-			std::string object_path;
-			std::vector<std::string> interface_names;
-			std::map<int, int> signal_fds_use_count;
-			int owner;
+			result.object_infos.push_back(SaftbusInfo::ObjectInfo());
+			auto &object_info = result.object_infos.back();
 
-			get_received().get(object_id);
-			get_received().get(object_path);
-			get_received().get(interface_names);
-			get_received().get(signal_fds_use_count);
-			get_received().get(owner);
+			get_received().get(object_info.object_id);
+			get_received().get(object_info.object_path);
+			get_received().get(object_info.interface_names);
+			get_received().get(object_info.signal_fds_use_count);
+			get_received().get(object_info.owner);
 
-			std::cerr << object_path << "=>" << object_id << " owner:" << owner << " signal_fds: ";
-			for (auto &signal_fd_use_count: signal_fds_use_count) {
+			std::cerr << object_info.object_path << "=>" << object_info.object_id << " owner:" << object_info.owner << " signal_fds: ";
+			for (auto &signal_fd_use_count: object_info.signal_fds_use_count) {
 				std::cerr << signal_fd_use_count.first << "/" << signal_fd_use_count.second << " ";
 			}
 			std::cerr << std::endl;
-			for (auto &interface_name: interface_names) {
+			for (auto &interface_name: object_info.interface_names) {
 				std::cerr << "    " << interface_name << std::endl;
 			}
 			std::cerr << std::endl;
@@ -425,16 +426,18 @@ namespace mini_saftlib {
 		size_t client_count;
 		get_received().get(client_count);
 		for (unsigned i = 0; i < client_count; ++i) {
-			int client_fd;
-			get_received().get(client_fd);
-			std::vector<SignalFD> signal_fds;
-			get_received().get(signal_fds);
-			std::cerr << "client " << client_fd << " with signal_fds: ";
-			for (auto &signal_fd: signal_fds) {
+			result.client_infos.push_back(SaftbusInfo::ClientInfo());
+			auto &client_info = result.client_infos.back();
+			get_received().get(client_info.process_id);
+			get_received().get(client_info.client_fd);
+			get_received().get(client_info.signal_fds);
+			std::cerr << "client " << client_info.client_fd << "(pid=" << client_info.process_id << ") with signal_fds: ";
+			for (auto &signal_fd: client_info.signal_fds) {
 				std::cerr << signal_fd.fd << "/" << signal_fd.use_count << " " ;
 			}
 			std::cerr << std::endl;
 		}
 		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
+		return result;
 	}
 }

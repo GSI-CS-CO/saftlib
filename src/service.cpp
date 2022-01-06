@@ -197,6 +197,7 @@ namespace mini_saftlib {
 					auto client_info = d->container->d->connection->get_client_info();
 					send.put(client_info.size());
 					for (auto &client: client_info) {
+						send.put(client.process_id);
 						send.put(client.client_fd);
 						send.put(client.signal_fds);
 					}

@@ -10,6 +10,8 @@
 #include <mutex>
 #include <algorithm>
 
+#include <unistd.h>
+
 namespace mini_saftlib {
 
 	class ClientConnection {
@@ -62,6 +64,26 @@ namespace mini_saftlib {
 		std::mutex&              get_client_socket();
 	};
 
+	struct SaftbusInfo {
+		struct ObjectInfo {
+			unsigned object_id;
+			std::string object_path;
+			std::vector<std::string> interface_names;
+			std::map<int, int> signal_fds_use_count;
+			int owner;
+		};
+		std::vector<ObjectInfo> object_infos;
+		struct ClientInfo {
+			pid_t process_id;
+			int client_fd;
+			struct SignalFD{
+				int fd;
+				int use_count;
+			};
+			std::vector<SignalFD> signal_fds;
+		};
+		std::vector<ClientInfo> client_infos;
+	};
 	class ContainerService_Proxy : public Proxy {
 	public:
 		ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group);
@@ -69,7 +91,7 @@ namespace mini_saftlib {
 		bool signal_dispatch(int interface, Deserializer &signal_content);
 		bool load_plugin(const std::string &so_filename, const std::string &object_path);
 		void quit();
-		void print_status();
+		SaftbusInfo get_status();
 	};
 
 }
