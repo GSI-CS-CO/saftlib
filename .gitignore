@@ -3,8 +3,8 @@ src/*.lo
 src/.*
 m4/*.m4
 .libs/
-mini-saftclient
-mini-saftd
+saftbus-ctl
+saftbusd
 missing
 Makefile
 Makefile.in
@@ -20,6 +20,6 @@ configure
 configure~
 depcomp
 install-sh
-libmini-saftlib.la
+libsaftbus.la
 libtool
 ltmain.sh

@@ -1,20 +1,15 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SIGC_CFLAGS) -I $(top_srcdir)/src #-I $(top_srcdir)/timingreceiver
+AM_CPPFLAGS = -Wall -g  $(SIGC_CFLAGS) -I $(top_srcdir)/src 
 
-lib_LTLIBRARIES = \
-	libmini-saftlib.la            
-# 	\
-# 	libtimingreceiver_service.la  \
-# 	libtimingreceiver_proxy.la    
-
+lib_LTLIBRARIES = libsaftbus.la            
 # libmini_saftlib_la_LDFLAGS = -version-info 0:0:0 
 
-mini_saftlib_includedir    = $(includedir)/mini-saftlib
-libmini_saftlib_la_SOURCES = \
+saftbus_includedir    = $(includedir)/saftbus
+libsaftbus_la_SOURCES = \
 	src/saftbus.cpp   \
 	src/client.cpp    
-mini_saftlib_include_HEADERS = \
+saftbus_include_HEADERS = \
 	src/make_unique.hpp \
 	src/loop.hpp        \
 	src/saftbus.hpp     \
@@ -23,30 +18,18 @@ mini_saftlib_include_HEADERS = \
 	src/plugins.hpp     \
 	src/server.hpp    
 
-# libtimingreceiver_service_la_CPPADD  = $(EB_CFLAGS)
-# libtimingreceiver_service_la_LIBADD  = $(EB_LIBS)
-# libtimingreceiver_service_la_SOURCES = \
-# 	timingreceiver/timingreceiver_service.cpp 
+bin_PROGRAMS = saftbusd      \
+               saftbus-ctl
 
-# libtimingreceiver_proxy_la_LIBADD  = libmini-saftlib.la
-# libtimingreceiver_proxy_la_SOURCES = \
-# 	timingreceiver/timingreceiver_proxy.cpp 
-# timingreceiver_proxy_includedir = $(includedir)/mini-saftlib
-# timingreceiver_proxy_include_HEADERS = \
-# 	timingreceiver/timingreceiver_proxy.hpp 
-
-bin_PROGRAMS = mini-saftd      \
-               mini-saftclient 
-
-mini_saftd_LDFLAGS = -Wl,--export-dynamic # -Wl,--whole-archive,libmini-saftlib.la,--no-whole-archive        
-mini_saftd_LDADD   = $(SIGC_LIBS) libmini-saftlib.la -lltdl
-mini_saftd_SOURCES = \
+saftbusd_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la -lltdl
+saftbusd_SOURCES = \
 	src/loop.cpp       \
-	src/mini-saftd.cpp \
+	src/saftbusd.cpp \
 	src/service.cpp    \
 	src/plugins.cpp    \
 	src/server.cpp        
 
-mini_saftclient_LDADD   = $(SIGC_LIBS) libmini-saftlib.la #libtimingreceiver_proxy.la 
-mini_saftclient_SOURCES = src/mini-saftclient.cpp
+saftbus_ctl_LDADD   = $(SIGC_LIBS) libsaftbus.la 
+saftbus_ctl_SOURCES = src/saftbus-ctl.cpp
 
