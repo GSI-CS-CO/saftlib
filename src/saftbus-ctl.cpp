@@ -57,7 +57,18 @@ int main(int argc, char **argv)
 
 	// std::cerr << "argc = " << argc << std::endl;
 	if (argc > 1) {
-		core_service_proxy->quit();
+		for (int i = 1; i < argc; ++i) {
+			std::string argvi(argv[i]);
+			if (argvi == "-q") {
+				core_service_proxy->quit();
+			} else if (argvi == "-l") {
+				if ((i+=2) < argc) {
+					core_service_proxy->load_plugin(argv[i-1], argv[i]);
+				} else {
+					throw std::runtime_error("expect so-filename and object-path after -l");
+				}
+			}
+		}
 	} else {
 		// mini_saftlib::Loop::get_default().run();
 		for (int i=0; i<5; ++i) {

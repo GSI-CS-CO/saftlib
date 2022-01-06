@@ -67,6 +67,7 @@ namespace mini_saftlib {
 		ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group);
 		static std::shared_ptr<ContainerService_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
 		bool signal_dispatch(int interface, Deserializer &signal_content);
+		bool load_plugin(const std::string &so_filename, const std::string &object_path);
 		void quit();
 	};
 

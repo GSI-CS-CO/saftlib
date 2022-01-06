@@ -62,7 +62,7 @@ bool fd_callback(int fd, int condition) {
 
 int main() {
 
-	mini_saftlib::LibraryLoader timingreciever_plugin("/home/michael/local/lib/libtiming-receiver.la");
+//	mini_saftlib::LibraryLoader timingreciever_plugin("/home/michael/local/lib/libtiming-receiver.la");
 
 
 	// two lines just to play around ... has nothing to do with the saftd functionality.
@@ -72,7 +72,7 @@ int main() {
 	// create a mini-saftlib-server and let it run
 	mini_saftlib::ServerConnection server_connection;
 
-	server_connection.get_service_container().create_object("/de/gsi/saftlib/tr0", std::move(timingreciever_plugin.create_service()));
+//	server_connection.get_service_container().create_object("/de/gsi/saftlib/tr0", std::move(timingreciever_plugin.create_service()));
 	mini_saftlib::Loop::get_default().run();
 
 	return 0;

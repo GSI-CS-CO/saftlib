@@ -307,22 +307,9 @@ namespace mini_saftlib {
 		d->send.put(d->signal_group_id);
 		{
 			std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
-			int send_result    = get_connection().send(d->send);
-			if (send_result <= 0) {
-				return; // if we cannot communicate with server, there is no point doing anything more
-			}
-			int receive_result = get_connection().receive(d->received);
-			if (receive_result <= 0) {
-				return; // if we cannot communicate with server, there is no point doing anything more
-			}
+			get_connection().send(d->send);
 		}
-		bool result;
-		std::cerr << "waiting for response from de-register" << std::endl;
-		d->received.get(result);
-		assert(result); // de-registration should always succeed
-		// de-register from signal_group
 		d->signal_group->unregister_proxy(this);
-		std::cerr << "Proxy de-registration successful" << std::endl;
 	}
 
 
@@ -357,7 +344,7 @@ namespace mini_saftlib {
 
 	std::shared_ptr<ContainerService_Proxy> ContainerService_Proxy::create(SignalGroup &signal_group)
 	{
-		return std::make_shared<ContainerService_Proxy>("/de/gsi/saftlib", signal_group);
+		return std::make_shared<ContainerService_Proxy>("/saftbus", signal_group);
 	}
 	bool ContainerService_Proxy::signal_dispatch(int interface, Deserializer &signal_content)
 	{
@@ -375,5 +362,21 @@ namespace mini_saftlib {
 		get_send().put(function_no  = 2); 
 		std::lock_guard<std::mutex> lock(get_client_socket());
 		get_connection().send(get_send());
+	}
+
+	bool ContainerService_Proxy::load_plugin(const std::string &so_filename, const std::string &object_path) 
+	{
+		get_send().put(get_saftlib_object_id());
+		unsigned interface_no, function_no;
+		get_send().put(interface_no = 0);
+		get_send().put(function_no  = 3);
+		get_send().put(so_filename); 
+		get_send().put(object_path);
+		std::lock_guard<std::mutex> lock(get_client_socket());
+		get_connection().send(get_send());
+		get_connection().receive(get_received());
+		bool result;
+		get_received().get(result);
+		return result;
 	}
 }

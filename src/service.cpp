@@ -1,5 +1,7 @@
 #include "service.hpp"
+
 #include "make_unique.hpp"
+#include "plugins.hpp"
 #include "loop.hpp"
 
 #include <string>
@@ -39,13 +41,15 @@ namespace mini_saftlib {
 	{
 		std::cerr << "Service::Impl::remove_signal_fd " << fd << std::endl;
 		auto found_use_count = signal_fds_use_count.find(fd);
-		assert(found_use_count != signal_fds_use_count.end());
-		signal_fds_use_count.erase(fd);
+		if (found_use_count != signal_fds_use_count.end()) {
+			signal_fds_use_count.erase(fd);
+		}
+		std::cerr << " number of signal fds: " << signal_fds_use_count.size() << std::endl;
 	}
 
 	void Service::emit(Serializer &send)
 	{
-		std::cerr << "emitting signal" << std::endl;
+		std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
 		for (auto &fd_use_count: d->signal_fds_use_count) {
 			int fd = fd_use_count.first;
 			std::cerr << "   to " << fd << std::endl;
@@ -63,6 +67,7 @@ namespace mini_saftlib {
 		ServiceContainer *container;
 		Serializer serialized_signal;
 		static std::vector<std::string> gen_interface_names();
+		std::map<std::string, std::unique_ptr<LibraryLoader> > plugins;
 	};
 
 
@@ -128,18 +133,38 @@ namespace mini_saftlib {
 					received.get(received_client_fd);
 					received.get(received_signal_group_fd);
 					d->container->unregister_proxy(saftlib_object_id, received_client_fd, received_signal_group_fd);
-					bool result = true;
-					send.put(result);
 				}
 				break;
-				case 2: // quit
+				case 2: // void quit()
 					Loop::get_default().quit_in(std::chrono::milliseconds(100));
 					std::cerr << "saftd will quit in 100 ms" << std::endl;
 				break;
-				case 3: {// greet
-					std::string name;
-					received.get(name);
-					std::cerr << "hello " << name << " from ContainerService" << std::endl;
+				case 3: {// bool load_plugin(const std::string &so_filename)
+					std::string lib_name;
+					std::string object_path;
+					received.get(lib_name);
+					received.get(object_path);
+					std::cerr << "loading " << lib_name << std::endl;
+					bool plugin_available = false;
+					auto plugin = d->plugins.find(lib_name);
+					if (plugin != d->plugins.end()) {
+						std::cerr << "plugin found" << std::endl;
+						plugin_available = true;
+					} else {
+						auto insertion_result = d->plugins.insert(std::make_pair(lib_name, std::move(std2::make_unique<LibraryLoader>(lib_name))));
+						if (insertion_result.second) {
+							std::cerr << "plugin inserted" << std::endl;
+							plugin = insertion_result.first;
+							plugin_available = true;
+						} else {
+							std::cerr << "plugin insertion failed" << std::endl;
+						}
+					}
+					if (plugin_available) {
+						unsigned object_id = d->container->create_object(object_path, std::move(plugin->second->create_service()));
+						std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
+					}
+					send.put(plugin_available);
 				}
 				break;
 				default:
@@ -162,7 +187,6 @@ namespace mini_saftlib {
 		struct Object {
 			std::unique_ptr<Service> service;
 			std::string object_path;
-			// std::set<int> client_fds;
 		};
 
 		std::map<unsigned, std::unique_ptr<Object> > objects;
@@ -184,7 +208,7 @@ namespace mini_saftlib {
 		d->connection = connection;
 		// create a Service that allows access to ServiceContainer functionality
 		auto container_service = std2::make_unique<ContainerService>(this);
-		unsigned object_id = create_object("/de/gsi/saftlib", std::move(container_service));
+		unsigned object_id = create_object("/saftbus", std::move(container_service));
 		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
 	}
 
@@ -192,6 +216,11 @@ namespace mini_saftlib {
 
 	unsigned ServiceContainer::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
+		if (d->object_path_lookup_table.find(object_path) != d->object_path_lookup_table.end()) {
+			// we have already registered an object under this object path
+			std::cerr << "object path " << object_path << " already in use by object_id " << d->object_path_lookup_table[object_path] << ". cannot register another object under the same path" << std::endl;
+			return 0;
+		}
 		unsigned saftlib_object_id = d->generate_saftlib_object_id();
 		service->d->object_id = saftlib_object_id;
 		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std2::make_unique<Impl::Object>()));
@@ -250,6 +279,7 @@ namespace mini_saftlib {
 	void ServiceContainer::remove_signal_fd(int fd)
 	{
 		for(auto &object: d->objects) {
+			std::cerr << "remove_signal_fd(" << fd << ") for object " << object.second->object_path << std::endl;
 			object.second->service->d->remove_signal_fd(fd);
 		}
 	}
