@@ -17,6 +17,7 @@ namespace mini_saftlib {
 		int          owner;
 		std::map<int, int> signal_fds_use_count;
 		std::vector<std::string> interface_names;
+		std::string object_path;
 		unsigned object_id;
 		void remove_signal_fd(int fd);
 	};
@@ -184,12 +185,12 @@ namespace mini_saftlib {
 		unsigned generate_saftlib_object_id();
 		ServerConnection *connection;
 
-		struct Object {
-			std::unique_ptr<Service> service;
-			std::string object_path;
-		};
+		// struct Object {
+		// 	std::unique_ptr<Service> service;
+		// 	std::string object_path;
+		// };
 
-		std::map<unsigned, std::unique_ptr<Object> > objects;
+		std::map<unsigned, std::unique_ptr<Service> > objects;
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
 	};
 	// generate a unique object_id != 0
@@ -223,14 +224,11 @@ namespace mini_saftlib {
 		}
 		unsigned saftlib_object_id = d->generate_saftlib_object_id();
 		service->d->object_id = saftlib_object_id;
-		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std2::make_unique<Impl::Object>()));
-		// insertion_result is a pair, where the 'first' member is an iterator to the inserted element,
-		// and the 'second' member is a bool that is true if the insertion took place and false if the insertion failed.
+		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std::move(service)));
 		auto  insertion_took_place  = insertion_result.second;
 		auto &inserted_object       = insertion_result.first->second; 
 		if (insertion_took_place) {
-			inserted_object->service     = std::move(service);
-			inserted_object->object_path = object_path;
+			inserted_object->d->object_path = object_path; // set the object_path of the Service object
 			d->object_path_lookup_table[object_path] = saftlib_object_id;
 			std::cerr << "inserted object under object_path " << object_path << " with object_id " << saftlib_object_id << std::endl;
 			return saftlib_object_id;
@@ -245,9 +243,9 @@ namespace mini_saftlib {
 			unsigned saftlib_object_id = find_result->second;
 			auto find_result = d->objects.find(saftlib_object_id);
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
-			auto    &object    = find_result->second;
-			object->service->d->signal_fds_use_count[signal_group_fd]++;
-			std::cerr << "register_proxy for object path " << object_path << " . object use count = " << object->service->d->signal_fds_use_count[signal_group_fd] << std::endl;
+			auto &service    = find_result->second;
+			service->d->signal_fds_use_count[signal_group_fd]++;
+			std::cerr << "register_proxy for object path " << object_path << " . object use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
 			d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 			return saftlib_object_id;
 		}
@@ -257,30 +255,31 @@ namespace mini_saftlib {
 	{
 		auto find_result = d->objects.find(saftlib_object_id);
 		assert(find_result != d->objects.end()); 
-		auto    &object    = find_result->second;
-		object->service->d->signal_fds_use_count[signal_group_fd]--;
+		auto    &service    = find_result->second;
+		service->d->signal_fds_use_count[signal_group_fd]--;
 		d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
-		std::cerr << "unregister_proxy: signal fd " << signal_group_fd << " use count = " << object->service->d->signal_fds_use_count[signal_group_fd] << std::endl;
-		if (object->service->d->signal_fds_use_count[signal_group_fd] == 0) {
-			object->service->d->signal_fds_use_count.erase(signal_group_fd);
+		std::cerr << "unregister_proxy: signal fd " << signal_group_fd << " use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
+		if (service->d->signal_fds_use_count[signal_group_fd] == 0) {
+			service->d->signal_fds_use_count.erase(signal_group_fd);
 		}
 	}
 
 
 	bool ServiceContainer::call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send) {
-		auto result = d->objects.find(saftlib_object_id);
-		if (result == d->objects.end()) {
+		auto find_result = d->objects.find(saftlib_object_id);
+		if (find_result == d->objects.end()) {
 			return false;
 		}
-		result->second->service->call(client_fd, received, send);
+		auto &service = find_result->second;
+		service->call(client_fd, received, send);
 		return true;
 	}
 
 	void ServiceContainer::remove_signal_fd(int fd)
 	{
-		for(auto &object: d->objects) {
-			std::cerr << "remove_signal_fd(" << fd << ") for object " << object.second->object_path << std::endl;
-			object.second->service->d->remove_signal_fd(fd);
+		for(auto &service: d->objects) {
+			std::cerr << "remove_signal_fd(" << fd << ") for object " << service.second->d->object_path << std::endl;
+			service.second->d->remove_signal_fd(fd);
 		}
 	}
 
