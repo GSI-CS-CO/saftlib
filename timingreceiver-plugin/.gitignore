@@ -1,0 +1,9 @@
+.deps/
+libtimingreceiver_proxy.la
+libtimingreceiver_service.la
+m4/*.m4
+src/.deps/
+src/.dirstamp
+src/*.o
+src/*.lo
+timingreceiver-ctl

@@ -1,35 +1,16 @@
 #include "client.hpp"
-// #include "loop.hpp"
 #include "make_unique.hpp"
-// #include "timingreceiver_proxy.hpp"
+#include "timingreceiver_proxy.hpp"
 
 #include <iostream>
 #include <thread>
-
-// bool timeout() {
-// 	static int i = 0;
-// 	std::cerr << "#" << i++ << std::endl;
-// 	// auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-// 	// mini_saftlib::Loop::get_default().quit();
-// 	if (i == 5) {
-// 		mini_saftlib::Loop::get_default().quit();
-// 	}
-// 	return true;
-// }
-
-// bool got_signal(int fd, int condition) {
-// 	std::cerr << "got_signal" << std::endl;
-// 	if (condition & POLLIN) {
-// 		mini_saftlib::SignalGroup::get_global().wait_for_signal(0);
-// 	}
-// 	return true;
-// }
 
 int main(int argc, char **argv)
 {
 	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
 	auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create();
 	auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create();
+	auto timingreceiver_proxy = mini_saftlib::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
 
 	// for(;;) {
 	// 	mini_saftlib::SignalGroup::get_global().wait_for_signal();
@@ -59,8 +40,7 @@ int main(int argc, char **argv)
 	if (argc > 1) {
 		core_service_proxy->quit();
 	} else {
-		// mini_saftlib::Loop::get_default().run();
-		for (int i=0; i<5; ++i) {
+		for (int i = 0; i < 5; ++i ) {
 			mini_saftlib::SignalGroup::get_global().wait_for_signal();
 		}
 	}

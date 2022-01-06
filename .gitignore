@@ -23,8 +23,3 @@ install-sh
 libmini-saftlib.la
 libtool
 ltmain.sh
-timingreceiver/.*
-timingreceiver/*.o
-timingreceiver/*.lo
-libtimingreceiver_service.la
-libtimingreceiver_proxy.la
