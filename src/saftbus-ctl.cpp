@@ -61,6 +61,9 @@ int main(int argc, char **argv)
 			std::string argvi(argv[i]);
 			if (argvi == "-q") {
 				core_service_proxy->quit();
+			} if (argvi == "-s") {
+				core_service_proxy->print_status();
+				return 0;
 			} else if (argvi == "-l") {
 				if ((i+=2) < argc) {
 					core_service_proxy->load_plugin(argv[i-1], argv[i]);

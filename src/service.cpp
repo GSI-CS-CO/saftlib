@@ -22,6 +22,22 @@ namespace mini_saftlib {
 		void remove_signal_fd(int fd);
 	};
 
+	struct ServiceContainer::Impl {
+		unsigned generate_saftlib_object_id();
+		ServerConnection *connection;
+
+		std::map<unsigned, std::unique_ptr<Service> > objects;
+		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
+	};
+
+	struct ContainerService::Impl {
+		ServiceContainer *container;
+		Serializer serialized_signal;
+		static std::vector<std::string> gen_interface_names();
+		std::map<std::string, std::unique_ptr<LibraryLoader> > plugins;
+	};
+
+
 	Service::Service(const std::vector<std::string> &interface_names) 
 		: d(std2::make_unique<Impl>())
 	{
@@ -64,12 +80,6 @@ namespace mini_saftlib {
 		return d->object_id;
 	}
 
-	struct ContainerService::Impl {
-		ServiceContainer *container;
-		Serializer serialized_signal;
-		static std::vector<std::string> gen_interface_names();
-		std::map<std::string, std::unique_ptr<LibraryLoader> > plugins;
-	};
 
 
 	std::vector<std::string> ContainerService::Impl::gen_interface_names() {
@@ -104,7 +114,7 @@ namespace mini_saftlib {
 	}
 
 	void ContainerService::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
-		std::cerr << "ContainerService called" << std::endl;
+		std::cerr << "ContainerService called with " << interface_no << " " << function_no << std::endl;
 		if (interface_no == 0) {
 			switch(function_no) {
 				case 0: {// register proxy
@@ -168,6 +178,20 @@ namespace mini_saftlib {
 					send.put(plugin_available);
 				}
 				break;
+				case 4: { // get_status() // report all info about server and services
+					std::cerr << "get_stats() called sending " << d->container->d->object_path_lookup_table.size() << " objects " << std::endl;
+					send.put(d->container->d->objects.size());
+					for (auto &object: d->container->d->objects) {
+						auto &object_id = object.first;
+						auto &service   = object.second;
+						send.put(object_id);
+						send.put(service->d->object_path);
+						send.put(service->d->interface_names);
+						send.put(service->d->signal_fds_use_count);
+						send.put(service->d->owner);
+					}
+				}
+				break;
 				default:
 					assert(false);
 			}
@@ -180,19 +204,6 @@ namespace mini_saftlib {
 
 
 
-
-	struct ServiceContainer::Impl {
-		unsigned generate_saftlib_object_id();
-		ServerConnection *connection;
-
-		// struct Object {
-		// 	std::unique_ptr<Service> service;
-		// 	std::string object_path;
-		// };
-
-		std::map<unsigned, std::unique_ptr<Service> > objects;
-		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
-	};
 	// generate a unique object_id != 0
 	unsigned ServiceContainer::Impl::generate_saftlib_object_id() {
 		static unsigned saftlib_object_id_generator = 1;

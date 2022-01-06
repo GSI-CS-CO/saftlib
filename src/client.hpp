@@ -69,6 +69,7 @@ namespace mini_saftlib {
 		bool signal_dispatch(int interface, Deserializer &signal_content);
 		bool load_plugin(const std::string &so_filename, const std::string &object_path);
 		void quit();
+		void print_status();
 	};
 
 }

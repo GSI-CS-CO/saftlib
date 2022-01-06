@@ -13,6 +13,7 @@ namespace mini_saftlib {
 	class Service {
 		struct Impl; std::unique_ptr<Impl> d;
 		friend class ServiceContainer;
+		friend class ContainerService;
 	public:
 		Service(const std::vector<std::string> &interface_names);
 		void call(int client_fd, Deserializer &received, Serializer &send);
@@ -28,6 +29,7 @@ namespace mini_saftlib {
 	// Container of all Services provided by mini-saftlib.
 	class ServiceContainer {
 		struct Impl; std::unique_ptr<Impl> d;
+		friend class ContainerService;
 	public:
 		ServiceContainer(ServerConnection *connection);
 		~ServiceContainer();

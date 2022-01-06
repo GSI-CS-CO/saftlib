@@ -163,10 +163,6 @@ namespace mini_saftlib {
 			if (fdresult <= 0) {
 				std::cerr << "SignalGroup::register_proxy cannot send file descriptor to server" << std::endl;
 			}
-			bool result = d->received.read_from(d->pfd.fd);
-			if (!result) {
-				std::cerr << "SignalGroup::register_proxy failed to read signal id from server" << std::endl;
-			}
 		} 
 		d->proxies.push_back(proxy);
 		return 0;
@@ -200,7 +196,7 @@ namespace mini_saftlib {
 	{
 		int result;
 		{
-			std::lock_guard<std::mutex> lock1(d->m1);
+			// std::lock_guard<std::mutex> lock1(d->m1);
 			std::cerr << "SignalGroup poll call" << std::endl;
 			if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
 				if (d->pfd.revents & POLLIN) {
@@ -230,7 +226,7 @@ namespace mini_saftlib {
 			}
 		}
 		{
-			std::lock_guard<std::mutex> lock2(d->m2);
+			// std::lock_guard<std::mutex> lock2(d->m2);
 		}
 		return result;
 	}
@@ -249,8 +245,8 @@ namespace mini_saftlib {
 		: d(std2::make_unique<Impl>()) 
 	{
 		d->signal_group = &signal_group;
-		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
-		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
+		// std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
+		// std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
 		// the Proxy constructor calls the server for 
 		// with object_id = 1 (the CoreService)
 		unsigned container_service_object_id = 1;
@@ -291,8 +287,8 @@ namespace mini_saftlib {
 	}
 	Proxy::~Proxy()
 	{
-		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
-		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
+		// std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
+		// std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
 		std::cerr << "destroy Proxy" << std::endl;
 		// de-register from server
 		// client connection is shared among threads
@@ -360,8 +356,10 @@ namespace mini_saftlib {
 		unsigned interface_no, function_no;
 		get_send().put(interface_no = 0);
 		get_send().put(function_no  = 2); 
-		std::lock_guard<std::mutex> lock(get_client_socket());
-		get_connection().send(get_send());
+		{
+			std::lock_guard<std::mutex> lock(get_client_socket());
+			get_connection().send(get_send());
+		}
 	}
 
 	bool ContainerService_Proxy::load_plugin(const std::string &so_filename, const std::string &object_path) 
@@ -372,11 +370,52 @@ namespace mini_saftlib {
 		get_send().put(function_no  = 3);
 		get_send().put(so_filename); 
 		get_send().put(object_path);
-		std::lock_guard<std::mutex> lock(get_client_socket());
-		get_connection().send(get_send());
-		get_connection().receive(get_received());
+		{
+			std::lock_guard<std::mutex> lock(get_client_socket());
+			get_connection().send(get_send());
+			get_connection().receive(get_received());
+		}
 		bool result;
 		get_received().get(result);
 		return result;
+	}
+	void ContainerService_Proxy::print_status()
+	{
+		get_send().put(get_saftlib_object_id());
+		unsigned interface_no, function_no;
+		get_send().put(interface_no = 0);
+		get_send().put(function_no  = 4);
+		{
+			std::lock_guard<std::mutex> lock(get_client_socket());
+			get_connection().send(get_send());
+			get_connection().receive(get_received());
+		}
+		size_t object_count;
+		get_received().get(object_count);
+		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
+		for (unsigned i = 0; i < object_count; ++i) {
+			unsigned object_id;
+			std::string object_path;
+			std::vector<std::string> interface_names;
+			std::map<int, int> signal_fds_use_count;
+			int owner;
+
+			get_received().get(object_id);
+			get_received().get(object_path);
+			get_received().get(interface_names);
+			get_received().get(signal_fds_use_count);
+			get_received().get(owner);
+
+			std::cerr << object_path << "=>" << object_id << " owner:" << owner << " signal_fds: ";
+			for (auto &signal_fd_use_count: signal_fds_use_count) {
+				std::cerr << signal_fd_use_count.first << "/" << signal_fd_use_count.second << " ";
+			}
+			std::cerr << std::endl;
+			for (auto &interface_name: interface_names) {
+				std::cerr << "    " << interface_name << std::endl;
+			}
+			std::cerr << std::endl;
+		}
+		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
 	}
 }
