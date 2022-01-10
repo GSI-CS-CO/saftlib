@@ -305,6 +305,12 @@ namespace mini_saftlib {
 		}
 	}
 
+	void ServiceContainer::clear() {
+		d->objects.clear();
+		d->object_path_lookup_table.clear();
+	}
+
+
 
 
 }

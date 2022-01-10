@@ -93,6 +93,10 @@ namespace mini_saftlib {
 		bool handle_client_request(int fd, int condition);
 	};
 
+	void ServerConnection::clear() {
+		d->container_of_services.clear();
+	}
+
 	std::vector<ServerConnection::ClientInfo> ServerConnection::get_client_info() {
 		std::vector<ClientInfo> result;
 		for (auto &client: d->clients) {

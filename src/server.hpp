@@ -22,6 +22,8 @@ namespace mini_saftlib {
 		void register_signal_id_for_client(int client_id, int signal_id);
 		void unregister_signal_id_for_client(int client_id, int signal_id);
 
+		void clear();
+
 		struct ClientInfo {
 			pid_t process_id;
 			int client_fd;

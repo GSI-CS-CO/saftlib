@@ -5,6 +5,8 @@
 #include <make_unique.hpp>
 #include <saftbus.hpp>
 
+#define ETHERBONE_THROWS 1
+#undef EB_USE_MALLOC
 #include <etherbone.h>
 
 #include <memory>
@@ -12,15 +14,23 @@
 
 namespace timingreceiver {
 
-	class Timingreceiver_Serivce : public mini_saftlib::Service 
+	class Device;
+	class MSI_Source;
+	class EB_Source;
+	class Timingreceiver_Service : public mini_saftlib::Service 
 	{
 	public:
-		Timingreceiver_Serivce();
+		Timingreceiver_Service();
+		~Timingreceiver_Service();
 		static std::vector<std::string> gen_interface_names();
 		void call(unsigned interface_no, unsigned function_no, int client_fd, mini_saftlib::Deserializer &received, mini_saftlib::Serializer &send);
 
 	    etherbone::Socket socket;
+	    std::unique_ptr<Device> device;
 
+	    MSI_Source *msi_source;
+	    EB_Source  *eb_source;
+	    eb_socket_t eb_socket;
 	};
 
 }

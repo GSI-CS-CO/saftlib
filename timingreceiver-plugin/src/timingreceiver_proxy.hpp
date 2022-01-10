@@ -3,6 +3,8 @@
 
 #include "client.hpp"
 
+#include <etherbone.h>
+
 namespace mini_saftlib {
 
 	class TimingReceiver_Proxy : public Proxy {
@@ -11,7 +13,8 @@ namespace mini_saftlib {
 		static std::shared_ptr<TimingReceiver_Proxy> create(const std::string &object_path, SignalGroup &signal_group = SignalGroup::get_global());
 		bool signal_dispatch(int interface, Deserializer &signal_content);
 
-		
+		eb_data_t eb_read(eb_address_t adr);
+
 	};
 
 }

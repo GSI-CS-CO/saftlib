@@ -35,6 +35,7 @@ namespace mini_saftlib {
 		bool quit_in(std::chrono::milliseconds wait_ms);
 		bool connect(std::unique_ptr<Source> source);
 		void remove(Source *s);
+		void clear();
 		static Loop &get_default();
 	};
 

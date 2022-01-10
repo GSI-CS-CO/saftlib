@@ -75,5 +75,9 @@ int main() {
 //	server_connection.get_service_container().create_object("/de/gsi/saftlib/tr0", std::move(timingreciever_plugin.create_service()));
 	mini_saftlib::Loop::get_default().run();
 
+	// destroy resources before the plugins get unloaded and the destructors arent available anymore
+	mini_saftlib::Loop::get_default().clear();
+	server_connection.clear();
+
 	return 0;
 }

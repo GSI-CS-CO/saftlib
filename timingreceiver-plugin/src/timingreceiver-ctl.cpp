@@ -7,9 +7,9 @@
 
 int main(int argc, char **argv)
 {
-	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-	auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create();
-	auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create();
+	// auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
+	// auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create();
+	// auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create();
 	auto timingreceiver_proxy = mini_saftlib::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
 
 	// for(;;) {
@@ -37,13 +37,14 @@ int main(int argc, char **argv)
 	// std::cin >> ch; 
 
 	// std::cerr << "argc = " << argc << std::endl;
-	if (argc > 1) {
-		core_service_proxy->quit();
-	} else {
-		for (int i = 0; i < 5; ++i ) {
-			mini_saftlib::SignalGroup::get_global().wait_for_signal();
-		}
-	}
+	// if (argc > 1) {
+	// 	core_service_proxy->quit();
+	// } else {
+		std::cerr << std::hex << std::setw(8) << std::setfill('0') << timingreceiver_proxy->eb_read(0x20140000) << std::endl;
+		// for (int i = 0; i < 5; ++i ) {
+		// 	mini_saftlib::SignalGroup::get_global().wait_for_signal();
+		// }
+	// }
 
 
 	return 0;

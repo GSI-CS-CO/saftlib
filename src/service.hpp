@@ -44,6 +44,8 @@ namespace mini_saftlib {
 		// return false if the saftlib_object_id is unknown
 		bool call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send);
 		void remove_signal_fd(int fd);
+
+		void clear();
 	};
 
 	// A Service to access the Container of Services

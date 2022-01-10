@@ -28,9 +28,9 @@
 int main(int argc, char **argv)
 {
 	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-	auto sg2 = mini_saftlib::SignalGroup();
-	auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create(sg2);
-	auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create(sg2);
+	// auto sg2 = mini_saftlib::SignalGroup();
+	// auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create(sg2);
+	// auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create(sg2);
 
 
 	// for(;;) {
@@ -62,7 +62,9 @@ int main(int argc, char **argv)
 		for (int i = 1; i < argc; ++i) {
 			std::string argvi(argv[i]);
 			if (argvi == "-q") {
+				std::cerr << "call proxy->quit()" << std::endl;
 				core_service_proxy->quit();
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			} if (argvi == "-s") {
 				mini_saftlib::SaftbusInfo saftbus_info = core_service_proxy->get_status();
 				return 0;

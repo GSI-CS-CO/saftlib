@@ -59,6 +59,7 @@ namespace mini_saftlib {
 		int running_depth; 
 	};
 
+
 	Loop::Loop() 
 		: d(std2::make_unique<Impl>())
 	{
@@ -147,7 +148,9 @@ namespace mini_saftlib {
 		// and only if this is not a nested iteration
 		//////////////////
 		if (d->running_depth == 1) {
+			std::cerr << "cleaning up sources" << std::endl;
 			for (auto removed_source: d->removed_sources) {
+				std::cerr << "cleaning a source sources" << std::endl;
 				d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
 					          d->sources.end());			
 			}
@@ -178,6 +181,10 @@ namespace mini_saftlib {
 			)
 		);
 		return false;
+	}
+
+	void Loop::clear() {
+		d->sources.clear();
 	}
 
 	bool Loop::connect(std::unique_ptr<Source> source) {
