@@ -5,6 +5,8 @@
 #include <make_unique.hpp>
 #include <saftbus.hpp>
 
+#include <etherbone.h>
+
 #include <memory>
 
 
@@ -16,6 +18,9 @@ namespace timingreceiver {
 		Timingreceiver_Serivce();
 		static std::vector<std::string> gen_interface_names();
 		void call(unsigned interface_no, unsigned function_no, int client_fd, mini_saftlib::Deserializer &received, mini_saftlib::Serializer &send);
+
+	    etherbone::Socket socket;
+
 	};
 
 }

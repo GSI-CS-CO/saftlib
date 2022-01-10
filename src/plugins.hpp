@@ -2,6 +2,7 @@
 #define MINI_SAFTLIB_PLUGINS_
 
 #include "service.hpp"
+#include "loop.hpp"
 
 #include <string>
 #include <memory>

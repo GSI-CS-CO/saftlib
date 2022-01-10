@@ -28,8 +28,10 @@
 int main(int argc, char **argv)
 {
 	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-	auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create();
-	auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create();
+	auto sg2 = mini_saftlib::SignalGroup();
+	auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create(sg2);
+	auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create(sg2);
+
 
 	// for(;;) {
 	// 	mini_saftlib::SignalGroup::get_global().wait_for_signal();

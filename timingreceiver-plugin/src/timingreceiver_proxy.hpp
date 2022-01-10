@@ -10,6 +10,8 @@ namespace mini_saftlib {
 		TimingReceiver_Proxy(const std::string &object_path, SignalGroup &signal_group);
 		static std::shared_ptr<TimingReceiver_Proxy> create(const std::string &object_path, SignalGroup &signal_group = SignalGroup::get_global());
 		bool signal_dispatch(int interface, Deserializer &signal_content);
+
+		
 	};
 
 }

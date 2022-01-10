@@ -9,14 +9,14 @@ lib_LTLIBRARIES = \
 libtimingreceiver_service_la_CPPADD  = $(EB_CFLAGS)
 libtimingreceiver_service_la_LIBADD  = $(EB_LIBS)
 libtimingreceiver_service_la_SOURCES = \
-	src/timingreceiver_service.cpp 
+	src/timingreceiver_service.cpp     
 
 libtimingreceiver_proxy_la_LIBADD  = -L/home/michael/local/lib -lsaftbus
 libtimingreceiver_proxy_la_SOURCES = \
-	src/timingreceiver_proxy.cpp 
+	src/timingreceiver_proxy.cpp     
 timingreceiver_proxy_includedir = $(includedir)/saftbus
 timingreceiver_proxy_include_HEADERS = \
-	src/timingreceiver_proxy.hpp 
+	src/timingreceiver_proxy.hpp       
 
 bin_PROGRAMS = timingreceiver-ctl
 timingreceiver_ctl_LDADD  = $(SIGC_LIBS) -L/home/michael/local/lib -lsaftbus libtimingreceiver_proxy.la
