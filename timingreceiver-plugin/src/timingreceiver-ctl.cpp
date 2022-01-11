@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 	// auto core_service_proxy = saftbus::ContainerService_Proxy::create();
 	// auto core_service_proxy2 = saftbus::ContainerService_Proxy::create();
 	// auto core_service_proxy3 = saftbus::ContainerService_Proxy::create();
-	auto timingreceiver_proxy = saftbus::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
+	auto saftd_proxy = saftlib::SAFTd_Proxy::create("/de/gsi/saftlib");
 
 	// for(;;) {
 	// 	saftbus::SignalGroup::get_global().wait_for_signal();
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 	// if (argc > 1) {
 	// 	core_service_proxy->quit();
 	// } else {
-		std::cerr << std::hex << std::setw(8) << std::setfill('0') << timingreceiver_proxy->eb_read(0x20140000) << std::endl;
+		std::cerr << std::hex << std::setw(8) << std::setfill('0') << saftd_proxy->eb_read(0x20140000) << std::endl;
 		// for (int i = 0; i < 5; ++i ) {
 		// 	saftbus::SignalGroup::get_global().wait_for_signal();
 		// }

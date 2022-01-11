@@ -5,13 +5,13 @@
 
 #include <etherbone.h>
 
-namespace saftbus {
+namespace saftlib {
 
-	class TimingReceiver_Proxy : public Proxy {
+	class SAFTd_Proxy : public saftbus::Proxy {
 	public:
-		TimingReceiver_Proxy(const std::string &object_path, SignalGroup &signal_group);
-		static std::shared_ptr<TimingReceiver_Proxy> create(const std::string &object_path, SignalGroup &signal_group = SignalGroup::get_global());
-		bool signal_dispatch(int interface, Deserializer &signal_content);
+		SAFTd_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group);
+		static std::shared_ptr<SAFTd_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global());
+		bool signal_dispatch(int interface, saftbus::Deserializer &signal_content);
 
 		eb_data_t eb_read(eb_address_t adr);
 

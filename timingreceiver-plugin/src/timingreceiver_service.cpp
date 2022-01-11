@@ -8,7 +8,7 @@
 #include <queue>
 #include <cstring>
 
-namespace timingreceiver 
+namespace saftlib 
 {
 
 	class EB_Source : public saftbus::Source
@@ -459,7 +459,7 @@ namespace timingreceiver
 	// 	return true;
 	// }
 
-	Timingreceiver_Service::Timingreceiver_Service()
+	SAFTd_Service::SAFTd_Service()
 		: saftbus::Service(gen_interface_names())
 	{
 		// std::cerr << "connect timeout source" << std::endl;
@@ -471,13 +471,13 @@ namespace timingreceiver
 		// 	)
 		// );
 
-		std::cerr << "Timingreceiver_Service constructor socket.open()" << std::endl;
+		std::cerr << "SAFTd_Service constructor socket.open()" << std::endl;
 		socket.open();
-		std::cerr << "Timingreceiver_Service constructor attach eb_source" << std::endl;
+		std::cerr << "SAFTd_Service constructor attach eb_source" << std::endl;
 		auto eb_source_unique = std2::make_unique<EB_Source>(socket);
 		eb_source = eb_source_unique.get();
 		saftbus::Loop::get_default().connect(std::move(eb_source_unique));
-		std::cerr << "Timingreceiver_Service constructor Device::hook_it_all" << std::endl;
+		std::cerr << "SAFTd_Service constructor Device::hook_it_all" << std::endl;
 		Device::hook_it_all(socket);
 		auto msi_source_unique = std2::make_unique<MSI_Source>();
 		msi_source = msi_source_unique.get();
@@ -501,33 +501,33 @@ namespace timingreceiver
 		auto MSI_MAILBOX_PRODUCT = 0xfab0bdd8;
 		std::vector<etherbone::sdb_msi_device> mailbox_msi;
 		device->sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mailbox_msi);
-		auto irq_adr = device->request_irq(mailbox_msi[0], sigc::mem_fun(this, &Timingreceiver_Service::msi_handler));
+		auto irq_adr = device->request_irq(mailbox_msi[0], sigc::mem_fun(this, &SAFTd_Service::msi_handler));
 		std::cerr << "irq adr = " << std::hex << irq_adr << std::dec << std::endl;
 
-		std::cerr << "Timingreceiver_Service constructor done" << std::endl;
+		std::cerr << "SAFTd_Service constructor done" << std::endl;
 	}
-	void Timingreceiver_Service::msi_handler(eb_data_t msi)
+	void SAFTd_Service::msi_handler(eb_data_t msi)
 	{
 		std::cerr << "msi_handler " << msi << std::endl;
 	}
 
-	Timingreceiver_Service::~Timingreceiver_Service() {
-		std::cerr << "Timingreceiver_Service destructor" << std::endl;
+	SAFTd_Service::~SAFTd_Service() {
+		std::cerr << "SAFTd_Service destructor" << std::endl;
 		saftbus::Loop::get_default().remove(msi_source);
 		device->close();
 		saftbus::Loop::get_default().remove(eb_source);
 		socket.close();
-		std::cerr << "Timingreceiver_Service destructor done" << std::endl;
+		std::cerr << "SAFTd_Service destructor done" << std::endl;
 	}
 
-	std::vector<std::string> Timingreceiver_Service::gen_interface_names()
+	std::vector<std::string> SAFTd_Service::gen_interface_names()
 	{
 		std::vector<std::string> result;
 		result.push_back("de.gsi.saftlib.TimingReceiver");
 		return result;
 	}
 
-	void Timingreceiver_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send)
+	void SAFTd_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send)
 	{
 		eb_address_t adr;
 		eb_data_t dat;
@@ -559,5 +559,5 @@ namespace timingreceiver
 }
 
 extern "C" std::unique_ptr<saftbus::Service> create_service() {
-	return std2::make_unique<timingreceiver::Timingreceiver_Service>();
+	return std2::make_unique<saftlib::SAFTd_Service>();
 }

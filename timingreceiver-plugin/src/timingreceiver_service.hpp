@@ -11,16 +11,16 @@
 #include <memory>
 
 
-namespace timingreceiver {
+namespace saftlib {
 
 	class Device;
 	class MSI_Source;
 	class EB_Source;
-	class Timingreceiver_Service : public saftbus::Service 
+	class SAFTd_Service : public saftbus::Service 
 	{
 	public:
-		Timingreceiver_Service();
-		~Timingreceiver_Service();
+		SAFTd_Service();
+		~SAFTd_Service();
 		static std::vector<std::string> gen_interface_names();
 		void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);
 
