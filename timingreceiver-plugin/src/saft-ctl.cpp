@@ -1,6 +1,6 @@
 #include "client.hpp"
 #include "make_unique.hpp"
-#include "timingreceiver_proxy.hpp"
+#include "SAFTd_proxy.hpp"
 
 #include <iostream>
 #include <thread>

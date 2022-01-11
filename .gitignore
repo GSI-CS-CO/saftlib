@@ -22,3 +22,4 @@ install-sh
 libsaftbus.la
 libtool
 ltmain.sh
+doc/

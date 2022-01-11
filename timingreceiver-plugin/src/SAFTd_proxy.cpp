@@ -1,4 +1,4 @@
-#include "timingreceiver_proxy.hpp"
+#include "SAFTd_proxy.hpp"
 
 namespace saftlib {
 

@@ -1,5 +1,5 @@
-#ifndef TIMINGRECEIVER_PROXY_HPP_
-#define TIMINGRECEIVER_PROXY_HPP_
+#ifndef SAFTD_PROXY_HPP_
+#define SAFTD_PROXY_HPP_
 
 #include "client.hpp"
 

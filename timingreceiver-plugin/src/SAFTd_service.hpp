@@ -1,5 +1,5 @@
-#ifndef TR_DRIVER_HPP_
-#define TR_DRIVER_HPP_
+#ifndef SAFTD_SERVICE_HPP_
+#define SAFTD_SERVICE_HPP_
 
 #include <service.hpp>
 #include <make_unique.hpp>
