@@ -8,7 +8,6 @@ saftbusd
 missing
 Makefile
 Makefile.in
-README.md
 aclocal.m4
 autom4te.cache/
 compile

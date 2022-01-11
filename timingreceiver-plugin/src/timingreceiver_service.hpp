@@ -6,7 +6,6 @@
 #include <saftbus.hpp>
 
 #define ETHERBONE_THROWS 1
-#undef EB_USE_MALLOC
 #include <etherbone.h>
 
 #include <memory>
