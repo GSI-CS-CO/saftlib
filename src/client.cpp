@@ -214,15 +214,17 @@ namespace saftbus {
 						return -1;
 					} 
 					int saftlib_object_id;
-					int interface;
+					int interface_no;
+					int signal_no;
 					d->received.get(saftlib_object_id);
-					d->received.get(interface);
-					std::cerr << "object_id = " << saftlib_object_id << " inteface = " << interface << " d->proxies.size()=" << d->proxies.size() <<  std::endl;
+					d->received.get(interface_no);
+					d->received.get(signal_no);
+					std::cerr << "object_id = " << saftlib_object_id << " inteface = " << interface_no << "   signal = " << signal_no << " d->proxies.size()=" << d->proxies.size() <<  std::endl;
 					for (auto &proxy: d->proxies) {
 						std::cerr << "proxy object id = " << proxy->d->saftlib_object_id << "  signal_group_id = " << proxy->d->signal_group_id << std::endl;
 						if (proxy->d->saftlib_object_id == saftlib_object_id) {
 							d->received.save();
-							proxy->signal_dispatch(interface, d->received);
+							proxy->signal_dispatch(interface_no, signal_no, d->received);
 							d->received.restore();
 						}
 					}
@@ -349,7 +351,7 @@ namespace saftbus {
 	{
 		return std::make_shared<ContainerService_Proxy>("/saftbus", signal_group);
 	}
-	bool ContainerService_Proxy::signal_dispatch(int interface, Deserializer &signal_content)
+	bool ContainerService_Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content)
 	{
 		int counter;
 		signal_content.get(counter);
@@ -386,6 +388,22 @@ namespace saftbus {
 		get_received().get(result);
 		return result;
 	}
+	bool ContainerService_Proxy::remove_object(const std::string &object_path) 
+	{
+		get_send().put(get_saftlib_object_id());
+		unsigned interface_no, function_no;
+		get_send().put(interface_no = 0);
+		get_send().put(function_no  = 4);
+		get_send().put(object_path); 
+		{
+			std::lock_guard<std::mutex> lock(get_client_socket());
+			get_connection().send(get_send());
+			get_connection().receive(get_received());
+		}
+		bool result;
+		get_received().get(result);
+		return result;
+	}
 
 	SaftbusInfo ContainerService_Proxy::get_status()
 	{
@@ -393,7 +411,7 @@ namespace saftbus {
 		get_send().put(get_saftlib_object_id());
 		unsigned interface_no, function_no;
 		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 4);
+		get_send().put(function_no  = 5);
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());

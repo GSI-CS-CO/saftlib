@@ -74,6 +74,12 @@ int main(int argc, char **argv)
 				} else {
 					throw std::runtime_error("expect so-filename and object-path after -l");
 				}
+			} else if (argvi == "-r") {
+				if ((i+=1) < argc) {
+					core_service_proxy->remove_object(argv[i]);
+				} else {
+					throw std::runtime_error("expect object_path -r");
+				}
 			}
 		}
 	} else {

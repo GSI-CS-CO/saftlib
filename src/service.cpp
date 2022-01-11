@@ -111,6 +111,8 @@ namespace saftbus {
 		d->serialized_signal.put(get_object_id());
 		int interface_no = 0;
 		d->serialized_signal.put(interface_no);
+		int signal_no = 0;
+		d->serialized_signal.put(signal_no);
 		d->serialized_signal.put(++count);
 		std::cerr << "emit signal with counter value " << count << std::endl;
 		emit(d->serialized_signal);
@@ -154,7 +156,7 @@ namespace saftbus {
 					Loop::get_default().quit_in(std::chrono::milliseconds(100));
 					std::cerr << "saftd will quit in 100 ms" << std::endl;
 				break;
-				case 3: {// bool load_plugin(const std::string &so_filename)
+				case 3: {// bool load_plugin(const std::string &so_filename, const std::string &object_path)
 					std::string lib_name;
 					std::string object_path;
 					received.get(lib_name);
@@ -182,7 +184,15 @@ namespace saftbus {
 					send.put(plugin_available);
 				}
 				break;
-				case 4: { // get_status() // report all info about server and services
+				case 4: {// bool remove_service(const std::string &object_path)
+					std::string object_path;
+					received.get(object_path);
+					std::cerr << "remove service at object_path " << object_path << std::endl;
+					bool remove_result = d->container->remove_object(object_path);
+					send.put(remove_result);
+				}
+				break;
+				case 5: { // get_status() // report all info about server and services
 					std::cerr << "get_stats() called sending " << d->container->d->object_path_lookup_table.size() << " objects " << std::endl;
 					send.put(d->container->d->objects.size());
 					for (auto &object: d->container->d->objects) {
@@ -256,6 +266,20 @@ namespace saftbus {
 			return saftlib_object_id;
 		}
 		return 0;
+	}
+
+	bool ServiceContainer::remove_object(const std::string &object_path)
+	{
+		auto find_result = d->object_path_lookup_table.find(object_path);
+		if (find_result == d->object_path_lookup_table.end()) {
+			// we have already registered an object under this object path
+			std::cerr << "remove_object: object path " << object_path << " not found " << std::endl;
+			return false;
+		}
+		auto object_id = find_result->second;
+		d->objects.erase(object_id);
+		d->object_path_lookup_table.erase(object_path);
+		return true;
 	}
 
 	unsigned ServiceContainer::register_proxy(const std::string &object_path, int client_fd, int signal_group_fd)

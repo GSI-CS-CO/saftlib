@@ -54,7 +54,7 @@ namespace saftbus {
 	friend class SignalGroup;
 	public:
 		virtual ~Proxy();
-		virtual bool signal_dispatch(int interface, Deserializer &signal_content) = 0;
+		virtual bool signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content) = 0;
 	protected:
 		Proxy(const std::string &object_path, SignalGroup &signal_group);
 		static ClientConnection& get_connection();
@@ -88,8 +88,9 @@ namespace saftbus {
 	public:
 		ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group);
 		static std::shared_ptr<ContainerService_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
-		bool signal_dispatch(int interface, Deserializer &signal_content);
+		bool signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content);
 		bool load_plugin(const std::string &so_filename, const std::string &object_path);
+		bool remove_object(const std::string &object_path);
 		void quit();
 		SaftbusInfo get_status();
 	};

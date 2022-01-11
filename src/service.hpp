@@ -37,7 +37,7 @@ namespace saftbus {
 		// insert an object and return the saftlib_object_id for this object
 		// return 0 in case the object_path is unknown
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
-		void remove_object(int object_id);
+		bool remove_object(const std::string &object_path);
 		// return saftlib_object_id if the object_path was found, 0 otherwise
 		unsigned register_proxy(const std::string &object_path, int client_fd, int signal_group_fd);
 		void unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd);
