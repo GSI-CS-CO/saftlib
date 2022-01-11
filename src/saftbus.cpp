@@ -15,7 +15,7 @@
 #include <signal.h>
 #include <error.h>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	int write_all(int fd, const char *buffer, int size)
 	{

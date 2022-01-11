@@ -7,7 +7,7 @@
 #include <cassert>
 #include <iostream>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	extern "C" typedef std::unique_ptr<Service> (*create_service_function)();
 

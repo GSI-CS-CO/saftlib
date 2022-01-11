@@ -1,6 +1,6 @@
 #include "timingreceiver_proxy.hpp"
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	TimingReceiver_Proxy::TimingReceiver_Proxy(const std::string &object_path, SignalGroup &signal_group)
 		: Proxy(object_path, signal_group)

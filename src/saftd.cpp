@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	SAFTd_Proxy::SAFTd_Proxy(SignalGroup &signal_group)
 		: Proxy::Proxy("/de/gsi/saftlib", signal_group)

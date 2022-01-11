@@ -1,5 +1,5 @@
-#ifndef MINI_SAFTLIB_SERVICE_
-#define MINI_SAFTLIB_SERVICE_
+#ifndef SAFTBUS_SERVICE_HPP_
+#define SAFTBUS_SERVICE_HPP_
 
 #include "saftbus.hpp"
 #include "server.hpp"
@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	class Service {
 		struct Impl; std::unique_ptr<Impl> d;
@@ -37,6 +37,7 @@ namespace mini_saftlib {
 		// insert an object and return the saftlib_object_id for this object
 		// return 0 in case the object_path is unknown
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
+		void remove_object(int object_id);
 		// return saftlib_object_id if the object_path was found, 0 otherwise
 		unsigned register_proxy(const std::string &object_path, int client_fd, int signal_group_fd);
 		void unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd);

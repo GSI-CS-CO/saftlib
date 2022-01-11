@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <poll.h>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	struct ClientConnection::Impl {
 		struct pollfd pfd; // file descriptor used to talk to the server

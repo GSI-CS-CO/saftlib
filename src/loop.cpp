@@ -11,7 +11,7 @@
 
 #include <poll.h>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 
 	struct Source::Impl {
@@ -176,7 +176,7 @@ namespace mini_saftlib {
 	bool Loop::quit_in(std::chrono::milliseconds wait_ms) {
 		//wait_ms = std::max(wait_ms, std::chrono::milliseconds(1)); // no less then 1 ms
 		connect(std::move(
-				std2::make_unique<mini_saftlib::TimeoutSource>
+				std2::make_unique<saftbus::TimeoutSource>
 					(sigc::mem_fun(this, &Loop::quit), wait_ms)
 			)
 		);

@@ -16,13 +16,15 @@ namespace timingreceiver {
 	class Device;
 	class MSI_Source;
 	class EB_Source;
-	class Timingreceiver_Service : public mini_saftlib::Service 
+	class Timingreceiver_Service : public saftbus::Service 
 	{
 	public:
 		Timingreceiver_Service();
 		~Timingreceiver_Service();
 		static std::vector<std::string> gen_interface_names();
-		void call(unsigned interface_no, unsigned function_no, int client_fd, mini_saftlib::Deserializer &received, mini_saftlib::Serializer &send);
+		void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);
+
+		void msi_handler(eb_data_t msi);
 
 	    etherbone::Socket socket;
 	    std::unique_ptr<Device> device;
@@ -34,7 +36,7 @@ namespace timingreceiver {
 
 }
 
-extern "C" std::unique_ptr<mini_saftlib::Service> create_service();
+extern "C" std::unique_ptr<saftbus::Service> create_service();
 
 
 #endif

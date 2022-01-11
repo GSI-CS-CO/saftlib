@@ -20,7 +20,7 @@
 
 #include <sigc++/sigc++.h>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	// Represent an open file descriptor for signals
 	// It maintains a use counter that indicates when close(fd) can be called.

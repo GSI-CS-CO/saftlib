@@ -1,5 +1,5 @@
-#ifndef MINI_SAFTLIB_SAFTBUS_
-#define MINI_SAFTLIB_SAFTBUS_
+#ifndef SAFTBUS_SAFTBUS_HPP_
+#define SAFTBUS_SAFTBUS_HPP_
 
 #include <iostream>
 #include <iomanip>
@@ -7,7 +7,7 @@
 #include <string>
 #include <map>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	int write_all(int fd, const char *buffer, int size);
 	int read_all(int fd, char *buffer, int size);

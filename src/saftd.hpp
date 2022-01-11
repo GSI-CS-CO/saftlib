@@ -1,5 +1,5 @@
-#ifndef MINI_SAFTLIB_SAFTD_
-#define MINI_SAFTLIB_SAFTD_
+#ifndef SAFTBUS_SAFTD_HPP_
+#define SAFTBUS_SAFTD_HPP_
 
 #include "client.hpp"
 #include "service.hpp"
@@ -7,7 +7,7 @@
 
 #include <cassert>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	// this is boilerplate and should be generated later (code generator is not yet written)
 	class SAFTd_Proxy : public Proxy {

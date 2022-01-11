@@ -1,5 +1,5 @@
-#ifndef MINI_SAFTLIB_CLIENT_CONNECTION_
-#define MINI_SAFTLIB_CLIENT_CONNECTION_
+#ifndef SAFTBUS_CLIENT_CONNECTION_HPP_
+#define SAFTBUS_CLIENT_CONNECTION_HPP_
 
 #include <saftbus.hpp>
 
@@ -12,7 +12,7 @@
 
 #include <unistd.h>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	class ClientConnection {
 		struct Impl; std::unique_ptr<Impl> d;		

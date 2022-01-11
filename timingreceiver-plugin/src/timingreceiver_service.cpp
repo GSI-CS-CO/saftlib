@@ -11,7 +11,7 @@
 namespace timingreceiver 
 {
 
-	class EB_Source : public mini_saftlib::Source
+	class EB_Source : public saftbus::Source
 	{
 		public:
 			EB_Source(etherbone::Socket socket_);
@@ -192,8 +192,8 @@ namespace timingreceiver
 
 
 
-	Device::irqMap Device::irqs;   // this is in globals.cpp
-	Device::msiQueue Device::msis; // this is in globals.cpp
+	Device::irqMap Device::irqs;
+	Device::msiQueue Device::msis;
 
 	Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last)//, bool poll, unsigned piv)
 	 : etherbone::Device(d), base(first), mask(last-first)//, activate_msi_polling(poll), polling_interval_ms(piv)
@@ -353,7 +353,7 @@ namespace timingreceiver
 	// 	msis.set_capacity(capacity);
 	// }
 
-	class MSI_Source : public mini_saftlib::Source
+	class MSI_Source : public saftbus::Source
 	{
 		public:
 			MSI_Source();
@@ -451,8 +451,8 @@ namespace timingreceiver
 	// bool timeout() {
 	// 	static int i = 0;
 	// 	std::cerr << "timeout #" << i++ << std::endl;
-	// 	// auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-	// 	// mini_saftlib::Loop::get_default().quit();
+	// 	// auto core_service_proxy = saftbus::ContainerService_Proxy::create();
+	// 	// saftbus::Loop::get_default().quit();
 	// 	if (i == 5) {
 	// 		return false;
 	// 	}
@@ -460,12 +460,12 @@ namespace timingreceiver
 	// }
 
 	Timingreceiver_Service::Timingreceiver_Service()
-		: mini_saftlib::Service(gen_interface_names())
+		: saftbus::Service(gen_interface_names())
 	{
 		// std::cerr << "connect timeout source" << std::endl;
-		// mini_saftlib::Loop::get_default().connect(
+		// saftbus::Loop::get_default().connect(
 		// 	std::move(
-		// 		std2::make_unique<mini_saftlib::TimeoutSource>(
+		// 		std2::make_unique<saftbus::TimeoutSource>(
 		// 			sigc::ptr_fun(timeout),std::chrono::milliseconds(1000)
 		// 		) 
 		// 	)
@@ -476,12 +476,12 @@ namespace timingreceiver
 		std::cerr << "Timingreceiver_Service constructor attach eb_source" << std::endl;
 		auto eb_source_unique = std2::make_unique<EB_Source>(socket);
 		eb_source = eb_source_unique.get();
-		mini_saftlib::Loop::get_default().connect(std::move(eb_source_unique));
+		saftbus::Loop::get_default().connect(std::move(eb_source_unique));
 		std::cerr << "Timingreceiver_Service constructor Device::hook_it_all" << std::endl;
 		Device::hook_it_all(socket);
 		auto msi_source_unique = std2::make_unique<MSI_Source>();
 		msi_source = msi_source_unique.get();
-		mini_saftlib::Loop::get_default().connect(std::move(msi_source_unique));
+		saftbus::Loop::get_default().connect(std::move(msi_source_unique));
 
 		// open the device
 		etherbone::Device edev;
@@ -496,14 +496,26 @@ namespace timingreceiver
 		// device->read(0x20140000,EB_DATA32,&dat);
 		// std::cerr << "test read 2 at adr 0x20140000 = " << std::hex << dat << std::dec << std::endl;
 
+
+		auto MSI_MAILBOX_VENDOR  = 0x651;
+		auto MSI_MAILBOX_PRODUCT = 0xfab0bdd8;
+		std::vector<etherbone::sdb_msi_device> mailbox_msi;
+		device->sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mailbox_msi);
+		auto irq_adr = device->request_irq(mailbox_msi[0], sigc::mem_fun(this, &Timingreceiver_Service::msi_handler));
+		std::cerr << "irq adr = " << std::hex << irq_adr << std::dec << std::endl;
+
 		std::cerr << "Timingreceiver_Service constructor done" << std::endl;
+	}
+	void Timingreceiver_Service::msi_handler(eb_data_t msi)
+	{
+		std::cerr << "msi_handler " << msi << std::endl;
 	}
 
 	Timingreceiver_Service::~Timingreceiver_Service() {
 		std::cerr << "Timingreceiver_Service destructor" << std::endl;
-		mini_saftlib::Loop::get_default().remove(msi_source);
+		saftbus::Loop::get_default().remove(msi_source);
 		device->close();
-		mini_saftlib::Loop::get_default().remove(eb_source);
+		saftbus::Loop::get_default().remove(eb_source);
 		socket.close();
 		std::cerr << "Timingreceiver_Service destructor done" << std::endl;
 	}
@@ -515,7 +527,7 @@ namespace timingreceiver
 		return result;
 	}
 
-	void Timingreceiver_Service::call(unsigned interface_no, unsigned function_no, int client_fd, mini_saftlib::Deserializer &received, mini_saftlib::Serializer &send)
+	void Timingreceiver_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send)
 	{
 		eb_address_t adr;
 		eb_data_t dat;
@@ -546,6 +558,6 @@ namespace timingreceiver
 
 }
 
-extern "C" std::unique_ptr<mini_saftlib::Service> create_service() {
+extern "C" std::unique_ptr<saftbus::Service> create_service() {
 	return std2::make_unique<timingreceiver::Timingreceiver_Service>();
 }

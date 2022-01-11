@@ -1,5 +1,5 @@
-#ifndef MINI_SAFTLIB_PLUGINS_
-#define MINI_SAFTLIB_PLUGINS_
+#ifndef SAFTBUS_PLUGINS_HPP_
+#define SAFTBUS_PLUGINS_HPP_
 
 #include "service.hpp"
 #include "loop.hpp"
@@ -7,7 +7,7 @@
 #include <string>
 #include <memory>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	class LibraryLoader {
 		struct Impl; std::unique_ptr<Impl> d;

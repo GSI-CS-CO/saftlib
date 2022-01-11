@@ -1,5 +1,5 @@
-#ifndef MINI_SAFTLIB_LOOP_
-#define MINI_SAFTLIB_LOOP_
+#ifndef SAFTBUS_LOOP_HPP_
+#define SAFTBUS_LOOP_HPP_
 
 #include <memory>
 #include <chrono>
@@ -7,7 +7,7 @@
 
 #include <poll.h>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	class Source {
 		struct Impl; std::unique_ptr<Impl> d;

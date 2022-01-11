@@ -5,7 +5,7 @@
 
 #include <etherbone.h>
 
-namespace mini_saftlib {
+namespace saftbus {
 
 	class TimingReceiver_Proxy : public Proxy {
 	public:

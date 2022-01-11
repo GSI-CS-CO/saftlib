@@ -9,10 +9,10 @@
 // bool timeout() {
 // 	static int i = 0;
 // 	std::cerr << "#" << i++ << std::endl;
-// 	// auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-// 	// mini_saftlib::Loop::get_default().quit();
+// 	// auto core_service_proxy = saftbus::ContainerService_Proxy::create();
+// 	// saftbus::Loop::get_default().quit();
 // 	if (i == 5) {
-// 		mini_saftlib::Loop::get_default().quit();
+// 		saftbus::Loop::get_default().quit();
 // 	}
 // 	return true;
 // }
@@ -20,36 +20,36 @@
 // bool got_signal(int fd, int condition) {
 // 	std::cerr << "got_signal" << std::endl;
 // 	if (condition & POLLIN) {
-// 		mini_saftlib::SignalGroup::get_global().wait_for_signal(0);
+// 		saftbus::SignalGroup::get_global().wait_for_signal(0);
 // 	}
 // 	return true;
 // }
 
 int main(int argc, char **argv)
 {
-	auto core_service_proxy = mini_saftlib::ContainerService_Proxy::create();
-	// auto sg2 = mini_saftlib::SignalGroup();
-	// auto core_service_proxy2 = mini_saftlib::ContainerService_Proxy::create(sg2);
-	// auto core_service_proxy3 = mini_saftlib::ContainerService_Proxy::create(sg2);
+	auto core_service_proxy = saftbus::ContainerService_Proxy::create();
+	// auto sg2 = saftbus::SignalGroup();
+	// auto core_service_proxy2 = saftbus::ContainerService_Proxy::create(sg2);
+	// auto core_service_proxy3 = saftbus::ContainerService_Proxy::create(sg2);
 
 
 	// for(;;) {
-	// 	mini_saftlib::SignalGroup::get_global().wait_for_signal();
+	// 	saftbus::SignalGroup::get_global().wait_for_signal();
 	// }
-	// auto core_service_proxy2= mini_saftlib::ContainerService_Proxy::create();
+	// auto core_service_proxy2= saftbus::ContainerService_Proxy::create();
 
-	// mini_saftlib::Loop::get_default().connect(
+	// saftbus::Loop::get_default().connect(
 	// 	std::move(
-	// 		std2::make_unique<mini_saftlib::TimeoutSource>(
+	// 		std2::make_unique<saftbus::TimeoutSource>(
 	// 			sigc::ptr_fun(timeout),std::chrono::milliseconds(1000)
 	// 		) 
 	// 	)
 	// );
 
-	// mini_saftlib::Loop::get_default().connect(
+	// saftbus::Loop::get_default().connect(
 	// 	std::move(
-	// 		std2::make_unique<mini_saftlib::IoSource>(
-	// 			sigc::ptr_fun(got_signal),  mini_saftlib::SignalGroup::get_global().get_fd(), POLLIN
+	// 		std2::make_unique<saftbus::IoSource>(
+	// 			sigc::ptr_fun(got_signal),  saftbus::SignalGroup::get_global().get_fd(), POLLIN
 	// 		) 
 	// 	)
 	// );
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 				core_service_proxy->quit();
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			} if (argvi == "-s") {
-				mini_saftlib::SaftbusInfo saftbus_info = core_service_proxy->get_status();
+				saftbus::SaftbusInfo saftbus_info = core_service_proxy->get_status();
 				return 0;
 			} else if (argvi == "-l") {
 				if ((i+=2) < argc) {
@@ -77,9 +77,9 @@ int main(int argc, char **argv)
 			}
 		}
 	} else {
-		// mini_saftlib::Loop::get_default().run();
+		// saftbus::Loop::get_default().run();
 		for (int i=0; i<5; ++i) {
-			mini_saftlib::SignalGroup::get_global().wait_for_signal();
+			saftbus::SignalGroup::get_global().wait_for_signal();
 		}
 	}
 
