@@ -369,45 +369,6 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 			} else {
 				in_class_definition = true;
 			}
-			// std::string classname; 
-			// lin >> classname;
-			// if (!lin) {
-			// 	std::ostringstream msg;
-			// 	msg << "parsing error in " << source_name << ":" << line_no << ": <classname> expected after \"" << keyword << "\"";
-			// 	throw std::runtime_error(msg.str());
-			// }
-			// char colon_or_comma;
-			// std::vector<std::string> basenames;
-			// for (;;) {
-			// 	lin >> colon_or_comma;
-			// 	if (!lin || colon_or_comma == '{') {
-			// 		break;
-			// 	} else {
-			// 		std::string basename;
-			// 		for (;;) {
-			// 			lin >> basename;
-			// 			if (!lin) {
-			// 				std::ostringstream msg;
-			// 				msg << "parsing error in " << source_name << ":" << line_no << ": <base-classname> expected after \"" << keyword << " : \"";
-			// 				throw std::runtime_error(msg.str());
-			// 			}
-			// 			if (basename.back() == ',') {
-			// 				basename.pop_back();
-			// 				lin.putback(',');
-			// 			}
-			// 			basename = strip(basename);
-			// 			if (basename != "public" && basename != "protected" && basename != "private") {
-			// 				break;
-			// 			}
-			// 		}
-			// 		basenames.push_back(basename);
-			// 	}
-			// }
-			// std::cerr << "found class definition: " << classname << "  ";
-			// for (auto &basename: basenames) {
-			// 	std::cerr << basename << " ";
-			// }
-			// std::cerr << std::endl;
 		} else if (keyword == "#define") {
 			std::string define_name;
 			lin >> define_name;
