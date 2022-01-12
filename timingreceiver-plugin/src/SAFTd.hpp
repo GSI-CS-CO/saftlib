@@ -25,7 +25,7 @@
 
 namespace saftlib {
 
-class SAFTd : public iSAFTd
+class SAFTd : public iSAFTd,public blub
 {
   public:
     static SAFTd& get() { return saftd; }
@@ -46,7 +46,6 @@ class SAFTd : public iSAFTd
     void Quit();
     // @saftbus-export
     std::map< std::string, std::string > getDevices() const;
-    
     // @saftbus-export
     std::string getSourceVersion() const;
     // @saftbus-export

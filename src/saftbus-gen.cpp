@@ -54,7 +54,7 @@ static void remove_block_comments(std::string &line, bool &block_comment) {
 	}
 }
 
-std::string build_namespace(const std::vector<std::string> namespace_names) {
+static std::string build_namespace(const std::vector<std::string> namespace_names) {
 	std::string result;
 	for (auto &name: namespace_names) {
 		if (name.size() > 0) {
@@ -132,9 +132,6 @@ struct FunctionArgument {
 	std::string name;
 	std::string init;
 	bool is_output; // non-const reference arguments are taken as outputs of the function
-	// FunctionArgument(const FunctionArgument& arg) 
-	// 	: type(arg.type), name(arg.type), init(arg.init) 
-	// 	{}
 	FunctionArgument(const std::string &argument_string) {
 		std::string type_and_name = argument_string;
 		auto equals_pos = argument_string.find("=");
@@ -152,10 +149,6 @@ struct FunctionArgument {
 			type.find("const") == type.npos) {  // that is not const
 			is_output = true;
 		}
-		// std::cerr << "argument type: \'" << type << "\'" << std::endl;
-		// std::cerr << "argument name: \'" << name << "\'" << std::endl;
-		// std::cerr << "argument init: \'" << init << "\'" << std::endl;
-		// std::cerr << "argument out : \'" << is_output << "\'" << std::endl;
 	}
 	std::string definition() {
 		std::string result;
@@ -173,6 +166,7 @@ struct FunctionArgument {
 		return result;
 	}
 };
+
 std::vector<FunctionArgument> split(std::string argument_list) {
 	std::vector<FunctionArgument> result;
 	std::string buffer;
@@ -205,6 +199,8 @@ struct FunctionSignature {
 		auto name_start = returntype_and_name.find_last_of(" &");
 		name        = strip(line.substr(name_start+1,paranthesis_open-name_start-1));
 		return_type = strip(line.substr(0,name_start+1));
+	}
+	void print() {
 		std::cerr << "   scope         : " << scope << std::endl;
 		std::cerr << "   function name : " << name << std::endl;
 		std::cerr << "   return type   : " << return_type << std::endl;
@@ -216,11 +212,64 @@ struct FunctionSignature {
 	}
 };
 
-struct ClassSignature {
+std::vector<std::string> split_bases(std::string argument_list) {
+	std::vector<std::string> result;
+	std::string buffer;
+	for (auto &ch: argument_list) {
+		if (ch == ',' || ch == '{') {
+			result.push_back(strip(buffer));
+			buffer.clear();
+			if (ch == '{') {
+				return result;
+			}
+		} else {
+			buffer.push_back(ch);
+		}
+	}
+	return result;
+}
+struct ClassDefinition {
+	std::string scope;
 	std::string name;
-	std::vector<std::string> derived_from;
+	std::vector<std::string> bases;
+	std::vector<FunctionSignature> exportedfunctions;
+	ClassDefinition(const std::string &scope_, const std::string &line) 
+		: scope(scope_)
+	{
+		auto colon_pos = line.find(':');
+		if (colon_pos == line.npos) {
+			// no base classes
+			std::istringstream lin(line);
+			lin >> name;
+			if (name.back()=='{') {
+				name.pop_back();
+			}
+		} else {
+			std::istringstream lin(line.substr(0,colon_pos));
+			lin >> name;
+			std::string base_list = line.substr(colon_pos+1);
+			bases = split_bases(base_list);
+		}
+	}
+	void print() {
+		std::cerr << "ClassDefinition: " << std::endl;
+		std::cerr << "  scope: " << scope << std::endl;
+		std::cerr << "  name : " << name  << std::endl;
+		if (bases.size() > 0) {
+			std::cerr << "  bases: ";
+			for (auto &base: bases) {
+				std::cerr << base << " , ";
+			}
+			std::cerr << std::endl;
+		}
+		for (auto &function: exportedfunctions) {
+			function.print();
+			std::cerr << std::endl;
+		}
+	}
 };
 
+std::vector<ClassDefinition> classes;
 
 static void cpp_parser(const std::string &source_name, std::map<std::string, std::string> &defines)
 {
@@ -238,8 +287,10 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 	std::string latest_scope_name;
 
 	std::string function_signature;
-
 	bool saftbus_export_tag_in_last_line = false;
+
+	std::string class_definition;
+	bool in_class_definition = false;
 	// parse the file line by line
 	for (int line_no = 1; ; ++line_no) {
 		std::string line;
@@ -253,33 +304,44 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 			break;
 		}
 
-		// remove line comments and detect @saftbus-export tags
+		// remove line comments and detect @saftbus-export tag (is has to be the first word in a line comment)
 		bool saftbus_export_tag = remove_line_comments(line);
 
 		// detect and remove block_comments
 		remove_block_comments(line,block_comment);
 		if (block_comment) {
-			saftbus_export_tag_in_last_line = saftbus_export_tag;
 			continue;
 		}
 
 		// extract function signature
 		if (saftbus_export_tag_in_last_line) {
 			function_signature.append(line);
-			if (line.find(';') == line.npos) { // cant find the closing ";" of the function declaration
+			if (line.find(';') == line.npos && line.find('{') == line.npos) { // cant find the closing ";" of the function declaration or the start of the definition block '{'
 				continue;
 			} else {	
 				std::cerr << line_no << ": extract function signature: " << std::endl;
-				auto signature = FunctionSignature(build_namespace(scope),function_signature);
+				if (classes.size() > 0) {
+					classes.back().exportedfunctions.push_back(FunctionSignature(build_namespace(scope),function_signature));
+				}
 			}
 			function_signature = "";
 		}
 		saftbus_export_tag_in_last_line = saftbus_export_tag;
 
-
 		// track scope level
 		manage_scopes(line, scope, latest_scope_name);
 		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
+
+		if (in_class_definition) {
+			class_definition.append(line);
+			if (class_definition.find('{') != class_definition.npos) {
+				classes.push_back(ClassDefinition(build_namespace(scope), class_definition));
+				in_class_definition = false;
+			}
+			continue;
+		}
+
+
 
 		// input stream for one line without comments
 		std::istringstream lin(line);
@@ -300,7 +362,53 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 			msg << "parsing error in " << source_name << ":" << line_no << ": expect a keyword \"source\", \"alias\"";
 			throw std::runtime_error(msg.str());
 		}
-		if (keyword == "#define") {
+		if (keyword == "class") {
+			std::getline(lin, class_definition);
+			if (class_definition.find('{') != class_definition.npos) {
+				classes.push_back(ClassDefinition(build_namespace(scope), class_definition));
+			} else {
+				in_class_definition = true;
+			}
+			// std::string classname; 
+			// lin >> classname;
+			// if (!lin) {
+			// 	std::ostringstream msg;
+			// 	msg << "parsing error in " << source_name << ":" << line_no << ": <classname> expected after \"" << keyword << "\"";
+			// 	throw std::runtime_error(msg.str());
+			// }
+			// char colon_or_comma;
+			// std::vector<std::string> basenames;
+			// for (;;) {
+			// 	lin >> colon_or_comma;
+			// 	if (!lin || colon_or_comma == '{') {
+			// 		break;
+			// 	} else {
+			// 		std::string basename;
+			// 		for (;;) {
+			// 			lin >> basename;
+			// 			if (!lin) {
+			// 				std::ostringstream msg;
+			// 				msg << "parsing error in " << source_name << ":" << line_no << ": <base-classname> expected after \"" << keyword << " : \"";
+			// 				throw std::runtime_error(msg.str());
+			// 			}
+			// 			if (basename.back() == ',') {
+			// 				basename.pop_back();
+			// 				lin.putback(',');
+			// 			}
+			// 			basename = strip(basename);
+			// 			if (basename != "public" && basename != "protected" && basename != "private") {
+			// 				break;
+			// 			}
+			// 		}
+			// 		basenames.push_back(basename);
+			// 	}
+			// }
+			// std::cerr << "found class definition: " << classname << "  ";
+			// for (auto &basename: basenames) {
+			// 	std::cerr << basename << " ";
+			// }
+			// std::cerr << std::endl;
+		} else if (keyword == "#define") {
 			std::string define_name;
 			lin >> define_name;
 			if (!lin) {
@@ -429,5 +537,9 @@ int main(int argc, char **argv)
 	}
 	std::map<std::string, std::string> defines;
 	cpp_parser(argv[1], defines);
+
+	for (auto &class_def: classes) {
+		class_def.print();
+	}
 	return 0;
 }
