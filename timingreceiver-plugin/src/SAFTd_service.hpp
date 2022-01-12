@@ -34,7 +34,7 @@ namespace saftlib {
 		void msi_handler(eb_data_t msi);
 
 		etherbone::Socket socket;
-		std::unique_ptr<Device> device;
+		// std::unique_ptr<Device> device;
 
 		MSI_Source *msi_source;
 		EB_Source  *eb_source;

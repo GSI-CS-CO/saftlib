@@ -19,7 +19,8 @@ saftbus_include_HEADERS = \
 	src/server.hpp    
 
 bin_PROGRAMS = saftbusd      \
-               saftbus-ctl
+               saftbus-ctl   \
+               saftbus-gen
 
 saftbusd_LDFLAGS = -Wl,--export-dynamic 
 saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la -lltdl
@@ -32,4 +33,6 @@ saftbusd_SOURCES = \
 
 saftbus_ctl_LDADD   = $(SIGC_LIBS) libsaftbus.la 
 saftbus_ctl_SOURCES = src/saftbus-ctl.cpp
+
+saftbus_gen_SOURCES = src/saftbus-gen.cpp
 

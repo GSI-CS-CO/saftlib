@@ -449,16 +449,19 @@ namespace saftlib
 //////////////////////////////////////////
 
 	struct OpenDevice {
-	  Device device;
-	  std::string name;
-	  std::string objectPath;
-	  std::string etherbonePath;
-	  // std::shared_ptr<BaseObject> ref;
-	  
-	  OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last,
-	  	const std::string &n, const std::string &op, const std::string ebp)
-	  : device(d, first, last), name(n), objectPath(op), etherbonePath(ebp) 
-	  {}
+		Device device;
+		std::string name;
+		std::string objectPath;
+		std::string etherbonePath;
+		// std::shared_ptr<BaseObject> ref;
+
+		OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last,
+			const std::string &n, const std::string &op, const std::string ebp)
+			: device(d, first, last), name(n), objectPath(op), etherbonePath(ebp) 
+		{}
+		~OpenDevice(){
+			device.close();
+		}
 	};
 
 
@@ -499,25 +502,19 @@ namespace saftlib
 		saftbus::Loop::get_default().connect(std::move(msi_source_unique));
 
 		// open the device
-		etherbone::Device edev;
-		edev.open(socket, "tcp/scuxl0089.acc");
-		eb_address_t first, last;
-		edev.enable_msi(&first, &last);
+		// etherbone::Device edev;
+		// edev.open(socket, "tcp/scuxl0089.acc");
+		// eb_address_t first, last;
+		// edev.enable_msi(&first, &last);
 		// std::cerr << "first=" << std::hex << first << " last=" << last << std::dec << std::endl;
 		// eb_data_t dat;
 		// edev.read(0x20140000,EB_DATA32,&dat);
 		// std::cerr << "test read at adr 0x20140000 = " << std::hex << dat << std::dec << std::endl;
-		device = std::move(std2::make_unique<Device>(edev, first, last));
+		// device = std::move(std2::make_unique<Device>(edev, first, last));
 		// device->read(0x20140000,EB_DATA32,&dat);
 		// std::cerr << "test read 2 at adr 0x20140000 = " << std::hex << dat << std::dec << std::endl;
 
 
-		auto MSI_MAILBOX_VENDOR  = 0x651;
-		auto MSI_MAILBOX_PRODUCT = 0xfab0bdd8;
-		std::vector<etherbone::sdb_msi_device> mailbox_msi;
-		device->sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mailbox_msi);
-		auto irq_adr = device->request_irq(mailbox_msi[0], sigc::mem_fun(this, &SAFTd_Service::msi_handler));
-		std::cerr << "irq adr = " << std::hex << irq_adr << std::dec << std::endl;
 
 		std::cerr << "SAFTd_Service constructor done" << std::endl;
 	}
@@ -532,7 +529,7 @@ namespace saftlib
 		}
 		std::cerr << "SAFTd_Service destructor" << std::endl;
 		saftbus::Loop::get_default().remove(msi_source);
-		device->close();
+		// device->close();
 		saftbus::Loop::get_default().remove(eb_source);
 		socket.close();
 
@@ -548,17 +545,18 @@ namespace saftlib
 
 	void SAFTd_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send)
 	{
+		std::cerr << " *********** SAFTd_Service:: call " << interface_no << " " << function_no << std::endl;
 		switch(interface_no) {
 			case 0:
 				switch(function_no) {
 					case 0:  { // eb-read
 						try {
 							eb_address_t adr;
-							eb_data_t dat;
+							eb_data_t dat=0x0;
 							std::cerr << "eb-write called" << std::endl;
 							received.get(adr);
 							std::cerr << "test read interactive at adr " << std::hex << adr << "   =>  " << dat << std::dec << std::endl;
-							device->read(adr,EB_DATA32,&dat);
+							// device->read(adr,EB_DATA32,&dat);
 							send.put(dat);
 						} catch (etherbone::exception_t &e) {
 							std::cerr << "got etherbone exception_t " << e.method << std::endl;
@@ -574,8 +572,9 @@ namespace saftlib
 						send.put(AttachDevice(name,path));
 					}
 					break;
-					case 2:  { // eb-write
+					case 2:  { // RemoveDevice
 						std::string name;
+						std::cerr << "RemoveDevice called" << std::endl;
 						received.get(name);
 						RemoveDevice(name);
 					}
@@ -598,12 +597,12 @@ namespace saftlib
 
 	std::string SAFTd_Service::AttachDevice(const std::string& name, const std::string& path)
 	{
+		try {
 		if (devs.find(name) != devs.end())
 			throw std::runtime_error("device already exists");
 		if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
 			throw std::runtime_error("Invalid name; [a-zA-Z0-9_] only");
 		
-		try {
 			etherbone::Device edev;
 			edev.open(socket, path.c_str());
 			
@@ -621,6 +620,14 @@ namespace saftlib
 				if ((first & size) != 0)
 					throw std::runtime_error("Device has unaligned MSI first address");
 			
+
+
+				auto MSI_MAILBOX_VENDOR  = 0x651;
+				auto MSI_MAILBOX_PRODUCT = 0xfab0bdd8;
+				std::vector<etherbone::sdb_msi_device> mailbox_msi;
+				edev.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mailbox_msi);
+				// auto irq_adr = edev.request_irq(mailbox_msi[0], sigc::mem_fun(this, &SAFTd_Service::msi_handler));
+
 				// bool poll_msis = false;
 				// std::string path_prefix = path.substr(0,7);
 				// // enable polling MSIs for USB and pseudo-terminal devices
@@ -637,7 +644,8 @@ namespace saftlib
 				//Drivers::probe(od);
 				// if (od.ref) {
 					devs.insert(std::make_pair(name, std2::make_unique<OpenDevice>(edev, first, last, name, get_object_path()+name, path)));
-
+					auto irq_adr = devs[name]->device.request_irq(mailbox_msi[0], sigc::mem_fun(this, &SAFTd_Service::msi_handler));
+					std::cerr << "irq adr = " << std::hex << irq_adr << std::dec << std::endl;
 					// if (poll_msis) {
 					// 	// create a special socket for eb-tools to attach to.
 					// 	m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(path));
@@ -655,11 +663,14 @@ namespace saftlib
 			std::ostringstream str;
 			str << "AttachDevice: failed to open: " << e;
 			throw std::runtime_error(str.str().c_str());
+		} catch (std::runtime_error & e) {
+			std::cerr << "EXCEPTION in AttachDevice: " << e.what() << std::endl;
 		}
 	}
 
 	void SAFTd_Service::RemoveDevice(const std::string& name)
 	{
+		std::cerr << "REMOVE DEVICE " << name << std::endl;
 		std::map< std::string, std::unique_ptr<OpenDevice> >::iterator elem = devs.find(name);
 		if (elem == devs.end())
 			throw std::runtime_error("no such device");
@@ -667,9 +678,10 @@ namespace saftlib
 		// remove special socket for eb-tools  
 		// m_eb_forward.erase(name);
 		///////////////////////////
-
 		// elem->second.ref.reset();
-		elem->second->device.close();
+		// elem->second->device.close();
+		saftbus::Loop::get_default().remove(eb_source);
+		// socket.close();
 		devs.erase(elem);
 	}
 

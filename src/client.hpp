@@ -1,7 +1,8 @@
 #ifndef SAFTBUS_CLIENT_CONNECTION_HPP_
 #define SAFTBUS_CLIENT_CONNECTION_HPP_
 
-#include <saftbus.hpp>
+#include "saftbus.hpp"
+#include "saftbus.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -43,6 +44,7 @@ namespace saftbus {
 
 		int get_fd(); // this can be used to hook the SignalGroup into an event loop
 
+		// @saftbus-export
 		int wait_for_signal(int timeout_ms = -1);
 		int wait_for_one_signal(int timeout_ms = -1);
 
@@ -76,7 +78,7 @@ namespace saftbus {
 		struct ClientInfo {
 			pid_t process_id;
 			int client_fd;
-			struct SignalFD{
+			struct SignalFD {
 				int fd;
 				int use_count;
 			};
@@ -88,7 +90,10 @@ namespace saftbus {
 	public:
 		ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group);
 		static std::shared_ptr<ContainerService_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
-		bool signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content);
+		// @saftbus-export
+		bool signal_dispatch(int interface_no, 
+			                 int signal_no, 
+			                 Deserializer& signal_content);
 		bool load_plugin(const std::string &so_filename, const std::string &object_path);
 		bool remove_object(const std::string &object_path);
 		void quit();
