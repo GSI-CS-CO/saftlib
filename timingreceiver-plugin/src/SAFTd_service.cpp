@@ -7,9 +7,12 @@
 #include <iostream>
 #include <queue>
 #include <cstring>
+#include <stdexcept>
 
 namespace saftlib 
 {
+
+
 
 	class EB_Source : public saftbus::Source
 	{
@@ -445,6 +448,18 @@ namespace saftlib
 //////////////////////////////////////////
 //////////////////////////////////////////
 
+	struct OpenDevice {
+	  Device device;
+	  std::string name;
+	  std::string objectPath;
+	  std::string etherbonePath;
+	  // std::shared_ptr<BaseObject> ref;
+	  
+	  OpenDevice(etherbone::Device d, eb_address_t first, eb_address_t last,
+	  	const std::string &n, const std::string &op, const std::string ebp)
+	  : device(d, first, last), name(n), objectPath(op), etherbonePath(ebp) 
+	  {}
+	};
 
 
 
@@ -512,30 +527,34 @@ namespace saftlib
 	}
 
 	SAFTd_Service::~SAFTd_Service() {
+		for(auto &dev: devs) {
+			dev.second->device.close();
+		}
 		std::cerr << "SAFTd_Service destructor" << std::endl;
 		saftbus::Loop::get_default().remove(msi_source);
 		device->close();
 		saftbus::Loop::get_default().remove(eb_source);
 		socket.close();
+
 		std::cerr << "SAFTd_Service destructor done" << std::endl;
 	}
 
 	std::vector<std::string> SAFTd_Service::gen_interface_names()
 	{
 		std::vector<std::string> result;
-		result.push_back("de.gsi.saftlib.TimingReceiver");
+		result.push_back("de.gsi.saftlib");
 		return result;
 	}
 
 	void SAFTd_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send)
 	{
-		eb_address_t adr;
-		eb_data_t dat;
 		switch(interface_no) {
 			case 0:
 				switch(function_no) {
-					case 0:  { // eb-write
+					case 0:  { // eb-read
 						try {
+							eb_address_t adr;
+							eb_data_t dat;
 							std::cerr << "eb-write called" << std::endl;
 							received.get(adr);
 							std::cerr << "test read interactive at adr " << std::hex << adr << "   =>  " << dat << std::dec << std::endl;
@@ -547,6 +566,20 @@ namespace saftlib
 						}
 					}
 					break;
+					case 1:  { // AttachDevice
+						std::string name, path;
+						std::cerr << "AttachDevice called" << std::endl;
+						received.get(name);
+						received.get(path);
+						send.put(AttachDevice(name,path));
+					}
+					break;
+					case 2:  { // eb-write
+						std::string name;
+						received.get(name);
+						RemoveDevice(name);
+					}
+					break;
 					default:
 						std::cerr << "unknown function_no " << function_no << std::endl;
 				}
@@ -555,6 +588,102 @@ namespace saftlib
 				std::cerr << "unknown interface_no " << interface_no << " " << std::endl;
 		}
 	}
+
+
+
+	static inline bool not_isalnum_(char c) 
+	{ 
+		return !(isalnum(c) || c == '_');
+	}
+
+	std::string SAFTd_Service::AttachDevice(const std::string& name, const std::string& path)
+	{
+		if (devs.find(name) != devs.end())
+			throw std::runtime_error("device already exists");
+		if (find_if(name.begin(), name.end(), not_isalnum_) != name.end())
+			throw std::runtime_error("Invalid name; [a-zA-Z0-9_] only");
+		
+		try {
+			etherbone::Device edev;
+			edev.open(socket, path.c_str());
+			
+			try {
+				// Determine the size of the MSI range
+				eb_address_t first, last;
+				edev.enable_msi(&first, &last);
+			
+				// Confirm the device is an aligned power of 2
+				eb_address_t size = last - first;
+			
+				if (((size + 1) & size) != 0)
+					throw std::runtime_error("Device has strange sized MSI range");
+			
+				if ((first & size) != 0)
+					throw std::runtime_error("Device has unaligned MSI first address");
+			
+				// bool poll_msis = false;
+				// std::string path_prefix = path.substr(0,7);
+				// // enable polling MSIs for USB and pseudo-terminal devices
+				// if (path_prefix == "dev/tty" || path_prefix == "dev/pts") {
+				// 	poll_msis = true;
+				// }
+				// struct OpenDevice od(edev, first, last, poll_msis);
+				// od.name = name;
+				// od.objectPath = "/de/gsi/saftlib/" + name;
+				// od.etherbonePath = path;
+
+
+			
+				//Drivers::probe(od);
+				// if (od.ref) {
+					devs.insert(std::make_pair(name, std2::make_unique<OpenDevice>(edev, first, last, name, get_object_path()+name, path)));
+
+					// if (poll_msis) {
+					// 	// create a special socket for eb-tools to attach to.
+					// 	m_eb_forward[name] = std::shared_ptr<EB_Forward>(new EB_Forward(path));
+					// }
+
+					return get_object_path() + "/"+  name;
+				// } else {
+				// 	throw std::runtime_error("no driver available for this device");
+				// }
+			} catch (...) {
+				edev.close();
+				throw;
+			}
+		} catch (const etherbone::exception_t& e) {
+			std::ostringstream str;
+			str << "AttachDevice: failed to open: " << e;
+			throw std::runtime_error(str.str().c_str());
+		}
+	}
+
+	void SAFTd_Service::RemoveDevice(const std::string& name)
+	{
+		std::map< std::string, std::unique_ptr<OpenDevice> >::iterator elem = devs.find(name);
+		if (elem == devs.end())
+			throw std::runtime_error("no such device");
+
+		// remove special socket for eb-tools  
+		// m_eb_forward.erase(name);
+		///////////////////////////
+
+		// elem->second.ref.reset();
+		elem->second->device.close();
+		devs.erase(elem);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 

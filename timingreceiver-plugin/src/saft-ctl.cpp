@@ -40,11 +40,31 @@ int main(int argc, char **argv)
 	// if (argc > 1) {
 	// 	core_service_proxy->quit();
 	// } else {
-		std::cerr << std::hex << std::setw(8) << std::setfill('0') << saftd_proxy->eb_read(0x20140000) << std::endl;
 		// for (int i = 0; i < 5; ++i ) {
 		// 	saftbus::SignalGroup::get_global().wait_for_signal();
 		// }
 	// }
+
+	if (argc > 1) {
+		for (int i = 1; i < argc; ++i) {
+			std::string argvi(argv[i]);
+			if (argvi == "-a") {
+				if ((i+=2) < argc) {
+					std::cerr << saftd_proxy->AttachDevice(argv[i-1], argv[i]) << std::endl;
+				} else {
+					throw std::runtime_error("expect name device after -a");
+				}
+			} else if (argvi == "-r") {
+				if ((i+=1) < argc) {
+					saftd_proxy->RemoveDevice(argv[i]);
+				} else {
+					throw std::runtime_error("expect name -r");
+				}
+			}
+		}
+	} else {
+		std::cerr << std::hex << std::setw(8) << std::setfill('0') << saftd_proxy->eb_read(0x20140000) << std::endl;
+	}	
 
 
 	return 0;
