@@ -31,27 +31,31 @@ static bool remove_line_comments(std::string &line) {
 }
 
 static void remove_block_comments(std::string &line, bool &block_comment) {
+	// std::cerr << "+++ " << line << std::endl;
+	std::string result;
 	bool in_string = false;
 	char previous_ch = ' ';
-	if (block_comment) {
-		for (size_t i = 0; i < line.size(); ++i) {
+	for (size_t i = 0; i < line.size(); ++i) {
+		if (block_comment) {
 			if (line[i] == '\"') in_string = !in_string;
 			if (line[i] == '/' && previous_ch == '*' && !in_string) {
-				line = line.substr(i+1);
 				block_comment = false;
 			}
 			previous_ch = line[i];
-		}
-	} else {
-		for (size_t i = 0; i < line.size(); ++i) {
+		} else {
 			if (line[i] == '\"') in_string = !in_string;
 			if (line[i] == '*' && previous_ch == '/' && !in_string) {
-				line = line.substr(0,i-1);
 				block_comment = true;
+				result.pop_back();
+			}
+			if (block_comment == false) {
+				result.push_back(line[i]);
 			}
 			previous_ch = line[i];
 		}
 	}
+	line = result;
+	// std::cerr << "=== " << line << std::endl;
 }
 
 static std::string build_namespace(const std::vector<std::string> namespace_names) {
@@ -269,9 +273,8 @@ struct ClassDefinition {
 	}
 };
 
-std::vector<ClassDefinition> classes;
 
-static void cpp_parser(const std::string &source_name, std::map<std::string, std::string> &defines)
+static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, std::map<std::string, std::string> &defines, std::vector<ClassDefinition> &classes, const std::vector<std::string> &include_paths)
 {
 	std::ifstream in(source_name);
 	if (!in) {
@@ -309,12 +312,10 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 
 		// detect and remove block_comments
 		remove_block_comments(line,block_comment);
-		if (block_comment) {
-			continue;
-		}
+
 		// track scope level
 		manage_scopes(line, scope, latest_scope_name);
-		std::cerr << line_no << " " << build_namespace(scope) << std::endl;
+		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
 
 		// extract function signature
 		if (saftbus_export_tag_in_last_line) {
@@ -460,22 +461,44 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 				msg << "parsing error in " << source_name << ":" << line_no << ": empty include filname";
 				throw std::runtime_error(msg.str());
 			}
+			if (include_open == '<') {
+				continue; // dont open sytem headers
+			}
+			std::string original_include_filename = include_filename;
 			if (source_name.find('/') != source_name.npos && include_filename[0] != '/') {
 				auto last_slash_pos = source_name.find_last_of('/');
 				include_filename = source_name.substr(0,last_slash_pos+1) + include_filename;
 			}
-			if (include_open == '<') {
-				continue; // dont open sytem headers
-			}
 			// test if the file can be opened...
+
 			std::ifstream included_file_in(include_filename);
 			if (!included_file_in) {
-				std::ostringstream msg;
-				msg << "parsing error in " << source_name << ":" << line_no << ": cannot open file \"" << include_filename << "\"";
-				throw std::runtime_error(msg.str());
+				std::cerr << "cannot open file: " << include_filename << std::endl;
+				// see if it can be opened in one of the include paths
+				bool success = false;
+				std::cerr << "check include paths " << include_paths.size() << std::endl;
+				for (auto &include_path: include_paths) {
+					std::string path_and_include_filename = include_path + "/" + original_include_filename;
+					std::cerr << "trying to open " << path_and_include_filename << std::endl;
+					auto path_and_included_file_in = std::ifstream(path_and_include_filename);
+					if (!path_and_included_file_in) {
+						std::cerr << "cannot open file: " << path_and_include_filename << std::endl;
+					} else {
+						std::cerr << "recursively parse " << path_and_include_filename << std::endl;
+						cpp_parser(path_and_include_filename, defines, classes, include_paths);
+						success = true;
+						break;
+					}
+				}
+				if (!success) {
+					std::ostringstream msg;
+					msg << "parsing error in " << source_name << ":" << line_no << ": cannot open file \"" << include_filename << "\"";
+					throw std::runtime_error(msg.str());
+				}
 			} else {
 				//... if it can be opened, call the parse function recursively
-				cpp_parser(include_filename, defines);
+				std::cerr << "recursively parse " << include_filename << std::endl;
+				cpp_parser(include_filename, defines, classes, include_paths);
 			}
 		} else if (!saftbus_export_tag) {
 			// do nothing
@@ -486,6 +509,7 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 		}
 	}
 	std::cerr << "end of file" << std::endl;
+	return classes;
 }
 
 
@@ -493,16 +517,36 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 
 int main(int argc, char **argv) 
 {
+	std::vector<std::string> include_paths;
+	std::vector<std::string> source_files;
 
-	if (argc != 2) {
-		std::cerr << "usage: " << argv[0] << " <c++-file>" << std::endl;
-		return 1;
+	for (int i = 1; i < argc; ++i) {
+		std::string argvi = argv[i];
+		if (argvi.substr(0,2) == "-I") {
+			if (argvi.size() > 2) {
+				include_paths.push_back(argvi.substr(2));
+			} else {
+				if (++i < argc) {
+					std::cerr << "add include_path: " << argv[i] << std::endl;
+					include_paths.push_back(argv[i]);
+				} else {
+					throw std::runtime_error("expecting pathname after \'-I\'");
+				}
+			}
+		} else {
+			source_files.push_back(argvi);
+		}
 	}
-	std::map<std::string, std::string> defines;
-	cpp_parser(argv[1], defines);
 
-	for (auto &class_def: classes) {
-		class_def.print();
+	// return 0;
+	for (auto &source_file: source_files) {
+		std::map<std::string, std::string> defines;
+		std::vector<ClassDefinition> classes;
+		cpp_parser(source_file, defines, classes, include_paths);
+		for (auto &class_def: classes) {
+			class_def.print();
+		}
 	}
+
 	return 0;
 }
