@@ -83,7 +83,7 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			if (!in) {
 				throw std::runtime_error("identifier expected after \'namespace\'");
 			}
-			i += 9 + latest_name.size();
+			i += 9 + name.size();
 			if (line.find(';') == line.npos && line.find("friend") == line.npos) {
 				latest_name = name;
 			}
@@ -96,7 +96,7 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			if (!in) {
 				throw std::runtime_error("identifier expected after \'class\'");
 			}
-			i += 5 + latest_name.size();
+			i += 5 + name.size();
 			if (line.find(';') == line.npos && line.find("friend") == line.npos) {
 				latest_name = name;
 			}
@@ -109,7 +109,7 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			if (!in) {
 				throw std::runtime_error("identifier expected after \'struct\'");
 			}
-			i += 6 + latest_name.size();
+			i += 6 + name.size();
 			if (line.find(';') == line.npos && line.find("friend") == line.npos) {
 				latest_name = name;
 			}
@@ -312,6 +312,9 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 		if (block_comment) {
 			continue;
 		}
+		// track scope level
+		manage_scopes(line, scope, latest_scope_name);
+		std::cerr << line_no << " " << build_namespace(scope) << std::endl;
 
 		// extract function signature
 		if (saftbus_export_tag_in_last_line) {
@@ -328,9 +331,6 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 		}
 		saftbus_export_tag_in_last_line = saftbus_export_tag;
 
-		// track scope level
-		manage_scopes(line, scope, latest_scope_name);
-		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
 
 		if (in_class_definition) {
 			class_definition.append(line);
@@ -467,12 +467,14 @@ static void cpp_parser(const std::string &source_name, std::map<std::string, std
 			if (include_open == '<') {
 				continue; // dont open sytem headers
 			}
+			// test if the file can be opened...
 			std::ifstream included_file_in(include_filename);
 			if (!included_file_in) {
 				std::ostringstream msg;
 				msg << "parsing error in " << source_name << ":" << line_no << ": cannot open file \"" << include_filename << "\"";
 				throw std::runtime_error(msg.str());
 			} else {
+				//... if it can be opened, call the parse function recursively
 				cpp_parser(include_filename, defines);
 			}
 		} else if (!saftbus_export_tag) {
