@@ -57,7 +57,7 @@ namespace Slib
 					source_pfds_ptr.push_back(pfd);
 				}
 			}
-			MAINCONTEXT_LOG("poll_recursive ", -1, -1);
+			MAINCONTEXT_LOG("poll_recursive ", -1, source_pfds.size());
 			poll(&source_pfds[0], source_pfds.size(), 0); // poll with timeout of 0
 			for (unsigned idx = 0; idx < source_pfds.size(); ++idx) {
 				source_pfds_ptr[idx]->pfd.revents = source_pfds[idx].revents;
@@ -149,7 +149,8 @@ namespace Slib
 			// std::vector<unsigned> signal_io_removed_indices;
 			signal_io_removed_indices.clear();
 			int poll_result;
-			MAINCONTEXT_LOG("poll", -1,timeout_ms);
+			MAINCONTEXT_LOG("poll_timeout", -1,timeout_ms);
+			MAINCONTEXT_LOG("poll_fd_size", -1,all_pfds.size());
 			if ((poll_result = poll(&all_pfds[0], all_pfds.size(), timeout_ms)) > 0) {
 			MAINCONTEXT_LOG("poll_fd", -1,-1);
 				// during check of results, signal_io_pfds and fds from sources
@@ -167,6 +168,7 @@ namespace Slib
 						if (fd.events & fd.revents) {
 							bool result = false;
 							if (fd.events & POLLIN) {
+								MAINCONTEXT_LOG("POLLIN_on_fd", -1,fd.fd);
 								//execute  signal_io callback
 								// nested calls to MainContext::iteration() may happen here!
 								result = signal_io_slots[idx](fd.revents);
