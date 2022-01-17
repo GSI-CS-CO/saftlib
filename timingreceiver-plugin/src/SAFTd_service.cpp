@@ -634,10 +634,10 @@ namespace saftlib
 				// if (path_prefix == "dev/tty" || path_prefix == "dev/pts") {
 				// 	poll_msis = true;
 				// }
-				// struct OpenDevice od(edev, first, last, poll_msis);
-				// od.name = name;
-				// od.objectPath = "/de/gsi/saftlib/" + name;
-				// od.etherbonePath = path;
+				struct OpenDevice od(edev, first, last, poll_msis);
+				od.name = name;
+				od.objectPath = "/de/gsi/saftlib/" + name;
+				od.etherbonePath = path;
 
 
 			

@@ -513,6 +513,210 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 }
 
 
+void generate_service_header(const std::string &outputdirectory, ClassDefinition &class_definition) {
+	std::string header_filename = outputdirectory;
+	if (header_filename.size()) {
+		header_filename.append("/");
+	}
+	header_filename.append(class_definition.name);
+	header_filename.append("_Service.hpp");
+	std::ofstream header_out(header_filename.c_str());
+
+	header_out << "#ifndef " << class_definition.name << "_SERVICE_HPP_" << std::endl;
+	header_out << "#define " << class_definition.name << "_SERVICE_HPP_" << std::endl;
+	header_out << std::endl;
+	header_out << "#include <saftbus/service.hpp>" << std::endl;
+	header_out << "#include <saftbus/saftbus.hpp>" << std::endl;
+	header_out << std::endl;
+
+	header_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
+	header_out << std::endl;
+
+	header_out << "\tclass " << class_definition.name << ";" << std::endl;
+	header_out << "\tclass " << class_definition.name << "_Service : public saftbus::Service {" << std::endl;
+	header_out << "\t\tstd::unique_ptr<" << class_definition.name << "> d;" << std::endl;
+	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
+	header_out << "\tpublic:" << std::endl;
+
+	header_out << "\t\t" <<        class_definition.name << "_Service();" << std::endl;
+	header_out << "\t\t" << "~" << class_definition.name << "_Service();" << std::endl;
+	header_out << "\t\t" << "void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);" << std::endl;
+	header_out << std::endl;
+
+	header_out << "\t};" << std::endl;
+
+	header_out << std::endl;
+	header_out << "}" << std::endl;
+	header_out << std::endl;
+
+	header_out << "#endif" << std::endl;
+
+}
+
+void generate_service_implementation(const std::string &outputdirectory, ClassDefinition &class_definition) {
+	std::string filename = outputdirectory;
+	if (filename.size()) {
+		filename.append("/");
+	}
+	filename.append(class_definition.name);
+	filename.append("_Service.cpp");
+	std::ofstream out(filename.c_str());
+
+	out << "#include \"" << class_definition.name << ".hpp\"" << std::endl;
+	out << "#include \"" << class_definition.name << "_Service.hpp\"" << std::endl;
+	out << "#include <saftbus/make_unique.hpp> " << std::endl;
+	out << std::endl;
+
+	out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
+	out << std::endl;
+
+
+	out << "\t" << "std::vector<std::string> " << class_definition.name << "_Service::gen_interface_names() {" << std::endl;
+	out << "\t\t" << "std::vector<std::string> result; " << std::endl;
+	out << "\t\t" << "result.push_back(\"" << class_definition.name << "\");" << std::endl;
+	out << "\t\t" << "return result;" << std::endl;
+	out << "\t" << "}" << std::endl;
+	out << "\t" << class_definition.name << "_Service::" << class_definition.name << "_Service() " << std::endl;
+	out << "\t" << ": saftbus::Service(gen_interface_names()), d(std2::make_unique<" << class_definition.name << ">())" << std::endl;
+	out << "\t" << "{}" << std::endl;
+	out << "\t" << class_definition.name << "_Service::~" << class_definition.name << "_Service() " << std::endl;
+	out << "\t" << "{}" << std::endl;
+
+	out << "\t" << "void " << class_definition.name << "_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send) {" << std::endl;
+	int interface_no = 0;
+	out << "\t\tswitch(interface_no) {" << std::endl;
+	out << "\t\t\t" << "case " << interface_no << ": " << std::endl;
+	out << "\t\t\tswitch(function_no) {" << std::endl;
+	for (unsigned function_no  = 0; function_no  < class_definition.exportedfunctions.size(); ++function_no ) {
+		auto &function = class_definition.exportedfunctions[function_no];
+		out << "\t\t\t\t" << "case " << function_no << ": {" << std::endl;
+		out << "\t\t\t\t" << "} break;" << std::endl;
+	}
+	out << "\t\t\t};" << std::endl;
+
+	// for (unsigned function_no = 0; function_no < function.argument_list.size(); ++function_no) {
+
+	out << "\t\t\t" << "break;" << std::endl;
+	out << std::endl;
+	out << "\t\t};" << std::endl;
+	out << "\t}" << std::endl;
+
+	out << std::endl;
+	out << "}" << std::endl;
+	out << std::endl;
+}
+
+
+void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &class_definition) {
+	std::string header_filename = outputdirectory;
+	if (header_filename.size()) {
+		header_filename.append("/");
+	}
+	header_filename.append(class_definition.name);
+	header_filename.append("_Proxy.hpp");
+	std::ofstream header_out(header_filename.c_str());
+
+	header_out << "#ifndef " << class_definition.name << "_PROXY_HPP_" << std::endl;
+	header_out << "#define " << class_definition.name << "_PROXY_HPP_" << std::endl;
+	header_out << std::endl;
+	header_out << "#include <saftbus/client.hpp>" << std::endl;
+	header_out << std::endl;
+
+	header_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
+	header_out << std::endl;
+
+	header_out << "\tclass " << class_definition.name << "_Proxy : public saftbus::Proxy {" << std::endl;
+	header_out << "\tpublic:" << std::endl;
+
+	for (auto &function: class_definition.exportedfunctions) {
+		header_out << "\t" << function.return_type << " " << function.name << "(";
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			header_out << function.argument_list[i].declaration();
+			if (i != function.argument_list.size()-1) {
+				header_out << ", ";
+			}
+		}
+		header_out << ");" << std::endl;
+	}
+
+	header_out << std::endl;
+
+	header_out << "\t};" << std::endl;
+
+	header_out << std::endl;
+	header_out << "}" << std::endl;
+	header_out << std::endl;
+
+	header_out << "#endif" << std::endl;
+
+}
+
+
+void generate_proxy_implementation(const std::string &outputdirectory, ClassDefinition &class_definition) {
+	std::string cpp_filename = outputdirectory;
+	if (cpp_filename.size()) {
+		cpp_filename.append("/");
+	}
+	cpp_filename.append(class_definition.name);
+	cpp_filename.append("_Proxy.cpp");
+	std::ofstream cpp_out(cpp_filename.c_str());
+
+	cpp_out << "#include \"" << class_definition.name << "_Proxy.hpp\"" << std::endl;
+	cpp_out << "#include <saftbus/saftbus.hpp>" << std::endl;
+	cpp_out << std::endl;
+
+	int interface_no = 0;
+
+	for (unsigned function_no  = 0; function_no  < class_definition.exportedfunctions.size(); ++function_no ) {
+		auto &function = class_definition.exportedfunctions[function_no];
+		cpp_out << function.return_type << " " << class_definition.scope << "_Proxy::" << function.name << "(";
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			cpp_out << function.argument_list[i].definition();
+			if (i != function.argument_list.size()-1) {
+				cpp_out << ", ";
+			}
+		}
+		cpp_out << ") {" << std::endl;
+		cpp_out << "\t" << "get_send().put(get_saftlib_object_id());" << std::endl;
+		cpp_out << "\t" << "get_send().put(" << interface_no << "); // interface_no" << std::endl;
+		cpp_out << "\t" << "get_send().put(" << function_no  << "); // function_no" << std::endl;
+		int num_outputs = 0;
+		if (function.return_type != "void") {
+			num_outputs = 1;
+		}
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			if (function.argument_list[i].is_output == false) {
+				cpp_out << "\t" << "get_send().put(" << function.argument_list[i].name << ");" << std::endl;
+			} else {
+				++num_outputs;
+			}
+		}
+		cpp_out << "\t{" << std::endl;
+		cpp_out << "\t\t" << "std::lock_guard<std::mutex> lock(get_client_socket());" << std::endl;
+		cpp_out << "\t\t" << "get_connection().send(get_send());" << std::endl;
+		if (num_outputs > 0) {
+			cpp_out << "\t\t" << "get_connection().receive(get_received());" << std::endl;
+		}
+		cpp_out << "\t}" << std::endl;
+
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			if (function.argument_list[i].is_output == true) {
+				cpp_out << "\t" << "get_received().get(" << function.argument_list[i].name << ");" << std::endl;
+			}
+		}
+
+		if (function.return_type != "void") {
+			cpp_out << "\t" << function.return_type << " return_value_result_;" << std::endl;
+			cpp_out << "\t" << "get_received().get(return_value_result_);" << std::endl;
+			cpp_out << "\t" << "return return_value_result_;" << std::endl;
+		}
+
+		cpp_out << "}" << std::endl;
+	}
+
+	cpp_out << std::endl;
+
+}
 
 
 int main(int argc, char **argv) 
@@ -545,7 +749,18 @@ int main(int argc, char **argv)
 		cpp_parser(source_file, defines, classes, include_paths);
 		for (auto &class_def: classes) {
 			class_def.print();
+		
+			generate_service_header("",class_def);
+			generate_service_implementation("",class_def);
+
+			generate_proxy_header("",class_def);
+			generate_proxy_implementation("",class_def);
+
 		}
+
+
+
+
 	}
 
 	return 0;

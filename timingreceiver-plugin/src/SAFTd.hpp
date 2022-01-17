@@ -20,21 +20,23 @@
 #ifndef SAFTLIB_SAFTD_H
 #define SAFTLIB_SAFTD_H
 
-#include <loop.h>
+#include <saftbus/loop.hpp>
 #include <memory>
+#include <map>
+#include <etherbone.h>
 
 namespace saftlib {
 
-class SAFTd : public iSAFTd,public blub
+class SAFTd 
 {
   public:
-    static SAFTd& get() { return saftd; }
-    ~SAFTd();
+    // static SAFTd& get() { return saftd; }
+    // ~SAFTd();
     
-    void setConnection(const std::shared_ptr<saftbus::Connection>& connection);
+    // void setConnection(const std::shared_ptr<saftbus::Connection>& connection);
     
-    const std::shared_ptr<Slib::MainLoop>&      loop()       { return m_loop; }
-    const std::shared_ptr<saftbus::Connection>& connection() { return m_connection; }
+    // const std::shared_ptr<Slib::MainLoop>&      loop()       { return m_loop; }
+    // const std::shared_ptr<saftbus::Connection>& connection() { return m_connection; }
     
     // @saftbus-export
     std::string AttachDevice(const std::string& name, const std::string& path);
@@ -47,24 +49,24 @@ class SAFTd : public iSAFTd,public blub
     // @saftbus-export
     std::map< std::string, std::string > getDevices() const;
     // @saftbus-export
-    std::string getSourceVersion() const;
+    std::string getSourceVersion(std::string &result) const;
     // @saftbus-export
     std::string getBuildInfo() const;
     
   protected:
-    SAFTd();
+    // SAFTd();
     
-    SAFTd_Service m_service;
-    std::shared_ptr<Slib::MainLoop> m_loop;
-    std::shared_ptr<saftbus::Connection> m_connection;
-    std::map< std::string, std::shared_ptr<EB_Forward> > m_eb_forward; 
-    etherbone::Socket socket;
-    sigc::connection eb_source;
-    sigc::connection msi_source;
+    // SAFTd_Service m_service;
+    // std::shared_ptr<Slib::MainLoop> m_loop;
+    // std::shared_ptr<saftbus::Connection> m_connection;
+    // std::map< std::string, std::shared_ptr<EB_Forward> > m_eb_forward; 
+    // etherbone::Socket socket;
+    // sigc::connection eb_source;
+    // sigc::connection msi_source;
     
-    std::map< std::string, OpenDevice > devs;
+    // std::map< std::string, OpenDevice > devs;
 
-    static SAFTd saftd;
+    // static SAFTd saftd;
 };
 
 } // saftlib

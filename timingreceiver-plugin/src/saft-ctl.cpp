@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 				if ((i+=1) < argc) {
 					std::cerr << "REMOVE DEVICE" << std::endl;
 					saftd_proxy->RemoveDevice(argv[i]);
-					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+					std::this_thread::sleep_for(std::chrono::milliseconds(300));
 				} else {
 					throw std::runtime_error("expect name -r");
 				}
