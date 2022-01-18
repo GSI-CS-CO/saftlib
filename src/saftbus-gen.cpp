@@ -662,9 +662,11 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 
 	header_out << "\tclass " << class_definition.name << "_Proxy : public saftbus::Proxy {" << std::endl;
 	header_out << "\tpublic:" << std::endl;
-
+	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group);" << std::endl;
+	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global());" << std::endl;
+	header_out << "\t\t" << "bool signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content);" << std::endl;
 	for (auto &function: class_definition.exportedfunctions) {
-		header_out << "\t" << function.return_type << " " << function.name << "(";
+		header_out << "\t\t" << function.return_type << " " << function.name << "(";
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			header_out << function.argument_list[i].declaration();
 			if (i != function.argument_list.size()-1) {
@@ -698,7 +700,21 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 
 	cpp_out << "#include \"" << class_definition.name << "_Proxy.hpp\"" << std::endl;
 	cpp_out << "#include <saftbus/saftbus.hpp>" << std::endl;
+	cpp_out << "#include <saftbus/make_unique.hpp>" << std::endl;
 	cpp_out << std::endl;
+	// cpp_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
+	// cpp_out << std::endl;
+
+	cpp_out << class_definition.scope << "_Proxy::" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group)" << std::endl;
+	cpp_out << "\t" << ": Proxy(object_path, signal_group)" << std::endl;
+	cpp_out << "{}" << std::endl;
+	cpp_out << "std::shared_ptr<" << class_definition.scope << "_Proxy> " << class_definition.scope << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group) {" << std::endl;
+	cpp_out << "\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group); " << std::endl;
+	cpp_out << "}" << std::endl;
+	cpp_out << "bool " << class_definition.scope << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
+	cpp_out << "\t" << "return true;" << std::endl;
+	cpp_out << "}" << std::endl;
+
 
 	int interface_no = 0;
 
@@ -749,6 +765,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 		cpp_out << "}" << std::endl;
 	}
 
+	// cpp_out << "}" << std::endl;
 	cpp_out << std::endl;
 
 }
@@ -758,6 +775,7 @@ int main(int argc, char **argv)
 {
 	std::vector<std::string> include_paths;
 	std::vector<std::string> source_files;
+	std::string output_directory;
 
 	for (int i = 1; i < argc; ++i) {
 		std::string argvi = argv[i];
@@ -772,6 +790,10 @@ int main(int argc, char **argv)
 					throw std::runtime_error("expecting pathname after \'-I\'");
 				}
 			}
+		} else if (argvi == "-o") {
+			if (++i < argc) {
+				output_directory = argv[i];
+			}
 		} else {
 			source_files.push_back(argvi);
 		}
@@ -785,11 +807,11 @@ int main(int argc, char **argv)
 		for (auto &class_def: classes) {
 			class_def.print();
 		
-			generate_service_header("",class_def);
-			generate_service_implementation("",class_def);
+			generate_service_header(output_directory, class_def);
+			generate_service_implementation(output_directory, class_def);
 
-			generate_proxy_header("",class_def);
-			generate_proxy_implementation("",class_def);
+			generate_proxy_header(output_directory, class_def);
+			generate_proxy_implementation(output_directory, class_def);
 
 		}
 
