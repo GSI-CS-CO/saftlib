@@ -590,6 +590,41 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	for (unsigned function_no  = 0; function_no  < class_definition.exportedfunctions.size(); ++function_no ) {
 		auto &function = class_definition.exportedfunctions[function_no];
 		out << "\t\t\t\t" << "case " << function_no << ": {" << std::endl;
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			std::string type = function.argument_list[i].type;
+			if (type.find("&") != type.npos) { // remove the reference from type signature (remove the "&")
+				type = type.substr(0,type.find("&"));
+			}
+			if (type.find("const") != type.npos) { // remove const 
+				type = type.substr(type.find("const")+6);
+			}
+			out << "\t\t\t\t\t" << type << " " << function.argument_list[i].name << ";" << std::endl;
+		}
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			if (function.argument_list[i].is_output == false) {
+				out << "\t\t\t\t\t" << "received.get(" << function.argument_list[i].name << ");" << std::endl;
+			} 
+		}
+		if (function.return_type != "void") {
+			out << "\t\t\t\t\t" << function.return_type << " function_call_result = " << "d->" << function.name << "(";	
+		} else {
+			out << "\t\t\t\t\t" << "d->" << function.name << "(";
+		}
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			out << function.argument_list[i].name;
+			if (i != function.argument_list.size()-1) {
+				out << ", ";
+			}
+		}
+		out << ");" << std::endl;
+		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+			if (function.argument_list[i].is_output == true) {
+				out << "\t\t\t\t\t" << "send.put(" << function.argument_list[i].name << ");" << std::endl;
+			} 
+		}
+		if (function.return_type != "void") {
+			out << "\t\t\t\t\t" << "send.put(function_call_result);" << std::endl;
+		}
 		out << "\t\t\t\t" << "} break;" << std::endl;
 	}
 	out << "\t\t\t};" << std::endl;
