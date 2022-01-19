@@ -2,6 +2,10 @@ AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -Wall -g  $(SIGC_CFLAGS) -I $(top_srcdir)/src 
 
+pkgdir = @libdir@/pkgconfig
+pkg_DATA = saftbus.pc
+EXTRA_DIST = saftbus.pc.in
+
 lib_LTLIBRARIES = libsaftbus.la            
 # libmini_saftlib_la_LDFLAGS = -version-info 0:0:0 
 
