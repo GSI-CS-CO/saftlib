@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SIGC_CFLAGS) -I $(top_srcdir)/src -I /home/michael/local/include/saftbus -I /home/michael/local/include
+AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I /home/michael/local/include/saftbus -I /home/michael/local/include
 
 lib_LTLIBRARIES = \
 	libsaftbus_example_service.la  \
@@ -25,13 +25,13 @@ libsaftbus_example_service_la_SOURCES = \
 	src/create_service.cpp
 	
 
-libsaftbus_example_proxy_la_LIBADD  = -L/home/michael/local/lib -lsaftbus
+libsaftbus_example_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 libsaftbus_example_proxy_la_SOURCES = \
 	src/Dice_Proxy.cpp     
-saftbus_example_proxy_includedir = $(includedir)/saftbus
+saftbus_example_proxy_includedir = $(includedir)/saftbus-example
 saftbus_example_proxy_include_HEADERS = \
 	src/Dice_Proxy.hpp       
 
 bin_PROGRAMS = saftbus-example-ctl
-saftbus_example_ctl_LDADD  = $(SIGC_LIBS) -L/home/michael/local/lib -lsaftbus libsaftbus_example_proxy.la
+saftbus_example_ctl_LDADD  = $(SAFTBUS_LIBS) libsaftbus_example_proxy.la
 saftbus_example_ctl_SOURCES = src/saftbus-example-ctl.cpp 
