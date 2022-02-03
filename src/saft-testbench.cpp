@@ -122,6 +122,7 @@ int main(int argc, char** argv) {
 	system("saft-software-tr&");
 	system("saftd&");
 	sleep(1);
+	system("saftbus-ctl --config-log-buffer 99999 3 10 /tmp/saftbus.log");
 	std::ifstream eb_device_name_in("/tmp/simbridge-eb-device");
 	if (!eb_device_name_in) {
 		std::cerr << "ERROR! cannot start software timing receiver" << std::endl;

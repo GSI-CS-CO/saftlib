@@ -188,6 +188,11 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 		std::string what;
 		saftbus::read(get_fd(), type);
 		saftbus::read(get_fd(), what);
+
+		// send the ping to saftd to prove that everyting is ok (and no segfault happend while unpacking the response)
+		saftbus::MessageTypeC2S ping = saftbus::SAFTBUS_CTL_HELLO;
+		saftbus::write(get_fd(), ping);
+
 		throw saftbus::Error(saftbus::Error::FAILED, what);
 	} else if (type == saftbus::METHOD_REPLY) {
 		// read regular function return value
@@ -197,10 +202,19 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 			saftbus::read_all(get_fd(), &_call_sync_result.data()[0], size);
 		}
 
+		// send the ping to saftd to prove that everyting is ok (and no segfault happend while unpacking the response)
+		saftbus::MessageTypeC2S ping = saftbus::SAFTBUS_CTL_HELLO;
+		saftbus::write(get_fd(), ping);
+
 		return _call_sync_result;
 	} else {
 		std::ostringstream msg;
 		msg << "ProxyConnection::call_sync() : unexpected type " << type << " instead of METHOD_REPLY or METHOD_ERROR";
+
+		// send the ping to saftd to prove that everyting is ok (and no segfault happend while unpacking the response)
+		saftbus::MessageTypeC2S ping = saftbus::REGISTER_CLIENT;
+		saftbus::write(get_fd(), ping);
+
 		throw saftbus::Error(saftbus::Error::FAILED, msg.str());
 	}
 

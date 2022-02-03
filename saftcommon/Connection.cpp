@@ -674,6 +674,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 							saftbus::write(client_fd, size);
 							saftbus::write_all(client_fd, data_ptr, size);
 
+
 						} else if (name == "Set") {
 							SAFTD_LOGT("SetProperty",property_name.c_str(),saftbus_object_id,-1); 
 							
@@ -762,6 +763,43 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 								saftbus::write_all(client_fd, data_ptr, size);
 							}
 						}
+					}
+					{
+						// after a method call, the proxy has to send a ping to show that it is still alive
+						// if there was a problem on the proxy side (e.g. a segfault) we will not receive anything here
+						// check if proxy has received the return value
+						SAFTD_LOG("Waiting for Proxy response", -1,-1);
+						struct pollfd pfd;
+						pfd.fd = client_fd;
+						pfd.events = POLLIN | POLLERR | POLLHUP;
+						int result = poll(&pfd, 1, 1000); // 1s timeout
+						if (result == 0) {
+							SAFTD_LOG("Logdump because: Timeout waiting for Proxy Response",-1,-1); 
+							fc_logger.dump();
+						} else if (result == 1) {
+							if (pfd.revents & POLLHUP) {
+								SAFTD_LOG("Logdump because: Proxy hung up (died)", -1,-1);
+								fc_logger.dump();
+							} else if (pfd.revents & POLLERR) {
+								SAFTD_LOG("Logdump because: Proxy error (died)", -1,-1);
+								fc_logger.dump();
+							} else if (pfd.revents & POLLIN) {
+								MessageTypeC2S ping;
+								saftbus::read(client_fd, ping);
+								if (ping != saftbus::SAFTBUS_CTL_HELLO) {
+									SAFTD_LOG("Logdump because: Proxy got unexpected response", -1,ping);
+									fc_logger.dump();
+								} else {
+									SAFTD_LOG("Proxy is ok after call_sync", -1,-1);
+								}
+							} else {
+								SAFTD_LOG("Logdump because: POLLERR or POLLHUP from Proxy",-1,-1); 
+								fc_logger.dump();
+							}
+						} else {
+							SAFTD_LOG("Logdump because: Error while waiting for Proxy response", -1,-1);
+							fc_logger.dump();
+						}		
 					}
 				}
 				break;
