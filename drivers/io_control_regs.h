@@ -62,6 +62,14 @@
 #define IO_SPECIAL_OUT_SHIFT         1
 #define IO_SPECIAL_IN_SHIFT          0
 
+#define IO_SPECIAL_MTCA4_BPL_BUF_OE    6
+#define IO_SPECIAL_LIBERA_TRIG_OE      5
+#define IO_SPECIAL_MTCA4_FAILSAFE_EN   4
+#define IO_SPECIAL_MTCA4_TRIG_BPL_PDN  3
+#define IO_SPECIAL_CLK_IN_EN           2
+#define IO_SPECIAL_TTL_TO_NIM          1
+#define IO_SPECIAL_NONE                0
+
 #define IO_CFG_FIELD_DIR_MASK        0xc0
 #define IO_CFG_FIELD_INFO_CHAN_MASK  0x38
 #define IO_CFG_FIELD_OE_MASK         0x04
