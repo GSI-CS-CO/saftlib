@@ -975,10 +975,28 @@ std::string InoutImpl::getLogicLevel() const
 
   switch(io_logic_level)
   {
-    case IO_LOGIC_LEVEL_TTL:   { IOLogicLevel = "TTL";   break; }
+    case IO_LOGIC_LEVEL_TTL:   { // display the correct level if the special function is level conversion
+      if (io_special_purpose == IO_SPECIAL_TTL_TO_NIM) {
+        if ( (io_spec_out_available && getSpecialPurposeOut()) || (io_spec_in_available  && getSpecialPurposeIn())) {
+          IOLogicLevel = "NIM";
+        } 
+      } else {
+        IOLogicLevel = "TTL";   
+      }
+    }
+    break; 
     case IO_LOGIC_LEVEL_LVTTL: { IOLogicLevel = "LVTTL"; break; }
     case IO_LOGIC_LEVEL_LVDS:  { IOLogicLevel = "LVDS";  break; }
-    case IO_LOGIC_LEVEL_NIM:   { IOLogicLevel = "NIM";   break; }
+    case IO_LOGIC_LEVEL_NIM:   { // display the correct level if the special function is level conversion
+      if (io_special_purpose == IO_SPECIAL_TTL_TO_NIM) {
+        if ( (io_spec_out_available && getSpecialPurposeOut()) || (io_spec_in_available  && getSpecialPurposeIn())) {
+          IOLogicLevel = "TTL";
+        } 
+      } else {
+        IOLogicLevel = "NIM";   
+      }
+    }
+    break; 
     case IO_LOGIC_LEVEL_CMOS:  { IOLogicLevel = "CMOS";  break; }
     default:                   { IOLogicLevel = "?";     break; }
   }
