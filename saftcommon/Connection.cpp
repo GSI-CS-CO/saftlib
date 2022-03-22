@@ -370,10 +370,10 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				break;
 				case saftbus::SAFTBUS_CTL_DISABLE_LOGGING:
 				{
-					SAFTD_LOG("logdump request",-1,-1);
+					SAFTD_LOG("logdump_request",-1,-1);
 					std::cerr << "# logdump on request" << std::endl;
 					fc_logger.dump(true);
-					SAFTD_LOG("logdump done",-1,-1);
+					SAFTD_LOG("logdump_done",-1,-1);
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_ENABLE_STATS:
@@ -768,36 +768,36 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 						// after a method call, the proxy has to send a ping to show that it is still alive
 						// if there was a problem on the proxy side (e.g. a segfault) we will not receive anything here
 						// check if proxy has received the return value
-						SAFTD_LOG("Waiting for Proxy response", -1,-1);
+						SAFTD_LOG("Waiting_for_Proxy_response", -1,-1);
 						struct pollfd pfd;
 						pfd.fd = client_fd;
 						pfd.events = POLLIN | POLLERR | POLLHUP;
 						int result = poll(&pfd, 1, 1000); // 1s timeout
 						if (result == 0) {
-							SAFTD_LOG("Logdump because: Timeout waiting for Proxy Response",-1,-1); 
+							SAFTD_LOG("Logdump_because_Timeout_waiting_for_Proxy_Response",-1,-1); 
 							fc_logger.dump();
 						} else if (result == 1) {
 							if (pfd.revents & POLLHUP) {
-								SAFTD_LOG("Logdump because: Proxy hung up (died)", -1,-1);
+								SAFTD_LOG("Logdump_because_Proxy_hung_up", -1,-1);
 								fc_logger.dump();
 							} else if (pfd.revents & POLLERR) {
-								SAFTD_LOG("Logdump because: Proxy error (died)", -1,-1);
+								SAFTD_LOG("Logdump_because_Proxy_error", -1,-1);
 								fc_logger.dump();
 							} else if (pfd.revents & POLLIN) {
 								MessageTypeC2S ping;
 								saftbus::read(client_fd, ping);
 								if (ping != saftbus::SAFTBUS_CTL_HELLO) {
-									SAFTD_LOG("Logdump because: Proxy got unexpected response", -1,ping);
+									SAFTD_LOG("Logdump_because_Proxy_got_unexpected_response", -1,ping);
 									fc_logger.dump();
 								} else {
-									SAFTD_LOG("Proxy is ok after call_sync", -1,-1);
+									SAFTD_LOG("Proxy_is_ok_after_call_sync", -1,-1);
 								}
 							} else {
-								SAFTD_LOG("Logdump because: POLLERR or POLLHUP from Proxy",-1,-1); 
+								SAFTD_LOG("Logdump_because_POLLERR_or_POLLHUP_from_Proxy",-1,-1); 
 								fc_logger.dump();
 							}
 						} else {
-							SAFTD_LOG("Logdump because: Error while waiting for Proxy response", -1,-1);
+							SAFTD_LOG("Logdump_because_Error_while_waiting_for_Proxy_response", -1,-1);
 							fc_logger.dump();
 						}		
 					}
