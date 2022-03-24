@@ -46,6 +46,15 @@ class SAFTd
     std::string EbForward(const std::string& saftlib_device);
     // @saftbus-export
     void Quit();
+
+    //! @brief List of all devices attached to saftd.
+    //!
+    //! The key is the name of the device as provided to AttachDevice.
+    //! The value is the Device object path, NOT the etherbone
+    //! path of the device. Each object is guaranteed to implement at least
+    //! the Device interface, however, typically the objects implement the
+    //! TimingReceiver interface.
+    //! 
     // @saftbus-export
     std::map< std::string, std::string > getDevices() const;
     // @saftbus-export
