@@ -79,12 +79,17 @@ namespace saftlib
 		}
 		if (leap_second_list_filename == nullptr) {
 			// no filename given
+			const char * default_filename = DATADIR "/saftlib/leap-seconds.list";
 			// first: look environment variable
 			leap_second_list_filename = getenv("SAFTLIB_LEAPSECONDSLIST");
-			std::ifstream testifstream(leap_second_list_filename);
-			if (!testifstream.good()) {
-				// second: look at standard location
-				leap_second_list_filename = DATADIR "/saftlib/leap-seconds.list";
+			if (leap_second_list_filename == nullptr) {
+				leap_second_list_filename = default_filename;
+			} else {
+				std::ifstream testifstream(leap_second_list_filename);
+				if (!testifstream.good()) {
+					// second: look at standard location
+					leap_second_list_filename = default_filename;
+				}
 			}
 		}
 		bool invalid_leap_second_list = false;
