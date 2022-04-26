@@ -241,9 +241,11 @@ namespace saftbus
 		void put(const std::vector<T>& std_vector) {
 			size_t size = std_vector.size();
 			put(size);
-			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_vector[0]));
-			const char* end   = begin + size*sizeof(std_vector[0]);
-			_data.insert(_data.end(), begin, end);
+			if (size > 0) {
+				const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_vector[0]));
+				const char* end   = begin + size*sizeof(std_vector[0]);
+				_data.insert(_data.end(), begin, end);
+			}
 		}
 		template<typename T>
 		void put(const std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) {
@@ -257,11 +259,13 @@ namespace saftbus
 		void get(std::vector<T> &std_vector) const {
 			size_t size;
 			get(size);
-			const T* begin = const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
-			const T* end   = begin + size;
 			std_vector.clear();
-			std_vector.insert(std_vector.end(), begin, end);
-			_iter += sizeof(T)*size;
+			if (size > 0) {
+				const T* begin = const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
+				const T* end   = begin + size;
+				std_vector.insert(std_vector.end(), begin, end);
+				_iter += sizeof(T)*size;
+			}
 		}
 		template<typename T>
 		void get(std::vector< std::vector<T, std::allocator<T> >, std::allocator< std::vector<T, std::allocator<T> > > >& std_vector_vector) const {
@@ -276,18 +280,22 @@ namespace saftbus
 		void put(const std::string& std_string) {
 			size_t size = std_string.size();
 			put(size);
-			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
-			const char* end   = begin + size*sizeof(std_string[0]);
-			_data.insert(_data.end(), begin, end);
+			if (size > 0) {
+				const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_string[0]));
+				const char* end   = begin + size*sizeof(std_string[0]);
+				_data.insert(_data.end(), begin, end);
+			}
 		}
 		void get(std::string &std_string) const {
 			size_t size;
 			get(size);
-			const char* begin = &(*_iter);
-			const char* end   = begin + size;
 			std_string.clear();
-			std_string.insert(std_string.end(), begin, end);
-			_iter += size;
+			if (size > 0) {
+				const char* begin = &(*_iter);
+				const char* end   = begin + size;
+				std_string.insert(std_string.end(), begin, end);
+				_iter += size;
+			}
 		}
 		// std::vector<std::string>
 		void put(const std::vector<std::string>& vector_string) {

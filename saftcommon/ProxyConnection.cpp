@@ -173,11 +173,13 @@ Serial& ProxyConnection::call_sync (int saftbus_index,
 
 	// serialize into a byte stream
 	uint32_t size = message.get_size();
-	const char *data_ptr =  static_cast<const char*>(message.get_data());
 	// write the data into the socket
 	saftbus::write(get_fd(), saftbus::METHOD_CALL);
 	saftbus::write(get_fd(), size);
-	saftbus::write_all(get_fd(), data_ptr, size);
+	if (size > 0) {
+		const char *data_ptr =  static_cast<const char*>(message.get_data());
+		saftbus::write_all(get_fd(), data_ptr, size);
+	}
 
 	// receive response from socket
 	saftbus::MessageTypeS2C type;
