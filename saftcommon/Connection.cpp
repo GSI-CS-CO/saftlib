@@ -754,11 +754,11 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
  							Serial &result = method_invocation_rptr->get_return_value();
 							// serialize
 							size = result.get_size();
-							const char *data_ptr = static_cast<const char*>(result.get_data());
 							//send 
 							saftbus::write(client_fd, saftbus::METHOD_REPLY);
 							saftbus::write(client_fd, size);
 							if (size > 0) {
+								const char *data_ptr = static_cast<const char*>(result.get_data());
 								saftbus::write_all(client_fd, data_ptr, size);
 							}
 						}

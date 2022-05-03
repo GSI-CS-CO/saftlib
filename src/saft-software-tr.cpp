@@ -1280,6 +1280,10 @@ public:
 			break;
 			case ECA_WALKER_CAPACITY_GET:  result = 0x100;
 			break;
+			case ECA_LATENCY_GET: result = 12;
+			break;
+			case ECA_OFFSET_BITS_GET: result = 32;
+			break;
     		case ECA_CHANNEL_TYPE_GET:     result = channel_type[_selected_channel];
     		break;
     		case ECA_CHANNEL_MAX_NUM_GET:  result = channel_raw_max_num[_selected_channel];

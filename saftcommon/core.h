@@ -227,13 +227,15 @@ namespace saftbus
 		// POD struct and build-in types
 		template<typename T>
 		void put(const T &val) {
+			while(_data.size()%sizeof(T) != 0) _data.push_back('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
 			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
 			const char* end   = begin + sizeof(val);
 			_data.insert(_data.end(), begin, end);
 		}
 		template<typename T>
 		void get(T &val) const {
-			memcpy(&val, &(*_iter), sizeof(T));
+			while((_iter-_data.begin())%sizeof(T) != 0) _iter+=sizeof('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
+			val    = *const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
 			_iter += sizeof(val);
 		}
 		// std::vector and nested std::vector
@@ -242,6 +244,7 @@ namespace saftbus
 			size_t size = std_vector.size();
 			put(size);
 			if (size > 0) {
+				while(_data.size()%sizeof(T) != 0) _data.push_back('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
 				const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&std_vector[0]));
 				const char* end   = begin + size*sizeof(std_vector[0]);
 				_data.insert(_data.end(), begin, end);
@@ -261,6 +264,7 @@ namespace saftbus
 			get(size);
 			std_vector.clear();
 			if (size > 0) {
+				while((_iter-_data.begin())%sizeof(T) != 0) _iter+=sizeof('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
 				const T* begin = const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
 				const T* end   = begin + size;
 				std_vector.insert(std_vector.end(), begin, end);
