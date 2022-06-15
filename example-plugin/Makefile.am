@@ -21,16 +21,19 @@ lib_LTLIBRARIES = \
 # libsaftbus_example_service_la_CPPADD  = $(EB_CFLAGS)
 # libsaftbus_example_service_la_LIBADD  = $(EB_LIBS)
 libsaftbus_example_service_la_SOURCES = \
-	src/Dice.cpp src/Dice.hpp      src/Dice_Service.cpp    src/Dice_Service.hpp \
+	src/Dice.cpp        src/Dice.hpp             src/Dice_Service.cpp           src/Dice_Service.hpp        \
+	src/SpecialDice.cpp src/SpecialDice.hpp      src/SpecialDice_Service.cpp    src/SpecialDice_Service.hpp \
 	src/create_service.cpp
 	
 
 libsaftbus_example_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 libsaftbus_example_proxy_la_SOURCES = \
-	src/Dice_Proxy.cpp     
+	src/Dice_Proxy.cpp     \
+	src/SpecialDice_Proxy.cpp
 saftbus_example_proxy_includedir = $(includedir)/saftbus-example
 saftbus_example_proxy_include_HEADERS = \
-	src/Dice_Proxy.hpp       
+	src/Dice_Proxy.hpp       \
+	src/SpecialDice_Proxy.hpp
 
 bin_PROGRAMS = saftbus-example-ctl
 saftbus_example_ctl_LDADD  = $(SAFTBUS_LIBS) libsaftbus_example_proxy.la

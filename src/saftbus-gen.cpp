@@ -220,8 +220,11 @@ std::vector<std::string> split_bases(std::string argument_list) {
 	std::vector<std::string> result;
 	std::string buffer;
 	for (auto &ch: argument_list) {
-		if (ch == ',' || ch == '{') {
+		if (ch == ',' || ch == '{' || ch == ' ') {
 			result.push_back(strip(buffer));
+			if (result.back() == "public" || result.back() == "") {
+				result.pop_back();
+			}
 			buffer.clear();
 			if (ch == '{') {
 				return result;
@@ -574,6 +577,9 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "\t" << "std::vector<std::string> " << class_definition.name << "_Service::gen_interface_names() {" << std::endl;
 	out << "\t\t" << "std::vector<std::string> result; " << std::endl;
 	out << "\t\t" << "result.push_back(\"" << class_definition.name << "\");" << std::endl;
+	for (auto &base: class_definition.bases) {
+		out << "\t\t" << "result.push_back(\"" << base << "\");" << std::endl;
+	}
 	out << "\t\t" << "return result;" << std::endl;
 	out << "\t" << "}" << std::endl;
 	out << "\t" << class_definition.name << "_Service::" << class_definition.name << "_Service() " << std::endl;
