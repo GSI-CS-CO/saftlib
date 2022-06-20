@@ -238,7 +238,8 @@ std::vector<std::string> split_bases(std::string argument_list) {
 struct ClassDefinition {
 	std::string scope;
 	std::string name;
-	std::vector<std::string> bases;
+	std::vector<std::string> bases;       // direct base classes
+	std::vector<std::string> all_bases;   // base classes and base classes of them
 	std::vector<FunctionSignature> exportedfunctions;
 	ClassDefinition(const std::string &scope_, const std::string &line) 
 		: scope(scope_)
@@ -258,13 +259,41 @@ struct ClassDefinition {
 			bases = split_bases(base_list);
 		}
 	}
+
+	bool operator==(std::string &n) {
+		return n == this->name;
+	}
+
+	std::vector<std::string> generate_all_bases(std::vector<ClassDefinition> &class_definitions) {
+		std::vector<std::string> result;
+		for (auto &base: bases) {
+			result.push_back(base);
+			ClassDefinition* base_class_definition = nullptr;
+			for (auto &class_definition: class_definitions) {
+				if (class_definition.name == base) {
+					base_class_definition = &class_definition;
+					break;
+				}
+			}
+			if (base_class_definition != nullptr) {
+				for (auto &bbase: base_class_definition->generate_all_bases(class_definitions)) {
+					result.push_back(bbase);
+				}
+			}
+		}
+		return result;
+	}
+
+	void finalize(std::vector<ClassDefinition> &class_definitions) {
+		all_bases = generate_all_bases(class_definitions);
+	}
 	void print() {
 		std::cerr << "ClassDefinition: " << std::endl;
 		std::cerr << "  scope: " << scope << std::endl;
 		std::cerr << "  name : " << name  << std::endl;
 		if (bases.size() > 0) {
 			std::cerr << "  bases: ";
-			for (auto &base: bases) {
+			for (auto &base: all_bases) {
 				std::cerr << base << " , ";
 			}
 			std::cerr << std::endl;
@@ -810,7 +839,9 @@ int main(int argc, char **argv)
 		std::map<std::string, std::string> defines;
 		std::vector<ClassDefinition> classes;
 		cpp_parser(source_file, defines, classes, include_paths);
+
 		for (auto &class_def: classes) {
+			class_def.finalize(classes);
 			class_def.print();
 		
 			generate_service_header(output_directory, class_def);

@@ -6,7 +6,7 @@ namespace example {
 	public:
 		Dice();
 		// @saftbus-export
-		int roll();
+		double roll();
 		// @saftbus-export
 		void setMax(int max);
 		// @saftbus-export

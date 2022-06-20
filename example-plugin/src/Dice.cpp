@@ -6,7 +6,7 @@ Dice::Dice() {
 	max = 6;
 }
 
-int Dice::roll() {
+double Dice::roll() {
 	return 1+rand()%max;
 }
 
