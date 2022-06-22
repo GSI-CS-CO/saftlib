@@ -62,6 +62,7 @@
 #define IO_SPECIAL_OUT_SHIFT         1
 #define IO_SPECIAL_IN_SHIFT          0
 
+#define IO_SPECIAL_I2C_USB_C           7
 #define IO_SPECIAL_MTCA4_BPL_BUF_OE    6
 #define IO_SPECIAL_LIBERA_TRIG_OE      5
 #define IO_SPECIAL_MTCA4_FAILSAFE_EN   4
