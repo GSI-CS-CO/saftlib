@@ -74,11 +74,47 @@ namespace saftlib {
 
     // detect the burst generator
     int cpu_idx = -1;
-    uint32_t bg_id = 0;
+    eb_data_t bg_id = 0;
 
     for (unsigned i = 0; i < ram.size(); ++i)
     {
       ram_base = ram[i].sdb_component.addr_first;
+
+      // write own slot number to a reserved location (shared memory)
+      device.write(ram_base + SHM_MB_SLOT_HOST, EB_DATA32, (eb_data_t)my_slot);
+
+      // reset lm32 core
+      uint32_t all_cpus = (1 << ram.size()) - 1;
+      uint32_t bits = (1 << i) & all_cpus;
+
+      clog << kLogDebug << "BurstGenerator: resetting lm32 core." <<
+        " (idx = " << i << ", bits = " << bits <<
+        ", all_cpus = " << all_cpus << ")" << std::endl;
+
+      // clear a buffer for the FW ID (in the shared memory) before reset
+      device.read(ram_base + SHM_FW_ID, EB_DATA32, &data);     // back up buffer value
+      device.write(ram_base + SHM_FW_ID, EB_DATA32, 0);
+
+      // use the first reset controller (register offsets: SET = +0x8, CLR = +0xc)
+      device.write(reset_controllers[0].sdb_component.addr_first + 0x8, EB_DATA32, bits); // halt
+      usleep(10);
+      device.write(reset_controllers[0].sdb_component.addr_first + 0xc, EB_DATA32, bits); // resume
+
+      // read the buffer for the FW ID until wait time expires (2 seconds)
+      int timeout = 20;
+      while ((static_cast<uint32_t>(bg_id) != BG_FW_ID) || (timeout != 0)) {
+        usleep(100000);
+        --timeout;
+        device.read(ram_base + SHM_FW_ID, EB_DATA32, &bg_id);
+      }
+
+      clog << kLogInfo << "BurstGenerator: LM32 reset complete." << std::endl;
+
+      if (static_cast<uint32_t>(bg_id) != BG_FW_ID)
+      {
+        device.write(ram_base + SHM_FW_ID, EB_DATA32, data);   // restore the buffer value
+        continue;
+      }
 
       // get a mailbox slot subscribed by the burst generator
       device.read(ram_base + SHM_MB_SLOT, EB_DATA32, &data);
@@ -89,48 +125,14 @@ namespace saftlib {
 
       bg_slot = mailbox.sdb_component.addr_first + data * 8;
 
-      // read the firmware id from a reserved location (shared memory)
-      device.read(ram_base + SHM_FW_ID, EB_DATA32, &data);
-      bg_id = static_cast<uint32_t>(data);
-
-      if (bg_id != BG_FW_ID)
-      {
-        continue;
-      }
-
       cpu_idx = i;
 
-      // write own slot number to a reserved location (shared memory)
-      device.read(ram_base + SHM_FW_ID, EB_DATA32, &data);         // back up data
-      device.write(ram_base + SHM_MB_SLOT_HOST, EB_DATA32, (eb_data_t)my_slot);
-
-      clog << kLogDebug << "BurstGenerator: my msi path = 0x" << std::hex << (uint32_t)my_msi_path <<
+      clog << kLogInfo << "BurstGenerator: my msi path = 0x" << std::hex << (uint32_t)my_msi_path <<
         ", my mailbox slot = 0x" << std::hex << my_slot <<
-        " (available for lm32 at 0x" << std::hex << (uint32_t)(ram_base + SHM_MB_SLOT_HOST) << ")"  << std::endl;
+        " (available for LM32 at 0x" << std::hex << (uint32_t)(ram_base + SHM_MB_SLOT_HOST) << ")"  << std::endl;
 
-      // reset lm32 core
-      uint32_t all_cpus = (1 << ram.size()) - 1;
-      uint32_t bits = (1 << cpu_idx) & all_cpus;
-
-      clog << kLogDebug << "BurstGenerator: resetting lm32 core." <<
-        " (idx = " << cpu_idx << ", bits = " << bits <<
-        ", all_cpus = " << all_cpus << ")" << std::endl;
-
-      // use the first reset controller (register offsets: SET = +0x8, CLR = +0xc)
-      device.write(reset_controllers[0].sdb_component.addr_first + 0x8, EB_DATA32, bits); // halt
-      usleep(1000);
-      device.write(reset_controllers[0].sdb_component.addr_first + 0xc, EB_DATA32, bits); // resume
-
-      if (firmwareRunning(bg_id))
-      {
-        clog << kLogDebug << "BurstGenerator: firmware is running." << std::endl;
-        break;
-      }
-      else
-      {
-        device.write(ram_base + SHM_MB_SLOT_HOST, EB_DATA32, data); // restore old data
-        cpu_idx = -1;
-      }
+      clog << kLogInfo << "BurstGenerator: firmware is running." << std::endl;
+      break;
     }
 
     if (cpu_idx < 0)

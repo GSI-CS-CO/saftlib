@@ -20,6 +20,9 @@
 #ifndef BG_REGS_H
 #define BG_REGS_H
 
+#include "../../modules/common-libs/include/common-defs.h"
+#include "../../modules/burst_generator/burstgen_shared_mmap.h"
+
 // Locate shared memory of processors
 #define LM32_RAM_USER_VENDOR      0x651       //vendor ID
 #define LM32_RAM_USER_PRODUCT     0x54111351  //product ID
@@ -38,12 +41,12 @@
 #define BG_FW_ID                  0xb2b2b2b2
 
 // definitions of buffers in shared memory
-#define SHM_BASE                  0x500
+#define SHM_BASE                  SHARED_OFFS + COMMON_SHARED_END
 
 #define SHM_FW_ID                 SHM_BASE
 #define SHM_MB_SLOT               SHM_BASE + 0x04UL
 #define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL
-#define SHM_CMD                   SHM_BASE + 0x10UL
+#define SHM_CMD                   SHARED_OFFS + COMMON_SHARED_CMD
 #define SHM_INPUT                 SHM_BASE + 0x20UL
 
 #define EVT_ID_IO_H32             0x0000FCA0UL  // event id of timing message for IO actions (hi32)
@@ -51,17 +54,17 @@
 #define EVT_MASK_IO               0xFFFFFFFF00000000ULL
 
 // user commands for the burst generator
-#define CMD_SHOW_ALL              0x1UL         // show pulse parameters, pulse cycles
-#define CMD_GET_PARAM             0x2UL         // get pulse parameters
-#define CMD_GET_CYCLE             0x3UL         // get pulse cycles
-#define CMD_LS_BURST              0x4UL         // list burst (burst ids or burst info)
-#define CMD_MK_BURST              0x5UL         // declare new burst
-#define CMD_RM_BURST              0x6UL         // remove burst
-#define CMD_DE_BURST              0x7UL         // dis/enable burst
-#define CMD_RD_MSI_ECPU           0x10UL        // read and show the content of ECA MSI registers (MSI enable, MSI destination address)
-#define CMD_RD_ECPU_CHAN          0x11UL        // read and show the content of ECA counters for the eCPU action channel
-#define CMD_RD_ECPU_QUEUE         0x12UL        // read and show the content of ECA queue connected to the eCPU action channel
-#define CMD_LS_FW_ID              0x13UL        // list the firmware id (the value is written to the shared input buffer)
+#define CMD_SHOW_ALL              0x21UL         // show pulse parameters, pulse cycles
+#define CMD_GET_PARAM             0x22UL         // get pulse parameters
+#define CMD_GET_CYCLE             0x23UL         // get pulse cycles
+#define CMD_LS_BURST              0x24UL         // list burst (burst ids or burst info)
+#define CMD_MK_BURST              0x25UL         // declare new burst
+#define CMD_RM_BURST              0x26UL         // remove burst
+#define CMD_DE_BURST              0x27UL         // dis/enable burst
+#define CMD_RD_MSI_ECPU           0x30UL        // read and show the content of ECA MSI registers (MSI enable, MSI destination address)
+#define CMD_RD_ECPU_CHAN          0x31UL        // read and show the content of ECA counters for the eCPU action channel
+#define CMD_RD_ECPU_QUEUE         0x32UL        // read and show the content of ECA queue connected to the eCPU action channel
+#define CMD_LS_FW_ID              0x33UL        // list the firmware id (the value is written to the shared input buffer)
 
 #define CTL_DIS                   0x0000UL
 #define CTL_EN                    0x0001UL
