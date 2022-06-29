@@ -178,15 +178,20 @@ namespace saftlib {
     if (bg_slot == 0)
       return false;
 
-    device.write(ram_base + SHM_INPUT, EB_DATA32, 0);
-    device.write(bg_slot, EB_DATA32, CMD_LS_FW_ID);
+    // send an user command to get the firmware ID (wait 100 ms for the firmware response)
+    int timeout = 10;
+    eb_data_t data = 0;
 
-    sleep(2);
+    device.write(ram_base + SHM_INPUT, EB_DATA32, data);
+    device.write(ram_base + SHM_CMD, EB_DATA32, CMD_LS_FW_ID);
 
-    eb_data_t value;
-    device.read(ram_base + SHM_INPUT, EB_DATA32, &value);
+    while (( data == 0) || (timeout != 0)) {
+      usleep(10000);
+      --timeout;
+      device.read(ram_base + SHM_INPUT, EB_DATA32, &data);
+    }
 
-    return (id == (uint32_t)value);
+    return (id == (uint32_t)data);
   }
 
   int32_t BurstGenerator::instruct(uint32_t code, const std::vector< uint32_t >& args)
@@ -213,7 +218,7 @@ namespace saftlib {
       cycle.close();
 
       // send the instruction code to LM32
-      device.write(bg_slot, EB_DATA32, code);
+      device.write(ram_base + SHM_CMD, EB_DATA32, code);
 
       clog << kLogDebug << "BurstGenerator: method call instruct(" << code << ") succeeded." << std::endl;
       return EB_OK;
@@ -234,13 +239,8 @@ namespace saftlib {
 
     try
     {
+      // common-libs deletes the command buffer in the shared memory
       eb_data_t data;
-      device.read(ram_base + SHM_CMD, EB_DATA32, &data);
-      if (static_cast<uint32_t>(data) != CMD_LS_BURST)
-      {
-        clog << kLogDebug << "BurstGenerator: more waits might be needed until LM32 uploads the burst info: " << static_cast<uint32_t>(data) << ' ' << CMD_LS_BURST << std::endl;
-        return info;
-      }
 
       // read burst info from the shared memory
       /*TODO: cycle read failed! Find out the reason!
