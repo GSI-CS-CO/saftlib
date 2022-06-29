@@ -187,7 +187,6 @@ static int  bg_clear_all        (bool verbose);
 static void bg_help             (char option);
 static int  bg_invoke_async     (std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t inst_code, std::vector<uint32_t> inst_args);
 static bool bg_is_comment       (const std::string& str);
-static std::vector<std::string> bg_split(const std::string& in, const char delimiter);
 //static std::vector<std::string> bg_extract_options(const std::string& str, const std::string& rule);
 static int parse_options        (int optc, char* optv[], const char* optstr);
 static int bg_parse_options     (const std::string& options, const char* optstring);
@@ -499,22 +498,24 @@ static int bg_parse_options(const std::string& options, const char* optstring)
   // clear option buffer
   memset(opt_buf, '\0', sizeof(opt_buf));
 
-  // make a local copy of a string
-  std::size_t len = options.size();
-  for (size_t i = 0; i < len; ++i)
-    opt_buf[i] = options[i];
-  opt_buf[len] = '\0';
-
   // get the number of option elements, optc
-  int optc = bg_split(options, ' ').size();
+  strcpy(opt_buf, options.c_str());
+  int optc = 0;
 
-  // create and set up an option vector
+  char *opt = std::strtok(opt_buf, " ");
+  while (opt != NULL) {
+   ++optc;
+   opt = std::strtok(NULL, " ");
+  }
+
+  // create and set up an option vector, optv
+  strcpy(opt_buf, options.c_str());
   char* optv[optc];
   int i = 0;
 
   optv[i] = std::strtok(opt_buf, " ");
 
-  while (optv[i] != NULL && i < optc)
+  while (optv[i] != NULL)
   {
     ++i;
     optv[i] = std::strtok(NULL, " ");
@@ -529,45 +530,6 @@ static int bg_parse_options(const std::string& options, const char* optstring)
   std::cout << std::endl;
 
   return parse_options(optc, optv, optstring);
-}
-
-/* Split a given string with the delimiter */
-static std::vector<std::string> bg_split(const std::string& in, const char delimiter)
-{
-  std::vector<std::string> out;
-  typedef std::string::const_iterator iter;
-
-  iter b = in.begin();  // begin of a word
-  iter e = b;           // end of a word
-
-  while(e != in.end())
-  {
-    // find begin of a word
-    while (b != in.end() && *b == delimiter) // find a begin of a word
-      ++b;
-
-    if (b == in.end())
-    {
-      e = in.end(); // reached end of a string
-    }
-    else            // find end of a word
-    {
-      e = b + 1;
-
-      while (e != in.end() && *e != delimiter)
-        ++e;
-
-      if (b != e)   // found a word
-      {
-        out.push_back(std::string(b, e));
-
-        if (e != in.end())
-          b = e + 1;
-      }
-    }
-  }
-
-  return out;
 }
 
 /* Extract options from a single string */
