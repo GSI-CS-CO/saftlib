@@ -195,6 +195,7 @@ static int bg_check_arguments   (void);
 static void bg_reset_variables  (void);
 static int bg_do_configuration  (void);
 static int bg_setup_device      (const char* device_name);
+static int io_check             (int burst_id, bool &found);
 
 /* Set up a timing receiver */
 static int bg_setup_device(const char* device_name)
@@ -1088,6 +1089,50 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
   return result;
 }
 
+/* Check if the given conditions for IO actions is already set */
+static int io_check(int burst_id, bool &found)
+{
+  /* Helpers */
+  uint64_t e_id = (EVT_ID_IO_H32 + (burstId << 4)) << 32;
+
+  /* Perform selected action(s) */
+  try
+  {
+    if (verbose_mode)
+      std::cout << "Info: check if events with ID " << std::hex << e_id << " already exist for IO action" << std::endl;
+
+    /* Search for IO name */
+    std::string io_path;
+    std::shared_ptr<Output_Proxy> output_proxy;
+
+    /* Check if IO exists output */
+    for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
+    {
+      output_proxy = Output_Proxy::create(it->second);
+
+      std::vector< std::string > all_conditions = output_proxy->getAllConditions();
+
+      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      {
+         /* Get output conditions */
+         std::shared_ptr<OutputCondition_Proxy> info_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
+         if (info_condition->getID() == e_id) {
+           found = true;
+           break;
+         }
+      }
+    }
+  }
+  catch (const saftbus::Error& error)
+  {
+    /* Catch error(s) */
+    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return (__IO_RETURN_FAILURE);
+  }
+
+  /* Done */
+  return (__IO_RETURN_SUCCESS);
+}
 
 /* Configure ECA with the IO event conditions for generating pulse at the chosen output */
 /* ==================================================================================================== */
@@ -1223,7 +1268,16 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
   uint64_t _e_id = EVT_ID_IO_H32 + (burstId << 4);
   _e_id <<= 32;
   uint64_t _e_mask = EVT_MASK_IO;
-  if (conditions == 1)
+
+  bool conditions_exist = false;
+  io_check(burstId, conditions_exist);
+
+  if (!b_flag && conditions_exist) // destroy existing conditions, if new pulse parameter is given (by burst flag)
+  {
+    io_destroy(verbose_mode);
+  }
+
+  if (n_conditions == 1)
   {
     if (t_high == t_period)
       level = 1;
