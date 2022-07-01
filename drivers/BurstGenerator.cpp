@@ -127,7 +127,8 @@ namespace saftlib {
 
       cpu_idx = i;
 
-      clog << kLogInfo << "BurstGenerator: my msi path = 0x" << std::hex << (uint32_t)my_msi_path <<
+      clog << kLogInfo << "BurstGenerator: LM32 ram base: " << std::hex << ram_base <<
+        ", my msi path = 0x" << std::hex << (uint32_t)my_msi_path <<
         ", my mailbox slot = 0x" << std::hex << my_slot <<
         " (available for LM32 at 0x" << std::hex << (uint32_t)(ram_base + SHM_MB_SLOT_HOST) << ")"  << std::endl;
 
