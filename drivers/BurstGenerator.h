@@ -30,6 +30,7 @@ namespace saftlib {
       int32_t instruct(uint32_t code, const std::vector< uint32_t >& args);
       std::vector< uint32_t > readBurstInfo(uint32_t id);
       std::vector< uint32_t > readSharedBuffer(uint32_t size);
+      uint32_t readState();
       uint32_t getResponse() const;
 
     protected:

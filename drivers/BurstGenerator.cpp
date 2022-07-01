@@ -314,6 +314,29 @@ namespace saftlib {
     }
   }
 
+  uint32_t BurstGenerator::readState()
+  {
+    if (ram_base == 0)
+      return COMMON_STATE_UNKNOWN;
+
+    try
+    {
+      eb_data_t data;
+
+      // read the FSM state location in the shared memory
+      device.read(ram_base + SHM_STATE, EB_DATA32, &data);
+
+      clog << kLogDebug << "BurstGenerator: method call readState() succeeded: " << static_cast<uint32_t>(data) << std::endl;
+
+      return static_cast<uint32_t>(data);
+    }
+    catch (etherbone::exception_t e)
+    {
+      clog << kLogDebug << "BurstGenerator: method call " << e.method << " failed with status: " << e.status << std::endl;
+      return -1;
+    }
+  }
+
   uint32_t BurstGenerator::getResponse() const
   {
     return response;

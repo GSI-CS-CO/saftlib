@@ -41,12 +41,13 @@
 #define BG_FW_ID                  0xb2b2b2b2
 
 // definitions of buffers in shared memory
+#define SHM_CMD                   SHARED_OFFS + COMMON_SHARED_CMD
+#define SHM_STATE                 SHARED_OFFS + COMMON_SHARED_STATE
 #define SHM_BASE                  SHARED_OFFS + COMMON_SHARED_END
 
 #define SHM_FW_ID                 SHM_BASE
 #define SHM_MB_SLOT               SHM_BASE + 0x04UL
 #define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL
-#define SHM_CMD                   SHARED_OFFS + COMMON_SHARED_CMD
 #define SHM_INPUT                 SHM_BASE + 0x20UL
 
 #define EVT_ID_IO_H32             0x0000FCA0UL  // event id of timing message for IO actions (hi32)

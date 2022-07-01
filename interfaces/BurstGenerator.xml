@@ -49,6 +49,14 @@
       <arg direction="out" type="au" name="data"/>
     </method>
 
+    <!-- readState: Read the actual state of the burst generator.
+
+         @state:   Actual state of the burst generator
+      -->
+    <method name="readState">
+      <arg direction="out" type="u" name="state"/>
+    </method>
+
     <!-- sigInstComplete: Notify the completion of an instruction.
          It is the response of the burst generator on user instruction request.
 
