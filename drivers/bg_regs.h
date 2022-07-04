@@ -50,9 +50,9 @@
 #define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL
 #define SHM_INPUT                 SHM_BASE + 0x20UL
 
-#define EVT_ID_IO_H32             0x0000FCA0UL  // event id of timing message for IO actions (hi32)
+#define EVT_ID_IO_H32             0x0000fca0UL  // event id of timing message for IO actions (hi32)
 #define EVT_ID_IO_L32             0x00000000UL  // event id of timing message for IO actions (lo32)
-#define EVT_MASK_IO               0xFFFFFFFF00000000ULL
+#define EVT_MASK_IO               0xffffffffffffffffULL
 
 // user commands for the burst generator
 #define CMD_SHOW_ALL              0x21UL         // show pulse parameters, pulse cycles
@@ -72,7 +72,27 @@
 #define CTL_VALID                 0x8000UL
 
 #define N_BURSTS                  16            // maximum number of bursts
-#define N_BURST_INFO              10            // the length of burst info (id, io_type, io_idx, start_h32/l32, stop_h32/l32, cycle_h32/l32, flag)
+
+enum BURST_INFO {                               // burst info fields
+  INFO_ID,
+  INFO_IO_TYPE,
+  INFO_IO_IDX,
+  INFO_START_EVT_H32,
+  INFO_START_EVT_L32,
+  INFO_STOP_EVT_H32,
+  INFO_STOP_EVT_L32,
+  INFO_LOOPS_H32,
+  INFO_LOOPS_L32,
+  INFO_ACTIONS_H32,
+  INFO_ACTIONS_L32,
+  INFO_FLAG,
+  N_BURST_INFO
+};
 
 #define INTERVAL_200US            200000ULL
+
+#define __BG_RETURN_SUCCESS       0
+#define __BG_RETURN_FAILURE       0xffffffff
+#define __BG_RETURN_OPTION_INVAL  0xfffffffe
+
 #endif
