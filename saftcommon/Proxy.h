@@ -61,7 +61,7 @@ namespace saftbus
 			//ProxyFlags  	flags = PROXY_FLAGS_ACTIVE_WAIT_FOR_SIGNAL,
             saftlib::SignalGroup    &signalGroup = saftlib::globalSignalGroup 
 		);
-		~Proxy();
+		virtual ~Proxy();
 
 		using MapChangedProperties = std::map<std::string, Serial>;
 
