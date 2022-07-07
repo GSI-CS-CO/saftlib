@@ -122,12 +122,12 @@ private:
 	std::deque<uint32_t> input_word_buffer;
 	std::deque<uint32_t> input_word_buffer2; // only used to echo the input next to the output (not used for bridge logic)
 	std::deque<uint32_t> output_word_buffer;
-	bool eb_flag_bca;
-	bool eb_flag_rca;
-	bool eb_flag_rff;
-	bool eb_flag_cyc;
-	bool eb_flag_wca;
-	bool eb_flag_wff;
+	bool eb_flag_bca = false;
+	bool eb_flag_rca = false;
+	bool eb_flag_rff = false;
+	bool eb_flag_cyc = false;
+	bool eb_flag_wca = false;
+	bool eb_flag_wff = false;
 	uint8_t eb_byte_en, eb_wcount, eb_rcount;
 
 	uint32_t base_write_adr;
@@ -666,7 +666,9 @@ void EBslave::send_output_buffer()
 				write_buffer.push_back(val);
 			}
 		}
-		write(pfds[0].fd, (void*)&write_buffer[0], write_buffer.size());
+		if (write_buffer.size() ) {
+			write(pfds[0].fd, (void*)&write_buffer[0], write_buffer.size());
+		}
 	}
 }
 
