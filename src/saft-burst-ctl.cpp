@@ -179,7 +179,7 @@ static int  bg_get_io_name      (int burst_id, std::string &name);
 static int  bg_list_bursts      (int burst_id, bool verbose);
 static int  bg_remove_burst     (int burst_id, bool verbose);
 static int  bg_disenable_burst  (int burst_id, int disen, bool verbose);
-static int  bg_create_burst     (int burst_id, uint64_t e_id, uint64_t e_mask, uint64_t stop_e_id, uint64_t stop_e_mask, bool verbose);
+static int  bg_create_burst     (int burst_id, uint64_t e_id, uint64_t e_mask, uint64_t stop_e_id, uint64_t stop_e_mask, bool verbose_mode);
 static std::string find_io_name (std::shared_ptr<TimingReceiver_Proxy> tr, std::vector<uint32_t> info);
 static int  ecpu_update         (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag, bool verbose);
 static int  ecpu_check          (uint64_t e_id, uint64_t e_mask, int64_t offset, uint32_t tag);
@@ -520,15 +520,18 @@ static int bg_parse_options(const std::string& options, const char* optstring)
     optv[i] = std::strtok(NULL, " ");
   }
 
-  //std::cout << "optc = " << optc << std::endl << "optstring = " << optstring << std::endl;
-  std::cout << "Parsing options : ";
+  int status = parse_options(optc, optv, optstring);
 
-  for (i = 0; i < optc; ++i)
-    std::cout << optv[i] << " ";
+  if (verbose_mode) {
+    std::cout << "Parsed options: ";
 
-  std::cout << std::endl;
+    for (i = 0; i < optc; ++i)
+      std::cout << optv[i] << " ";
 
-  return parse_options(optc, optv, optstring);
+    std::cout << std::endl;
+  }
+
+  return status;
 }
 
 /* Extract options from a single string */
@@ -942,7 +945,7 @@ static int bg_disenable_burst(int burst_id, int disen, bool verbose)
 }
 
 /* Create new burst */
-static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_t stop_e_id, uint64_t stop_e_mask, bool verbose)
+static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_t stop_e_id, uint64_t stop_e_mask, bool verbose_mode)
 {
   int result = 0;
 
@@ -1003,7 +1006,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     else if (check == 0) // conditions were not set
     {
       /* Configure ECA with the conditions for eCPU actions */
-      if (ecpu_update(e_id, e_mask, 0, tag, verbose))  // TODO: apply offset?
+      if (ecpu_update(e_id, e_mask, 0, tag, verbose_mode))  // TODO: apply offset?
       {
         std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
         return -1;
@@ -1023,7 +1026,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
       else if (check == 0) // conditions were not set
       {
         /* Configure ECA with the conditions for eCPU actions */
-        if (ecpu_update(stop_e_id, stop_e_mask, 0, tag, verbose))  // TODO: apply offset?
+        if (ecpu_update(stop_e_id, stop_e_mask, 0, tag, verbose_mode))  // TODO: apply offset?
         {
           std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
           return -1;
@@ -1036,9 +1039,10 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     int io_drive = 0;
     bool set_oe = true;
     bool set_drive = true;
+    bool verbose = true;
 
     result = io_setup(io_oe, 0, 0, 0, 0, 0, 0, 0, io_drive, 0,
-          set_oe, false, false, false, false, false, false, false, set_drive, false, true);
+          set_oe, false, false, false, false, false, false, false, set_drive, false, verbose_mode);
 
     if (result != 0)
     {
@@ -1064,7 +1068,7 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     args.push_back((uint32_t)e_id);
     args.push_back((uint32_t)(stop_e_id >> 32));
     args.push_back((uint32_t)stop_e_id);
-    args.push_back(static_cast<uint32_t>(verbose));
+    args.push_back(verbose);
 
     if (bg_invoke_async(bg, CMD_MK_BURST, args))
     {
@@ -1250,10 +1254,6 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
     return -1;
   }
 
-  std::cout << "Burst info: " << std::showbase;
-  for (unsigned int i = 0; i < args.size(); ++i)
-    std::cout << ' ' << std::hex << args.at(i);
-  std::cout << std::endl;
   if (verbose_mode)
     print_burst_info(args);
 
@@ -1379,6 +1379,7 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
   try
   {
     std::vector<uint32_t> args;
+    bool verbose=true;
 
     // pack burst parameters (id, delay, number of conditions, block period, burst flag)
     args.push_back(burstId);
@@ -1386,12 +1387,14 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
     args.push_back(n_main_conditions);       // number of conditions in a block
     args.push_back(t_block);                 // block period
     args.push_back(b_flag);
-    args.push_back((uint32_t)verbose_mode);
+    args.push_back((uint32_t)verbose);
 
-    std::cout << "Pulse params: ";
-    for ( std::vector<uint32_t>::iterator it = args.begin(); it != args.end(); ++it)
-      std::cout << std::hex << *it << ' ';
-    std::cout << std::endl;
+    if (verbose_mode) {
+      std::cout << "Pulse params: ";
+      for ( std::vector<uint32_t>::iterator it = args.begin(); it != args.end(); ++it)
+        std::cout << std::hex << *it << ' ';
+      std::cout << std::endl;
+    }
 
     if (bg_invoke_async(bg, CMD_GET_PARAM, args))
     {
@@ -1405,12 +1408,14 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
     args.push_back(burstId);
     args.push_back(n_block >> 32);
     args.push_back(n_block);
-    args.push_back((uint32_t)verbose_mode);
+    args.push_back((uint32_t)verbose);
 
-    std::cout << "Block production: ";
-    for ( std::vector<uint32_t>::iterator it = args.begin(); it != args.end(); ++it)
-      std::cout << std::hex << *it << ' ';
-    std::cout << std::endl;
+    if (verbose_mode) {
+      std::cout << "Block production: ";
+      for ( std::vector<uint32_t>::iterator it = args.begin(); it != args.end(); ++it)
+        std::cout << std::hex << *it << ' ';
+      std::cout << std::endl;
+    }
 
     if (bg_invoke_async(bg, CMD_GET_CYCLE, args))
     {
@@ -2579,8 +2584,6 @@ int main (int argc, char** argv)
     for (int i = 1; i < argc; ++i)
       cmd_args.append(string(argv[i]) + " ");
 
-    cout << "Command args: " << cmd_args << endl;
-
     // check if an option file is specified
     while((opt = getopt(argc, argv, ":ho:")) != -1) {
       switch (opt) {
@@ -2665,15 +2668,12 @@ int main (int argc, char** argv)
   }
 
   /* Detect a given target device */
-  cout << "Detecting target device: " << deviceName << endl;
   if (deviceName != NULL) {
     if (bg_setup_device(deviceName))
     {
-      cerr << "Failed to set up " << deviceName << endl;
+      cerr << endl << "Failed to set up " << deviceName << endl;
       return -1;
     }
-
-    cout << "Device " << deviceName << " found!" << endl;
   }
   else {
     cerr << "Error: device name is missing!" << endl;
@@ -2684,15 +2684,7 @@ int main (int argc, char** argv)
   vector<string>::iterator itr = remove_if(bg_options.begin(), bg_options.end(), bg_is_comment);
   bg_options.erase(itr, bg_options.end());
 
-  cout << "Options to process:" << endl;
-  itr = bg_options.begin();
-  while (itr != bg_options.end()) {
-    cout << "<" << *itr << ">" << endl;
-    ++itr;
-  }
-
   bg_reset_variables();
-  cout << "Starting configuration ..." << endl;
 
   /* Parse the command-line options, check their arguments and configure the target */
   itr = bg_options.begin();
@@ -2709,12 +2701,13 @@ int main (int argc, char** argv)
       {
         // do configuration
         status = bg_do_configuration();
+
         if (status) {
-          cerr << "Failed options: " << *itr << endl;
+          cerr << endl << "Failed options: " << *itr << endl;
           return status;
         }
-        else
-          cout << "Successed: " << *itr << endl;
+        else if (verbose_mode)
+          cout << "Succeeded: " << argv[0] << endl;
       }
 
       bg_reset_variables();
