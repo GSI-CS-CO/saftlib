@@ -37,5 +37,5 @@ jobs:
       run: |
         ./autogen.sh
         ./configure
-        make saftlib -j$(nproc)
-        sudo make saftlib-install
+        make -j$(nproc)
+        sudo make install
