@@ -1,0 +1,42 @@
+name: CI Basic Build
+
+on:
+  push:
+    branches: [ "master", "github_actions_development" ]
+  pull_request:
+    branches: [ "master", "github_actions_development" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install missing packages
+      run: sudo apt-get -y install automake libreadline-dev docbook-utils build-essential libboost-all-dev pkg-config libsigc++-2.0-dev xsltproc
+
+    - name: Set PKG_CONFIG_PATH
+      run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+    - name: Create symlinks
+      run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
+
+    - name: Clone and compile bel_projects
+      run: |
+      git clone https://github.com/GSI-CS-CO/bel_projects.git
+      cd bel_projects
+      git checkout master
+      make
+      make etherbone
+      sudo make etherbone-install
+      cd ..
+      
+    - name: Configure and compile saftlib
+      run: |
+      cd saftlib
+      ./autogen
+      ./configure
+      make saftlib -j$(nproc)
+      sudo make saftlib-install
