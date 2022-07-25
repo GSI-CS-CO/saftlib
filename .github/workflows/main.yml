@@ -39,3 +39,8 @@ jobs:
         ./configure
         make -j$(nproc)
         sudo make install
+        
+    - name: Run test cases
+      run: |
+        cd tests/saft-testbench
+        make
