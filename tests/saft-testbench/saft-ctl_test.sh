@@ -1,5 +1,5 @@
 #!/bin/bash
-# Syopsis: Small test to test saft-ctl.
+# Syopsis: Small test of saft-ctl and saft-dm. 
 
 # Source
 source common.sh
