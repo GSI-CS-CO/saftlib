@@ -27,7 +27,7 @@ jobs:
       run: |
         git clone https://github.com/GSI-CS-CO/bel_projects.git
         cd bel_projects
-        git checkout master
+        git checkout fallout
         make
         make etherbone
         sudo make etherbone-install
