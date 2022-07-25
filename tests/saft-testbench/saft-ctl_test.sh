@@ -49,6 +49,7 @@ rm $snoop_file
 saft-ctl $tr_default snoop 0 0 0 -x > $snoop_file &
 saft-dm $tr_default -n 1 -p $random_events
 sleep 10
+sudo killall saft-ctl
 
 # Create comparable "snooped events" file
 rm $snoop_compare_file
