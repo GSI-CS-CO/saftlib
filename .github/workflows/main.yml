@@ -22,6 +22,9 @@ jobs:
 
     - name: Create symlinks
       run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
+      
+    - name: Get current repository location
+      run: export saftlib_base=$(pwd)
 
     - name: Clone and compile bel_projects
       run: |
@@ -31,11 +34,10 @@ jobs:
         make
         make etherbone
         sudo make etherbone-install
-        cd ..
       
     - name: Configure and compile saftlib
       run: |
-        cd saftlib
+        cd $saftlib_base
         ./autogen
         ./configure
         make saftlib -j$(nproc)
