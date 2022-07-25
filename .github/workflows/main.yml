@@ -25,18 +25,18 @@ jobs:
 
     - name: Clone and compile bel_projects
       run: |
-      git clone https://github.com/GSI-CS-CO/bel_projects.git
-      cd bel_projects
-      git checkout master
-      make
-      make etherbone
-      sudo make etherbone-install
-      cd ..
+        git clone https://github.com/GSI-CS-CO/bel_projects.git
+        cd bel_projects
+        git checkout master
+        make
+        make etherbone
+        sudo make etherbone-install
+        cd ..
       
     - name: Configure and compile saftlib
       run: |
-      cd saftlib
-      ./autogen
-      ./configure
-      make saftlib -j$(nproc)
-      sudo make saftlib-install
+        cd saftlib
+        ./autogen
+        ./configure
+        make saftlib -j$(nproc)
+        sudo make saftlib-install
