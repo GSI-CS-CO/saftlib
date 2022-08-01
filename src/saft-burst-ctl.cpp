@@ -443,13 +443,6 @@ static int parse_options(int optc, char* optv[], const char* optstr)
                     if (optv[index] != NULL && optv[index][0] != '-') { bg_instr_args.push_back(optv[index]); ++index; }
                     else                                              { optind = index - 1; break; }
                   }
-                  if (!bg_instr_args.empty())
-                  {
-                    std::cout << "Arguments: ";
-                    for (vector<string>::iterator it = bg_instr_args.begin(); it != bg_instr_args.end(); ++it)
-                      std::cout << *it << ' ';
-                    std::cout << std::endl;
-                  }
                   break; }
       case 'l': { if (optv[optind-1] != NULL) { bg_id = strtol(optv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing burst id!" << std::endl; return -1; }
@@ -529,6 +522,14 @@ static int bg_parse_options(const std::string& options, const char* optstring)
       std::cout << optv[i] << " ";
 
     std::cout << std::endl;
+
+    if (bg_instr)
+    {
+      std::cout << "User instr: ";
+      for (vector<string>::iterator it = bg_instr_args.begin(); it != bg_instr_args.end(); ++it)
+        std::cout << *it << ' ';
+      std::cout << std::endl;
+    }
   }
 
   return status;
@@ -1942,17 +1943,20 @@ static void io_help (void)
   std::cout << "  -e <id> <disen>:                               Dis/enable burst(s): disable if disen = 0, otherwise enable" << std::endl;
   std::cout << "  -r <id>:                                       Remove burst(s)" << std::endl;
   std::cout << std::endl;
-/*  std::cout << "  -i <instr_code> [u32 u32 ...]:                 Instruction to the burst generator, allowed instructions are listed below:" << std::endl;
+  std::cout << "  -i <user_instr> [u32 u32 ...]:                 Send an user instruction to the burst generator, allowed instructions are listed below:" << std::endl;
   std::cout << std::endl;
+  std::cout << "      0x2                                        Enter the 'opready' FSM state." << endl;
+  std::cout << "      0x3                                        Exit from the opready' FSM state. It enters the 'configured' state." << endl;
+  /*
   std::cout << "      0x1                                        Print the burst parameters. Arguments: burst_id" << std::endl;
   std::cout << "      0x2                                        Obtain the burst parameters. Arguments: burst_id, delay, conditions, block period, flag, verbose" << std::endl;
   std::cout << "      0x3                                        Obtain the block production parameters. Arguments: burst_id, n_block_h32, n_block_l32, verbose" << std::endl;
   std::cout << "      0x10                                       Print MSI configuration" << std::endl;
   std::cout << "      0x11                                       Print ECA channel counters" << std::endl;
   std::cout << "      0x12                                       Print ECA queue content" << std::endl;
-  std::cout << "  All print instructions require the eb-console tool to be run to see the output" << std::endl;*/
+  std::cout << "  All print instructions require the eb-console tool to be run to see the output" << std::endl;
   std::cout << "  -x:                                            Clear all unowned conditions for the IO and eCPU actions." << std::endl;
-  std::cout << "  -o <file>:                                     Load options from a given <file>" << std::endl;
+  std::cout << "  -o <file>:                                     Load options from a given <file>" << std::endl;*/
   std::cout << std::endl;
   std::cout << "Examples:" << std::endl << std::endl;
   std::cout << program << " tr0" << " -l 0" << std::endl;
