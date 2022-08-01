@@ -149,6 +149,7 @@ int            bg_disen        = 0;     /* Disable or enable option argument val
 vector<string> bg_instr_args;           /* Arguments of instruct option */
 int            bg_id           = 0x00;  /* Burst ID */
 bool           bg_fw_id        = false; /* Get and print the firmware id of the burst generator */
+bool           bg_state        = false; /* Get and print the actual state of the burst generator */
 bool           bg_instr        = false; /* Demo option to test the instruct method call */
 bool           bg_cfg_io       = false; /* Set the ECA conditions for IO actions */
 bool           bg_clr_all      = false; /* Clear all unowned conditions for the IO and eCPU actions */
@@ -173,6 +174,7 @@ static void io_catch_input (uint64_t event, uint64_t param, saftlib::Time deadli
 static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
 static int  bg_get_fw_id        (void);
+static int  bg_get_state        (void);
 static int  bg_instruct         (std::vector<std::string> instr);
 static int  bg_config_io        (uint32_t t_high, uint32_t t_period, int64_t t_burst, uint64_t b_delay, uint32_t b_flag, bool verbose_mode);
 static int  bg_get_io_name      (int burst_id, std::string &name);
@@ -245,6 +247,7 @@ static int bg_do_configuration(void)
   int return_code = 0;
 
   if      (bg_fw_id)       { return_code = bg_get_fw_id(); }
+  else if (bg_state)       { return_code = bg_get_state(); }
   else if (bg_instr)       { return_code = bg_instruct(bg_instr_args); }
   else if (bg_cfg_io)      { return_code = bg_config_io(bg_t_high, bg_t_p, bg_t_b, bg_b_delay, bg_b_flag, verbose_mode); }
   else if (bg_clr_all)     { return_code = bg_clear_all(verbose_mode); }
@@ -333,6 +336,7 @@ static void bg_reset_variables(void)
   bg_instr_args.clear() ;  /* Arguments of instruct option */
   bg_id           = 0x00;  /* Burst ID */
   bg_fw_id        = false; /* Get and print the firmware id of the burst generator */
+  bg_state        = false; /* Get and print the actual state of the burst generator */
   bg_instr        = false; /* Demo option to test the instruct method call */
   bg_cfg_io       = false; /* Set the ECA conditions for IO actions */
   bg_clr_all      = false; /* Clear all unowned conditions for the IO and eCPU actions */
@@ -413,6 +417,7 @@ static int parse_options(int optc, char* optv[], const char* optstr)
     switch (opt)
     {
       case 'f': { bg_fw_id       = true; break; }
+      case 'S': { bg_state       = true; break; }
       case 'p': { if (optv[optind-1] != NULL) { bg_t_high = strtoul(optv[optind-1], &pEnd, 0); }
                   else                        { std::cerr << "Error: Missing active state length of a pulse (u32)!" << std::endl; return -1; }
                   if (optv[optind+0] != NULL) { bg_t_p = strtoul(optv[optind+0], &pEnd, 0); }
@@ -647,7 +652,10 @@ static int bg_get_fw_id(void)
     args = bg->readSharedBuffer(1);
     if (args.size() > 0)
     {
-      std::cout << "Got firmware id: 0x" << std::hex << args.at(0) << std::endl;
+      if (verbose_mode)
+        cout << "Got firmware id: 0x" << hex << args.at(0) << endl;
+      else
+        cout << hex << args.at(0) << endl;
     }
     else
     {
@@ -659,6 +667,38 @@ static int bg_get_fw_id(void)
   {
     /* Catch error(s) */
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    return -1;
+  }
+
+  return 0;
+}
+
+/* Get and print the actual state of the burst generator */
+/* ==================================================================================================== */
+static int bg_get_state(void)
+{
+  try
+  {
+    uint32_t state = COMMON_STATE_UNKNOWN;
+
+    state = bg->readState();
+    if (state != COMMON_STATE_UNKNOWN)
+    {
+      if (verbose_mode)
+        cout << "Got firmware state: 0x" << hex << state << endl;
+      else
+        cout << hex << state << endl;
+    }
+    else
+    {
+      cerr << "Could not get the actual state." << endl;
+      return -1;
+    }
+  }
+  catch (const saftbus::Error& error)
+  {
+    /* Catch error(s) */
+    cerr << "Failed to invoke method: " << error.what() << endl;
     return -1;
   }
 
@@ -1930,6 +1970,7 @@ static void io_help (void)
   std::cout << "  -n <name>:                                     Specify IO name" << std::endl;
   std::cout << std::endl;
   std::cout << "  -f:                                            Get the firmware id of the burst generator" << std::endl;
+  std::cout << "  -S:                                            Get the actual state of the burst generator" << std::endl;
   std::cout << "  -b <id>:                                       Specify burst ID" << std::endl;
   std::cout << "      id                                           Burst ID, valid IDs: 1.." << N_BURSTS << std::endl;
   std::cout << "  -s <start>:                                    Specify ID of the start event. Requires -n and -b options!" << std::endl;
@@ -2694,7 +2735,7 @@ int main (int argc, char** argv)
   itr = bg_options.begin();
   while (itr != bg_options.end()) {
     // parse options
-    if (bg_parse_options(*itr, ":fp:e:i:l:b:r:s:t:xn:v"))
+    if (bg_parse_options(*itr, ":fSp:e:i:l:b:r:s:t:xn:v"))
       cerr << "Cannot parse options: " << *itr << endl;
     else
     {
