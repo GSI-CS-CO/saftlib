@@ -82,7 +82,7 @@ namespace saftbus {
 
 	bool Loop::iteration(bool may_block) {
 		++d->running_depth;
-		std::cerr << ".";
+		// std::cerr << ".";
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 
 		//////////////////
@@ -117,7 +117,7 @@ namespace saftbus {
 		//////////////////
 		// std::cerr << "poll pfds size " << d->pfds.size() << std::endl;
 		if (d->pfds.size() > 0) {
-			std::cerr << "p";
+			// std::cerr << "p";
 			int poll_result = 0;
 			if ((poll_result = poll(&d->pfds[0], d->pfds.size(), timeout.count())) > 0) {
 				for (unsigned i = 0; i < d->pfds.size();++i) {
@@ -129,7 +129,7 @@ namespace saftbus {
 				std::cerr << "poll error: " << strerror(errno) << std::endl;
 			} 
 		} else if (timeout > std::chrono::milliseconds(0)) {
-			std::cerr << "s";
+			// std::cerr << "s";
 			std::this_thread::sleep_for(timeout);
 		}
 
@@ -148,9 +148,9 @@ namespace saftbus {
 		// and only if this is not a nested iteration
 		//////////////////
 		if (d->running_depth == 1) {
-			std::cerr << "cleaning up sources" << std::endl;
+			// std::cerr << "cleaning up sources" << std::endl;
 			for (auto removed_source: d->removed_sources) {
-				std::cerr << "cleaning a source sources" << std::endl;
+				// std::cerr << "cleaning a source sources" << std::endl;
 				d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
 					          d->sources.end());			
 			}

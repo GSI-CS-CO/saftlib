@@ -4,12 +4,63 @@
 #include "plugins.hpp"
 #include "make_unique.hpp"
 
+#include "chunck_allocator_rt.hpp"
+
 #include <iostream>
 #include <memory>
 
 
 #include <fcntl.h>  // open()
 #include <unistd.h> // read()
+
+
+
+
+saftbus::ChunckAllocatorRT<64,128> allocator128;
+saftbus::ChunckAllocatorRT<16,1024> allocator1024;
+int heap_allocations = 0;
+
+void *operator new(std::size_t n) {
+	// std::cerr << "my operator new" << std::endl;
+	// allocator128.print_size();
+	// allocator1024.print_size();
+	// std::cerr << "heap: " << heap_allocations << std::endl;
+	if (n <= 128 && !allocator128.full()) {
+		// std::cerr << "small" << std::endl;
+		return allocator128.malloc(n);
+	} else if (n <= 1024 && !allocator1024.full()) {
+		// std::cerr << "big" << std::endl;
+		return allocator1024.malloc(n);
+	} else {
+		++heap_allocations;
+		std::cerr << "heap****************************************************" << std::endl;
+		return malloc(n);
+	}
+}
+
+void operator delete(void *p) {
+	// std::cerr << "my operator delete" << std::endl;
+	// allocator128.print_size();
+	// allocator1024.print_size();
+	// std::cerr << "heap: " << heap_allocations << std::endl;
+
+	char* ptr = reinterpret_cast<char*>(p);
+
+	if (allocator128.contains(ptr)) {
+		// std::cerr << "small" << std::endl;
+		allocator128.free(ptr);
+	} else if (allocator1024.contains(ptr)) {
+		// std::cerr << "big" << std::endl;
+		allocator1024.free(ptr);
+	} else {
+		--heap_allocations;
+		// std::cerr << "heap*********************************************************" << std::endl;
+		free(p);
+	}
+}
+
+
+
 
 bool timeout_tick() {
 	std::cout << "tick" << std::endl;

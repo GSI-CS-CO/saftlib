@@ -15,4 +15,19 @@ namespace example {
 		int max;
 	};
 
+
+	class Dice2 {
+	public:
+		Dice2();
+		// @saftbus-export
+		double roll2();
+		// @saftbus-export
+		void setMax2(int max);
+		// @saftbus-export
+		int getMax2();
+	private:
+		int max2;
+	};
+
+
 }
