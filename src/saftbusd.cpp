@@ -30,7 +30,8 @@ bool timeout_tock() {
 		saftbus::Loop::get_default().connect(
 			std::move(
 				std2::make_unique<saftbus::TimeoutSource>(
-					sigc::ptr_fun(timeout_tick),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
+					timeout_tick, std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
+					// sigc::ptr_fun(timeout_tick),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
 				)
 			)
 		);
@@ -45,7 +46,8 @@ void init_fd(){
 	saftbus::Loop::get_default().connect(
 		std::move(
 			std2::make_unique<saftbus::IoSource>(
-				sigc::ptr_fun(fd_callback), fd, POLLIN | POLLHUP
+				//sigc::ptr_fun(fd_callback), fd, POLLIN | POLLHUP
+				fd_callback, fd, POLLIN | POLLHUP
 			)
 		)
 	);
@@ -71,7 +73,11 @@ int main() {
 
 	// two lines just to play around ... has nothing to do with the saftd functionality.
 	init_fd();
-	saftbus::Loop::get_default().connect(std::move(std2::make_unique<saftbus::TimeoutSource>(sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500))));
+	saftbus::Loop::get_default().connect(std::move(std2::make_unique<saftbus::TimeoutSource>(
+		//sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)
+		timeout_tock, std::chrono::milliseconds(1000), std::chrono::milliseconds(500)
+		)
+	));
 
 	// create a mini-saftlib-server and let it run
 	saftbus::ServerConnection server_connection;

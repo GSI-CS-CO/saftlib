@@ -98,7 +98,9 @@ namespace saftbus {
 	{
 		d->container = container;
 		Loop::get_default().connect(
-			std::move(std2::make_unique<saftbus::TimeoutSource>(sigc::mem_fun(this,&ContainerService::emit_periodical_signal),std::chrono::milliseconds(1000)
+			std::move(std2::make_unique<saftbus::TimeoutSource>(
+				//sigc::mem_fun(this,&ContainerService::emit_periodical_signal),std::chrono::milliseconds(1000)
+				std::bind(&ContainerService::emit_periodical_signal, this), std::chrono::milliseconds(1000)
 				) 
 			)
 		);

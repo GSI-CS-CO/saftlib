@@ -3,7 +3,8 @@
 
 #include <memory>
 #include <chrono>
-#include <sigc++/sigc++.h>
+// #include <sigc++/sigc++.h>
+#include <functional>
 
 #include <poll.h>
 
@@ -49,7 +50,7 @@ namespace saftbus {
 	class TimeoutSource : public Source {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
-		TimeoutSource(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset = std::chrono::milliseconds(0));
+		TimeoutSource(std::function<bool(void)> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset = std::chrono::milliseconds(0));
 		~TimeoutSource();
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;
@@ -61,7 +62,7 @@ namespace saftbus {
 	class IoSource : public Source {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
-		IoSource(sigc::slot<bool, int, int> slot, int fd, int condition);
+		IoSource(std::function<bool(int, int)> slot, int fd, int condition);
 		~IoSource();
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;

@@ -202,7 +202,8 @@ namespace saftbus {
 		//wait_ms = std::max(wait_ms, std::chrono::milliseconds(1)); // no less then 1 ms
 		connect(std::move(
 				std2::make_unique<saftbus::TimeoutSource>
-					(sigc::mem_fun(this, &Loop::quit), wait_ms)
+					//(sigc::mem_fun(this, &Loop::quit), wait_ms)
+					(std::bind(&Loop::quit, this), wait_ms)
 			)
 		);
 		return false;
@@ -229,14 +230,14 @@ namespace saftbus {
 
 
 	struct TimeoutSource::Impl {
-		sigc::slot<bool> slot;
+		std::function<bool(void)> slot;
 		std::chrono::milliseconds interval;
 		std::chrono::time_point<std::chrono::steady_clock> next_time;
-		Impl(sigc::slot<bool> s, std::chrono::milliseconds i, std::chrono::milliseconds o) : slot(s), interval(i), next_time(std::chrono::steady_clock::now()+i+o)
+		Impl(std::function<bool(void)> s, std::chrono::milliseconds i, std::chrono::milliseconds o) : slot(s), interval(i), next_time(std::chrono::steady_clock::now()+i+o)
 		{}
 	};
 
-	TimeoutSource::TimeoutSource(sigc::slot<bool> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset) 
+	TimeoutSource::TimeoutSource(std::function<bool(void)> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset) 
 		: d(std2::make_unique<Impl>(slot, interval, offset))
 	{}
 
@@ -281,14 +282,14 @@ namespace saftbus {
 
 
 	struct IoSource::Impl {
-		sigc::slot<bool, int, int> slot;
+		std::function<bool(int, int)> slot;
 		struct pollfd pfd;
 		int id;
 		static int id_source;
 	};
 	int IoSource::Impl::id_source = 0;
 
-	IoSource::IoSource(sigc::slot<bool, int, int> slot, int fd, int condition) 
+	IoSource::IoSource(std::function<bool(int, int)> slot, int fd, int condition) 
 		: d(std2::make_unique<Impl>())
 	{
 		d->slot              = slot;
