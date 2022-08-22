@@ -65,7 +65,7 @@ namespace saftbus {
 
 	void Service::emit(Serializer &send)
 	{
-		std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
+		// std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
 		for (auto &fd_use_count: d->signal_fds_use_count) {
 			int fd = fd_use_count.first;
 			std::cerr << "   to " << fd << std::endl;
@@ -114,7 +114,7 @@ namespace saftbus {
 		int signal_no = 0;
 		d->serialized_signal.put(signal_no);
 		d->serialized_signal.put(++count);
-		std::cerr << "emit signal with counter value " << count << std::endl;
+		// std::cerr << "emit signal with counter value " << count << std::endl;
 		emit(d->serialized_signal);
 		return true;
 	}

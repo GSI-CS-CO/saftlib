@@ -18,6 +18,6 @@ SAFTd_proxy_includedir = $(includedir)/saftbus
 SAFTd_proxy_include_HEADERS = \
 	src/SAFTd_proxy.hpp       
 
-bin_PROGRAMS = mini-saft-ctl
+bin_PROGRAMS = mini-saft-ctl saft-software-tr
 mini_saft_ctl_LDADD  = $(SIGC_LIBS) -L/home/michael/local/lib -lsaftbus libSAFTd_proxy.la
 mini_saft_ctl_SOURCES = src/saft-ctl.cpp 
