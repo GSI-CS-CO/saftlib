@@ -19,6 +19,7 @@ saftcommon_HEADERS =         \
 	Source.h           \
 	PollFD.h	       \
 	saftbus.h          \
+	chunck_allocator_rt.h\
 	Data.hpp              \
 	GELFConfig.hpp        \
 	InternalGELF.hpp      \
@@ -52,6 +53,7 @@ libsaftcommon_la_SOURCES =     \
 	Interface.cpp              \
 	SignalGroup.cpp            \
 	saftbus.cpp                \
+	chunck_allocator_rt.cpp    \
 	MainContext.cpp            \
 	MainLoop.cpp               \
 	Source.cpp                 \

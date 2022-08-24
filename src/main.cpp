@@ -35,6 +35,18 @@
 #include "clog.h"
 #include "build.h"
 
+
+
+#include "chunck_allocator_rt.h"
+void *operator new(std::size_t n) {
+  return saftbus::get_allocator()->malloc(n);
+}
+void operator delete(void *p) {
+  char *ptr = reinterpret_cast<char*>(p);
+  saftbus::get_allocator()->free(ptr);
+}
+
+
 using namespace saftlib;
 
 static bool am_daemon = false;
@@ -250,6 +262,8 @@ int main(int argc, char** argv)
   
   // Cleanup
   saftbus::unown_name(id);
+
+  std::cerr << saftbus::get_allocator()->fillstate() << std::endl;
 
   return 0;
 }

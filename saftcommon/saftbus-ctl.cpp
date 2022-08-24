@@ -63,7 +63,7 @@ static void show_help(const char *argv0)
 	std::cerr << "                  otherwise dump logbuffer into the file (append mode)"  << std::endl;
 	std::cout << "   --trigger-logdump                  " << std::endl;
 	std::cout << "   --enable-signal-timing-stats       " << std::endl;
-	std::cout << "   --disable-signal-timing-stats      " << std::endl;
+	std::cout << "   --allocator-fill-state             " << std::endl;
 	std::cout << "   --download-signal-timing-stats     " << std::endl;
 }
 
@@ -544,7 +544,7 @@ int main(int argc, char *argv[])
 				save_signal_time_stats = true;
 			} else if (argvi == "--enable-signal-timing-stats") {
 				enable_signal_stats = true;
-			} else if (argvi == "--disable-signal-timing-stats") {
+			} else if (argvi == "--allocator-fill-state") {
 				disable_signal_stats = true;
 			} else if (argvi == "--config-log-buffer") {
 				resize_log_buffer = true;
@@ -660,8 +660,11 @@ int main(int argc, char *argv[])
 			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_ENABLE_STATS);
 		}
 		if (disable_signal_stats) {
-			std::cout << "disabling signal flight time statistics in saftd" << std::endl;
+			std::cout << "allocator fill state: " << std::endl;
 			saftbus::write(connection->get_fd(), saftbus::SAFTBUS_CTL_DISABLE_STATS);
+			std::string fillstate;
+			saftbus::read(connection->get_fd(), fillstate);
+			std::cerr << fillstate << std::endl;
 		}
 
 		if (save_signal_time_stats) {

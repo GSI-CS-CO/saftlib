@@ -18,6 +18,7 @@
 #include "Connection.h"
 #include "core.h"
 #include "Logger.h"
+#include "chunck_allocator_rt.h"
 
 #include <iostream>
 #include <iomanip>
@@ -386,6 +387,7 @@ bool Connection::dispatch(Slib::IOCondition condition, int client_fd)
 				{
 					_create_signal_flight_time_statistics = false;
 					// std::cerr << "_signal_flight_times_stats=" << _create_signal_flight_time_statistics << std::endl;
+					saftbus::write(client_fd, get_allocator()->fillstate());
 				}
 				break;
 				case saftbus::SAFTBUS_CTL_GET_STATS:
