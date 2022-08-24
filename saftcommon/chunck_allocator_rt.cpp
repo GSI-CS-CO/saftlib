@@ -1,5 +1,7 @@
 #include "chunck_allocator_rt.h"
 
+#include <sstream>
+
 namespace saftbus
 {
 
