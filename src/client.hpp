@@ -86,10 +86,10 @@ namespace saftbus {
 		};
 		std::vector<ClientInfo> client_infos;
 	};
-	class ContainerService_Proxy : public Proxy {
+	class Container_Proxy : public Proxy {
 	public:
-		ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group);
-		static std::shared_ptr<ContainerService_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
+		Container_Proxy(const std::string &object_path, SignalGroup &signal_group);
+		static std::shared_ptr<Container_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
 		// @saftbus-export
 		bool signal_dispatch(int interface_no, 
 			                 int signal_no, 

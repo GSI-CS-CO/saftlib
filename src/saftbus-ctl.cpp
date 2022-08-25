@@ -11,7 +11,7 @@
 // bool timeout() {
 // 	static int i = 0;
 // 	std::cerr << "#" << i++ << std::endl;
-// 	// auto core_service_proxy = saftbus::ContainerService_Proxy::create();
+// 	// auto core_service_proxy = saftbus::Container_Proxy::create();
 // 	// saftbus::Loop::get_default().quit();
 // 	if (i == 5) {
 // 		saftbus::Loop::get_default().quit();
@@ -29,16 +29,16 @@
 
 int main(int argc, char **argv)
 {
-	auto core_service_proxy = saftbus::ContainerService_Proxy::create();
+	auto core_service_proxy = saftbus::Container_Proxy::create();
 	// auto sg2 = saftbus::SignalGroup();
-	// auto core_service_proxy2 = saftbus::ContainerService_Proxy::create(sg2);
-	// auto core_service_proxy3 = saftbus::ContainerService_Proxy::create(sg2);
+	// auto core_service_proxy2 = saftbus::Container_Proxy::create(sg2);
+	// auto core_service_proxy3 = saftbus::Container_Proxy::create(sg2);
 
 
 	// for(;;) {
 	// 	saftbus::SignalGroup::get_global().wait_for_signal();
 	// }
-	// auto core_service_proxy2= saftbus::ContainerService_Proxy::create();
+	// auto core_service_proxy2= saftbus::Container_Proxy::create();
 
 	// saftbus::Loop::get_default().connect(
 	// 	std::move(

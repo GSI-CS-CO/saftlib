@@ -368,23 +368,23 @@ namespace saftbus {
 	//////////////////////////////////////////	
 	//////////////////////////////////////////	
 
-	ContainerService_Proxy::ContainerService_Proxy(const std::string &object_path, SignalGroup &signal_group)
+	Container_Proxy::Container_Proxy(const std::string &object_path, SignalGroup &signal_group)
 		: Proxy(object_path, signal_group)
 	{}
 
-	std::shared_ptr<ContainerService_Proxy> ContainerService_Proxy::create(SignalGroup &signal_group)
+	std::shared_ptr<Container_Proxy> Container_Proxy::create(SignalGroup &signal_group)
 	{
-		return std::make_shared<ContainerService_Proxy>("/saftbus", signal_group);
+		return std::make_shared<Container_Proxy>("/saftbus", signal_group);
 	}
-	bool ContainerService_Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content)
+	bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content)
 	{
 		int counter;
 		signal_content.get(counter);
-		std::cerr << "ContainerService_Proxy received a signal from interface: counter=" << counter << std::endl;
+		std::cerr << "Container_Proxy received a signal from interface: counter=" << counter << std::endl;
 		return true;
 	}
 
-	void ContainerService_Proxy::quit() 
+	void Container_Proxy::quit() 
 	{
 		get_send().put(get_saftlib_object_id());
 		unsigned interface_no, function_no;
@@ -396,7 +396,7 @@ namespace saftbus {
 		}
 	}
 
-	bool ContainerService_Proxy::load_plugin(const std::string &so_filename, const std::string &object_path) 
+	bool Container_Proxy::load_plugin(const std::string &so_filename, const std::string &object_path) 
 	{
 		get_send().put(get_saftlib_object_id());
 		unsigned interface_no, function_no;
@@ -413,7 +413,7 @@ namespace saftbus {
 		get_received().get(result);
 		return result;
 	}
-	bool ContainerService_Proxy::remove_object(const std::string &object_path) 
+	bool Container_Proxy::remove_object(const std::string &object_path) 
 	{
 		get_send().put(get_saftlib_object_id());
 		unsigned interface_no, function_no;
@@ -430,7 +430,7 @@ namespace saftbus {
 		return result;
 	}
 
-	SaftbusInfo ContainerService_Proxy::get_status()
+	SaftbusInfo Container_Proxy::get_status()
 	{
 		SaftbusInfo result;
 		get_send().put(get_saftlib_object_id());
@@ -455,7 +455,7 @@ namespace saftbus {
 			get_received().get(object_info.signal_fds_use_count);
 			get_received().get(object_info.owner);
 
-			std::cerr << object_info.object_path << "=>" << object_info.object_id << " owner:" << object_info.owner << " signal_fds: ";
+			std::cerr << object_info.object_path << "=>" << object_info.object_id << " owner:" << object_info.owner << " sig_fd/use_cnt: ";
 			for (auto &signal_fd_use_count: object_info.signal_fds_use_count) {
 				std::cerr << signal_fd_use_count.first << "/" << signal_fd_use_count.second << " ";
 			}
