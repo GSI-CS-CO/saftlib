@@ -15,19 +15,16 @@ namespace saftbus {
 
 
 	Source::Source() 
-	{
-		pfds_size = 0;
-	}
+	{}
 	Source::~Source() = default;
 
 	void Source::add_poll(struct pollfd &pfd)
 	{
-		assert(pfds_size < pfds.size());
-		pfds[pfds_size++] = &pfd;
+		pfds.push_back(&pfd);
 	}
 	void Source::remove_poll(struct pollfd &pfd)
 	{
-		pfds_size = pfds.begin() - std::remove(pfds.begin(), pfds.end(), &pfd);
+		pfds.erase(pfds.begin(), std::remove(pfds.begin(), pfds.end(), &pfd));
 	}
 	void Source::destroy() {
 		loop->remove(this);
@@ -98,7 +95,7 @@ namespace saftbus {
 					timeout = std::min(timeout, timeout_source);
 				}
 			}
-			for(auto it = source->pfds.cbegin(); it != source->pfds.cbegin()+source->pfds_size; ++it) {
+			for(auto it = source->pfds.cbegin(); it != source->pfds.cbegin()+source->pfds.size(); ++it) {
 				// create a packed array of pfds that can be passed to poll()
 				pfds.push_back(**it);
 				// also create an array of pointers to pfds to where the poll() results can be copied back

@@ -27,10 +27,7 @@ namespace saftbus {
 		void destroy();
 	private:
 		Loop *loop;
-		// store the file descriptor pointers on the stack to be faster
-		// drawback: no source may provide more file descriptor than have place in pfds-array
-		std::array<struct pollfd*, 32> pfds; 
-		size_t                         pfds_size;		
+		std::vector<struct pollfd*> pfds;
 	};
 
 	class Loop {
