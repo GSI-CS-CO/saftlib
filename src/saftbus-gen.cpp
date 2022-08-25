@@ -512,7 +512,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 				for (auto &include_path: include_paths) {
 					std::string path_and_include_filename = include_path + "/" + original_include_filename;
 					std::cerr << "trying to open " << path_and_include_filename << std::endl;
-					auto path_and_included_file_in = std::ifstream(path_and_include_filename);
+					std::ifstream path_and_included_file_in(path_and_include_filename.c_str());
 					if (!path_and_included_file_in) {
 						std::cerr << "cannot open file: " << path_and_include_filename << std::endl;
 					} else {
