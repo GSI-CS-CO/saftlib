@@ -120,10 +120,10 @@ public:
 		} else {
 			::free(ptr);
 		}
-		// std::cerr << "--------free------------" << std::endl;
-		// allocator_1->print_size();
-		// allocator_2->print_size();
-		// allocator_3->print_size();
+		std::cerr << "--------free------------" << std::endl;
+		allocator_1->print_size();
+		allocator_2->print_size();
+		allocator_3->print_size();
 	}
 private:
 	ChunckAllocatorRT<1024,128> *allocator_1;

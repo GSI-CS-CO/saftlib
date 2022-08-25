@@ -22,15 +22,15 @@ namespace saftbus {
 		void remove_signal_fd(int fd);
 	};
 
-	struct ServiceContainer::Impl {
+	struct Container::Impl {
 		unsigned generate_saftlib_object_id();
 		ServerConnection *connection;
 		std::map<unsigned, std::unique_ptr<Service> > objects;
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
 	};
 
-	struct ContainerService::Impl {
-		ServiceContainer *container;
+	struct Container_Service::Impl {
+		Container *container;
 		Serializer serialized_signal;
 		static std::vector<std::string> gen_interface_names();
 		std::map<std::string, std::unique_ptr<LibraryLoader> > plugins;
@@ -86,25 +86,25 @@ namespace saftbus {
 
 
 
-	std::vector<std::string> ContainerService::Impl::gen_interface_names() {
+	std::vector<std::string> Container_Service::Impl::gen_interface_names() {
 		std::vector<std::string> interface_names;
 		interface_names.push_back("saftbus");
 		return interface_names;
 	}
 
-	ContainerService::ContainerService(ServiceContainer *container)
+	Container_Service::Container_Service(Container *container)
 		: Service(Impl::gen_interface_names())
 		, d(std2::make_unique<Impl>())
 	{
 		d->container = container;
 		Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ContainerService::emit_periodical_signal, this), std::chrono::milliseconds(1000)
+			std::bind(&Container_Service::emit_periodical_signal, this), std::chrono::milliseconds(1000)
 		);
 
 	}
-	ContainerService::~ContainerService() = default;
+	Container_Service::~Container_Service() = default;
 
-	bool ContainerService::emit_periodical_signal() {
+	bool Container_Service::emit_periodical_signal() {
 		static int count = 0;
 		d->serialized_signal.put(get_object_id());
 		int interface_no = 0;
@@ -117,8 +117,8 @@ namespace saftbus {
 		return true;
 	}
 
-	void ContainerService::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
-		std::cerr << "ContainerService called with " << interface_no << " " << function_no << std::endl;
+	void Container_Service::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
+		std::cerr << "Container_Service called with " << interface_no << " " << function_no << std::endl;
 		if (interface_no == 0) {
 			switch(function_no) {
 				case 0: {// register proxy
@@ -226,7 +226,7 @@ namespace saftbus {
 
 
 	// generate a unique object_id != 0
-	unsigned ServiceContainer::Impl::generate_saftlib_object_id() {
+	unsigned Container::Impl::generate_saftlib_object_id() {
 		static unsigned saftlib_object_id_generator = 1;
 		while ((objects.find(saftlib_object_id_generator) != objects.end()) ||
 		        saftlib_object_id_generator == 0) {
@@ -235,19 +235,19 @@ namespace saftbus {
 		return saftlib_object_id_generator++;
 	}
 
-	ServiceContainer::ServiceContainer(ServerConnection *connection) 
+	Container::Container(ServerConnection *connection) 
 		: d(std2::make_unique<Impl>())
 	{
 		d->connection = connection;
-		// create a Service that allows access to ServiceContainer functionality
-		auto container_service = std2::make_unique<ContainerService>(this);
+		// create a Service that allows access to Container functionality
+		auto container_service = std2::make_unique<Container_Service>(this);
 		unsigned object_id = create_object("/saftbus", std::move(container_service));
 		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
 	}
 
-	ServiceContainer::~ServiceContainer() = default;
+	Container::~Container() = default;
 
-	unsigned ServiceContainer::create_object(const std::string &object_path, std::unique_ptr<Service> service)
+	unsigned Container::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
 		if (d->object_path_lookup_table.find(object_path) != d->object_path_lookup_table.end()) {
 			// we have already registered an object under this object path
@@ -268,7 +268,7 @@ namespace saftbus {
 		return 0;
 	}
 
-	bool ServiceContainer::remove_object(const std::string &object_path)
+	bool Container::remove_object(const std::string &object_path)
 	{
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
@@ -282,7 +282,7 @@ namespace saftbus {
 		return true;
 	}
 
-	unsigned ServiceContainer::register_proxy(const std::string &object_path, int client_fd, int signal_group_fd)
+	unsigned Container::register_proxy(const std::string &object_path, int client_fd, int signal_group_fd)
 	{
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result != d->object_path_lookup_table.end()) {
@@ -297,7 +297,7 @@ namespace saftbus {
 		}
 		return 0;
 	}
-	void ServiceContainer::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
+	void Container::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
 	{
 		auto find_result = d->objects.find(saftlib_object_id);
 		assert(find_result != d->objects.end()); 
@@ -311,7 +311,7 @@ namespace saftbus {
 	}
 
 
-	bool ServiceContainer::call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send) {
+	bool Container::call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send) {
 		auto find_result = d->objects.find(saftlib_object_id);
 		if (find_result == d->objects.end()) {
 			return false;
@@ -321,7 +321,7 @@ namespace saftbus {
 		return true;
 	}
 
-	void ServiceContainer::remove_signal_fd(int fd)
+	void Container::remove_signal_fd(int fd)
 	{
 		for(auto &service: d->objects) {
 			std::cerr << "remove_signal_fd(" << fd << ") for object " << service.second->d->object_path << std::endl;
@@ -329,7 +329,7 @@ namespace saftbus {
 		}
 	}
 
-	void ServiceContainer::clear() {
+	void Container::clear() {
 		d->objects.clear();
 		d->object_path_lookup_table.clear();
 	}

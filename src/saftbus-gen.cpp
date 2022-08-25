@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -257,6 +258,7 @@ struct ClassDefinition {
 			lin >> name;
 			std::string base_list = line.substr(colon_pos+1);
 			bases = split_bases(base_list);
+			std::sort(bases.begin(), bases.end());
 		}
 	}
 
@@ -606,7 +608,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "\t" << "std::vector<std::string> " << class_definition.name << "_Service::gen_interface_names() {" << std::endl;
 	out << "\t\t" << "std::vector<std::string> result; " << std::endl;
 	out << "\t\t" << "result.push_back(\"" << class_definition.name << "\");" << std::endl;
-	for (auto &base: class_definition.bases) {
+	for (auto &base: class_definition.all_bases) {
 		out << "\t\t" << "result.push_back(\"" << base << "\");" << std::endl;
 	}
 	out << "\t\t" << "return result;" << std::endl;
@@ -843,7 +845,9 @@ int main(int argc, char **argv)
 		for (auto &class_def: classes) {
 			class_def.finalize(classes);
 			class_def.print();
-		
+		}
+
+		for (auto &class_def: classes) {
 			generate_service_header(output_directory, class_def);
 			generate_service_implementation(output_directory, class_def);
 

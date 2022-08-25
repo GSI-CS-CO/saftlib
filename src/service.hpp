@@ -10,10 +10,11 @@
 
 namespace saftbus {
 
+	// base class of all Services
 	class Service {
 		struct Impl; std::unique_ptr<Impl> d;
-		friend class ServiceContainer;
-		friend class ContainerService;
+		friend class Container;
+		friend class Container_Service;
 	public:
 		Service(const std::vector<std::string> &interface_names);
 		void call(int client_fd, Deserializer &received, Serializer &send);
@@ -28,12 +29,12 @@ namespace saftbus {
 
 
 	// Container of all Services provided by mini-saftlib.
-	class ServiceContainer {
+	class Container {
 		struct Impl; std::unique_ptr<Impl> d;
-		friend class ContainerService;
+		friend class Container_Service;
 	public:
-		ServiceContainer(ServerConnection *connection);
-		~ServiceContainer();
+		Container(ServerConnection *connection);
+		~Container();
 		// insert an object and return the saftlib_object_id for this object
 		// return 0 in case the object_path is unknown
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
@@ -51,12 +52,12 @@ namespace saftbus {
 
 	// A Service to access the Container of Services
 	// mainly Proxy (de-)registration 
-	class ContainerService : public Service {
+	class Container_Service : public Service {
 		struct Impl; std::unique_ptr<Impl> d;
 		bool emit_periodical_signal();
 	public:
-		ContainerService(ServiceContainer *container);
-		~ContainerService();
+		Container_Service(Container *container);
+		~Container_Service();
 		void call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send);
 	};
 

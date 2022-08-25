@@ -84,7 +84,7 @@ namespace saftbus {
 	}
 
 	struct ServerConnection::Impl {
-		ServiceContainer container_of_services;
+		Container container_of_services;
 		std::vector<std::unique_ptr<Client> > clients;
 		Serializer   send;
 		Deserializer received;
@@ -227,7 +227,7 @@ namespace saftbus {
 
 	ServerConnection::~ServerConnection() = default;
 
-	ServiceContainer& ServerConnection::get_service_container()
+	Container& ServerConnection::get_service_container()
 	{
 		return d->container_of_services;
 	}
