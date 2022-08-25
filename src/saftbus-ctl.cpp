@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 			if (argvi == "-q") {
 				std::cerr << "call proxy->quit()" << std::endl;
 				core_service_proxy->quit();
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				std::cerr << "quit done" << std::endl;
 			} if (argvi == "-s") {
 				saftbus::SaftbusInfo saftbus_info = core_service_proxy->get_status();
 				return 0;
@@ -84,11 +84,10 @@ int main(int argc, char **argv)
 		}
 	} else {
 		// saftbus::Loop::get_default().run();
-		for (int i=0; i<5; ++i) {
+		for (int i=0; i<50; ++i) {
 			saftbus::SignalGroup::get_global().wait_for_signal();
 		}
 	}
-
 
 	return 0;
 }

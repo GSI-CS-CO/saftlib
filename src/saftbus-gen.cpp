@@ -322,7 +322,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 	std::string latest_scope_name;
 
 	std::string function_signature;
-	bool saftbus_export_tag_in_last_line = false;
+	bool saftbus_export_tag_in_previous_line = false;
 
 	std::string class_definition;
 	bool in_class_definition = false;
@@ -350,7 +350,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
 
 		// extract function signature
-		if (saftbus_export_tag_in_last_line) {
+		if (saftbus_export_tag_in_previous_line) {
 			function_signature.append(line);
 			if (line.find(';') == line.npos && line.find('{') == line.npos) { // cant find the closing ";" of the function declaration or the start of the definition block '{'
 				continue;
@@ -362,7 +362,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			}
 			function_signature = "";
 		}
-		saftbus_export_tag_in_last_line = saftbus_export_tag;
+		saftbus_export_tag_in_previous_line = saftbus_export_tag;
 
 
 		if (in_class_definition) {

@@ -132,29 +132,31 @@ namespace saftbus {
 	}
 
 	bool ServerConnection::Impl::handle_client_request(int fd, int condition) {
-		if (condition & POLLHUP) {
-			std::cerr << "client hung up" << std::endl;
-
-			std::cerr << "clients.size() " << clients.size() << std::endl;
-			// auto client = clients.find(fd);
-			auto removed_client = std::find(clients.begin(), clients.end(), fd);
-			if (removed_client == clients.end()) { 
-				assert(false);
-			} else {
-				// remove all signal fds associated with this client from all services
-				for(auto &signal_fd: (*removed_client)->signal_fds) {
-					std::cerr << "remove client signal fd " << signal_fd->fd << std::endl;
-					container_of_services.remove_signal_fd(signal_fd->fd);
-				}
-				clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
-			}
-			std::cerr << "clients.size() " << clients.size() << std::endl;
-			return false;
-		}
-		if (condition & POLLIN) {
+		if (condition & (POLLIN|POLLHUP) ) {
 			bool read_result = received.read_from(fd);
 			if (!read_result) {
 				std::cerr << "failed to read data from fd " << fd << std::endl;
+
+				if (condition & POLLHUP) {
+					std::cerr << "client hung up" << std::endl;
+
+					std::cerr << "clients.size() " << clients.size() << std::endl;
+					// auto client = clients.find(fd);
+					auto removed_client = std::find(clients.begin(), clients.end(), fd);
+					if (removed_client == clients.end()) { 
+						assert(false);
+					} else {
+						// remove all signal fds associated with this client from all services
+						for(auto &signal_fd: (*removed_client)->signal_fds) {
+							std::cerr << "remove client signal fd " << signal_fd->fd << std::endl;
+							container_of_services.remove_signal_fd(signal_fd->fd);
+						}
+						clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
+					}
+					std::cerr << "clients.size() " << clients.size() << std::endl;
+					return false;
+				}
+
 				return false;
 			}
 			unsigned saftlib_object_id;

@@ -150,11 +150,9 @@ namespace saftbus {
 			msg << "cannot create socket pair: " << strerror(errno);
 			throw std::runtime_error(msg.str());
 		}
-		// close(d->fd_pair[0]);
-		// close(d->fd_pair[1]);
 		// keep the other socket end in order to listen for events
 		d->pfd.fd = d->fd_pair[1];
-		d->pfd.events = POLLIN | POLLHUP | POLLERR;
+		d->pfd.events = POLLIN;
 		d->signal_group_id = -1;
 	}
 
@@ -167,6 +165,10 @@ namespace saftbus {
 
 		if (d->signal_group_id == -1) {
 			int fdresult = sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
+			close(d->fd_pair[0]); // close the fd after sending it to the server
+			                      // if this is not closed, we will not receiver POLLHUP
+			                      // when the server closed the other end (because here we
+			                      // still have an open descriptor to the same end)
 			if (fdresult <= 0) {
 				std::cerr << "SignalGroup::register_proxy cannot send file descriptor to server" << std::endl;
 			}
@@ -187,10 +189,18 @@ namespace saftbus {
 		return d->pfd.fd;
 	}
 
+	// Wait for singals to arrive. Don't wait more than timeout_ms milliseconds.
+	// If there are multiple signals waiting in the queue, they are all processed before the function returns.
+	// Return value:
+	//   > 0 if a signal was received
+	//     0 if timeout was hit
+	//   < 0 in case of failure (e.g. service object was destroyed)
 	int SignalGroup::wait_for_signal(int timeout_ms)
 	{
+		std::cerr << "wait_for_signal(" << timeout_ms << ")" << std::endl;
 		int result = wait_for_one_signal(timeout_ms);
-		if (result) {
+		if (result >= 0) {
+			std::cerr << "." << std::endl;
 			// there was a signal, timeout was not hit. 
 			// In this case look for other pending signals 
 			// using a timeout of 0
@@ -199,18 +209,31 @@ namespace saftbus {
 		return result;
 	}
 
+	// Wait for a singal signal to arrive. Don't wait more than timeout_ms milliseconds.
+	// Return value:
+	//   > 0 if a signal was received
+	//     0 if timeout was hit
+	//   < 0 in case of failure (e.g. service object was destroyed)
 	int SignalGroup::wait_for_one_signal(int timeout_ms)
 	{
+		std::cerr << "wait_for_one_signal(" << timeout_ms << ")" << std::endl;
 		int result;
 		{
+			std::cerr << "wait for mutex" << std::endl;
 			std::lock_guard<std::mutex> lock1(d->m1);
-			std::cerr << "SignalGroup poll call" << std::endl;
-			if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
-				if (d->pfd.revents & POLLIN) {
-					std::cerr << "POLLIN" << std::endl;
+			std::cerr << "SignalGroup poll call " << d->pfd.events << " " << timeout_ms << std::endl;
+			result = poll(&d->pfd, 1, timeout_ms);
+			std::cerr << "SignalGroup poll done " << result << std::endl;
+			if (result > 0) {
+
+				if (d->pfd.revents & (POLLIN|POLLHUP) ) {
+					std::cerr << "POLLIN|POLLHUP" << std::endl;
 					bool result = d->received.read_from(d->pfd.fd);
 					if (!result) {
 						std::cerr << "failed to read data from fd " << d->pfd.fd << std::endl;
+						if (d->pfd.revents & POLLHUP) {
+							std::cerr << "service hung up" << std::endl;
+						}
 						return -1;
 					} 
 					int saftlib_object_id;
@@ -233,7 +256,9 @@ namespace saftbus {
 					assert(false); // did the server crash? this should never happen
 				}
 			}
+			std::cerr << "SignalGroup poll call done" << std::endl;
 		}
+
 		{
 			std::lock_guard<std::mutex> lock2(d->m2);
 		}

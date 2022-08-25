@@ -155,8 +155,10 @@ namespace saftbus {
 				}
 				break;
 				case 2: // void quit()
-					Loop::get_default().quit_in(std::chrono::milliseconds(100));
-					std::cerr << "saftd will quit in 100 ms" << std::endl;
+					// Loop::get_default().quit_in(std::chrono::milliseconds(100));
+					// std::cerr << "saftd will quit in 100 ms" << std::endl;
+					Loop::get_default().quit();
+					std::cerr << "saftd will quit now" << std::endl;
 				break;
 				case 3: {// bool load_plugin(const std::string &so_filename, const std::string &object_path)
 					std::string lib_name;

@@ -95,10 +95,10 @@ public:
 		::free(allocator_1);
 	}
 	char* malloc(size_t n) {
+		// std::cerr << "--------malloc----------" << std::endl;
 		// allocator_1->print_size();
 		// allocator_2->print_size();
 		// allocator_3->print_size();
-		// std::cerr << "------------------------" << std::endl;
 		       if (allocator_1->fits(n) && !allocator_1->full()) {
 			return allocator_1->malloc(n);
 		} else if (allocator_2->fits(n) && !allocator_2->full()) {
@@ -120,6 +120,10 @@ public:
 		} else {
 			::free(ptr);
 		}
+		// std::cerr << "--------free------------" << std::endl;
+		// allocator_1->print_size();
+		// allocator_2->print_size();
+		// allocator_3->print_size();
 	}
 private:
 	ChunckAllocatorRT<1024,128> *allocator_1;

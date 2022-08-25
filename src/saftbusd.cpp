@@ -27,14 +27,17 @@ bool timeout_tock() {
 	// static int j = 0;
 	if (++i == 6) {
 		i = 0;
-		saftbus::Loop::get_default().connect(
-			std::move(
-				std2::make_unique<saftbus::TimeoutSource>(
-					timeout_tick, std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
-					// sigc::ptr_fun(timeout_tick),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
-				)
-			)
-		);
+		// saftbus::Loop::get_default().connect(
+		// 	std::move(
+		// 		std2::make_unique<saftbus::TimeoutSource>(
+		// 			timeout_tick, std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
+		// 			// sigc::ptr_fun(timeout_tick),std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
+		// 		)
+		// 	)
+		// );
+		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+				timeout_tick, std::chrono::milliseconds(1000), std::chrono::milliseconds(-500)
+			);
 	}
 	return true;
 }
