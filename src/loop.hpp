@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <chrono>
-// #include <sigc++/sigc++.h>
 #include <functional>
 #include <array>
 

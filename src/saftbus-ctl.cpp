@@ -1,10 +1,12 @@
 #include "client.hpp"
 // #include "loop.hpp"
-#include "make_unique.hpp"
+// #include "make_unique.hpp"
 // #include "timingreceiver_proxy.hpp"
 
 #include <iostream>
 #include <thread>
+
+// #include <poll.h>
 
 // bool timeout() {
 // 	static int i = 0;
@@ -46,12 +48,9 @@ int main(int argc, char **argv)
 	// 	)
 	// );
 
-	// saftbus::Loop::get_default().connect(
-	// 	std::move(
-	// 		std2::make_unique<saftbus::IoSource>(
-	// 			sigc::ptr_fun(got_signal),  saftbus::SignalGroup::get_global().get_fd(), POLLIN
-	// 		) 
-	// 	)
+	// saftbus::Loop::get_default();
+	// saftbus::Loop::get_default().connect<saftbus::IoSource>(
+	// 			&got_signal,  saftbus::SignalGroup::get_global().get_fd(), POLLIN
 	// );
 
 	// char ch;

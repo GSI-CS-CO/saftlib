@@ -69,6 +69,17 @@ bool fd_callback(int fd, int condition) {
 	return true;
 }
 
+// struct Blub {
+// 	bool fd_call(int fd, int condition) {
+// 		return true;
+// 	}
+// 	Blub() {
+// 		fd = open("my_pipe", O_RDONLY | O_NONBLOCK);
+// 		saftbus::Loop::get_default().connect<saftbus::IoSource>(std::bind(&Blub::fd_call, this, std::placeholders::_1, std::placeholders::_2), fd, POLLIN);
+// 	}
+// 	int fd;
+// };
+
 int main() {
 
 //	saftbus::LibraryLoader timingreciever_plugin("/home/michael/local/lib/libtiming-receiver.la");
@@ -76,6 +87,7 @@ int main() {
 
 	// two lines just to play around ... has nothing to do with the saftd functionality.
 	init_fd();
+	// Blub blub;
 	saftbus::Loop::get_default().connect(std::move(std2::make_unique<saftbus::TimeoutSource>(
 		//sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)
 		timeout_tock, std::chrono::milliseconds(1000), std::chrono::milliseconds(500)

@@ -18,7 +18,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include <sigc++/sigc++.h>
+// #include <sigc++/sigc++.h>
 
 namespace saftbus {
 
@@ -122,7 +122,7 @@ namespace saftbus {
 			// read process_id from client
 			pid_t pid;
 			read(client_socket_fd, &pid, sizeof(pid));
-			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*this, &ServerConnection::Impl::handle_client_request), client_socket_fd, POLLIN | POLLHUP)));
+			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), (int)client_socket_fd, (int)POLLIN)));
 			// register the client
 			clients.push_back(std::move(std2::make_unique<Client>(client_socket_fd, pid)));
 			// send the ID back to client (the file descriptor integer number is used as ID)
@@ -222,7 +222,7 @@ namespace saftbus {
 			                   S_IRGRP | S_IWGRP | 
 			                   S_IROTH | S_IWOTH );
 
-		Loop::get_default().connect(std::move(std2::make_unique<IoSource>(sigc::mem_fun(*d, &ServerConnection::Impl::accept_client), base_socket_fd, POLLIN)));
+		Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::accept_client, d.get(), std::placeholders::_1, std::placeholders::_2), base_socket_fd, POLLIN);
 	}
 
 	ServerConnection::~ServerConnection() = default;
