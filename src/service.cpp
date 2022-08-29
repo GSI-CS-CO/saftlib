@@ -133,14 +133,15 @@ namespace saftbus {
 					int signal_fd;
 					received.get(signal_fd);
 
-					// check if the requested interfaces are all implemented by this service
+					// Check if the requested interfaces are all implemented by this service.
+					// If yes, return a map of interface_name -> interface_no for this particular service object
 					bool implment_all_interfaces = true;
 					std::map<std::string, int> interface_name2no_map;
 					for (auto &interface_name: interface_names) {
 						bool interface_implemented = false;
 						for (unsigned i = 0; i <  get_interface_names().size(); ++i) {
 							if (interface_name == get_interface_names()[i]) {
-								interface_name2no_map[interface_name] = 0;
+								interface_name2no_map[interface_name] = i; // for this particular service object, i is the interface_no for interface_name
 								interface_implemented = true;
 							}
 						}

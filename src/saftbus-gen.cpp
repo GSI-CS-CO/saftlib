@@ -294,7 +294,14 @@ struct ClassDefinition {
 		std::cerr << "  scope: " << scope << std::endl;
 		std::cerr << "  name : " << name  << std::endl;
 		if (bases.size() > 0) {
-			std::cerr << "  bases: ";
+			std::cerr << "  direct bases: ";
+			for (auto &base: bases) {
+				std::cerr << base << " , ";
+			}
+			std::cerr << std::endl;
+		}
+		if (all_bases.size() > 0) {
+			std::cerr << "     all bases: ";
 			for (auto &base: all_bases) {
 				std::cerr << base << " , ";
 			}
@@ -691,16 +698,34 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "#ifndef " << class_definition.name << "_PROXY_HPP_" << std::endl;
 	header_out << "#define " << class_definition.name << "_PROXY_HPP_" << std::endl;
 	header_out << std::endl;
-	header_out << "#include <saftbus/client.hpp>" << std::endl;
+	header_out << "#include <saftbus/client.hpp>" << std::endl;	
+	header_out << std::endl;
+
+	std::string include_prefix("");
+	if (outputdirectory != "") {
+		include_prefix = outputdirectory;
+		include_prefix.append("/");
+	}
+	for (auto &base: class_definition.bases) {
+		header_out << "#include \"" << include_prefix << base << "_Proxy.hpp\"" << std::endl;
+	}
 	header_out << std::endl;
 
 	header_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	header_out << std::endl;
 
-	header_out << "\tclass " << class_definition.name << "_Proxy : public saftbus::Proxy {" << std::endl;
+	header_out << "\tclass " << class_definition.name << "_Proxy : public ";
+	if (class_definition.bases.size()) {
+		for (unsigned i = 0; i < class_definition.bases.size(); ++i) {
+			header_out << (i?',':' ') << " " << class_definition.bases[i] << "_Proxy ";
+		}
+	} else {
+		header_out << "virtual saftbus::Proxy" << std::endl;
+	}
+	header_out << " { " << std::endl;
 	header_out << "\tpublic:" << std::endl;
-	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group);" << std::endl;
-	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global());" << std::endl;
+	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
+	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
 	header_out << "\t\t" << "bool signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content);" << std::endl;
 	for (auto &function: class_definition.exportedfunctions) {
 		header_out << "\t\t" << function.return_type << " " << function.name << "(";
@@ -712,6 +737,8 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 		}
 		header_out << ");" << std::endl;
 	}
+	header_out << "\tprivate:" << std::endl;
+	header_out << "\t\tint interface_no;" << std::endl;
 
 	header_out << std::endl;
 
@@ -742,22 +769,30 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	// cpp_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	// cpp_out << std::endl;
 
-	cpp_out << class_definition.scope << "_Proxy::" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group)" << std::endl;
-	cpp_out << "\t" << ": Proxy(object_path, signal_group)" << std::endl;
-	cpp_out << "{}" << std::endl;
-	cpp_out << "std::shared_ptr<" << class_definition.scope << "_Proxy> " << class_definition.scope << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group) {" << std::endl;
-	cpp_out << "\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group); " << std::endl;
+	cpp_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
+	cpp_out << std::endl;
+
+	cpp_out << class_definition.name << "_Proxy::" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names)" << std::endl;
+	cpp_out << "\t" << ": saftbus::Proxy(object_path, signal_group, interface_names)" << std::endl;
+	if (class_definition.bases.size()) {
+		for (unsigned i = 0; i < class_definition.bases.size(); ++i) {
+			cpp_out << (true?"\t, ":"") << class_definition.bases[i] << "_Proxy(object_path, signal_group, interface_names) " << std::endl;
+		}
+	}
+	cpp_out << "{" << std::endl;
+	cpp_out << "\tinterface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\")" << std::endl;
 	cpp_out << "}" << std::endl;
-	cpp_out << "bool " << class_definition.scope << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
+	cpp_out << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {" << std::endl;
+	cpp_out << "\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, interface_names); " << std::endl;
+	cpp_out << "}" << std::endl;
+	cpp_out << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
 	cpp_out << "\t" << "return true;" << std::endl;
 	cpp_out << "}" << std::endl;
 
 
-	int interface_no = 0;
-
 	for (unsigned function_no  = 0; function_no  < class_definition.exportedfunctions.size(); ++function_no ) {
 		auto &function = class_definition.exportedfunctions[function_no];
-		cpp_out << function.return_type << " " << class_definition.scope << "_Proxy::" << function.name << "(";
+		cpp_out << function.return_type << " " << class_definition.name << "_Proxy::" << function.name << "(";
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			cpp_out << function.argument_list[i].definition();
 			if (i != function.argument_list.size()-1) {
@@ -766,7 +801,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 		}
 		cpp_out << ") {" << std::endl;
 		cpp_out << "\t" << "get_send().put(get_saftlib_object_id());" << std::endl;
-		cpp_out << "\t" << "get_send().put(" << interface_no << "); // interface_no" << std::endl;
+		cpp_out << "\t" << "get_send().put(interface_no);" << std::endl;
 		cpp_out << "\t" << "get_send().put(" << function_no  << "); // function_no" << std::endl;
 		int num_outputs = 0;
 		if (function.return_type != "void") {
@@ -802,7 +837,8 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 		cpp_out << "}" << std::endl;
 	}
 
-	// cpp_out << "}" << std::endl;
+	cpp_out << std::endl;
+	cpp_out << "}" << std::endl;
 	cpp_out << std::endl;
 
 }

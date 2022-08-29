@@ -94,13 +94,14 @@ int main() {
 		)
 	));
 
-	// create a mini-saftlib-server and let it run
+	// Create a mini-saftlib-server. It will connect itself to the default main loop.
 	saftbus::ServerConnection server_connection;
 
 //	server_connection.get_service_container().create_object("/de/gsi/saftlib/tr0", std::move(timingreciever_plugin.create_service()));
-	saftbus::Loop::get_default().run();
+	// Run the default main loop
+	saftbus::Loop::get_default().run(); 
 
-	// destroy resources before the plugins get unloaded and the destructors arent available anymore
+	// If the loop ends for some reason: Destroy resources before the plugins get unloaded and the destructors aren't available anymore
 	saftbus::Loop::get_default().clear();
 	server_connection.clear();
 
