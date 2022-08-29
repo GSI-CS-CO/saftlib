@@ -31,5 +31,8 @@ void Dice2::setMax2(int max) {
 int Dice2::getMax2() {
 	return max2;
 }
+bool Dice2::dont_export() {
+	return false;
+}
 
 }

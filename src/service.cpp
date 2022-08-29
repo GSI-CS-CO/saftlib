@@ -83,12 +83,15 @@ namespace saftbus {
 	{
 		return d->object_path;
 	}
+	std::vector<std::string> &Service::get_interface_names() {
+		return d->interface_names;
+	}
 
 
 
 	std::vector<std::string> Container_Service::Impl::gen_interface_names() {
 		std::vector<std::string> interface_names;
-		interface_names.push_back("saftbus");
+		interface_names.push_back("Container");
 		return interface_names;
 	}
 
@@ -125,19 +128,47 @@ namespace saftbus {
 					std::cerr << "register_proxy called" << std::endl;
 					std::string object_path;
 					received.get(object_path);
+					std::vector<std::string> interface_names;
+					received.get(interface_names);
 					int signal_fd;
 					received.get(signal_fd);
-					if (signal_fd == -1) {
-						signal_fd = recvfd(client_fd);
-						std::cerr << "got (open) " << signal_fd << std::endl;
-					} else {
-						std::cerr << "reuse " << signal_fd << std::endl;
+
+					// check if the requested interfaces are all implemented by this service
+					bool implment_all_interfaces = true;
+					std::map<std::string, int> interface_name2no_map;
+					for (auto &interface_name: interface_names) {
+						bool interface_implemented = false;
+						for (unsigned i = 0; i <  get_interface_names().size(); ++i) {
+							if (interface_name == get_interface_names()[i]) {
+								interface_name2no_map[interface_name] = 0;
+								interface_implemented = true;
+							}
+						}
+						if (!interface_implemented) {
+							implment_all_interfaces = false;
+							std::cerr << "requested interface " << interface_name << "is not implemented by " << object_path << std::endl;
+						}
 					}
-					unsigned saftlib_object_id = d->container->register_proxy(object_path, client_fd, signal_fd);
-					std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
-					send.put(saftlib_object_id);
-					send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
-					send.put(signal_fd);
+
+					if (implment_all_interfaces) {
+						if (signal_fd == -1) {
+							signal_fd = recvfd(client_fd);
+							std::cerr << "got (open) " << signal_fd << std::endl;
+						} else {
+							std::cerr << "reuse " << signal_fd << std::endl;
+						}
+						unsigned saftlib_object_id = d->container->register_proxy(object_path, client_fd, signal_fd);
+						std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
+						send.put(saftlib_object_id);
+						send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
+						send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
+						send.put(interface_name2no_map);
+					} else {
+						send.put(-1);        // -1 means that one of the requested interfaces is not implemented by this service object
+						send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
+						send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
+						send.put(interface_name2no_map);
+					}
 				}
 				break;
 				case 1: {// unregister proxy;

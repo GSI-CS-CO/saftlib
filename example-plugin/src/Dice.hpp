@@ -25,6 +25,8 @@ namespace example {
 		void setMax2(int max);
 		// @saftbus-export
 		int getMax2();
+		// normal comment
+		bool dont_export();
 	private:
 		int max2;
 	};

@@ -58,12 +58,27 @@ namespace saftbus {
 		virtual ~Proxy();
 		virtual bool signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content) = 0;
 	protected:
-		Proxy(const std::string &object_path, SignalGroup &signal_group);
+		// The Proxy constructor connects the Proxy with a given Service object (identified by the object_path)
+		// and connencts the SignalGroup for it.
+		// interfaces_names is an array of strings with the interface names in text from.
+		// During initialization, the Proxy asks the Service object for the indices that correspont to 
+		// the given interface names on this particular service object. The mapping is provided to all 
+		// base classes by the method interface_no_from_name.
+		Proxy(const std::string &object_path, SignalGroup &signal_group, const std::vector<std::string> &interface_names);
 		static ClientConnection& get_connection();
 		Serializer&              get_send();
 		Deserializer&            get_received();
 		int                      get_saftlib_object_id();
 		std::mutex&              get_client_socket();
+
+
+		// this needs to be called by derived classes in order to determine
+		// which interface_no they refer to.
+		// A specific Proxy only knows the interface name, but not under which number this name can be addressed
+		// in the Service object. The Proxy constructor has to get this name->number mapping from the
+		// Service object during the initialization phase (the Proxy constructor)
+		int interface_no_from_name(const std::string &interface_name); 
+		static std::vector<std::string> append_interface(std::vector<std::string> interface_names, const std::string &interface_name);
 	};
 
 	struct SaftbusInfo {
@@ -88,7 +103,7 @@ namespace saftbus {
 	};
 	class Container_Proxy : public Proxy {
 	public:
-		Container_Proxy(const std::string &object_path, SignalGroup &signal_group);
+		Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names = std::vector<std::string>());
 		static std::shared_ptr<Container_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
 		// @saftbus-export
 		bool signal_dispatch(int interface_no, 

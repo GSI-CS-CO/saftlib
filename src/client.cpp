@@ -139,6 +139,8 @@ namespace saftbus {
 		Serializer   send;
 		Deserializer received;
 		SignalGroup *signal_group;
+		std::vector<std::string>   interface_names;
+		std::map<std::string, int> interface_name2no_map;
 	};
 
 	SignalGroup::SignalGroup() 
@@ -275,21 +277,22 @@ namespace saftbus {
 	/////////////////////////////
 	/////////////////////////////
 
-	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group) 
+	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group, const std::vector<std::string> &interface_names) 
 		: d(std2::make_unique<Impl>()) 
 	{
 		d->signal_group = &signal_group;
 		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
 		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
 		// the Proxy constructor calls the server for 
-		// with object_id = 1 (the CoreService)
+		// with object_id = 1 (the Container_Service)
 		unsigned container_service_object_id = 1;
-		int interface_no = 0;
-		int function_no = 0; // 0 is register_proxy
+		int interface_no = 0; // Container_Service has only 1 interface with interface_no 0
+		int function_no = 0; // function_no 0 is register_proxy
 		d->send.put(container_service_object_id);
 		d->send.put(interface_no);
 		d->send.put(function_no);
 		d->send.put(object_path);
+		d->send.put(interface_names);
 		{
 			std::lock_guard<std::mutex> lock(get_connection().d->m_client_socket);
 			d->send.put(signal_group.d->signal_group_id); 
@@ -307,10 +310,22 @@ namespace saftbus {
 		d->received.get(d->saftlib_object_id);
 		d->received.get(d->client_id);
 		d->received.get(d->signal_group_id);
+		d->received.get(d->interface_name2no_map);
 		// if we get saftlib_object_id=0, the object path was not found
-		if (!d->saftlib_object_id) {
+		if (d->saftlib_object_id == 0) {
 			std::ostringstream msg;
 			msg << "object path \"" << object_path << "\" not found" << std::endl;
+			throw std::runtime_error(msg.str());
+		}
+		// if we get saftlib_object_id=-1, the object path was found found bu one of the requested interfaces is not implemented
+		if (d->saftlib_object_id == -1) { 
+			std::ostringstream msg;
+			msg << "object \"" << object_path << "\" does not implement requested interfaces: ";
+			for (auto &interface_name: interface_names) {
+				if (d->interface_name2no_map.find(interface_name) == d->interface_name2no_map.end()) {
+					msg << "\""<< interface_name << "\"" << std::endl;
+				}
+			}
 			throw std::runtime_error(msg.str());
 		}
 		if (signal_group.d->signal_group_id == -1) {
@@ -318,6 +333,10 @@ namespace saftbus {
 			signal_group.d->signal_group_id = d->signal_group_id;
 		}
 		std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
+		std::cerr << "interface name to no mapping: " << std::endl;
+		for (auto &pair: d->interface_name2no_map) {
+			std::cerr << "\t" << pair.first << " -> " << pair.second << std::endl;
+		}
 	}
 	Proxy::~Proxy()
 	{
@@ -364,12 +383,25 @@ namespace saftbus {
 		return get_connection().d->m_client_socket;
 	}
 
+	int Proxy::interface_no_from_name(const std::string &interface_name) {
+		std::map< std::string, int>::iterator it = d->interface_name2no_map.find(interface_name);
+		if (it != d->interface_name2no_map.end()) {
+			return it->second;
+		}
+		assert(0);
+		return -1; // erro (maybe better throw?);
+	}
+	std::vector<std::string> Proxy::append_interface(std::vector<std::string> interface_names, const std::string &interface_name) {
+		interface_names.push_back(interface_name);
+		return interface_names;
+	}
+
 	//////////////////////////////////////////	
 	//////////////////////////////////////////	
 	//////////////////////////////////////////	
 
-	Container_Proxy::Container_Proxy(const std::string &object_path, SignalGroup &signal_group)
-		: Proxy(object_path, signal_group)
+	Container_Proxy::Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names)
+		: Proxy(object_path, signal_group, append_interface(interface_names, "Container"))
 	{}
 
 	std::shared_ptr<Container_Proxy> Container_Proxy::create(SignalGroup &signal_group)

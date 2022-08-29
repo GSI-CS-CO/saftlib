@@ -24,6 +24,7 @@ namespace saftbus {
 		void emit(Serializer &send);
 		int get_object_id();
 		std::string &get_object_path();
+		std::vector<std::string> &get_interface_names();
 	};
 
 
