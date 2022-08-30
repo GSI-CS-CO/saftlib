@@ -360,7 +360,10 @@ namespace saftbus {
 		}
 		d->signal_group->unregister_proxy(this);
 	}
-
+	bool Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content) 
+	{
+		return false;
+	}
 
 	ClientConnection& Proxy::get_connection() {
 		static ClientConnection connection;
@@ -391,22 +394,21 @@ namespace saftbus {
 		assert(0);
 		return -1; // erro (maybe better throw?);
 	}
-	std::vector<std::string> Proxy::append_interface(std::vector<std::string> interface_names, const std::string &interface_name) {
-		interface_names.push_back(interface_name);
-		return interface_names;
-	}
 
 	//////////////////////////////////////////	
 	//////////////////////////////////////////	
 	//////////////////////////////////////////	
 
 	Container_Proxy::Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names)
-		: Proxy(object_path, signal_group, append_interface(interface_names, "Container"))
-	{}
+		: Proxy(object_path, signal_group, interface_names)
+	{
+	}
 
 	std::shared_ptr<Container_Proxy> Container_Proxy::create(SignalGroup &signal_group)
 	{
-		return std::make_shared<Container_Proxy>("/saftbus", signal_group);
+		std::vector<std::string> interface_names;
+		interface_names.push_back("Container");
+		return std::make_shared<Container_Proxy>("/saftbus", signal_group, interface_names);
 	}
 	bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content)
 	{

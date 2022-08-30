@@ -19,10 +19,10 @@ namespace saftbus {
 		struct Impl; std::unique_ptr<Impl> d;		
 	friend class SignalGroup;
 	friend class Proxy;
-	public:
+	private:
 		ClientConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ClientConnection();
-
+	public:
 		// send whatever data is in serial buffer to the server
 		int send(Serializer &serializer, int timeout_ms = -1); 
 		// wait for data to arrive from the server
@@ -78,7 +78,6 @@ namespace saftbus {
 		// in the Service object. The Proxy constructor has to get this name->number mapping from the
 		// Service object during the initialization phase (the Proxy constructor)
 		int interface_no_from_name(const std::string &interface_name); 
-		static std::vector<std::string> append_interface(std::vector<std::string> interface_names, const std::string &interface_name);
 	};
 
 	struct SaftbusInfo {
@@ -103,7 +102,7 @@ namespace saftbus {
 	};
 	class Container_Proxy : public Proxy {
 	public:
-		Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names = std::vector<std::string>());
+		Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names);
 		static std::shared_ptr<Container_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
 		// @saftbus-export
 		bool signal_dispatch(int interface_no, 

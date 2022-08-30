@@ -45,6 +45,32 @@ namespace saftbus {
 	}
 	Service::~Service() = default;
 
+	// Generate the mapping from interface_name to interface_no for all interface_names,
+	// return true if all interface_names are found, false otherwise
+	bool Service::get_interface_name2no_map(const std::vector<std::string> &interface_names, std::map<std::string, int> &interface_name2no_map)
+	{
+		// Check if the requested interfaces are all implemented by this service.
+		// If yes, return a map of interface_name -> interface_no for this particular service object
+		bool implement_all_interfaces = true;
+		for (auto &interface_name: interface_names) {
+			std::cerr << "  check for interface " << interface_name << std::endl;
+			bool interface_implemented = false;
+			for (unsigned i = 0; i <  get_interface_names().size(); ++i) {
+				std::cerr << "    check against " << get_interface_names()[i] << std::endl;
+				if (interface_name == get_interface_names()[i]) {
+					interface_name2no_map[interface_name] = i; // for this particular service object, i is the interface_no for interface_name
+					interface_implemented = true;
+				}
+			}
+			std::cerr << "  => " << interface_implemented << std::endl;
+			if (!interface_implemented) {
+				implement_all_interfaces = false;
+				std::cerr << "requested interface " << interface_name << "is not implemented by " << get_object_path() << std::endl;
+			}
+		}
+		return implement_all_interfaces;
+	}
+
 	void Service::call(int client_fd, Deserializer &received, Serializer &send) {
 		int interface_no, function_no;
 		received.get(interface_no);
@@ -133,43 +159,20 @@ namespace saftbus {
 					int signal_fd;
 					received.get(signal_fd);
 
-					// Check if the requested interfaces are all implemented by this service.
-					// If yes, return a map of interface_name -> interface_no for this particular service object
-					bool implment_all_interfaces = true;
-					std::map<std::string, int> interface_name2no_map;
-					for (auto &interface_name: interface_names) {
-						bool interface_implemented = false;
-						for (unsigned i = 0; i <  get_interface_names().size(); ++i) {
-							if (interface_name == get_interface_names()[i]) {
-								interface_name2no_map[interface_name] = i; // for this particular service object, i is the interface_no for interface_name
-								interface_implemented = true;
-							}
-						}
-						if (!interface_implemented) {
-							implment_all_interfaces = false;
-							std::cerr << "requested interface " << interface_name << "is not implemented by " << object_path << std::endl;
-						}
-					}
 
-					if (implment_all_interfaces) {
-						if (signal_fd == -1) {
-							signal_fd = recvfd(client_fd);
-							std::cerr << "got (open) " << signal_fd << std::endl;
-						} else {
-							std::cerr << "reuse " << signal_fd << std::endl;
-						}
-						unsigned saftlib_object_id = d->container->register_proxy(object_path, client_fd, signal_fd);
-						std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
-						send.put(saftlib_object_id);
-						send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
-						send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
-						send.put(interface_name2no_map);
+					if (signal_fd == -1) {
+						signal_fd = recvfd(client_fd);
+						std::cerr << "got (open) " << signal_fd << std::endl;
 					} else {
-						send.put(-1);        // -1 means that one of the requested interfaces is not implemented by this service object
-						send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
-						send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
-						send.put(interface_name2no_map);
+						std::cerr << "reuse " << signal_fd << std::endl;
 					}
+					std::map<std::string, int> interface_name2no_map;
+					unsigned saftlib_object_id = d->container->register_proxy(object_path, interface_names, interface_name2no_map, client_fd, signal_fd);
+					std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
+					send.put(saftlib_object_id);
+					send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
+					send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
+					send.put(interface_name2no_map);
 				}
 				break;
 				case 1: {// unregister proxy;
@@ -314,7 +317,7 @@ namespace saftbus {
 		return true;
 	}
 
-	unsigned Container::register_proxy(const std::string &object_path, int client_fd, int signal_group_fd)
+	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
 	{
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result != d->object_path_lookup_table.end()) {
@@ -322,10 +325,14 @@ namespace saftbus {
 			auto find_result = d->objects.find(saftlib_object_id);
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto &service    = find_result->second;
-			service->d->signal_fds_use_count[signal_group_fd]++;
-			std::cerr << "register_proxy for object path " << object_path << " . object use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
-			d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
-			return saftlib_object_id;
+			if (service->get_interface_name2no_map(interface_names, interface_name2no_map)) { //returns false if not all requested interfaces are implemented
+				service->d->signal_fds_use_count[signal_group_fd]++;
+				std::cerr << "register_proxy for object path " << object_path << " . object use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
+				d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
+				return saftlib_object_id;
+			}
+			// not all requested interfaces are implmented => return -1
+			return -1;
 		}
 		return 0;
 	}

@@ -723,6 +723,7 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 		header_out << "virtual saftbus::Proxy" << std::endl;
 	}
 	header_out << " { " << std::endl;
+	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
 	header_out << "\tpublic:" << std::endl;
 	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
 	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
@@ -772,6 +773,15 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	cpp_out << std::endl;
 
+	cpp_out << "\t" << "std::vector<std::string> " << class_definition.name << "_Proxy::gen_interface_names() {" << std::endl;
+	cpp_out << "\t\t" << "std::vector<std::string> result; " << std::endl;
+	cpp_out << "\t\t" << "result.push_back(\"" << class_definition.name << "\");" << std::endl;
+	for (auto &base: class_definition.all_bases) {
+		cpp_out << "\t\t" << "result.push_back(\"" << base << "\");" << std::endl;
+	}
+	cpp_out << "\t\t" << "return result;" << std::endl;
+	cpp_out << "\t" << "}" << std::endl;
+
 	cpp_out << class_definition.name << "_Proxy::" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names)" << std::endl;
 	cpp_out << "\t" << ": saftbus::Proxy(object_path, signal_group, interface_names)" << std::endl;
 	if (class_definition.bases.size()) {
@@ -780,10 +790,10 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 		}
 	}
 	cpp_out << "{" << std::endl;
-	cpp_out << "\tinterface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\")" << std::endl;
+	cpp_out << "\tinterface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\");" << std::endl;
 	cpp_out << "}" << std::endl;
 	cpp_out << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {" << std::endl;
-	cpp_out << "\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, interface_names); " << std::endl;
+	cpp_out << "\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
 	cpp_out << "}" << std::endl;
 	cpp_out << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
 	cpp_out << "\t" << "return true;" << std::endl;
