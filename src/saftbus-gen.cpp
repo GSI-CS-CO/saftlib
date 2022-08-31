@@ -6,6 +6,8 @@
 #include <vector>
 #include <map>
 
+bool verbose = false;
+
 // return true if a saftbus export tag was found in a line comment 
 static bool remove_line_comments(std::string &line) {
 	std::string saftbus_export_tag = " @saftbus-export";
@@ -324,7 +326,9 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		throw std::runtime_error(msg.str());
 	}
 
-	std::cerr << "parsing config file " << source_name << std::endl;
+	if (verbose) {
+		std::cerr << "parsing config file " << source_name << std::endl;
+	}
 
 	bool block_comment = false;
 	std::vector<std::string> scope;
@@ -364,7 +368,9 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			if (line.find(';') == line.npos && line.find('{') == line.npos) { // cant find the closing ";" of the function declaration or the start of the definition block '{'
 				continue;
 			} else {	
-				std::cerr << line_no << ": extract function signature: " << std::endl;
+				if (verbose) {
+					std::cerr << line_no << ": extract function signature: " << std::endl;
+				}
 				if (classes.size() > 0) {
 					classes.back().exportedfunctions.push_back(FunctionSignature(build_namespace(scope),function_signature));
 				}
@@ -525,7 +531,9 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 					if (!path_and_included_file_in) {
 						std::cerr << "cannot open file: " << path_and_include_filename << std::endl;
 					} else {
-						std::cerr << "recursively parse " << path_and_include_filename << std::endl;
+						if (verbose) {
+							std::cerr << "recursively parse " << path_and_include_filename << std::endl;
+						}
 						cpp_parser(path_and_include_filename, defines, classes, include_paths);
 						success = true;
 						break;
@@ -537,8 +545,10 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 					throw std::runtime_error(msg.str());
 				}
 			} else {
+				if (verbose) {
 				//... if it can be opened, call the parse function recursively
-				std::cerr << "recursively parse " << include_filename << std::endl;
+					std::cerr << "recursively parse " << include_filename << std::endl;
+				}
 				cpp_parser(include_filename, defines, classes, include_paths);
 			}
 		} else if (!saftbus_export_tag) {
@@ -549,8 +559,43 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			throw std::runtime_error(msg.str());
 		}
 	}
-	std::cerr << "end of file" << std::endl;
 	return classes;
+}
+
+void move_file_if_not_identical(const std::string &source_file, const std::string &dest_file) {
+	std::ifstream in1(source_file.c_str());
+	std::ifstream in2(dest_file.c_str());
+	bool identical = true;
+	for (;;) {
+		char ch1, ch2;
+		// in1 >> ch1;
+		// in2 >> ch2;
+		ch1 = in1.get();
+		ch2 = in2.get();
+		if (!in1 && !in2) {
+			// both files ended at the same time
+			break;
+		}
+		if (!in1 || !in2) {
+			// only one file endend
+			identical = false;
+			break;
+		}
+		if (ch1 != ch2) {
+			// file content differs
+			identical = false;
+			break;
+		}
+	}
+	if (identical) {
+		// remove the source_file
+		remove(source_file.c_str());
+		return;
+	}
+	// move the file using a syscall
+	in1.close();
+	in2.close();
+	rename(source_file.c_str(), dest_file.c_str());
 }
 
 
@@ -561,7 +606,10 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 	}
 	header_filename.append(class_definition.name);
 	header_filename.append("_Service.hpp");
-	std::ofstream header_out(header_filename.c_str());
+	//std::ofstream header_out(header_filename.c_str());
+	std::string tmp_filename = header_filename;
+	tmp_filename.append(".tmp");
+	std::ofstream header_out(tmp_filename);
 
 	header_out << "#ifndef " << class_definition.name << "_SERVICE_HPP_" << std::endl;
 	header_out << "#define " << class_definition.name << "_SERVICE_HPP_" << std::endl;
@@ -592,6 +640,9 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 
 	header_out << "#endif" << std::endl;
 
+	header_out.close();
+  
+	move_file_if_not_identical(tmp_filename, header_filename);
 }
 
 void generate_service_implementation(const std::string &outputdirectory, ClassDefinition &class_definition) {
@@ -601,7 +652,10 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	}
 	filename.append(class_definition.name);
 	filename.append("_Service.cpp");
-	std::ofstream out(filename.c_str());
+	// std::ofstream out(filename.c_str());
+	std::string tmp_filename = filename;
+	tmp_filename.append(".tmp");
+	std::ofstream out(tmp_filename);
 
 	out << "#include \"" << class_definition.name << ".hpp\"" << std::endl;
 	out << "#include \"" << class_definition.name << "_Service.hpp\"" << std::endl;
@@ -699,6 +753,9 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << std::endl;
 	out << "}" << std::endl;
 	out << std::endl;
+
+	out.close();
+	move_file_if_not_identical(tmp_filename, filename);	
 }
 
 
@@ -709,7 +766,10 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	}
 	header_filename.append(class_definition.name);
 	header_filename.append("_Proxy.hpp");
-	std::ofstream header_out(header_filename.c_str());
+	// std::ofstream header_out(header_filename.c_str());
+	std::string tmp_filename = header_filename;
+	tmp_filename.append(".tmp");
+	std::ofstream header_out(tmp_filename);
 
 	header_out << "#ifndef " << class_definition.name << "_PROXY_HPP_" << std::endl;
 	header_out << "#define " << class_definition.name << "_PROXY_HPP_" << std::endl;
@@ -767,6 +827,8 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 
 	header_out << "#endif" << std::endl;
 
+	header_out.close();
+	move_file_if_not_identical(tmp_filename, header_filename);
 }
 
 
@@ -777,7 +839,10 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	}
 	cpp_filename.append(class_definition.name);
 	cpp_filename.append("_Proxy.cpp");
-	std::ofstream cpp_out(cpp_filename.c_str());
+	// std::ofstream cpp_out(cpp_filename.c_str());
+	std::string tmp_filename = cpp_filename;
+	tmp_filename.append(".tmp");
+	std::ofstream cpp_out(tmp_filename);
 
 	cpp_out << "#include \"" << class_definition.name << "_Proxy.hpp\"" << std::endl;
 	cpp_out << "#include <saftbus/saftbus.hpp>" << std::endl;
@@ -874,6 +939,8 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "}" << std::endl;
 	cpp_out << std::endl;
 
+	cpp_out.close();
+	move_file_if_not_identical(tmp_filename, cpp_filename);
 }
 
 
@@ -900,6 +967,8 @@ int main(int argc, char **argv)
 			if (++i < argc) {
 				output_directory = argv[i];
 			}
+		} else if (argvi == "-v") {
+			verbose = true;
 		} else {
 			source_files.push_back(argvi);
 		}
@@ -913,7 +982,9 @@ int main(int argc, char **argv)
 
 		for (auto &class_def: classes) {
 			class_def.finalize(classes);
-			class_def.print();
+			if (verbose) {
+				class_def.print();
+			}
 		}
 
 		for (auto &class_def: classes) {
