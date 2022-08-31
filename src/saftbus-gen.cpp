@@ -240,7 +240,7 @@ struct ClassDefinition {
 	std::string scope;
 	std::string name;
 	std::vector<std::string> bases;       // direct base classes
-	std::vector<std::string> all_bases;   // base classes and base classes of them
+	std::vector<ClassDefinition*> all_bases;   // base classes and base classes of them
 	std::vector<FunctionSignature> exportedfunctions;
 	ClassDefinition(const std::string &scope_, const std::string &line) 
 		: scope(scope_)
@@ -266,10 +266,9 @@ struct ClassDefinition {
 		return n == this->name;
 	}
 
-	std::vector<std::string> generate_all_bases(std::vector<ClassDefinition> &class_definitions) {
-		std::vector<std::string> result;
+	std::vector<ClassDefinition*> generate_all_bases(std::vector<ClassDefinition> &class_definitions) {
+		std::vector<ClassDefinition*> result;
 		for (auto &base: bases) {
-			result.push_back(base);
 			ClassDefinition* base_class_definition = nullptr;
 			for (auto &class_definition: class_definitions) {
 				if (class_definition.name == base) {
@@ -278,6 +277,7 @@ struct ClassDefinition {
 				}
 			}
 			if (base_class_definition != nullptr) {
+				result.push_back(base_class_definition);
 				for (auto &bbase: base_class_definition->generate_all_bases(class_definitions)) {
 					result.push_back(bbase);
 				}
@@ -303,7 +303,7 @@ struct ClassDefinition {
 		if (all_bases.size() > 0) {
 			std::cerr << "     all bases: ";
 			for (auto &base: all_bases) {
-				std::cerr << base << " , ";
+				std::cerr << base->name << " , ";
 			}
 			std::cerr << std::endl;
 		}
@@ -616,7 +616,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "\t\t" << "std::vector<std::string> result; " << std::endl;
 	out << "\t\t" << "result.push_back(\"" << class_definition.name << "\");" << std::endl;
 	for (auto &base: class_definition.all_bases) {
-		out << "\t\t" << "result.push_back(\"" << base << "\");" << std::endl;
+		out << "\t\t" << "result.push_back(\"" << base->name << "\");" << std::endl;
 	}
 	out << "\t\t" << "return result;" << std::endl;
 	out << "\t" << "}" << std::endl;
@@ -626,56 +626,60 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "\t" << class_definition.name << "_Service::~" << class_definition.name << "_Service() " << std::endl;
 	out << "\t" << "{}" << std::endl;
 
+	std::vector<ClassDefinition*> class_and_all_base_classes;
+	class_and_all_base_classes.push_back(&class_definition);
+	class_and_all_base_classes.insert(class_and_all_base_classes.end(), class_definition.all_bases.begin(), class_definition.all_bases.end());
+
 	out << "\t" << "void " << class_definition.name << "_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send) {" << std::endl;
-	int interface_no = 0;
 	out << "\t\tswitch(interface_no) {" << std::endl;
-	out << "\t\t\t" << "case " << interface_no << ": " << std::endl;
-	out << "\t\t\tswitch(function_no) {" << std::endl;
-	for (unsigned function_no  = 0; function_no  < class_definition.exportedfunctions.size(); ++function_no ) {
-		auto &function = class_definition.exportedfunctions[function_no];
-		out << "\t\t\t\t" << "case " << function_no << ": {" << std::endl;
-		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
-			std::string type = function.argument_list[i].type;
-			if (type.find("&") != type.npos) { // remove the reference from type signature (remove the "&")
-				type = type.substr(0,type.find("&"));
+
+	for (unsigned interface_no = 0; interface_no < class_and_all_base_classes.size(); ++interface_no) {
+
+		out << "\t\t\t" << "case " << interface_no << ": " << std::endl;
+		out << "\t\t\tswitch(function_no) {" << std::endl;
+		for (unsigned function_no  = 0; function_no  < class_and_all_base_classes[interface_no]->exportedfunctions.size(); ++function_no ) {
+			auto &function = class_and_all_base_classes[interface_no]->exportedfunctions[function_no];
+			out << "\t\t\t\t" << "case " << function_no << ": {" << std::endl;
+			for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+				std::string type = function.argument_list[i].type;
+				if (type.find("&") != type.npos) { // remove the reference from type signature (remove the "&")
+					type = type.substr(0,type.find("&"));
+				}
+				if (type.find("const") != type.npos) { // remove const 
+					type = type.substr(type.find("const")+6);
+				}
+				out << "\t\t\t\t\t" << type << " " << function.argument_list[i].name << ";" << std::endl;
 			}
-			if (type.find("const") != type.npos) { // remove const 
-				type = type.substr(type.find("const")+6);
+			for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+				if (function.argument_list[i].is_output == false) {
+					out << "\t\t\t\t\t" << "received.get(" << function.argument_list[i].name << ");" << std::endl;
+				} 
 			}
-			out << "\t\t\t\t\t" << type << " " << function.argument_list[i].name << ";" << std::endl;
-		}
-		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
-			if (function.argument_list[i].is_output == false) {
-				out << "\t\t\t\t\t" << "received.get(" << function.argument_list[i].name << ");" << std::endl;
-			} 
-		}
-		if (function.return_type != "void") {
-			out << "\t\t\t\t\t" << function.return_type << " function_call_result = " << "d->" << function.name << "(";	
-		} else {
-			out << "\t\t\t\t\t" << "d->" << function.name << "(";
-		}
-		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
-			out << function.argument_list[i].name;
-			if (i != function.argument_list.size()-1) {
-				out << ", ";
+			if (function.return_type != "void") {
+				out << "\t\t\t\t\t" << function.return_type << " function_call_result = " << "d->" << function.name << "(";	
+			} else {
+				out << "\t\t\t\t\t" << "d->" << function.name << "(";
 			}
+			for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+				out << function.argument_list[i].name;
+				if (i != function.argument_list.size()-1) {
+					out << ", ";
+				}
+			}
+			out << ");" << std::endl;
+			for (unsigned i = 0; i < function.argument_list.size(); ++i) {
+				if (function.argument_list[i].is_output == true) {
+					out << "\t\t\t\t\t" << "send.put(" << function.argument_list[i].name << ");" << std::endl;
+				} 
+			}
+			if (function.return_type != "void") {
+				out << "\t\t\t\t\t" << "send.put(function_call_result);" << std::endl;
+			}
+			out << "\t\t\t\t" << "} return;" << std::endl;
 		}
-		out << ");" << std::endl;
-		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
-			if (function.argument_list[i].is_output == true) {
-				out << "\t\t\t\t\t" << "send.put(" << function.argument_list[i].name << ");" << std::endl;
-			} 
-		}
-		if (function.return_type != "void") {
-			out << "\t\t\t\t\t" << "send.put(function_call_result);" << std::endl;
-		}
-		out << "\t\t\t\t" << "} break;" << std::endl;
+		out << "\t\t\t};" << std::endl;
 	}
-	out << "\t\t\t};" << std::endl;
 
-	// for (unsigned function_no = 0; function_no < function.argument_list.size(); ++function_no) {
-
-	out << "\t\t\t" << "break;" << std::endl;
 	out << std::endl;
 	out << "\t\t};" << std::endl;
 	out << "\t}" << std::endl;
@@ -714,13 +718,13 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	header_out << std::endl;
 
-	header_out << "\tclass " << class_definition.name << "_Proxy : public ";
+	header_out << "\tclass " << class_definition.name << "_Proxy : ";
 	if (class_definition.bases.size()) {
 		for (unsigned i = 0; i < class_definition.bases.size(); ++i) {
-			header_out << (i?',':' ') << " " << class_definition.bases[i] << "_Proxy ";
+			header_out <<  (i?',':' ') << "public " << " " << class_definition.bases[i] << "_Proxy ";
 		}
 	} else {
-		header_out << "virtual saftbus::Proxy" << std::endl;
+		header_out << "public virtual saftbus::Proxy" << std::endl;
 	}
 	header_out << " { " << std::endl;
 	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
@@ -777,7 +781,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "\t\t" << "std::vector<std::string> result; " << std::endl;
 	cpp_out << "\t\t" << "result.push_back(\"" << class_definition.name << "\");" << std::endl;
 	for (auto &base: class_definition.all_bases) {
-		cpp_out << "\t\t" << "result.push_back(\"" << base << "\");" << std::endl;
+		cpp_out << "\t\t" << "result.push_back(\"" << base->name << "\");" << std::endl;
 	}
 	cpp_out << "\t\t" << "return result;" << std::endl;
 	cpp_out << "\t" << "}" << std::endl;

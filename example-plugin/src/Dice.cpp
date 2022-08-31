@@ -1,4 +1,5 @@
 #include "Dice.hpp"
+#include <iostream>
 
 namespace example {
 
@@ -7,6 +8,7 @@ Dice::Dice() {
 }
 
 double Dice::roll() {
+	std::cerr << "************ Dice::roll()" << std::endl; 
 	return 1+rand()%max;
 }
 
