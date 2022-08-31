@@ -14,6 +14,8 @@ namespace example {
 		int getMax2();
 		// normal comment
 		bool dont_export();
+		// @saftbus-export
+		void trigger_exception();
 	private:
 		int max2;
 	};

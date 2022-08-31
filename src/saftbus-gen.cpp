@@ -631,6 +631,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	class_and_all_base_classes.insert(class_and_all_base_classes.end(), class_definition.all_bases.begin(), class_definition.all_bases.end());
 
 	out << "\t" << "void " << class_definition.name << "_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send) {" << std::endl;
+	out << "\t\ttry {" << std::endl;
 	out << "\t\tswitch(interface_no) {" << std::endl;
 
 	for (unsigned interface_no = 0; interface_no < class_and_all_base_classes.size(); ++interface_no) {
@@ -667,6 +668,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 				}
 			}
 			out << ");" << std::endl;
+			out << "\t\t\t\t\t" << "send.put(saftbus::FunctionResult::RETURN);" << std::endl;
 			for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 				if (function.argument_list[i].is_output == true) {
 					out << "\t\t\t\t\t" << "send.put(" << function.argument_list[i].name << ");" << std::endl;
@@ -682,8 +684,18 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 
 	out << std::endl;
 	out << "\t\t};" << std::endl;
-	out << "\t}" << std::endl;
 
+	out << "\t\t} catch (std::runtime_error &e) {" << std::endl;
+	out << "\t\t\t" << "send.put(saftbus::FunctionResult::EXCEPTION);" << std::endl;
+	out << "\t\t\t" << "std::string what(e.what());" << std::endl;
+	out << "\t\t\t" << "send.put(what);" << std::endl;
+	out << "\t\t} catch (...) {" << std::endl;
+	out << "\t\t\t" << "send.put(saftbus::FunctionResult::EXCEPTION);" << std::endl;
+	out << "\t\t\t" << "std::string what(\"unknown exception\");" << std::endl;
+	out << "\t\t\t" << "send.put(what);" << std::endl;
+	out << "\t\t} "<< std::endl;
+
+	out << "\t}" << std::endl;
 	out << std::endl;
 	out << "}" << std::endl;
 	out << std::endl;
@@ -770,6 +782,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "#include \"" << class_definition.name << "_Proxy.hpp\"" << std::endl;
 	cpp_out << "#include <saftbus/saftbus.hpp>" << std::endl;
 	cpp_out << "#include <saftbus/make_unique.hpp>" << std::endl;
+	cpp_out << "#include <cassert>" << std::endl;
 	cpp_out << std::endl;
 	// cpp_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	// cpp_out << std::endl;
@@ -831,11 +844,17 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 		cpp_out << "\t{" << std::endl;
 		cpp_out << "\t\t" << "std::lock_guard<std::mutex> lock(get_client_socket());" << std::endl;
 		cpp_out << "\t\t" << "get_connection().send(get_send());" << std::endl;
-		if (num_outputs > 0) {
-			cpp_out << "\t\t" << "get_connection().receive(get_received());" << std::endl;
-		}
+		cpp_out << "\t\t" << "get_connection().receive(get_received());" << std::endl;
 		cpp_out << "\t}" << std::endl;
 
+		cpp_out << "\t" << "saftbus::FunctionResult function_result_;" << std::endl;
+		cpp_out << "\t" << "get_received().get(function_result_);" << std::endl;
+		cpp_out << "\t" << "if (function_result_ == saftbus::FunctionResult::EXCEPTION) {" << std::endl;
+		cpp_out << "\t\t" << "std::string what;" << std::endl;
+		cpp_out << "\t\t" << "get_received().get(what);" << std::endl;
+		cpp_out << "\t\t" << "throw std::runtime_error(what);" << std::endl;
+		cpp_out << "\t" << "}" << std::endl;
+		cpp_out << "\t" << "assert(function_result_ == saftbus::FunctionResult::RETURN);" << std::endl;
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			if (function.argument_list[i].is_output == true) {
 				cpp_out << "\t" << "get_received().get(" << function.argument_list[i].name << ");" << std::endl;

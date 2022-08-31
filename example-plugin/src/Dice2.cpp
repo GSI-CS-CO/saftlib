@@ -14,13 +14,16 @@ double Dice2::roll2() {
 }
 
 void Dice2::setMax2(int max) {
-	this->max2= max2;
+	this->max2= max;
 }
 int Dice2::getMax2() {
 	return max2;
 }
 bool Dice2::dont_export() {
 	return false;
+}
+void Dice2::trigger_exception() {
+	throw std::runtime_error("MyException");
 }
 
 }

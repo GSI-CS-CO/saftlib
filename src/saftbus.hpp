@@ -9,6 +9,11 @@
 
 namespace saftbus {
 
+	enum class FunctionResult {
+		RETURN,
+		EXCEPTION,
+	};
+
 	int write_all(int fd, const char *buffer, int size);
 	int read_all(int fd, char *buffer, int size);
 
