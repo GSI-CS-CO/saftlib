@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I /home/michael/local/include/saftbus -I /home/michael/local/include
+AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -I /home/michael/local/include/saftbus -I /home/michael/local/include
 
 lib_LTLIBRARIES = \
 	libsaftbus_example_service.la  \
