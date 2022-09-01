@@ -1,4 +1,5 @@
 #include <iostream>
+#include <functional>
 
 namespace example {
 
@@ -11,6 +12,8 @@ namespace example {
 		void setMax(int max);
 		// @saftbus-export
 		int getMax();
+		// @saftbus-signal
+		std::function<void(int a,int b,int c)> signal1;
 	private:
 		int max;
 	};

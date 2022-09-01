@@ -91,13 +91,16 @@ namespace saftbus {
 
 	void Service::emit(Serializer &send)
 	{
-		// std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
+		std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
 		for (auto &fd_use_count: d->signal_fds_use_count) {
-			int fd = fd_use_count.first;
-			std::cerr << "   to " << fd << std::endl;
-			send.write_to_no_init(fd);
-		}
-		send.put_init();
+			if (fd_use_count.second > 0) { // only send data if use count is > 0
+				int fd = fd_use_count.first;
+				std::cerr << "   to " << fd << std::endl;
+				send.write_to_no_init(fd); // The same data is written multiple times. Therefore the
+				                          // put_init function must not be called automatically after write
+			}                            //
+		}                               // but manually after the for loop 
+		send.put_init();               // <- here
 	}
 
 	int Service::get_object_id() 

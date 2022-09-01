@@ -16,6 +16,9 @@ void Dice::setMax(int max) {
 	this->max = max;
 }
 int Dice::getMax() {
+	std::cerr << "************ Dice::getMax()" << std::endl; 
+	signal1(1,2,3);
+	std::cerr << "singnal emitted" << std::endl;
 	return max;
 }
 

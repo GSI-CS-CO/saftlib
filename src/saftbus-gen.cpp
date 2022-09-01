@@ -8,9 +8,16 @@
 
 bool verbose = false;
 
+enum ExportTag {
+	NO_EXPORT,
+	SIGNAL_EXPORT,
+	FUNCTION_EXPORT,
+};
+
 // return true if a saftbus export tag was found in a line comment 
-static bool remove_line_comments(std::string &line) {
+static ExportTag remove_line_comments(std::string &line) {
 	std::string saftbus_export_tag = " @saftbus-export";
+	std::string saftbus_signal_tag = " @saftbus-signal";
 	bool in_string = false;
 	char previous_ch = ' ';
 	for (size_t i = 0; i < line.size(); ++i) {
@@ -22,15 +29,23 @@ static bool remove_line_comments(std::string &line) {
 				if (line.substr(i+1,saftbus_export_tag.size()) == saftbus_export_tag) {
 					line = line.substr(0,i-1);
 					// std::cerr << "saftbus export " << line << std::endl;
-					return true;
+					return FUNCTION_EXPORT;
+				}
+			} 
+			if (i+1+saftbus_signal_tag.size() <= line.size()) {
+				// std::cerr << "++ " << line.substr(i+1,saftbus_signal_tag.size()) << std::endl;
+				if (line.substr(i+1,saftbus_signal_tag.size()) == saftbus_signal_tag) {
+					line = line.substr(0,i-1);
+					// std::cerr << "saftbus export " << line << std::endl;
+					return SIGNAL_EXPORT;
 				}
 			}
 			line = line.substr(0,1);
-			return false;
+			return NO_EXPORT;
 		}
 		previous_ch = line[i];
 	}
-	return false;
+	return NO_EXPORT;
 }
 
 static void remove_block_comments(std::string &line, bool &block_comment) {
@@ -208,10 +223,37 @@ struct FunctionSignature {
 		return_type = strip(line.substr(0,name_start+1));
 	}
 	void print() {
-		std::cerr << "   scope         : " << scope << std::endl;
-		std::cerr << "   function name : " << name << std::endl;
-		std::cerr << "   return type   : " << return_type << std::endl;
-		std::cerr << "   arguments     : ";
+		std::cerr << "  Function        " << std::endl;
+		std::cerr << "    scope       : " << scope << std::endl;
+		std::cerr << "    name        : " << name << std::endl;
+		std::cerr << "    return type : " << return_type << std::endl;
+		std::cerr << "    arguments   : ";
+		for (auto &argument: argument_list) {
+			std::cerr << argument.declaration() << ", ";
+		}
+		std::cerr << std::endl;
+	}
+};
+
+struct SignalSignature {
+	std::string scope;
+	std::string name;
+	std::vector<FunctionArgument> argument_list;
+	SignalSignature(const std::string &s, const std::string &line) 
+		: scope(s) 
+	{
+		auto paranthesis_open = line.find('(');
+		auto paranthesis_close = line.find(')');
+		auto template_close = line.find('>');
+		auto semicolon = line.find(';');
+		argument_list = split(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
+		name = strip(line.substr(template_close+1,semicolon-template_close-1));
+	}
+	void print() {
+		std::cerr << "  Signal        " << std::endl;
+		std::cerr << "    scope     : " << scope << std::endl;
+		std::cerr << "    name      : " << name << std::endl;
+		std::cerr << "    arguments : ";
 		for (auto &argument: argument_list) {
 			std::cerr << argument.declaration() << ", ";
 		}
@@ -244,6 +286,7 @@ struct ClassDefinition {
 	std::vector<std::string> bases;       // direct base classes
 	std::vector<ClassDefinition*> all_bases;   // base classes and base classes of them
 	std::vector<FunctionSignature> exportedfunctions;
+	std::vector<SignalSignature> exportedsignals;
 	ClassDefinition(const std::string &scope_, const std::string &line) 
 		: scope(scope_)
 	{
@@ -313,6 +356,10 @@ struct ClassDefinition {
 			function.print();
 			std::cerr << std::endl;
 		}
+		for (auto &signal: exportedsignals) {
+			signal.print();
+			std::cerr << std::endl;
+		}
 	}
 };
 
@@ -334,8 +381,8 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 	std::vector<std::string> scope;
 	std::string latest_scope_name;
 
-	std::string function_signature;
-	bool saftbus_export_tag_in_previous_line = false;
+	std::string function_or_signal_signature;
+	ExportTag saftbus_export_tag_in_previous_line = NO_EXPORT;
 
 	std::string class_definition;
 	bool in_class_definition = false;
@@ -353,7 +400,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		}
 
 		// remove line comments and detect @saftbus-export tag (is has to be the first word in a line comment)
-		bool saftbus_export_tag = remove_line_comments(line);
+		ExportTag saftbus_export_tag = remove_line_comments(line);
 
 		// detect and remove block_comments
 		remove_block_comments(line,block_comment);
@@ -362,9 +409,23 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		manage_scopes(line, scope, latest_scope_name);
 		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
 
-		// extract function signature
-		if (saftbus_export_tag_in_previous_line) {
-			function_signature.append(line);
+		// extract signal or function signature
+		if (saftbus_export_tag_in_previous_line == SIGNAL_EXPORT) {
+			function_or_signal_signature.append(line);
+			if (line.find(';') == line.npos) { // cant find the closing ";" of the function declaration
+				continue;
+			} else {	
+				if (verbose) {
+					std::cerr << line_no << ": extract signal signature: " << std::endl;
+				}
+				if (classes.size() > 0) {
+					classes.back().exportedsignals.push_back(SignalSignature(build_namespace(scope),function_or_signal_signature));
+				}
+			}
+			function_or_signal_signature = "";
+		}
+		if (saftbus_export_tag_in_previous_line == FUNCTION_EXPORT) {
+			function_or_signal_signature.append(line);
 			if (line.find(';') == line.npos && line.find('{') == line.npos) { // cant find the closing ";" of the function declaration or the start of the definition block '{'
 				continue;
 			} else {	
@@ -372,10 +433,10 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 					std::cerr << line_no << ": extract function signature: " << std::endl;
 				}
 				if (classes.size() > 0) {
-					classes.back().exportedfunctions.push_back(FunctionSignature(build_namespace(scope),function_signature));
+					classes.back().exportedfunctions.push_back(FunctionSignature(build_namespace(scope),function_or_signal_signature));
 				}
 			}
-			function_signature = "";
+			function_or_signal_signature = "";
 		}
 		saftbus_export_tag_in_previous_line = saftbus_export_tag;
 
@@ -617,6 +678,8 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 	header_out << "#include <saftbus/service.hpp>" << std::endl;
 	header_out << "#include <saftbus/saftbus.hpp>" << std::endl;
 	header_out << std::endl;
+	header_out << "#include <functional>" << std::endl;
+	header_out << std::endl;
 
 	header_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	header_out << std::endl;
@@ -631,6 +694,23 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 	header_out << "\t\t" << "~" << class_definition.name << "_Service();" << std::endl;
 	header_out << "\t\t" << "void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);" << std::endl;
 	header_out << std::endl;
+
+	// function declaration for the functions that will be connected to the signals (e.g. std::function objects)
+	std::vector<ClassDefinition*> class_and_all_base_classes;
+	class_and_all_base_classes.push_back(&class_definition);
+	class_and_all_base_classes.insert(class_and_all_base_classes.end(), class_definition.all_bases.begin(), class_definition.all_bases.end());
+	for (auto& class_definition: class_and_all_base_classes) {
+		for (auto &signal: class_definition->exportedsignals) {
+			header_out << "\t\t" << "void " << signal.name << "_dispatch_function(";
+			for (unsigned i  = 0; i < signal.argument_list.size(); ++i) {
+				header_out << signal.argument_list[i].definition();
+				if (i < signal.argument_list.size()-1) {
+					header_out << ',';
+				}
+			}
+			header_out << ");" << std::endl;
+		}
+	}
 
 	header_out << "\t};" << std::endl;
 
@@ -665,6 +745,9 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	out << std::endl;
 
+	std::vector<ClassDefinition*> class_and_all_base_classes;
+	class_and_all_base_classes.push_back(&class_definition);
+	class_and_all_base_classes.insert(class_and_all_base_classes.end(), class_definition.all_bases.begin(), class_definition.all_bases.end());
 
 	out << "\t" << "std::vector<std::string> " << class_definition.name << "_Service::gen_interface_names() {" << std::endl;
 	out << "\t\t" << "std::vector<std::string> result; " << std::endl;
@@ -676,13 +759,21 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "\t" << "}" << std::endl;
 	out << "\t" << class_definition.name << "_Service::" << class_definition.name << "_Service() " << std::endl;
 	out << "\t" << ": saftbus::Service(gen_interface_names()), d(std2::make_unique<" << class_definition.name << ">())" << std::endl;
-	out << "\t" << "{}" << std::endl;
+	out << "\t" << "{" << std::endl;
+
+	for (auto& class_def: class_and_all_base_classes) {
+		for (auto &signal: class_def->exportedsignals) {
+			out << "\t\t" << "d->" << signal.name << " = std::bind(&" << class_definition.name << "_Service::" << signal.name << "_dispatch_function, this";
+			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+				out << ", std::placeholders::_" << i+1;
+			}
+			out << ");" << std::endl;
+		}
+	}
+
+	out << "\t" << "}" << std::endl;
 	out << "\t" << class_definition.name << "_Service::~" << class_definition.name << "_Service() " << std::endl;
 	out << "\t" << "{}" << std::endl;
-
-	std::vector<ClassDefinition*> class_and_all_base_classes;
-	class_and_all_base_classes.push_back(&class_definition);
-	class_and_all_base_classes.insert(class_and_all_base_classes.end(), class_definition.all_bases.begin(), class_definition.all_bases.end());
 
 	out << "\t" << "void " << class_definition.name << "_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send) {" << std::endl;
 	out << "\t\ttry {" << std::endl;
@@ -751,6 +842,42 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 
 	out << "\t}" << std::endl;
 	out << std::endl;
+
+	// signal dispatch functions
+	// for (auto &signal: class_definition.exportedsignals) {
+	// 	out << "\t\t" << "d->" << signal.name << " = std::bind(&" << class_definition.name << "_Service::" << signal.name << "_dispatch_function, this";
+	// 	for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+	// 		out << ", std::placeholders::_" << i+1;
+	// 	}
+	// 	out << ");" << std::endl;
+	// }
+	for (int interface_no = 0; interface_no < static_cast<int>(class_and_all_base_classes.size()); ++interface_no) {
+		auto &class_def = class_and_all_base_classes[interface_no];
+		for (int signal_no = 0; signal_no < static_cast<int>(class_def->exportedsignals.size()); ++signal_no) {
+			auto &signal = class_def->exportedsignals[signal_no];
+			out << "\t" << "void " << class_definition.name << "_Service::" << signal.name << "_dispatch_function(";
+			for (unsigned i  = 0; i < signal.argument_list.size(); ++i) {
+				out << signal.argument_list[i].definition();
+				if (i < signal.argument_list.size()-1) {
+					out << ", ";
+				}
+			}
+			out << ") {" << std::endl;
+			out << "\t\t" << "std::cerr << \"service dispatch function called!!!!!!!!!!!!\" << std::endl;" << std::endl;
+			out << "\t\t" << "saftbus::Serializer serialized_signal;" << std::endl;
+			out << "\t\t" << "serialized_signal.put(get_object_id());" << std::endl;
+			out << "\t\t" << "serialized_signal.put(" << interface_no    << ");" << std::endl;
+			out << "\t\t" << "serialized_signal.put(" << signal_no       << ");" << std::endl;
+			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+				out << "\t\t" << "serialized_signal.put(" << signal.argument_list[i].name << ");" << std::endl;
+			}
+			out << "\t\t" << "emit(serialized_signal);" << std::endl;
+			out << "\t" << "}" << std::endl;
+		}
+	}
+
+
+	out << std::endl;
 	out << "}" << std::endl;
 	out << std::endl;
 
@@ -775,6 +902,8 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "#define " << class_definition.name << "_PROXY_HPP_" << std::endl;
 	header_out << std::endl;
 	header_out << "#include <saftbus/client.hpp>" << std::endl;	
+	header_out << std::endl;
+	header_out << "#include <functional>" << std::endl;	
 	header_out << std::endl;
 
 	std::string include_prefix("");
@@ -814,6 +943,21 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 		}
 		header_out << ");" << std::endl;
 	}
+
+	// signals
+	for (auto &signal: class_definition.exportedsignals) {
+		header_out << "\t\t" << "std::function<void(";
+		for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+			if (i > 0) {
+				header_out << ", ";
+			}
+			header_out << signal.argument_list[i].definition();
+		}
+		header_out << ")> " << signal.name << ";" << std::endl;
+	}
+
+
+
 	header_out << "\tprivate:" << std::endl;
 	header_out << "\t\tint interface_no;" << std::endl;
 
@@ -877,9 +1021,36 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {" << std::endl;
 	cpp_out << "\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
 	cpp_out << "}" << std::endl;
-	cpp_out << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
-	cpp_out << "\t" << "return true;" << std::endl;
-	cpp_out << "}" << std::endl;
+	cpp_out << "\t"     << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
+	cpp_out << "\t\t"   <<   "if (interface_no == this->interface_no) {" << std::endl;
+	if ( class_definition.exportedsignals.size() > 0) {
+		cpp_out << "\t\t\t"   <<   "switch(signal_no) {" << std::endl;
+		for (unsigned signal_no = 0; signal_no < class_definition.exportedsignals.size(); ++signal_no) {
+			auto &signal = class_definition.exportedsignals[signal_no];
+			cpp_out << "\t\t\t" << "case " << signal_no << ": {" << std::endl;
+			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+				cpp_out << "\t\t\t\t" << signal.argument_list[i].definition() << ";" << std::endl;
+				cpp_out << "\t\t\t\t" << "signal_content.get(" << signal.argument_list[i].name << ");" << std::endl;
+			}
+			cpp_out << "\t\t\t\t" <<    signal.name << "(";
+			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+				if (i > 0) {
+					cpp_out << ", ";
+				}
+				cpp_out << signal.argument_list[i].name;
+			}
+			cpp_out << ");" << std::endl;
+			cpp_out << "\t\t\t\t" <<     "// execute signal e.g. std::function" << std::endl;
+			cpp_out << "\t\t\t" <<     "} return true;" << std::endl;
+		}
+		cpp_out << "\t\t\t"   <<   "}" << std::endl;
+	}
+	cpp_out << "\t\t"   <<   "}" << std::endl;
+	for (auto & base: class_definition.bases) {
+		cpp_out << "\t\t"   <<   "if (" << base << "_Proxy::signal_dispatch(interface_no, signal_no, signal_content)) return true;" << std::endl;
+	}
+	cpp_out << "\t\t"     <<   "return false;" << std::endl;
+	cpp_out << "\t"     << "}" << std::endl;
 
 
 	for (unsigned function_no  = 0; function_no  < class_definition.exportedfunctions.size(); ++function_no ) {
