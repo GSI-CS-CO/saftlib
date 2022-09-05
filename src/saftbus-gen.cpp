@@ -1032,7 +1032,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 				cpp_out << "\t\t\t\t" << signal.argument_list[i].definition() << ";" << std::endl;
 				cpp_out << "\t\t\t\t" << "signal_content.get(" << signal.argument_list[i].name << ");" << std::endl;
 			}
-			cpp_out << "\t\t\t\t" <<    signal.name << "(";
+			cpp_out << "\t\t\t\t" << "if (" << signal.name << ") " << signal.name << "(";
 			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
 				if (i > 0) {
 					cpp_out << ", ";

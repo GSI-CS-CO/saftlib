@@ -280,6 +280,7 @@ namespace saftbus {
 	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group, const std::vector<std::string> &interface_names) 
 		: d(std2::make_unique<Impl>()) 
 	{
+		std::cerr << "Proxy constructor for " << object_path << std::endl;
 		d->signal_group = &signal_group;
 		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
 		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);

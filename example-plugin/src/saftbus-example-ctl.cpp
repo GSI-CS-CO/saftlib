@@ -1,9 +1,17 @@
 #include "SpecialDice_Proxy.hpp"
 #include <saftbus/client.hpp>
 // #include <saftbus/make_unique.hpp>
+#include <thread>
 
 void signal1(int a,int b, int c) {
 	std::cerr << "+++++++++++++++ signal1(" << a << "," << b << "," << c << ")" << std::endl;
+	// std::thread call_again([](){
+		// std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		// std::cerr << "new proxy" << std::endl;
+		// auto dice = example::SpecialDice_Proxy::create("/example");
+		// std::cerr << "call again" << std::endl;
+		// dice->getMax(); // causes signal
+	// });
 }
 
 int main(int argc, char **argv) {
@@ -18,6 +26,7 @@ int main(int argc, char **argv) {
 	// }
 
 	auto dice = example::SpecialDice_Proxy::create("/example");
+	auto dice2 = example::SpecialDice_Proxy::create("/example");
 	dice->signal1 = &signal1;
 
 
@@ -52,7 +61,10 @@ int main(int argc, char **argv) {
 
 
 	dice->getMax();
-	saftbus::SignalGroup::get_global().wait_for_signal();
+	for (;;) {
+		std::cerr << " wait for signal" << std::endl;
+		saftbus::SignalGroup::get_global().wait_for_signal();
+	}
 
 	return 0;
 }
