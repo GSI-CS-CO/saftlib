@@ -81,17 +81,17 @@ namespace saftbus {
 
 	void Service::Impl::remove_signal_fd(int fd)
 	{
-		std::cerr << "Service::Impl::remove_signal_fd " << fd << std::endl;
+		// std::cerr << "Service::Impl::remove_signal_fd " << fd << std::endl;
 		auto found_use_count = signal_fds_use_count.find(fd);
 		if (found_use_count != signal_fds_use_count.end()) {
 			signal_fds_use_count.erase(fd);
 		}
-		std::cerr << " number of signal fds: " << signal_fds_use_count.size() << std::endl;
+		// std::cerr << " number of signal fds: " << signal_fds_use_count.size() << std::endl;
 	}
 
 	void Service::emit(Serializer &send)
 	{
-		std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
+		// std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
 		for (auto &fd_use_count: d->signal_fds_use_count) {
 			if (fd_use_count.second > 0) { // only send data if use count is > 0
 				int fd = fd_use_count.first;

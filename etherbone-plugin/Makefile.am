@@ -47,6 +47,6 @@ etherbone_plugin_proxy_include_HEADERS = \
 	src/Device_Proxy.hpp   
 
 
-bin_PROGRAMS = eb-source-test
-eb_source_test_LDADD  = $(EB_LIBS) $(SAFTBUS_LIBS) libetherbone_plugin_proxy.la
-eb_source_test_SOURCES = src/eb-source-test.cpp 
+# bin_PROGRAMS = eb-source-test
+# eb_source_test_LDADD  =  $(EB_LIBS) $(SAFTBUS_LIBS) libetherbone_plugin_proxy.la
+# eb_source_test_SOURCES = src/eb-source-test.cpp src/loop.cpp 

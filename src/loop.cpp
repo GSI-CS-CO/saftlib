@@ -15,18 +15,23 @@ namespace saftbus {
 
 
 	Source::Source() 
-	{}
+	{
+		valid = true;
+	}
 	Source::~Source() = default;
 
 	void Source::add_poll(struct pollfd &pfd)
 	{
+		// std::cerr << "add poll" << std::endl;
 		pfds.push_back(&pfd);
 	}
 	void Source::remove_poll(struct pollfd &pfd)
 	{
+		// std::cerr << "remove poll" << std::endl;
 		pfds.erase(pfds.begin(), std::remove(pfds.begin(), pfds.end(), &pfd));
 	}
 	void Source::destroy() {
+		valid = false;
 		loop->remove(this);
 	}
 	bool operator==(const std::unique_ptr<Source> &lhs, const Source *rhs)
@@ -67,32 +72,35 @@ namespace saftbus {
 	}
 
 	bool Loop::iteration(bool may_block) {
-		unsigned us = 0;
-		auto start = std::chrono::steady_clock::now();
-		auto stop = std::chrono::steady_clock::now();
 		++d->running_depth;
 		// std::cerr << ".";
 		static const auto no_timeout = std::chrono::milliseconds(-1);
-
 		std::vector<struct pollfd> pfds;
-		pfds.reserve(16);
+		// pfds.reserve(16);
 		std::vector<struct pollfd*> source_pfds;
-		source_pfds.reserve(16);
+		// source_pfds.reserve(16);
+		auto timeout = no_timeout; 
 
+		unsigned us = 0;
+		auto start = std::chrono::steady_clock::now();
+		auto stop = std::chrono::steady_clock::now();
+
+		// std::cerr << "sources.size() = " << d->sources.size() << std::endl;
 
 		//////////////////
 		// preparation 
 		// (find the earliest timeout)
 		//////////////////
-		auto timeout = no_timeout; 
 		for(auto &source: d->sources) {
-			auto timeout_source = no_timeout;
-			source->prepare(timeout_source); // source may leave timeout_source unchanged 
-			if (timeout_source != no_timeout) {
+			if (!source->valid) continue; 
+
+			auto timeout_from_source = no_timeout;
+			source->prepare(timeout_from_source); // source may leave timeout_from_source unchanged 
+			if (timeout_from_source != no_timeout) {
 				if (timeout == no_timeout) {
-					timeout = timeout_source;
+					timeout = timeout_from_source;
 				} else {
-					timeout = std::min(timeout, timeout_source);
+					timeout = std::min(timeout, timeout_from_source);
 				}
 			}
 			for(auto it = source->pfds.cbegin(); it != source->pfds.cbegin()+source->pfds.size(); ++it) {
@@ -140,6 +148,8 @@ namespace saftbus {
 		// dispatching
 		//////////////////
 		for (auto &source: d->sources) {
+			if (!source->valid) continue;
+
 			if (source->check()) {
 				// this is allowed(?) to make (nested) calls to Loop::iteration
 				source->dispatch();
@@ -173,7 +183,9 @@ namespace saftbus {
 		--d->running_depth;
 
 		stop = std::chrono::steady_clock::now();
-		std::cerr << changes << "    " << us << " , " << std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count() << std::endl;
+		// std::cerr << changes << "    " << us << " , " << std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count() << std::endl;
+
+
 
 		return !d->sources.empty();
 	}
@@ -207,13 +219,16 @@ namespace saftbus {
 	}
 
 	bool Loop::connect(std::unique_ptr<Source> source) {
+		// std::cerr << "Loop::connect" << std::endl;
 		source->loop = this;
 		d->added_sources.push_back(std::move(source));
 		return true;
 	}
 
-	void Loop::remove(Source *s) {
-		d->removed_sources.push_back(s);
+	void Loop::remove(Source *source) {
+		// std::cerr << "Loop::remove" << std::endl;
+		d->removed_sources.push_back(source);
+		source->valid = false;
 	}
 
 

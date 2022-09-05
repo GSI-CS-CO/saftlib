@@ -10,7 +10,7 @@
 
 #include <poll.h>
 
-#include <saftbus/loop.hpp>
+#include <loop.hpp>
 
 #include <map>
 

@@ -12,7 +12,7 @@ namespace eb_plugin {
 
 
 	EB_Source::EB_Source(etherbone::Socket socket_)
-	 : socket(socket_)
+	 : Source(), socket(socket_)
 	{
 	}
 
@@ -25,7 +25,7 @@ namespace eb_plugin {
 
 	int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
 	{
-	  std::cerr << "EB_Source::add_fd(" << fd << ")" << std::endl;
+	  // std::cout << "EB_Source::add_fd(" << fd << ")" << std::endl;
 	  EB_Source* self = (EB_Source*)data;
 	  
 	  struct pollfd pfd;
@@ -48,8 +48,7 @@ namespace eb_plugin {
 
 	int EB_Source::get_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
 	{
-	  std::cerr << "EB_Source::get_fd" << std::endl;
-	  return 0;
+	  // std::cout << "EB_Source::get_fd" << std::endl;
 	  EB_Source* self = (EB_Source*)data;
 	  
 	  fd_map::iterator i = self->fds.find(fd);
@@ -69,7 +68,7 @@ namespace eb_plugin {
 
 	bool EB_Source::prepare(std::chrono::milliseconds &timeout_ms)
 	{
-	  std::cerr << "EB_Source::prepare" << std::endl;
+	  // std::cout << "EB_Source::prepare" << std::endl;
 	  // Retrieve cached current time
 	  auto now    = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
 	  auto epoch  = now.time_since_epoch();
@@ -115,7 +114,7 @@ namespace eb_plugin {
 
 	bool EB_Source::check()
 	{
-	  std::cerr << "EB_Source::check" << std::endl;
+	  // std::cout << "EB_Source::check" << std::endl;
 	  bool ready = false;
 	  
 	  // Descriptors ready?
@@ -133,7 +132,7 @@ namespace eb_plugin {
 
 	bool EB_Source::dispatch()
 	{
-	  std::cerr << "EB_Source::dispatch" << std::endl;
+	  // std::cout << "EB_Source::dispatch" << std::endl;
 
 	  auto now    = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
 	  auto epoch  = now.time_since_epoch();

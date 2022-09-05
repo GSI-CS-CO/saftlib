@@ -15,7 +15,6 @@ libsaftbus_la_SOURCES = \
 	src/client.cpp    
 saftbus_include_HEADERS = \
 	src/make_unique.hpp \
-	src/loop.hpp        \
 	src/saftbus.hpp     \
 	src/client.hpp      \
 	src/service.hpp     \

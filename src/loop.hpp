@@ -2,6 +2,7 @@
 #define SAFTBUS_LOOP_HPP_
 
 #include <memory>
+#include <iostream>
 #include <chrono>
 #include <functional>
 #include <vector>
@@ -27,6 +28,7 @@ namespace saftbus {
 	private:
 		Loop *loop;
 		std::vector<struct pollfd*> pfds;
+		bool valid;
 	};
 
 	class Loop {
