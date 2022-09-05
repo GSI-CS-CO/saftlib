@@ -5,13 +5,17 @@
 
 void signal1(int a,int b, int c) {
 	std::cerr << "+++++++++++++++ signal1(" << a << "," << b << "," << c << ")" << std::endl;
-	// std::thread call_again([](){
-		// std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		// std::cerr << "new proxy" << std::endl;
-		// auto dice = example::SpecialDice_Proxy::create("/example");
-		// std::cerr << "call again" << std::endl;
-		// dice->getMax(); // causes signal
-	// });
+	std::thread call_again([](){
+		// Inside of a singal handler, no proxy can be created on the same signal group
+		saftbus::SignalGroup local_signal_group;
+		std::cerr << "new proxy" << std::endl;
+		auto dice = example::SpecialDice_Proxy::create("/example", local_signal_group);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		std::cerr << "call again" << std::endl;
+		dice->getMax(); // causes signal
+		std::cerr << "call done" << std::endl;
+	});
+	// call_again.join();
 }
 
 int main(int argc, char **argv) {
