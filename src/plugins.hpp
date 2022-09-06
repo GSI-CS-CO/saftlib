@@ -14,7 +14,8 @@ namespace saftbus {
 	public:
 		LibraryLoader(const std::string &so_filename);
 		~LibraryLoader();
-		std::unique_ptr<Service> create_service();
+		std::string              get_object_path(Container *container);
+		std::unique_ptr<Service> create_service (Container *container);
 	};
 
 }

@@ -108,7 +108,7 @@ namespace saftbus {
 		bool signal_dispatch(int interface_no, 
 			                 int signal_no, 
 			                 Deserializer& signal_content);
-		bool load_plugin(const std::string &so_filename, const std::string &object_path);
+		bool load_plugin(const std::string &so_filename);
 		bool remove_object(const std::string &object_path);
 		void quit();
 		SaftbusInfo get_status();

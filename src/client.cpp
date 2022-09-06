@@ -431,14 +431,14 @@ namespace saftbus {
 		}
 	}
 
-	bool Container_Proxy::load_plugin(const std::string &so_filename, const std::string &object_path) 
+	bool Container_Proxy::load_plugin(const std::string &so_filename) 
 	{
 		get_send().put(get_saftlib_object_id());
 		unsigned interface_no, function_no;
 		get_send().put(interface_no = 0);
 		get_send().put(function_no  = 3);
 		get_send().put(so_filename); 
-		get_send().put(object_path);
+		// get_send().put(object_path);
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());

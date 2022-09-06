@@ -68,10 +68,10 @@ int main(int argc, char **argv)
 				saftbus::SaftbusInfo saftbus_info = core_service_proxy->get_status();
 				return 0;
 			} else if (argvi == "-l") {
-				if ((i+=2) < argc) {
-					core_service_proxy->load_plugin(argv[i-1], argv[i]);
+				if ((i+=1) < argc) {
+					core_service_proxy->load_plugin(argv[i]);
 				} else {
-					throw std::runtime_error("expect so-filename and object-path after -l");
+					throw std::runtime_error("expect la-filename after -l");
 				}
 			} else if (argvi == "-r") {
 				if ((i+=1) < argc) {

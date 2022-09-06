@@ -690,6 +690,7 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
 	header_out << "\tpublic:" << std::endl;
 
+	header_out << "\t\t" <<        class_definition.name << "_Service(std::unique_ptr<" << class_definition.name <<"> instance);" << std::endl;
 	header_out << "\t\t" <<        class_definition.name << "_Service();" << std::endl;
 	header_out << "\t\t" << "~" << class_definition.name << "_Service();" << std::endl;
 	header_out << "\t\t" << "void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);" << std::endl;
@@ -757,10 +758,11 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	}
 	out << "\t\t" << "return result;" << std::endl;
 	out << "\t" << "}" << std::endl;
-	out << "\t" << class_definition.name << "_Service::" << class_definition.name << "_Service() " << std::endl;
-	out << "\t" << ": saftbus::Service(gen_interface_names()), d(std2::make_unique<" << class_definition.name << ">())" << std::endl;
-	out << "\t" << "{" << std::endl;
 
+	// constructor with instance pointer
+	out << "\t" << class_definition.name << "_Service::" << class_definition.name << "_Service(std::unique_ptr< " << class_definition.name << "> instance) " << std::endl;
+	out << "\t" << ": saftbus::Service(gen_interface_names()), d(std::move(instance))" << std::endl;
+	out << "\t" << "{" << std::endl;
 	for (auto& class_def: class_and_all_base_classes) {
 		for (auto &signal: class_def->exportedsignals) {
 			out << "\t\t" << "d->" << signal.name << " = std::bind(&" << class_definition.name << "_Service::" << signal.name << "_dispatch_function, this";
@@ -770,8 +772,9 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 			out << ");" << std::endl;
 		}
 	}
-
 	out << "\t" << "}" << std::endl;
+
+
 	out << "\t" << class_definition.name << "_Service::~" << class_definition.name << "_Service() " << std::endl;
 	out << "\t" << "{}" << std::endl;
 
@@ -1159,11 +1162,14 @@ int main(int argc, char **argv)
 		}
 
 		for (auto &class_def: classes) {
-			generate_service_header(output_directory, class_def);
-			generate_service_implementation(output_directory, class_def);
+			if (class_def.exportedfunctions.size() > 0 || class_def.exportedsignals.size() > 0) {
+				generate_service_header(output_directory, class_def);
+				generate_service_implementation(output_directory, class_def);
 
-			generate_proxy_header(output_directory, class_def);
-			generate_proxy_implementation(output_directory, class_def);
+				generate_proxy_header(output_directory, class_def);
+				generate_proxy_implementation(output_directory, class_def);
+
+			}
 
 		}
 

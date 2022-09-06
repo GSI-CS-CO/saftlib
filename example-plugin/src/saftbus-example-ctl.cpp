@@ -15,7 +15,7 @@ void signal1(int a,int b, int c) {
 		dice->getMax(); // causes signal
 		std::cerr << "call done" << std::endl;
 	});
-	// call_again.join();
+	call_again.join();
 }
 
 int main(int argc, char **argv) {
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 	// }
 
 	auto dice = example::SpecialDice_Proxy::create("/example");
-	auto dice2 = example::SpecialDice_Proxy::create("/example");
+	// auto dice2 = example::SpecialDice_Proxy::create("/example");
 	dice->signal1 = &signal1;
 
 

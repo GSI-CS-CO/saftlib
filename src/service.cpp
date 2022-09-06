@@ -196,9 +196,9 @@ namespace saftbus {
 				break;
 				case 3: {// bool load_plugin(const std::string &so_filename, const std::string &object_path)
 					std::string lib_name;
-					std::string object_path;
+					// std::string object_path;
 					received.get(lib_name);
-					received.get(object_path);
+					// received.get(object_path);
 					std::cerr << "loading " << lib_name << std::endl;
 					bool plugin_available = false;
 					auto plugin = d->plugins.find(lib_name);
@@ -216,7 +216,8 @@ namespace saftbus {
 						}
 					}
 					if (plugin_available) {
-						unsigned object_id = d->container->create_object(object_path, std::move(plugin->second->create_service()));
+						std::string object_path = plugin->second->get_object_path(d->container);
+						unsigned object_id = d->container->create_object(object_path, std::move(plugin->second->create_service(d->container)));
 						std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
 					}
 					send.put(plugin_available);
