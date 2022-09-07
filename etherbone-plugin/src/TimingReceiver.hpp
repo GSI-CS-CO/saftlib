@@ -17,20 +17,26 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef EB_PLUGIN_DEVICE_HPP_
-#define EB_PLUGIN_DEVICE_HPP_
+#ifndef EB_PLUGIN_TIMING_RECEIVER_HPP_
+#define EB_PLUGIN_TIMING_RECEIVER_HPP_
 
 #include <deque>
 #include <memory>
 #include <string>
-#include <etherbone.h>
+
+#include <saftbus/service.hpp>
+
+#include <sys/stat.h>
+
+#include "eb-source.hpp"
 
 namespace eb_plugin {
 
 // Saftlib devices just add IRQs
-class Device : public etherbone::Device {
+class TimingReceiver {
 public:
-	Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll = false, unsigned piv = 1);
+	TimingReceiver(saftbus::Container *container, etherbone::Socket &socket, const std::string &object_path, const std::string &name, const std::string etherbone_path);
+	~TimingReceiver();
 
 	// // This function chooses a random address from the msi address range and returns it.
 	// // The provided slot will be called whenever the hardware writes to this address.
@@ -42,13 +48,28 @@ public:
 
 	// static void set_msi_buffer_capacity(size_t capacity);
 
-private:
-	std::string name;
-	std::string objectPath;
-	std::string etherbonePath;
+	const std::string &get_object_path() const;
 
-	eb_address_t base;
-	eb_address_t mask;
+	// @saftbus-export
+	void Remove();
+	// @saftbus-export
+	std::string getEtherbonePath() const;
+	// @saftbus-export
+	std::string getName() const;
+
+private:
+
+	etherbone::Device eb_device;
+
+	std::string object_path;
+	std::string name;
+	std::string etherbone_path;
+
+	struct stat dev_stat;
+
+	eb_address_t first, last; // Msi address range
+
+	eb_address_t base,  mask;
 
 	//   typedef std::map<eb_address_t, sigc::slot<void, eb_data_t> > irqMap;
 	//   static irqMap irqs;

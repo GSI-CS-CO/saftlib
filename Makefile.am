@@ -11,26 +11,32 @@ lib_LTLIBRARIES = libsaftbus.la
 
 saftbus_includedir    = $(includedir)/saftbus
 libsaftbus_la_SOURCES = \
-	src/saftbus.cpp   \
+	src/saftbus.cpp      \
+	src/error.cpp         \
 	src/client.cpp    
+
 saftbus_include_HEADERS = \
-	src/make_unique.hpp \
-	src/saftbus.hpp     \
-	src/client.hpp      \
-	src/service.hpp     \
-	src/plugins.hpp     \
+	src/make_unique.hpp    \
+	src/loop.hpp            \
+	src/error.hpp            \
+	src/saftbus.hpp           \
+	src/client.hpp             \
+	src/service.hpp             \
+	src/plugins.hpp              \
+	src/chunck_allocator_rt.hpp   \
 	src/server.hpp    
 
-bin_PROGRAMS = saftbusd      \
-               saftbus-ctl   \
-               saftbus-gen
+bin_PROGRAMS = \
+	saftbusd    \
+	saftbus-ctl  \
+	saftbus-gen
 
 saftbusd_LDFLAGS = -Wl,--export-dynamic 
 saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la -lltdl
 saftbusd_SOURCES = \
-	src/loop.cpp       \
+	src/loop.cpp    \
 	src/saftbusd.cpp \
-	src/service.cpp    \
+	src/service.cpp   \
 	src/plugins.cpp    \
 	src/server.cpp        
 

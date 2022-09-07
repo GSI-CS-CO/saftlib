@@ -2,12 +2,21 @@
 
 #include <saftbus/client.hpp>
 #include <memory>
+#include <iostream>
 
-int main() {
+int main(int argc, char **argv) {
+
 	auto saftd = eb_plugin::SAFTd_Proxy::create("/de/gsi/saftlib");
 
-	saftd->AttachDevice("tr0", "dev/ttyUSB0");
+	if (argc == 3) {
+		saftd->AttachDevice(argv[1], argv[2]);
+	}
 
-	saftbus::SignalGroup::get_global().wait_for_signal();
+	auto devices = saftd->getDevices();
+
+	for (auto &device: devices) {
+		std::cerr << device.first << " -> " << device.second << std::endl;
+	}
+
 	return 0;
 }

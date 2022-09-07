@@ -22,7 +22,6 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include "Device.hpp"
 
 #include <stdlib.h>
 #include <string.h>
@@ -30,16 +29,71 @@
 #include <iomanip>
 #include <memory>
 
+#include <saftbus/error.hpp>
+
+#include "TimingReceiver.hpp"
 
 namespace eb_plugin {
 
 // Device::irqMap Device::irqs;   // this is in globals.cpp
 // Device::msiQueue Device::msis; // this is in globals.cpp
 
-Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll, unsigned piv)
- : etherbone::Device(d), base(first), mask(last-first), activate_msi_polling(poll), polling_interval_ms(piv)
+TimingReceiver::TimingReceiver(saftbus::Container *container, etherbone::Socket &socket, const std::string &obj_path, const std::string &n, const std::string eb_path)
+    : object_path(obj_path)
+    , name(n)
+    , etherbone_path(eb_path)
 {
+    stat(etherbone_path.c_str(), &dev_stat);
+    object_path.append("/");
+    object_path.append(name);
+    eb_device.open(socket, etherbone_path.c_str());
+
+    // // This just reads the MSI address range out of the ehterbone config space registers
+    // // It does not actually enable anything ... MSIs also work without this
+    // eb_device.enable_msi(&first, &last);
+
+    // Confirm the device is an aligned power of 2
+    eb_address_t size = last - first;
+    if (((size + 1) & size) != 0) {
+        eb_device.close();
+        chmod(etherbone_path.c_str(), dev_stat.st_mode);
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
+    }
+    if ((first & size) != 0) {
+        eb_device.close();
+        chmod(etherbone_path.c_str(), dev_stat.st_mode);
+        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
+    }
 }
+
+TimingReceiver::~TimingReceiver() 
+{
+    eb_device.close();
+    chmod(etherbone_path.c_str(), dev_stat.st_mode);
+}
+
+const std::string &TimingReceiver::get_object_path() const
+{
+    return object_path;
+}
+
+void TimingReceiver::Remove() {
+
+}
+std::string TimingReceiver::getEtherbonePath() const
+{
+    return etherbone_path;
+}
+std::string TimingReceiver::getName() const
+{
+    return name;
+}
+
+
+// Device::Device(etherbone::Device d, eb_address_t first, eb_address_t last, bool poll, unsigned piv)
+//  : etherbone::Device(d), base(first), mask(last-first), activate_msi_polling(poll), polling_interval_ms(piv)
+// {
+// }
 
 // eb_address_t Device::request_irq(const etherbone::sdb_msi_device& sdb, const sigc::slot<void,eb_data_t>& slot)
 // {

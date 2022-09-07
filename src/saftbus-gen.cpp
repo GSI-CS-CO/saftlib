@@ -284,6 +284,7 @@ struct ClassDefinition {
 	std::string scope;
 	std::string name;
 	std::vector<std::string> bases;       // direct base classes
+	std::vector<ClassDefinition*> direct_bases;// direct base classes
 	std::vector<ClassDefinition*> all_bases;   // base classes and base classes of them
 	std::vector<FunctionSignature> exportedfunctions;
 	std::vector<SignalSignature> exportedsignals;
@@ -311,6 +312,9 @@ struct ClassDefinition {
 		return n == this->name;
 	}
 
+	bool has_exports() {
+		return exportedfunctions.size() > 0 || exportedsignals.size() > 0;
+	}
 	std::vector<ClassDefinition*> generate_all_bases(std::vector<ClassDefinition> &class_definitions) {
 		std::vector<ClassDefinition*> result;
 		for (auto &base: bases) {
@@ -331,17 +335,43 @@ struct ClassDefinition {
 		return result;
 	}
 
+	std::vector<ClassDefinition*> generate_direct_bases(std::vector<ClassDefinition> &class_definitions) {
+		std::vector<ClassDefinition*> result;
+		for (auto &base: bases) {
+			ClassDefinition* base_class_definition = nullptr;
+			for (auto &class_definition: class_definitions) {
+				if (class_definition.name == base) {
+					base_class_definition = &class_definition;
+					break;
+				}
+			}
+			if (base_class_definition != nullptr) {
+				result.push_back(base_class_definition);
+			}
+		}
+		return result;
+	}
+
+
 	void finalize(std::vector<ClassDefinition> &class_definitions) {
-		all_bases = generate_all_bases(class_definitions);
+		all_bases    = generate_all_bases(class_definitions);
+		direct_bases = generate_direct_bases(class_definitions);
 	}
 	void print() {
 		std::cerr << "ClassDefinition: " << std::endl;
 		std::cerr << "  scope: " << scope << std::endl;
 		std::cerr << "  name : " << name  << std::endl;
 		if (bases.size() > 0) {
-			std::cerr << "  direct bases: ";
+			std::cerr << "  bases names: ";
 			for (auto &base: bases) {
 				std::cerr << base << " , ";
+			}
+			std::cerr << std::endl;
+		}
+		if (all_bases.size() > 0) {
+			std::cerr << "     direct bases: ";
+			for (auto &base: direct_bases) {
+				std::cerr << base->name << " , ";
 			}
 			std::cerr << std::endl;
 		}
@@ -914,21 +944,28 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 		include_prefix = outputdirectory;
 		include_prefix.append("/");
 	}
-	for (auto &base: class_definition.bases) {
-		header_out << "#include \"" << include_prefix << base << "_Proxy.hpp\"" << std::endl;
+	for (auto &base: class_definition.direct_bases) {
+		if (base->has_exports()) {
+			header_out << "#include \"" << include_prefix << base->name << "_Proxy.hpp\"" << std::endl;
+		}
 	}
 	header_out << std::endl;
 
 	header_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	header_out << std::endl;
 
-	header_out << "\tclass " << class_definition.name << "_Proxy : ";
+	header_out << "\tclass " << class_definition.name << "_Proxy ";
+	int base_count = 0;
 	if (class_definition.bases.size()) {
-		for (unsigned i = 0; i < class_definition.bases.size(); ++i) {
-			header_out <<  (i?',':' ') << "public " << " " << class_definition.bases[i] << "_Proxy ";
+		for (unsigned i = 0; i < class_definition.direct_bases.size(); ++i) {
+			if (class_definition.direct_bases[i]->has_exports()) {
+				header_out <<  (i?',':':') << " public " << " " << class_definition.direct_bases[i]->name << "_Proxy ";
+				++base_count;
+			}
 		}
-	} else {
-		header_out << "public virtual saftbus::Proxy" << std::endl;
+	} 
+	if (base_count == 0) {
+		header_out << ": public virtual saftbus::Proxy" << std::endl;
 	}
 	header_out << " { " << std::endl;
 	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
@@ -1006,7 +1043,9 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "\t\t" << "std::vector<std::string> result; " << std::endl;
 	cpp_out << "\t\t" << "result.push_back(\"" << class_definition.name << "\");" << std::endl;
 	for (auto &base: class_definition.all_bases) {
-		cpp_out << "\t\t" << "result.push_back(\"" << base->name << "\");" << std::endl;
+		if (base->has_exports()) {
+			cpp_out << "\t\t" << "result.push_back(\"" << base->name << "\");" << std::endl;
+		}
 	}
 	cpp_out << "\t\t" << "return result;" << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
@@ -1014,8 +1053,10 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << class_definition.name << "_Proxy::" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names)" << std::endl;
 	cpp_out << "\t" << ": saftbus::Proxy(object_path, signal_group, interface_names)" << std::endl;
 	if (class_definition.bases.size()) {
-		for (unsigned i = 0; i < class_definition.bases.size(); ++i) {
-			cpp_out << (true?"\t, ":"") << class_definition.bases[i] << "_Proxy(object_path, signal_group, interface_names) " << std::endl;
+		for (unsigned i = 0; i < class_definition.direct_bases.size(); ++i) {
+			if (class_definition.direct_bases[i]->has_exports()) {
+				cpp_out << (true?"\t, ":"") << class_definition.direct_bases[i]->name << "_Proxy(object_path, signal_group, interface_names) " << std::endl;
+			}
 		}
 	}
 	cpp_out << "{" << std::endl;
@@ -1049,8 +1090,10 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 		cpp_out << "\t\t\t"   <<   "}" << std::endl;
 	}
 	cpp_out << "\t\t"   <<   "}" << std::endl;
-	for (auto & base: class_definition.bases) {
-		cpp_out << "\t\t"   <<   "if (" << base << "_Proxy::signal_dispatch(interface_no, signal_no, signal_content)) return true;" << std::endl;
+	for (auto & base: class_definition.direct_bases) {
+		if (base->has_exports()) {
+			cpp_out << "\t\t"   <<   "if (" << base->name << "_Proxy::signal_dispatch(interface_no, signal_no, signal_content)) return true;" << std::endl;
+		}
 	}
 	cpp_out << "\t\t"     <<   "return false;" << std::endl;
 	cpp_out << "\t"     << "}" << std::endl;
