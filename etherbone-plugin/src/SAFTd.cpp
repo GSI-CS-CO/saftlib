@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include <iomanip>
 #include <sstream>
 #include <cstring>
 
@@ -37,11 +38,16 @@ namespace eb_plugin {
 		memcpy(eb_slave_sdb.sdb_component.product.name, "SAFTLIB           ", 19);
 		socket.attach(&eb_slave_sdb, this);
 
-		saftbus::Loop::get_default().connect<eb_plugin::EB_Source>(socket);
+		// connect the eb-source to saftbus::Loop in order to react on incoming MSIs from hardware
+		eb_source = saftbus::Loop::get_default().connect<eb_plugin::EB_Source>(socket);
 	}
 
 	SAFTd::~SAFTd() 
 	{
+		for (auto &dev: devs) {
+			RemoveDevice(dev.first);
+		}
+		saftbus::Loop::get_default().remove(eb_source);
 		socket.close();
 	}
 
@@ -52,6 +58,19 @@ namespace eb_plugin {
 
 	eb_status_t SAFTd::write(eb_address_t address, eb_width_t width, eb_data_t data) {
 		std::cerr << "write callback " << address << " " << data << std::endl;
+	    
+	    std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
+	    if (it != irqs.end()) {
+	      try {
+	        it->second(data);
+	      } catch (...) {
+	        std::cerr << "Unhandled unknown exception in MSI handler for 0x" 
+	             << std::hex << address << std::dec << std::endl;
+	      }
+	    } else {
+	      std::cerr << "No handler for MSI 0x" << std::hex << address << std::dec << std::endl;
+	    }
+
 		return EB_OK;
 	}
 
@@ -109,6 +128,15 @@ namespace eb_plugin {
 			result.insert(std::make_pair(dev.first, dev.second->getEtherbonePath()));
 		}
 		return result;
+	}
+
+
+	void SAFTd::request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot) 
+	{
+		irqs[irq] = slot;
+	}
+	void SAFTd::release_irq(eb_address_t irq) {
+		irqs.erase(irq);
 	}
 
 

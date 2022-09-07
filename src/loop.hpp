@@ -40,10 +40,10 @@ namespace saftbus {
 		void run();
 		bool quit();
 		bool quit_in(std::chrono::milliseconds wait_ms);
-		bool connect(std::unique_ptr<Source> source);
+		Source* connect(std::unique_ptr<Source> source);
 
 		template<typename T, typename... Args> // T must be subclass of Source
-		bool connect(Args&&... args) {
+		Source* connect(Args&&... args) {
 			return connect(std::move(std::unique_ptr<T>(new T(std::forward<Args>(args)...))));
 		}
 		void remove(Source *s);

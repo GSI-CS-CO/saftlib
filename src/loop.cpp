@@ -218,11 +218,12 @@ namespace saftbus {
 		d->sources.clear();
 	}
 
-	bool Loop::connect(std::unique_ptr<Source> source) {
+	Source *Loop::connect(std::unique_ptr<Source> source) {
 		// std::cerr << "Loop::connect" << std::endl;
 		source->loop = this;
+		Source *result = source.get();
 		d->added_sources.push_back(std::move(source));
-		return true;
+		return result;
 	}
 
 	void Loop::remove(Source *source) {

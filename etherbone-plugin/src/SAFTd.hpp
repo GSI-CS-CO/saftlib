@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <functional>
 
 #include "TimingReceiver.hpp"
 
@@ -29,6 +30,9 @@ namespace eb_plugin {
 		std::string getBuildInfo() const;
 		// @saftbus-export
 		std::map< std::string, std::string > getDevices() const;
+
+		void request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
+		void release_irq(eb_address_t irq);
 	private:
 
 		// The sdb structure for this "virtual" etherbone device
@@ -51,6 +55,8 @@ namespace eb_plugin {
 
 		// remember all attached devices. devs.first contains what was given as name argument in AttachDevice-function
 		std::map< std::string, TimingReceiver* > devs;
+
+		std::map<eb_address_t, std::function<void(eb_data_t)> > irqs;
 	};
 
 
