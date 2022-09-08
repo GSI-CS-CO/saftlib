@@ -33,62 +33,92 @@
 
 #include "TimingReceiver.hpp"
 
+#include "eca_regs.h"
+#include "eca_queue_regs.h"
+#include "fg_regs.h"
+#include "ats_regs.h"
+
+
 namespace eb_plugin {
 
 // Device::irqMap Device::irqs;   // this is in globals.cpp
 // Device::msiQueue Device::msis; // this is in globals.cpp
 
-TimingReceiver::TimingReceiver(saftbus::Container *container, etherbone::Socket &socket, const std::string &obj_path, const std::string &n, const std::string eb_path)
-    : object_path(obj_path)
-    , name(n)
-    , etherbone_path(eb_path)
+TimingReceiver::TimingReceiver(saftbus::Container *cont, SAFTd *sd, etherbone::Socket &socket, const std::string &obj_path, const std::string &n, const std::string eb_path)
+	: container(cont)
+	, saftd(sd)
+	, object_path(obj_path)
+	, name(n)
+	, etherbone_path(eb_path)
 {
-    std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
-    stat(etherbone_path.c_str(), &dev_stat);
-    object_path.append("/");
-    object_path.append(name);
-    eb_device.open(socket, etherbone_path.c_str());
+	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
+	stat(etherbone_path.c_str(), &dev_stat);
+	object_path.append("/");
+	object_path.append(name);
+	eb_device.open(socket, etherbone_path.c_str());
 
-    // // This just reads the MSI address range out of the ehterbone config space registers
-    // // It does not actually enable anything ... MSIs also work without this
-    // eb_device.enable_msi(&first, &last);
+	// // This just reads the MSI address range out of the ehterbone config space registers
+	// // It does not actually enable anything ... MSIs also work without this
+	// eb_device.enable_msi(&first, &last);
 
-    // Confirm the device is an aligned power of 2
-    eb_address_t size = last - first;
-    if (((size + 1) & size) != 0) {
-        eb_device.close();
-        chmod(etherbone_path.c_str(), dev_stat.st_mode);
-        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
-    }
-    if ((first & size) != 0) {
-        eb_device.close();
-        chmod(etherbone_path.c_str(), dev_stat.st_mode);
-        throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
-    }
+	// Confirm the device is an aligned power of 2
+	eb_address_t size = last - first;
+	if (((size + 1) & size) != 0) {
+		eb_device.close();
+		chmod(etherbone_path.c_str(), dev_stat.st_mode);
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
+	}
+	if ((first & size) != 0) {
+		eb_device.close();
+		chmod(etherbone_path.c_str(), dev_stat.st_mode);
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
+	}
+
+
+	std::vector<etherbone::sdb_msi_device> ecas, mbx_msi;
+	std::vector<sdb_device> streams, infos, watchdogs, scubus, pps, mbx, ats;
+	eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
+
+	eb_device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas);
+	eb_device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi);
+	eb_device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams);
+	eb_device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos);
+	eb_device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs);
+	eb_device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
+	eb_device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps);
+	eb_device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats);
+	eb_device.sdb_find_by_identity(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx);
+
+	// only support super basic hardware for now
+	if (ecas.size() != 1 || streams.size() != 1 || infos.size() != 1 || watchdogs.size() != 1 
+		|| pps.size() != 1 || mbx.size() != 1 || mbx_msi.size() != 1) {
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has insuficient hardware resources");
+	}
+
 }
 
 TimingReceiver::~TimingReceiver() 
 {
-    std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
-    eb_device.close();
-    chmod(etherbone_path.c_str(), dev_stat.st_mode);
+	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
+	eb_device.close();
+	chmod(etherbone_path.c_str(), dev_stat.st_mode);
 }
 
 const std::string &TimingReceiver::get_object_path() const
 {
-    return object_path;
+	return object_path;
 }
 
 void TimingReceiver::Remove() {
-    throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver::Remove is deprecated, use SAFTd::Remove instead");
+	throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver::Remove is deprecated, use SAFTd::Remove instead");
 }
 std::string TimingReceiver::getEtherbonePath() const
 {
-    return etherbone_path;
+	return etherbone_path;
 }
 std::string TimingReceiver::getName() const
 {
-    return name;
+	return name;
 }
 
 
@@ -272,7 +302,7 @@ std::string TimingReceiver::getName() const
 //   while (!Device::msis.empty() && --limit) {
 //     Device::MSI msi = Device::msis.front();
 //     Device::msis.pop_front();
-    
+	
 //     Device::irqMap::iterator i = Device::irqs.find(msi.address);
 //     if (i != Device::irqs.end()) {
 //       try {

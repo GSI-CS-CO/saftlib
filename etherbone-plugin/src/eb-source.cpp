@@ -14,6 +14,7 @@ namespace eb_plugin {
 	EB_Source::EB_Source(etherbone::Socket socket_)
 	 : Source(), socket(socket_)
 	{
+		fds.reserve(8);
 		fds_it_valid = false;
 	}
 
@@ -23,7 +24,6 @@ namespace eb_plugin {
 
 	int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
 	{
-		// std::cerr << "EB_Source::add_fd(" << fd << ")" << std::endl;
 		EB_Source* self = (EB_Source*)data;
 
 		self->fds.push_back(pollfd());

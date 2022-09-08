@@ -25,7 +25,6 @@ namespace saftbus {
 		void add_poll(pollfd *pfd);
 		void remove_poll(pollfd *pfd);
 		void clear_poll();
-		void destroy();
 	private:
 		Loop *loop;
 		std::vector<pollfd*> pfds;

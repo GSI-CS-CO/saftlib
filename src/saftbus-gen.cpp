@@ -94,9 +94,17 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 	for (size_t i = 0; i < line.size(); ++i) {
 		if (line[i] == '{') {
 			scope.push_back(latest_name);
+			if (verbose) {
+				std::cerr << "enter scope \'" << scope.back() << "\'" << std::endl;
+			}
 			latest_name = "";
 		}
-		if (line[i] == '}') scope.pop_back();
+		if (line[i] == '}') {
+			if (verbose) {
+				std::cerr << "leave scope \'" << scope.back() << "\'" << std::endl;
+			}
+			scope.pop_back();
+		}
 		// namespace
 		if (line[i] == 'n' && line.substr(i,9) == "namespace") {
 			std::istringstream in(line.substr(i+9));
@@ -506,7 +514,9 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			if (class_definition.find('{') != class_definition.npos) {
 				classes.push_back(ClassDefinition(build_namespace(scope), class_definition));
 			} else {
-				in_class_definition = true;
+				if (class_definition.find(';') == class_definition.npos) { // don't react on class declarations "class MyClass;"
+					in_class_definition = true;
+				}
 			}
 		} else if (keyword == "#define") {
 			std::string define_name;

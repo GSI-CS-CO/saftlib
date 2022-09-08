@@ -33,10 +33,6 @@ namespace saftbus {
 	void Source::clear_poll() {
 		pfds.clear();
 	}
-	void Source::destroy() {
-		valid = false;
-		loop->remove(this);
-	}
 	bool operator==(const std::unique_ptr<Source> &lhs, const Source *rhs)
 	{
 		return &*lhs == rhs;
@@ -76,7 +72,7 @@ namespace saftbus {
 
 	bool Loop::iteration(bool may_block) {
 		++d->running_depth;
-		// std::cerr << ".";
+		std::cerr << ".";
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 		std::vector<struct pollfd> pfds;
 		// pfds.reserve(16);
@@ -161,9 +157,10 @@ namespace saftbus {
 		for (auto &source: d->sources) {
 			if (!source->valid) continue;
 
-			if (source->check()) {
-				// this is allowed(?) to make (nested) calls to Loop::iteration
-				source->dispatch();
+			if (source->check()) { // if check returns true, dispatch is called
+				if (!source->dispatch()) { // if dispatch returns false, the source is removed
+					remove(source.get());
+				}
 			}
 		}
 
@@ -185,6 +182,7 @@ namespace saftbus {
 
 			// adding new sources
 			for (auto &added_source: d->added_sources) {
+				// std::cerr << "adding a source" << std::endl;
 				d->sources.push_back(std::move(added_source));
 				changes = true;
 			}
@@ -250,8 +248,12 @@ namespace saftbus {
 
 
 	TimeoutSource::TimeoutSource(std::function<bool(void)> s, std::chrono::milliseconds i, std::chrono::milliseconds o) 
-		: slot(s), interval(i), next_time(std::chrono::steady_clock::now()+i+o)
-	{}
+		: slot(s), interval(i), next_time(std::chrono::steady_clock::now()+o)
+	{
+		if (interval <= std::chrono::milliseconds(0)) {
+			interval = std::chrono::milliseconds(1);
+		}
+	}
 
 	TimeoutSource::~TimeoutSource() = default;
 
@@ -267,8 +269,7 @@ namespace saftbus {
 
 	bool TimeoutSource::check() {
 		auto now = std::chrono::steady_clock::now();
-		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_time - now); 
-		if (ms <= std::chrono::milliseconds(0)) {
+		if (now >= next_time) {
 			return true;
 		}
 		return false;
@@ -279,11 +280,7 @@ namespace saftbus {
 		do {
 			next_time += interval;
 		} while (now >= next_time);
-		auto result = slot();
-		if (!result) {
-			destroy();
-		}
-		return result;
+		return slot();
 	}
 
 
@@ -299,9 +296,6 @@ namespace saftbus {
 		pfd.fd            = f;
 		pfd.events        = c;
 		pfd.revents       = 0;
-		// id = id_source++;
-		// std::cerr << "IoSource(" << d->id << ")" << std::endl;
-		// std::cerr << (condition & POLLHUP) << " " << (condition & POLLIN) << std::endl;
 		add_poll(&pfd);
 	}
 	IoSource::~IoSource() 
@@ -310,7 +304,6 @@ namespace saftbus {
 	}
 
 	bool IoSource::prepare(std::chrono::milliseconds &timeout_ms) {
-		// std::cerr << "prepare IoSource(" << d->id << ")" << std::endl;
 		if (pfd.revents & pfd.events) {
 			return true;
 		}
@@ -318,7 +311,6 @@ namespace saftbus {
 	}
 
 	bool IoSource::check() {
-		// std::cerr << "check IoSource(" << d->id << ") " << d->pfd.revents << " "<< d->pfd.events << std::endl;
 		if (pfd.revents & pfd.events) {
 			return true;
 		}
@@ -326,12 +318,7 @@ namespace saftbus {
 	}
 
 	bool IoSource::dispatch() {
-		// std::cerr << "dispatch IoSource(" << d->id << ")" << std::endl;
 		auto result = slot(pfd.fd, pfd.revents);
-		if (!result) {
-			// remove_poll(d->pfd);
-			destroy();
-		}
 		pfd.revents = 0; // clear the events after  the dispatching
 		return result;
 	}

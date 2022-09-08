@@ -27,6 +27,7 @@ namespace saftbus {
 		ServerConnection *connection;
 		std::map<unsigned, std::unique_ptr<Service> > objects;
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
+		std::string delayed_removal_object_path;
 	};
 
 	struct Container_Service::Impl {
@@ -309,6 +310,7 @@ namespace saftbus {
 
 	bool Container::remove_object(const std::string &object_path)
 	{
+		std::cerr << "remove_object " << object_path << " now" << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
 			// we have already registered an object under this object path
@@ -343,7 +345,10 @@ namespace saftbus {
 	void Container::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
 	{
 		auto find_result = d->objects.find(saftlib_object_id);
-		assert(find_result != d->objects.end()); 
+		if (find_result == d->objects.end()) {
+			std::cerr << "object " << saftlib_object_id << " already gone" << std::endl;
+			return;
+		}
 		auto    &service    = find_result->second;
 		service->d->signal_fds_use_count[signal_group_fd]--;
 		d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);

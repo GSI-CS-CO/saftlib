@@ -12,7 +12,7 @@
 
 namespace eb_plugin {
 
-	class SAFTd  : public etherbone::Handler {
+	class SAFTd : public etherbone::Handler {
 	public:
 		SAFTd(saftbus::Container *c, const std::string &obj_path);
 		~SAFTd();

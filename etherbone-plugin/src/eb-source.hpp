@@ -4,17 +4,14 @@
 #define ETHERBONE_THROWS 1
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
-
 #include <etherbone.h>
 
-#include "eb-source.hpp"
+#include <memory>
+#include <vector>
 
 #include <poll.h>
 
 #include <loop.hpp>
-
-#include <memory>
-#include <map>
 
 namespace eb_plugin {
 

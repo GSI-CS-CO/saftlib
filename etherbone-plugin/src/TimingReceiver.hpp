@@ -32,10 +32,10 @@
 
 namespace eb_plugin {
 
-// Saftlib devices just add IRQs
+class SAFTd;
 class TimingReceiver {
 public:
-	TimingReceiver(saftbus::Container *container, etherbone::Socket &socket, const std::string &object_path, const std::string &name, const std::string etherbone_path);
+	TimingReceiver(saftbus::Container *container, SAFTd *saftd, etherbone::Socket &socket, const std::string &object_path, const std::string &name, const std::string etherbone_path);
 	~TimingReceiver();
 
 	// // This function chooses a random address from the msi address range and returns it.
@@ -61,6 +61,9 @@ public:
 private:
 
 	etherbone::Device eb_device;
+
+	saftbus::Container *container; // need a pointer to container to register new Service objects (ActionSink, Condition, ...)
+	SAFTd              *saftd; // need a pointer to SAFTd because ther MSI callbacks can be registered
 
 	std::string object_path;
 	std::string name;

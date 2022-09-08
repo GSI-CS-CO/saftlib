@@ -22,5 +22,10 @@ int main(int argc, char **argv) {
 		std::cerr << device.first << " -> " << device.second << std::endl;
 	}
 
+	if (argc == 1) {
+		saftd->Quit();
+	}
+
+
 	return 0;
 }

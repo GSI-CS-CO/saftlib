@@ -86,7 +86,7 @@ namespace eb_plugin {
 
 		try {
 			// create the TimingReceiver and keep a bare pointer to it (for later use)
-			std::unique_ptr<TimingReceiver> instance(new TimingReceiver(container, socket, object_path, name, etherbone_path));
+			std::unique_ptr<TimingReceiver> instance(new TimingReceiver(container, this, socket, object_path, name, etherbone_path));
 			TimingReceiver *timing_receiver = instance.get();
 
 			// crate a TimingReceiver_Service object
@@ -108,9 +108,13 @@ namespace eb_plugin {
 		}
 		return std::string();
 	}
+
+
 	std::string SAFTd::EbForward(const std::string& saftlib_device) {
 		return std::string();
 	}
+
+
 	void SAFTd::RemoveDevice(const std::string& name) {
 		std::map< std::string, TimingReceiver* >::iterator device = attached_devices.find(name);
 		if (device == attached_devices.end()) {
@@ -119,17 +123,21 @@ namespace eb_plugin {
 		container->remove_object(device->second->get_object_path());
 		attached_devices.erase(device);
 	}
-	void SAFTd::Quit() {
 
+
+	void SAFTd::Quit() {
+		container->remove_object(object_path);
 	}
+
+
 	std::string SAFTd::getSourceVersion() const {
 		return std::string();
-
 	}
+
 	std::string SAFTd::getBuildInfo() const {
 		return std::string();
-
 	}
+
 	std::map< std::string, std::string > SAFTd::getDevices() const {
 		std::map<std::string, std::string> result;
 		for (auto &device: attached_devices) {
