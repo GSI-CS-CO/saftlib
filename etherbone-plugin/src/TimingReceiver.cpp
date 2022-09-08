@@ -43,6 +43,7 @@ TimingReceiver::TimingReceiver(saftbus::Container *container, etherbone::Socket 
     , name(n)
     , etherbone_path(eb_path)
 {
+    std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
     stat(etherbone_path.c_str(), &dev_stat);
     object_path.append("/");
     object_path.append(name);
@@ -68,6 +69,7 @@ TimingReceiver::TimingReceiver(saftbus::Container *container, etherbone::Socket 
 
 TimingReceiver::~TimingReceiver() 
 {
+    std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
     eb_device.close();
     chmod(etherbone_path.c_str(), dev_stat.st_mode);
 }
@@ -78,7 +80,7 @@ const std::string &TimingReceiver::get_object_path() const
 }
 
 void TimingReceiver::Remove() {
-
+    throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver::Remove is deprecated, use SAFTd::Remove instead");
 }
 std::string TimingReceiver::getEtherbonePath() const
 {

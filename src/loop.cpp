@@ -20,15 +20,18 @@ namespace saftbus {
 	}
 	Source::~Source() = default;
 
-	void Source::add_poll(struct pollfd &pfd)
+	void Source::add_poll(pollfd *pfd)
 	{
-		// std::cerr << "add poll" << std::endl;
-		pfds.push_back(&pfd);
+		// std::cerr << "add poll " << pfd->fd << std::endl;
+		pfds.push_back(pfd);
 	}
-	void Source::remove_poll(struct pollfd &pfd)
+	void Source::remove_poll(pollfd *pfd)
 	{
-		// std::cerr << "remove poll" << std::endl;
-		pfds.erase(pfds.begin(), std::remove(pfds.begin(), pfds.end(), &pfd));
+		// std::cerr << "remove poll " << pfd->fd << std::endl;
+		pfds.erase(pfds.begin(), std::remove(pfds.begin(), pfds.end(), pfd));
+	}
+	void Source::clear_poll() {
+		pfds.clear();
 	}
 	void Source::destroy() {
 		valid = false;
@@ -51,7 +54,7 @@ namespace saftbus {
 		int running_depth; 
 	};
 
-
+	
 	Loop::Loop() 
 		: d(std2::make_unique<Impl>())
 	{
@@ -108,6 +111,7 @@ namespace saftbus {
 				pfds.push_back(**it);
 				// also create an array of pointers to pfds to where the poll() results can be copied back
 				source_pfds.push_back(*it);
+				// std::cerr << "added fd=" << (*it)->fd << std::endl;
 			}
 		}
 		if (!may_block) {
@@ -123,14 +127,21 @@ namespace saftbus {
 			stop = std::chrono::steady_clock::now();
 			us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
 			if ((poll_result = poll(&pfds[0], pfds.size(), timeout.count())) > 0) {
+				// copy the results back to the owners of the pfds
 				for (unsigned i = 0; i < pfds.size();++i) {
-					// copy the results back to the owners of the pfds
-					// std::cerr << "poll results " << i << " = " << pfds[i].revents << std::endl;
 					source_pfds[i]->revents = pfds[i].revents;
+					// if (pfds[i].revents & POLLHUP) {
+					// 	std::cerr << "POLLHUP on pfds[" << i << "]" << std::endl;
+					// }
+					// if (pfds[i].revents & POLLERR) {
+					// 	std::cerr << "POLLERR on pfds[" << i << "]" << std::endl;
+					// }
 				}
 			} else if (poll_result < 0) {
 				std::cerr << "poll error: " << strerror(errno) << std::endl;
-			} 
+			} else {
+				std::cerr << "poll result = " << poll_result << std::endl;
+			}
 			start = std::chrono::steady_clock::now();
 
 		} else if (timeout > std::chrono::milliseconds(0)) {
@@ -165,7 +176,7 @@ namespace saftbus {
 		if (d->running_depth == 1) {
 			// std::cerr << "cleaning up sources" << std::endl;
 			for (auto removed_source: d->removed_sources) {
-				// std::cerr << "cleaning a source sources" << std::endl;
+				// std::cerr << "cleaning a source " << std::endl;
 				d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
 					          d->sources.end());
 				changes = true;
@@ -291,11 +302,11 @@ namespace saftbus {
 		// id = id_source++;
 		// std::cerr << "IoSource(" << d->id << ")" << std::endl;
 		// std::cerr << (condition & POLLHUP) << " " << (condition & POLLIN) << std::endl;
-		add_poll(pfd);
+		add_poll(&pfd);
 	}
 	IoSource::~IoSource() 
 	{
-		remove_poll(pfd);
+		remove_poll(&pfd);
 	}
 
 	bool IoSource::prepare(std::chrono::milliseconds &timeout_ms) {

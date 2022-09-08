@@ -5,8 +5,8 @@
 
 #include <memory>
 #include <string>
-#include <map>
 #include <functional>
+#include <map>
 
 #include "TimingReceiver.hpp"
 
@@ -19,8 +19,6 @@ namespace eb_plugin {
 		// @saftbus-export
 		std::string AttachDevice(const std::string& name, const std::string& path);
 		// @saftbus-export
-		std::string EbForward(const std::string& saftlib_device);
-		// @saftbus-export
 		void RemoveDevice(const std::string& name);
 		// @saftbus-export
 		void Quit();
@@ -30,6 +28,8 @@ namespace eb_plugin {
 		std::string getBuildInfo() const;
 		// @saftbus-export
 		std::map< std::string, std::string > getDevices() const;
+		// @saftbus-export
+		std::string EbForward(const std::string& saftlib_device);
 
 		void request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
 		void release_irq(eb_address_t irq);
@@ -53,8 +53,8 @@ namespace eb_plugin {
 		etherbone::Socket socket;
 		saftbus::Source *eb_source;
 
-		// remember all attached devices. devs.first contains what was given as name argument in AttachDevice-function
-		std::map< std::string, TimingReceiver* > devs;
+		// remember all attached devices 
+		std::map<std::string, TimingReceiver*> attached_devices;
 
 		std::map<eb_address_t, std::function<void(eb_data_t)> > irqs;
 	};

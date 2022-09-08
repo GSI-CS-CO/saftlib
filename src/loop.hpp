@@ -22,12 +22,13 @@ namespace saftbus {
 		virtual bool check() = 0;
 		virtual bool dispatch() = 0;
 	protected:
-		void add_poll(struct pollfd &pfd);
-		void remove_poll(struct pollfd &pfd);
+		void add_poll(pollfd *pfd);
+		void remove_poll(pollfd *pfd);
+		void clear_poll();
 		void destroy();
 	private:
 		Loop *loop;
-		std::vector<struct pollfd*> pfds;
+		std::vector<pollfd*> pfds;
 		bool valid;
 	};
 
@@ -84,7 +85,7 @@ namespace saftbus {
 		bool dispatch() override;
 	private:
 		std::function<bool(int, int)> slot;
-		struct pollfd pfd;
+		pollfd pfd;
 		// int id;
 		// static int id_source;		
 	};

@@ -12,6 +12,10 @@ int main(int argc, char **argv) {
 		saftd->AttachDevice(argv[1], argv[2]);
 	}
 
+	if (argc == 2) {
+		saftd->RemoveDevice(argv[1]);
+	}
+
 	auto devices = saftd->getDevices();
 
 	for (auto &device: devices) {

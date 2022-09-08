@@ -4,6 +4,7 @@
 #define ETHERBONE_THROWS 1
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
+
 #include <etherbone.h>
 
 #include "eb-source.hpp"
@@ -12,6 +13,7 @@
 
 #include <loop.hpp>
 
+#include <memory>
 #include <map>
 
 namespace eb_plugin {
@@ -31,8 +33,9 @@ namespace eb_plugin {
 		~EB_Source();
 	private:
 		etherbone::Socket socket;
-		typedef std::map<int, struct pollfd> fd_map;
-		fd_map fds;
+		std::vector<pollfd> fds;
+		std::vector<pollfd>::iterator fds_it;
+		bool fds_it_valid;
 	};
 
 }

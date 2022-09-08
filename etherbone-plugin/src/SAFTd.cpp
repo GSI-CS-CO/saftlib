@@ -44,9 +44,10 @@ namespace eb_plugin {
 
 	SAFTd::~SAFTd() 
 	{
-		for (auto &dev: devs) {
-			RemoveDevice(dev.first);
+		for (auto &device: attached_devices) {
+			container->remove_object(device.second->get_object_path());
 		}
+		attached_devices.clear();
 		saftbus::Loop::get_default().remove(eb_source);
 		socket.close();
 	}
@@ -76,8 +77,8 @@ namespace eb_plugin {
 
 	std::string SAFTd::AttachDevice(const std::string& name, const std::string& etherbone_path) 
 	{
-		if (devs.find(name) != devs.end()) {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
+		if (attached_devices.find(name) != attached_devices.end()) {
+	        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
 		}
 		if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
@@ -87,13 +88,15 @@ namespace eb_plugin {
 			// create the TimingReceiver and keep a bare pointer to it (for later use)
 			std::unique_ptr<TimingReceiver> instance(new TimingReceiver(container, socket, object_path, name, etherbone_path));
 			TimingReceiver *timing_receiver = instance.get();
-			devs.insert(std::make_pair(name, timing_receiver));
 
 			// crate a TimingReceiver_Service object
 			std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(std::move(instance)));
 
 			// insert the Service object
 			container->create_object(timing_receiver->get_object_path(), std::move(service));
+
+			// remember the TimingReceiver under name
+			attached_devices.insert(std::make_pair(name, timing_receiver));
 
 			// return the object path to the new Servie object
 			return timing_receiver->get_object_path();
@@ -109,7 +112,12 @@ namespace eb_plugin {
 		return std::string();
 	}
 	void SAFTd::RemoveDevice(const std::string& name) {
-
+		std::map< std::string, TimingReceiver* >::iterator device = attached_devices.find(name);
+		if (device == attached_devices.end()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
+		}
+		container->remove_object(device->second->get_object_path());
+		attached_devices.erase(device);
 	}
 	void SAFTd::Quit() {
 
@@ -124,8 +132,8 @@ namespace eb_plugin {
 	}
 	std::map< std::string, std::string > SAFTd::getDevices() const {
 		std::map<std::string, std::string> result;
-		for (auto &dev: devs) {
-			result.insert(std::make_pair(dev.first, dev.second->getEtherbonePath()));
+		for (auto &device: attached_devices) {
+			result.insert(std::make_pair(device.first, device.second->getEtherbonePath()));
 		}
 		return result;
 	}

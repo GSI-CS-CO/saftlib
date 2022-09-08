@@ -57,6 +57,7 @@ public:
 	// @saftbus-export
 	std::string getName() const;
 
+
 private:
 
 	etherbone::Device eb_device;

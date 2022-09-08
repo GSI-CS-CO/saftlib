@@ -86,13 +86,13 @@ int main() {
 
 
 	// two lines just to play around ... has nothing to do with the saftd functionality.
-	init_fd();
-	// Blub blub;
-	saftbus::Loop::get_default().connect(std::move(std2::make_unique<saftbus::TimeoutSource>(
-		//sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)
-		timeout_tock, std::chrono::milliseconds(1000), std::chrono::milliseconds(500)
-		)
-	));
+	// init_fd();
+	// // Blub blub;
+	// saftbus::Loop::get_default().connect(std::move(std2::make_unique<saftbus::TimeoutSource>(
+	// 	//sigc::ptr_fun(timeout_tock), std::chrono::milliseconds(1000), std::chrono::milliseconds(500)
+	// 	timeout_tock, std::chrono::milliseconds(1000), std::chrono::milliseconds(500)
+	// 	)
+	// ));
 
 	// Create a mini-saftlib-server. It will connect itself to the default main loop.
 	saftbus::ServerConnection server_connection;

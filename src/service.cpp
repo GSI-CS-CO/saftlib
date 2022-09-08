@@ -129,9 +129,9 @@ namespace saftbus {
 		, d(std2::make_unique<Impl>())
 	{
 		d->container = container;
-		Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&Container_Service::emit_periodical_signal, this), std::chrono::milliseconds(1000)
-		);
+		// Loop::get_default().connect<saftbus::TimeoutSource>(
+		// 	std::bind(&Container_Service::emit_periodical_signal, this), std::chrono::milliseconds(1000)
+		// );
 
 	}
 	Container_Service::~Container_Service() = default;
