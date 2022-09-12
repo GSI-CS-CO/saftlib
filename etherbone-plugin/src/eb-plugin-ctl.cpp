@@ -31,6 +31,8 @@ int main(int argc, char **argv) {
 	for(auto &pair: gateware_info) {
 		std::cerr << pair.first << " " << pair.second << std::endl;
 	}
+	auto sas_object_path = tr->NewSoftwareActionSink("");
+	std::cerr << "sas_object_path = " << sas_object_path << std::endl;
 
 	if (argc == 1) {
 		saftd->Quit();

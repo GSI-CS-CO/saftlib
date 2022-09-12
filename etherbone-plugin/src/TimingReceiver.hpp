@@ -51,8 +51,8 @@ public:
 
 
 
-	// // @saftbus-export
-	// std::string NewSoftwareActionSink(const std::string& name);
+	// @saftbus-export
+	std::string NewSoftwareActionSink(const std::string& name);
 	// // @saftbus-export
 	// void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
 	// // @saftbus-export
@@ -73,8 +73,8 @@ public:
 	// bool getTemperatureSensorAvail() const;
 	// // @saftbus-export
 	// int32_t CurrentTemperature();
-	// // @saftbus-export
-	// std::map< std::string, std::string > getSoftwareActionSinks() const;
+	// @saftbus-export
+	std::map< std::string, std::string > getSoftwareActionSinks() const;
 	// // @saftbus-export
 	// std::map< std::string, std::string > getOutputs() const;
 	// // @saftbus-export
@@ -94,7 +94,7 @@ public:
 
     // public type, even though the member is private
     typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
-    typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
+    typedef std::map< SinkKey, ActionSink* >  ActionSinks;
     // typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
 
 
@@ -121,9 +121,11 @@ private:
     std::vector<eb_address_t> queue_addresses;
     std::vector<uint16_t> most_full;
 
+    uint64_t sas_count; // number of SoftwareActionSinks
     ActionSinks  actionSinks;
     // EventSources eventSources;
     // OtherStuff   otherStuff;
+    void popMissingQueue(unsigned channel, unsigned num);
 
 
 	mutable etherbone::Device device;

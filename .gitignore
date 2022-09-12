@@ -26,3 +26,7 @@ doc/
 saftbus-gen
 saftbus.pc
 *.la
+*_Proxy.*pp
+*_Service.*pp
+*_Proxy.*o
+*_Service.*o

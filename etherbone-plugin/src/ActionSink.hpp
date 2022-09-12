@@ -108,8 +108,9 @@ class ActionSink
     void compile();
     
     // The name under which this ActionSink is listed in TimingReceiver::Iterfaces
-    virtual const char *getInterfaceName() const = 0;
     const std::string &getObjectName() const { return name; }
+
+    const std::string &getObjectPath() const { return object_path; }
 
     // Used by TimingReciever::compile
     // typedef std::map< uint32_t, std::shared_ptr<Condition> > Conditions;
@@ -121,10 +122,12 @@ class ActionSink
     virtual void receiveMSI(uint8_t code);
     
   protected:
+    std::string object_path;
     TimingReceiver* dev;
     std::string name;
     unsigned channel;
     unsigned num;
+
     
     // User controlled values
     int64_t minOffset, maxOffset;

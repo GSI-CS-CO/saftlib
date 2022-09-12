@@ -29,12 +29,16 @@
 #include <sstream>
 #include <iomanip>
 #include <memory>
+#include <algorithm>
 
 #include <saftbus/error.hpp>
 
 #include "TimingReceiver.hpp"
+#include "SoftwareActionSink.hpp"
+#include "SoftwareActionSink_Service.hpp"
 
 #include "eca_regs.h"
+#include "eca_flags.h"
 #include "eca_queue_regs.h"
 #include "fg_regs.h"
 #include "ats_regs.h"
@@ -164,6 +168,7 @@ TimingReceiver::TimingReceiver(saftbus::Container *cont, SAFTd *sd, etherbone::S
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has insuficient hardware resources");
 	}
 
+	base      = ecas_dev[0].sdb_component.addr_first;
     stream    = (eb_address_t)streams_dev[0].sdb_component.addr_first;
     info      = (eb_address_t)infos_dev[0].sdb_component.addr_first;
     watchdog  = (eb_address_t)watchdogs_dev[0].sdb_component.addr_first;
@@ -206,7 +211,115 @@ TimingReceiver::TimingReceiver(saftbus::Container *cont, SAFTd *sd, etherbone::S
 
 	// remove all old rules
 	compile();
+
+	// Locate all queue interfaces
+	std::vector<sdb_device> queues;
+	device.sdb_find_by_identity(ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, queues);
+
+	// Figure out which queues correspond to which channels
+	for (unsigned i = 0; i < queues.size(); ++i) {
+		eb_data_t id;
+		eb_address_t address = queues[i].sdb_component.addr_first;
+		device.read(address + ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &id);
+		++id; // id=0 is the reserved GPIO channel
+		if (id >= channels) continue;
+		queue_addresses[id] = address;
+	}
+
+
+	// Create the IOs (channel 0)
+	// InoutImpl::probe(this, actionSinks, eventSources);
+
+	// Configure the non-IO action sinks, creating objects and clearing status
+	std::cerr << "############# channels: " << channels << std::endl;
+	for (unsigned i = 1; i < channels; ++i) {
+		cycle.open(device);
+		cycle.write(base + ECA_CHANNEL_SELECT_RW,    EB_DATA32, i);
+		cycle.read (base + ECA_CHANNEL_TYPE_GET,     EB_DATA32, &raw_type);
+		cycle.read (base + ECA_CHANNEL_MAX_NUM_GET,  EB_DATA32, &raw_max_num);
+		cycle.read (base + ECA_CHANNEL_CAPACITY_GET, EB_DATA32, &raw_capacity);
+		cycle.close();
+
+		std::cerr << "############# raw_type:     " << raw_type     << std::endl;
+		std::cerr << "############# raw_max_num:  " << raw_max_num  << std::endl;
+		std::cerr << "############# raw_capacity: " << raw_capacity << std::endl;
+		// Flush any queue we manage
+		if (raw_type == ECA_LINUX) {
+			for (; raw_capacity; --raw_capacity) {
+				device.write(queue_addresses[i] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
+			}
+		}
+
+		for (unsigned num = 0; num < raw_max_num; ++num) {
+			switch (raw_type) {
+				case ECA_LINUX: {
+					// defer construction till demanded by NewSoftwareActionSink, but setup the keys
+					actionSinks[SinkKey(i, num)] == nullptr;
+					// clear any stale valid count
+					popMissingQueue(i, num);
+					break;
+				}
+				// case ECA_WBM: {
+				// // !!! unsupported
+				// break;
+				// }
+				// case ECA_SCUBUS: {
+				// std::vector<sdb_device> scubus;
+				// device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
+				// if (scubus.size() == 1 && num == 0) {
+				// std::string path = getObjectPath() + "/scubus";
+				// SCUbusActionSink::ConstructorType args = { path, this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
+				// actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(args);
+				// }
+				// break;
+				// }
+				// case ECA_EMBEDDED_CPU: {
+				// #if DEBUG_COMPILE
+				// clog << kLogDebug << "ECA: Found queue..." << std::endl;
+				// #endif
+				// for (unsigned queue_id = 1; queue_id < channels; ++queue_id) {
+				// eb_data_t get_id;
+				// cycle.open(device);
+				// cycle.read(queue_addresses[queue_id]+ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &get_id);
+				// cycle.close();
+				// #if DEBUG_COMPILE
+				// clog << kLogDebug << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
+				// clog << kLogDebug << "ECA: Found queue with ID: " << get_id << std::endl;
+				// #endif
+				// if (get_id == ECA_EMBEDDED_CPU) {
+				// #if DEBUG_COMPILE
+				// clog << kLogDebug << "ECA: Found embedded CPU channel!" << std::endl;
+				// #endif
+				// std::string path = getObjectPath() + "/embedded_cpu";
+				// EmbeddedCPUActionSink::ConstructorType args = { path, this, "embedded_cpu", i, queue_addresses[queue_id] };
+				// actionSinks[SinkKey(i, num)] = EmbeddedCPUActionSink::create(args);
+				// }
+				// }
+				// break;
+				// }
+				default: {
+					//clog << kLogWarning << "ECA: unsupported channel type detected" << std::endl;
+					// std::cerr << "ECA: unsupported channel type detected" << std::endl;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
+{
+  etherbone::Cycle cycle;
+  eb_data_t nill;
   
+  // First, rearm the MSI
+  cycle.open(device);
+  device.write(base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+  device.write(base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+  device.read (base + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
+  cycle.close();
+  // Then pop the ignored record
+  device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
 }
 
 TimingReceiver::~TimingReceiver() 
@@ -272,6 +385,82 @@ struct ECA_OpenClose {
   unsigned channel;
   unsigned num;
 };
+
+
+static inline bool not_isalnum_(char c)
+{
+  return !(isalnum(c) || c == '_');
+}
+
+std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
+{
+	// Is there an available software channel?
+	ActionSinks::iterator alloc;
+	for (alloc = actionSinks.begin(); alloc != actionSinks.end(); ++alloc) {
+		if (!alloc->second) break;
+	}
+  
+	if (alloc == actionSinks.end()) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
+	}
+
+	std::string seq, name;
+	std::ostringstream str;
+	str.imbue(std::locale("C"));
+	str << "_" << ++sas_count;
+	seq = str.str();
+
+	if (name_ == "") {
+		name = seq;
+	} else {
+		name = name_;
+		if (name[0] == '_') {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
+		}
+		if (find_if(name.begin(), name.end(), not_isalnum_) != name.end()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+		}
+
+		std::map< std::string, std::string > sinks = getSoftwareActionSinks();
+		if (sinks.find(name) != sinks.end()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
+		}
+	}
+  
+  // nest the object under our own name
+  std::string path = get_object_path() + "/software/" + seq;
+  
+  unsigned channel = alloc->first.first;
+  unsigned num     = alloc->first.second;
+  eb_address_t address = queue_addresses[channel];
+  // sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), alloc->first);
+  
+
+
+  // SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
+  std::unique_ptr<SoftwareActionSink> instance(new SoftwareActionSink(path, this, name, channel, num, address	));
+  alloc->second = instance.get();
+  std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(std::move(instance)));
+
+  // softwareActionSink->initOwner(getConnection(), getSender());
+  container->create_object(path, std::move(service));
+  
+  return path;
+}
+
+std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const
+{
+  typedef ActionSinks::const_iterator iterator;
+  std::map< std::string, std::string > out;
+  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
+    SoftwareActionSink* softwareActionSink = dynamic_cast<SoftwareActionSink*>(i->second);
+    if (!softwareActionSink) continue;
+    out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
+  }
+  return out;
+}
+
+
 
 void TimingReceiver::compile()
 {

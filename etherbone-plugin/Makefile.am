@@ -9,21 +9,24 @@ lib_LTLIBRARIES = \
 libetherbone_plugin_service_la_LDFLAGS = -Wl,--export-dynamic 
 libetherbone_plugin_service_la_CPPADD  = $(EB_CFLAGS)
 libetherbone_plugin_service_la_LIBADD  = $(EB_LIBS)
-libetherbone_plugin_service_la_SOURCES =                     \
-	src/eb-source.cpp               src/eb-source.hpp         \
-	src/eb-forward.cpp              src/eb-forward.hpp         \
-	src/SAFTd.cpp                   src/SAFTd.hpp               \
-	src/SAFTd_Service.cpp           src/SAFTd_Service.hpp        \
-	src/ActionSink.cpp              src/ActionSink.hpp            \
-	src/ActionSink_Service.cpp      src/ActionSink_Service.hpp     \
-	src/TimingReceiver.cpp          src/TimingReceiver.hpp          \
-	src/TimingReceiver_Service.cpp  src/TimingReceiver_Service.hpp   \
+libetherbone_plugin_service_la_SOURCES =                           \
+	src/eb-source.cpp                   src/eb-source.hpp           \
+	src/eb-forward.cpp                  src/eb-forward.hpp           \
+	src/SAFTd.cpp                       src/SAFTd.hpp                 \
+	src/SAFTd_Service.cpp               src/SAFTd_Service.hpp          \
+	src/ActionSink.cpp                  src/ActionSink.hpp              \
+	src/ActionSink_Service.cpp          src/ActionSink_Service.hpp       \
+	src/SoftwareActionSink.cpp          src/SoftwareActionSink.hpp        \
+	src/SoftwareActionSink_Service.cpp  src/SoftwareActionSink_Service.hpp \
+	src/TimingReceiver.cpp              src/TimingReceiver.hpp              \
+	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp       \
 	src/create_service.cpp
 
 libetherbone_plugin_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 libetherbone_plugin_proxy_la_SOURCES = \
 	src/SAFTd_Proxy.cpp                 \
 	src/ActionSink_Proxy.cpp             \
+	src/SoftwareActionSink_Proxy.cpp      \
 	src/TimingReceiver_Proxy.cpp         
 
 
@@ -31,6 +34,7 @@ etherbone_plugin_proxy_includedir = $(includedir)/saftbus-example
 etherbone_plugin_proxy_include_HEADERS = \
 	src/SAFTd_Proxy.hpp                   \
 	src/ActionSink_Proxy.hpp               \
+	src/SoftwareActionSink_Proxy.hpp        \
 	src/TimingReceiver_Proxy.hpp
 
 
