@@ -6,6 +6,7 @@ lib_LTLIBRARIES = \
 	libetherbone_plugin_service.la  \
 	libetherbone_plugin_proxy.la    
 
+libetherbone_plugin_service_la_LDFLAGS = -Wl,--export-dynamic 
 libetherbone_plugin_service_la_CPPADD  = $(EB_CFLAGS)
 libetherbone_plugin_service_la_LIBADD  = $(EB_LIBS)
 libetherbone_plugin_service_la_SOURCES =                     \
@@ -16,7 +17,6 @@ libetherbone_plugin_service_la_SOURCES =                     \
 	src/TimingReceiver.cpp          src/TimingReceiver.hpp        \
 	src/TimingReceiver_Service.cpp  src/TimingReceiver_Service.hpp \
 	src/create_service.cpp
-
 
 libetherbone_plugin_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 libetherbone_plugin_proxy_la_SOURCES = \

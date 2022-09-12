@@ -69,7 +69,7 @@ namespace saftbus {
 	private:
 		std::function<bool(void)> slot;
 		std::chrono::milliseconds interval;
-		std::chrono::time_point<std::chrono::steady_clock> next_time;		
+		std::chrono::time_point<std::chrono::steady_clock> dispatch_time;		
 	};
 
 	// call <slot> whenever <fd> fulfills <condition> (usually POLLIN or POLLOUT)

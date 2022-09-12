@@ -72,7 +72,7 @@ namespace saftbus {
 
 	bool Loop::iteration(bool may_block) {
 		++d->running_depth;
-		std::cerr << ".";
+		// std::cerr << ".";
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 		std::vector<struct pollfd> pfds;
 		// pfds.reserve(16);
@@ -118,11 +118,12 @@ namespace saftbus {
 		//////////////////
 		// std::cerr << "poll pfds size " << pfds.size() << std::endl;
 		if (pfds.size() > 0) {
-			// std::cerr << "p";
+			// std::cerr << "polling timeout_ms = " << timeout.count() << std::endl;
 			int poll_result = 0;
-			stop = std::chrono::steady_clock::now();
-			us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
+			// stop = std::chrono::steady_clock::now();
+			// us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
 			if ((poll_result = poll(&pfds[0], pfds.size(), timeout.count())) > 0) {
+				// std::cerr << "poll result = " << poll_result << std::endl;
 				// copy the results back to the owners of the pfds
 				for (unsigned i = 0; i < pfds.size();++i) {
 					source_pfds[i]->revents = pfds[i].revents;
@@ -136,15 +137,15 @@ namespace saftbus {
 			} else if (poll_result < 0) {
 				std::cerr << "poll error: " << strerror(errno) << std::endl;
 			} else {
-				std::cerr << "poll result = " << poll_result << std::endl;
+				// std::cerr << "poll result = " << poll_result << std::endl;
 			}
 			start = std::chrono::steady_clock::now();
 
 		} else if (timeout > std::chrono::milliseconds(0)) {
-			stop = std::chrono::steady_clock::now();
-			us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
+			// stop = std::chrono::steady_clock::now();
+			// us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
 
-			// std::cerr << "s";
+			// std::cerr << "sleeping" << std::endl;
 			std::this_thread::sleep_for(timeout);
 			start = std::chrono::steady_clock::now();
 			
@@ -231,7 +232,14 @@ namespace saftbus {
 		// std::cerr << "Loop::connect" << std::endl;
 		source->loop = this;
 		Source *result = source.get();
-		d->added_sources.push_back(std::move(source));
+		if (d->running_depth) {
+			// durin an iteration, the source vector may not be changed.
+			// put the source in a buffer vector which is cpoied into 
+			// the source vector after the iteration is done
+			d->added_sources.push_back(std::move(source));
+		} else {
+			d->sources.push_back(std::move(source));
+		}
 		return result;
 	}
 
@@ -248,7 +256,7 @@ namespace saftbus {
 
 
 	TimeoutSource::TimeoutSource(std::function<bool(void)> s, std::chrono::milliseconds i, std::chrono::milliseconds o) 
-		: slot(s), interval(i), next_time(std::chrono::steady_clock::now()+o)
+		: slot(s), interval(i), dispatch_time(std::chrono::steady_clock::now()+o)
 	{
 		if (interval <= std::chrono::milliseconds(0)) {
 			interval = std::chrono::milliseconds(1);
@@ -259,17 +267,18 @@ namespace saftbus {
 
 	bool TimeoutSource::prepare(std::chrono::milliseconds &timeout_ms) {
 		auto now = std::chrono::steady_clock::now();
-		if (now >= next_time) {
+		timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dispatch_time - now); 
+		if (timeout_ms.count() <= 0) {
 			timeout_ms = std::chrono::milliseconds(0);
 			return true;
 		}
-		timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(next_time - now); 
 		return false;
 	}
 
 	bool TimeoutSource::check() {
 		auto now = std::chrono::steady_clock::now();
-		if (now >= next_time) {
+		auto timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dispatch_time - now); 
+		if (timeout_ms.count() <= 0) {
 			return true;
 		}
 		return false;
@@ -278,8 +287,8 @@ namespace saftbus {
 	bool TimeoutSource::dispatch() {
 		auto now = std::chrono::steady_clock::now();
 		do {
-			next_time += interval;
-		} while (now >= next_time);
+			dispatch_time += interval;
+		} while (now >= dispatch_time);
 		return slot();
 	}
 

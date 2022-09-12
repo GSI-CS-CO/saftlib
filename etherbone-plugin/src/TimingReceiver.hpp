@@ -38,16 +38,6 @@ public:
 	TimingReceiver(saftbus::Container *container, SAFTd *saftd, etherbone::Socket &socket, const std::string &object_path, const std::string &name, const std::string etherbone_path);
 	~TimingReceiver();
 
-	// // This function chooses a random address from the msi address range and returns it.
-	// // The provided slot will be called whenever the hardware writes to this address.
-	// eb_address_t request_irq(const etherbone::sdb_msi_device& sdb, const sigc::slot<void,eb_data_t>& slot);
-	// void release_irq(eb_address_t);
-
-	// static void hook_it_all(etherbone::Socket s);
-	// static sigc::connection attach(const std::shared_ptr<Slib::MainLoop>& loop);
-
-	// static void set_msi_buffer_capacity(size_t capacity);
-
 	const std::string &get_object_path() const;
 
 	// @saftbus-export
@@ -58,9 +48,61 @@ public:
 	std::string getName() const;
 
 
-private:
 
-	etherbone::Device eb_device;
+	// // @saftbus-export
+	// std::string NewSoftwareActionSink(const std::string& name);
+	// // @saftbus-export
+	// void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
+	// // @saftbus-export
+	// void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time);
+	// // @saftbus-export
+	// uint64_t ReadCurrentTime();
+	// // @saftbus-export
+	// saftlib::Time CurrentTime();
+	// @saftbus-export
+	std::map< std::string, std::string > getGatewareInfo() const;
+	// // @saftbus-export
+	// std::string getGatewareVersion() const;
+	
+	// @saftbus-export
+	bool getLocked() const;
+	
+	// // @saftbus-export
+	// bool getTemperatureSensorAvail() const;
+	// // @saftbus-export
+	// int32_t CurrentTemperature();
+	// // @saftbus-export
+	// std::map< std::string, std::string > getSoftwareActionSinks() const;
+	// // @saftbus-export
+	// std::map< std::string, std::string > getOutputs() const;
+	// // @saftbus-export
+	// std::map< std::string, std::string > getInputs() const;
+	// // @saftbus-export
+	// std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
+	// // @saftbus-export
+	// uint32_t getFree() const;
+
+	// @saftbus-signal
+	std::function<void(bool locked)> SigLocked;
+
+
+private:
+	bool aquire_watchdog(); 
+    eb_data_t watchdog_value;
+
+    void setupGatewareInfo(uint32_t address);
+    std::map<std::string, std::string> gateware_info;
+
+    bool poll();
+    saftbus::Source *poll_timeout_source;
+
+	mutable etherbone::Device device;
+    
+    eb_address_t stream;
+    eb_address_t watchdog;
+    eb_address_t pps;
+    eb_address_t ats;
+    eb_address_t info;
 
 	saftbus::Container *container; // need a pointer to container to register new Service objects (ActionSink, Condition, ...)
 	SAFTd              *saftd; // need a pointer to SAFTd because ther MSI callbacks can be registered
@@ -68,6 +110,9 @@ private:
 	std::string object_path;
 	std::string name;
 	std::string etherbone_path;
+
+
+	mutable bool locked;
 
 	struct stat dev_stat;
 
