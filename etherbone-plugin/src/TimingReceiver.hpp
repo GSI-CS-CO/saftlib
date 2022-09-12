@@ -30,6 +30,8 @@
 
 #include "eb-source.hpp"
 
+#include "ActionSink.hpp"
+
 namespace eb_plugin {
 
 class SAFTd;
@@ -86,6 +88,19 @@ public:
 	std::function<void(bool locked)> SigLocked;
 
 
+	// Compile the condition table
+	void compile();
+
+
+    // public type, even though the member is private
+    typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
+    typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
+    // typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
+
+
+    etherbone::Device& getDevice() { return device; }
+    eb_address_t getBase() { return base; }
+
 private:
 	bool aquire_watchdog(); 
     eb_data_t watchdog_value;
@@ -95,6 +110,21 @@ private:
 
     bool poll();
     saftbus::Source *poll_timeout_source;
+
+
+    unsigned channels;
+    unsigned search_size;
+    unsigned walker_size;
+    unsigned max_conditions;
+    unsigned used_conditions;
+    std::vector<eb_address_t> channel_msis;
+    std::vector<eb_address_t> queue_addresses;
+    std::vector<uint16_t> most_full;
+
+    ActionSinks  actionSinks;
+    // EventSources eventSources;
+    // OtherStuff   otherStuff;
+
 
 	mutable etherbone::Device device;
     
@@ -120,20 +150,11 @@ private:
 
 	eb_address_t base,  mask;
 
-	//   typedef std::map<eb_address_t, sigc::slot<void, eb_data_t> > irqMap;
-	//   static irqMap irqs;
-
-	//   struct MSI { eb_address_t address, data; };
-	//   typedef boost::circular_buffer<MSI> msiQueue;
-	//   static msiQueue msis;
-
 	  bool activate_msi_polling;
 	  unsigned polling_interval_ms;
-	//   bool poll_msi();
-	// eb_address_t msi_first;
 
-	// friend class EbSlaveHandler;
-	// friend class MSI_Source;
+	friend class ActionSink;
+
 };
 
 } // namespace 

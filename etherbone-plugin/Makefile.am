@@ -14,19 +14,23 @@ libetherbone_plugin_service_la_SOURCES =                     \
 	src/eb-forward.cpp              src/eb-forward.hpp         \
 	src/SAFTd.cpp                   src/SAFTd.hpp               \
 	src/SAFTd_Service.cpp           src/SAFTd_Service.hpp        \
-	src/TimingReceiver.cpp          src/TimingReceiver.hpp        \
-	src/TimingReceiver_Service.cpp  src/TimingReceiver_Service.hpp \
+	src/ActionSink.cpp              src/ActionSink.hpp            \
+	src/ActionSink_Service.cpp      src/ActionSink_Service.hpp     \
+	src/TimingReceiver.cpp          src/TimingReceiver.hpp          \
+	src/TimingReceiver_Service.cpp  src/TimingReceiver_Service.hpp   \
 	src/create_service.cpp
 
 libetherbone_plugin_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 libetherbone_plugin_proxy_la_SOURCES = \
 	src/SAFTd_Proxy.cpp                 \
-	src/TimingReceiver_Proxy.cpp
+	src/ActionSink_Proxy.cpp             \
+	src/TimingReceiver_Proxy.cpp         
 
 
 etherbone_plugin_proxy_includedir = $(includedir)/saftbus-example
 etherbone_plugin_proxy_include_HEADERS = \
 	src/SAFTd_Proxy.hpp                   \
+	src/ActionSink_Proxy.hpp               \
 	src/TimingReceiver_Proxy.hpp
 
 
