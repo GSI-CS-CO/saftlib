@@ -511,7 +511,7 @@ namespace saftbus {
 			get_received().get(client_info.signal_fds);
 			std::cerr << "client " << client_info.client_fd << "(pid=" << client_info.process_id << ") with signal_fds: ";
 			for (auto &signal_fd: client_info.signal_fds) {
-				std::cerr << signal_fd.fd << "/" << signal_fd.use_count << " " ;
+				std::cerr << signal_fd.first << "/" << signal_fd.second << " " ;
 			}
 			std::cerr << std::endl;
 		}

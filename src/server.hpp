@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 #include <unistd.h>
 
@@ -38,7 +39,7 @@ namespace saftbus {
 				int fd;
 				int use_count;
 			};
-			std::vector<SignalFD> signal_fds;
+			std::map<int,int> signal_fds;
 		};
 		std::vector<ClientInfo> get_client_info();
 	};

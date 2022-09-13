@@ -10,6 +10,7 @@
 #include <vector>
 #include <cassert>
 #include <set>
+#include <map>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -18,33 +19,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-// #include <sigc++/sigc++.h>
-
 namespace saftbus {
-
-	// Represent an open file descriptor for signals
-	// It maintains a use counter that indicates when close(fd) can be called.
-	struct SignalFD {
-		int fd;
-		int use_count;
-		SignalFD(int f) : fd(f), use_count(1) {}
-		~SignalFD() {
-			std::cerr << "SignalFD destructor: close " << fd << std::endl;
-			if (use_count) {
-				std::cerr << "signal fd " << fd << " closed, but still has " << use_count << " users" << std::endl;
-			}
-			close(fd);
-		}
-		void use() { ++use_count; }
-		bool release() { // return true if use count dropped to zero
-			std::cerr << "SignalFD::release called: use count = " << use_count << "->" << (use_count-1) << std::endl;
-			--use_count; 
-			return use_count == 0;
-		}
-	};
-	bool operator==(const std::unique_ptr<SignalFD> &lhs, int rhs) {
-		return lhs->fd == rhs;
-	}
 
 
 	// Client represents the program (running in another process)
@@ -53,29 +28,25 @@ namespace saftbus {
 	struct Client {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
 		pid_t process_id; // store the clients pid as additional useful information
-		std::vector<std::unique_ptr<SignalFD> > signal_fds; 
+		std::map<int,int> signal_fd_use_count;
 		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  {}
 		~Client() {
+			if (signal_fd_use_count.size() > 0) {
+				std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
+			}
 			close(socket_fd);
 		}
 		void use_signal_fd(int fd) {
-			// auto signal_fd = signal_fds.find(fd);
-			auto signal_fd = std::find(signal_fds.begin(), signal_fds.end(), fd);
-			if (signal_fd == signal_fds.end()) {
-				signal_fds.push_back(std::move(std2::make_unique<SignalFD>(fd)));
-			} else {
-				(*signal_fd)->use();
-			}
+			int &count = signal_fd_use_count[fd];
+			++count;
 		}
 		void release_signal_fd(int fd) {
-			//auto signal_fd = signal_fds.find(fd);
-			auto signal_fd = std::find(signal_fds.begin(), signal_fds.end(), fd);
-			if (signal_fd == signal_fds.end()) {
-				assert(false); // should never happen!
-			} else {
-				if ((*signal_fd)->release()) {
-					signal_fds.erase(signal_fd);
-				}
+			int &count = signal_fd_use_count[fd];
+			--count;
+			assert(count >= 0);
+			if (count == 0) {
+				close(fd);
+				signal_fd_use_count.erase(fd);
 			}
 		}
 	};
@@ -103,11 +74,7 @@ namespace saftbus {
 			result.push_back(ClientInfo());
 			result.back().process_id = client->process_id;
 			result.back().client_fd  = client->socket_fd;
-			for (auto &signal_fd: client->signal_fds) {
-				result.back().signal_fds.push_back(ClientInfo::SignalFD());
-				result.back().signal_fds.back().fd        = signal_fd->fd;
-				result.back().signal_fds.back().use_count = signal_fd->use_count;
-			}
+			result.back().signal_fds = client->signal_fd_use_count;
 		}
 		return result;
 	}
@@ -147,9 +114,9 @@ namespace saftbus {
 						assert(false);
 					} else {
 						// remove all signal fds associated with this client from all services
-						for(auto &signal_fd: (*removed_client)->signal_fds) {
-							std::cerr << "remove client signal fd " << signal_fd->fd << std::endl;
-							container_of_services.remove_signal_fd(signal_fd->fd);
+						for(auto &signal_fd: (*removed_client)->signal_fd_use_count) {
+							std::cerr << "remove client signal fd " << signal_fd.first << std::endl;
+							container_of_services.remove_signal_fd(signal_fd.second);
 						}
 						clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
 					}

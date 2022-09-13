@@ -96,7 +96,7 @@ namespace saftbus {
 				int fd;
 				int use_count;
 			};
-			std::vector<SignalFD> signal_fds;
+			std::map<int,int> signal_fds;
 		};
 		std::vector<ClientInfo> client_infos;
 	};

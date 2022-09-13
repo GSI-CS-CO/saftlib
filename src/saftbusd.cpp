@@ -105,5 +105,13 @@ int main() {
 	saftbus::Loop::get_default().clear();
 	server_connection.clear();
 
+
+// eigentlich muesste das ja so sein:
+	// saftbus::Container container;
+	// saftbus::Container_Service container_service(&container);
+	// saftbus::ServerConnection server_connection(&container_service);
+	// saftbus::Loop::get_default().run();
+
+
 	return 0;
 }
