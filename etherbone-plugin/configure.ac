@@ -1,4 +1,4 @@
-AC_INIT([example-plugin], [0.0])
+AC_INIT([eb-plugin], [0.0])
 LT_INIT
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])

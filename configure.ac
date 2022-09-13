@@ -1,4 +1,4 @@
-AC_INIT([mini-saftlib], [0.0])
+AC_INIT([saftbus], [0.0])
 LT_INIT
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])

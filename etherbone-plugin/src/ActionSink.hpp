@@ -27,11 +27,14 @@
 
 #include <saftbus/loop.hpp>
 
+// @saftbus-include
+#include <Time.hpp>
+
 namespace eb_plugin {
 
 class TimingReceiver;
 
-// de.gsi.saftlib.ActionSink:
+// de.gsi.eb_plugin.ActionSink:
 /// @brief An output through which actions flow.
 /// 
 /// Conditions created on this ActionSink specify which timing events are
@@ -276,16 +279,54 @@ class ActionSink
 		///
 		// @saftbus-export
 		uint64_t getOverflowCount() const;
+
+		/// @brief  The number of actions processed by the Sink.
+		/// @return The number of actions processed by the Sink.
+		///
+		/// As actions can be emitted very rapidly, ActionCount may increase by
+		/// more than 1 between emissions. There is a minimum delay of SignalRate
+		/// nanoseconds between updates to this property.		
+		///
 		// @saftbus-export
 		uint64_t getActionCount() const;
+
+		/// @brief  The number of actions delivered late.
+		/// @return The number of actions delivered late.
+		/// 
+		/// As described in the interface overview, an action can be late due to
+		/// a buggy data master, loss of clock synchronization, or very negative
+		/// condition offsets.  This is a critical failure as it can result in
+		/// misordering of executed actions.  Each such failure increases this
+		/// counter.  
+		/// 
+		/// As late actions can occur very rapidly, LateCount may increase by
+		/// more than 1 between emissions. There is a minimum delay of SignalRate
+		/// nanoseconds between updates to this property.		
+		///
 		// @saftbus-export
 		uint64_t getLateCount() const;
+
+
+		// @saftbus-signal		
+		std::function< void(uint32_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigLate;
+
 		// @saftbus-export
 		uint64_t getEarlyCount() const;
+
+		// @saftbus-signal		
+		std::function< void(uint32_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigEarly;
+
 		// @saftbus-export
 		uint64_t getConflictCount() const;
+
+		// @saftbus-signal		
+		std::function< void(uint64_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigConflict;
+
 		// @saftbus-export
 		uint64_t getDelayedCount() const;
+
+		// @saftbus-signal		
+		std::function< void(uint64_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigDelayed;
 		
 		// @saftbus-export
 		void setMinOffset(int64_t val);
@@ -307,7 +348,6 @@ class ActionSink
 		void setConflictCount(uint64_t val);
 		// @saftbus-export
 		void setDelayedCount(uint64_t val);
-		
 		// Do the grunt work to create a condition
 		// typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
 		// std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey, ConditionConstructor constructor);
@@ -327,6 +367,8 @@ class ActionSink
 		
 		// Receive MSI from TimingReceiver
 		virtual void receiveMSI(uint8_t code);
+
+
 		
 	protected:
 		std::string object_path;

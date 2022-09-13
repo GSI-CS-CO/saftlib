@@ -12,12 +12,14 @@ enum ExportTag {
 	NO_EXPORT,
 	SIGNAL_EXPORT,
 	FUNCTION_EXPORT,
+	INCLUDE_EXPORT,
 };
 
 // return true if a saftbus export tag was found in a line comment 
 static ExportTag remove_line_comments(std::string &line) {
-	std::string saftbus_export_tag = " @saftbus-export";
-	std::string saftbus_signal_tag = " @saftbus-signal";
+	std::string saftbus_export_tag  = " @saftbus-export";
+	std::string saftbus_signal_tag  = " @saftbus-signal";
+	std::string saftbus_include_tag = " @saftbus-include";
 	bool in_string = false;
 	char previous_ch = ' ';
 	for (size_t i = 0; i < line.size(); ++i) {
@@ -38,6 +40,14 @@ static ExportTag remove_line_comments(std::string &line) {
 					line = line.substr(0,i-1);
 					// std::cerr << "saftbus export " << line << std::endl;
 					return SIGNAL_EXPORT;
+				}
+			}
+			if (i+1+saftbus_include_tag.size() <= line.size()) {
+				// std::cerr << "++ " << line.substr(i+1,saftbus_include_tag.size()) << std::endl;
+				if (line.substr(i+1,saftbus_include_tag.size()) == saftbus_include_tag) {
+					line = line.substr(0,i-1);
+					// std::cerr << "saftbus export " << line << std::endl;
+					return INCLUDE_EXPORT;
 				}
 			}
 			line = line.substr(0,1);
@@ -402,7 +412,7 @@ struct ClassDefinition {
 };
 
 
-static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, std::map<std::string, std::string> &defines, std::vector<ClassDefinition> &classes, const std::vector<std::string> &include_paths)
+static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, std::map<std::string, std::string> &defines, std::vector<ClassDefinition> &classes, const std::vector<std::string> &include_paths, std::vector<std::string> &include_exports)
 {
 	std::ifstream in(source_name);
 	if (!in) {
@@ -421,6 +431,8 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 
 	std::string function_or_signal_signature;
 	ExportTag saftbus_export_tag_in_previous_line = NO_EXPORT;
+
+	bool include_export = false;
 
 	std::string class_definition;
 	bool in_class_definition = false;
@@ -475,6 +487,11 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 				}
 			}
 			function_or_signal_signature = "";
+		}
+		if (saftbus_export_tag_in_previous_line == INCLUDE_EXPORT) {
+			include_export = true;
+		} else {
+			include_export = false;
 		}
 		saftbus_export_tag_in_previous_line = saftbus_export_tag;
 
@@ -575,6 +592,12 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			// nothing to do here
 		} else 
 		if (keyword == "#include") {
+			if (include_export) {
+				if (verbose) {
+					std::cerr << "#include-export: " << line << std::endl;
+				}
+				include_exports.push_back(line);
+			}
 			char ch;
 			lin >> ch;
 			if (!lin) {
@@ -635,7 +658,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 						if (verbose) {
 							std::cerr << "recursively parse " << path_and_include_filename << std::endl;
 						}
-						cpp_parser(path_and_include_filename, defines, classes, include_paths);
+						cpp_parser(path_and_include_filename, defines, classes, include_paths, include_exports);
 						success = true;
 						break;
 					}
@@ -650,7 +673,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 				//... if it can be opened, call the parse function recursively
 					std::cerr << "recursively parse " << include_filename << std::endl;
 				}
-				cpp_parser(include_filename, defines, classes, include_paths);
+				cpp_parser(include_filename, defines, classes, include_paths, include_exports);
 			}
 		} else if (!saftbus_export_tag) {
 			// do nothing
@@ -929,7 +952,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 }
 
 
-void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &class_definition) {
+void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &class_definition, std::vector<std::string> &include_exports) {
 	std::string header_filename = outputdirectory;
 	if (header_filename.size()) {
 		header_filename.append("/");
@@ -947,6 +970,11 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "#include <saftbus/client.hpp>" << std::endl;	
 	header_out << std::endl;
 	header_out << "#include <functional>" << std::endl;	
+	header_out << std::endl;
+
+	for (auto &include_export: include_exports) {
+		header_out << include_export << std::endl;
+	}
 	header_out << std::endl;
 
 	std::string include_prefix("");
@@ -1205,7 +1233,8 @@ int main(int argc, char **argv)
 	for (auto &source_file: source_files) {
 		std::map<std::string, std::string> defines;
 		std::vector<ClassDefinition> classes;
-		cpp_parser(source_file, defines, classes, include_paths);
+		std::vector<std::string> include_exports; // the #include directives from class files that are supposed to appear also in the _Proxy file
+		cpp_parser(source_file, defines, classes, include_paths, include_exports);
 
 		for (auto &class_def: classes) {
 			class_def.finalize(classes);
@@ -1219,7 +1248,7 @@ int main(int argc, char **argv)
 				generate_service_header(output_directory, class_def);
 				generate_service_implementation(output_directory, class_def);
 
-				generate_proxy_header(output_directory, class_def);
+				generate_proxy_header(output_directory, class_def, include_exports);
 				generate_proxy_implementation(output_directory, class_def);
 
 			}
