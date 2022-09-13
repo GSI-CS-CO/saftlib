@@ -30,10 +30,38 @@
 
 namespace eb_plugin {
 
-class SoftwareActionSink : public ActionSink {
+	/// de.gsi.saftlib.SoftwareActionSink:
+	/// @brief An output through which software actions flow.
+	///
+	/// A SoftwareActionSink guarantees ordered execution of all callbacks
+	/// on SoftwareConditions created via the NewCondition method. Each
+	/// SoftwareActionSink is independent of all others, so a single 
+	/// program may operate in isolation without concern about potential
+	/// conflicting rules from other clients on the same machine.
+	///
+	/// A SoftwareActionSink is both an ActionSink and Owned.
+	///
+	/// If two SoftwareConditions are created on the same SoftwareActionSink
+	/// which require simultaneous delivery of two Actions, then they will be
+	/// delivered in arbitrary order, both having the 'conflict' flag set.
+	class SoftwareActionSink : public ActionSink {
 	public:
 		SoftwareActionSink(const std::string &object_path, TimingReceiver *dev, const std::string &name, unsigned channel, unsigned num, eb_address_t queue);
-		
+
+		/// NewCondition: Create a condition to match incoming events
+		///
+		///   @param active Should the condition be immediately active
+		///   @param id     Event ID to match incoming event IDs against
+		///   @param mask   Set of bits for which the event ID and id must agree
+		///   @param offset Delay in nanoseconds between event and action
+		///   @return       Object path to the created SoftwareCondition
+		///
+		/// This method creates a new condition that matches events whose
+		/// identifier lies in the range [id & mask, id | ~mask].  The offset
+		/// acts as a delay which is added to the event's execution timestamp
+		/// to determine the timestamp when the matching condition fires its
+		/// action.  The returned object path is a SoftwareCondition object.		
+		///
 		// @saftbus-export
 		std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset);
 
@@ -42,7 +70,7 @@ class SoftwareActionSink : public ActionSink {
 		
 	protected:
 		eb_address_t queue;
-};
+	};
 
 }
 

@@ -265,6 +265,8 @@ namespace saftbus {
 
 	TimeoutSource::~TimeoutSource() = default;
 
+	// prepare is called by Loop to find out the next dispatch_time of all sources
+	// and it will wait for min() of all reported dispatch_times.
 	bool TimeoutSource::prepare(std::chrono::milliseconds &timeout_ms) {
 		auto now = std::chrono::steady_clock::now();
 		timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dispatch_time - now); 
@@ -275,6 +277,8 @@ namespace saftbus {
 		return false;
 	}
 
+	// After the wait phase, the loop will call check on all source.
+	// Loop will call dispatch on all sources where check returns true. 
 	bool TimeoutSource::check() {
 		auto now = std::chrono::steady_clock::now();
 		auto timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dispatch_time - now); 
@@ -284,6 +288,7 @@ namespace saftbus {
 		return false;
 	}
 
+	// Execute whatever action is attached to the source
 	bool TimeoutSource::dispatch() {
 		auto now = std::chrono::steady_clock::now();
 		do {
