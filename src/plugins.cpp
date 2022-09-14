@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <set>
 
 namespace saftbus {
 
@@ -16,6 +17,7 @@ namespace saftbus {
 		lt_dlhandle handle;
 		create_services_function create_services;
 		destroy_service_function destroy_service;
+		std::set<saftbus::Service*> services;
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
@@ -41,16 +43,28 @@ namespace saftbus {
 	}
 
 	std::vector<std::pair<std::string, std::unique_ptr<Service> > > LibraryLoader::create_services(Container *container) {
-		return d->create_services(container);
+		auto result = d->create_services(container);
+		for (auto &name_service: result) {
+			d->services.insert(name_service.second.get());
+		}
+		return result;
 	}
 
 	void LibraryLoader::destroy_service(Service *service) {
-		return d->destroy_service(service);
+		std::cerr << "LibraryLoader::destroy_service " << std::endl;
+		d->destroy_service(service);
+		d->services.erase(service);
 	}
 
 	LibraryLoader::~LibraryLoader()
 	{
+		std::cerr << "~LibraryLoader()" << std::endl;
+
 		if (d->handle != NULL) {
+			for (auto &service: d->services) {
+				d->destroy_service(service);
+			}
+			d->services.clear();
 			lt_dlclose(d->handle);
 		}		
 		int result = lt_dlexit();

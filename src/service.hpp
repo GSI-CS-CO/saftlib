@@ -42,6 +42,7 @@ namespace saftbus {
 		// return 0 in case the object_path is unknown
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
 		bool remove_object(const std::string &object_path);
+		bool remove_object_delayed(const std::string &object_path);
 		// return saftlib_object_id if the object_path was found and all requested interfaces are implemented
 		// return 0 if object_path was not found
 		// return -1 if object_path was found but not all requested interfaces are implmented by the object
@@ -52,6 +53,8 @@ namespace saftbus {
 		bool call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send);
 		void remove_signal_fd(int fd);
 
+
+		bool load_plugin(const std::string &so_filename);
 		void clear();
 	};
 

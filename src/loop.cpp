@@ -63,7 +63,11 @@ namespace saftbus {
 		d->running = true;
 		d->running_depth = 0; // 0 means: the loop is not running
 	}
-	Loop::~Loop() = default;
+	Loop::~Loop() {
+		std::cerr << "~Loop()" << std::endl;
+		d->sources.clear();
+		d->added_sources.clear();
+	}
 
 	Loop& Loop::get_default() {
 		static Loop default_loop;
@@ -224,9 +228,6 @@ namespace saftbus {
 		return false;
 	}
 
-	void Loop::clear() {
-		d->sources.clear();
-	}
 
 	Source *Loop::connect(std::unique_ptr<Source> source) {
 		// std::cerr << "Loop::connect" << std::endl;
@@ -245,8 +246,17 @@ namespace saftbus {
 
 	void Loop::remove(Source *source) {
 		// std::cerr << "Loop::remove" << std::endl;
-		d->removed_sources.push_back(source);
-		source->valid = false;
+		if (std::find(d->sources.begin(), d->sources.end(), source) != d->sources.end() ||
+			std::find(d->added_sources.begin(), d->added_sources.end(), source) != d->added_sources.end()) {
+
+			d->removed_sources.push_back(source);
+			source->valid = false;
+		}
+	}
+
+	void Loop::clear() {
+		d->sources.clear();
+		d->added_sources.clear();
 	}
 
 

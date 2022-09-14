@@ -60,6 +60,9 @@ namespace saftbus {
 		Serializer   send;
 		Deserializer received;
 		Impl(ServerConnection *connection) : container_of_services(connection) {}
+		~Impl() {
+			std::cerr << "ServerConnection::~Impl()" << std::endl;
+		}
 		bool accept_client(int fd, int condition);
 		bool handle_client_request(int fd, int condition);
 	};
@@ -188,7 +191,10 @@ namespace saftbus {
 		Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::accept_client, d.get(), std::placeholders::_1, std::placeholders::_2), base_socket_fd, POLLIN);
 	}
 
-	ServerConnection::~ServerConnection() = default;
+	ServerConnection::~ServerConnection() 
+	{
+		std::cerr << "~ServerConnection" << std::endl;
+	}
 
 	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{

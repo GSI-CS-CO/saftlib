@@ -136,13 +136,13 @@ private:
     eb_address_t ats;
     eb_address_t info;
 
-	saftbus::Container *container; // need a pointer to container to register new Service objects (ActionSink, Condition, ...)
 	SAFTd              *saftd; // need a pointer to SAFTd because ther MSI callbacks can be registered
 
 	std::string object_path;
 	std::string name;
 	std::string etherbone_path;
 
+	saftbus::Container *container; // need a pointer to container to register new Service objects (ActionSink, Condition, ...)
 
 	mutable bool locked;
 

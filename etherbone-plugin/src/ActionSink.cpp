@@ -70,13 +70,20 @@ ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, cons
 
 ActionSink::~ActionSink()
 {
+  std::cerr << "~ActionSink" << std::endl;
   // unhook any pending updates
   saftbus::Loop::get_default().remove(overflowPending);
+  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
   saftbus::Loop::get_default().remove(actionPending);
+  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
   saftbus::Loop::get_default().remove(latePending);
+  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
   saftbus::Loop::get_default().remove(earlyPending);
+  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
   saftbus::Loop::get_default().remove(conflictPending);
+  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
   saftbus::Loop::get_default().remove(delayedPending);
+  std::cerr << "~ActionSink done " << std::endl;
 
   // No need to recompile; done in TimingReceiver.cpp
 }

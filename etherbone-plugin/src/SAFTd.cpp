@@ -44,13 +44,18 @@ namespace eb_plugin {
 
 	SAFTd::~SAFTd() 
 	{
+		std::cerr << "~SAFTd()" << std::endl;
 		if (container) {
 			for (auto &device: attached_devices) {
-				container->remove_object(device.second->get_object_path());
+				std::cerr << "  remove " << device.second->get_object_path() << std::endl;
+				container->remove_object_delayed(device.second->get_object_path());
 			}
 		}
+		std::cerr << "attached_devices.clear()" << std::endl;
 		attached_devices.clear();
+		std::cerr << "saftbus::Loop::get_default().remove(eb_source);" << std::endl;
 		saftbus::Loop::get_default().remove(eb_source);
+		std::cerr << "socket.close()" << std::endl;
 		socket.close();
 	}
 
@@ -123,7 +128,7 @@ namespace eb_plugin {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 		}
 		if (container) {
-			container->remove_object(device->second->get_object_path());
+			container->remove_object_delayed(device->second->get_object_path());
 		}
 		attached_devices.erase(device);
 	}

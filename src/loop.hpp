@@ -47,7 +47,7 @@ namespace saftbus {
 			return connect(std::move(std::unique_ptr<T>(new T(std::forward<Args>(args)...))));
 		}
 		void remove(Source *s);
-		void clear();
+		void clear(); // remove all sources
 		static Loop &get_default();
 	};
 

@@ -126,7 +126,7 @@ class ActionSink
 		         , unsigned channel
 		         , unsigned num
 		         );//, sigc::slot<void> destroy = sigc::slot<void>());
-		~ActionSink();
+		virtual ~ActionSink();
 		
 		/// @brief  Atomically toggle the active status of conditions.
 		///

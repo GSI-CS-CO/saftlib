@@ -324,11 +324,24 @@ void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
 
 TimingReceiver::~TimingReceiver() 
 {
-	saftbus::Loop::get_default().remove(poll_timeout_source);
-
 	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
+	if (container) {
+		for (auto &actionSink: actionSinks) {
+			if (actionSink.second) {
+				std::cerr << "   remove " << actionSink.second->getObjectPath() << std::endl;
+				container->remove_object_delayed(actionSink.second->getObjectPath());
+				
+			}
+		}
+	}
+
+	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
+	saftbus::Loop::get_default().remove(poll_timeout_source);
+	std::cerr << "device.close()" << std::endl;
 	device.close();
+	std::cerr << "fix device file" << std::endl;
 	chmod(etherbone_path.c_str(), dev_stat.st_mode);
+
 }
 
 const std::string &TimingReceiver::get_object_path() const
@@ -440,7 +453,7 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 	// SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
 	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(path, this, name, channel, num, address));
 	// softwareActionSink->initOwner(getConnection(), getSender());
-	if (container != nullptr) {
+	if (container) {
 		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
 		container->create_object(path, std::move(service));
 	}

@@ -20,6 +20,7 @@ namespace eb_plugin {
 
 	EB_Source::~EB_Source()
 	{
+		std::cerr << "~EB_Source()" << std::endl;
 	}
 
 	int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)

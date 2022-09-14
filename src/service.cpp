@@ -20,21 +20,30 @@ namespace saftbus {
 		std::string object_path;
 		unsigned object_id;
 		void remove_signal_fd(int fd);
+		~Impl()  {
+			std::cerr << "Service::~Impl()" << std::endl;
+		}
 	};
 
 	struct Container::Impl {
+		std::map<std::string, std::unique_ptr<LibraryLoader> > plugins;
 		unsigned generate_saftlib_object_id();
 		ServerConnection *connection;
 		std::map<unsigned, std::unique_ptr<Service> > objects; // Container owns the Service objects
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
 		Impl(ServerConnection *con) : connection(con) {}
+		~Impl()  {
+			std::cerr << "Container::~Impl()" << std::endl;
+		}
 	};
 
 	struct Container_Service::Impl {
 		Container *container;
 		Serializer serialized_signal;
 		static std::vector<std::string> gen_interface_names();
-		std::map<std::string, std::unique_ptr<LibraryLoader> > plugins;
+		~Impl()  {
+			std::cerr << "Container_Service::~Impl()" << std::endl;
+		}
 	};
 
 
@@ -44,7 +53,9 @@ namespace saftbus {
 		d->owner = -1;
 		d->interface_names = interface_names;
 	}
-	Service::~Service() = default;
+	Service::~Service() {
+		std::cerr << "~Service " << d->object_path << std::endl;
+	}
 
 	// Generate the mapping from interface_name to interface_no for all interface_names,
 	// return true if all interface_names are found, false otherwise
@@ -135,7 +146,10 @@ namespace saftbus {
 		// );
 
 	}
-	Container_Service::~Container_Service() = default;
+	Container_Service::~Container_Service() 
+	{
+		std::cerr << "~Container_Service" << std::endl;
+	}
 
 	bool Container_Service::emit_periodical_signal() {
 		static int count = 0;
@@ -196,35 +210,35 @@ namespace saftbus {
 					std::cerr << "saftd will quit now" << std::endl;
 				break;
 				case 3: {// bool load_plugin(const std::string &so_filename, const std::string &object_path)
-					std::string lib_name;
+					std::string so_filename;
 					// std::string object_path;
-					received.get(lib_name);
+					received.get(so_filename);
 					// received.get(object_path);
-					std::cerr << "loading " << lib_name << std::endl;
-					bool plugin_available = false;
-					auto plugin = d->plugins.find(lib_name);
-					if (plugin != d->plugins.end()) {
-						std::cerr << "plugin found" << std::endl;
-						plugin_available = true;
-					} else {
-						auto insertion_result = d->plugins.insert(std::make_pair(lib_name, std::move(std2::make_unique<LibraryLoader>(lib_name))));
-						if (insertion_result.second) {
-							std::cerr << "plugin inserted" << std::endl;
-							plugin = insertion_result.first;
-							plugin_available = true;
-						} else {
-							std::cerr << "plugin insertion failed" << std::endl;
-						}
-					}
-					if (plugin_available) {
-						std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(d->container);
-						for (auto &object_path_and_service: services) {
-							std::string              &object_path = object_path_and_service.first;
-							std::unique_ptr<Service> &service     = object_path_and_service.second;
-							unsigned object_id = d->container->create_object(object_path, std::move(service));
-							std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
-						}
-					}
+					std::cerr << "loading " << so_filename << std::endl;
+					bool plugin_available = d->container->load_plugin(so_filename);
+					// auto plugin = d->plugins.find(lib_name);
+					// if (plugin != d->plugins.end()) {
+					// 	std::cerr << "plugin found" << std::endl;
+					// 	plugin_available = true;
+					// } else {
+					// 	auto insertion_result = d->plugins.insert(std::make_pair(lib_name, std::move(std2::make_unique<LibraryLoader>(lib_name))));
+					// 	if (insertion_result.second) {
+					// 		std::cerr << "plugin inserted" << std::endl;
+					// 		plugin = insertion_result.first;
+					// 		plugin_available = true;
+					// 	} else {
+					// 		std::cerr << "plugin insertion failed" << std::endl;
+					// 	}
+					// }
+					// if (plugin_available) {
+					// 	std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(d->container);
+					// 	for (auto &object_path_and_service: services) {
+					// 		std::string              &object_path = object_path_and_service.first;
+					// 		std::unique_ptr<Service> &service     = object_path_and_service.second;
+					// 		unsigned object_id = d->container->create_object(object_path, std::move(service));
+					// 		std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
+					// 	}
+					// }
 					send.put(plugin_available);
 				}
 				break;
@@ -286,7 +300,10 @@ namespace saftbus {
 		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
 	}
 
-	Container::~Container() = default;
+	Container::~Container() 
+	{
+		std::cerr << "~Container" << std::endl;
+	}
 
 	unsigned Container::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
@@ -314,15 +331,21 @@ namespace saftbus {
 		std::cerr << "remove_object " << object_path << " now" << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
-			// we have already registered an object under this object path
+			// we dont have this object 
 			std::cerr << "remove_object: object path " << object_path << " not found " << std::endl;
 			return false;
 		}
 		auto object_id = find_result->second;
 		d->objects.erase(object_id);
 		d->object_path_lookup_table.erase(object_path);
-		return true;
+		return false;
 	}
+	bool Container::remove_object_delayed(const std::string &object_path)
+	{
+		Loop::get_default().connect<TimeoutSource>(std::bind(&Container::remove_object,this, object_path), std::chrono::milliseconds(1));
+		return false;
+	}
+
 
 	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
 	{
@@ -377,6 +400,36 @@ namespace saftbus {
 			service.second->d->remove_signal_fd(fd);
 		}
 	}
+
+	bool Container::load_plugin(const std::string &so_filename) {
+		std::cerr << "loading " << so_filename << std::endl;
+		bool plugin_available = false;
+		auto plugin = d->plugins.find(so_filename);
+		if (plugin != d->plugins.end()) {
+			std::cerr << "plugin found" << std::endl;
+			plugin_available = true;
+		} else {
+			auto insertion_result = d->plugins.insert(std::make_pair(so_filename, std::move(std2::make_unique<LibraryLoader>(so_filename))));
+			if (insertion_result.second) {
+				std::cerr << "plugin inserted" << std::endl;
+				plugin = insertion_result.first;
+				plugin_available = true;
+			} else {
+				std::cerr << "plugin insertion failed" << std::endl;
+			}
+		}
+		if (plugin_available) {
+			std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(this);
+			for (auto &object_path_and_service: services) {
+				std::string              &object_path = object_path_and_service.first;
+				std::unique_ptr<Service> &service     = object_path_and_service.second;
+				unsigned object_id = create_object(object_path, std::move(service));
+				std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
+			}
+		}
+		return plugin_available;
+	}
+
 
 	void Container::clear() {
 		d->objects.clear();

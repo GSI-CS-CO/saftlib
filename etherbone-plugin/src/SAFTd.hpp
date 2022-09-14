@@ -35,6 +35,7 @@ namespace eb_plugin {
 		void release_irq(eb_address_t irq);
 
 		std::string get_object_path();
+		
 	private:
 
 		// The sdb structure for this "virtual" etherbone device
