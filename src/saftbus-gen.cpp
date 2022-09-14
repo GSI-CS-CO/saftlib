@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cassert>
 
 bool verbose = false;
 
@@ -74,6 +75,7 @@ static void remove_block_comments(std::string &line, bool &block_comment) {
 			if (line[i] == '\"') in_string = !in_string;
 			if (line[i] == '*' && previous_ch == '/' && !in_string) {
 				block_comment = true;
+				assert(result.size() > 0);
 				result.pop_back();
 			}
 			if (block_comment == false) {
@@ -110,6 +112,7 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			latest_name = "";
 		}
 		if (line[i] == '}') {
+			assert(scope.size() > 0);
 			if (verbose) {
 				std::cerr << "leave scope \'" << scope.back() << "\'" << std::endl;
 			}
@@ -159,6 +162,7 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 
 std::string strip(std::string line) {
 	// std::cerr << "strip \'" << line << "\'" << std::endl;
+	if (line.size() == 0) return line;
 	size_t start = 0;
 	while(isspace(line[start])) ++start;
 	size_t stop = line.size()-1;
@@ -314,6 +318,7 @@ struct ClassDefinition {
 			// no base classes
 			std::istringstream lin(line);
 			lin >> name;
+			assert(name.size() > 0);
 			if (name.back()=='{') {
 				name.pop_back();
 			}
@@ -546,11 +551,13 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			std::string define_replacement;
 			std::getline(lin, define_replacement);
 			//strip trailing whitespaces
-			while(std::isspace(define_replacement.back())) {
-				define_replacement.pop_back();
-			}
-			while(std::isspace(define_replacement.front())) {
-				define_replacement = define_replacement.substr(1);
+			if (define_replacement.size() > 0) {
+				while(std::isspace(define_replacement.back())) {
+					define_replacement.pop_back();
+				}
+				while(std::isspace(define_replacement.front())) {
+					define_replacement = define_replacement.substr(1);
+				}
 			}
 			if (defines.find(define_name) != defines.end()) {
 				std::ostringstream msg;
@@ -841,7 +848,11 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 
 
 	out << "\t" << class_definition.name << "_Service::~" << class_definition.name << "_Service() " << std::endl;
-	out << "\t" << "{}" << std::endl;
+	out << "\t" << "{" << std::endl;
+	out << "\t\t" << "if (service_destruction_callback) {" << std::endl;
+	out << "\t\t\t" << "service_destruction_callback(this);" << std::endl;
+	out << "\t\t" << "}" << std::endl;
+	out << "\t" << "}" << std::endl;
 
 	out << "\t" << "void " << class_definition.name << "_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send) {" << std::endl;
 	out << "\t\ttry {" << std::endl;
