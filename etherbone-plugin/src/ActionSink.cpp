@@ -30,13 +30,16 @@
 
 #include <saftbus/error.hpp>
 
+#include <sstream>
+
 namespace eb_plugin {
 
-ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_)//, sigc::slot<void> destroy)
+ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, saftbus::Container *container_)//, sigc::slot<void> destroy)
  : object_path(objectPath), 
  dev(dev_), name(name_), channel(channel_), num(num_),
    minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
-   overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0)
+   overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
+   container(container_)
 {
   overflowUpdate = actionUpdate = lateUpdate = earlyUpdate = conflictUpdate = delayedUpdate = std::chrono::steady_clock::now();
   eb_data_t raw_latency, raw_offset_bits, raw_capacity, null;
@@ -471,30 +474,31 @@ void ActionSink::compile()
   dev->compile();
 }
 
-// std::string ActionSink::NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey, ConditionConstructor constructor)
-// {
+unsigned ActionSink::prepareCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey)//, ConditionConstructor constructor)
+{
 //   //ownerOnly();
 
-//   // sanity check arguments
-//   if (offset < minOffset || offset > maxOffset)
-//     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
-//   if ((~mask & (~mask+1)) != 0)
-//     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
-//   if ((id & mask) != id)
-//     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
+  // sanity check arguments
+  if (offset < minOffset || offset > maxOffset)
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
+  if ((~mask & (~mask+1)) != 0)
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
+  if ((id & mask) != id)
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
 
-//   // Pick a random number
-//   std::pair<Conditions::iterator, bool> attempt;
-//   do attempt = conditions.insert(Conditions::value_type(random(), std::shared_ptr<Condition>()));
-//   while (!attempt.second);
+  // Pick a random number that is not already present in the map
+  unsigned number;
+  do {
+    number = random();
+  }
+  while (conditions.find(number) != conditions.end());
+
 
 //   // Setup a destruction callback
 //   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &ActionSink::removeCondition), attempt.first);
 
-//   std::ostringstream str;
-//   str.imbue(std::locale("C"));
-//   str << getObjectPath() << "/_" << attempt.first->first;
-//   std::string path = str.str();
+
+  return number;
 
 //   std::shared_ptr<Condition> condition;
 //   try {
@@ -510,7 +514,7 @@ void ActionSink::compile()
 //     throw;
 //   }
 
-//   return condition->getObjectPath();
-// }
+  //return condition->getObjectPath();
+}
 
 }

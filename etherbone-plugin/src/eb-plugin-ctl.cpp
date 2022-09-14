@@ -1,5 +1,6 @@
 #include "SAFTd_Proxy.hpp"
 #include "TimingReceiver_Proxy.hpp"
+#include "SoftwareActionSink_Proxy.hpp"
 
 #include <saftbus/client.hpp>
 #include <memory>
@@ -33,6 +34,14 @@ int main(int argc, char **argv) {
 	}
 	auto sas_object_path = tr->NewSoftwareActionSink("");
 	std::cerr << "sas_object_path = " << sas_object_path << std::endl;
+
+	auto sas_proxy = eb_plugin::SoftwareActionSink_Proxy::create(sas_object_path);
+
+	auto cond_object_path = sas_proxy->NewCondition(true, 0x0, 0x0, 0x0);
+
+
+	auto core_service_proxy = saftbus::Container_Proxy::create();
+	saftbus::SaftbusInfo saftbus_info = core_service_proxy->get_status();
 
 	if (argc == 1) {
 		saftd->Quit();

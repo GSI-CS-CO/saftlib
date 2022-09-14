@@ -26,9 +26,12 @@
 #include <string>
 
 #include <saftbus/loop.hpp>
+#include <saftbus/service.hpp>
 
 // @saftbus-include
 #include <Time.hpp>
+
+#include "Condition.hpp"
 
 namespace eb_plugin {
 
@@ -125,7 +128,7 @@ class ActionSink
 		         , const std::string& name
 		         , unsigned channel
 		         , unsigned num
-		         );//, sigc::slot<void> destroy = sigc::slot<void>());
+		         , saftbus::Container *container = nullptr);//, sigc::slot<void> destroy = sigc::slot<void>());
 		virtual ~ActionSink();
 		
 		/// @brief  Atomically toggle the active status of conditions.
@@ -418,7 +421,10 @@ class ActionSink
 
 		// Do the grunt work to create a condition
 		// typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
-		// std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey, ConditionConstructor constructor);
+		// std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey);//, ConditionConstructor constructor);
+
+		/// @brief Sanity checks for the construction arguments of a condition and selection of a unique random number 
+		unsigned prepareCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey);
 
 		void compile();
 		
@@ -428,8 +434,8 @@ class ActionSink
 		const std::string &getObjectPath() const { return object_path; }
 
 		// Used by TimingReciever::compile
-		// typedef std::map< uint32_t, std::shared_ptr<Condition> > Conditions;
-		// const Conditions& getConditions() const { return conditions; }
+		typedef std::map< uint32_t, std::unique_ptr<Condition> > Conditions;
+		const Conditions& getConditions() const { return conditions; }
 		unsigned getChannel() const { return channel; }
 		unsigned getNum() const { return num; }
 		
@@ -496,10 +502,12 @@ class ActionSink
 		bool updateDelayed() const;
 		
 		// conditions must come after dev to ensure safe cleanup on ~Condition
-		//Conditions conditions;
+		Conditions conditions;
 		
 		// Useful for Condition destroy methods
-		//void removeCondition(Conditions::iterator i);
+		// void removeCondition(Conditions::iterator i);
+
+		saftbus::Container *container;
 };
 
 }

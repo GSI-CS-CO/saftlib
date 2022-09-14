@@ -25,12 +25,18 @@
 #include "eca_flags.h"
 // #include "src/clog.h"
 
+#include "SoftwareCondition.hpp"
+#include "SoftwareCondition_Service.hpp"
+
+
 #include <cassert>
+#include <sstream>
+#include <memory>
 
 namespace eb_plugin {
 
-SoftwareActionSink::SoftwareActionSink(const std::string &object_path, TimingReceiver *dev, const std::string &name, unsigned channel, unsigned num, eb_address_t queue)
- : ActionSink(object_path, dev, name, channel, num), queue(queue)
+SoftwareActionSink::SoftwareActionSink(const std::string &object_path, TimingReceiver *dev, const std::string &name, unsigned channel, unsigned num, eb_address_t queue, saftbus::Container *container)
+ : ActionSink(object_path, dev, name, channel, num, container), queue(queue)
 {
 }
 
@@ -108,9 +114,23 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
 
 std::string SoftwareActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset)
 {
-  // return NewConditionHelper(active, id, mask, offset, 0, true,
-  //   sigc::ptr_fun(&SoftwareCondition::create));
-  return std::string();
+  unsigned number = prepareCondition(active, id, mask, offset, 0, true);
+  std::ostringstream path;
+  path << getObjectPath() << "/_" << number;
+
+  std::unique_ptr<SoftwareCondition> software_condition(new SoftwareCondition(path.str(), this, active, id, mask, offset, number));
+  std::cerr << "SoftwareActionSink::NewCondition" << std::endl;
+  if (container) {
+    std::cerr << "have a container" << std::endl;
+    std::unique_ptr<SoftwareCondition_Service> service(new SoftwareCondition_Service(software_condition.get()));
+    container->create_object(path.str(), std::move(service));
+  }
+  conditions[number] = std::move(software_condition);
+  if (active) {
+    std::cerr << "compile" << std::endl;
+    dev->compile();
+  }
+  return path.str();
 }
 
 }

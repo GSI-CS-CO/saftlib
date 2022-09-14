@@ -447,7 +447,7 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 
 
 	// SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
-	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(path, this, name, channel, num, address));
+	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(path, this, name, channel, num, address, container));
 	// softwareActionSink->initOwner(getConnection(), getSender());
 	if (container) {
 		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
@@ -475,6 +475,7 @@ std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() co
 
 void TimingReceiver::compile()
 {
+	std::cerr << "TimingReceiver::compile" << std::endl;
 //   // Store all active conditions into a vector for processing
 //   typedef std::vector<ECA_OpenClose> ID_Space;
 //   ID_Space id_space;
