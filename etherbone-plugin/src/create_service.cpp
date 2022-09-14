@@ -11,8 +11,10 @@ eb_plugin::SAFTd_Service *saftd_service;
                                                                                     
 extern "C" 
 void destroy_service(saftbus::Service *service) {
+	std::cerr << "destroy_service was called" << std::endl;
 	// this is a hint, that the Service object will no longer be needed an we can (if we want to) savely destroy the SAFTd object
 	if (saftd_service && saftd_service == dynamic_cast<eb_plugin::SAFTd_Service*>(service)) {
+		std::cerr << "  destroying service" << std::endl;
 		saftd.reset(); // destructor + release memory
 		saftd_service = nullptr;
 	}

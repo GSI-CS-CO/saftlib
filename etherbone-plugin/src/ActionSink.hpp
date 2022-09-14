@@ -196,6 +196,8 @@ class ActionSink
 		///
 		// @saftbus-export
 		int64_t getMinOffset() const;
+		// @saftbus-export
+		void setMinOffset(int64_t val);
 		
 		/// @brief  Maximum allowed offset (nanoseconds) usable in NewCondition.
 		/// @return Maximum allowed offset (nanoseconds) usable in NewCondition.
@@ -208,6 +210,8 @@ class ActionSink
 		///
 		// @saftbus-export
 		int64_t getMaxOffset() const;
+		// @saftbus-export
+		void setMaxOffset(int64_t val);
 
 		/// @brief  Nanoseconds between event and earliest execution of an action.
 		/// @return Nanoseconds between event and earliest execution of an action.
@@ -250,6 +254,8 @@ class ActionSink
 		///
 		// @saftbus-export
 		uint16_t getMostFull() const;
+		// @saftbus-export
+		void setMostFull(uint16_t val);
 
 		/// @brief  Minimum interval between updates (nanoseconds, default 100ms).
 		/// @return Minimum interval between updates (nanoseconds, default 100ms).
@@ -261,6 +267,8 @@ class ActionSink
 		///
 		// @saftbus-export
 		std::chrono::nanoseconds getSignalRate() const;
+		// @saftbus-export
+		void setSignalRate(std::chrono::nanoseconds val);
 
 		/// @brief The number of actions lost due to Overflow.
 		///
@@ -279,6 +287,8 @@ class ActionSink
 		///
 		// @saftbus-export
 		uint64_t getOverflowCount() const;
+		// @saftbus-export
+		void setOverflowCount(uint64_t val);
 
 		/// @brief  The number of actions processed by the Sink.
 		/// @return The number of actions processed by the Sink.
@@ -289,6 +299,8 @@ class ActionSink
 		///
 		// @saftbus-export
 		uint64_t getActionCount() const;
+		// @saftbus-export
+		void setActionCount(uint64_t val);
 
 		/// @brief  The number of actions delivered late.
 		/// @return The number of actions delivered late.
@@ -305,49 +317,105 @@ class ActionSink
 		///
 		// @saftbus-export
 		uint64_t getLateCount() const;
-
-
+		// @saftbus-export
+		void setLateCount(uint64_t val);
+		/// @brief:      An example of a late action since last LateCount change.
+		///
+		/// @param count    The new value of LateCount when this signal was raised.
+		/// @param event    The event identifier of the late action.
+		/// @param param    The parameter field, whose meaning depends on the event ID.
+		/// @param deadline The desired execution timestamp (event time + offset).
+		/// @param executed The actual execution timestamp.
+		/// Keep in mind that an action is only counted as late if it is
+		/// scheduled for the past.  An action which leaves the timing receiver
+		/// after its deadline, due to a slow consumer, is a delayed (not late)
+		/// action.		
+		///
 		// @saftbus-signal		
 		std::function< void(uint32_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigLate;
 
-		// @saftbus-export
-		uint64_t getEarlyCount() const;
 
+
+		///	@brief  The number of actions delivered early.
+		///	@return The number of actions delivered early.
+		///
+		///	As described in the interface overview, an action can be early due to
+		///	a buggy data master, loss of clock synchronization, or very positive
+		///	condition offsets.  This is a critical failure as it can result in
+		///	misordering of executed actions.  Each such failure increases this
+		///	counter.  
+		///
+		///	As early acitons can occur very rapidly, EarlyCount may increase by
+		///	more than 1 between emissions. There is a minimum delay of SignalRate
+		///	nanoseconds between updates to this property.
+		///
+       	// @saftbus-export
+		uint64_t getEarlyCount() const;
+		// @saftbus-export
+		void setEarlyCount(uint64_t val);
+		/// @brief     An example of an early action since last EarlyCount change.
+		///
+		/// @param count    The new value of LateCount when this signal was raised.
+		/// @param event    The event identifier of the early action.
+		/// @param param    The parameter field, whose meaning depends on the event ID.
+		/// @param deadline The desired execution timestamp (event time + offset).
+		/// @param executed The actual execution timestamp.
 		// @saftbus-signal		
 		std::function< void(uint32_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigEarly;
 
+		/// @brief  The number of actions which conflicted. 
+		/// @return The number of actions which conflicted. 
+		///
+		/// If two actions should have been executed simultaneously by the same
+		/// ActionSink, they are executed in an undefined order. Each time this
+		/// happens, the ConflictCount is increased. 
+		/// As conflicts can occur very rapidly, ConflictCount may increase by
+		/// more than 1 between emissions. There is a minimum delay of SignalRate
+		/// nanoseconds between updates to this property.
+		///
 		// @saftbus-export
 		uint64_t getConflictCount() const;
-
+		// @saftbus-export
+		void setConflictCount(uint64_t val);
+		/// @brief   An example of a conflict since last ConflictCount change.
+		///
+		/// @param count    The new value of ConflictCount when this signal was raised.
+		/// @param event    The event identifier of a conflicting action.
+		/// @param param    The parameter field, whose meaning depends on the event ID.
+		/// @param deadline The scheduled action execution timestamp (event time + offset).
+		/// @param executed The timestamp when the action was actually executed.	
+		///
 		// @saftbus-signal		
 		std::function< void(uint64_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigConflict;
 
+		/// @brief  The number of actions which have been delayed.
+		/// @return The number of actions which have been delayed.
+		///
+		/// The timing receiver emits actions potentially every nanosecond. In
+		/// the case that the receiver cannot immediately process an action, the
+		/// timing receiver delays the action until the receiver is ready. This
+		/// can happen either because the receiver was still busy with a previous
+		/// action or the output was used externally (bus arbitration).
+		/// As actions can be emitted very rapidly, DelayedCount may increase by
+		/// more than 1 between emissions. There is a minimum delay of SignalRate
+		/// nanoseconds between updates to this property.
+		///
 		// @saftbus-export
 		uint64_t getDelayedCount() const;
-
+		// @saftbus-export
+		void setDelayedCount(uint64_t val);
+		/// @brief   An example of a delayed action the last DelayedCount change.
+		///
+		/// @param count    The value of DelayedCount when this signal was raised.
+		/// @param event    The event identifier of the delayed action.
+		/// @param param    The parameter field, whose meaning depends on the event ID.
+		/// @param deadline The desired execution timestamp (event time + offset).
+		/// @param executed The timestamp when the action was actually executed.	
+		///
 		// @saftbus-signal		
 		std::function< void(uint64_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigDelayed;
 		
-		// @saftbus-export
-		void setMinOffset(int64_t val);
-		// @saftbus-export
-		void setMaxOffset(int64_t val);
-		// @saftbus-export
-		void setMostFull(uint16_t val);
-		// @saftbus-export
-		void setSignalRate(std::chrono::nanoseconds val);
-		// @saftbus-export
-		void setOverflowCount(uint64_t val);
-		// @saftbus-export
-		void setActionCount(uint64_t val);
-		// @saftbus-export
-		void setLateCount(uint64_t val);
-		// @saftbus-export
-		void setEarlyCount(uint64_t val);
-		// @saftbus-export
-		void setConflictCount(uint64_t val);
-		// @saftbus-export
-		void setDelayedCount(uint64_t val);
+
 		// Do the grunt work to create a condition
 		// typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
 		// std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey, ConditionConstructor constructor);

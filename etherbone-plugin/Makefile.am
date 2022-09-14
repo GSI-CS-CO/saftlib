@@ -15,12 +15,14 @@ lib@PACKAGE@_service_la_SOURCES =                                 \
 	src/eb-forward.cpp                  src/eb-forward.hpp           \
 	src/SAFTd.cpp                       src/SAFTd.hpp                 \
 	src/SAFTd_Service.cpp               src/SAFTd_Service.hpp          \
-	src/ActionSink.cpp                  src/ActionSink.hpp              \
-	src/ActionSink_Service.cpp          src/ActionSink_Service.hpp       \
-	src/SoftwareActionSink.cpp          src/SoftwareActionSink.hpp        \
-	src/SoftwareActionSink_Service.cpp  src/SoftwareActionSink_Service.hpp \
-	src/TimingReceiver.cpp              src/TimingReceiver.hpp              \
-	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp       \
+	src/Condition.cpp                   src/Condition.hpp               \
+	src/Condition_Service.cpp           src/Condition_Service.hpp        \
+	src/ActionSink.cpp                  src/ActionSink.hpp                \
+	src/ActionSink_Service.cpp          src/ActionSink_Service.hpp         \
+	src/SoftwareActionSink.cpp          src/SoftwareActionSink.hpp          \
+	src/SoftwareActionSink_Service.cpp  src/SoftwareActionSink_Service.hpp   \
+	src/TimingReceiver.cpp              src/TimingReceiver.hpp                \
+	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp         \
 	src/create_service.cpp
 
 # lib@PACKAGE@_proxy_la_CPPADD  = -DDATADIR='"$(datadir)"'
@@ -28,17 +30,19 @@ lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/Time.cpp                   \
 	src/SAFTd_Proxy.cpp             \
-	src/ActionSink_Proxy.cpp         \
-	src/SoftwareActionSink_Proxy.cpp  \
+	src/Condition_Proxy.cpp          \
+	src/ActionSink_Proxy.cpp          \
+	src/SoftwareActionSink_Proxy.cpp   \
 	src/TimingReceiver_Proxy.cpp         
 
 
 lib@PACKAGE@_proxy_includedir = $(includedir)/@PACKAGE@
 lib@PACKAGE@_proxy_include_HEADERS = \
-	src/Time.hpp                   \
-	src/SAFTd_Proxy.hpp             \
-	src/ActionSink_Proxy.hpp         \
-	src/SoftwareActionSink_Proxy.hpp  \
+	src/Time.hpp                      \
+	src/SAFTd_Proxy.hpp                \
+	src/Condition_Proxy.hpp             \
+	src/ActionSink_Proxy.hpp             \
+	src/SoftwareActionSink_Proxy.hpp      \
 	src/TimingReceiver_Proxy.hpp
 
 

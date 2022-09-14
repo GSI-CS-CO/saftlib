@@ -231,7 +231,6 @@ TimingReceiver::TimingReceiver(SAFTd *sd, etherbone::Socket &socket, const std::
 	// InoutImpl::probe(this, actionSinks, eventSources);
 
 	// Configure the non-IO action sinks, creating objects and clearing status
-	std::cerr << "############# channels: " << channels << std::endl;
 	for (unsigned i = 1; i < channels; ++i) {
 		cycle.open(device);
 		cycle.write(base + ECA_CHANNEL_SELECT_RW,    EB_DATA32, i);
@@ -240,9 +239,6 @@ TimingReceiver::TimingReceiver(SAFTd *sd, etherbone::Socket &socket, const std::
 		cycle.read (base + ECA_CHANNEL_CAPACITY_GET, EB_DATA32, &raw_capacity);
 		cycle.close();
 
-		std::cerr << "############# raw_type:     " << raw_type     << std::endl;
-		std::cerr << "############# raw_max_num:  " << raw_max_num  << std::endl;
-		std::cerr << "############# raw_capacity: " << raw_capacity << std::endl;
 		// Flush any queue we manage
 		if (raw_type == ECA_LINUX) {
 			for (; raw_capacity; --raw_capacity) {
@@ -330,7 +326,7 @@ TimingReceiver::~TimingReceiver()
 			if (actionSink.second) {
 				std::cerr << "   remove " << actionSink.second->getObjectPath() << std::endl;
 				container->remove_object_delayed(actionSink.second->getObjectPath());
-				
+
 			}
 		}
 	}
