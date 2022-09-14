@@ -64,10 +64,6 @@ namespace saftbus {
 		bool handle_client_request(int fd, int condition);
 	};
 
-	void ServerConnection::clear() {
-		d->container_of_services.clear();
-	}
-
 	std::vector<ServerConnection::ClientInfo> ServerConnection::get_client_info() {
 		std::vector<ClientInfo> result;
 		for (auto &client: d->clients) {
@@ -193,12 +189,6 @@ namespace saftbus {
 	}
 
 	ServerConnection::~ServerConnection() = default;
-
-	Container& ServerConnection::get_service_container()
-	{
-		return d->container_of_services;
-	}
-
 
 	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{

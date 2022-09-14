@@ -94,7 +94,7 @@ public:
 
     // public type, even though the member is private
     typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
-    typedef std::map< SinkKey, ActionSink* >  ActionSinks;
+    typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
     // typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
 
 

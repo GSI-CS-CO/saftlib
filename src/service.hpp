@@ -55,6 +55,7 @@ namespace saftbus {
 		void clear();
 	};
 
+	class ServerConnection;
 	// A Service to access the Container of Services
 	// mainly Proxy (de-)registration 
 	class Container_Service : public Service {

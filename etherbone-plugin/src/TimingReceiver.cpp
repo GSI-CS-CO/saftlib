@@ -254,7 +254,7 @@ TimingReceiver::TimingReceiver(saftbus::Container *cont, SAFTd *sd, etherbone::S
 			switch (raw_type) {
 				case ECA_LINUX: {
 					// defer construction till demanded by NewSoftwareActionSink, but setup the keys
-					actionSinks[SinkKey(i, num)] == nullptr;
+					actionSinks[SinkKey(i, num)].reset(); // this will create the unique_ptr, but with no content
 					// clear any stale valid count
 					popMissingQueue(i, num);
 					break;
@@ -438,9 +438,9 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 
 
   // SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
-  std::unique_ptr<SoftwareActionSink> instance(new SoftwareActionSink(path, this, name, channel, num, address	));
-  alloc->second = instance.get();
-  std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(std::move(instance)));
+  std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(path, this, name, channel, num, address));
+  std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
+  alloc->second = std::move(software_action_sink);
 
   // softwareActionSink->initOwner(getConnection(), getSender());
   container->create_object(path, std::move(service));
@@ -453,7 +453,7 @@ std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() co
   typedef ActionSinks::const_iterator iterator;
   std::map< std::string, std::string > out;
   for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    SoftwareActionSink* softwareActionSink = dynamic_cast<SoftwareActionSink*>(i->second);
+    SoftwareActionSink* softwareActionSink = dynamic_cast<SoftwareActionSink*>(i->second.get());
     if (!softwareActionSink) continue;
     out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
   }

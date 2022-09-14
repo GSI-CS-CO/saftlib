@@ -25,9 +25,9 @@ namespace saftbus {
 	struct Container::Impl {
 		unsigned generate_saftlib_object_id();
 		ServerConnection *connection;
-		std::map<unsigned, std::unique_ptr<Service> > objects;
+		std::map<unsigned, std::unique_ptr<Service> > objects; // Container owns the Service objects
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
-		std::string delayed_removal_object_path;
+		Impl(ServerConnection *con) : connection(con) {}
 	};
 
 	struct Container_Service::Impl {
@@ -217,9 +217,13 @@ namespace saftbus {
 						}
 					}
 					if (plugin_available) {
-						std::string object_path = plugin->second->get_object_path(d->container);
-						unsigned object_id = d->container->create_object(object_path, std::move(plugin->second->create_service(d->container)));
-						std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
+						std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(d->container);
+						for (auto &object_path_and_service: services) {
+							std::string              &object_path = object_path_and_service.first;
+							std::unique_ptr<Service> &service     = object_path_and_service.second;
+							unsigned object_id = d->container->create_object(object_path, std::move(service));
+							std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
+						}
 					}
 					send.put(plugin_available);
 				}
@@ -276,12 +280,9 @@ namespace saftbus {
 	}
 
 	Container::Container(ServerConnection *connection) 
-		: d(std2::make_unique<Impl>())
+		: d(std2::make_unique<Impl>(connection))
 	{
-		d->connection = connection;
-		// create a Service that allows access to Container functionality
-		auto container_service = std2::make_unique<Container_Service>(this);
-		unsigned object_id = create_object("/saftbus", std::move(container_service));
+		unsigned object_id = create_object("/saftbus", std::move(std::unique_ptr<Container_Service>(new Container_Service(this))));
 		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
 	}
 
@@ -381,8 +382,6 @@ namespace saftbus {
 		d->objects.clear();
 		d->object_path_lookup_table.clear();
 	}
-
-
 
 
 }

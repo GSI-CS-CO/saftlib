@@ -54,7 +54,7 @@ namespace eb_plugin {
 		saftbus::Source *eb_source;
 
 		// remember all attached devices 
-		std::map<std::string, TimingReceiver*> attached_devices;
+		std::map<std::string, std::unique_ptr<TimingReceiver> > attached_devices;
 
 		std::map<eb_address_t, std::function<void(eb_data_t)> > irqs;
 	};

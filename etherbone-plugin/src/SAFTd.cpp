@@ -85,18 +85,16 @@ namespace eb_plugin {
 		}
 
 		try {
-			// create the TimingReceiver and keep a bare pointer to it (for later use)
-			std::unique_ptr<TimingReceiver> instance(new TimingReceiver(container, this, socket, object_path, name, etherbone_path));
-			TimingReceiver *timing_receiver = instance.get();
+			// create a new TimingReceiver object and add it to the attached_devices
+			TimingReceiver *timing_receiver = new TimingReceiver(container, this, socket, object_path, name, etherbone_path);
+			attached_devices[name] = std::move(std::unique_ptr<TimingReceiver>(timing_receiver));
+			// auto insertion_result = attached_devices.insert(std::make_pair(name, TimingReceiver(container, this, socket, object_path, name, etherbone_path)));
 
 			// crate a TimingReceiver_Service object
-			std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(std::move(instance)));
+			std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver));
 
 			// insert the Service object
 			container->create_object(timing_receiver->get_object_path(), std::move(service));
-
-			// remember the TimingReceiver under name
-			attached_devices.insert(std::make_pair(name, timing_receiver));
 
 			// return the object path to the new Servie object
 			return timing_receiver->get_object_path();
@@ -116,7 +114,7 @@ namespace eb_plugin {
 
 
 	void SAFTd::RemoveDevice(const std::string& name) {
-		std::map< std::string, TimingReceiver* >::iterator device = attached_devices.find(name);
+		std::map< std::string, std::unique_ptr<TimingReceiver> >::iterator device = attached_devices.find(name);
 		if (device == attached_devices.end()) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 		}

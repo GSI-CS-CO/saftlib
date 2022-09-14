@@ -26,11 +26,8 @@ namespace saftbus {
 		ServerConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
 
-		Container& get_service_container();
 		void register_signal_id_for_client(int client_id, int signal_id);
 		void unregister_signal_id_for_client(int client_id, int signal_id);
-
-		void clear();
 
 		struct ClientInfo {
 			pid_t process_id;

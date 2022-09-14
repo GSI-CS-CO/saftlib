@@ -5,7 +5,8 @@
 #include "loop.hpp"
 
 #include <string>
-#include <memory>
+#include <vector>
+#include <map>
 
 namespace saftbus {
 
@@ -14,8 +15,12 @@ namespace saftbus {
 	public:
 		LibraryLoader(const std::string &so_filename);
 		~LibraryLoader();
-		std::string              get_object_path(Container *container);
-		std::unique_ptr<Service> create_service (Container *container);
+		// the service objects are owned by the plugin, we only get a naked pointer to it
+		// the std::string is the object path under which the respective Servie object should be mounted		
+		std::vector<std::pair<std::string, std::unique_ptr<Service> > > create_services(Container *container); 
+
+		// we are done with the Service object, tell the plugin that it is safe to destroy it
+		void destroy_service(Service *service); 
 	};
 
 }

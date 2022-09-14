@@ -2,15 +2,31 @@
 #include "SAFTd.hpp"
 #include "SAFTd_Service.hpp"
 
-extern "C" std::string get_object_path(saftbus::Container *container) {
-	return std::string("/de/gsi/saftlib");
+#include <memory>
+#include <vector>
+#include <map>
+
+std::unique_ptr<eb_plugin::SAFTd> saftd;
+eb_plugin::SAFTd_Service *saftd_service; 
+std::string object_path = "/de/gsi/saftlib";
+                                                                                    
+extern "C" 
+std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_services(saftbus::Container *container) {
+	saftd         = std::move(std::unique_ptr<eb_plugin::SAFTd>(new eb_plugin::SAFTd(container, object_path)));
+	saftd_service = new eb_plugin::SAFTd_Service(saftd.get());
+
+	std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > services;
+	services.push_back(std::make_pair(std::string(object_path), std::move(std::unique_ptr<eb_plugin::SAFTd_Service>(saftd_service))));
+
+	return services;
 }
 
-extern "C" std::unique_ptr<saftbus::Service> create_service(saftbus::Container *container) {
 
-	std::unique_ptr<eb_plugin::SAFTd> instance(new eb_plugin::SAFTd(container, get_object_path(container)));
-	std::unique_ptr<eb_plugin::SAFTd_Service> service(new eb_plugin::SAFTd_Service(std::move(instance)));
-	return service;
+
+extern "C" 
+void destroy_service(saftbus::Service *service) {
+	// this is a hint, that the Service object will no longer be needed an we can (if we want to) savely destroy the SAFTd object
+	if (saftd_service == dynamic_cast<eb_plugin::SAFTd_Service*>(service)) {
+		saftd.reset(); // destructor + release memory
+	}
 }
-
-

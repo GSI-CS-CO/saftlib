@@ -9,13 +9,13 @@
 
 namespace saftbus {
 
-	extern "C" typedef std::string              (*get_object_path_function)(Container *container);
-	extern "C" typedef std::unique_ptr<Service> (*create_service_function) (Container *container);
+	extern "C" typedef std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > (*create_services_function) (saftbus::Container *container);
+	extern "C" typedef void                                                                     (*destroy_service_function) (saftbus::Service *service);
 
 	struct LibraryLoader::Impl {
 		lt_dlhandle handle;
-		get_object_path_function get_object_path;
-		create_service_function create_service;
+		create_services_function create_services;
+		destroy_service_function destroy_service;
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
@@ -33,19 +33,19 @@ namespace saftbus {
 			std::cerr << "successfully opened " << so_filename << std::endl;
 		}
 
-		// get the create_service function
-		d->get_object_path = (get_object_path_function)lt_dlsym(d->handle,"get_object_path");
-		assert(d->get_object_path != NULL);
-		d->create_service = (create_service_function)lt_dlsym(d->handle,"create_service");
-		assert(d->create_service != NULL);
+		// load the function pointers
+		d->create_services = (create_services_function)lt_dlsym(d->handle,"create_services");
+		assert(d->create_services != NULL);
+		d->destroy_service = (destroy_service_function)lt_dlsym(d->handle,"destroy_service");
+		assert(d->destroy_service != NULL);
 	}
 
-	std::string LibraryLoader::get_object_path(Container *container) {
-		return d->get_object_path(container);
+	std::vector<std::pair<std::string, std::unique_ptr<Service> > > LibraryLoader::create_services(Container *container) {
+		return d->create_services(container);
 	}
 
-	std::unique_ptr<Service> LibraryLoader::create_service(Container *container) {
-		return d->create_service(container);
+	void LibraryLoader::destroy_service(Service *service) {
+		return d->destroy_service(service);
 	}
 
 	LibraryLoader::~LibraryLoader()
