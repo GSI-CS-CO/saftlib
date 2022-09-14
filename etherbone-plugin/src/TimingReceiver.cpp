@@ -117,12 +117,12 @@ bool TimingReceiver::poll()
 }
 
 
-TimingReceiver::TimingReceiver(saftbus::Container *cont, SAFTd *sd, etherbone::Socket &socket, const std::string &obj_path, const std::string &n, const std::string eb_path)
-	: container(cont)
-	, saftd(sd)
+TimingReceiver::TimingReceiver(SAFTd *sd, etherbone::Socket &socket, const std::string &obj_path, const std::string &n, const std::string eb_path, saftbus::Container *cont)
+	: saftd(sd)
 	, object_path(obj_path)
 	, name(n)
 	, etherbone_path(eb_path)
+	, container(cont)
 {
 	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
 	stat(etherbone_path.c_str(), &dev_stat);
@@ -437,15 +437,17 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
   
 
 
-  // SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
-  std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(path, this, name, channel, num, address));
-  std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
-  alloc->second = std::move(software_action_sink);
+	// SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
+	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(path, this, name, channel, num, address));
+	// softwareActionSink->initOwner(getConnection(), getSender());
+	if (container != nullptr) {
+		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
+		container->create_object(path, std::move(service));
+	}
+	alloc->second = std::move(software_action_sink);
 
-  // softwareActionSink->initOwner(getConnection(), getSender());
-  container->create_object(path, std::move(service));
   
-  return path;
+	return path;
 }
 
 std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const

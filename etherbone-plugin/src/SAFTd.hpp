@@ -14,7 +14,7 @@ namespace eb_plugin {
 
 	class SAFTd : public etherbone::Handler {
 	public:
-		SAFTd(saftbus::Container *c, const std::string &obj_path);
+		SAFTd(saftbus::Container *container = nullptr);
 		~SAFTd();
 		// @saftbus-export
 		std::string AttachDevice(const std::string& name, const std::string& path);
@@ -33,6 +33,8 @@ namespace eb_plugin {
 
 		void request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
 		void release_irq(eb_address_t irq);
+
+		std::string get_object_path();
 	private:
 
 		// The sdb structure for this "virtual" etherbone device

@@ -8,15 +8,14 @@
 
 std::unique_ptr<eb_plugin::SAFTd> saftd;
 eb_plugin::SAFTd_Service *saftd_service; 
-std::string object_path = "/de/gsi/saftlib";
                                                                                     
 extern "C" 
 std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_services(saftbus::Container *container) {
-	saftd         = std::move(std::unique_ptr<eb_plugin::SAFTd>(new eb_plugin::SAFTd(container, object_path)));
+	saftd         = std::move(std::unique_ptr<eb_plugin::SAFTd>(new eb_plugin::SAFTd(container)));
 	saftd_service = new eb_plugin::SAFTd_Service(saftd.get());
 
 	std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > services;
-	services.push_back(std::make_pair(std::string(object_path), std::move(std::unique_ptr<eb_plugin::SAFTd_Service>(saftd_service))));
+	services.push_back(std::make_pair(saftd->get_object_path(), std::move(std::unique_ptr<eb_plugin::SAFTd_Service>(saftd_service))));
 
 	return services;
 }

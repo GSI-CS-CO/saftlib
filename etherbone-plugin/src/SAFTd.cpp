@@ -19,9 +19,9 @@
 namespace eb_plugin {
 
 
-	SAFTd::SAFTd(saftbus::Container *c, const std::string &obj_path) 
-		: container(c)
-		, object_path(obj_path)
+	SAFTd::SAFTd(saftbus::Container *cont)
+		: container(cont)
+		, object_path("/de/gsi/saftlib")
 	{
 		socket.open();
 
@@ -44,8 +44,10 @@ namespace eb_plugin {
 
 	SAFTd::~SAFTd() 
 	{
-		for (auto &device: attached_devices) {
-			container->remove_object(device.second->get_object_path());
+		if (container) {
+			for (auto &device: attached_devices) {
+				container->remove_object(device.second->get_object_path());
+			}
 		}
 		attached_devices.clear();
 		saftbus::Loop::get_default().remove(eb_source);
@@ -86,15 +88,17 @@ namespace eb_plugin {
 
 		try {
 			// create a new TimingReceiver object and add it to the attached_devices
-			TimingReceiver *timing_receiver = new TimingReceiver(container, this, socket, object_path, name, etherbone_path);
+			TimingReceiver *timing_receiver = new TimingReceiver(this, socket, object_path, name, etherbone_path, container);
 			attached_devices[name] = std::move(std::unique_ptr<TimingReceiver>(timing_receiver));
 			// auto insertion_result = attached_devices.insert(std::make_pair(name, TimingReceiver(container, this, socket, object_path, name, etherbone_path)));
 
 			// crate a TimingReceiver_Service object
-			std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver));
+			if (container) {
+				std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver));
 
-			// insert the Service object
-			container->create_object(timing_receiver->get_object_path(), std::move(service));
+				// insert the Service object
+				container->create_object(timing_receiver->get_object_path(), std::move(service));
+			}
 
 			// return the object path to the new Servie object
 			return timing_receiver->get_object_path();
@@ -118,13 +122,17 @@ namespace eb_plugin {
 		if (device == attached_devices.end()) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 		}
-		container->remove_object(device->second->get_object_path());
+		if (container) {
+			container->remove_object(device->second->get_object_path());
+		}
 		attached_devices.erase(device);
 	}
 
 
 	void SAFTd::Quit() {
-		container->remove_object(object_path);
+		if (container) {
+			container->remove_object(object_path);
+		}
 	}
 
 
@@ -151,6 +159,10 @@ namespace eb_plugin {
 	}
 	void SAFTd::release_irq(eb_address_t irq) {
 		irqs.erase(irq);
+	}
+
+	std::string SAFTd::get_object_path() {
+		return object_path;
 	}
 
 
