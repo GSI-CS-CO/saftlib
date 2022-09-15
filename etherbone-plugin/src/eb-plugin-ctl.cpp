@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
 	}
 
 	auto tr = eb_plugin::TimingReceiver_Proxy::create(path);
+	std::cerr << "gateware version: " << tr->getGatewareVersion() << std::endl;
 	std::cerr << "locked: " << tr->getLocked() << std::endl;
 	auto gateware_info = tr->getGatewareInfo();
 	std::cerr << "gateware_info: " << std::endl;

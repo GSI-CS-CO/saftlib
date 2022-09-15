@@ -303,20 +303,6 @@ TimingReceiver::TimingReceiver(SAFTd *sd, etherbone::Socket &socket, const std::
 	}
 }
 
-void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
-{
-  etherbone::Cycle cycle;
-  eb_data_t nill;
-  
-  // First, rearm the MSI
-  cycle.open(device);
-  device.write(base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-  device.write(base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
-  device.read (base + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
-  cycle.close();
-  // Then pop the ignored record
-  device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
-}
 
 TimingReceiver::~TimingReceiver() 
 {
@@ -366,6 +352,28 @@ std::string TimingReceiver::getName() const
 #endif
 #define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
 
+
+std::string TimingReceiver::getGatewareVersion() const
+{
+  std::map< std::string, std::string >         gatewareInfo;
+  std::map<std::string, std::string>::iterator j;
+  std::string                                    rawVersion;
+  std::string                                    findString = "-v";
+  int                                              pos = 0;
+
+  gatewareInfo = getGatewareInfo();
+  j = gatewareInfo.begin();        // build date
+  j++;                             // gateware version
+  rawVersion = j->second;
+  pos = rawVersion.find(findString, 0);
+
+  if ((pos <= 0) || (((pos + findString.length()) >= rawVersion.length()))) return ("N/A");
+
+  pos = pos + findString.length(); // get rid of findString '-v'
+  
+  return(rawVersion.substr(pos, rawVersion.length() - pos));
+}
+
 bool TimingReceiver::getLocked() const
 {
 	eb_data_t data;
@@ -382,18 +390,6 @@ bool TimingReceiver::getLocked() const
 
 	return newLocked;
 }
-
-
-struct ECA_OpenClose {
-  uint64_t  key;    // open?first:last
-  bool     open;
-  uint64_t  subkey; // open?last:first
-  int64_t   offset;
-  uint32_t  tag;
-  uint8_t   flags;
-  unsigned channel;
-  unsigned num;
-};
 
 
 static inline bool not_isalnum_(char c)
@@ -471,132 +467,186 @@ std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() co
   return out;
 }
 
+void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
+{
+  etherbone::Cycle cycle;
+  eb_data_t nill;
+  
+  // First, rearm the MSI
+  cycle.open(device);
+  device.write(base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+  device.write(base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+  device.read (base + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
+  cycle.close();
+  // Then pop the ignored record
+  device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
+}
 
+struct ECA_OpenClose {
+  uint64_t  key;    // open?first:last
+  bool     open;
+  uint64_t  subkey; // open?last:first
+  int64_t   offset;
+  uint32_t  tag;
+  uint8_t   flags;
+  unsigned channel;
+  unsigned num;
+};
+
+// Using this heuristic, perfect containment never duplicates walk records
+static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
+{
+  if (a.key < b.key) return true;
+  if (a.key > b.key) return false;
+  if (!a.open && b.open) return true; // close first
+  if (a.open && !b.open) return false;
+  if (a.subkey > b.subkey) return true; // open largest first, close smallest first
+  if (a.subkey < b.subkey) return false;
+  // order does not matter (popping does not depend on content)
+  return false;
+}
+
+struct SearchEntry {
+  uint64_t event;
+  int16_t  index;
+  SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
+};
+
+struct WalkEntry {
+  int16_t   next;
+  int64_t   offset;
+  uint32_t  tag;
+  uint8_t   flags;
+  unsigned channel;
+  unsigned num;
+  WalkEntry(int16_t n, const ECA_OpenClose& oc) : next(n), 
+    offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
+};
 
 void TimingReceiver::compile()
 {
 	std::cerr << "TimingReceiver::compile" << std::endl;
-//   // Store all active conditions into a vector for processing
-//   typedef std::vector<ECA_OpenClose> ID_Space;
-//   ID_Space id_space;
+  // Store all active conditions into a vector for processing
+  typedef std::vector<ECA_OpenClose> ID_Space;
+  ID_Space id_space;
 
-//   // Step one is to find all active conditions on all action sinks
-//   for (ActionSinks::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
-//     if (!sink->second) continue; // skip unassigned software action sinks
-//     for (ActionSink::Conditions::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
-//       if (!condition->second->getActive()) continue;
+  // Step one is to find all active conditions on all action sinks
+  for (ActionSinks::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
+    if (!sink->second) continue; // skip unassigned software action sinks
+    for (ActionSink::Conditions::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
+      if (!condition->second->getActive()) continue;
       
-//       // Memorize the condition
-//       ECA_OpenClose oc;
-//       oc.key     = condition->second->getID() &  condition->second->getMask();
-//       oc.open    = true;
-//       oc.subkey  = condition->second->getID() | ~condition->second->getMask();
-//       oc.offset  = condition->second->getOffset();
-//       oc.tag     = condition->second->getRawTag();
-//       oc.flags   =(condition->second->getAcceptLate()    ?(1<<ECA_LATE)    :0) |
-//                   (condition->second->getAcceptEarly()   ?(1<<ECA_EARLY)   :0) |
-//                   (condition->second->getAcceptConflict()?(1<<ECA_CONFLICT):0) |
-//                   (condition->second->getAcceptDelayed() ?(1<<ECA_DELAYED) :0);
-//       oc.channel = sink->second->getChannel();
-//       oc.num     = sink->second->getNum();
+      // Memorize the condition
+      ECA_OpenClose oc;
+      oc.key     = condition->second->getID() &  condition->second->getMask();
+      oc.open    = true;
+      oc.subkey  = condition->second->getID() | ~condition->second->getMask();
+      oc.offset  = condition->second->getOffset();
+      oc.tag     = condition->second->getRawTag();
+      oc.flags   =(condition->second->getAcceptLate()    ?(1<<ECA_LATE)    :0) |
+                  (condition->second->getAcceptEarly()   ?(1<<ECA_EARLY)   :0) |
+                  (condition->second->getAcceptConflict()?(1<<ECA_CONFLICT):0) |
+                  (condition->second->getAcceptDelayed() ?(1<<ECA_DELAYED) :0);
+      oc.channel = sink->second->getChannel();
+      oc.num     = sink->second->getNum();
       
-//       // Push the open record
-//       id_space.push_back(oc);
+      // Push the open record
+      id_space.push_back(oc);
       
-//       // Push the close record (if any)
-//       if (oc.subkey != UINT64_MAX) {
-//         oc.open = false;
-//         std::swap(oc.key, oc.subkey);
-//         ++oc.key;
-//         id_space.push_back(oc);
-//       }
-//     }
-//   }
+      // Push the close record (if any)
+      if (oc.subkey != UINT64_MAX) {
+        oc.open = false;
+        std::swap(oc.key, oc.subkey);
+        ++oc.key;
+        id_space.push_back(oc);
+      }
+    }
+  }
   
-//   // Don't proceed if too many actions for the ECA
-//   if (id_space.size()/2 >= max_conditions)
-//     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
+  // Don't proceed if too many actions for the ECA
+  if (id_space.size()/2 >= max_conditions)
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
   
-//   // Sort it by the open/close criteria
-//   std::sort(id_space.begin(), id_space.end());
+  // Sort it by the open/close criteria
+  std::sort(id_space.begin(), id_space.end());
   
-//   // Representation used in hardware
-//   typedef std::vector<SearchEntry> Search;
-//   typedef std::vector<WalkEntry> Walk;
-//   Search search;
-//   Walk walk;
-//   int16_t next = -1;
-//   uint64_t cursor = 0;
+  // Representation used in hardware
+  typedef std::vector<SearchEntry> Search;
+  typedef std::vector<WalkEntry> Walk;
+  Search search;
+  Walk walk;
+  int16_t next = -1;
+  uint64_t cursor = 0;
   
-//   // Special-case at zero: always push a leading record
-//   if (id_space.empty() || id_space[0].key != 0)
-//     search.push_back(SearchEntry(0, next));
+  // Special-case at zero: always push a leading record
+  if (id_space.empty() || id_space[0].key != 0)
+    search.push_back(SearchEntry(0, next));
   
-//   // Walk the remaining records and transform them to hardware!
-//   unsigned i = 0;
-//   while (i < id_space.size()) {
-//     cursor = id_space[i].key;
+  // Walk the remaining records and transform them to hardware!
+  unsigned i = 0;
+  while (i < id_space.size()) {
+    cursor = id_space[i].key;
     
-//     // pop the walker stack for all closes
-//     while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
-//       if (next == -1)
-//         throw saftbus::Error(saftbus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
-//       next = walk[next].next;
-//       ++i;
-//     }
+    // pop the walker stack for all closes
+    while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
+      if (next == -1)
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
+      next = walk[next].next;
+      ++i;
+    }
     
-//     // push the opens
-//     while (i < id_space.size() && cursor == id_space[i].key && id_space[i].open) {
-//       walk.push_back(WalkEntry(next, id_space[i]));
-//       next = walk.size()-1;
-//       ++i;
-//     }
+    // push the opens
+    while (i < id_space.size() && cursor == id_space[i].key && id_space[i].open) {
+      walk.push_back(WalkEntry(next, id_space[i]));
+      next = walk.size()-1;
+      ++i;
+    }
     
-//     search.push_back(SearchEntry(cursor, next));
-//   }
+    search.push_back(SearchEntry(cursor, next));
+  }
   
-// #if DEBUG_COMPILE
-//   clog << kLogDebug << "Table compilation complete!" << std::endl;
-//   for (i = 0; i < search.size(); ++i)
-//     clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
-//   for (i = 0; i < walk.size(); ++i)
-//     clog << kLogDebug << "W: " << walk[i].next << " " << walk[i].offset << " " << walk[i].tag << " " << walk[i].flags << " " << (int)walk[i].channel << " " << (int)walk[i].num << std::endl;
-// #endif
+#if DEBUG_COMPILE
+  clog << kLogDebug << "Table compilation complete!" << std::endl;
+  for (i = 0; i < search.size(); ++i)
+    clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
+  for (i = 0; i < walk.size(); ++i)
+    clog << kLogDebug << "W: " << walk[i].next << " " << walk[i].offset << " " << walk[i].tag << " " << walk[i].flags << " " << (int)walk[i].channel << " " << (int)walk[i].num << std::endl;
+#endif
 
-//   etherbone::Cycle cycle;
-//   for (unsigned i = 0; i < search_size; ++i) {
-//     /* Duplicate last entry to fill out the table */
-//     const SearchEntry& se = (i<search.size())?search[i]:search.back();
+  etherbone::Cycle cycle;
+  for (unsigned i = 0; i < search_size; ++i) {
+    /* Duplicate last entry to fill out the table */
+    const SearchEntry& se = (i<search.size())?search[i]:search.back();
     
-//     cycle.open(device);
-//     cycle.write(base + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
-//     cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
-//     cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
-//     cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
-//     cycle.write(base + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
-//     cycle.close();
-//   }
+    cycle.open(device);
+    cycle.write(base + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
+    cycle.write(base + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
+    cycle.write(base + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
+    cycle.write(base + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
+    cycle.write(base + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
+    cycle.close();
+  }
   
-//   for (unsigned i = 0; i < walk.size(); ++i) {
-//     const WalkEntry& we = walk[i];
+  for (unsigned i = 0; i < walk.size(); ++i) {
+    const WalkEntry& we = walk[i];
     
-//     cycle.open(device);
-//     cycle.write(base + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
-//     cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (uint16_t)we.next);
-//     cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (uint64_t)we.offset >> 32); // don't sign-extend on shift
-//     cycle.write(base + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (uint32_t)we.offset);
-//     cycle.write(base + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
-//     cycle.write(base + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
-//     cycle.write(base + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
-//     cycle.write(base + ECA_WALKER_RW_NUM_RW,       EB_DATA32, we.num);
-//     cycle.write(base + ECA_WALKER_WRITE_OWR,       EB_DATA32, 1);
-//     cycle.close();
-//   }
+    cycle.open(device);
+    cycle.write(base + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
+    cycle.write(base + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (uint16_t)we.next);
+    cycle.write(base + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (uint64_t)we.offset >> 32); // don't sign-extend on shift
+    cycle.write(base + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (uint32_t)we.offset);
+    cycle.write(base + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
+    cycle.write(base + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
+    cycle.write(base + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
+    cycle.write(base + ECA_WALKER_RW_NUM_RW,       EB_DATA32, we.num);
+    cycle.write(base + ECA_WALKER_WRITE_OWR,       EB_DATA32, 1);
+    cycle.close();
+  }
   
-//   // Flip the tables
-//   device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
+  // Flip the tables
+  device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
   
-//   used_conditions = id_space.size()/2;
+  used_conditions = id_space.size()/2;
 }
 
 

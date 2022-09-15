@@ -63,8 +63,8 @@ public:
 	// saftlib::Time CurrentTime();
 	// @saftbus-export
 	std::map< std::string, std::string > getGatewareInfo() const;
-	// // @saftbus-export
-	// std::string getGatewareVersion() const;
+	// @saftbus-export
+	std::string getGatewareVersion() const;
 	
 	// @saftbus-export
 	bool getLocked() const;

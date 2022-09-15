@@ -50,12 +50,18 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/TimingReceiver_Proxy.hpp
 
 
-bin_PROGRAMS = eb-plugin-ctl eb-standalone
+bin_PROGRAMS = eb-plugin-ctl eb-standalone software-tr
 eb_plugin_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@_proxy.la
 eb_plugin_ctl_SOURCES = src/eb-plugin-ctl.cpp 
 
 eb_standalone_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) -lsaftbus-standalone lib@PACKAGE@_service.la
 eb_standalone_SOURCES = src/eb-standalone.cpp
+
+# software timing receiver program
+software_tr_sdb_DATA = src/software-tr.sdb
+software_tr_sdbdir   = @datadir@/@PACKAGE@
+software_tr_LDADD    = $(EB_LIBS)
+software_tr_SOURCES  = src/software-tr.cpp 
 
 leapseconddir = $(datadir)/@PACKAGE@
 leapsecond_DATA = leap-seconds.list
