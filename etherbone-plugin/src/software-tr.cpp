@@ -673,15 +673,17 @@ void EBslave::send_output_buffer()
 		}
 	}
 	if (word_count == 0 && poll_msis == false) {
-		std::cerr << "all bytes sent" << std::endl;
+		// std::cerr << "all bytes sent" << std::endl;
 		for (unsigned i = 0; i < msi_queue.size(); ++i) {
 			std::vector<uint8_t> msi_buffer;
 			uint32_t adr = msi_queue[i].adr;
 			uint32_t dat = msi_queue[i].dat;
-			std::cerr << "send msi ";
-			std::cerr << std::hex << std::setw(8) << std::setfill('0') << adr << " ";
-			std::cerr << std::hex << std::setw(8) << std::setfill('0') << dat << " ";
-			std::cerr << std::dec << std::endl;
+			if (verbosity >= 1) {
+				std::cerr << "send msi ";
+				std::cerr << "adr=0x" << std::hex << std::setw(8) << std::setfill('0') << adr << " ";
+				std::cerr << "dat=0x" << std::hex << std::setw(8) << std::setfill('0') << dat << " ";
+				std::cerr << std::dec << std::endl;
+			}
 		
 			msi_buffer.push_back(0xa8);
 			msi_buffer.push_back(0x0f);
@@ -1753,7 +1755,7 @@ public:
 		: _adr_first(adr_first) 
 		, _instance(instance) 
 		, _write_count(0)
-		, _slots(2*128, 0xffffffff)
+		, _slots(128, 0xffffffff)
 	{
 		if (verbosity >= 1) {
 			std::cout << "MsiMailbox " << std::hex << _adr_first << std::endl;
@@ -1767,16 +1769,22 @@ public:
 			std::cout << "mailbox write access: " << std::hex << adr << " " << dat << std::endl;
 		}
 		int idx = (adr-_adr_first)/4;
-		_slots[idx] = dat;
-		if (!(idx%2)) {
-			eb_slave->push_msi(adr, dat);
+		if (idx%2) {
+			_slots[idx/2] = dat;
+		} else {
+			eb_slave->push_msi(_slots[idx/2], dat);
 		}
 		return true;
 	}
 	bool read_access(uint32_t adr, int sel, uint32_t *dat_out) {
-		*dat_out = _slots[(adr-_adr_first)/4];
 		if (verbosity >= 1) {
 			std::cout << "mailbox read access: " << std::hex << adr << " " << *dat_out << std::endl;
+		}
+		int idx = (adr-_adr_first)/4;
+		if (idx%2) {
+			*dat_out = _slots[idx/2];
+		} else {
+			*dat_out = 0xffffffff;
 		}
 		return true;
 	}

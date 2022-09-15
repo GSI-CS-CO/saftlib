@@ -33,6 +33,7 @@
 
 #include <saftbus/error.hpp>
 
+#include "SAFTd.hpp"
 #include "TimingReceiver.hpp"
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
@@ -117,18 +118,22 @@ bool TimingReceiver::poll()
 }
 
 
-TimingReceiver::TimingReceiver(SAFTd *sd, etherbone::Socket &socket, const std::string &obj_path, const std::string &n, const std::string eb_path, saftbus::Container *cont)
+TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::string eb_path, saftbus::Container *cont)
 	: saftd(sd)
-	, object_path(obj_path)
+	, object_path(sd->get_object_path() + "/" + n)
 	, name(n)
 	, etherbone_path(eb_path)
 	, container(cont)
 {
 	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
+
+	if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+	}
+
+
 	stat(etherbone_path.c_str(), &dev_stat);
-	object_path.append("/");
-	object_path.append(name);
-	device.open(socket, etherbone_path.c_str());
+	device.open(sd->get_etherbone_socket(), etherbone_path.c_str());
 
 	// // This just reads the MSI address range out of the ehterbone config space registers
 	// // It does not actually enable anything ... MSIs also work without this
@@ -390,8 +395,8 @@ bool TimingReceiver::getLocked() const
 		}
 	}
 
-	device.write(mbox_for_testing_only + 4, EB_DATA32, 0);
-	device.write(mbox_for_testing_only + 0, EB_DATA32, 4);
+	// device.write(mbox_for_testing_only + 4, EB_DATA32, 0);
+	// device.write(mbox_for_testing_only + 0, EB_DATA32, 4);
 
 	return newLocked;
 }
@@ -459,6 +464,28 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
   
 	return path;
 }
+
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
+{
+  InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
+}
+
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
+{
+  etherbone::Cycle cycle;
+  
+  cycle.open(device);
+  cycle.write(stream, EB_DATA32, event >> 32);
+  cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+  cycle.write(stream, EB_DATA32, param >> 32);
+  cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+  cycle.write(stream, EB_DATA32, 0); // reserved
+  cycle.write(stream, EB_DATA32, 0); // TEF
+  cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
+  cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
+  cycle.close();
+}
+
 
 std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const
 {

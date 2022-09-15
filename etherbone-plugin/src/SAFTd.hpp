@@ -94,6 +94,10 @@ namespace eb_plugin {
 
 		std::string get_object_path();
 
+		etherbone::Socket &get_etherbone_socket() { return socket; }
+
+		TimingReceiver* getTimingReceiver(const std::string &object_path);
+
 	private:
 
 		// The sdb structure for this "virtual" etherbone device

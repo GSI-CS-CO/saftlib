@@ -37,7 +37,7 @@ namespace eb_plugin {
 class SAFTd;
 class TimingReceiver {
 public:
-	TimingReceiver(SAFTd *saftd, etherbone::Socket &socket, const std::string &object_path, const std::string &name, const std::string etherbone_path, saftbus::Container *container = nullptr);
+	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, saftbus::Container *container = nullptr);
 	~TimingReceiver();
 
 	const std::string &get_object_path() const;
@@ -53,10 +53,10 @@ public:
 
 	// @saftbus-export
 	std::string NewSoftwareActionSink(const std::string& name);
-	// // @saftbus-export
-	// void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
-	// // @saftbus-export
-	// void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time);
+	// @saftbus-export
+	void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
+	// @saftbus-export
+	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
 	// // @saftbus-export
 	// uint64_t ReadCurrentTime();
 	// // @saftbus-export

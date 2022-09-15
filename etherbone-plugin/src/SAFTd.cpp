@@ -87,15 +87,10 @@ namespace eb_plugin {
 		if (attached_devices.find(name) != attached_devices.end()) {
 	        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
 		}
-		if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
-		}
-
 		try {
 			// create a new TimingReceiver object and add it to the attached_devices
-			TimingReceiver *timing_receiver = new TimingReceiver(this, socket, object_path, name, etherbone_path, container);
+			TimingReceiver *timing_receiver = new TimingReceiver(this, name, etherbone_path, container);
 			attached_devices[name] = std::move(std::unique_ptr<TimingReceiver>(timing_receiver));
-			// auto insertion_result = attached_devices.insert(std::make_pair(name, TimingReceiver(container, this, socket, object_path, name, etherbone_path)));
 
 			// crate a TimingReceiver_Service object
 			if (container) {
@@ -170,5 +165,21 @@ namespace eb_plugin {
 		return object_path;
 	}
 
+
+	TimingReceiver* SAFTd::getTimingReceiver(const std::string &tr_obj_path) {
+		size_t pos;
+		// std::cerr << "is " << object_path << " contained in " << tr_obj_path << "? " << std::endl;
+		if ((pos=tr_obj_path.find(object_path)) == tr_obj_path.npos) {
+			const std::string &tr_name = tr_obj_path; // maybe the name of the TimingReceiver was given instead of its object_path
+			if (attached_devices.find(tr_name) != attached_devices.end()) {
+				return attached_devices[tr_name].get();
+			} 
+		} else {
+			std::string name = tr_obj_path.substr(pos+1);
+			std::cerr << "get_timing_receiver " << name << std::endl;
+			return attached_devices[name].get();
+		}
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
+	}
 
 }
