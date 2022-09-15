@@ -670,6 +670,36 @@ void EBslave::send_output_buffer()
 			write(pfds[0].fd, (void*)&write_buffer[0], write_buffer.size());
 		}
 	}
+	if (word_count == 0) {
+		std::cerr << "all bytes sent" << std::endl;
+		for (unsigned i = 0; i < msi_queue.size(); ++i) {
+			std::vector<uint8_t> msi_buffer;
+			uint32_t adr = msi_queue[i].adr;
+			uint32_t dat = msi_queue[i].dat;
+			std::cerr << "send msi ";
+			std::cerr << std::hex << std::setw(8) << std::setfill('0') << adr << " ";
+			std::cerr << std::hex << std::setw(8) << std::setfill('0') << dat << " ";
+			std::cerr << std::dec << std::endl;
+		
+			msi_buffer.push_back(0xa8);
+			msi_buffer.push_back(0x0f);
+			msi_buffer.push_back(0x01);
+			msi_buffer.push_back(0x00);
+
+			msi_buffer.push_back(adr>>24);
+			msi_buffer.push_back(adr>>16);
+			msi_buffer.push_back(adr>>8);
+			msi_buffer.push_back(adr>>0);
+
+			msi_buffer.push_back(dat>>24);
+			msi_buffer.push_back(dat>>16);
+			msi_buffer.push_back(dat>>8);
+			msi_buffer.push_back(dat>>0);		
+
+			write(pfds[0].fd, (void*)&msi_buffer[0], msi_buffer.size());
+		}
+		msi_queue.clear();
+	}
 }
 
 // should be called on falling_edge(clk)

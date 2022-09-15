@@ -136,6 +136,8 @@ private:
     eb_address_t ats;
     eb_address_t info;
 
+    eb_address_t mbox_for_testing_only; // only here to see if msis from software-tr work
+
 	SAFTd              *saftd; // need a pointer to SAFTd because ther MSI callbacks can be registered
 
 	std::string object_path;

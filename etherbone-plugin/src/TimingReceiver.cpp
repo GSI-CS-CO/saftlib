@@ -174,6 +174,8 @@ TimingReceiver::TimingReceiver(SAFTd *sd, etherbone::Socket &socket, const std::
     watchdog  = (eb_address_t)watchdogs_dev[0].sdb_component.addr_first;
     pps       = (eb_address_t)pps_dev[0].sdb_component.addr_first;
 
+mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
+
     if (!aquire_watchdog()) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
     }
@@ -387,6 +389,9 @@ bool TimingReceiver::getLocked() const
 			SigLocked(locked);
 		}
 	}
+
+	device.write(mbox_for_testing_only + 4, EB_DATA32, 0);
+	device.write(mbox_for_testing_only + 0, EB_DATA32, 4);
 
 	return newLocked;
 }
