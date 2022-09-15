@@ -47,6 +47,8 @@
 // verbosity =  0: output program status information
 // verbosity =  1: output register access
 int verbosity = 0;
+bool poll_msis = false; // If this is true, MSIS are provided in registers of  etherbone config space.
+                        // Otherwise MSIs are directly sent to the EB-master (no polling needed)
 
 #include <errno.h>
 #include <string.h>
@@ -497,7 +499,7 @@ int EBslave::master_out(std_logic_t *cyc, std_logic_t *stb, std_logic_t *we, int
 							wb_stbs.back().end_cyc = eb_flag_cyc;
 						break;
 						case 0x40: // msi_adr
-							if (msi_queue.size() > 0) {
+							if (msi_queue.size() > 0 && poll_msis) {
 								msi_adr = msi_queue.front().adr;
 								msi_dat = msi_queue.front().dat;
 								msi_cnt = 1;
@@ -670,7 +672,7 @@ void EBslave::send_output_buffer()
 			write(pfds[0].fd, (void*)&write_buffer[0], write_buffer.size());
 		}
 	}
-	if (word_count == 0) {
+	if (word_count == 0 && poll_msis == false) {
 		std::cerr << "all bytes sent" << std::endl;
 		for (unsigned i = 0; i < msi_queue.size(); ++i) {
 			std::vector<uint8_t> msi_buffer;
@@ -1934,6 +1936,9 @@ int main(int argc, char *argv[]) {
 				}
 				if (argvi == "--quiet" || argvi == "-q") {
 					--verbosity;
+				}
+				if (argvi == "--polled-msis" || argvi == "-p") {
+					poll_msis = true;
 				}
 			}
 		}
