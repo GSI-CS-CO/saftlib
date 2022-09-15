@@ -34,13 +34,21 @@
 
 namespace eb_plugin {
 
-ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, saftbus::Container *container_)//, sigc::slot<void> destroy)
- : object_path(objectPath), 
- dev(dev_), name(name_), channel(channel_), num(num_),
+// ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, saftbus::Container *container_)//, sigc::slot<void> destroy)
+ActionSink::ActionSink(TimingReceiver* dev_
+                     , const std::string& name_
+                     , unsigned channel_
+                     , unsigned num_
+                     , saftbus::Container *container_)
+ : object_path(dev_->get_object_path() + "/" + name_), 
+   dev(dev_), name(name_), channel(channel_), num(num_),
    minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
    overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
    container(container_)
 {
+
+
+
   overflowUpdate = actionUpdate = lateUpdate = earlyUpdate = conflictUpdate = delayedUpdate = std::chrono::steady_clock::now();
   eb_data_t raw_latency, raw_offset_bits, raw_capacity, null;
 

@@ -114,7 +114,6 @@ class ActionSink
 	public:
 		/// @brief  ActionSink constructor
 		///
-		/// @param objectPath the object path of the newly created ActionSink
 		/// @param dev points to the TimingReceiver object on which the ActionSink is created
 		/// @param name name of the ActionSink
 		/// @param channel the ECA channel that feeds the ActionSink
@@ -123,12 +122,11 @@ class ActionSink
 		/// Create a new action sink on a TimingReceiver with a given name. If the name is an 
 		/// empty string, a name in the form "_<number>" will be generated. The ActionSink
 		/// is attached to the given ECA channel/subchannel.
-		ActionSink(const std::string& objectPath
-		         , TimingReceiver* dev
+		ActionSink(TimingReceiver* dev
 		         , const std::string& name
 		         , unsigned channel
 		         , unsigned num
-		         , saftbus::Container *container = nullptr);//, sigc::slot<void> destroy = sigc::slot<void>());
+		         , saftbus::Container *container = nullptr);
 		virtual ~ActionSink();
 		
 		/// @brief  Atomically toggle the active status of conditions.

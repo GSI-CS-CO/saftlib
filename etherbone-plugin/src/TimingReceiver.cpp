@@ -204,6 +204,7 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 	cycle.read(base + ECA_WALKER_CAPACITY_GET, EB_DATA32, &raw_walker);
 	cycle.close();
 
+
 	// Initilize members
 	channels = raw_channels;
 	search_size = raw_search;
@@ -233,35 +234,64 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 		queue_addresses[id] = address;
 	}
 
+	ECAchannels.resize(channels);
 
 	// Create the IOs (channel 0)
 	// InoutImpl::probe(this, actionSinks, eventSources);
 
 	// Configure the non-IO action sinks, creating objects and clearing status
-	for (unsigned i = 1; i < channels; ++i) {
+	// for (unsigned i = 1; i < channels; ++i) {
+	ECA_LINUX_channel = nullptr; // initialize with null, if a ECA_LINUX_channel is found this will point to it
+
+	for (unsigned channel_idx = 1; channel_idx < channels; ++channel_idx) {
 		cycle.open(device);
-		cycle.write(base + ECA_CHANNEL_SELECT_RW,    EB_DATA32, i);
+		cycle.write(base + ECA_CHANNEL_SELECT_RW,    EB_DATA32, channel_idx);
 		cycle.read (base + ECA_CHANNEL_TYPE_GET,     EB_DATA32, &raw_type);
 		cycle.read (base + ECA_CHANNEL_MAX_NUM_GET,  EB_DATA32, &raw_max_num);
 		cycle.read (base + ECA_CHANNEL_CAPACITY_GET, EB_DATA32, &raw_capacity);
 		cycle.close();
 
-		// Flush any queue we manage
-		if (raw_type == ECA_LINUX) {
-			for (; raw_capacity; --raw_capacity) {
-				device.write(queue_addresses[i] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
-			}
+		std::cerr << "channel=" << channel_idx << "   raw_max_num=" << raw_max_num <<	std::endl;
+
+		switch(raw_type) {
+			case ECA_LINUX:
+				// Flush any queue we manage
+				for (unsigned i = 0; i < raw_capacity; ++i) {
+					device.write(queue_addresses[channel_idx] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
+				}
+				// clear any stale valid count
+				for (unsigned num = 0; num < raw_max_num; ++num) {
+					popMissingQueue(channel_idx, num);
+				}
+				// Take a pointer the the first Linux facing queue
+				if (ECA_LINUX_channel == nullptr) {
+					ECA_LINUX_channel = &ECAchannels[channel_idx];
+					ECA_LINUX_channel_subchannels = raw_max_num;
+					ECA_LINUX_channel->reserve(raw_max_num); // allocate enough memory for all hareware resources
+				} else {
+					std::cerr << "more than one Linux facing ECA channel. We will use the first of them and ignore the rest" << std::endl;
+				}
+			break;
+			// case ECA_WBM:
+			// break;
+			// case ECA_SCUBUS:
+			// break;
+			// case ECA_EMBEDDED_CPU:
+			// break;
 		}
 
-		for (unsigned num = 0; num < raw_max_num; ++num) {
-			switch (raw_type) {
-				case ECA_LINUX: {
-					// defer construction till demanded by NewSoftwareActionSink, but setup the keys
-					actionSinks[SinkKey(i, num)].reset(); // this will create the unique_ptr, but with no content
-					// clear any stale valid count
-					popMissingQueue(i, num);
-					break;
-				}
+
+
+			// switch (raw_type) {
+			// 	case ECA_LINUX: {
+			// 		//actionSinks[channel_idx][num]
+			// 		// defer construction till demanded by NewSoftwareActionSink, but setup the keys
+			// 		// actionSinks[SinkKey(i, num)].reset(); // this will create the unique_ptr, but with no content
+
+			// 		// clear any stale valid count
+			// 		popMissingQueue(channel_idx, num);
+			// 		break;
+			// 	}
 				// case ECA_WBM: {
 				// // !!! unsupported
 				// break;
@@ -300,26 +330,81 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 				// }
 				// break;
 				// }
-				default: {
-					//clog << kLogWarning << "ECA: unsupported channel type detected" << std::endl;
-					// std::cerr << "ECA: unsupported channel type detected" << std::endl;
-					break;
-				}
-			}
-		}
+			// 	default: {
+			// 		//clog << kLogWarning << "ECA: unsupported channel type detected" << std::endl;
+			// 		// std::cerr << "ECA: unsupported channel type detected" << std::endl;
+			// 		break;
+			// 	}
+			// }
+		// }
 	}
 }
 
+static inline bool not_isalnum_(char c)
+{
+  return !(isalnum(c) || c == '_');
+}
+
+
+std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
+{
+	if (ECA_LINUX_channel == nullptr) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
+	}
+	if (ECA_LINUX_channel->size() >= ECA_LINUX_channel_subchannels) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "All available Linux facing ECA subchannels are already in use");
+	}
+
+	// build a name. For SoftwareActionSinks it always starts with "software/<name>"
+	std::string name("software/");
+	if (name_ == "") {
+		// if no name is provided, we generate one 
+		std::string seq;
+		std::ostringstream str;
+		str.imbue(std::locale("C"));
+		str << "_" << ++sas_count;
+		seq = str.str();
+		name.append(seq);
+	} else {
+		if (name_[0] == '_') {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
+		}
+		if (find_if(name_.begin(), name_.end(), not_isalnum_) != name_.end()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+		}
+
+		std::map< std::string, std::string > sinks = getSoftwareActionSinks();
+		if (sinks.find(name_) != sinks.end()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
+		}
+		name.append(name_);
+	}
+  
+	unsigned channel = ECA_LINUX_channel_index;
+	unsigned num     = ECA_LINUX_channel->size();
+	eb_address_t address = queue_addresses[channel];
+
+	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(this, name, channel, num, address, container));
+	std::string sink_object_path = software_action_sink->getObjectPath();
+	if (container) {
+		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
+		container->create_object(sink_object_path, std::move(service));
+	}
+	ECA_LINUX_channel->push_back(std::move(software_action_sink));
+  
+	return sink_object_path;
+}
 
 TimingReceiver::~TimingReceiver() 
 {
 	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
 	if (container) {
-		for (auto &actionSink: actionSinks) {
-			if (actionSink.second) {
-				std::cerr << "   remove " << actionSink.second->getObjectPath() << std::endl;
-				container->remove_object_delayed(actionSink.second->getObjectPath());
-
+		for (auto &channel: ECAchannels) {
+			for (auto &actionSink: channel) {
+				if (actionSink) {
+					std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
+					container->remove_object_delayed(actionSink->getObjectPath());
+				}
 			}
 		}
 	}
@@ -402,68 +487,6 @@ bool TimingReceiver::getLocked() const
 }
 
 
-static inline bool not_isalnum_(char c)
-{
-  return !(isalnum(c) || c == '_');
-}
-
-std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
-{
-	// Is there an available software channel?
-	ActionSinks::iterator alloc;
-	for (alloc = actionSinks.begin(); alloc != actionSinks.end(); ++alloc) {
-		if (!alloc->second) break;
-	}
-  
-	if (alloc == actionSinks.end()) {
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
-	}
-
-	std::string seq, name;
-	std::ostringstream str;
-	str.imbue(std::locale("C"));
-	str << "_" << ++sas_count;
-	seq = str.str();
-
-	if (name_ == "") {
-		name = seq;
-	} else {
-		name = name_;
-		if (name[0] == '_') {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
-		}
-		if (find_if(name.begin(), name.end(), not_isalnum_) != name.end()) {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
-		}
-
-		std::map< std::string, std::string > sinks = getSoftwareActionSinks();
-		if (sinks.find(name) != sinks.end()) {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
-		}
-	}
-  
-  // nest the object under our own name
-  std::string path = get_object_path() + "/software/" + seq;
-  
-  unsigned channel = alloc->first.first;
-  unsigned num     = alloc->first.second;
-  eb_address_t address = queue_addresses[channel];
-  // sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &TimingReceiver::do_remove), alloc->first);
-  
-
-
-	// SoftwareActionSink::ConstructorType args = { path, this, name, channel, num, address, destroy };
-	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(path, this, name, channel, num, address, container));
-	// softwareActionSink->initOwner(getConnection(), getSender());
-	if (container) {
-		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
-		container->create_object(path, std::move(service));
-	}
-	alloc->second = std::move(software_action_sink);
-
-  
-	return path;
-}
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
 {
@@ -489,12 +512,11 @@ void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time
 
 std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const
 {
-  typedef ActionSinks::const_iterator iterator;
   std::map< std::string, std::string > out;
-  for (iterator i = actionSinks.begin(); i != actionSinks.end(); ++i) {
-    SoftwareActionSink* softwareActionSink = dynamic_cast<SoftwareActionSink*>(i->second.get());
-    if (!softwareActionSink) continue;
-    out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
+  if (ECA_LINUX_channel != nullptr) {
+  	for (auto &softwareActionSink: *ECA_LINUX_channel) {
+	    out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
+  	}
   }
   return out;
 }
@@ -562,39 +584,41 @@ void TimingReceiver::compile()
   typedef std::vector<ECA_OpenClose> ID_Space;
   ID_Space id_space;
 
-  // Step one is to find all active conditions on all action sinks
-  for (ActionSinks::const_iterator sink = actionSinks.begin(); sink != actionSinks.end(); ++sink) {
-    if (!sink->second) continue; // skip unassigned software action sinks
-    for (ActionSink::Conditions::const_iterator condition = sink->second->getConditions().begin(); condition != sink->second->getConditions().end(); ++condition) {
-      if (!condition->second->getActive()) continue;
-      
-      // Memorize the condition
-      ECA_OpenClose oc;
-      oc.key     = condition->second->getID() &  condition->second->getMask();
-      oc.open    = true;
-      oc.subkey  = condition->second->getID() | ~condition->second->getMask();
-      oc.offset  = condition->second->getOffset();
-      oc.tag     = condition->second->getRawTag();
-      oc.flags   =(condition->second->getAcceptLate()    ?(1<<ECA_LATE)    :0) |
-                  (condition->second->getAcceptEarly()   ?(1<<ECA_EARLY)   :0) |
-                  (condition->second->getAcceptConflict()?(1<<ECA_CONFLICT):0) |
-                  (condition->second->getAcceptDelayed() ?(1<<ECA_DELAYED) :0);
-      oc.channel = sink->second->getChannel();
-      oc.num     = sink->second->getNum();
-      
-      // Push the open record
-      id_space.push_back(oc);
-      
-      // Push the close record (if any)
-      if (oc.subkey != UINT64_MAX) {
-        oc.open = false;
-        std::swap(oc.key, oc.subkey);
-        ++oc.key;
-        id_space.push_back(oc);
-      }
-    }
-  }
-  
+	// Step one is to find all active conditions on all action sinks
+	for (auto &channel: ECAchannels) {
+		for (auto &actionSink: channel) {
+			for (auto &number_condition: actionSink->getConditions()) {
+				auto &condition = number_condition.second;
+				if (!condition->getActive()) continue;
+
+				// Memorize the condition
+				ECA_OpenClose oc;
+				oc.key     = condition->getID() &  condition->getMask();
+				oc.open    = true;
+				oc.subkey  = condition->getID() | ~condition->getMask();
+				oc.offset  = condition->getOffset();
+				oc.tag     = condition->getRawTag();
+				oc.flags   =(condition->getAcceptLate()    ?(1<<ECA_LATE)    :0) |
+				            (condition->getAcceptEarly()   ?(1<<ECA_EARLY)   :0) |
+				            (condition->getAcceptConflict()?(1<<ECA_CONFLICT):0) |
+				            (condition->getAcceptDelayed() ?(1<<ECA_DELAYED) :0);
+				oc.channel = actionSink->getChannel();
+				oc.num     = actionSink->getNum();
+
+				// Push the open record
+				id_space.push_back(oc);
+
+				// Push the close record (if any)
+				if (oc.subkey != UINT64_MAX) {
+					oc.open = false;
+					std::swap(oc.key, oc.subkey);
+					++oc.key;
+					id_space.push_back(oc);
+				}
+			}
+		}
+	}
+ 
   // Don't proceed if too many actions for the ECA
   if (id_space.size()/2 >= max_conditions)
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
@@ -679,6 +703,17 @@ void TimingReceiver::compile()
   device.write(base + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
   
   used_conditions = id_space.size()/2;
+}
+
+
+SoftwareActionSink *TimingReceiver::getSoftwareActionSink(const std::string & sas_obj_path)
+{
+	for (auto &softwareActionSink: *ECA_LINUX_channel) {
+		if (softwareActionSink->getObjectPath() == sas_obj_path) {
+			return dynamic_cast<SoftwareActionSink*>(softwareActionSink.get());
+		}
+	}
+	throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 }
 
 

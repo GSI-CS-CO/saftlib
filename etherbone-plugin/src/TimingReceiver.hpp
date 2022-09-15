@@ -35,6 +35,7 @@
 namespace eb_plugin {
 
 class SAFTd;
+class SoftwareActionSink;
 class TimingReceiver {
 public:
 	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, saftbus::Container *container = nullptr);
@@ -93,13 +94,16 @@ public:
 
 
     // public type, even though the member is private
-    typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
-    typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
+    // typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
+    // typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
+
     // typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
 
 
     etherbone::Device& getDevice() { return device; }
     eb_address_t getBase() { return base; }
+
+    SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
 
 private:
 	bool aquire_watchdog(); 
@@ -122,7 +126,12 @@ private:
     std::vector<uint16_t> most_full;
 
     uint64_t sas_count; // number of SoftwareActionSinks
-    ActionSinks  actionSinks;
+
+    std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
+    std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
+    unsigned                                         ECA_LINUX_channel_index;
+    unsigned                                         ECA_LINUX_channel_subchannels;
+    //ActionSinks  actionSinks;
     // EventSources eventSources;
     // OtherStuff   otherStuff;
     void popMissingQueue(unsigned channel, unsigned num);

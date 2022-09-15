@@ -46,7 +46,11 @@ namespace eb_plugin {
 	/// delivered in arbitrary order, both having the 'conflict' flag set.
 	class SoftwareActionSink : public ActionSink {
 	public:
-		SoftwareActionSink(const std::string &object_path, TimingReceiver *dev, const std::string &name, unsigned channel, unsigned num, eb_address_t queue, saftbus::Container *container = nullptr);
+		//SoftwareActionSink(const std::string &object_path, TimingReceiver *dev, const std::string &name, unsigned channel, unsigned num, eb_address_t queue, saftbus::Container *container = nullptr);
+		SoftwareActionSink(TimingReceiver *dev
+			             , const std::string &name
+			             , unsigned channel, unsigned num, eb_address_t queue_address
+			             , saftbus::Container *container = nullptr);
 
 		/// NewCondition: Create a condition to match incoming events
 		///
