@@ -719,6 +719,9 @@ void move_file_if_not_identical(const std::string &source_file, const std::strin
 		}
 	}
 	if (identical) {
+		if (verbose) {
+			std::cerr << "   " << dest_file << " is up to date. leave it" << std::endl;
+		}
 		// remove the source_file
 		remove(source_file.c_str());
 		return;
@@ -726,6 +729,9 @@ void move_file_if_not_identical(const std::string &source_file, const std::strin
 	// move the file using a syscall
 	in1.close();
 	in2.close();
+	if (verbose) {
+		std::cerr << "   writing file " << dest_file  << std::endl;
+	}
 	rename(source_file.c_str(), dest_file.c_str());
 }
 
