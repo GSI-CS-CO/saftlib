@@ -1209,55 +1209,55 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 
 	for (unsigned function_no  = 0; function_no  < class_definition.exportedfunctions.size(); ++function_no ) {
 		auto &function = class_definition.exportedfunctions[function_no];
-		cpp_out << function.return_type << " " << class_definition.name << "_Proxy::" << function.name << "(";
+		cpp_out << "\t" << function.return_type << " " << class_definition.name << "_Proxy::" << function.name << "(";
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			cpp_out << function.argument_list[i].definition();
 			if (i != function.argument_list.size()-1) {
 				cpp_out << ", ";
 			}
 		}
-		cpp_out << ") {" << std::endl;
-		cpp_out << "\t" << "get_send().put(get_saftlib_object_id());" << std::endl;
-		cpp_out << "\t" << "get_send().put(interface_no);" << std::endl;
-		cpp_out << "\t" << "get_send().put(" << function_no  << "); // function_no" << std::endl;
+		cpp_out << "\t) {" << std::endl;
+		cpp_out << "\t\t" << "get_send().put(get_saftlib_object_id());" << std::endl;
+		cpp_out << "\t\t" << "get_send().put(interface_no);" << std::endl;
+		cpp_out << "\t\t" << "get_send().put(" << function_no  << "); // function_no" << std::endl;
 		int num_outputs = 0;
 		if (function.return_type != "void") {
 			num_outputs = 1;
 		}
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			if (function.argument_list[i].is_output == false) {
-				cpp_out << "\t" << "get_send().put(" << function.argument_list[i].name << ");" << std::endl;
+				cpp_out << "\t\t" << "get_send().put(" << function.argument_list[i].name << ");" << std::endl;
 			} else {
 				++num_outputs;
 			}
 		}
-		cpp_out << "\t{" << std::endl;
-		cpp_out << "\t\t" << "std::lock_guard<std::mutex> lock(get_client_socket());" << std::endl;
-		cpp_out << "\t\t" << "get_connection().send(get_send());" << std::endl;
-		cpp_out << "\t\t" << "get_connection().receive(get_received());" << std::endl;
-		cpp_out << "\t}" << std::endl;
+		cpp_out << "\t\t{" << std::endl;
+		cpp_out << "\t\t\t" << "std::lock_guard<std::mutex> lock(get_client_socket());" << std::endl;
+		cpp_out << "\t\t\t" << "get_connection().send(get_send());" << std::endl;
+		cpp_out << "\t\t\t" << "get_connection().receive(get_received());" << std::endl;
+		cpp_out << "\t\t}" << std::endl;
 
-		cpp_out << "\t" << "saftbus::FunctionResult function_result_;" << std::endl;
-		cpp_out << "\t" << "get_received().get(function_result_);" << std::endl;
-		cpp_out << "\t" << "if (function_result_ == saftbus::FunctionResult::EXCEPTION) {" << std::endl;
-		cpp_out << "\t\t" << "std::string what;" << std::endl;
-		cpp_out << "\t\t" << "get_received().get(what);" << std::endl;
-		cpp_out << "\t\t" << "throw std::runtime_error(what);" << std::endl;
-		cpp_out << "\t" << "}" << std::endl;
-		cpp_out << "\t" << "assert(function_result_ == saftbus::FunctionResult::RETURN);" << std::endl;
+		cpp_out << "\t\t" << "saftbus::FunctionResult function_result_;" << std::endl;
+		cpp_out << "\t\t" << "get_received().get(function_result_);" << std::endl;
+		cpp_out << "\t\t" << "if (function_result_ == saftbus::FunctionResult::EXCEPTION) {" << std::endl;
+		cpp_out << "\t\t\t" << "std::string what;" << std::endl;
+		cpp_out << "\t\t\t" << "get_received().get(what);" << std::endl;
+		cpp_out << "\t\t\t" << "throw std::runtime_error(what);" << std::endl;
+		cpp_out << "\t\t" << "}" << std::endl;
+		cpp_out << "\t\t" << "assert(function_result_ == saftbus::FunctionResult::RETURN);" << std::endl;
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			if (function.argument_list[i].is_output == true) {
-				cpp_out << "\t" << "get_received().get(" << function.argument_list[i].name << ");" << std::endl;
+				cpp_out << "\t\t" << "get_received().get(" << function.argument_list[i].name << ");" << std::endl;
 			}
 		}
 
 		if (function.return_type != "void") {
-			cpp_out << "\t" << function.return_type << " return_value_result_;" << std::endl;
-			cpp_out << "\t" << "get_received().get(return_value_result_);" << std::endl;
-			cpp_out << "\t" << "return return_value_result_;" << std::endl;
+			cpp_out << "\t\t" << function.return_type << " return_value_result_;" << std::endl;
+			cpp_out << "\t\t" << "get_received().get(return_value_result_);" << std::endl;
+			cpp_out << "\t\t" << "return return_value_result_;" << std::endl;
 		}
 
-		cpp_out << "}" << std::endl;
+		cpp_out << "\t}" << std::endl;
 	}
 
 	cpp_out << std::endl;
