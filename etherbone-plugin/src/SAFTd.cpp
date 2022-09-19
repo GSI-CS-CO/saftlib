@@ -65,7 +65,10 @@ namespace eb_plugin {
 	}
 
 	eb_status_t SAFTd::write(eb_address_t address, eb_width_t width, eb_data_t data) {
-		std::cerr << "write callback " << address << " " << data << std::endl;
+		std::cerr << "write callback " << std::hex << std::setw(8) << std::setfill('0') << address 
+		          <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
+		          << std::dec 
+		          << std::endl;
 	    
 	    std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
 	    if (it != irqs.end()) {
@@ -153,12 +156,22 @@ namespace eb_plugin {
 	}
 
 
-	void SAFTd::request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot) 
+	bool SAFTd::request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot) 
 	{
-		irqs[irq] = slot;
+		auto it = irqs.find(irq);
+		if (it == irqs.end()) {
+			// the requested address is still free
+			irqs[irq] = slot;
+			return true;
+		}
+		// the requested address is already in use
+		return false;
 	}
 	void SAFTd::release_irq(eb_address_t irq) {
-		irqs.erase(irq);
+		auto it = irqs.find(irq);
+		if (it != irqs.end()) {
+			irqs.erase(it);
+		}
 	}
 
 	std::string SAFTd::get_object_path() {

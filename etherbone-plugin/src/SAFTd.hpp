@@ -89,7 +89,15 @@ namespace eb_plugin {
 		// @saftbus-export
 		std::string EbForward(const std::string& saftlib_device);
 
-		void request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
+		/// @brief try to attach a callback to an irq address
+		///
+		/// @param irq the address at which the callback should be attached
+		/// @param slot the function object
+		/// @return true if the requested address was still free, false if the 
+		///         requested address was already in use
+		bool request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
+		/// @brief release a callback
+		/// @param irq the address to be released
 		void release_irq(eb_address_t irq);
 
 		std::string get_object_path();

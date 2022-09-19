@@ -135,30 +135,23 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 	stat(etherbone_path.c_str(), &dev_stat);
 	device.open(sd->get_etherbone_socket(), etherbone_path.c_str());
 
-	// // This just reads the MSI address range out of the ehterbone config space registers
-	// // It does not actually enable anything ... MSIs also work without this
-	device.enable_msi(&first, &last);
-
-	// Confirm the device is an aligned power of 2
-	eb_address_t size = last - first;
-	if (((size + 1) & size) != 0) {
-		device.close();
-		chmod(etherbone_path.c_str(), dev_stat.st_mode);
-		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
-	}
-	if ((first & size) != 0) {
-		device.close();
-		chmod(etherbone_path.c_str(), dev_stat.st_mode);
-		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
-	}
-
-
 	std::vector<etherbone::sdb_msi_device> ecas_dev, mbx_msi_dev;
 	std::vector<sdb_device> streams_dev, infos_dev, watchdogs_dev, scubus_dev, pps_dev, mbx_dev, ats_dev;
 	eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
 
 	device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
 	device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi_dev);
+
+	std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
+	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
+	          << std::dec
+	          << std::endl;
+
+	std::cerr << "mbox.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_first 
+	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_last
+	          << std::dec
+	          << std::endl;
+
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams_dev);
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos_dev);
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
@@ -235,6 +228,8 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 	}
 
 	ECAchannels.resize(channels);
+
+	std::cerr << "TimingReceiver with " << channels << " ECA channels" << std::endl;
 
 	// Create the IOs (channel 0)
 	// InoutImpl::probe(this, actionSinks, eventSources);
@@ -338,7 +333,201 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 			// }
 		// }
 	}
+
+
+	// // This just reads the MSI address range out of the ehterbone config space registers
+	// // It does not actually enable anything ... MSIs also work without this
+	device.enable_msi(&first, &last);
+	std::cerr << "TimingReceiver enable_msi first=0x" << std::hex << std::setw(8) << std::setfill('0') << first 
+	          <<                          " last=0x"  << std::hex << std::setw(8) << std::setfill('0') << last << std::endl;
+
+	// Confirm the device is an aligned power of 2
+	eb_address_t size = last - first;
+	if (((size + 1) & size) != 0) {
+		device.close();
+		chmod(etherbone_path.c_str(), dev_stat.st_mode);
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
+	}
+	if ((first & size) != 0) {
+		device.close();
+		chmod(etherbone_path.c_str(), dev_stat.st_mode);
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
+	}
+
+	// set MSI handlers
+	for (unsigned channel_idx = 0; channel_idx < channels; ++channel_idx) {
+
+		etherbone::sdb_msi_device& sdb = ecas_dev[0];
+
+		// Confirm we had SDB records for MSI all the way down
+		if (sdb.msi_last < sdb.msi_first) {
+			throw etherbone::exception_t("request_irq/non_msi_crossbar_inbetween", EB_FAIL);
+		}
+
+		// Confirm that first is aligned to size
+		// e.g. first = 0x10000  last = 0x1ffff 
+		// => size_mask = 0x0ffff
+		// => 0x10000 & 0x0ffff = 0
+		eb_address_t size_mask = sdb.msi_last - sdb.msi_first;
+		if ((sdb.msi_first & size_mask) != 0) {
+			throw etherbone::exception_t("request_irq/misaligned", EB_FAIL);
+		}
+
+		// values from enable_msi(&first, &last);
+		eb_address_t base = first;
+		eb_address_t mask = last-first;
+
+		// Confirm that the MSI range could contain our master (not mismapped)
+		if (size_mask < mask) {
+			throw etherbone::exception_t("request_irq/badly_mapped", EB_FAIL);
+		}
+
+		// make up and irq address and connect a callback
+		while (true) {
+			// Select an IRQ
+			eb_address_t irq = ((rand() & mask) + base) & (~0x3);
+			// try to attach
+			if ( saftd->request_irq(irq, std::bind(&TimingReceiver::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
+				std::cerr << "registered irq under address " << std::hex << std::setw(8) << std::setfill('0') << irq 
+				          << std::dec
+				          << std::endl;
+				channel_msis.push_back(irq);
+				// configure the output channel with the chosen irq address
+				setHandler(channel_idx, true, channel_msis.back());
+				break;
+			}
+		}
+	}
+
 }
+
+
+
+TimingReceiver::~TimingReceiver() 
+{
+	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
+
+
+
+	if (container) {
+		for (auto &channel: ECAchannels) {
+			for (auto &actionSink: channel) {
+				if (actionSink) {
+					std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
+					container->remove_object_delayed(actionSink->getObjectPath());
+				}
+			}
+		}
+	}
+
+	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
+	saftbus::Loop::get_default().remove(poll_timeout_source);
+	std::cerr << "device.close()" << std::endl;
+	device.close();
+	std::cerr << "fix device file" << std::endl;
+	chmod(etherbone_path.c_str(), dev_stat.st_mode);
+
+}
+
+
+void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t address)
+{
+  etherbone::Cycle cycle;
+  cycle.open(device);
+  cycle.write(base + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+  cycle.write(base + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, 0);
+  cycle.write(base + ECA_CHANNEL_MSI_SET_TARGET_OWR, EB_DATA32, address);
+  cycle.write(base + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, enable?1:0);
+  cycle.close();
+  // clog << kLogDebug << "TimingReceiver: registered irq 0x" << std::hex << address << std::endl;
+}
+
+void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
+{
+	std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
+	unsigned code = msi >> 16;
+	unsigned num  = msi & 0xFFFF;
+
+	std::cerr << "MSI: " << channel << " " << num << " " << code << std::endl;
+
+	// MAX_FULL is tracked by this object, not the subchannel
+	if (code == ECA_MAX_FULL) {
+		updateMostFull(channel);
+	} else {
+		auto &chan = ECAchannels[channel];
+		if (num >= chan.size()) {
+			std::cerr << "MSI for non-existant channel " << channel << " num " << num << std::endl;
+		} else {
+			auto &actionSink = chan[num];
+			if (actionSink) {
+				actionSink->receiveMSI(code);
+			} else {
+				// It could be that the user deleted the SoftwareActionSink
+				// while it still had pending actions. Pop any stale records.
+				if (code == ECA_VALID) popMissingQueue(channel, num);
+			}
+		}
+	}
+}
+
+uint16_t TimingReceiver::updateMostFull(unsigned channel)
+{
+	if (channel >= most_full.size()) return 0;
+
+	etherbone::Cycle cycle;
+	eb_data_t raw;
+
+	cycle.open(device);
+	cycle.write(base + ECA_CHANNEL_SELECT_RW,        EB_DATA32, channel);
+	cycle.read (base + ECA_CHANNEL_MOSTFULL_ACK_GET, EB_DATA32, &raw);
+	cycle.close();
+
+	uint16_t mostFull = raw & 0xFFFF;
+	uint16_t used     = raw >> 16;
+
+	if (most_full[channel] != mostFull) {
+		most_full[channel] = mostFull;
+
+		// // Broadcast new value to all subchannels
+		// maybe introduce a signal for this (is anyone using this?)
+		// SinkKey low(channel, 0);
+		// SinkKey high(channel+1, 0);
+		// ActionSinks::iterator first = actionSinks.lower_bound(low);
+		// ActionSinks::iterator last  = actionSinks.lower_bound(high);
+	}
+
+	return used;
+}
+
+void TimingReceiver::resetMostFull(unsigned channel)
+{
+	if (channel >= most_full.size()) return;
+
+	etherbone::Cycle cycle;
+	eb_data_t null;
+
+	cycle.open(device);
+	cycle.write(base + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+	cycle.read (base + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
+	cycle.close();
+}
+
+
+void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
+{
+	etherbone::Cycle cycle;
+	eb_data_t nill;
+
+	// First, rearm the MSI
+	cycle.open(device);
+	device.write(base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+	device.write(base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+	device.read (base + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
+	cycle.close();
+	// Then pop the ignored record
+	device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
+}
+
 
 static inline bool not_isalnum_(char c)
 {
@@ -395,28 +584,6 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 	return sink_object_path;
 }
 
-TimingReceiver::~TimingReceiver() 
-{
-	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
-	if (container) {
-		for (auto &channel: ECAchannels) {
-			for (auto &actionSink: channel) {
-				if (actionSink) {
-					std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
-					container->remove_object_delayed(actionSink->getObjectPath());
-				}
-			}
-		}
-	}
-
-	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
-	saftbus::Loop::get_default().remove(poll_timeout_source);
-	std::cerr << "device.close()" << std::endl;
-	device.close();
-	std::cerr << "fix device file" << std::endl;
-	chmod(etherbone_path.c_str(), dev_stat.st_mode);
-
-}
 
 const std::string &TimingReceiver::get_object_path() const
 {
@@ -521,20 +688,6 @@ std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() co
   return out;
 }
 
-void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
-{
-  etherbone::Cycle cycle;
-  eb_data_t nill;
-  
-  // First, rearm the MSI
-  cycle.open(device);
-  device.write(base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-  device.write(base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
-  device.read (base + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
-  cycle.close();
-  // Then pop the ignored record
-  device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
-}
 
 struct ECA_OpenClose {
   uint64_t  key;    // open?first:last

@@ -50,6 +50,7 @@ SoftwareActionSink::SoftwareActionSink(TimingReceiver *dev
 
 void SoftwareActionSink::receiveMSI(uint8_t code)
 {
+  std::cerr << "SoftwareActionSink::receiveMSI " << code << std::endl;
   // Intercept valid action counter increase
   if (code == ECA_VALID) {
     // DRIVER_LOG("MSI-ECA_VALID",-1, code);

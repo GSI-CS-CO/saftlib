@@ -93,59 +93,65 @@ public:
 	void compile();
 
 
-    // public type, even though the member is private
-    // typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
-    // typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
+	// public type, even though the member is private
+	// typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
+	// typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
 
-    // typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
+	// typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
 
 
-    etherbone::Device& getDevice() { return device; }
-    eb_address_t getBase() { return base; }
+	etherbone::Device& getDevice() { return device; }
+	eb_address_t getBase() { return base; }
 
-    SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
+	SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
 
 private:
+
+	void setHandler(unsigned channel, bool enable, eb_address_t address);
+	void msiHandler(eb_data_t msi, unsigned channel);
+	uint16_t updateMostFull(unsigned channel); // returns current fill
+	void resetMostFull(unsigned channel);
+	void popMissingQueue(unsigned channel, unsigned num);
+
 	bool aquire_watchdog(); 
-    eb_data_t watchdog_value;
+	eb_data_t watchdog_value;
 
-    void setupGatewareInfo(uint32_t address);
-    std::map<std::string, std::string> gateware_info;
+	void setupGatewareInfo(uint32_t address);
+	std::map<std::string, std::string> gateware_info;
 
-    bool poll();
-    saftbus::Source *poll_timeout_source;
+	bool poll();
+	saftbus::Source *poll_timeout_source;
 
 
-    unsigned channels;
-    unsigned search_size;
-    unsigned walker_size;
-    unsigned max_conditions;
-    unsigned used_conditions;
-    std::vector<eb_address_t> channel_msis;
-    std::vector<eb_address_t> queue_addresses;
-    std::vector<uint16_t> most_full;
+	unsigned channels;
+	unsigned search_size;
+	unsigned walker_size;
+	unsigned max_conditions;
+	unsigned used_conditions;
+	std::vector<eb_address_t> channel_msis;
+	std::vector<eb_address_t> queue_addresses;
+	std::vector<uint16_t> most_full;
 
-    uint64_t sas_count; // number of SoftwareActionSinks
+	uint64_t sas_count; // number of SoftwareActionSinks
 
-    std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
-    std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
-    unsigned                                         ECA_LINUX_channel_index;
-    unsigned                                         ECA_LINUX_channel_subchannels;
-    //ActionSinks  actionSinks;
-    // EventSources eventSources;
-    // OtherStuff   otherStuff;
-    void popMissingQueue(unsigned channel, unsigned num);
+	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
+	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
+	unsigned                                         ECA_LINUX_channel_index;
+	unsigned                                         ECA_LINUX_channel_subchannels;
+	//ActionSinks  actionSinks;
+	// EventSources eventSources;
+	// OtherStuff   otherStuff;
 
 
 	mutable etherbone::Device device;
-    
-    eb_address_t stream;
-    eb_address_t watchdog;
-    eb_address_t pps;
-    eb_address_t ats;
-    eb_address_t info;
+	
+	eb_address_t stream;
+	eb_address_t watchdog;
+	eb_address_t pps;
+	eb_address_t ats;
+	eb_address_t info;
 
-    eb_address_t mbox_for_testing_only; // only here to see if msis from software-tr work
+	eb_address_t mbox_for_testing_only; // only here to see if msis from software-tr work
 
 	SAFTd              *saftd; // need a pointer to SAFTd because ther MSI callbacks can be registered
 
