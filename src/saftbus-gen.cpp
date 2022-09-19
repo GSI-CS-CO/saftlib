@@ -11,6 +11,18 @@ bool verbose = false;
 
 std::string output_only_this_file = "";
 
+std::string strip(std::string line) {
+	// std::cerr << "strip \'" << line << "\'" << std::endl;
+	if (line.size() == 0) return line;
+	size_t start = 0;
+	while(isspace(line[start])) ++start;
+	size_t stop = line.size()-1;
+	while(isspace(line[stop])) --stop;
+	std::string result = line.substr(start,stop-start+1);
+	// std::cerr << "stripped \'" << result << "\'" << std::endl;
+	return result;
+}
+
 enum ExportTag {
 	NO_EXPORT,
 	SIGNAL_EXPORT,
@@ -18,6 +30,8 @@ enum ExportTag {
 	INCLUDE_EXPORT,
 };
 
+std::vector<std::string> last_comments;
+std::vector<std::string> comment_buffer;
 // return true if a saftbus export tag was found in a line comment 
 static ExportTag remove_line_comments(std::string &line) {
 	std::string saftbus_export_tag  = " @saftbus-export";
@@ -25,9 +39,12 @@ static ExportTag remove_line_comments(std::string &line) {
 	std::string saftbus_include_tag = " @saftbus-include";
 	bool in_string = false;
 	char previous_ch = ' ';
+	static bool safe_buffer = true;
 	for (size_t i = 0; i < line.size(); ++i) {
 		if (line[i] == '\"') in_string = !in_string;
 		if (line[i] == '/' && previous_ch == '/' && !in_string) {
+			safe_buffer = true;
+			comment_buffer.push_back(line);
 			// std::cerr << "found//" << line << std::endl;
 			if (i+1+saftbus_export_tag.size() <= line.size()) {
 				// std::cerr << "++ " << line.substr(i+1,saftbus_export_tag.size()) << std::endl;
@@ -58,6 +75,18 @@ static ExportTag remove_line_comments(std::string &line) {
 		}
 		previous_ch = line[i];
 	}
+	if (safe_buffer) {
+		// copy all lines that start with a "//" comment 
+		last_comments.clear();
+		for(auto line: comment_buffer) {
+			std::string comment = strip(line);
+			if (comment.size()>=2&&comment[0]=='/'&&comment[1]=='/') {
+				last_comments.push_back(line);
+			}
+		}
+		safe_buffer = false;
+	}
+	comment_buffer.clear();
 	return NO_EXPORT;
 }
 
@@ -162,17 +191,7 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 	}
 }
 
-std::string strip(std::string line) {
-	// std::cerr << "strip \'" << line << "\'" << std::endl;
-	if (line.size() == 0) return line;
-	size_t start = 0;
-	while(isspace(line[start])) ++start;
-	size_t stop = line.size()-1;
-	while(isspace(line[stop])) --stop;
-	std::string result = line.substr(start,stop-start+1);
-	// std::cerr << "stripped \'" << result << "\'" << std::endl;
-	return result;
-}
+
 struct FunctionArgument { 
 	std::string type;
 	std::string name;
@@ -235,8 +254,9 @@ struct FunctionSignature {
 	std::string name;
 	std::string return_type;
 	std::vector<FunctionArgument> argument_list;
-	FunctionSignature(const std::string &s, const std::string &line) 
-		: scope(s) 
+	std::vector<std::string> comments;
+	FunctionSignature(const std::string &s, const std::string &line, const std::vector<std::string> &comment) 
+		: scope(s), comments(comment)
 	{
 		auto paranthesis_open = line.find('(');
 		auto paranthesis_close = line.find(')');
@@ -263,8 +283,9 @@ struct SignalSignature {
 	std::string scope;
 	std::string name;
 	std::vector<FunctionArgument> argument_list;
-	SignalSignature(const std::string &s, const std::string &line) 
-		: scope(s) 
+	std::vector<std::string> comments;
+	SignalSignature(const std::string &s, const std::string &line, const std::vector<std::string> &comment) 
+		: scope(s), comments(comment)
 	{
 		auto paranthesis_open = line.find('(');
 		auto paranthesis_close = line.find(')');
@@ -275,6 +296,9 @@ struct SignalSignature {
 	}
 	void print() {
 		std::cerr << "  Signal        " << std::endl;
+		for(auto &comment_line: comments) {
+			std::cerr << comment_line << std::endl;
+		}
 		std::cerr << "    scope     : " << scope << std::endl;
 		std::cerr << "    name      : " << name << std::endl;
 		std::cerr << "    arguments : ";
@@ -312,8 +336,9 @@ struct ClassDefinition {
 	std::vector<ClassDefinition*> all_bases;   // base classes and base classes of them
 	std::vector<FunctionSignature> exportedfunctions;
 	std::vector<SignalSignature> exportedsignals;
-	ClassDefinition(const std::string &scope_, const std::string &line) 
-		: scope(scope_)
+	std::vector<std::string> comments;
+	ClassDefinition(const std::string &scope_, const std::string &line, const std::vector<std::string> &comment) 
+		: scope(scope_), comments(comment)
 	{
 		auto colon_pos = line.find(':');
 		if (colon_pos == line.npos) {
@@ -481,7 +506,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 					std::cerr << line_no << ": extract signal signature: " << std::endl;
 				}
 				if (classes.size() > 0) {
-					classes.back().exportedsignals.push_back(SignalSignature(build_namespace(scope),function_or_signal_signature));
+					classes.back().exportedsignals.push_back(SignalSignature(build_namespace(scope),function_or_signal_signature, last_comments));
 				}
 			}
 			function_or_signal_signature = "";
@@ -495,7 +520,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 					std::cerr << line_no << ": extract function signature: " << std::endl;
 				}
 				if (classes.size() > 0) {
-					classes.back().exportedfunctions.push_back(FunctionSignature(build_namespace(scope),function_or_signal_signature));
+					classes.back().exportedfunctions.push_back(FunctionSignature(build_namespace(scope),function_or_signal_signature, last_comments));
 				}
 			}
 			function_or_signal_signature = "";
@@ -511,7 +536,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		if (in_class_definition) {
 			class_definition.append(line);
 			if (class_definition.find('{') != class_definition.npos) {
-				classes.push_back(ClassDefinition(build_namespace(scope), class_definition));
+				classes.push_back(ClassDefinition(build_namespace(scope), class_definition, last_comments));
 				in_class_definition = false;
 			}
 			continue;
@@ -541,7 +566,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		if (keyword == "class") {
 			std::getline(lin, class_definition);
 			if (class_definition.find('{') != class_definition.npos) {
-				classes.push_back(ClassDefinition(build_namespace(scope), class_definition));
+				classes.push_back(ClassDefinition(build_namespace(scope), class_definition, last_comments));
 			} else {
 				if (class_definition.find(';') == class_definition.npos) { // don't react on class declarations "class MyClass;"
 					in_class_definition = true;
@@ -1025,6 +1050,10 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
 	header_out << std::endl;
 
+	// recreate comments from this class
+	for( auto &comment_line: class_definition.comments) {
+		header_out << comment_line << std::endl;
+	}
 	header_out << "\tclass " << class_definition.name << "_Proxy ";
 	int base_count = 0;
 	if (class_definition.bases.size()) {
@@ -1045,6 +1074,10 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
 	header_out << "\t\t" << "bool signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content);" << std::endl;
 	for (auto &function: class_definition.exportedfunctions) {
+		// recreate comments from this function
+		for( auto &comment_line: function.comments) {
+			header_out << comment_line << std::endl;
+		}
 		header_out << "\t\t" << function.return_type << " " << function.name << "(";
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			header_out << function.argument_list[i].declaration();
@@ -1057,6 +1090,10 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 
 	// signals
 	for (auto &signal: class_definition.exportedsignals) {
+		// recreate comments from this signal
+		for( auto &comment_line: signal.comments) {
+			header_out << comment_line << std::endl;
+		}
 		header_out << "\t\t" << "std::function<void(";
 		for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
 			if (i > 0) {
