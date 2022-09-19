@@ -9,6 +9,8 @@
 
 bool verbose = false;
 
+std::string output_only_this_file = "";
+
 enum ExportTag {
 	NO_EXPORT,
 	SIGNAL_EXPORT,
@@ -336,7 +338,12 @@ struct ClassDefinition {
 	}
 
 	bool has_exports() {
-		return exportedfunctions.size() > 0 || exportedsignals.size() > 0;
+		bool result = false;
+		for (auto &base: all_bases) {
+			result |= base->has_exports();
+		}
+		result |= (exportedfunctions.size() > 0 || exportedsignals.size() > 0);
+		return result;
 	}
 	std::vector<ClassDefinition*> generate_all_bases(std::vector<ClassDefinition> &class_definitions) {
 		std::vector<ClassDefinition*> result;
@@ -694,6 +701,13 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 }
 
 void move_file_if_not_identical(const std::string &source_file, const std::string &dest_file) {
+	if (dest_file != output_only_this_file) {
+		if (verbose) {
+			std::cerr << "skip file " << dest_file << std::endl;
+		}
+		remove(source_file.c_str());
+		return;
+	}
 	std::ifstream in1(source_file.c_str());
 	std::ifstream in2(dest_file.c_str());
 	bool identical = true;
@@ -729,9 +743,9 @@ void move_file_if_not_identical(const std::string &source_file, const std::strin
 	// move the file using a syscall
 	in1.close();
 	in2.close();
-	if (verbose) {
+	// if (verbose) {
 		std::cerr << "   writing file " << dest_file  << std::endl;
-	}
+	// }
 	rename(source_file.c_str(), dest_file.c_str());
 }
 
@@ -1024,7 +1038,7 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	if (base_count == 0) {
 		header_out << ": public virtual saftbus::Proxy" << std::endl;
 	}
-	header_out << " { " << std::endl;
+	header_out << "\t{" << std::endl;
 	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
 	header_out << "\tpublic:" << std::endl;
 	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
@@ -1107,21 +1121,21 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "\t\t" << "return result;" << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
 
-	cpp_out << class_definition.name << "_Proxy::" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names)" << std::endl;
-	cpp_out << "\t" << ": saftbus::Proxy(object_path, signal_group, interface_names)" << std::endl;
+	cpp_out << "\t" << class_definition.name << "_Proxy::" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names)" << std::endl;
+	cpp_out << "\t\t" << ": saftbus::Proxy(object_path, signal_group, interface_names)" << std::endl;
 	if (class_definition.bases.size()) {
 		for (unsigned i = 0; i < class_definition.direct_bases.size(); ++i) {
 			if (class_definition.direct_bases[i]->has_exports()) {
-				cpp_out << (true?"\t, ":"") << class_definition.direct_bases[i]->name << "_Proxy(object_path, signal_group, interface_names) " << std::endl;
+				cpp_out << (true?"\t\t, ":"") << class_definition.direct_bases[i]->name << "_Proxy(object_path, signal_group, interface_names) " << std::endl;
 			}
 		}
 	}
-	cpp_out << "{" << std::endl;
-	cpp_out << "\tinterface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\");" << std::endl;
-	cpp_out << "}" << std::endl;
-	cpp_out << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {" << std::endl;
-	cpp_out << "\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
-	cpp_out << "}" << std::endl;
+	cpp_out << "\t" << "{" << std::endl;
+	cpp_out << "\t\t" << "interface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\");" << std::endl;
+	cpp_out << "\t" << "}" << std::endl;
+	cpp_out << "\t" << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {" << std::endl;
+	cpp_out << "\t\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
+	cpp_out << "\t" << "}" << std::endl;
 	cpp_out << "\t"     << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
 	cpp_out << "\t\t"   <<   "if (interface_no == this->interface_no) {" << std::endl;
 	if ( class_definition.exportedsignals.size() > 0) {
@@ -1241,6 +1255,10 @@ int main(int argc, char **argv)
 			if (++i < argc) {
 				output_directory = argv[i];
 			}
+		} else if (argvi == "--only") {
+			if (++i < argc) {
+				output_only_this_file = argv[i];
+			}
 		} else if (argvi == "-v") {
 			verbose = true;
 		} else {
@@ -1263,7 +1281,7 @@ int main(int argc, char **argv)
 		}
 
 		for (auto &class_def: classes) {
-			if (class_def.exportedfunctions.size() > 0 || class_def.exportedsignals.size() > 0) {
+			if (class_def.has_exports()) {
 				generate_service_header(output_directory, class_def);
 				generate_service_implementation(output_directory, class_def);
 

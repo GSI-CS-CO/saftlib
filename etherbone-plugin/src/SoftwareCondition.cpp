@@ -31,12 +31,4 @@ SoftwareCondition::SoftwareCondition(const std::string &objectPath, ActionSink *
 {
 }
 
-
-void SoftwareCondition::dummy() {}
-
-// std::shared_ptr<SoftwareCondition> SoftwareCondition::create(const ConstructorType& args)
-// {
-//   return RegisteredObject<SoftwareCondition>::create(args.objectPath, args);
-// }
-
 }

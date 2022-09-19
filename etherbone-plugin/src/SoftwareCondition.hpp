@@ -28,9 +28,6 @@ class SoftwareCondition : public Condition
 {
 public:
 	SoftwareCondition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
-
-	// @saftbus-export
-	void dummy();
 };
 
 }
