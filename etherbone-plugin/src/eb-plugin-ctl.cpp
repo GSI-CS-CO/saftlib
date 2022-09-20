@@ -23,19 +23,15 @@ int main(int argc, char **argv) {
 		return 1;
 	}	
 
-	using namespace proxy;
-	using namespace standalone;
-
-	eb_plugin::SAFTd::create("/de/gsi/saftlib");
 
 	auto saftd = eb_plugin::SAFTd_Proxy::create("/de/gsi/saftlib");
 
-	saftd->AttachDevice(argv[1], argv[2]);
+	auto tr_obj_path = saftd->AttachDevice(argv[1], argv[2]);
 	for (auto &device: saftd->getDevices()) {
 		std::cerr << device.first << " " << device.second << std::endl;
 	}
 
-	auto tr = eb_plugin::TimingReceiver_Proxy::create(std::string("/de/gsi/saftlib/")+argv[1]);
+	auto tr = eb_plugin::TimingReceiver_Proxy::create(tr_obj_path);
 	auto sas_object_path = tr->NewSoftwareActionSink("");
 	std::cerr << "sas_object_path = " << sas_object_path << std::endl;
 

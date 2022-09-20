@@ -23,11 +23,11 @@ int main(int argc, char *argv[]) {
 
 	eb_plugin::SAFTd saftd;
 
-	saftd.AttachDevice(argv[1], argv[2]);
+	auto tr_obj_path = saftd.AttachDevice(argv[1], argv[2]);
 	for (auto &device: saftd.getDevices()) {
 		std::cerr << device.first << " " << device.second << std::endl;
 	}
-	eb_plugin::TimingReceiver* tr = saftd.getTimingReceiver(argv[1]);
+	eb_plugin::TimingReceiver* tr = saftd.getTimingReceiver(tr_obj_path);
 
 
 	auto softwareActionSink_obj_path = tr->NewSoftwareActionSink("");

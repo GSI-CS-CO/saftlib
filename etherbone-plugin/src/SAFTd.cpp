@@ -182,14 +182,16 @@ namespace eb_plugin {
 
 	TimingReceiver* SAFTd::getTimingReceiver(const std::string &tr_obj_path) {
 		size_t pos;
-		// std::cerr << "is " << object_path << " contained in " << tr_obj_path << "? " << std::endl;
+		std::cerr << "is " << object_path << " contained in " << tr_obj_path << "? " << std::endl;
 		if ((pos=tr_obj_path.find(object_path)) == tr_obj_path.npos) {
+			std::cerr << "no" << std::endl;
 			const std::string &tr_name = tr_obj_path; // maybe the name of the TimingReceiver was given instead of its object_path
 			if (attached_devices.find(tr_name) != attached_devices.end()) {
 				return attached_devices[tr_name].get();
 			} 
 		} else {
-			std::string name = tr_obj_path.substr(pos+1);
+			std::cerr << "yes" << std::endl;
+			std::string name = tr_obj_path.substr(object_path.size()+1);
 			std::cerr << "get_timing_receiver " << name << std::endl;
 			return attached_devices[name].get();
 		}
