@@ -36,434 +36,434 @@ namespace eb_plugin {
 
 // ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, saftbus::Container *container_)//, sigc::slot<void> destroy)
 ActionSink::ActionSink(TimingReceiver* dev_
-                     , const std::string& name_
-                     , unsigned channel_
-                     , unsigned num_
-                     , saftbus::Container *container_)
+										 , const std::string& name_
+										 , unsigned channel_
+										 , unsigned num_
+										 , saftbus::Container *container_)
  : object_path(dev_->get_object_path() + "/" + name_), 
-   dev(dev_), name(name_), channel(channel_), num(num_),
-   minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
-   overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
-   container(container_)
+	 dev(dev_), name(name_), channel(channel_), num(num_),
+	 minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
+	 overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
+	 container(container_)
 {
 
 
 
-  overflowUpdate = actionUpdate = lateUpdate = earlyUpdate = conflictUpdate = delayedUpdate = std::chrono::steady_clock::now();
-  eb_data_t raw_latency, raw_offset_bits, raw_capacity, null;
+	overflowUpdate = actionUpdate = lateUpdate = earlyUpdate = conflictUpdate = delayedUpdate = std::chrono::steady_clock::now();
+	eb_data_t raw_latency, raw_offset_bits, raw_capacity, null;
 
-  etherbone::Cycle cycle;
-  cycle.open(dev->getDevice());
-  // Grab configuration
-  cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,     EB_DATA32, channel);
-  cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW, EB_DATA32, num);
-  cycle.read (dev->getBase() + ECA_LATENCY_GET,           EB_DATA32, &raw_latency);
-  cycle.read (dev->getBase() + ECA_OFFSET_BITS_GET,       EB_DATA32, &raw_offset_bits);
-  cycle.read (dev->getBase() + ECA_CHANNEL_CAPACITY_GET,  EB_DATA32, &raw_capacity);
-  // Wipe out any old state:
-  cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
-  cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET,    EB_DATA32, &null);
-  cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_LATE);
-  cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
-  cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_EARLY);
-  cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
-  cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_CONFLICT);
-  cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
-  cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_DELAYED);
-  cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
-  cycle.close();
+	etherbone::Cycle cycle;
+	cycle.open(dev->getDevice());
+	// Grab configuration
+	cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,     EB_DATA32, channel);
+	cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW, EB_DATA32, num);
+	cycle.read (dev->getBase() + ECA_LATENCY_GET,           EB_DATA32, &raw_latency);
+	cycle.read (dev->getBase() + ECA_OFFSET_BITS_GET,       EB_DATA32, &raw_offset_bits);
+	cycle.read (dev->getBase() + ECA_CHANNEL_CAPACITY_GET,  EB_DATA32, &raw_capacity);
+	// Wipe out any old state:
+	cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
+	cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET,    EB_DATA32, &null);
+	cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_LATE);
+	cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_EARLY);
+	cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_CONFLICT);
+	cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_DELAYED);
+	cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.close();
 
-  latency = raw_latency;   // in nanoseconds
-  earlyThreshold = 1;      // in nanoseconds
-  earlyThreshold <<= raw_offset_bits;
-  capacity = raw_capacity; // in actions
+	latency = raw_latency;   // in nanoseconds
+	earlyThreshold = 1;      // in nanoseconds
+	earlyThreshold <<= raw_offset_bits;
+	capacity = raw_capacity; // in actions
 }
 
 ActionSink::~ActionSink()
 {
-  std::cerr << "~ActionSink" << std::endl;
-  // unhook any pending updates
-  saftbus::Loop::get_default().remove(overflowPending);
-  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
-  saftbus::Loop::get_default().remove(actionPending);
-  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
-  saftbus::Loop::get_default().remove(latePending);
-  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
-  saftbus::Loop::get_default().remove(earlyPending);
-  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
-  saftbus::Loop::get_default().remove(conflictPending);
-  std::cerr << "~ActionSink remove timeoutsource" << std::endl;
-  saftbus::Loop::get_default().remove(delayedPending);
-  std::cerr << "~ActionSink done " << std::endl;
+	std::cerr << "~ActionSink" << std::endl;
+	// unhook any pending updates
+	saftbus::Loop::get_default().remove(overflowPending);
+	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
+	saftbus::Loop::get_default().remove(actionPending);
+	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
+	saftbus::Loop::get_default().remove(latePending);
+	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
+	saftbus::Loop::get_default().remove(earlyPending);
+	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
+	saftbus::Loop::get_default().remove(conflictPending);
+	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
+	saftbus::Loop::get_default().remove(delayedPending);
+	std::cerr << "~ActionSink done " << std::endl;
 
-  // No need to recompile; done in TimingReceiver.cpp
+	// No need to recompile; done in TimingReceiver.cpp
 }
 
 void ActionSink::ToggleActive()
 {
-  // //ownerOnly();
+	// //ownerOnly();
 
-  // // Toggle raw to prevent recompile at each step
-  // Conditions::iterator i;
-  // for (i = conditions.begin(); i != conditions.end(); ++i)
-  //   i->second->setRawActive(!i->second->getActive());
+	// // Toggle raw to prevent recompile at each step
+	// Conditions::iterator i;
+	// for (i = conditions.begin(); i != conditions.end(); ++i)
+	//   i->second->setRawActive(!i->second->getActive());
 
-  // try {
-  //   compile();
-  // } catch (...) {
-  //   // failed => undo flips
-  //   for (i = conditions.begin(); i != conditions.end(); ++i)
-  //     i->second->setRawActive(!i->second->getActive());
-  //   throw;
-  // }
+	// try {
+	//   compile();
+	// } catch (...) {
+	//   // failed => undo flips
+	//   for (i = conditions.begin(); i != conditions.end(); ++i)
+	//     i->second->setRawActive(!i->second->getActive());
+	//   throw;
+	// }
 }
 
 uint16_t ActionSink::ReadFill()
 {
-  // return dev->updateMostFull(channel);
-  return 0;
+	// return dev->updateMostFull(channel);
+	return 0;
 }
 
 std::vector< std::string > ActionSink::getAllConditions() const
 {
-  std::vector< std::string > out;
-  // Conditions::const_iterator i;
-  // for (i = conditions.begin(); i != conditions.end(); ++i)
-  //   out.push_back(i->second->getObjectPath());
-  return out;
+	std::vector< std::string > out;
+	// Conditions::const_iterator i;
+	// for (i = conditions.begin(); i != conditions.end(); ++i)
+	//   out.push_back(i->second->getObjectPath());
+	return out;
 }
 
 std::vector< std::string > ActionSink::getActiveConditions() const
 {
-  std::vector< std::string > out;
-  // Conditions::const_iterator i;
-  // for (i = conditions.begin(); i != conditions.end(); ++i)
-  //   if (i->second->getActive()) out.push_back(i->second->getObjectPath());
-  return out;
+	std::vector< std::string > out;
+	// Conditions::const_iterator i;
+	// for (i = conditions.begin(); i != conditions.end(); ++i)
+	//   if (i->second->getActive()) out.push_back(i->second->getObjectPath());
+	return out;
 }
 
 std::vector< std::string > ActionSink::getInactiveConditions() const
 {
-  std::vector< std::string > out;
-  // Conditions::const_iterator i;
-  // for (i = conditions.begin(); i != conditions.end(); ++i)
-  //   if (!i->second->getActive()) out.push_back(i->second->getObjectPath());
-  return out;
+	std::vector< std::string > out;
+	// Conditions::const_iterator i;
+	// for (i = conditions.begin(); i != conditions.end(); ++i)
+	//   if (!i->second->getActive()) out.push_back(i->second->getObjectPath());
+	return out;
 }
 
 int64_t ActionSink::getMinOffset() const
 {
-  return minOffset;
+	return minOffset;
 }
 
 int64_t ActionSink::getMaxOffset() const
 {
-  return maxOffset;
+	return maxOffset;
 }
 
 uint64_t ActionSink::getEarlyThreshold() const
 {
-  return earlyThreshold;
+	return earlyThreshold;
 }
 
 uint64_t ActionSink::getLatency() const
 {
-  return latency;
+	return latency;
 }
 
 uint16_t ActionSink::getCapacity() const
 {
-  return capacity;
+	return capacity;
 }
 
 uint16_t ActionSink::getMostFull() const
 {
-  return dev->most_full[channel];
+	return dev->most_full[channel];
 }
 
 std::chrono::nanoseconds ActionSink::getSignalRate() const
 {
-  return signalRate;
+	return signalRate;
 }
 
 uint64_t ActionSink::getOverflowCount() const
 {
-  updateOverflow();
-  return overflowCount;
+	updateOverflow();
+	return overflowCount;
 }
 
 uint64_t ActionSink::getActionCount() const
 {
-  updateAction();
-  return actionCount;
+	updateAction();
+	return actionCount;
 }
 
 uint64_t ActionSink::getLateCount() const
 {
-  updateLate();
-  return lateCount;
+	updateLate();
+	return lateCount;
 }
 
 uint64_t ActionSink::getEarlyCount() const
 {
-  updateEarly();
-  return earlyCount;
+	updateEarly();
+	return earlyCount;
 }
 
 uint64_t ActionSink::getConflictCount() const
 {
-  updateConflict();
-  return conflictCount;
+	updateConflict();
+	return conflictCount;
 }
 
 uint64_t ActionSink::getDelayedCount() const
 {
-  updateDelayed();
-  return delayedCount;
+	updateDelayed();
+	return delayedCount;
 }
 
 void ActionSink::setMinOffset(int64_t val)
 {
-  //ownerOnly();
-  minOffset = val;
+	//ownerOnly();
+	minOffset = val;
 }
 
 void ActionSink::setMaxOffset(int64_t val)
 {
-  //ownerOnly();
-  maxOffset = val;
+	//ownerOnly();
+	maxOffset = val;
 }
 
 void ActionSink::setMostFull(uint16_t val)
 {
-  //ownerOnly();
-  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set MostFull to 0");
-  // dev->resetMostFull(channel);
+	//ownerOnly();
+	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set MostFull to 0");
+	// dev->resetMostFull(channel);
 }
 
 void ActionSink::setSignalRate(std::chrono::nanoseconds val)
 {
-  //ownerOnly();
-  signalRate = val;
+	//ownerOnly();
+	signalRate = val;
 }
 
 void ActionSink::setOverflowCount(uint64_t val)
 {
-  //ownerOnly();
-  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
-  overflowCount = 0;
+	//ownerOnly();
+	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
+	overflowCount = 0;
 }
 
 void ActionSink::setActionCount(uint64_t val)
 {
-  //ownerOnly();
-  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ActionCount to 0");
-  actionCount = 0;
+	//ownerOnly();
+	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ActionCount to 0");
+	actionCount = 0;
 }
 
 void ActionSink::setLateCount(uint64_t val)
 {
-  //ownerOnly();
-  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set LateCount to 0");
-  lateCount = 0;
+	//ownerOnly();
+	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set LateCount to 0");
+	lateCount = 0;
 }
 
 void ActionSink::setEarlyCount(uint64_t val)
 {
-  //ownerOnly();
-  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
-  earlyCount = 0;
+	//ownerOnly();
+	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
+	earlyCount = 0;
 }
 
 void ActionSink::setConflictCount(uint64_t val)
 {
-  //ownerOnly();
-  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
-  conflictCount = 0;
+	//ownerOnly();
+	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
+	conflictCount = 0;
 }
 
 void ActionSink::setDelayedCount(uint64_t val)
 {
-  //ownerOnly();
-  if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
-  delayedCount = 0;
+	//ownerOnly();
+	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
+	delayedCount = 0;
 }
 
 void ActionSink::receiveMSI(uint8_t code)
 {
-  std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point exec; 
-  std::chrono::milliseconds interval(0);
+	std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point exec; 
+	std::chrono::milliseconds interval(0);
 
-  switch (code) {
-  case ECA_OVERFLOW:
-    //DRIVER_LOG("ECA_OVERFLOW",-1, -1);
-    saftbus::Loop::get_default().remove(overflowPending); // just to be safe
-    exec = overflowUpdate + signalRate;
-    if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-    overflowPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-      std::bind(&ActionSink::updateOverflow, this),interval);
-    break;
-  case ECA_VALID:
-    //DRIVER_LOG("ECA_VALID",-1, -1);
-    saftbus::Loop::get_default().remove(actionPending); // just to be safe
-    exec = actionUpdate + signalRate;
-    if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-    actionPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-      std::bind(&ActionSink::updateAction, this),interval);
-    break;
-  case ECA_LATE:
-    //DRIVER_LOG("ECA_LATE",-1, -1);
-    saftbus::Loop::get_default().remove(latePending); // just to be safe
-    exec = lateUpdate + signalRate;
-    if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-    latePending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-      std::bind(&ActionSink::updateLate, this),interval);
-    break;
-  case ECA_EARLY:
-    //DRIVER_LOG("ECA_EARLY",-1, -1);
-    saftbus::Loop::get_default().remove(earlyPending); // just to be safe
-    exec = earlyUpdate + signalRate;
-    if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-    earlyPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-      std::bind(&ActionSink::updateEarly, this),interval);
-    break;
-  case ECA_CONFLICT:
-    //DRIVER_LOG("ECA_CONFLICT",-1, -1);
-    saftbus::Loop::get_default().remove(conflictPending); // just to be safe
-    exec = conflictUpdate + signalRate;
-    if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-    conflictPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-      std::bind(&ActionSink::updateConflict, this),interval);
-    break;
-  case ECA_DELAYED:
-    //DRIVER_LOG("ECA_DELAYED",-1, -1);
-    saftbus::Loop::get_default().remove(delayedPending); // just to be safe
-    exec = delayedUpdate + signalRate;
-    if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-    delayedPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-      std::bind(&ActionSink::updateDelayed, this),interval);
-    break;
-  default:
-    //clog << kLogErr << "Asked to handle an invalid MSI condition code in ActionSink.cpp" << std::endl;
-    break;
-  }
+	switch (code) {
+	case ECA_OVERFLOW:
+		//DRIVER_LOG("ECA_OVERFLOW",-1, -1);
+		saftbus::Loop::get_default().remove(overflowPending); // just to be safe
+		exec = overflowUpdate + signalRate;
+		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		overflowPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			std::bind(&ActionSink::updateOverflow, this),interval);
+		break;
+	case ECA_VALID:
+		//DRIVER_LOG("ECA_VALID",-1, -1);
+		saftbus::Loop::get_default().remove(actionPending); // just to be safe
+		exec = actionUpdate + signalRate;
+		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		actionPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			std::bind(&ActionSink::updateAction, this),interval);
+		break;
+	case ECA_LATE:
+		//DRIVER_LOG("ECA_LATE",-1, -1);
+		saftbus::Loop::get_default().remove(latePending); // just to be safe
+		exec = lateUpdate + signalRate;
+		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		latePending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			std::bind(&ActionSink::updateLate, this),interval);
+		break;
+	case ECA_EARLY:
+		//DRIVER_LOG("ECA_EARLY",-1, -1);
+		saftbus::Loop::get_default().remove(earlyPending); // just to be safe
+		exec = earlyUpdate + signalRate;
+		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		earlyPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			std::bind(&ActionSink::updateEarly, this),interval);
+		break;
+	case ECA_CONFLICT:
+		//DRIVER_LOG("ECA_CONFLICT",-1, -1);
+		saftbus::Loop::get_default().remove(conflictPending); // just to be safe
+		exec = conflictUpdate + signalRate;
+		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		conflictPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			std::bind(&ActionSink::updateConflict, this),interval);
+		break;
+	case ECA_DELAYED:
+		//DRIVER_LOG("ECA_DELAYED",-1, -1);
+		saftbus::Loop::get_default().remove(delayedPending); // just to be safe
+		exec = delayedUpdate + signalRate;
+		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		delayedPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			std::bind(&ActionSink::updateDelayed, this),interval);
+		break;
+	default:
+		//clog << kLogErr << "Asked to handle an invalid MSI condition code in ActionSink.cpp" << std::endl;
+		break;
+	}
 }
 
 bool ActionSink::updateOverflow() const
 {
-  //DRIVER_LOG("start",-1,-1);
-  eb_data_t overflow;
+	//DRIVER_LOG("start",-1,-1);
+	eb_data_t overflow;
 
-  etherbone::Cycle cycle;
-  cycle.open(dev->getDevice());
-  cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
-  cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,      EB_DATA32, num);
-  // reading OVERFLOW_COUNT clears the count and rearms the MSI
-  cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
-  cycle.close();
+	etherbone::Cycle cycle;
+	cycle.open(dev->getDevice());
+	cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+	cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,      EB_DATA32, num);
+	// reading OVERFLOW_COUNT clears the count and rearms the MSI
+	cycle.read (dev->getBase() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
+	cycle.close();
 
-  overflowCount += overflow;
+	overflowCount += overflow;
 
-  overflowUpdate = std::chrono::steady_clock::now();
-  
-  //DRIVER_LOG("done",-1, -1);
-  return false;
+	overflowUpdate = std::chrono::steady_clock::now();
+	
+	//DRIVER_LOG("done",-1, -1);
+	return false;
 }
 
 bool ActionSink::updateAction() const
 {
-  //DRIVER_LOGT("start",name.c_str(),-1,channel);
-  eb_data_t valid;
+	//DRIVER_LOGT("start",name.c_str(),-1,channel);
+	eb_data_t valid;
 
-  etherbone::Cycle cycle;
-  cycle.open(dev->getDevice());
-  cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-  cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
-  // reading VALID_COUNT clears the count and rearms the MSI
-  cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &valid);
-  cycle.close();
+	etherbone::Cycle cycle;
+	cycle.open(dev->getDevice());
+	cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+	cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+	// reading VALID_COUNT clears the count and rearms the MSI
+	cycle.read (dev->getBase() + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &valid);
+	cycle.close();
 
-  actionCount += valid;
-  actionUpdate = std::chrono::steady_clock::now();
-  //DRIVER_LOG("done",-1,channel);
-  return false;
+	actionCount += valid;
+	actionUpdate = std::chrono::steady_clock::now();
+	//DRIVER_LOG("done",-1,channel);
+	return false;
 }
 
 ActionSink::Record ActionSink::fetchError(uint8_t code) const
 {
-  //DRIVER_LOG("start",-1,-1);
-  eb_data_t event_hi, event_lo, param_hi, param_lo, tag, tef,
-            deadline_hi, deadline_lo, executed_hi, executed_lo, failed;
+	//DRIVER_LOG("start",-1,-1);
+	eb_data_t event_hi, event_lo, param_hi, param_lo, tag, tef,
+						deadline_hi, deadline_lo, executed_hi, executed_lo, failed;
 
-  etherbone::Cycle cycle;
-  cycle.open(dev->getDevice());
-  cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-  cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
-  cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,  EB_DATA32, code);
-  cycle.read (dev->getBase() + ECA_CHANNEL_EVENT_ID_HI_GET, EB_DATA32, &event_hi);
-  cycle.read (dev->getBase() + ECA_CHANNEL_EVENT_ID_LO_GET, EB_DATA32, &event_lo);
-  cycle.read (dev->getBase() + ECA_CHANNEL_PARAM_HI_GET,    EB_DATA32, &param_hi);
-  cycle.read (dev->getBase() + ECA_CHANNEL_PARAM_LO_GET,    EB_DATA32, &param_lo);
-  cycle.read (dev->getBase() + ECA_CHANNEL_TAG_GET,         EB_DATA32, &tag);
-  cycle.read (dev->getBase() + ECA_CHANNEL_TEF_GET,         EB_DATA32, &tef);
-  cycle.read (dev->getBase() + ECA_CHANNEL_DEADLINE_HI_GET, EB_DATA32, &deadline_hi);
-  cycle.read (dev->getBase() + ECA_CHANNEL_DEADLINE_LO_GET, EB_DATA32, &deadline_lo);
-  cycle.read (dev->getBase() + ECA_CHANNEL_EXECUTED_HI_GET, EB_DATA32, &executed_hi);
-  cycle.read (dev->getBase() + ECA_CHANNEL_EXECUTED_LO_GET, EB_DATA32, &executed_lo);
-  // reading FAILED_COUNT clears the count, releases the record, and rearms the MSI
-  cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET, EB_DATA32, &failed);
-  cycle.close();
+	etherbone::Cycle cycle;
+	cycle.open(dev->getDevice());
+	cycle.write(dev->getBase() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+	cycle.write(dev->getBase() + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+	cycle.write(dev->getBase() + ECA_CHANNEL_CODE_SELECT_RW,  EB_DATA32, code);
+	cycle.read (dev->getBase() + ECA_CHANNEL_EVENT_ID_HI_GET, EB_DATA32, &event_hi);
+	cycle.read (dev->getBase() + ECA_CHANNEL_EVENT_ID_LO_GET, EB_DATA32, &event_lo);
+	cycle.read (dev->getBase() + ECA_CHANNEL_PARAM_HI_GET,    EB_DATA32, &param_hi);
+	cycle.read (dev->getBase() + ECA_CHANNEL_PARAM_LO_GET,    EB_DATA32, &param_lo);
+	cycle.read (dev->getBase() + ECA_CHANNEL_TAG_GET,         EB_DATA32, &tag);
+	cycle.read (dev->getBase() + ECA_CHANNEL_TEF_GET,         EB_DATA32, &tef);
+	cycle.read (dev->getBase() + ECA_CHANNEL_DEADLINE_HI_GET, EB_DATA32, &deadline_hi);
+	cycle.read (dev->getBase() + ECA_CHANNEL_DEADLINE_LO_GET, EB_DATA32, &deadline_lo);
+	cycle.read (dev->getBase() + ECA_CHANNEL_EXECUTED_HI_GET, EB_DATA32, &executed_hi);
+	cycle.read (dev->getBase() + ECA_CHANNEL_EXECUTED_LO_GET, EB_DATA32, &executed_lo);
+	// reading FAILED_COUNT clears the count, releases the record, and rearms the MSI
+	cycle.read (dev->getBase() + ECA_CHANNEL_FAILED_COUNT_GET, EB_DATA32, &failed);
+	cycle.close();
 
-  ActionSink::Record out;
-  out.event    = uint64_t(event_hi)    << 32 | event_lo;
-  out.param    = uint64_t(param_hi)    << 32 | param_lo;
-  out.deadline = uint64_t(deadline_hi) << 32 | deadline_lo;
-  out.executed = uint64_t(executed_hi) << 32 | executed_lo;
-  out.count    = failed;
+	ActionSink::Record out;
+	out.event    = uint64_t(event_hi)    << 32 | event_lo;
+	out.param    = uint64_t(param_hi)    << 32 | param_lo;
+	out.deadline = uint64_t(deadline_hi) << 32 | deadline_lo;
+	out.executed = uint64_t(executed_hi) << 32 | executed_lo;
+	out.count    = failed;
 
-  //DRIVER_LOG("done",-1,failed);
-  return out;
+	//DRIVER_LOG("done",-1,failed);
+	return out;
 }
 
 bool ActionSink::updateLate() const
 {
-  //DRIVER_LOG("start",-1, -1);
-  Record r = fetchError(ECA_LATE);
-  lateCount += r.count;
-  lateUpdate = std::chrono::steady_clock::now();
-  //DRIVER_LOG("done",-1, -1);
-  return false;
+	//DRIVER_LOG("start",-1, -1);
+	Record r = fetchError(ECA_LATE);
+	lateCount += r.count;
+	lateUpdate = std::chrono::steady_clock::now();
+	//DRIVER_LOG("done",-1, -1);
+	return false;
 }
 
 bool ActionSink::updateEarly() const
 {
-  //DRIVER_LOG("start",-1, -1);
-  Record r = fetchError(ECA_EARLY);
-  earlyCount += r.count;
-  earlyUpdate = std::chrono::steady_clock::now();
-  //DRIVER_LOG("done",-1, -1);
-  return false;
+	//DRIVER_LOG("start",-1, -1);
+	Record r = fetchError(ECA_EARLY);
+	earlyCount += r.count;
+	earlyUpdate = std::chrono::steady_clock::now();
+	//DRIVER_LOG("done",-1, -1);
+	return false;
 }
 
 bool ActionSink::updateConflict() const
 {
-  //DRIVER_LOG("start",-1, -1);
-  Record r = fetchError(ECA_CONFLICT);
-  conflictCount += r.count;
-  conflictUpdate = std::chrono::steady_clock::now();
-  //DRIVER_LOG("done",-1, -1);
-  return false;
+	//DRIVER_LOG("start",-1, -1);
+	Record r = fetchError(ECA_CONFLICT);
+	conflictCount += r.count;
+	conflictUpdate = std::chrono::steady_clock::now();
+	//DRIVER_LOG("done",-1, -1);
+	return false;
 }
 
 bool ActionSink::updateDelayed() const
 {
-  //DRIVER_LOG("start",-1, -1);
-  Record r = fetchError(ECA_DELAYED);
-  delayedCount += r.count;
-  delayedUpdate = std::chrono::steady_clock::now();
-  //DRIVER_LOG("done",-1, -1);
-  return false;
+	//DRIVER_LOG("start",-1, -1);
+	Record r = fetchError(ECA_DELAYED);
+	delayedCount += r.count;
+	delayedUpdate = std::chrono::steady_clock::now();
+	//DRIVER_LOG("done",-1, -1);
+	return false;
 }
 
 // void ActionSink::removeCondition(Conditions::iterator i)
@@ -479,34 +479,46 @@ bool ActionSink::updateDelayed() const
 
 void ActionSink::compile()
 {
-  dev->compile();
+	dev->compile();
 }
+
+Condition *ActionSink::getCondition(const std::string object_path) {
+	for (auto &pair: conditions) {
+		auto number = pair.first;
+		auto cond   = pair.second.get();
+		if (cond->getObjectPath() == object_path) {
+			return cond;
+		}
+	}
+	return nullptr;
+}
+
 
 unsigned ActionSink::prepareCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey)//, ConditionConstructor constructor)
 {
 //   //ownerOnly();
 
-  // sanity check arguments
-  if (offset < minOffset || offset > maxOffset)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
-  if ((~mask & (~mask+1)) != 0)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
-  if ((id & mask) != id)
-    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
+	// sanity check arguments
+	if (offset < minOffset || offset > maxOffset)
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
+	if ((~mask & (~mask+1)) != 0)
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
+	if ((id & mask) != id)
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
 
-  // Pick a random number that is not already present in the map
-  unsigned number;
-  do {
-    number = random();
-  }
-  while (conditions.find(number) != conditions.end());
+	// Pick a random number that is not already present in the map
+	unsigned number;
+	do {
+		number = random();
+	}
+	while (conditions.find(number) != conditions.end());
 
 
 //   // Setup a destruction callback
 //   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &ActionSink::removeCondition), attempt.first);
 
 
-  return number;
+	return number;
 
 //   std::shared_ptr<Condition> condition;
 //   try {
@@ -522,7 +534,9 @@ unsigned ActionSink::prepareCondition(bool active, uint64_t id, uint64_t mask, i
 //     throw;
 //   }
 
-  //return condition->getObjectPath();
+	//return condition->getObjectPath();
 }
+
+
 
 }

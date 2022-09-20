@@ -161,6 +161,7 @@ namespace eb_plugin {
 		auto it = irqs.find(irq);
 		if (it == irqs.end()) {
 			// the requested address is still free
+			std::cerr << "attach irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
 			irqs[irq] = slot;
 			return true;
 		}

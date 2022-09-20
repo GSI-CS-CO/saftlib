@@ -38,7 +38,7 @@ class Condition
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
     Condition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
-    // ~Condition(); // unnecessary; ActionSink::removeCondition executes compile()
+    virtual ~Condition() = default; 
     
 
     /// @brief The event identifier which this condition matches against.
@@ -117,6 +117,8 @@ class Condition
     // @saftbus-export
     void setActive(bool val);
     
+
+    std::string &getObjectPath() { return objectPath; }
     
     
     // used by TimingReceiver and ActionSink

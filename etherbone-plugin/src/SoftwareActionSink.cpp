@@ -19,12 +19,11 @@
  */
 
 #include "SoftwareActionSink.hpp"
-// #include "SoftwareCondition.h"
 #include "TimingReceiver.hpp"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
-// #include "src/clog.h"
 
+#include "Condition.hpp"
 #include "SoftwareCondition.hpp"
 #include "SoftwareCondition_Service.hpp"
 
@@ -50,15 +49,17 @@ SoftwareActionSink::SoftwareActionSink(TimingReceiver *dev
 
 void SoftwareActionSink::receiveMSI(uint8_t code)
 {
-  std::cerr << "SoftwareActionSink::receiveMSI " << code << std::endl;
+  std::cerr << "SoftwareActionSink::receiveMSI " << (int)code << std::endl;
   // Intercept valid action counter increase
   if (code == ECA_VALID) {
+    std::cerr << "ECA_VALID" << std::endl;
     // DRIVER_LOG("MSI-ECA_VALID",-1, code);
     updateAction(); // increase the counter, rearming the MSI
     
     eb_data_t flags, rawNum, event_hi, event_lo, param_hi, param_lo, 
               tag, tef, deadline_hi, deadline_lo, executed_hi, executed_lo;
     
+    std::cerr << "read data" << std::endl;
     etherbone::Cycle cycle;
     cycle.open(dev->getDevice());
     cycle.read(queue + ECA_QUEUE_FLAGS_GET,       EB_DATA32, &flags);
@@ -75,6 +76,7 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
     cycle.read(queue + ECA_QUEUE_EXECUTED_LO_GET, EB_DATA32, &executed_lo);
     cycle.write(queue + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
     cycle.close();
+    std::cerr << "read done" << std::endl;
     
     uint64_t id       = uint64_t(event_hi)    << 32 | event_lo;
     uint64_t param    = uint64_t(param_hi)    << 32 | param_lo;
@@ -82,44 +84,58 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
     uint64_t executed = uint64_t(executed_hi) << 32 | executed_lo;
     
     if ((flags & (1<<ECA_VALID)) == 0) {
-      // clog << kLogErr << "SoftwareActionSink: MSI for increase in VALID_COUNT did not correspond to a valid action in the queue" << std::endl;
+      std::cerr << "SoftwareActionSink: MSI for increase in VALID_COUNT did not correspond to a valid action in the queue" << std::endl;
       return;
     }
     
     if (rawNum != num) {
-      // clog << kLogErr << "SoftwareActionSink: MSI dispatched to wrong queue" << std::endl;
+      std::cerr << "SoftwareActionSink: MSI dispatched to wrong queue" << std::endl;
       return;
     }
     
     // Emit the Action
-    // Conditions::iterator it = conditions.find(tag);
-    // if (it == conditions.end()) {
-    //   // This can happen if the user deletes a condition at the same time a match arrives
-    //   // => Just silently discard the action on this race condition
-    //   return;
-    // } 
+    Conditions::iterator it = conditions.find(tag);
+    if (it == conditions.end()) {
+      // This can happen if the user deletes a condition at the same time a match arrives
+      // => Just silently discard the action on this race condition
+      return;
+    } 
     
     // std::unique_ptr<SoftwareCondition> softwareCondition =
     //   std::dynamic_pointer_cast<SoftwareCondition>(it->second);
-    // // std::unique_ptr<SoftwareCondition> softwareCondition =
-    // //   std::unique_ptr<SoftwareCondition>::cast_dynamic(it->second);
-    // if (!softwareCondition) {
-    //   // clog << kLogErr << "SoftwareActionSink: a Condition was not a SoftwareCondition" << std::endl;
-    //   return;
-    // }
+      // std::unique_ptr<SoftwareCondition> softwareCondition =
+      //   std::unique_ptr<SoftwareCondition>::cast_dynamic(it->second);
+    if (!it->second) {
+      std::cerr << "SoftwareActionSink: a Condition was not a SoftwareCondition" << std::endl;
+      return;
+    }
     
     // DRIVER_LOG("deadline",-1, deadline);
     // DRIVER_LOG("id",      -1, id);
     // Inform clients
-    //softwareCondition->Action(id, param, deadline, executed, flags & 0xF);
-    // softwareCondition->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);
+    // softwareCondition->Action(id, param, deadline, executed, flags & 0xF);
+    std::cerr << "cast" << std::endl;
+    Condition* cond = it->second.get();
+    SoftwareCondition* sw_cond = dynamic_cast<SoftwareCondition*>(cond);
+    if (sw_cond->SigAction) {
+      std::cerr << "SigAction" << std::endl;
+      sw_cond->SigAction(id, param, eb_plugin::makeTimeTAI(deadline), eb_plugin::makeTimeTAI(executed), flags & 0xF);
+    } else {
+      std::cerr << "nothing connected to SigAction" << std::endl;
+    }
     
   } else {
+    std::cerr << "not ECA_VALID" << std::endl;
     // DRIVER_LOG("MSI-ECA_NOT_VALID",-1, code);
     // deal with the MSI the normal way
     ActionSink::receiveMSI(code);
   }
 }
+
+SoftwareCondition * SoftwareActionSink::getCondition(const std::string object_path) {
+  return dynamic_cast<SoftwareCondition*>(ActionSink::getCondition(object_path));
+}
+
 
 std::string SoftwareActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset)
 {

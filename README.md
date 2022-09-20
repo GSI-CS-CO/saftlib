@@ -2,7 +2,7 @@
 
 The saftbus backage provides 
   * a deamon that provides services which can be accessed through a UNIX domain socket. New services can be added by plugins at startup or during runtime of the daemon.
-  * a library that facilitates developments of plugins for the daemon.
+  * a library and a code generator that facilitates developments of plugins for the daemon.
   * a command line tool to control the daemon.
 
 The aim is to make the deamon itself realtime friendly. That means

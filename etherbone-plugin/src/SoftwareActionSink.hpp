@@ -30,6 +30,8 @@
 
 namespace eb_plugin {
 
+	class SoftwareCondition;
+
 	/// de.gsi.saftlib.SoftwareActionSink:
 	/// @brief An output through which software actions flow.
 	///
@@ -71,6 +73,8 @@ namespace eb_plugin {
 
 		// override receiveMSI to also pop the software queue
 		void receiveMSI(uint8_t code);
+
+		SoftwareCondition * getCondition(const std::string object_path);
 		
 	protected:
 		eb_address_t queue;

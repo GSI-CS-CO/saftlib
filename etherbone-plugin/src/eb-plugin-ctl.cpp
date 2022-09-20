@@ -1,51 +1,56 @@
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
+#include <SAFTd_Proxy.hpp>
+#include <TimingReceiver_Proxy.hpp>
+#include <SoftwareActionSink_Proxy.hpp>
+#include <SoftwareCondition_Proxy.hpp>
 
 #include <saftbus/client.hpp>
 #include <memory>
 #include <iostream>
 
+void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) {
+	std::cerr << "event " << event << " " 
+	          << "param " << param << " " 
+	          << "deadline " << deadline.getTAI() << " "
+	          << "executed " << executed.getTAI() << " " 
+	          << "flags " << flags << " "
+	          << std::endl;
+}
+
 int main(int argc, char **argv) {
+
+	if (argc != 3 ) {
+		std::cerr << "usage: " << argv[0] << " <name> <device>" << std::endl;
+		return 1;
+	}	
+
+	using namespace proxy;
+	using namespace standalone;
+
+	eb_plugin::SAFTd::create("/de/gsi/saftlib");
 
 	auto saftd = eb_plugin::SAFTd_Proxy::create("/de/gsi/saftlib");
 
-	std::string path;
-	if (argc == 3) {
-		path = saftd->AttachDevice(argv[1], argv[2]);
+	saftd->AttachDevice(argv[1], argv[2]);
+	for (auto &device: saftd->getDevices()) {
+		std::cerr << device.first << " " << device.second << std::endl;
 	}
 
-	if (argc == 2) {
-		saftd->RemoveDevice(argv[1]);
-	}
-
-	auto devices = saftd->getDevices();
-
-	for (auto &device: devices) {
-		std::cerr << device.first << " -> " << device.second << std::endl;
-	}
-
-	auto tr = eb_plugin::TimingReceiver_Proxy::create(path);
-	std::cerr << "gateware version: " << tr->getGatewareVersion() << std::endl;
-	std::cerr << "locked: " << tr->getLocked() << std::endl;
-	auto gateware_info = tr->getGatewareInfo();
-	std::cerr << "gateware_info: " << std::endl;
-	for(auto &pair: gateware_info) {
-		std::cerr << pair.first << " " << pair.second << std::endl;
-	}
+	auto tr = eb_plugin::TimingReceiver_Proxy::create(std::string("/de/gsi/saftlib/")+argv[1]);
 	auto sas_object_path = tr->NewSoftwareActionSink("");
 	std::cerr << "sas_object_path = " << sas_object_path << std::endl;
 
 	auto sas_proxy = eb_plugin::SoftwareActionSink_Proxy::create(sas_object_path);
 
-	auto cond_object_path = sas_proxy->NewCondition(true, 0x0, 0x0, 0x0);
+	auto condition_obj_path = sas_proxy->NewCondition(true, 0, 0xffffffffffffffff, 0);
+	std::cerr << "new Condition: " << condition_obj_path << std::endl; 
 
+	auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
+	cond_proxy->SigAction = &on_action;
 
-	auto core_service_proxy = saftbus::Container_Proxy::create();
-	saftbus::SaftbusInfo saftbus_info = core_service_proxy->get_status();
+	tr->InjectEvent(0,0,0);
 
-	if (argc == 1) {
-		saftd->Quit();
+	for (int i = 0; i < 5; ++i ) {
+		saftbus::SignalGroup::get_global().wait_for_signal(1000);		
 	}
 
 

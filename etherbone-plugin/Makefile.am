@@ -50,7 +50,7 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/TimingReceiver_Proxy.hpp
 
 
-bin_PROGRAMS = eb-plugin-ctl eb-standalone software-tr
+bin_PROGRAMS = eb-plugin-ctl eb-standalone software-tr soft-tr wait-msi
 eb_plugin_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@_proxy.la
 eb_plugin_ctl_SOURCES = src/eb-plugin-ctl.cpp 
 
@@ -62,6 +62,14 @@ software_tr_sdb_DATA = src/software-tr.sdb
 software_tr_sdbdir   = @datadir@/@PACKAGE@
 software_tr_LDADD    = $(EB_LIBS)
 software_tr_SOURCES  = src/software-tr.cpp 
+
+# another software timing receiver program
+soft_tr_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) -lsaftbus-standalone lib@PACKAGE@_service.la
+soft_tr_SOURCES  = src/soft-tr.cpp 
+
+# simple program to find out how to receive MSIs from soft-tr
+wait_msi_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) -lsaftbus-standalone lib@PACKAGE@_service.la
+wait_msi_SOURCES  = src/wait-msi.cpp 
 
 leapseconddir = $(datadir)/@PACKAGE@
 leapsecond_DATA = leap-seconds.list

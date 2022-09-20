@@ -142,16 +142,6 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 	device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
 	device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi_dev);
 
-	std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
-	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
-	          << std::dec
-	          << std::endl;
-
-	std::cerr << "mbox.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_first 
-	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_last
-	          << std::dec
-	          << std::endl;
-
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams_dev);
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos_dev);
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
@@ -165,6 +155,16 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 		|| pps_dev.size() != 1 || mbx_dev.size() != 1 || mbx_msi_dev.size() != 1) {
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has insuficient hardware resources");
 	}
+
+	std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
+	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
+	          << std::dec
+	          << std::endl;
+
+	std::cerr << "mbox.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_first 
+	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_last
+	          << std::dec
+	          << std::endl;
 
 	base      = ecas_dev[0].sdb_component.addr_first;
     stream    = (eb_address_t)streams_dev[0].sdb_component.addr_first;

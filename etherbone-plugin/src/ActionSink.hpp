@@ -441,6 +441,8 @@ class ActionSink
 		virtual void receiveMSI(uint8_t code);
 
 
+
+		Condition *getCondition(const std::string object_path);
 		
 	protected:
 		std::string object_path;
