@@ -1,7 +1,7 @@
-#include <SAFTd_Proxy.hpp>
-#include <TimingReceiver_Proxy.hpp>
-#include <SoftwareActionSink_Proxy.hpp>
-#include <SoftwareCondition_Proxy.hpp>
+#include <src/SAFTd_Proxy.hpp>
+#include <src/TimingReceiver_Proxy.hpp>
+#include <src/SoftwareActionSink_Proxy.hpp>
+#include <src/SoftwareCondition_Proxy.hpp>
 
 #include <saftbus/client.hpp>
 #include <memory>

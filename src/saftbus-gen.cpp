@@ -726,7 +726,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 }
 
 void move_file_if_not_identical(const std::string &source_file, const std::string &dest_file) {
-	if (dest_file != output_only_this_file) {
+	if (output_only_this_file != "" && dest_file != output_only_this_file) {
 		if (verbose) {
 			std::cerr << "skip file " << dest_file << std::endl;
 		}
