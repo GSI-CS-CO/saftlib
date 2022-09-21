@@ -16,7 +16,7 @@ void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plug
 	          << std::endl;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
 
 	if (argc != 3 ) {
 		std::cerr << "usage: " << argv[0] << " <name> <device>" << std::endl;
@@ -45,10 +45,10 @@ int main(int argc, char **argv) {
 
 	tr->InjectEvent(0,0,0);
 
+
+
 	for (int i = 0; i < 5; ++i ) {
 		saftbus::SignalGroup::get_global().wait_for_signal(1000);		
 	}
-
-
 	return 0;
 }

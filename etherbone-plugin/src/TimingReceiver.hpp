@@ -36,6 +36,49 @@ namespace eb_plugin {
 
 class SAFTd;
 class SoftwareActionSink;
+
+/// de.gsi.saftlib.TimingReceiver:
+/// @brief A timing receiver.
+/// @param saftd A pointer to a SAFTd object. The SAFTd object holds the etherbone socket
+///              on which the MSI arrive.
+/// @param name The logical name of the Timing receiver
+/// @param etherbone_path The etherbone path of the hardware
+/// @param container A pointer to a saftbus container. If an instance of TimingReceiver 
+///                  should run on a saftbus deamon, container must point to the saftbus::Container 
+///                  instance. If the TimingReceiver is used stand-alone, this pointer must be nullptr.
+///
+/// Timing receivers are attached to saftlib by specifying a name and an etherbone path.  The
+/// name should denote the logical relationship of the device to saftd. 
+/// For example, baseboard would be a good name for the timing receiver
+/// attached to an SCU.  If an exploder is being used to output events to
+/// an oscilloscope, a good logical name might be scope.  In these
+/// examples, the path for the SCU baseboard would be dev/wbm0, and the
+/// scope exploder would be dev/ttyUSB3 or similar.
+/// This scheme is intended to make it easy to hot-swap hardware. If the
+/// exploder dies, you can simply attach a new one under the same logical
+/// name, even though the path might be different.
+///
+/// Timing receivers can respond to timing events from the data master.
+/// The can also respond to external timing triggers via inputs.
+/// The general idea is that a TimingReceiver has ActionSinks to which it
+/// sends actions in response to incoming timing events. Timing events
+/// are matched with Conditions to create the Actions sent to the Sinks.
+/// EventSources are objects which create timing events, to be matched
+/// by the conditions. The data master is a global EventSource to which
+/// all TimingReceivers listen. However, external inputs can also be
+/// configured to generate timing events. Furthermore, a TimingReceiver
+/// can simulate the receipt of a timing event by calling the InjectEvent
+/// method.
+///
+/// Timing receivers always typically have binary outputs lines
+/// (OutputActionSinks), which are listed in the Outputs property. 
+/// Similarly, they often have digital inputs (InputEventSources).
+/// Some timing receivers have special purpose interfaces. For example,
+/// an SCU has the SCUbusActionSink which generates 32-bit messages over
+/// the SCU backplane. These special interfaces can be found in the
+/// interfaces property. The SCU backplane would be found under the
+/// SCUbusActionSink key, and as there is only one, it would be the 0th.
+///
 class TimingReceiver {
 public:
 	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, saftbus::Container *container = nullptr);
@@ -43,50 +86,179 @@ public:
 
 	const std::string &get_object_path() const;
 
+	/// @brief Remove the device from saftlib management.
+	///
 	// @saftbus-export
 	void Remove();
+
+	/// @brief The path through which the device is reached.
+	/// @return The path through which the device is reached.
+	///
 	// @saftbus-export
 	std::string getEtherbonePath() const;
+
+	/// @brief The logical name with which the device was connected.
+	/// @return The logical name with which the device was connected.
+	///
 	// @saftbus-export
 	std::string getName() const;
 
 
-
+	/// @brief        Create a new SoftwareActionSink.
+	/// @param name   A name for the SoftwareActionSink. Can be left blank.
+	/// @return       Object path to the created SoftwareActionSink.
+	///
+	/// SoftwareActionSinks allow a program to create conditions that match
+	/// incoming timing events.  These conditions may have callback methods
+	/// attached to them in order to receive notification.  The returned
+	/// path corresponds to a SoftwareActionSink that is owned by the
+	/// process which claimed it, and can thus be certain that no other
+	/// processes can interfere with the results.
+	///
 	// @saftbus-export
 	std::string NewSoftwareActionSink(const std::string& name);
+
+
+	/// @brief The method is depricated, use InjectEvent with saftlib::Time instead.
+	/// @param event The event identifier which is matched against Conditions
+	/// @param param The parameter field, whose meaning depends on the event ID.
+	/// @param time  The execution time for the event, added to condition offsets.
+	///
+	/// Simulate the receipt of a timing event
+	/// Sometimes it is useful to simulate the receipt of a timing event. 
+	/// This allows software to test that configured conditions lead to the
+	/// desired behaviour without needing the data master to send anything.
+	///
 	// @saftbus-export
 	void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
+
+
+	/// @brief        Simulate the receipt of a timing event
+	/// @param event  The event identifier which is matched against Conditions
+	/// @param param  The parameter field, whose meaning depends on the event ID.
+	/// @param time   The execution time for the event, added to condition offsets.
+	///
+	/// Sometimes it is useful to simulate the receipt of a timing event. 
+	/// This allows software to test that configured conditions lead to the
+	/// desired behaviour without needing the data master to send anything.
+	///
 	// @saftbus-export
 	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
+
+	/// @brief This method is deprecaded, use CurrentTime instead. 
+	/// @return         Nanoseconds since 1970.
+	///
+	/// The current time in nanoseconds since 1970.
+	/// Due to delays in software, the returned value is probably several
+	/// milliseconds behind the true time.
+	///
 	// // @saftbus-export
 	// uint64_t ReadCurrentTime();
+
+
+	/// @brief The current time of the timingreceiver.
+	/// @return     the current time of the timingreceiver
+	///
+	/// The result type is saftlib::Time, which can be used to obtain 
+	/// either the number of nanoseconds since 1970, or the same value
+	/// minus the current UTC offset.
+	/// Due to delays in software, the returned value is probably several
+	/// milliseconds behind the true time.
+	///
 	// // @saftbus-export
 	// saftlib::Time CurrentTime();
+
+	/// @brief Key-value map of hardware build information
+	/// @return Key-value map of hardware build information
+	///
 	// @saftbus-export
 	std::map< std::string, std::string > getGatewareInfo() const;
+
+	/// @brief Hardware build version
+	/// @return "major.minor.tiny" if version is valid (or "N/A" if not available)
+	///
 	// @saftbus-export
 	std::string getGatewareVersion() const;
 	
+	/// @brief The timing receiver is locked to the timing grandmaster.
+	/// @return The timing receiver is locked to the timing grandmaster.
+	///
+	/// Upon power-up it takes approximately one minute until the timing
+	/// receiver has a correct timestamp.
+	///
 	// @saftbus-export
 	bool getLocked() const;
+
+	/// @brief This signal is sent when the Lock Property changes
+	///
+	// @saftbus-signal
+	std::function<void(bool locked)> SigLocked;
 	
+
+	/// @brief Check if a temperature sensor is available
+	/// @return Check if a temperature sensor is available
+	///
+	/// in a timing receiver.
+	///
 	// // @saftbus-export
 	// bool getTemperatureSensorAvail() const;
+
+	/// @brief The current temperature in degree Celsius.
+	/// @return         Temperature in degree Celsius.
+	///
+	/// The valid temperature range is from -70 to 127 degree Celsius.
+	/// The data type is 32-bit signed integer.
+	///
 	// // @saftbus-export
 	// int32_t CurrentTemperature();
+
+
+	/// @brief A list of all current SoftwareActionSinks.
+	/// @return A list of all current SoftwareActionSinks.
+	///
+	/// Typically, these SoftwareActionSinks will be owned by their
+	/// processes and not of much interest to others.  Therefore, many of
+	/// the entries here may be of no interest to a particular client. 
+	/// However, it is possible for a SoftwareActionSink to be Disowned, in
+	/// which case it may be persistent and shared between programs under a
+	/// well known name.
+	///
 	// @saftbus-export
 	std::map< std::string, std::string > getSoftwareActionSinks() const;
+
+	/// @brief A list of all the high/low outputs on the receiver.
+	/// @return A list of all the high/low outputs on the receiver.
+	///
+	/// Each path refers to an object of type Output.	
+	///
 	// // @saftbus-export
 	// std::map< std::string, std::string > getOutputs() const;
+
+	/// @brief A list of all the high/low inputs on the receiver.
+	/// @return  A list of all the high/low inputs on the receiver.
+	///
+	/// Each path refers to an object of type Input.	
+	///
 	// // @saftbus-export
 	// std::map< std::string, std::string > getInputs() const;
+
+	/// @brief List of all object instances of various hardware.
+	/// @return List of all object instances of various hardware.
+	///
+	/// The key in the dictionary is the name of the interface.
+	/// The value is all object paths to hardware implementing that interface.	
+	///
 	// // @saftbus-export
 	// std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
+
+	/// @brief The number of additional conditions that may be activated.
+	/// @return The number of additional conditions that may be activated.
+	///
+	/// The ECA has limited hardware resources in its match table.	
+	///
 	// // @saftbus-export
 	// uint32_t getFree() const;
 
-	// @saftbus-signal
-	std::function<void(bool locked)> SigLocked;
 
 
 	// Compile the condition table
