@@ -3,6 +3,7 @@
 #include "make_unique.hpp"
 #include "plugins.hpp"
 #include "loop.hpp"
+#include "error.hpp"
 
 #include <string>
 #include <map>
@@ -19,6 +20,7 @@ namespace saftbus {
 		std::vector<std::string> interface_names;
 		std::string object_path;
 		unsigned object_id;
+		std::function<void()> destruction_callback; // a funtion can be attatched here that is called whenever the service is destroyed
 		void remove_signal_fd(int fd);
 		~Impl()  {
 			std::cerr << "Service::~Impl()" << std::endl;
@@ -31,7 +33,8 @@ namespace saftbus {
 		ServerConnection *connection;
 		std::map<unsigned, std::unique_ptr<Service> > objects; // Container owns the Service objects
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
-		Impl(ServerConnection *con) : connection(con) {}
+		Service *active_service; // this is set only during the call_service function
+		Impl() {}
 		~Impl()  {
 			std::cerr << "Container::~Impl()" << std::endl;
 		}
@@ -47,13 +50,17 @@ namespace saftbus {
 	};
 
 
-	Service::Service(const std::vector<std::string> &interface_names) 
+	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback)
 		: d(std2::make_unique<Impl>())
 	{
 		d->owner = -1;
 		d->interface_names = interface_names;
+		d->destruction_callback = destruction_callback;
 	}
 	Service::~Service() {
+		if (d->destruction_callback) {
+			d->destruction_callback();
+		}
 		std::cerr << "~Service " << d->object_path << std::endl;
 	}
 
@@ -294,10 +301,12 @@ namespace saftbus {
 	}
 
 	Container::Container(ServerConnection *connection) 
-		: d(std2::make_unique<Impl>(connection))
+		: d(std2::make_unique<Impl>())
 	{
 		unsigned object_id = create_object("/saftbus", std::move(std::unique_ptr<Container_Service>(new Container_Service(this))));
 		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
+		d->connection = connection;
+		d->active_service = nullptr;
 	}
 
 	Container::~Container() 
@@ -389,7 +398,9 @@ namespace saftbus {
 			return false;
 		}
 		auto &service = find_result->second;
+		d->active_service = service.get();
 		service->call(client_fd, received, send);
+		d->active_service = nullptr;
 		return true;
 	}
 
@@ -401,8 +412,21 @@ namespace saftbus {
 		}
 	}
 
-	void Container::client_hung_up(int fd) {
 
+	// define this operator to find a Service based on owner 
+	bool operator==(std::pair<const unsigned int, std::unique_ptr<saftbus::Service> > &p, const int fd) {
+		return p.second->d->owner == fd;
+	}
+	void Container::client_hung_up(int fd) {
+		std::cerr << "Container::client_hung_up(" << fd << ")" << std::endl;
+		for(;;) {
+			auto iter = std::find(d->objects.begin(), d->objects.end(), fd);
+			if (iter == d->objects.end()) {
+				break;
+			}
+			std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
+			remove_object(iter->second->get_object_path());
+		} 
 	}
 
 
@@ -437,6 +461,29 @@ namespace saftbus {
 
 	void Container::quit() {
 		saftbus::Loop::get_default().quit();
+	}
+
+	int Container::get_calling_client_id() {
+		return d->connection->get_calling_client_id();
+	}
+	void Container::set_owner() {
+		if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
+		}
+		d->active_service->d->owner = get_calling_client_id();
+	}
+	void Container::release_owner() {
+		if (d->active_service->d->owner == -1) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
+		}
+		owner_only();
+		d->active_service->d->owner = -1;
+	}
+	void Container::owner_only() {
+		//if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) { // original saftlib behavior
+		if (d->active_service->d->owner != get_calling_client_id()) {                                   // doesn't this make more sense?
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
+		}
 	}
 
 

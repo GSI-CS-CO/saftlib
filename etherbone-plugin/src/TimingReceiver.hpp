@@ -81,7 +81,8 @@ class SoftwareActionSink;
 ///
 class TimingReceiver {
 public:
-	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, saftbus::Container *container = nullptr);
+	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, 
+		           saftbus::Container *container = nullptr);
 	~TimingReceiver();
 
 	const std::string &get_object_path() const;

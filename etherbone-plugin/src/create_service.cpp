@@ -23,7 +23,7 @@ void destroy_service(saftbus::Service *service) {
 extern "C" 
 std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_services(saftbus::Container *container) {
 	saftd         = std::move(std::unique_ptr<eb_plugin::SAFTd>(new eb_plugin::SAFTd(container)));
-	saftd_service = new eb_plugin::SAFTd_Service(saftd.get(), &destroy_service);
+	saftd_service = new eb_plugin::SAFTd_Service(saftd.get(), std::bind(&destroy_service, saftd_service));
 
 	std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > services;
 	services.push_back(std::make_pair(

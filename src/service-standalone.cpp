@@ -23,7 +23,7 @@ namespace saftbus {
 	};
 
 
-	Service::Service(const std::vector<std::string> &interface_names) 
+	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback) 
 	{
 		assert(false);
 	}
@@ -137,6 +137,20 @@ namespace saftbus {
 	{
 		assert(false);
 		return true;
+	}
+
+	int Container::get_calling_client_id() {
+		assert(false);
+		return -1;
+	}
+	void Container::set_owner() {
+		assert(false);
+	}
+	void Container::release_owner() {
+		assert(false);
+	}
+	void Container::owner_only() {
+		assert(false);
 	}
 
 	void Container::clear() {

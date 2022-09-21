@@ -131,7 +131,6 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
 	}
 
-
 	stat(etherbone_path.c_str(), &dev_stat);
 	device.open(sd->get_etherbone_socket(), etherbone_path.c_str());
 
@@ -537,6 +536,12 @@ static inline bool not_isalnum_(char c)
 
 std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 {
+	if (container) {
+		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
+		container->set_owner();
+		std::cerr << "set owner" << std::endl;
+	}
+
 	if (ECA_LINUX_channel == nullptr) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
 	}

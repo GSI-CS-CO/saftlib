@@ -29,6 +29,8 @@ namespace saftbus {
 		void register_signal_id_for_client(int client_id, int signal_id);
 		void unregister_signal_id_for_client(int client_id, int signal_id);
 
+		int get_calling_client_id();
+
 		struct ClientInfo {
 			pid_t process_id;
 			int client_fd;

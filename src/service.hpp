@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace saftbus {
 
@@ -15,8 +16,9 @@ namespace saftbus {
 		struct Impl; std::unique_ptr<Impl> d;
 		friend class Container;
 		friend class Container_Service;
+		friend bool operator==(std::pair<const unsigned int, std::unique_ptr<saftbus::Service> > &p, const int fd);
 	public:
-		Service(const std::vector<std::string> &interface_names);
+		Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback = std::function<void()>() );
 		bool get_interface_name2no_map(const std::vector<std::string> &interface_names, std::map<std::string, int> &interface_name2no_map);
 		void call(int client_fd, Deserializer &received, Serializer &send);
 		virtual ~Service();
@@ -64,6 +66,12 @@ namespace saftbus {
 
 		// @saftbus-export
 		bool load_plugin(const std::string &so_filename);
+
+		// these can be called whenever a client request ist handled
+		int get_calling_client_id();
+		void set_owner();
+		void release_owner();
+		void owner_only();
 
 		void clear();
 	};

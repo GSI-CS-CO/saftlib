@@ -59,7 +59,8 @@ namespace saftbus {
 		std::vector<std::unique_ptr<Client> > clients;
 		Serializer   send;
 		Deserializer received;
-		Impl(ServerConnection *connection) : container_of_services(connection) {}
+		int calling_client_id; // this is set to the client id as long as a client request is handled
+		Impl(ServerConnection *connection) : container_of_services(connection), calling_client_id(-1) {}
 		~Impl() {
 			std::cerr << "ServerConnection::~Impl()" << std::endl;
 		}
@@ -98,6 +99,14 @@ namespace saftbus {
 	}
 
 	bool ServerConnection::Impl::handle_client_request(int fd, int condition) {
+		// The calling_client_id should be reset to -1 at end of scope.
+		// This anonymous struct guarantees that this is the case
+		struct ClientID {
+			int &ref;
+			ClientID(int &id_ref, int id_value) : ref(id_ref) { id_ref = id_value; }
+			~ClientID() { ref = -1; }
+		} ccid(calling_client_id, fd); 
+
 		if (condition & (POLLIN|POLLHUP) ) {
 			bool read_result = received.read_from(fd);
 			if (!read_result) {
@@ -110,6 +119,7 @@ namespace saftbus {
 					// auto client = clients.find(fd);
 					auto removed_client = std::find(clients.begin(), clients.end(), fd);
 					if (removed_client == clients.end()) { 
+						calling_client_id = -1;
 						assert(false);
 					} else {
 						// remove all signal fds associated with this client from all services
@@ -222,6 +232,13 @@ namespace saftbus {
 			(*client)->release_signal_fd(signal_fd);
 		}
 	}
+
+	int ServerConnection::get_calling_client_id() {
+		return d->calling_client_id;
+	}
+	void set_owner();
+	void release_owner();
+	void owner_only();
 
 
 }
