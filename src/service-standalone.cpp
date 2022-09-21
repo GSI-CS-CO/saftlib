@@ -106,11 +106,11 @@ namespace saftbus {
 		assert(false);
 		return false;
 	}
-	bool Container::remove_object_delayed(const std::string &object_path)
-	{
-		assert(false);
-		return false;
-	}
+	// bool Container::remove_object_delayed(const std::string &object_path)
+	// {
+	// 	assert(false);
+	// 	return false;
+	// }
 
 	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
 	{

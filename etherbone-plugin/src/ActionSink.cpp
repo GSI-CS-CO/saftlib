@@ -96,6 +96,15 @@ ActionSink::~ActionSink()
 	saftbus::Loop::get_default().remove(delayedPending);
 	std::cerr << "~ActionSink done " << std::endl;
 
+	if (container) {
+		for (auto &cond: conditions) {
+			Condition *condition = cond.second.get();
+			if (condition) {
+				container->remove_object(condition->getObjectPath());
+			}
+		}
+	}
+
 	// No need to recompile; done in TimingReceiver.cpp
 }
 

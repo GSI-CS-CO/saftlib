@@ -48,7 +48,7 @@ namespace eb_plugin {
 		if (container) {
 			for (auto &device: attached_devices) {
 				std::cerr << "  remove " << device.second->get_object_path() << std::endl;
-				container->remove_object_delayed(device.second->get_object_path());
+				container->remove_object(device.second->get_object_path());
 			}
 		}
 		std::cerr << "attached_devices.clear()" << std::endl;
@@ -126,7 +126,7 @@ namespace eb_plugin {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 		}
 		if (container) {
-			container->remove_object_delayed(device->second->get_object_path());
+			container->remove_object(device->second->get_object_path());
 		}
 		attached_devices.erase(device);
 	}

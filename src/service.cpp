@@ -340,11 +340,11 @@ namespace saftbus {
 		d->object_path_lookup_table.erase(object_path);
 		return false;
 	}
-	bool Container::remove_object_delayed(const std::string &object_path)
-	{
-		Loop::get_default().connect<TimeoutSource>(std::bind(&Container::remove_object,this, object_path), std::chrono::milliseconds(1));
-		return false;
-	}
+	// bool Container::remove_object_delayed(const std::string &object_path)
+	// {
+	// 	Loop::get_default().connect<TimeoutSource>(std::bind(&Container::remove_object,this, object_path), std::chrono::milliseconds(1));
+	// 	return false;
+	// }
 
 
 	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
@@ -401,6 +401,11 @@ namespace saftbus {
 		}
 	}
 
+	void Container::client_hung_up(int fd) {
+
+	}
+
+
 	bool Container::load_plugin(const std::string &so_filename) {
 		std::cerr << "loading " << so_filename << std::endl;
 		bool plugin_available = false;
@@ -428,6 +433,10 @@ namespace saftbus {
 			}
 		}
 		return plugin_available;
+	}
+
+	void Container::quit() {
+		saftbus::Loop::get_default().quit();
 	}
 
 

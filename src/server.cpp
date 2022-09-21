@@ -119,6 +119,9 @@ namespace saftbus {
 						}
 						clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
 					}
+					// tell the container that a client hung up
+					// the container hast to remove all services previously owned by this client
+					container_of_services.client_hung_up(fd);
 					std::cerr << "clients.size() " << clients.size() << std::endl;
 					return false;
 				}

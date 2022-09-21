@@ -414,7 +414,7 @@ TimingReceiver::~TimingReceiver()
 			for (auto &actionSink: channel) {
 				if (actionSink) {
 					std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
-					container->remove_object_delayed(actionSink->getObjectPath());
+					container->remove_object(actionSink->getObjectPath());
 				}
 			}
 		}
