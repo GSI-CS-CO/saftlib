@@ -109,16 +109,27 @@ namespace saftbus {
 
 
 
-	// Container of all Services provided by mini-saftlib.
+	/// @brief A Container of Service objects.
+	///
+	/// Classes derived from Service can be stored here. One instance of Container is hold by 
+	/// the Connection object and all Service objects are available for remote Proxy objects to 
+	/// register and execute function calls through the Connection.
 	class Container {
 		struct Impl; std::unique_ptr<Impl> d;
 		friend class Container_Service;
 	public:
+		/// @brief create a Container for saftbus::Service objects
+		///
+		/// @param connection The Connection object that owns the Container
 		Container(ServerConnection *connection);
 		~Container();
-		// insert an object and return the saftlib_object_id for this object
-		// return 0 in case the object_path is unknown
+		/// @brief Insert a Service object and return the saftlib_object_id for this object
+		/// @param object_path the object path under which the Service object is available to Proxy objects.
+		/// @param service A Service object
+		/// @return 0 in case the object_path is already used by another Service object. 
+		///         The object_id if the Service object was successfully inserted into the Container
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
+
 		// @saftbus-export
 		void quit();
 		bool remove_object(const std::string &object_path);
@@ -128,7 +139,7 @@ namespace saftbus {
 		// return 0 if object_path was not found
 		// return -1 if object_path was found but not all requested interfaces are implmented by the object
 		// @saftbus-export
-		int register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd);
+		int register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string,int> &interface_name2no_map, int client_fd, int signal_group_fd);
 
 		// @saftbus-export
 		void unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd);

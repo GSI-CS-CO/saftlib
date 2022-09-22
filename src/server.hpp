@@ -34,7 +34,7 @@ namespace saftbus {
 		struct ClientInfo {
 			pid_t process_id;
 			int client_fd;
-			struct SignalFD{
+			struct SignalFD {
 				int fd;
 				int use_count;
 			};

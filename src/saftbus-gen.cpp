@@ -133,7 +133,7 @@ static std::string build_namespace(const std::vector<std::string> namespace_name
 }
 
 void manage_scopes(const std::string &line, std::vector<std::string> &scope, std::string &latest_name) {
-
+	// std::cerr << scope.size() << ": " << line << std::endl;
 	for (size_t i = 0; i < line.size(); ++i) {
 		if (line[i] == '{') {
 			scope.push_back(latest_name);
@@ -157,6 +157,9 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			if (!in) {
 				throw std::runtime_error("identifier expected after \'namespace\'");
 			}
+			if (name.find('{') != name.npos) {
+				throw std::runtime_error("please insert whitespace before \"{\" in \"" + name + "\"");
+			}
 			i += 9 + name.size();
 			if (line.find(';') == line.npos && line.find("friend") == line.npos) {
 				latest_name = name;
@@ -170,6 +173,9 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			if (!in) {
 				throw std::runtime_error("identifier expected after \'class\'");
 			}
+			if (name.find('{') != name.npos) {
+				throw std::runtime_error("please insert whitespace before \"{\" in \"" + name + "\"");
+			}
 			i += 5 + name.size();
 			if (line.find(';') == line.npos && line.find("friend") == line.npos) {
 				latest_name = name;
@@ -182,6 +188,9 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			in >> name;
 			if (!in) {
 				throw std::runtime_error("identifier expected after \'struct\'");
+			}
+			if (name.find('{') != name.npos) {
+				throw std::runtime_error("please insert whitespace before \"{\" in \"" + name + "\"");
 			}
 			i += 6 + name.size();
 			if (line.find(';') == line.npos && line.find("friend") == line.npos) {
@@ -232,11 +241,14 @@ struct FunctionArgument {
 	}
 };
 
-std::vector<FunctionArgument> split(std::string argument_list) {
+std::vector<FunctionArgument> split_arguments(std::string argument_list) {
 	std::vector<FunctionArgument> result;
 	std::string buffer;
+	int scope = 0; // count the nesting level of < ... > where commas do not separate arguments
 	for (auto &ch: argument_list) {
-		if (ch == ',') {
+		if (ch == '<') ++scope;
+		if (ch == '>') --scope;
+		if (ch == ',' && scope == 0) {
 			result.push_back(FunctionArgument(strip(buffer)));
 			buffer.clear();
 		} else {
@@ -260,7 +272,7 @@ struct FunctionSignature {
 	{
 		auto paranthesis_open = line.find('(');
 		auto paranthesis_close = line.find(')');
-		argument_list = split(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
+		argument_list = split_arguments(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
 		std::string returntype_and_name = line.substr(0,paranthesis_open);
 		auto name_start = returntype_and_name.find_last_of(" &");
 		name        = strip(line.substr(name_start+1,paranthesis_open-name_start-1));
@@ -291,7 +303,7 @@ struct SignalSignature {
 		auto paranthesis_close = line.find(')');
 		auto template_close = line.find('>');
 		auto semicolon = line.find(';');
-		argument_list = split(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
+		argument_list = split_arguments(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
 		name = strip(line.substr(template_close+1,semicolon-template_close-1));
 	}
 	void print() {
@@ -493,7 +505,13 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		remove_block_comments(line,block_comment);
 
 		// track scope level
-		manage_scopes(line, scope, latest_scope_name);
+		try {
+			manage_scopes(line, scope, latest_scope_name);
+		} catch (std::runtime_error &e) {
+			std::ostringstream msg;
+			msg << "parsing error in " << source_name << ":" << line_no << ": " << e.what();
+			throw std::runtime_error(msg.str());
+		}
 		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
 
 		// extract signal or function signature
@@ -901,11 +919,11 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 
 	for (unsigned interface_no = 0; interface_no < class_and_all_base_classes.size(); ++interface_no) {
 
-		out << "\t\t\t" << "case " << interface_no << ": " << std::endl;
+		out << "\t\t\t" << "case " << interface_no << ": // " << class_and_all_base_classes[interface_no]->name << std::endl;
 		out << "\t\t\tswitch(function_no) {" << std::endl;
 		for (unsigned function_no  = 0; function_no  < class_and_all_base_classes[interface_no]->exportedfunctions.size(); ++function_no ) {
 			auto &function = class_and_all_base_classes[interface_no]->exportedfunctions[function_no];
-			out << "\t\t\t\t" << "case " << function_no << ": {" << std::endl;
+			out << "\t\t\t\t" << "case " << function_no << ": { // " << class_and_all_base_classes[interface_no]->name << "::" << function.name << std::endl;
 			for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 				std::string type = function.argument_list[i].type;
 				if (type.find("&") != type.npos) { // remove the reference from type signature (remove the "&")

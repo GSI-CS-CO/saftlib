@@ -223,29 +223,6 @@ namespace saftbus {
 					// received.get(object_path);
 					std::cerr << "loading " << so_filename << std::endl;
 					bool plugin_available = d->container->load_plugin(so_filename);
-					// auto plugin = d->plugins.find(lib_name);
-					// if (plugin != d->plugins.end()) {
-					// 	std::cerr << "plugin found" << std::endl;
-					// 	plugin_available = true;
-					// } else {
-					// 	auto insertion_result = d->plugins.insert(std::make_pair(lib_name, std::move(std2::make_unique<LibraryLoader>(lib_name))));
-					// 	if (insertion_result.second) {
-					// 		std::cerr << "plugin inserted" << std::endl;
-					// 		plugin = insertion_result.first;
-					// 		plugin_available = true;
-					// 	} else {
-					// 		std::cerr << "plugin insertion failed" << std::endl;
-					// 	}
-					// }
-					// if (plugin_available) {
-					// 	std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(d->container);
-					// 	for (auto &object_path_and_service: services) {
-					// 		std::string              &object_path = object_path_and_service.first;
-					// 		std::unique_ptr<Service> &service     = object_path_and_service.second;
-					// 		unsigned object_id = d->container->create_object(object_path, std::move(service));
-					// 		std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
-					// 	}
-					// }
 					send.put(plugin_available);
 				}
 				break;
