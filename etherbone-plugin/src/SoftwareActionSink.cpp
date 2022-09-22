@@ -38,7 +38,7 @@ SoftwareActionSink::SoftwareActionSink(TimingReceiver *dev
                                       , const std::string &name
                                       , unsigned channel, unsigned num, eb_address_t queue_address
                                       , saftbus::Container *container)
-  : ActionSink(dev, name, channel, num, container), queue(queue_address)
+  : Owned(container), ActionSink(dev, name, channel, num, container), queue(queue_address)
 {}
 
 
@@ -147,7 +147,7 @@ std::string SoftwareActionSink::NewCondition(bool active, uint64_t id, uint64_t 
   std::cerr << "SoftwareActionSink::NewCondition" << std::endl;
   if (container) {
     std::cerr << "have a container" << std::endl;
-    std::unique_ptr<SoftwareCondition_Service> service(new SoftwareCondition_Service(software_condition.get()));
+    std::unique_ptr<SoftwareCondition_Service> service(new SoftwareCondition_Service(software_condition.get(), std::bind(&ActionSink::removeCondition, this, number)));
     container->create_object(path.str(), std::move(service));
   }
   conditions[number] = std::move(software_condition);

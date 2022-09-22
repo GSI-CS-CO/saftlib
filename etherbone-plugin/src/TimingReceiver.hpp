@@ -166,7 +166,7 @@ public:
 	/// Due to delays in software, the returned value is probably several
 	/// milliseconds behind the true time.
 	///
-	// // @saftbus-export
+	// @saftbus-export
 	// saftlib::Time CurrentTime();
 
 	/// @brief Key-value map of hardware build information
@@ -278,6 +278,7 @@ public:
 
 	SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
 
+	void removeSowftwareActionSink(SoftwareActionSink *sas);
 private:
 
 	void setHandler(unsigned channel, bool enable, eb_address_t address);

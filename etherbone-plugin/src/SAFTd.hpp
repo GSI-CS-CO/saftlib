@@ -107,6 +107,7 @@ namespace eb_plugin {
 		TimingReceiver* getTimingReceiver(const std::string &object_path);
 
 	private:
+		void RemoveObject(const std::string& name);
 
 		// The sdb structure for this "virtual" etherbone device
 		sdb_device eb_slave_sdb;

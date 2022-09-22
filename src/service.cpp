@@ -148,6 +148,7 @@ namespace saftbus {
 		, d(std2::make_unique<Impl>())
 	{
 		d->container = container;
+		//Service::d->owner = 0; // special case. owner 0 should not appear as client id.
 		// Loop::get_default().connect<saftbus::TimeoutSource>(
 		// 	std::bind(&Container_Service::emit_periodical_signal, this), std::chrono::milliseconds(1000)
 		// );
@@ -314,6 +315,9 @@ namespace saftbus {
 
 	bool Container::remove_object(const std::string &object_path)
 	{
+		if (object_path == "/saftbus") {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "cannot remove /saftbus");
+		}
 		std::cerr << "remove_object " << object_path << " now" << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
@@ -444,22 +448,34 @@ namespace saftbus {
 		return d->connection->get_calling_client_id();
 	}
 	void Container::set_owner() {
-		if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) {
+		if (d->active_service) {
+			if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) {
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
+			}
+			d->active_service->d->owner = get_calling_client_id();
+		}
+	}
+	void Container::set_owner(Service *s) {
+		if (s->d->owner != -1 && s->d->owner != get_calling_client_id()) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
 		}
-		d->active_service->d->owner = get_calling_client_id();
+		s->d->owner = get_calling_client_id();
 	}
 	void Container::release_owner() {
-		if (d->active_service->d->owner == -1) {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
+		if (d->active_service) {
+			if (d->active_service->d->owner == -1) {
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
+			}
+			owner_only();
+			d->active_service->d->owner = -1;
 		}
-		owner_only();
-		d->active_service->d->owner = -1;
 	}
 	void Container::owner_only() {
-		//if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) { // original saftlib behavior
-		if (d->active_service->d->owner != get_calling_client_id()) {                                   // doesn't this make more sense?
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
+		if (d->active_service) {
+			//if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) { // original saftlib behavior
+			if (d->active_service->d->owner != get_calling_client_id()) {                                   // doesn't this make more sense?
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
+			}
 		}
 	}
 

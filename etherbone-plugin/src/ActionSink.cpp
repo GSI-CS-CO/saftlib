@@ -31,6 +31,7 @@
 #include <saftbus/error.hpp>
 
 #include <sstream>
+#include <cassert>
 
 namespace eb_plugin {
 
@@ -97,12 +98,12 @@ ActionSink::~ActionSink()
 	std::cerr << "~ActionSink done " << std::endl;
 
 	if (container) {
-		for (auto &cond: conditions) {
-			Condition *condition = cond.second.get();
-			if (condition) {
-				container->remove_object(condition->getObjectPath());
-			}
+		while (conditions.size()) {
+			container->remove_object(conditions.begin()->second->getObjectPath());
 		}
+		assert(conditions.size() == 0);
+	} else {
+		conditions.clear();
 	}
 
 	// No need to recompile; done in TimingReceiver.cpp
@@ -475,16 +476,21 @@ bool ActionSink::updateDelayed() const
 	return false;
 }
 
-// void ActionSink::removeCondition(Conditions::iterator i)
-// {
-//   bool active = i->second->getActive();
-//   conditions.erase(i);
-//   try {
-//     if (active) dev->compile();
-//   } catch (...) {
-//     //clog << kLogErr << "Failed to recompile after removing condition (should be impossible)" << std::endl;
-//   }
-// }
+void ActionSink::removeCondition(uint32_t number)
+{
+	auto found = conditions.find(number);
+	if (found != conditions.end()) {
+		bool active = found->second->getActive();
+		conditions.erase(found);
+		try {
+			if (active) dev->compile();
+		} catch (...) {
+			std::cerr << "Failed to recompile after removing condition (should be impossible)" << std::endl;
+		}
+	} else {
+		std::cerr << "ActionSink::removeCondition no condition with number " << number << " found" << std::endl;
+	}
+}
 
 void ActionSink::compile()
 {

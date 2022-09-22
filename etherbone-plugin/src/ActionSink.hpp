@@ -444,6 +444,9 @@ class ActionSink
 
 		Condition *getCondition(const std::string object_path);
 		
+		// Useful for Condition destroy methods
+		void removeCondition(uint32_t number);
+		
 	protected:
 		std::string object_path;
 		TimingReceiver* dev;
@@ -504,8 +507,6 @@ class ActionSink
 		// conditions must come after dev to ensure safe cleanup on ~Condition
 		Conditions conditions;
 		
-		// Useful for Condition destroy methods
-		// void removeCondition(Conditions::iterator i);
 
 		saftbus::Container *container;
 };

@@ -157,11 +157,14 @@ namespace saftbus {
 		// these can be called whenever a client request ist handled
 		int get_calling_client_id();
 		void set_owner();
+		void set_owner(Service *);
 		void release_owner();
 		void owner_only();
 
 		void clear();
+
 	};
+
 
 	class ServerConnection;
 	// A Service to access the Container of Services

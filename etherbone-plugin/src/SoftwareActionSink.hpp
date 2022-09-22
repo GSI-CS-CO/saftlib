@@ -26,6 +26,7 @@
 #define __STDC_CONSTANT_MACROS
 #include <etherbone.h>
 
+#include "Owned.hpp"
 #include "ActionSink.hpp"
 
 namespace eb_plugin {
@@ -46,7 +47,7 @@ namespace eb_plugin {
 	/// If two SoftwareConditions are created on the same SoftwareActionSink
 	/// which require simultaneous delivery of two Actions, then they will be
 	/// delivered in arbitrary order, both having the 'conflict' flag set.
-	class SoftwareActionSink : public ActionSink {
+	class SoftwareActionSink : public Owned , public ActionSink {
 	public:
 		SoftwareActionSink(TimingReceiver *dev
 			             , const std::string &name

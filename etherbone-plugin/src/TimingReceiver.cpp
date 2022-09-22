@@ -124,6 +124,8 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 	, name(n)
 	, etherbone_path(eb_path)
 	, container(cont)
+	, sas_count(0)
+	, locked(false)
 {
 	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
 
@@ -236,7 +238,7 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 	// Configure the non-IO action sinks, creating objects and clearing status
 	// for (unsigned i = 1; i < channels; ++i) {
 	ECA_LINUX_channel = nullptr; // initialize with null, if a ECA_LINUX_channel is found this will point to it
-
+	ECA_LINUX_channel_index = -1;
 	for (unsigned channel_idx = 1; channel_idx < channels; ++channel_idx) {
 		cycle.open(device);
 		cycle.write(base + ECA_CHANNEL_SELECT_RW,    EB_DATA32, channel_idx);
@@ -259,6 +261,7 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 				}
 				// Take a pointer the the first Linux facing queue
 				if (ECA_LINUX_channel == nullptr) {
+					ECA_LINUX_channel_index = channel_idx;
 					ECA_LINUX_channel = &ECAchannels[channel_idx];
 					ECA_LINUX_channel_subchannels = raw_max_num;
 					ECA_LINUX_channel->reserve(raw_max_num); // allocate enough memory for all hareware resources
@@ -538,19 +541,21 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 {
 	if (container) {
 		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
-		container->set_owner();
-		std::cerr << "set owner" << std::endl;
 	}
 
+	std::cerr << "A" << std::endl;
 	if (ECA_LINUX_channel == nullptr) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
 	}
+	std::cerr << "A" << std::endl;
 	if (ECA_LINUX_channel->size() >= ECA_LINUX_channel_subchannels) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "All available Linux facing ECA subchannels are already in use");
 	}
+	std::cerr << "A" << std::endl;
 
 	// build a name. For SoftwareActionSinks it always starts with "software/<name>"
 	std::string name("software/");
+	std::cerr << "A" << std::endl;
 	if (name_ == "") {
 		// if no name is provided, we generate one 
 		std::string seq;
@@ -559,6 +564,7 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 		str << "_" << ++sas_count;
 		seq = str.str();
 		name.append(seq);
+	std::cerr << "A" << std::endl;
 	} else {
 		if (name_[0] == '_') {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
@@ -572,21 +578,38 @@ std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
 		}
 		name.append(name_);
+	std::cerr << "A" << std::endl;
 	}
   
+	std::cerr << "A" << std::endl;
 	unsigned channel = ECA_LINUX_channel_index;
-	unsigned num     = ECA_LINUX_channel->size();
+	std::cerr << "A" << std::endl;
+	unsigned num     = ECA_LINUX_channel->size(); 
+  	std::cerr << "channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
+	std::cerr << "A" << std::endl;
 	eb_address_t address = queue_addresses[channel];
+	std::cerr << "A" << std::endl;
 
 	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(this, name, channel, num, address, container));
 	std::string sink_object_path = software_action_sink->getObjectPath();
 	if (container) {
-		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get()));
+		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&TimingReceiver::removeSowftwareActionSink,this, software_action_sink.get())));
+		container->set_owner(service.get());
 		container->create_object(sink_object_path, std::move(service));
 	}
 	ECA_LINUX_channel->push_back(std::move(software_action_sink));
-  
+	std::cerr << "A" << std::endl;
+
 	return sink_object_path;
+}
+
+bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
+	return up.get() == p;
+}
+void TimingReceiver::removeSowftwareActionSink(SoftwareActionSink *sas) {
+	ActionSink *as = sas;
+	ECA_LINUX_channel->erase(std::remove(ECA_LINUX_channel->begin(), ECA_LINUX_channel->end(), as),
+		                     ECA_LINUX_channel->end());
 }
 
 

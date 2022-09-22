@@ -55,8 +55,13 @@ namespace eb_plugin {
 		attached_devices.clear();
 		std::cerr << "saftbus::Loop::get_default().remove(eb_source);" << std::endl;
 		saftbus::Loop::get_default().remove(eb_source);
-		std::cerr << "socket.close()" << std::endl;
-		socket.close();
+		try {
+			std::cerr << "socket.close()" << std::endl;
+			socket.close();
+			std::cerr << "~SAftd done" << std::endl;
+		} catch (etherbone::exception_t &e) {
+			std::cerr << "~SAftd exception: " << e << std::endl;
+		}
 	}
 
 	eb_status_t SAFTd::read(eb_address_t address, eb_width_t width, eb_data_t* data) {
@@ -97,13 +102,13 @@ namespace eb_plugin {
 
 			// crate a TimingReceiver_Service object
 			if (container) {
-				std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver, std::bind(&SAFTd::RemoveDevice, this, name)));
+				std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver, std::bind(&SAFTd::RemoveObject, this, name)));
 
 				// insert the Service object
 				container->create_object(timing_receiver->get_object_path(), std::move(service));
 			}
 
-			// return the object path to the new Servie object
+			// return the object path to the new Service object
 			return timing_receiver->get_object_path();
 
 		} catch (const etherbone::exception_t& e) {
@@ -121,14 +126,21 @@ namespace eb_plugin {
 
 
 	void SAFTd::RemoveDevice(const std::string& name) {
+		std::cerr << "SAFTd::RemoveDevice(" << name << ")" << std::endl;
 		std::map< std::string, std::unique_ptr<TimingReceiver> >::iterator device = attached_devices.find(name);
 		if (device == attached_devices.end()) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 		}
+		std::cerr << "SAFTd::RemoveDevice(" << name << ") was found" << std::endl;
 		if (container) {
-			container->remove_object(device->second->get_object_path());
+			container->remove_object(device->second->get_object_path()); // the destruction_callback will call RemoveObject
+		} else {
+			RemoveObject(name); // if we are not living inside of a saftbus::Container, we call RemoveObject ourselfs
 		}
-		attached_devices.erase(device);
+	}
+	void SAFTd::RemoveObject(const std::string& name) {
+		std::map< std::string, std::unique_ptr<TimingReceiver> >::iterator device_driver = attached_devices.find(name);
+		attached_devices.erase(device_driver);
 	}
 
 
