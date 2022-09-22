@@ -326,6 +326,13 @@ namespace saftbus {
 			return false;
 		}
 		auto object_id = find_result->second;
+		auto &service = d->objects[object_id];
+		if (service->d->owner != -1) { // the service is owned
+			if (service->d->owner != d->connection->get_calling_client_id()) {
+				std::cerr << "only the owner can remove an owned object" << std::endl;
+				return false;
+			}
+		}
 		d->objects.erase(object_id);
 		d->object_path_lookup_table.erase(object_path);
 		return false;
