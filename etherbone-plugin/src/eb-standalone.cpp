@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 	sw_condition->SigAction = &on_action;
 
 	saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-		std::bind([](eb_plugin::TimingReceiver* tr){tr->InjectEvent(0,0,0); return true;}, tr), 
+		std::bind([](eb_plugin::TimingReceiver* tr){tr->InjectEvent(0,0,tr->CurrentTime()+100000000); return true;}, tr), 
 		std::chrono::milliseconds(1000));
 
 	for (int i = 0; i < 30 ; ++i) {

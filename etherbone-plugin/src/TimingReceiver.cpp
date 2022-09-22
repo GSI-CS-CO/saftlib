@@ -47,10 +47,37 @@
 
 namespace eb_plugin {
 
-// Device::irqMap Device::irqs;   // this is in globals.cpp
-// Device::msiQueue Device::msis; // this is in globals.cpp
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 
-bool TimingReceiver::aquire_watchdog() {
+class WatchdogDriver {
+	etherbone::Device &device;
+	eb_address_t watchdog;
+	eb_data_t watchdog_value;
+public:
+	WatchdogDriver(etherbone::Device &device);
+	bool aquire();
+	void update();
+};
+
+WatchdogDriver::WatchdogDriver(etherbone::Device &dev) 
+	: device(dev) 
+{
+	std::vector<sdb_device> watchdogs_dev;
+	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
+	if (watchdogs_dev.size() < 1) {
+		throw saftbus::Error(saftbus::Error::FAILED, "no watchdog device found on hardware");
+	}
+	if (watchdogs_dev.size() > 1) {
+		std::cerr << "more than one watchdog device found on hardware, taking the first one" << std::endl;
+	}
+	watchdog = static_cast<eb_address_t>(watchdogs_dev[0].sdb_component.addr_first);
+	if (!aquire()) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Watchdog on Timing Receiver already locked");
+	}
+}
+bool WatchdogDriver::aquire() {
 	// try to acquire watchdog
 	eb_data_t retry;
 	device.read(watchdog, EB_DATA32, &watchdog_value);
@@ -64,6 +91,31 @@ bool TimingReceiver::aquire_watchdog() {
 	}
 	return true;
 }
+void WatchdogDriver::update() {
+	device.write(watchdog, EB_DATA32, watchdog_value);
+}
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+
+
+
+
+// bool TimingReceiver::aquire_watchdog() {
+// 	// try to acquire watchdog
+// 	eb_data_t retry;
+// 	device.read(watchdog, EB_DATA32, &watchdog_value);
+// 	if ((watchdog_value & 0xFFFF) != 0) {
+// 		return false;
+// 	}
+// 	device.write(watchdog, EB_DATA32, watchdog_value);
+// 	device.read(watchdog, EB_DATA32, &retry);
+// 	if (((retry ^ watchdog_value) >> 16) != 0) {
+// 		return false;
+// 	}
+// 	return true;
+// }
 
 void TimingReceiver::setupGatewareInfo(uint32_t address)
 {
@@ -113,7 +165,8 @@ bool TimingReceiver::poll()
 {
 	std::cerr << "TimingReceiver::poll()" << std::endl;
 	getLocked();
-	device.write(watchdog, EB_DATA32, watchdog_value);
+	watchdog->update();
+	// device.write(watchdog, EB_DATA32, watchdog_value);
 	return true;
 }
 
@@ -136,8 +189,10 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 	stat(etherbone_path.c_str(), &dev_stat);
 	device.open(sd->get_etherbone_socket(), etherbone_path.c_str());
 
+	watchdog = std::move(std::unique_ptr<WatchdogDriver>(new WatchdogDriver(device)));
+
 	std::vector<etherbone::sdb_msi_device> ecas_dev, mbx_msi_dev;
-	std::vector<sdb_device> streams_dev, infos_dev, watchdogs_dev, scubus_dev, pps_dev, mbx_dev, ats_dev;
+	std::vector<sdb_device> streams_dev, infos_dev, /*watchdogs_dev,*/ scubus_dev, pps_dev, mbx_dev, ats_dev;
 	eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
 
 	device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
@@ -145,14 +200,14 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams_dev);
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos_dev);
-	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
+	// device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus_dev);
 	device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps_dev);
 	device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats_dev);
 	device.sdb_find_by_identity(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_dev);
 
 	// only support super basic hardware for now
-	if (ecas_dev.size() != 1 || streams_dev.size() != 1 || infos_dev.size() != 1 || watchdogs_dev.size() != 1 
+	if (ecas_dev.size() != 1 || streams_dev.size() != 1 || infos_dev.size() != 1 /*|| watchdogs_dev.size() != 1 */
 		|| pps_dev.size() != 1 || mbx_dev.size() != 1 || mbx_msi_dev.size() != 1) {
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has insuficient hardware resources");
 	}
@@ -170,14 +225,14 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 	base      = ecas_dev[0].sdb_component.addr_first;
     stream    = (eb_address_t)streams_dev[0].sdb_component.addr_first;
     info      = (eb_address_t)infos_dev[0].sdb_component.addr_first;
-    watchdog  = (eb_address_t)watchdogs_dev[0].sdb_component.addr_first;
+    // watchdog  = (eb_address_t)watchdogs_dev[0].sdb_component.addr_first;
     pps       = (eb_address_t)pps_dev[0].sdb_component.addr_first;
 
 mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 
-    if (!aquire_watchdog()) {
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
-    }
+  //   if (!aquire_watchdog()) {
+		// throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
+  //   }
 	setupGatewareInfo(info);
 
 	// update locked status ...
@@ -371,9 +426,29 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 		// => size_mask = 0x0ffff
 		// => 0x10000 & 0x0ffff = 0
 		eb_address_t size_mask = sdb.msi_last - sdb.msi_first;
+		// msi_first and msi_last is the address range in which the msi_master (on hardware) can reach the host
+		// for a host connected with PCIe, this might be msi_first=0x10000 and msi_last=0x1ffff
+		// for a host connected with USB (same hardware) msi_first=0x20000 and msi_last=0x2ffff
+
+		// the first and last values obtained from from enable_msi(&first, &last) refers to the address range 
+		// available to an etherbone master on a host connected to the pcie-wishbone bridge driver
+		// for example, if two processes are connected to dev/wbm0, 
+		// the first gets:  first = 0x00000 and last = 0x00fff
+		// the second gets: first = 0x01000 and last = 0x01fff
+		//
+		// if a hardware MSI master writes to 0x10400, the first  etherbone master (connected to dev/wbm0) will get a callback on address 0x400
+		// if a hardware MSI master writes to 0x11400, the second etherbone master (connected to dev/wbm0) will get a callback on address 0x400
+		// if a hardware MSI master writes to 0x20400, another etherbone master connected via usb will get the MSI on address 0x400
 		if ((sdb.msi_first & size_mask) != 0) {
 			throw etherbone::exception_t("request_irq/misaligned", EB_FAIL);
 		}
+
+		std::cerr << "first = 0x" << std::hex << std::setw(8) << std::setfill('0') << first << std::endl;
+		std::cerr << "last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << last  << std::endl;
+		std::cerr << "eca msi_first = 0x" << std::hex << std::setw(8) << std::setfill('0') << sdb.msi_first << std::endl;
+		std::cerr << "eca msi_last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << sdb.msi_last  << std::endl;
+		std::cerr << "mbx msi_first = 0x" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_first << std::endl;
+		std::cerr << "mbx msi_last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_last  << std::endl;
 
 		// values from enable_msi(&first, &last);
 		eb_address_t base = first;
@@ -395,7 +470,7 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 				          << std::endl;
 				channel_msis.push_back(irq);
 				// configure the output channel with the chosen irq address
-				setHandler(channel_idx, true, channel_msis.back());
+				setHandler(channel_idx, true, channel_msis.back() + sdb.msi_first);
 				break;
 			}
 		}

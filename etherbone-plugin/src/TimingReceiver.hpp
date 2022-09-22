@@ -37,6 +37,8 @@ namespace eb_plugin {
 class SAFTd;
 class SoftwareActionSink;
 
+class WatchdogDriver;
+
 /// de.gsi.saftlib.TimingReceiver:
 /// @brief A timing receiver.
 /// @param saftd A pointer to a SAFTd object. The SAFTd object holds the etherbone socket
@@ -284,14 +286,15 @@ public:
 
 private:
 
+
 	void setHandler(unsigned channel, bool enable, eb_address_t address);
 	void msiHandler(eb_data_t msi, unsigned channel);
 	uint16_t updateMostFull(unsigned channel); // returns current fill
 	void resetMostFull(unsigned channel);
 	void popMissingQueue(unsigned channel, unsigned num);
 
-	bool aquire_watchdog(); 
-	eb_data_t watchdog_value;
+	// bool aquire_watchdog(); 
+	// eb_data_t watchdog_value;
 
 	void setupGatewareInfo(uint32_t address);
 	std::map<std::string, std::string> gateware_info;
@@ -320,9 +323,11 @@ private:
 
 
 	mutable etherbone::Device device;
+
+	std::unique_ptr<WatchdogDriver> watchdog;
 	
 	eb_address_t stream;
-	eb_address_t watchdog;
+	// eb_address_t watchdog;
 	eb_address_t pps;
 	eb_address_t ats;
 	eb_address_t info;
@@ -336,7 +341,7 @@ private:
 	std::string etherbone_path;
 
 	uint64_t sas_count; // number of SoftwareActionSinks
-	
+
 	saftbus::Container *container; // need a pointer to container to register new Service objects (ActionSink, Condition, ...)
 
 	mutable bool locked;
