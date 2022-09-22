@@ -499,7 +499,7 @@ void ActionSink::compile()
 
 Condition *ActionSink::getCondition(const std::string object_path) {
 	for (auto &pair: conditions) {
-		auto number = pair.first;
+		// auto number = pair.first;
 		auto cond   = pair.second.get();
 		if (cond->getObjectPath() == object_path) {
 			return cond;

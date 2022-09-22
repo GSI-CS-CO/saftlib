@@ -123,8 +123,8 @@ TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::strin
 	, object_path(sd->get_object_path() + "/" + n)
 	, name(n)
 	, etherbone_path(eb_path)
-	, container(cont)
 	, sas_count(0)
+	, container(cont)
 	, locked(false)
 {
 	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
@@ -675,8 +675,9 @@ bool TimingReceiver::getLocked() const
 		}
 	}
 
-	// device.write(mbox_for_testing_only + 4, EB_DATA32, 0);
-	// device.write(mbox_for_testing_only + 0, EB_DATA32, 4);
+	// just to see if msis work: use MBOX to send us a telegram
+	device.write(mbox_for_testing_only + 4, EB_DATA32, 0x10f00); // configure MSI
+	device.write(mbox_for_testing_only + 0, EB_DATA32, 0xaffe);  // send MSI
 
 	return newLocked;
 }
@@ -685,37 +686,60 @@ bool TimingReceiver::getLocked() const
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
 {
-  InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
+	InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
 }
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
 {
-  etherbone::Cycle cycle;
-  
-  cycle.open(device);
-  cycle.write(stream, EB_DATA32, event >> 32);
-  cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
-  cycle.write(stream, EB_DATA32, param >> 32);
-  cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
-  cycle.write(stream, EB_DATA32, 0); // reserved
-  cycle.write(stream, EB_DATA32, 0); // TEF
-  cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
-  cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
-  cycle.close();
+	etherbone::Cycle cycle;
+
+	cycle.open(device);
+	cycle.write(stream, EB_DATA32, event >> 32);
+	cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+	cycle.write(stream, EB_DATA32, param >> 32);
+	cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+	cycle.write(stream, EB_DATA32, 0); // reserved
+	cycle.write(stream, EB_DATA32, 0); // TEF
+	cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
+	cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
+	cycle.close();
 }
 
 
 std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const
 {
-  std::map< std::string, std::string > out;
-  if (ECA_LINUX_channel != nullptr) {
-  	for (auto &softwareActionSink: *ECA_LINUX_channel) {
-	    out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
-  	}
-  }
-  return out;
+	std::map< std::string, std::string > out;
+	if (ECA_LINUX_channel != nullptr) {
+		for (auto &softwareActionSink: *ECA_LINUX_channel) {
+			out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
+		}
+	}
+	return out;
 }
 
+uint64_t TimingReceiver::ReadRawCurrentTime()
+{
+	etherbone::Cycle cycle;
+	eb_data_t time1, time0, time2;
+
+	do {
+		cycle.open(device);
+		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time1);
+		cycle.read(base + ECA_TIME_LO_GET, EB_DATA32, &time0);
+		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time2);
+		cycle.close();
+	} while (time1 != time2);
+
+	return uint64_t(time1) << 32 | time0;
+}
+eb_plugin::Time TimingReceiver::CurrentTime()
+{
+	if (!locked) {
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
+	}
+
+	return eb_plugin::makeTimeTAI(ReadRawCurrentTime());
+}
 
 struct ECA_OpenClose {
   uint64_t  key;    // open?first:last

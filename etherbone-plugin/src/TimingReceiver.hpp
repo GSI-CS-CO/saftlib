@@ -167,7 +167,7 @@ public:
 	/// milliseconds behind the true time.
 	///
 	// @saftbus-export
-	// saftlib::Time CurrentTime();
+	eb_plugin::Time CurrentTime();
 
 	/// @brief Key-value map of hardware build information
 	/// @return Key-value map of hardware build information
@@ -279,6 +279,9 @@ public:
 	SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
 
 	void removeSowftwareActionSink(SoftwareActionSink *sas);
+
+	uint64_t ReadRawCurrentTime();
+
 private:
 
 	void setHandler(unsigned channel, bool enable, eb_address_t address);
@@ -306,7 +309,6 @@ private:
 	std::vector<eb_address_t> queue_addresses;
 	std::vector<uint16_t> most_full;
 
-	uint64_t sas_count; // number of SoftwareActionSinks
 
 	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
 	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
@@ -333,6 +335,8 @@ private:
 	std::string name;
 	std::string etherbone_path;
 
+	uint64_t sas_count; // number of SoftwareActionSinks
+	
 	saftbus::Container *container; // need a pointer to container to register new Service objects (ActionSink, Condition, ...)
 
 	mutable bool locked;
