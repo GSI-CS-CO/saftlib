@@ -20,14 +20,19 @@
 #ifndef SOFTWARE_CONDITION_H
 #define SOFTWARE_CONDITION_H
 
+#include "Owned.hpp"
 #include "Condition.hpp"
+
 
 // @saftbus-include
 #include <Time.hpp>
 
+#include <saftbus/service.hpp>
+
 #include <functional>
 
 namespace eb_plugin {
+
 
 /// de.gsi.saftlib.SoftwareCondition
 /// @brief Matched against incoming events on a SoftwareActionSink.
@@ -35,10 +40,10 @@ namespace eb_plugin {
 /// SoftwareConditions are created by SoftwareActionSinks to select which
 /// events should generate callbacks. This interface always implies
 /// that the object also implements the general Condition interface.
-class SoftwareCondition : public Condition
+class SoftwareCondition : public Owned, public Condition
 {
 public:
-	SoftwareCondition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
+	SoftwareCondition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container);
 
 	/// @brief    Emitted whenever the condition matches a timing event.
 	/// 
