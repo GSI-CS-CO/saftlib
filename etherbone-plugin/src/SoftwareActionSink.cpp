@@ -34,11 +34,11 @@
 
 namespace eb_plugin {
 
-SoftwareActionSink::SoftwareActionSink(TimingReceiver *dev
+SoftwareActionSink::SoftwareActionSink(EcaDriver *eca
                                       , const std::string &name
                                       , unsigned channel, unsigned num, eb_address_t queue_address
                                       , saftbus::Container *container)
-  : Owned(container), ActionSink(dev, name, channel, num, container), queue(queue_address)
+  : Owned(container), ActionSink(eca, name, channel, num, container), queue(queue_address)
 {}
 
 
@@ -61,7 +61,7 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
     
     std::cerr << "read data" << std::endl;
     etherbone::Cycle cycle;
-    cycle.open(dev->getDevice());
+    cycle.open(eca->get_device());
     cycle.read(queue + ECA_QUEUE_FLAGS_GET,       EB_DATA32, &flags);
     cycle.read(queue + ECA_QUEUE_NUM_GET,         EB_DATA32, &rawNum);
     cycle.read(queue + ECA_QUEUE_EVENT_ID_HI_GET, EB_DATA32, &event_hi);
@@ -154,7 +154,7 @@ std::string SoftwareActionSink::NewCondition(bool active, uint64_t id, uint64_t 
   conditions[number] = std::move(software_condition);
   if (active) {
     std::cerr << "compile" << std::endl;
-    dev->compile();
+    eca->compile();
   }
   return path.str();
 }

@@ -97,150 +97,109 @@ void WatchdogDriver::update() {
 
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 
+#define WR_API_VERSION          4
 
+#if WR_API_VERSION <= 3
+#define WR_PPS_GEN_ESCR_MASK    0x6       //bit 1: PPS valid, bit 2: TS valid
+#else
+#define WR_PPS_GEN_ESCR_MASK    0xc       //bit 2: PPS valid, bit 3: TS valid
+#endif
+#define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
 
+#define WR_PPS_VENDOR_ID        0xce42
+#define WR_PPS_DEVICE_ID        0xde0d8ced
 
+class PpsDriver {
+	friend class TimingReceiver;
+	etherbone::Device &device;
+	std::function<void(bool locked)> &SigLocked;
+	eb_address_t pps;
+	mutable bool locked;
+public:
+	PpsDriver(etherbone::Device &dev, std::function<void(bool locked)> &sl);
+	bool getLocked() const;
+};
 
-// bool TimingReceiver::aquire_watchdog() {
-// 	// try to acquire watchdog
-// 	eb_data_t retry;
-// 	device.read(watchdog, EB_DATA32, &watchdog_value);
-// 	if ((watchdog_value & 0xFFFF) != 0) {
-// 		return false;
-// 	}
-// 	device.write(watchdog, EB_DATA32, watchdog_value);
-// 	device.read(watchdog, EB_DATA32, &retry);
-// 	if (((retry ^ watchdog_value) >> 16) != 0) {
-// 		return false;
-// 	}
-// 	return true;
-// }
-
-void TimingReceiver::setupGatewareInfo(uint32_t address)
+PpsDriver::PpsDriver(etherbone::Device &dev, std::function<void(bool locked)> &sl)
+	: device(dev)
+	, SigLocked(sl)
 {
-	eb_data_t buffer[256];
-
-	etherbone::Cycle cycle;
-	cycle.open(device);
-	for (unsigned i = 0; i < sizeof(buffer)/sizeof(buffer[0]); ++i) {
-		cycle.read(address + i*4, EB_DATA32, &buffer[i]);
+	std::vector<sdb_device> pps_dev;
+	device.sdb_find_by_identity(WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID, pps_dev);
+	if (pps_dev.size() < 1) {
+		throw saftbus::Error(saftbus::Error::FAILED, "no WR-PPS device found on hardware");
 	}
-	cycle.close();
-
-	std::string str;
-	for (unsigned i = 0; i < sizeof(buffer)/sizeof(buffer[0]); ++i) {
-		str.push_back((buffer[i] >> 24) & 0xff);
-		str.push_back((buffer[i] >> 16) & 0xff);
-		str.push_back((buffer[i] >>  8) & 0xff);
-		str.push_back((buffer[i] >>  0) & 0xff);
+	if (pps_dev.size() > 1) {
+		std::cerr << "more than one WR-PPS device found on hardware, taking the first one" << std::endl;
 	}
-
-	std::stringstream ss(str);
-	std::string line;
-	while (std::getline(ss, line))
-	{
-		if (line.empty() || line[0] == ' ') continue; // skip empty/history lines
-
-		std::string::size_type offset = line.find(':');
-		if (offset == std::string::npos) continue; // not a field
-		if (offset+2 >= line.size()) continue;
-		std::string value(line, offset+2);
-
-		std::string::size_type tail = line.find_last_not_of(' ', offset-1);
-		if (tail == std::string::npos) continue;
-		std::string key(line, 0, tail+1);
-
-		// store the field
-		gateware_info[key] = value;
-	}
-}
-
-std::map< std::string, std::string > TimingReceiver::getGatewareInfo() const
-{
-  return gateware_info;
-}
-
-bool TimingReceiver::poll()
-{
-	std::cerr << "TimingReceiver::poll()" << std::endl;
+	pps = static_cast<eb_address_t>(pps_dev[0].sdb_component.addr_first);
 	getLocked();
-	watchdog->update();
-	// device.write(watchdog, EB_DATA32, watchdog_value);
-	return true;
 }
 
-
-TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::string eb_path, saftbus::Container *cont)
-	: saftd(sd)
-	, object_path(sd->get_object_path() + "/" + n)
-	, name(n)
-	, etherbone_path(eb_path)
-	, sas_count(0)
-	, container(cont)
-	, locked(false)
+bool PpsDriver::getLocked() const
 {
-	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
+	eb_data_t data;
+	device.read(pps + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+	bool newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
 
-	if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+	/* Update signal */
+	if (newLocked != locked) {
+		locked = newLocked;
+		if (SigLocked) {
+			SigLocked(locked);
+		}
 	}
 
-	stat(etherbone_path.c_str(), &dev_stat);
-	device.open(sd->get_etherbone_socket(), etherbone_path.c_str());
+	// just to see if msis work: use MBOX to send us a telegram
+	// device.write(mbox_for_testing_only + 4, EB_DATA32, 0x10f00); // configure MSI
+	// device.write(mbox_for_testing_only + 0, EB_DATA32, 0xaffe);  // send MSI
 
-	watchdog = std::move(std::unique_ptr<WatchdogDriver>(new WatchdogDriver(device)));
+	return newLocked;
+}
 
-	std::vector<etherbone::sdb_msi_device> ecas_dev, mbx_msi_dev;
-	std::vector<sdb_device> streams_dev, infos_dev, /*watchdogs_dev,*/ scubus_dev, pps_dev, mbx_dev, ats_dev;
-	eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+#define EVENT_SDB_DEVICE_ID             0x8752bf45
+
+
+EcaDriver::EcaDriver(SAFTd *sd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
+	: saftd(sd)
+	, device(dev)
+	, object_path(obj_path)
+	, container(cont)
+	, sas_count(0)
+{
+	std::vector<etherbone::sdb_msi_device> ecas_dev;
+	std::vector<sdb_device> streams_dev;
 
 	device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
-	device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi_dev);
-
-	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams_dev);
-	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos_dev);
-	// device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
-	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus_dev);
-	device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps_dev);
-	device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats_dev);
-	device.sdb_find_by_identity(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_dev);
-
-	// only support super basic hardware for now
-	if (ecas_dev.size() != 1 || streams_dev.size() != 1 || infos_dev.size() != 1 /*|| watchdogs_dev.size() != 1 */
-		|| pps_dev.size() != 1 || mbx_dev.size() != 1 || mbx_msi_dev.size() != 1) {
-		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has insuficient hardware resources");
-	}
+	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, EVENT_SDB_DEVICE_ID, streams_dev);
 
 	std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
 	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
 	          << std::dec
 	          << std::endl;
 
-	std::cerr << "mbox.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_first 
-	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_last
-	          << std::dec
-	          << std::endl;
+	if (ecas_dev.size() < 1) {
+		throw saftbus::Error(saftbus::Error::FAILED, "no ECA_UNIT:CONTROL device found on hardware");
+	}
+	if (ecas_dev.size() > 1) {
+		std::cerr << "more than one ECA_UNIT:CONTROL devices found on hardware, taking the first one" << std::endl;
+	}
+
+	if (streams_dev.size() < 1) {
+		throw saftbus::Error(saftbus::Error::FAILED, "no ECA_UNIT:EVENTS_IN device found on hardware");
+	}
+	if (streams_dev.size() > 1) {
+		std::cerr << "more than one ECA_UNIT:EVENTS_IN devices found on hardware, taking the first one" << std::endl;
+	}
 
 	base      = ecas_dev[0].sdb_component.addr_first;
     stream    = (eb_address_t)streams_dev[0].sdb_component.addr_first;
-    info      = (eb_address_t)infos_dev[0].sdb_component.addr_first;
-    // watchdog  = (eb_address_t)watchdogs_dev[0].sdb_component.addr_first;
-    pps       = (eb_address_t)pps_dev[0].sdb_component.addr_first;
-
-mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
-
-  //   if (!aquire_watchdog()) {
-		// throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
-  //   }
-	setupGatewareInfo(info);
-
-	// update locked status ...
-	poll();
-	//    ... and repeat every 1s 
-	poll_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&TimingReceiver::poll, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000)
-		);
 
 	// ECA Setup
 
@@ -331,69 +290,11 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 			// case ECA_EMBEDDED_CPU:
 			// break;
 		}
-
-
-
-			// switch (raw_type) {
-			// 	case ECA_LINUX: {
-			// 		//actionSinks[channel_idx][num]
-			// 		// defer construction till demanded by NewSoftwareActionSink, but setup the keys
-			// 		// actionSinks[SinkKey(i, num)].reset(); // this will create the unique_ptr, but with no content
-
-			// 		// clear any stale valid count
-			// 		popMissingQueue(channel_idx, num);
-			// 		break;
-			// 	}
-				// case ECA_WBM: {
-				// // !!! unsupported
-				// break;
-				// }
-				// case ECA_SCUBUS: {
-				// std::vector<sdb_device> scubus;
-				// device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
-				// if (scubus.size() == 1 && num == 0) {
-				// std::string path = getObjectPath() + "/scubus";
-				// SCUbusActionSink::ConstructorType args = { path, this, "scubus", i, (eb_address_t)scubus[0].sdb_component.addr_first };
-				// actionSinks[SinkKey(i, num)] = SCUbusActionSink::create(args);
-				// }
-				// break;
-				// }
-				// case ECA_EMBEDDED_CPU: {
-				// #if DEBUG_COMPILE
-				// clog << kLogDebug << "ECA: Found queue..." << std::endl;
-				// #endif
-				// for (unsigned queue_id = 1; queue_id < channels; ++queue_id) {
-				// eb_data_t get_id;
-				// cycle.open(device);
-				// cycle.read(queue_addresses[queue_id]+ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &get_id);
-				// cycle.close();
-				// #if DEBUG_COMPILE
-				// clog << kLogDebug << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
-				// clog << kLogDebug << "ECA: Found queue with ID: " << get_id << std::endl;
-				// #endif
-				// if (get_id == ECA_EMBEDDED_CPU) {
-				// #if DEBUG_COMPILE
-				// clog << kLogDebug << "ECA: Found embedded CPU channel!" << std::endl;
-				// #endif
-				// std::string path = getObjectPath() + "/embedded_cpu";
-				// EmbeddedCPUActionSink::ConstructorType args = { path, this, "embedded_cpu", i, queue_addresses[queue_id] };
-				// actionSinks[SinkKey(i, num)] = EmbeddedCPUActionSink::create(args);
-				// }
-				// }
-				// break;
-				// }
-			// 	default: {
-			// 		//clog << kLogWarning << "ECA: unsupported channel type detected" << std::endl;
-			// 		// std::cerr << "ECA: unsupported channel type detected" << std::endl;
-			// 		break;
-			// 	}
-			// }
-		// }
 	}
 
 
-	// // This just reads the MSI address range out of the ehterbone config space registers
-	// // It does not actually enable anything ... MSIs also work without this
+	// This just reads the MSI address range out of the ehterbone config space registers
+	// It does not actually enable anything ... MSIs also work without this
 	device.enable_msi(&first, &last);
 	std::cerr << "TimingReceiver enable_msi first=0x" << std::hex << std::setw(8) << std::setfill('0') << first 
 	          <<                          " last=0x"  << std::hex << std::setw(8) << std::setfill('0') << last << std::endl;
@@ -401,20 +302,15 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 	// Confirm the device is an aligned power of 2
 	eb_address_t size = last - first;
 	if (((size + 1) & size) != 0) {
-		device.close();
-		chmod(etherbone_path.c_str(), dev_stat.st_mode);
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has strange sized MSI range");
 	}
 	if ((first & size) != 0) {
-		device.close();
-		chmod(etherbone_path.c_str(), dev_stat.st_mode);
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has unaligned MSI first address");
 	}
 
 	// set MSI handlers
+	etherbone::sdb_msi_device& sdb = ecas_dev[0];
 	for (unsigned channel_idx = 0; channel_idx < channels; ++channel_idx) {
-
-		etherbone::sdb_msi_device& sdb = ecas_dev[0];
 
 		// Confirm we had SDB records for MSI all the way down
 		if (sdb.msi_last < sdb.msi_first) {
@@ -447,8 +343,6 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 		std::cerr << "last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << last  << std::endl;
 		std::cerr << "eca msi_first = 0x" << std::hex << std::setw(8) << std::setfill('0') << sdb.msi_first << std::endl;
 		std::cerr << "eca msi_last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << sdb.msi_last  << std::endl;
-		std::cerr << "mbx msi_first = 0x" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_first << std::endl;
-		std::cerr << "mbx msi_last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_last  << std::endl;
 
 		// values from enable_msi(&first, &last);
 		eb_address_t base = first;
@@ -464,7 +358,7 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 			// Select an IRQ
 			eb_address_t irq = ((rand() & mask) + base) & (~0x3);
 			// try to attach
-			if ( saftd->request_irq(irq, std::bind(&TimingReceiver::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
+			if ( saftd->request_irq(irq, std::bind(&EcaDriver::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
 				std::cerr << "registered irq under address " << std::hex << std::setw(8) << std::setfill('0') << irq 
 				          << std::dec
 				          << std::endl;
@@ -478,14 +372,8 @@ mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
 
 }
 
-
-
-TimingReceiver::~TimingReceiver() 
+EcaDriver::~EcaDriver() 
 {
-	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
-
-
-
 	if (container) {
 		for (auto &channel: ECAchannels) {
 			for (auto &actionSink: channel) {
@@ -496,18 +384,10 @@ TimingReceiver::~TimingReceiver()
 			}
 		}
 	}
-
-	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
-	saftbus::Loop::get_default().remove(poll_timeout_source);
-	std::cerr << "device.close()" << std::endl;
-	device.close();
-	std::cerr << "fix device file" << std::endl;
-	chmod(etherbone_path.c_str(), dev_stat.st_mode);
-
 }
 
 
-void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t address)
+void EcaDriver::setHandler(unsigned channel, bool enable, eb_address_t address)
 {
   etherbone::Cycle cycle;
   cycle.open(device);
@@ -519,7 +399,7 @@ void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t addr
   // clog << kLogDebug << "TimingReceiver: registered irq 0x" << std::hex << address << std::endl;
 }
 
-void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
+void EcaDriver::msiHandler(eb_data_t msi, unsigned channel)
 {
 	std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
 	unsigned code = msi >> 16;
@@ -547,7 +427,24 @@ void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
 	}
 }
 
-uint16_t TimingReceiver::updateMostFull(unsigned channel)
+void EcaDriver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
+{
+	etherbone::Cycle cycle;
+
+	cycle.open(device);
+	cycle.write(stream, EB_DATA32, event >> 32);
+	cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+	cycle.write(stream, EB_DATA32, param >> 32);
+	cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+	cycle.write(stream, EB_DATA32, 0); // reserved
+	cycle.write(stream, EB_DATA32, 0); // TEF
+	cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
+	cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
+	cycle.close();
+}
+
+
+uint16_t EcaDriver::updateMostFull(unsigned channel)
 {
 	if (channel >= most_full.size()) return 0;
 
@@ -576,7 +473,7 @@ uint16_t TimingReceiver::updateMostFull(unsigned channel)
 	return used;
 }
 
-void TimingReceiver::resetMostFull(unsigned channel)
+void EcaDriver::resetMostFull(unsigned channel)
 {
 	if (channel >= most_full.size()) return;
 
@@ -589,8 +486,7 @@ void TimingReceiver::resetMostFull(unsigned channel)
 	cycle.close();
 }
 
-
-void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
+void EcaDriver::popMissingQueue(unsigned channel, unsigned num)
 {
 	etherbone::Cycle cycle;
 	eb_data_t nill;
@@ -606,258 +502,49 @@ void TimingReceiver::popMissingQueue(unsigned channel, unsigned num)
 }
 
 
-static inline bool not_isalnum_(char c)
-{
-  return !(isalnum(c) || c == '_');
-}
-
-
-std::string TimingReceiver::NewSoftwareActionSink(const std::string& name_)
-{
-	if (container) {
-		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
-	}
-
-	std::cerr << "A" << std::endl;
-	if (ECA_LINUX_channel == nullptr) {
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
-	}
-	std::cerr << "A" << std::endl;
-	if (ECA_LINUX_channel->size() >= ECA_LINUX_channel_subchannels) {
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "All available Linux facing ECA subchannels are already in use");
-	}
-	std::cerr << "A" << std::endl;
-
-	// build a name. For SoftwareActionSinks it always starts with "software/<name>"
-	std::string name("software/");
-	std::cerr << "A" << std::endl;
-	if (name_ == "") {
-		// if no name is provided, we generate one 
-		std::string seq;
-		std::ostringstream str;
-		str.imbue(std::locale("C"));
-		str << "_" << ++sas_count;
-		seq = str.str();
-		name.append(seq);
-	std::cerr << "A" << std::endl;
-	} else {
-		if (name_[0] == '_') {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
-		}
-		if (find_if(name_.begin(), name_.end(), not_isalnum_) != name_.end()) {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
-		}
-
-		std::map< std::string, std::string > sinks = getSoftwareActionSinks();
-		if (sinks.find(name_) != sinks.end()) {
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
-		}
-		name.append(name_);
-	std::cerr << "A" << std::endl;
-	}
-  
-	std::cerr << "A" << std::endl;
-	unsigned channel = ECA_LINUX_channel_index;
-	std::cerr << "A" << std::endl;
-	unsigned num     = ECA_LINUX_channel->size(); 
-  	std::cerr << "channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
-	std::cerr << "A" << std::endl;
-	eb_address_t address = queue_addresses[channel];
-	std::cerr << "A" << std::endl;
-
-	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(this, name, channel, num, address, container));
-	std::string sink_object_path = software_action_sink->getObjectPath();
-	if (container) {
-		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&TimingReceiver::removeSowftwareActionSink,this, software_action_sink.get())));
-		container->set_owner(service.get());
-		container->create_object(sink_object_path, std::move(service));
-	}
-	ECA_LINUX_channel->push_back(std::move(software_action_sink));
-	std::cerr << "A" << std::endl;
-
-	return sink_object_path;
-}
-
-bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
-	return up.get() == p;
-}
-void TimingReceiver::removeSowftwareActionSink(SoftwareActionSink *sas) {
-	ActionSink *as = sas;
-	ECA_LINUX_channel->erase(std::remove(ECA_LINUX_channel->begin(), ECA_LINUX_channel->end(), as),
-		                     ECA_LINUX_channel->end());
-}
-
-
-const std::string &TimingReceiver::get_object_path() const
-{
-	return object_path;
-}
-
-void TimingReceiver::Remove() {
-	throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver::Remove is deprecated, use SAFTd::Remove instead");
-}
-std::string TimingReceiver::getEtherbonePath() const
-{
-	return etherbone_path;
-}
-std::string TimingReceiver::getName() const
-{
-	return name;
-}
-
-#define WR_API_VERSION          4
-
-#if WR_API_VERSION <= 3
-#define WR_PPS_GEN_ESCR_MASK    0x6       //bit 1: PPS valid, bit 2: TS valid
-#else
-#define WR_PPS_GEN_ESCR_MASK    0xc       //bit 2: PPS valid, bit 3: TS valid
-#endif
-#define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
-
-
-std::string TimingReceiver::getGatewareVersion() const
-{
-  std::map< std::string, std::string >         gatewareInfo;
-  std::map<std::string, std::string>::iterator j;
-  std::string                                    rawVersion;
-  std::string                                    findString = "-v";
-  int                                              pos = 0;
-
-  gatewareInfo = getGatewareInfo();
-  j = gatewareInfo.begin();        // build date
-  j++;                             // gateware version
-  rawVersion = j->second;
-  pos = rawVersion.find(findString, 0);
-
-  if ((pos <= 0) || (((pos + findString.length()) >= rawVersion.length()))) return ("N/A");
-
-  pos = pos + findString.length(); // get rid of findString '-v'
-  
-  return(rawVersion.substr(pos, rawVersion.length() - pos));
-}
-
-bool TimingReceiver::getLocked() const
-{
-	eb_data_t data;
-	device.read(pps + WR_PPS_GEN_ESCR, EB_DATA32, &data);
-	bool newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
-
-	/* Update signal */
-	if (newLocked != locked) {
-		locked = newLocked;
-		if (SigLocked) {
-			SigLocked(locked);
-		}
-	}
-
-	// just to see if msis work: use MBOX to send us a telegram
-	device.write(mbox_for_testing_only + 4, EB_DATA32, 0x10f00); // configure MSI
-	device.write(mbox_for_testing_only + 0, EB_DATA32, 0xaffe);  // send MSI
-
-	return newLocked;
-}
-
-
-
-void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
-{
-	InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
-}
-
-void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
-{
-	etherbone::Cycle cycle;
-
-	cycle.open(device);
-	cycle.write(stream, EB_DATA32, event >> 32);
-	cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
-	cycle.write(stream, EB_DATA32, param >> 32);
-	cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
-	cycle.write(stream, EB_DATA32, 0); // reserved
-	cycle.write(stream, EB_DATA32, 0); // TEF
-	cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
-	cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
-	cycle.close();
-}
-
-
-std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const
-{
-	std::map< std::string, std::string > out;
-	if (ECA_LINUX_channel != nullptr) {
-		for (auto &softwareActionSink: *ECA_LINUX_channel) {
-			out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
-		}
-	}
-	return out;
-}
-
-uint64_t TimingReceiver::ReadRawCurrentTime()
-{
-	etherbone::Cycle cycle;
-	eb_data_t time1, time0, time2;
-
-	do {
-		cycle.open(device);
-		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time1);
-		cycle.read(base + ECA_TIME_LO_GET, EB_DATA32, &time0);
-		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time2);
-		cycle.close();
-	} while (time1 != time2);
-
-	return uint64_t(time1) << 32 | time0;
-}
-eb_plugin::Time TimingReceiver::CurrentTime()
-{
-	if (!locked) {
-		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
-	}
-
-	return eb_plugin::makeTimeTAI(ReadRawCurrentTime());
-}
-
 struct ECA_OpenClose {
-  uint64_t  key;    // open?first:last
-  bool     open;
-  uint64_t  subkey; // open?last:first
-  int64_t   offset;
-  uint32_t  tag;
-  uint8_t   flags;
-  unsigned channel;
-  unsigned num;
+	uint64_t  key;    // open?first:last
+	bool     open;
+	uint64_t  subkey; // open?last:first
+	int64_t   offset;
+	uint32_t  tag;
+	uint8_t   flags;
+	unsigned channel;
+	unsigned num;
 };
 
 // Using this heuristic, perfect containment never duplicates walk records
 static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
 {
-  if (a.key < b.key) return true;
-  if (a.key > b.key) return false;
-  if (!a.open && b.open) return true; // close first
-  if (a.open && !b.open) return false;
-  if (a.subkey > b.subkey) return true; // open largest first, close smallest first
-  if (a.subkey < b.subkey) return false;
-  // order does not matter (popping does not depend on content)
-  return false;
+	if (a.key < b.key) return true;
+	if (a.key > b.key) return false;
+	if (!a.open && b.open) return true; // close first
+	if (a.open && !b.open) return false;
+	if (a.subkey > b.subkey) return true; // open largest first, close smallest first
+	if (a.subkey < b.subkey) return false;
+	// order does not matter (popping does not depend on content)
+	return false;
 }
 
 struct SearchEntry {
-  uint64_t event;
-  int16_t  index;
-  SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
+	uint64_t event;
+	int16_t  index;
+	SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
 };
 
 struct WalkEntry {
-  int16_t   next;
-  int64_t   offset;
-  uint32_t  tag;
-  uint8_t   flags;
-  unsigned channel;
-  unsigned num;
-  WalkEntry(int16_t n, const ECA_OpenClose& oc) : next(n), 
-    offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
+	int16_t   next;
+	int64_t   offset;
+	uint32_t  tag;
+	uint8_t   flags;
+	unsigned channel;
+	unsigned num;
+	WalkEntry(int16_t n, const ECA_OpenClose& oc) : next(n), 
+	offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
 };
 
-void TimingReceiver::compile()
+
+void EcaDriver::compile()
 {
 	std::cerr << "TimingReceiver::compile" << std::endl;
   // Store all active conditions into a vector for processing
@@ -986,7 +673,7 @@ void TimingReceiver::compile()
 }
 
 
-SoftwareActionSink *TimingReceiver::getSoftwareActionSink(const std::string & sas_obj_path)
+SoftwareActionSink *EcaDriver::getSoftwareActionSink(const std::string & sas_obj_path)
 {
 	for (auto &softwareActionSink: *ECA_LINUX_channel) {
 		if (softwareActionSink->getObjectPath() == sas_obj_path) {
@@ -995,6 +682,463 @@ SoftwareActionSink *TimingReceiver::getSoftwareActionSink(const std::string & sa
 	}
 	throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 }
+
+
+etherbone::Device &EcaDriver::get_device() {
+	return device;
+}
+
+static inline bool not_isalnum_(char c)
+{
+	return !(isalnum(c) || c == '_');
+}
+
+std::string EcaDriver::NewSoftwareActionSink(const std::string& name_)
+{
+	if (container) {
+		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
+	}
+	std::cerr << "A" << std::endl;
+
+	if (ECA_LINUX_channel == nullptr) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
+	}
+	std::cerr << "A" << std::endl;
+	if (ECA_LINUX_channel->size() >= ECA_LINUX_channel_subchannels) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "All available Linux facing ECA subchannels are already in use");
+	}
+	std::cerr << "A" << std::endl;
+
+	// build a name. For SoftwareActionSinks it always starts with "software/<name>"
+	std::string name("software/");
+	std::cerr << "A" << std::endl;
+	if (name_ == "") {
+	std::cerr << "A" << std::endl;
+		// if no name is provided, we generate one 
+		std::string seq;
+		std::ostringstream str;
+		str.imbue(std::locale("C"));
+		str << "_" << ++sas_count;
+		seq = str.str();
+		name.append(seq);
+	} else {
+	std::cerr << "A" << std::endl;
+		if (name_[0] == '_') {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; leading _ is reserved");
+		}
+		if (find_if(name_.begin(), name_.end(), not_isalnum_) != name_.end()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+		}
+
+		std::map< std::string, std::string > sinks = getSoftwareActionSinks();
+		if (sinks.find(name_) != sinks.end()) {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Name already in use");
+		}
+		name.append(name_);
+	}
+	std::cerr << "A" << std::endl;
+  
+	unsigned channel = ECA_LINUX_channel_index;
+	std::cerr << "A" << std::endl;
+	unsigned num     = ECA_LINUX_channel->size(); 
+  	std::cerr << "channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
+	eb_address_t address = queue_addresses[channel];
+	std::cerr << "A" << std::endl;
+
+std::cerr << object_path  << "  /  " << name << std::endl;
+
+	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(this, name, channel, num, address, container));
+	std::cerr << "A" << std::endl;
+	std::string sink_object_path = software_action_sink->getObjectPath();
+	std::cerr << "A" << std::endl;
+	if (container) {
+	std::cerr << "A" << std::endl;
+		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&EcaDriver::removeSowftwareActionSink,this, software_action_sink.get())));
+	std::cerr << "A" << std::endl;
+		container->set_owner(service.get());
+	std::cerr << "A" << std::endl;
+		container->create_object(sink_object_path, std::move(service));
+	}
+	std::cerr << "A" << std::endl;
+	ECA_LINUX_channel->push_back(std::move(software_action_sink));
+	std::cerr << "A" << std::endl;
+
+	return sink_object_path;
+}
+
+bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
+	return up.get() == p;
+}
+void EcaDriver::removeSowftwareActionSink(SoftwareActionSink *sas) {
+	ActionSink *as = sas;
+	ECA_LINUX_channel->erase(std::remove(ECA_LINUX_channel->begin(), ECA_LINUX_channel->end(), as),
+		                     ECA_LINUX_channel->end());
+}
+
+std::map< std::string, std::string > EcaDriver::getSoftwareActionSinks() const
+{
+	std::map< std::string, std::string > out;
+	if (ECA_LINUX_channel != nullptr) {
+		for (auto &softwareActionSink: *ECA_LINUX_channel) {
+			out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
+		}
+	}
+	return out;
+}
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+
+// bool TimingReceiver::aquire_watchdog() {
+// 	// try to acquire watchdog
+// 	eb_data_t retry;
+// 	device.read(watchdog, EB_DATA32, &watchdog_value);
+// 	if ((watchdog_value & 0xFFFF) != 0) {
+// 		return false;
+// 	}
+// 	device.write(watchdog, EB_DATA32, watchdog_value);
+// 	device.read(watchdog, EB_DATA32, &retry);
+// 	if (((retry ^ watchdog_value) >> 16) != 0) {
+// 		return false;
+// 	}
+// 	return true;
+// }
+
+void TimingReceiver::setupGatewareInfo(uint32_t address)
+{
+	eb_data_t buffer[256];
+
+	etherbone::Cycle cycle;
+	cycle.open(device);
+	for (unsigned i = 0; i < sizeof(buffer)/sizeof(buffer[0]); ++i) {
+		cycle.read(address + i*4, EB_DATA32, &buffer[i]);
+	}
+	cycle.close();
+
+	std::string str;
+	for (unsigned i = 0; i < sizeof(buffer)/sizeof(buffer[0]); ++i) {
+		str.push_back((buffer[i] >> 24) & 0xff);
+		str.push_back((buffer[i] >> 16) & 0xff);
+		str.push_back((buffer[i] >>  8) & 0xff);
+		str.push_back((buffer[i] >>  0) & 0xff);
+	}
+
+	std::stringstream ss(str);
+	std::string line;
+	while (std::getline(ss, line))
+	{
+		if (line.empty() || line[0] == ' ') continue; // skip empty/history lines
+
+		std::string::size_type offset = line.find(':');
+		if (offset == std::string::npos) continue; // not a field
+		if (offset+2 >= line.size()) continue;
+		std::string value(line, offset+2);
+
+		std::string::size_type tail = line.find_last_not_of(' ', offset-1);
+		if (tail == std::string::npos) continue;
+		std::string key(line, 0, tail+1);
+
+		// store the field
+		gateware_info[key] = value;
+	}
+}
+
+std::map< std::string, std::string > TimingReceiver::getGatewareInfo() const
+{
+  return gateware_info;
+}
+
+bool TimingReceiver::poll()
+{
+	std::cerr << "TimingReceiver::poll()" << std::endl;
+	pps->getLocked();
+	watchdog->update();
+	// device.write(watchdog, EB_DATA32, watchdog_value);
+	return true;
+}
+
+
+TimingReceiver::TimingReceiver(SAFTd *sd, const std::string &n, const std::string eb_path, saftbus::Container *cont)
+	: saftd(sd)
+	, object_path(sd->get_object_path() + "/" + n)
+	, name(n)
+	, etherbone_path(eb_path)
+	// , sas_count(0)
+	, container(cont)
+	// , locked(false)
+{
+	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
+
+	if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
+	}
+
+	stat(etherbone_path.c_str(), &dev_stat);
+	device.open(sd->get_etherbone_socket(), etherbone_path.c_str());
+
+	try {
+		watchdog = std::move(std::unique_ptr<WatchdogDriver>(new WatchdogDriver(device)));
+		pps      = std::move(std::unique_ptr<PpsDriver>     (new PpsDriver     (device, SigLocked)));
+		eca      = std::move(std::unique_ptr<EcaDriver>     (new EcaDriver     (saftd, device, object_path, container)));
+	} catch (etherbone::exception_t &e) {
+		device.close();
+		chmod(etherbone_path.c_str(), dev_stat.st_mode);
+		throw;		
+	}
+
+	std::vector<etherbone::sdb_msi_device> /*ecas_dev, */ mbx_msi_dev;
+	std::vector<sdb_device> /*streams_dev, */infos_dev, /*watchdogs_dev,*/ scubus_dev, /*pps_dev,*/ /*mbx_dev,*/ ats_dev;
+	eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
+
+	// device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
+	device.sdb_find_by_identity_msi(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_msi_dev);
+
+	// device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x8752bf45, streams_dev);
+	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x2d39fa8b, infos_dev);
+	// device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
+	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus_dev);
+	// device.sdb_find_by_identity(0xce42, 0xde0d8ced, pps_dev);
+	device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats_dev);
+	// device.sdb_find_by_identity(MSI_MAILBOX_VENDOR, MSI_MAILBOX_PRODUCT, mbx_dev);
+
+	// only support super basic hardware for now
+	if (/*ecas_dev.size() != 1 ||*/ /*streams_dev.size() != 1 ||*/ infos_dev.size() != 1 /*|| watchdogs_dev.size() != 1 */
+		|| /*pps_dev.size() != 1 ||*/ /*mbx_dev.size() != 1 || */mbx_msi_dev.size() != 1) {
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has insuficient hardware resources");
+	}
+
+	// std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
+	//           << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
+	//           << std::dec
+	//           << std::endl;
+
+	std::cerr << "mbox.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_first 
+	          << "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << mbx_msi_dev[0].msi_last
+	          << std::dec
+	          << std::endl;
+
+	// base      = ecas_dev[0].sdb_component.addr_first;
+ //    stream    = (eb_address_t)streams_dev[0].sdb_component.addr_first;
+    info      = (eb_address_t)infos_dev[0].sdb_component.addr_first;
+    // watchdog  = (eb_address_t)watchdogs_dev[0].sdb_component.addr_first;
+    // pps       = (eb_address_t)pps_dev[0].sdb_component.addr_first;
+
+// mbox_for_testing_only = (eb_address_t)mbx_dev[0].sdb_component.addr_first;
+
+  //   if (!aquire_watchdog()) {
+		// throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Timing Receiver already locked");
+  //   }
+	setupGatewareInfo(info);
+
+	// update locked status ...
+	poll();
+	//    ... and repeat every 1s 
+	poll_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			std::bind(&TimingReceiver::poll, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000)
+		);
+}
+
+
+
+TimingReceiver::~TimingReceiver() 
+{
+	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
+
+
+
+	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
+	saftbus::Loop::get_default().remove(poll_timeout_source);
+	std::cerr << "device.close()" << std::endl;
+	device.close();
+	std::cerr << "fix device file" << std::endl;
+	chmod(etherbone_path.c_str(), dev_stat.st_mode);
+
+}
+
+
+// void TimingReceiver::setHandler(unsigned channel, bool enable, eb_address_t address)
+// {
+//   etherbone::Cycle cycle;
+//   cycle.open(device);
+//   cycle.write(base + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+//   cycle.write(base + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, 0);
+//   cycle.write(base + ECA_CHANNEL_MSI_SET_TARGET_OWR, EB_DATA32, address);
+//   cycle.write(base + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, enable?1:0);
+//   cycle.close();
+//   // clog << kLogDebug << "TimingReceiver: registered irq 0x" << std::hex << address << std::endl;
+// }
+
+// void TimingReceiver::msiHandler(eb_data_t msi, unsigned channel)
+// {
+// 	std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
+// 	unsigned code = msi >> 16;
+// 	unsigned num  = msi & 0xFFFF;
+
+// 	std::cerr << "MSI: " << channel << " " << num << " " << code << std::endl;
+
+// 	// MAX_FULL is tracked by this object, not the subchannel
+// 	if (code == ECA_MAX_FULL) {
+// 		updateMostFull(channel);
+// 	} else {
+// 		auto &chan = ECAchannels[channel];
+// 		if (num >= chan.size()) {
+// 			std::cerr << "MSI for non-existant channel " << channel << " num " << num << std::endl;
+// 		} else {
+// 			auto &actionSink = chan[num];
+// 			if (actionSink) {
+// 				actionSink->receiveMSI(code);
+// 			} else {
+// 				// It could be that the user deleted the SoftwareActionSink
+// 				// while it still had pending actions. Pop any stale records.
+// 				if (code == ECA_VALID) popMissingQueue(channel, num);
+// 			}
+// 		}
+// 	}
+// }
+
+
+
+
+
+
+
+
+const std::string &TimingReceiver::get_object_path() const
+{
+	return object_path;
+}
+
+void TimingReceiver::Remove() {
+	throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver::Remove is deprecated, use SAFTd::Remove instead");
+}
+std::string TimingReceiver::getEtherbonePath() const
+{
+	return etherbone_path;
+}
+std::string TimingReceiver::getName() const
+{
+	return name;
+}
+
+// #define WR_API_VERSION          4
+
+// #if WR_API_VERSION <= 3
+// #define WR_PPS_GEN_ESCR_MASK    0x6       //bit 1: PPS valid, bit 2: TS valid
+// #else
+// #define WR_PPS_GEN_ESCR_MASK    0xc       //bit 2: PPS valid, bit 3: TS valid
+// #endif
+// #define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
+
+
+std::string TimingReceiver::getGatewareVersion() const
+{
+  std::map< std::string, std::string >         gatewareInfo;
+  std::map<std::string, std::string>::iterator j;
+  std::string                                    rawVersion;
+  std::string                                    findString = "-v";
+  int                                              pos = 0;
+
+  gatewareInfo = getGatewareInfo();
+  j = gatewareInfo.begin();        // build date
+  j++;                             // gateware version
+  rawVersion = j->second;
+  pos = rawVersion.find(findString, 0);
+
+  if ((pos <= 0) || (((pos + findString.length()) >= rawVersion.length()))) return ("N/A");
+
+  pos = pos + findString.length(); // get rid of findString '-v'
+  
+  return(rawVersion.substr(pos, rawVersion.length() - pos));
+}
+
+bool TimingReceiver::getLocked() const
+{
+	return pps->getLocked();
+	// eb_data_t data;
+	// device.read(pps + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+	// bool newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
+
+	// /* Update signal */
+	// if (newLocked != locked) {
+	// 	locked = newLocked;
+	// 	if (SigLocked) {
+	// 		SigLocked(locked);
+	// 	}
+	// }
+
+	// // just to see if msis work: use MBOX to send us a telegram
+	// device.write(mbox_for_testing_only + 4, EB_DATA32, 0x10f00); // configure MSI
+	// device.write(mbox_for_testing_only + 0, EB_DATA32, 0xaffe);  // send MSI
+
+	// return newLocked;
+}
+
+
+
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
+{
+	// InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
+	eca->InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
+}
+
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
+{
+// 	etherbone::Cycle cycle;
+
+// 	cycle.open(device);
+// 	cycle.write(stream, EB_DATA32, event >> 32);
+// 	cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+// 	cycle.write(stream, EB_DATA32, param >> 32);
+// 	cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+// 	cycle.write(stream, EB_DATA32, 0); // reserved
+// 	cycle.write(stream, EB_DATA32, 0); // TEF
+// 	cycle.write(stream, EB_DATA32, time.getTAI() >> 32);
+// 	cycle.write(stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
+// 	cycle.close();
+
+	eca->InjectEvent(event, param, time);
+}
+
+
+std::string TimingReceiver::NewSoftwareActionSink(const std::string& name) {
+	return eca->NewSoftwareActionSink(name);
+}
+
+std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const {
+	return eca->getSoftwareActionSinks();
+}
+
+SoftwareActionSink *TimingReceiver::getSoftwareActionSink(const std::string & object_path) {
+	return eca->getSoftwareActionSink(object_path);
+}
+
+
+uint64_t TimingReceiver::ReadRawCurrentTime()
+{
+	etherbone::Cycle cycle;
+	eb_data_t time1, time0, time2;
+
+	do {
+		cycle.open(device);
+		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time1);
+		cycle.read(base + ECA_TIME_LO_GET, EB_DATA32, &time0);
+		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time2);
+		cycle.close();
+	} while (time1 != time2);
+
+	return uint64_t(time1) << 32 | time0;
+}
+eb_plugin::Time TimingReceiver::CurrentTime()
+{
+	if (!pps->locked) {
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
+	}
+
+	return eb_plugin::makeTimeTAI(ReadRawCurrentTime());
+}
+
 
 
 } // namespace saftlib

@@ -676,7 +676,7 @@ void EBslave::send_output_buffer()
 		// std::cerr << "all bytes sent" << std::endl;
 		for (unsigned i = 0; i < msi_queue.size(); ++i) {
 			std::vector<uint8_t> msi_buffer;
-			uint32_t adr = msi_queue[i].adr;
+			uint32_t adr = msi_queue[i].adr - eb_msi_adr_first;
 			uint32_t dat = msi_queue[i].dat;
 			if (verbosity >= 1) {
 				std::cerr << "send msi ";
@@ -684,7 +684,7 @@ void EBslave::send_output_buffer()
 				std::cerr << "dat=0x" << std::hex << std::setw(8) << std::setfill('0') << dat << " ";
 				std::cerr << std::dec << std::endl;
 			}
-		
+			
 			msi_buffer.push_back(0xa8);
 			msi_buffer.push_back(0x0f);
 			msi_buffer.push_back(0x01);
@@ -1973,8 +1973,8 @@ int main(int argc, char *argv[]) {
 		bool stop_until_connected = true;
 		eb_slave = new EBslave(stop_until_connected, 
 		                       sdb->start_adr(), 
-		                       0x0000, 
-		                       0xffff);
+		                       0x20000, 
+		                       0x2ffff);
 
 		// Endless loop to service wb-requests from the etherbone slave (= wb master)
 		// (The code looks a bit strange because it was initially developed with the 

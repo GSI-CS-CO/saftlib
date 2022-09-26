@@ -35,7 +35,7 @@
 
 namespace eb_plugin {
 
-class TimingReceiver;
+class EcaDriver;
 
 // de.gsi.eb_plugin.ActionSink:
 /// @brief An output through which actions flow.
@@ -114,15 +114,15 @@ class ActionSink
 	public:
 		/// @brief  ActionSink constructor
 		///
-		/// @param dev points to the TimingReceiver object on which the ActionSink is created
+		/// @param eca points to the EcaDriver object on which the ActionSink is created
 		/// @param name name of the ActionSink
 		/// @param channel the ECA channel that feeds the ActionSink
 		/// @param num     subchannel of the ECA channel
 		///
-		/// Create a new action sink on a TimingReceiver with a given name. If the name is an 
+		/// Create a new action sink on an ECA deive with a given name. If the name is an 
 		/// empty string, a name in the form "_<number>" will be generated. The ActionSink
 		/// is attached to the given ECA channel/subchannel.
-		ActionSink(TimingReceiver* dev
+		ActionSink(EcaDriver* eca
 		         , const std::string& name
 		         , unsigned channel
 		         , unsigned num
@@ -449,7 +449,7 @@ class ActionSink
 		
 	protected:
 		std::string object_path;
-		TimingReceiver* dev;
+		EcaDriver* eca;
 		std::string name;
 		unsigned channel;
 		unsigned num;

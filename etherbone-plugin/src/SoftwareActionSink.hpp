@@ -32,7 +32,7 @@
 namespace eb_plugin {
 
 	class SoftwareCondition;
-
+	class EcaDriver;
 	/// de.gsi.saftlib.SoftwareActionSink:
 	/// @brief An output through which software actions flow.
 	///
@@ -49,7 +49,7 @@ namespace eb_plugin {
 	/// delivered in arbitrary order, both having the 'conflict' flag set.
 	class SoftwareActionSink : public Owned , public ActionSink {
 	public:
-		SoftwareActionSink(TimingReceiver *dev
+		SoftwareActionSink(EcaDriver *eca
 			             , const std::string &name
 			             , unsigned channel, unsigned num, eb_address_t queue_address
 			             , saftbus::Container *container = nullptr);
