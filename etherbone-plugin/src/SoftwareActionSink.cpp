@@ -19,7 +19,7 @@
  */
 
 #include "SoftwareActionSink.hpp"
-#include "TimingReceiver.hpp"
+#include "EcaDriver.hpp"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
 

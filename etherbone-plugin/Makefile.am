@@ -25,8 +25,9 @@ lib@PACKAGE@_service_la_SOURCES =                                 \
 	src/SoftwareCondition_Service.cpp   src/SoftwareCondition_Service.hpp      \
 	src/SoftwareActionSink.cpp          src/SoftwareActionSink.hpp              \
 	src/SoftwareActionSink_Service.cpp  src/SoftwareActionSink_Service.hpp       \
-	src/TimingReceiver.cpp              src/TimingReceiver.hpp                    \
-	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp             \
+	src/EcaDriver.cpp                   src/EcaDriver.hpp                         \
+	src/TimingReceiver.cpp              src/TimingReceiver.hpp                     \
+	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp              \
 	src/create_service.cpp
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)

@@ -23,7 +23,7 @@
 #define __STDC_CONSTANT_MACROS
 
 #include "ActionSink.hpp"
-#include "TimingReceiver.hpp"
+#include "EcaDriver.hpp"
 #include "eca_regs.h"
 #include "eca_flags.h"
 //#include "clog.h"
