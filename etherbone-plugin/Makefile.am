@@ -25,11 +25,12 @@ lib@PACKAGE@_service_la_SOURCES =                                 \
 	src/SoftwareCondition_Service.cpp   src/SoftwareCondition_Service.hpp      \
 	src/SoftwareActionSink.cpp          src/SoftwareActionSink.hpp              \
 	src/SoftwareActionSink_Service.cpp  src/SoftwareActionSink_Service.hpp       \
-	src/Watchdog.cpp                    src/Watchdog.hpp                          \
-	src/EcaDriver.cpp                   src/EcaDriver.hpp                          \
-	src/EcaDriver_Service.cpp           src/EcaDriver_Service.hpp                   \
-	src/TimingReceiver.cpp              src/TimingReceiver.hpp                       \
-	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp                \
+	src/OpenDevice.cpp                  src/OpenDevice.hpp                        \
+	src/Watchdog.cpp                    src/Watchdog.hpp                           \
+	src/ECA.cpp                         src/ECA.hpp                                 \
+	src/ECA_Service.cpp                 src/ECA_Service.hpp                          \
+	src/TimingReceiver.cpp              src/TimingReceiver.hpp                        \
+	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp                 \
 	src/create_service.cpp
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
@@ -41,7 +42,7 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/ActionSink_Proxy.cpp           \
 	src/SoftwareCondition_Proxy.cpp     \
 	src/SoftwareActionSink_Proxy.cpp     \
-	src/EcaDriver_Proxy.cpp               \
+	src/ECA_Proxy.cpp                     \
 	src/TimingReceiver_Proxy.cpp         
 
 
@@ -54,7 +55,7 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/ActionSink_Proxy.hpp              \
 	src/SoftwareCondition_Proxy.hpp        \
 	src/SoftwareActionSink_Proxy.hpp        \
-	src/EcaDriver_Proxy.hpp                  \
+	src/ECA_Proxy.hpp                        \
 	src/TimingReceiver_Proxy.hpp
 
 # the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time

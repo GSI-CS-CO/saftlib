@@ -1,6 +1,28 @@
-#include "EcaDriver.hpp"
+#include "ECA.hpp"
 
 #include "SAFTd.hpp"
+
+#include <stdlib.h>
+#include <string.h>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <memory>
+#include <algorithm>
+
+#include <saftbus/error.hpp>
+#include <saftbus/service.hpp>
+
+#include "Time.hpp"
+#include "SoftwareActionSink.hpp"
+#include "SoftwareActionSink_Service.hpp"
+
+#include "eca_regs.h"
+#include "eca_flags.h"
+#include "eca_queue_regs.h"
+#include "fg_regs.h"
+#include "ats_regs.h"
+
 
 namespace eb_plugin {
 
@@ -8,7 +30,7 @@ namespace eb_plugin {
 #define EVENT_SDB_DEVICE_ID             0x8752bf45
 
 
-struct EcaDriver::Impl {
+struct ECA::Impl {
 	Impl(etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont); 
 
 	etherbone::Device  &device;
@@ -50,7 +72,7 @@ struct EcaDriver::Impl {
 	void popMissingQueue(unsigned channel, unsigned num);	
 	void probeConfiguration();
 	void prepareChannels();
-	void setMsiHandlers(SAFTd *saftd);
+	void setMsiHandlers(SAFTd &saftd);
 	void msiHandler(eb_data_t msi, unsigned channel);
 	void setHandler(unsigned channel, bool enable, eb_address_t address);
 
@@ -58,18 +80,18 @@ struct EcaDriver::Impl {
 
 };
 
-EcaDriver::Impl::Impl(etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
+ECA::Impl::Impl(etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
 	: device(dev)
 	, object_path(obj_path)
 	, container(cont)
 	, sas_count(0)
 {
-	std::cerr << "EcaDriver::Impl::Impl()" << std::endl;
+	std::cerr << "ECA::Impl::Impl()" << std::endl;
 }
 
 
 
-uint16_t EcaDriver::Impl::updateMostFull(unsigned channel)
+uint16_t ECA::Impl::updateMostFull(unsigned channel)
 {
 	if (channel >= most_full.size()) return 0;
 
@@ -91,7 +113,7 @@ uint16_t EcaDriver::Impl::updateMostFull(unsigned channel)
 	return used;
 }
 
-void EcaDriver::Impl::resetMostFull(unsigned channel)
+void ECA::Impl::resetMostFull(unsigned channel)
 {
 	if (channel >= most_full.size()) return;
 
@@ -104,7 +126,7 @@ void EcaDriver::Impl::resetMostFull(unsigned channel)
 	cycle.close();
 }
 
-void EcaDriver::Impl::popMissingQueue(unsigned channel, unsigned num)
+void ECA::Impl::popMissingQueue(unsigned channel, unsigned num)
 {
 	etherbone::Cycle cycle;
 	eb_data_t nill;
@@ -122,7 +144,7 @@ void EcaDriver::Impl::popMissingQueue(unsigned channel, unsigned num)
 
 
 
-void EcaDriver::Impl::probeConfiguration() 
+void ECA::Impl::probeConfiguration() 
 {
 	std::vector<etherbone::sdb_msi_device> ecas_dev;
 	std::vector<sdb_device> streams_dev;
@@ -229,7 +251,7 @@ void EcaDriver::Impl::probeConfiguration()
 	most_full.resize(channels, 0);
 }
 
-void EcaDriver::Impl::prepareChannels()
+void ECA::Impl::prepareChannels()
 {
 	eb_data_t raw_type, raw_max_num, raw_capacity;
 	etherbone::Cycle cycle;
@@ -299,7 +321,7 @@ void EcaDriver::Impl::prepareChannels()
 	}
 }
 
-void EcaDriver::Impl::setMsiHandlers(SAFTd *saftd) 
+void ECA::Impl::setMsiHandlers(SAFTd &saftd) 
 {
 	// set MSI handlers
 
@@ -322,7 +344,7 @@ void EcaDriver::Impl::setMsiHandlers(SAFTd *saftd)
 			// Select an IRQ
 			eb_address_t irq = ((rand() & mask) + base) & (~0x3);
 			// try to attach
-			if ( saftd->request_irq(irq, std::bind(&EcaDriver::Impl::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
+			if ( saftd.request_irq(irq, std::bind(&ECA::Impl::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
 				std::cerr << "registered irq under address " << std::hex << std::setw(8) << std::setfill('0') << irq 
 									<< std::dec
 									<< std::endl;
@@ -336,7 +358,7 @@ void EcaDriver::Impl::setMsiHandlers(SAFTd *saftd)
 }
 
 
-void EcaDriver::Impl::msiHandler(eb_data_t msi, unsigned channel)
+void ECA::Impl::msiHandler(eb_data_t msi, unsigned channel)
 {
 	std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
 	unsigned code = msi >> 16;
@@ -364,7 +386,7 @@ void EcaDriver::Impl::msiHandler(eb_data_t msi, unsigned channel)
 	}
 }
 
-void EcaDriver::Impl::setHandler(unsigned channel, bool enable, eb_address_t address)
+void ECA::Impl::setHandler(unsigned channel, bool enable, eb_address_t address)
 {
 	etherbone::Cycle cycle;
 	cycle.open(device);
@@ -421,9 +443,9 @@ struct WalkEntry {
 
 
 
-void EcaDriver::Impl::compile()
+void ECA::Impl::compile()
 {
-	std::cerr << "EcaDriver::Impl::compile" << std::endl;
+	std::cerr << "ECA::Impl::compile" << std::endl;
 	// Store all active conditions into a vector for processing
 	typedef std::vector<ECA_OpenClose> ID_Space;
 	ID_Space id_space;
@@ -556,34 +578,35 @@ void EcaDriver::Impl::compile()
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
-uint16_t EcaDriver::getMostFull(int channel)
+uint16_t ECA::getMostFull(int channel)
 {
 	return d->most_full[channel];
 }
 
-const std::string &EcaDriver::get_object_path()
+const std::string &ECA::get_object_path()
 {
 	return d->object_path;
 }
 
 
-void EcaDriver::compile() 
+void ECA::compile() 
 {
 	d->compile();
 }
 
 
-EcaDriver::EcaDriver(SAFTd *saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
-	: d(std::unique_ptr<EcaDriver::Impl>(new EcaDriver::Impl(dev, obj_path, cont)))
+ECA::ECA(SAFTd &saftd, const std::string &etherbone_path, const std::string &object_path, saftbus::Container *container)
+	: Watchdog(saftd.get_etherbone_socket(), etherbone_path)
+	, d(std::unique_ptr<ECA::Impl>(new ECA::Impl(OpenDevice::device, object_path, container)))
 {
-	std::cerr << "EcaDriver::EcaDriver()" << std::endl;
+	std::cerr << "ECA::ECA()" << std::endl;
 	d->probeConfiguration();
 	d->compile(); // remove old rules
 	d->prepareChannels();
 	d->setMsiHandlers(saftd); // hook
 }
 
-EcaDriver::~EcaDriver() 
+ECA::~ECA() 
 {
 	if (d->container) {
 		for (auto &channel: d->ECAchannels) {
@@ -597,12 +620,12 @@ EcaDriver::~EcaDriver()
 	}
 }
 
-eb_address_t EcaDriver::get_base_address() 
+eb_address_t ECA::get_base_address() 
 {
 	return d->base;
 }
 
-uint64_t EcaDriver::ReadRawCurrentTime()
+uint64_t ECA::ReadRawCurrentTime()
 {
 	etherbone::Cycle cycle;
 	eb_data_t time1, time0, time2;
@@ -620,7 +643,7 @@ uint64_t EcaDriver::ReadRawCurrentTime()
 
 
 
-void EcaDriver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
+void ECA::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time)
 {
 	etherbone::Cycle cycle;
 
@@ -631,8 +654,8 @@ void EcaDriver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time
 	cycle.write(d->stream, EB_DATA32, param & 0xFFFFFFFFUL);
 	cycle.write(d->stream, EB_DATA32, 0); // reserved
 	cycle.write(d->stream, EB_DATA32, 0); // TEF
-	cycle.write(d->stream, EB_DATA32, time.getTAI() >> 32);
-	cycle.write(d->stream, EB_DATA32, time.getTAI() & 0xFFFFFFFFUL);
+	cycle.write(d->stream, EB_DATA32, time >> 32);
+	cycle.write(d->stream, EB_DATA32, time & 0xFFFFFFFFUL);
 	cycle.close();
 }
 
@@ -642,7 +665,7 @@ void EcaDriver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time
 
 
 
-SoftwareActionSink *EcaDriver::getSoftwareActionSink(const std::string & sas_obj_path)
+SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 {
 	for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
 		if (softwareActionSink->getObjectPath() == sas_obj_path) {
@@ -653,8 +676,8 @@ SoftwareActionSink *EcaDriver::getSoftwareActionSink(const std::string & sas_obj
 }
 
 
-etherbone::Device &EcaDriver::get_device() {
-	return d->device;
+etherbone::Device &ECA::get_device() {
+	return OpenDevice::device;
 }
 
 static inline bool not_isalnum_(char c)
@@ -662,7 +685,7 @@ static inline bool not_isalnum_(char c)
 	return !(isalnum(c) || c == '_');
 }
 
-std::string EcaDriver::NewSoftwareActionSink(const std::string& name_)
+std::string ECA::NewSoftwareActionSink(const std::string& name_)
 {
 	if (d->container) {
 		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << d->container->get_calling_client_id() << std::endl;
@@ -705,10 +728,10 @@ std::string EcaDriver::NewSoftwareActionSink(const std::string& name_)
 		std::cerr << "channel = " << channel << " num = " << num << " queue_addresses.size() = " << d->queue_addresses.size() << std::endl;
 	eb_address_t address = d->queue_addresses[channel];
 
-	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(this, name, channel, num, address, d->container));
+	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(*this, name, channel, num, address, d->container));
 	std::string sink_object_path = software_action_sink->getObjectPath();
 	if (d->container) {
-		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&EcaDriver::removeSowftwareActionSink,this, software_action_sink.get())));
+		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&ECA::removeSowftwareActionSink,this, software_action_sink.get())));
 		d->container->set_owner(service.get());
 		d->container->create_object(sink_object_path, std::move(service));
 	}
@@ -720,13 +743,13 @@ std::string EcaDriver::NewSoftwareActionSink(const std::string& name_)
 bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
 	return up.get() == p;
 }
-void EcaDriver::removeSowftwareActionSink(SoftwareActionSink *sas) {
+void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	ActionSink *as = sas;
 	d->ECA_LINUX_channel->erase(std::remove(d->ECA_LINUX_channel->begin(), d->ECA_LINUX_channel->end(), as),
 	                            d->ECA_LINUX_channel->end());
 }
 
-std::map< std::string, std::string > EcaDriver::getSoftwareActionSinks() const
+std::map< std::string, std::string > ECA::getSoftwareActionSinks() const
 {
 	std::map< std::string, std::string > out;
 	if (d->ECA_LINUX_channel != nullptr) {

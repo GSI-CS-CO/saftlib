@@ -24,16 +24,18 @@
 #include <memory>
 #include <string>
 
-#include <saftbus/service.hpp>
+#include <saftbus/loop.hpp>
 
-#include <sys/stat.h>
+// #include <sys/stat.h>
 
-#include "eb-source.hpp"
+// #include "eb-source.hpp"
 
-#include "SoftwareActionSink.hpp"
+// #include "SoftwareActionSink.hpp"
 
-#include "EcaDriver.hpp"
-#include "Watchdog.hpp"
+#include "ECA.hpp"
+
+// @saftbus-include
+#include <Time.hpp>
 
 namespace eb_plugin {
 
@@ -43,16 +45,6 @@ class SAFTd;
 // class WatchdogDriver;
 class PpsDriver;
 // class EcaDriver;
-
-/// @brief etherbone::Device that is opend on construction and closed before destruction
-struct OpenDevice {
-	std::string etherbone_path;
-	struct stat dev_stat;	
-	etherbone::Device device;
-
-	OpenDevice(const etherbone::Socket &socket, const std::string& eb_path);
-	virtual ~OpenDevice();
-};
 
 
 /// de.gsi.saftlib.TimingReceiver:
@@ -97,9 +89,9 @@ struct OpenDevice {
 /// interfaces property. The SCU backplane would be found under the
 /// SCUbusActionSink key, and as there is only one, it would be the 0th.
 ///
-class TimingReceiver : public OpenDevice, public Watchdog, public EcaDriver {
+class TimingReceiver : public ECA {
 public:
-	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, 
+	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string etherbone_path, 
 		           saftbus::Container *container = nullptr);
 	~TimingReceiver();
 
@@ -133,6 +125,19 @@ public:
 	///
 	// @saftbus-export
 	eb_plugin::Time CurrentTime();
+
+	/// @brief        Simulate the receipt of a timing event
+	/// @param event  The event identifier which is matched against Conditions
+	/// @param param  The parameter field, whose meaning depends on the event ID.
+	/// @param time   The execution time for the event, added to condition offsets.
+	///
+	/// Sometimes it is useful to simulate the receipt of a timing event. 
+	/// This allows software to test that configured conditions lead to the
+	/// desired behaviour without needing the data master to send anything.
+	///
+	// @saftbus-export
+	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
+
 
 	/// @brief Key-value map of hardware build information
 	/// @return Key-value map of hardware build information

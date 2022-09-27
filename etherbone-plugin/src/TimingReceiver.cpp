@@ -160,22 +160,6 @@ bool PpsDriver::getLocked() const
 	return newLocked;
 }
 
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
-OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_path)
-	: etherbone_path(eb_path)
-{
-	std::cerr << "OpenDevice::OpenDevice()" << std::endl;
-	stat(etherbone_path.c_str(), &dev_stat);
-	device.open(socket, etherbone_path.c_str());
-}
-OpenDevice::~OpenDevice()
-{
-	device.close();
-	chmod(etherbone_path.c_str(), dev_stat.st_mode);
-}
-
 
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
@@ -236,11 +220,9 @@ bool TimingReceiver::poll()
 	return true;
 }
 
-TimingReceiver::TimingReceiver(SAFTd *saftd, const std::string &n, const std::string eb_path, saftbus::Container *container)
-	: OpenDevice(saftd->get_etherbone_socket(), eb_path)
-	, Watchdog(OpenDevice::device)
-	, EcaDriver(saftd, OpenDevice::device, object_path, container)
-	, object_path(saftd->get_object_path() + "/" + n)
+TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string ethterbone_path, saftbus::Container *container)
+	: ECA(saftd, ethterbone_path, object_path, container)
+	, object_path(saftd.get_object_path() + "/" + n)
 	, name(n)
 {
 	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
@@ -335,6 +317,10 @@ eb_plugin::Time TimingReceiver::CurrentTime()
 	return eb_plugin::makeTimeTAI(ReadRawCurrentTime());
 }
 
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
+{
+	ECA::InjectEventRaw(event, param, time.getTAI());
+}
 
 
 } // namespace saftlib

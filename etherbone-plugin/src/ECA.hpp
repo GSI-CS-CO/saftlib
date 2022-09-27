@@ -2,32 +2,20 @@
 #define EB_PLUGIN_ECA_DRIVER_HPP_
 
 
-#include <stdlib.h>
-#include <string.h>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
+
+
+#include "Watchdog.hpp"
+
+#include <saftbus/service.hpp>
+
 #include <memory>
-#include <algorithm>
-
-#include <saftbus/error.hpp>
-
-#include "Time.hpp"
-#include "SoftwareActionSink.hpp"
-#include "SoftwareActionSink_Service.hpp"
-
-#include "eca_regs.h"
-#include "eca_flags.h"
-#include "eca_queue_regs.h"
-#include "fg_regs.h"
-#include "ats_regs.h"
-
 
 namespace eb_plugin {
 
 class SAFTd;
+class SoftwareActionSink;
 
-class EcaDriver {
+class ECA : public Watchdog {
 	struct Impl; std::unique_ptr<Impl> d;
 
 	friend class SoftwareActionSink;
@@ -41,9 +29,8 @@ class EcaDriver {
 
 public:
 
-
-	EcaDriver(SAFTd *saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont);
-	virtual ~EcaDriver();
+	ECA(SAFTd &saftd, const std::string &etherbone_path, const std::string &object_path, saftbus::Container *container);
+	virtual ~ECA();
 
 
 	void removeSowftwareActionSink(SoftwareActionSink *sas);
@@ -81,7 +68,7 @@ public:
 	/// desired behaviour without needing the data master to send anything.
 	///
 	// @saftbus-export
-	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
+	void InjectEventRaw(uint64_t event, uint64_t param, uint64_t time);
 
 	/// @brief A list of all current SoftwareActionSinks.
 	/// @return A list of all current SoftwareActionSinks.

@@ -97,7 +97,7 @@ namespace eb_plugin {
 		}
 		try {
 			// create a new TimingReceiver object and add it to the attached_devices
-			TimingReceiver *timing_receiver = new TimingReceiver(this, name, etherbone_path, container);
+			TimingReceiver *timing_receiver = new TimingReceiver(*this, name, etherbone_path, container);
 			attached_devices[name] = std::move(std::unique_ptr<TimingReceiver>(timing_receiver));
 
 			// crate a TimingReceiver_Service object
