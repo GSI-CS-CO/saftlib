@@ -31,6 +31,7 @@
 #include "eb-source.hpp"
 
 #include "SoftwareActionSink.hpp"
+
 #include "EcaDriver.hpp"
 
 namespace eb_plugin {
@@ -42,6 +43,15 @@ class WatchdogDriver;
 class PpsDriver;
 // class EcaDriver;
 
+/// @brief etherbone::Device that is opend on construction and closed before destruction
+struct OpenDevice {
+	std::string etherbone_path;
+	struct stat dev_stat;	
+	etherbone::Device device;
+
+	OpenDevice(const etherbone::Socket &socket, const std::string& eb_path);
+	virtual ~OpenDevice();
+};
 
 
 /// de.gsi.saftlib.TimingReceiver:
@@ -86,7 +96,7 @@ class PpsDriver;
 /// interfaces property. The SCU backplane would be found under the
 /// SCUbusActionSink key, and as there is only one, it would be the 0th.
 ///
-class TimingReceiver {
+class TimingReceiver : public OpenDevice, public EcaDriver {
 public:
 	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, 
 		           saftbus::Container *container = nullptr);
@@ -110,59 +120,6 @@ public:
 	///
 	// @saftbus-export
 	std::string getName() const;
-
-
-	/// @brief        Create a new SoftwareActionSink.
-	/// @param name   A name for the SoftwareActionSink. Can be left blank.
-	/// @return       Object path to the created SoftwareActionSink.
-	///
-	/// SoftwareActionSinks allow a program to create conditions that match
-	/// incoming timing events.  These conditions may have callback methods
-	/// attached to them in order to receive notification.  The returned
-	/// path corresponds to a SoftwareActionSink that is owned by the
-	/// process which claimed it, and can thus be certain that no other
-	/// processes can interfere with the results.
-	///
-	// @saftbus-export
-	std::string NewSoftwareActionSink(const std::string& name);
-
-
-	/// @brief The method is depricated, use InjectEvent with saftlib::Time instead.
-	/// @param event The event identifier which is matched against Conditions
-	/// @param param The parameter field, whose meaning depends on the event ID.
-	/// @param time  The execution time for the event, added to condition offsets.
-	///
-	/// Simulate the receipt of a timing event
-	/// Sometimes it is useful to simulate the receipt of a timing event. 
-	/// This allows software to test that configured conditions lead to the
-	/// desired behaviour without needing the data master to send anything.
-	///
-	// @saftbus-export
-	void InjectEvent(uint64_t event, uint64_t param, uint64_t time);
-
-
-	/// @brief        Simulate the receipt of a timing event
-	/// @param event  The event identifier which is matched against Conditions
-	/// @param param  The parameter field, whose meaning depends on the event ID.
-	/// @param time   The execution time for the event, added to condition offsets.
-	///
-	/// Sometimes it is useful to simulate the receipt of a timing event. 
-	/// This allows software to test that configured conditions lead to the
-	/// desired behaviour without needing the data master to send anything.
-	///
-	// @saftbus-export
-	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
-
-	/// @brief This method is deprecaded, use CurrentTime instead. 
-	/// @return         Nanoseconds since 1970.
-	///
-	/// The current time in nanoseconds since 1970.
-	/// Due to delays in software, the returned value is probably several
-	/// milliseconds behind the true time.
-	///
-	// // @saftbus-export
-	// uint64_t ReadCurrentTime();
-
 
 	/// @brief The current time of the timingreceiver.
 	/// @return     the current time of the timingreceiver
@@ -231,8 +188,8 @@ public:
 	/// which case it may be persistent and shared between programs under a
 	/// well known name.
 	///
-	// @saftbus-export
-	std::map< std::string, std::string > getSoftwareActionSinks() const;
+	// // @saftbus-export
+	// std::map< std::string, std::string > getSoftwareActionSinks() const;
 
 	/// @brief A list of all the high/low outputs on the receiver.
 	/// @return A list of all the high/low outputs on the receiver.
@@ -271,7 +228,7 @@ public:
 
 	etherbone::Device& getDevice() { return device; }
 
-	SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
+//	SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
 
 
 private:
@@ -283,11 +240,9 @@ private:
 	bool poll();
 	saftbus::Source *poll_timeout_source;
 
-	mutable etherbone::Device device;
-
 	std::unique_ptr<WatchdogDriver> watchdog;
 	std::unique_ptr<PpsDriver>      pps;
-	std::unique_ptr<EcaDriver>      eca;
+	// std::unique_ptr<EcaDriver>      eca;
 	
 	eb_address_t ats;
 	eb_address_t info;
@@ -295,8 +250,7 @@ private:
 	std::string object_path;
 	std::string name;
 
-	std::string etherbone_path;
-	struct stat dev_stat;
+
 
 	bool activate_msi_polling;
 	unsigned polling_interval_ms;

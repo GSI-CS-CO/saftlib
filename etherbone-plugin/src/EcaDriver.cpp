@@ -64,6 +64,7 @@ EcaDriver::Impl::Impl(etherbone::Device &dev, const std::string &obj_path, saftb
 	, container(cont)
 	, sas_count(0)
 {
+	std::cerr << "EcaDriver::Impl::Impl()" << std::endl;
 }
 
 
@@ -126,7 +127,9 @@ void EcaDriver::Impl::probeConfiguration()
 	std::vector<etherbone::sdb_msi_device> ecas_dev;
 	std::vector<sdb_device> streams_dev;
 
+	std::cerr << "A" << std::endl;
 	device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
+	std::cerr << "B" << std::endl;
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, EVENT_SDB_DEVICE_ID, streams_dev);
 
 	std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
@@ -573,6 +576,7 @@ void EcaDriver::compile()
 EcaDriver::EcaDriver(SAFTd *saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
 	: d(std::unique_ptr<EcaDriver::Impl>(new EcaDriver::Impl(dev, obj_path, cont)))
 {
+	std::cerr << "EcaDriver::EcaDriver()" << std::endl;
 	d->probeConfiguration();
 	d->compile(); // remove old rules
 	d->prepareChannels();

@@ -63,11 +63,14 @@ public:
 	void update();
 };
 
+#define WATCHDOG_VENDOR_ID        0x00000651
+#define WATCHDOG_DEVICE_ID        0xb6232cd3
+
 WatchdogDriver::WatchdogDriver(etherbone::Device &dev) 
 	: device(dev) 
 {
 	std::vector<sdb_device> watchdogs_dev;
-	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0xb6232cd3, watchdogs_dev);
+	device.sdb_find_by_identity(WATCHDOG_VENDOR_ID, WATCHDOG_DEVICE_ID, watchdogs_dev);
 	if (watchdogs_dev.size() < 1) {
 		throw saftbus::Error(saftbus::Error::FAILED, "no watchdog device found on hardware");
 	}
@@ -160,6 +163,23 @@ bool PpsDriver::getLocked() const
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
+OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_path)
+	: etherbone_path(eb_path)
+{
+	std::cerr << "OpenDevice::OpenDevice()" << std::endl;
+	stat(etherbone_path.c_str(), &dev_stat);
+	device.open(socket, etherbone_path.c_str());
+}
+OpenDevice::~OpenDevice()
+{
+	device.close();
+	chmod(etherbone_path.c_str(), dev_stat.st_mode);
+}
+
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 
 #define BUILD_ID_ROM_VENDOR_ID 0x00000651
 #define BUILD_ID_ROM_DEVICE_ID 0x2d39fa8b
@@ -217,9 +237,10 @@ bool TimingReceiver::poll()
 }
 
 TimingReceiver::TimingReceiver(SAFTd *saftd, const std::string &n, const std::string eb_path, saftbus::Container *container)
-	: object_path(saftd->get_object_path() + "/" + n)
+	: OpenDevice(saftd->get_etherbone_socket(), eb_path)
+	, EcaDriver(saftd, device, object_path, container)
+	, object_path(saftd->get_object_path() + "/" + n)
 	, name(n)
-	, etherbone_path(eb_path)
 {
 	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
 
@@ -227,20 +248,9 @@ TimingReceiver::TimingReceiver(SAFTd *saftd, const std::string &n, const std::st
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
 	}
 
-	stat(etherbone_path.c_str(), &dev_stat);
-	device.open(saftd->get_etherbone_socket(), etherbone_path.c_str());
+	watchdog = std::move(std::unique_ptr<WatchdogDriver>(new WatchdogDriver(device)));
+	pps      = std::move(std::unique_ptr<PpsDriver>     (new PpsDriver     (device, SigLocked)));
 
-	try {
-		watchdog = std::move(std::unique_ptr<WatchdogDriver>(new WatchdogDriver(device)));
-		pps      = std::move(std::unique_ptr<PpsDriver>     (new PpsDriver     (device, SigLocked)));
-		eca      = std::move(std::unique_ptr<EcaDriver>     (new EcaDriver     (saftd, device, object_path, container)));
-	} catch (etherbone::exception_t &e) {
-		device.close();
-		chmod(etherbone_path.c_str(), dev_stat.st_mode);
-		throw;		
-	}
-
-	// std::vector<etherbone::sdb_msi_device> mbx_msi_dev;
 	std::vector<sdb_device> infos_dev, ats_dev;
 	eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
 
@@ -249,10 +259,10 @@ TimingReceiver::TimingReceiver(SAFTd *saftd, const std::string &n, const std::st
 
 	// only support super basic hardware for now
 	if (infos_dev.size() != 1) {
-		throw saftbus::Error(saftbus::Error::IO_ERROR, "Device has insuficient hardware resources");
+		throw saftbus::Error(saftbus::Error::IO_ERROR, "No Build ID found");
 	}
 
-    info      = (eb_address_t)infos_dev[0].sdb_component.addr_first;
+    info = (eb_address_t)infos_dev[0].sdb_component.addr_first;
 	setupGatewareInfo(info);
 
 	// update locked status ...
@@ -270,10 +280,6 @@ TimingReceiver::~TimingReceiver()
 	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
 	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
 	saftbus::Loop::get_default().remove(poll_timeout_source);
-	std::cerr << "device.close()" << std::endl;
-	device.close();
-	std::cerr << "fix device file" << std::endl;
-	chmod(etherbone_path.c_str(), dev_stat.st_mode);
 }
 
 const std::string &TimingReceiver::get_object_path() const
@@ -320,38 +326,12 @@ bool TimingReceiver::getLocked() const
 	return pps->getLocked();
 }
 
-
-
-void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, uint64_t time)
-{
-	// InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
-	eca->InjectEvent(event,param,eb_plugin::makeTimeTAI(time));
-}
-
-void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
-{
-	eca->InjectEvent(event, param, time);
-}
-
-
-std::string TimingReceiver::NewSoftwareActionSink(const std::string& name) {
-	return eca->NewSoftwareActionSink(name);
-}
-
-std::map< std::string, std::string > TimingReceiver::getSoftwareActionSinks() const {
-	return eca->getSoftwareActionSinks();
-}
-
-SoftwareActionSink *TimingReceiver::getSoftwareActionSink(const std::string & object_path) {
-	return eca->getSoftwareActionSink(object_path);
-}
-
 eb_plugin::Time TimingReceiver::CurrentTime()
 {
 	if (!pps->locked) {
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
 	}
-	return eb_plugin::makeTimeTAI(eca->ReadRawCurrentTime());
+	return eb_plugin::makeTimeTAI(ReadRawCurrentTime());
 }
 
 

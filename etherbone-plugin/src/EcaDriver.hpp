@@ -13,7 +13,6 @@
 #include <saftbus/error.hpp>
 
 #include "Time.hpp"
-#include "TimingReceiver.hpp"
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
 
@@ -30,16 +29,22 @@ class SAFTd;
 
 class EcaDriver {
 	struct Impl; std::unique_ptr<Impl> d;
-	friend class ActionSink;
-	uint16_t getMostFull(int channel);	
-public:
-	EcaDriver(SAFTd *saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont);
-	~EcaDriver();
 
+	friend class SoftwareActionSink;
+	friend class ActionSink;
+
+	uint16_t getMostFull(int channel);	
 	eb_address_t get_base_address();
 	const std::string &get_object_path();
 	etherbone::Device &get_device();
 	void compile();
+
+public:
+
+
+	EcaDriver(SAFTd *saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont);
+	virtual ~EcaDriver();
+
 
 	void removeSowftwareActionSink(SoftwareActionSink *sas);
 
@@ -52,8 +57,6 @@ public:
 	// @saftbus-export
 	uint64_t ReadRawCurrentTime();
 	
-
-
 	/// @brief        Create a new SoftwareActionSink.
 	/// @param name   A name for the SoftwareActionSink. Can be left blank.
 	/// @return       Object path to the created SoftwareActionSink.
@@ -67,8 +70,6 @@ public:
 	///
 	// @saftbus-export	
 	std::string NewSoftwareActionSink(const std::string& name);
-	
-
 
 	/// @brief        Simulate the receipt of a timing event
 	/// @param event  The event identifier which is matched against Conditions
