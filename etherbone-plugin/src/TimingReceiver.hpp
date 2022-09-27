@@ -33,13 +33,14 @@
 #include "SoftwareActionSink.hpp"
 
 #include "EcaDriver.hpp"
+#include "Watchdog.hpp"
 
 namespace eb_plugin {
 
 class SAFTd;
 // class SoftwareActionSink;
 
-class WatchdogDriver;
+// class WatchdogDriver;
 class PpsDriver;
 // class EcaDriver;
 
@@ -96,7 +97,7 @@ struct OpenDevice {
 /// interfaces property. The SCU backplane would be found under the
 /// SCUbusActionSink key, and as there is only one, it would be the 0th.
 ///
-class TimingReceiver : public OpenDevice, public EcaDriver {
+class TimingReceiver : public OpenDevice, public Watchdog, public EcaDriver {
 public:
 	TimingReceiver(SAFTd *saftd, const std::string &name, const std::string etherbone_path, 
 		           saftbus::Container *container = nullptr);
@@ -226,7 +227,7 @@ public:
 
 
 
-	etherbone::Device& getDevice() { return device; }
+	// etherbone::Device& getDevice() { return OpenDevice::device; }
 
 //	SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
 
@@ -240,7 +241,7 @@ private:
 	bool poll();
 	saftbus::Source *poll_timeout_source;
 
-	std::unique_ptr<WatchdogDriver> watchdog;
+	// std::unique_ptr<WatchdogDriver> watchdog;
 	std::unique_ptr<PpsDriver>      pps;
 	// std::unique_ptr<EcaDriver>      eca;
 	

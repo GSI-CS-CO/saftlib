@@ -45,7 +45,7 @@
 #include "fg_regs.h"
 #include "ats_regs.h"
 
-#include "EcaDriver.hpp"
+// #include "EcaDriver.hpp"
 
 namespace eb_plugin {
 
@@ -53,52 +53,52 @@ namespace eb_plugin {
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
-class WatchdogDriver {
-	etherbone::Device &device;
-	eb_address_t watchdog;
-	eb_data_t watchdog_value;
-public:
-	WatchdogDriver(etherbone::Device &device);
-	bool aquire();
-	void update();
-};
+// class WatchdogDriver {
+// 	etherbone::Device &device;
+// 	eb_address_t watchdog;
+// 	eb_data_t watchdog_value;
+// public:
+// 	WatchdogDriver(etherbone::Device &device);
+// 	bool aquire();
+// 	void update();
+// };
 
-#define WATCHDOG_VENDOR_ID        0x00000651
-#define WATCHDOG_DEVICE_ID        0xb6232cd3
+// #define WATCHDOG_VENDOR_ID        0x00000651
+// #define WATCHDOG_DEVICE_ID        0xb6232cd3
 
-WatchdogDriver::WatchdogDriver(etherbone::Device &dev) 
-	: device(dev) 
-{
-	std::vector<sdb_device> watchdogs_dev;
-	device.sdb_find_by_identity(WATCHDOG_VENDOR_ID, WATCHDOG_DEVICE_ID, watchdogs_dev);
-	if (watchdogs_dev.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "no watchdog device found on hardware");
-	}
-	if (watchdogs_dev.size() > 1) {
-		std::cerr << "more than one watchdog device found on hardware, taking the first one" << std::endl;
-	}
-	watchdog = static_cast<eb_address_t>(watchdogs_dev[0].sdb_component.addr_first);
-	if (!aquire()) {
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Watchdog on Timing Receiver already locked");
-	}
-}
-bool WatchdogDriver::aquire() {
-	// try to acquire watchdog
-	eb_data_t retry;
-	device.read(watchdog, EB_DATA32, &watchdog_value);
-	if ((watchdog_value & 0xFFFF) != 0) {
-		return false;
-	}
-	device.write(watchdog, EB_DATA32, watchdog_value);
-	device.read(watchdog, EB_DATA32, &retry);
-	if (((retry ^ watchdog_value) >> 16) != 0) {
-		return false;
-	}
-	return true;
-}
-void WatchdogDriver::update() {
-	device.write(watchdog, EB_DATA32, watchdog_value);
-}
+// WatchdogDriver::WatchdogDriver(etherbone::Device &dev) 
+// 	: device(dev) 
+// {
+// 	std::vector<sdb_device> watchdogs_dev;
+// 	device.sdb_find_by_identity(WATCHDOG_VENDOR_ID, WATCHDOG_DEVICE_ID, watchdogs_dev);
+// 	if (watchdogs_dev.size() < 1) {
+// 		throw saftbus::Error(saftbus::Error::FAILED, "no watchdog device found on hardware");
+// 	}
+// 	if (watchdogs_dev.size() > 1) {
+// 		std::cerr << "more than one watchdog device found on hardware, taking the first one" << std::endl;
+// 	}
+// 	watchdog = static_cast<eb_address_t>(watchdogs_dev[0].sdb_component.addr_first);
+// 	if (!aquire()) {
+// 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Watchdog on Timing Receiver already locked");
+// 	}
+// }
+// bool WatchdogDriver::aquire() {
+// 	// try to acquire watchdog
+// 	eb_data_t retry;
+// 	device.read(watchdog, EB_DATA32, &watchdog_value);
+// 	if ((watchdog_value & 0xFFFF) != 0) {
+// 		return false;
+// 	}
+// 	device.write(watchdog, EB_DATA32, watchdog_value);
+// 	device.read(watchdog, EB_DATA32, &retry);
+// 	if (((retry ^ watchdog_value) >> 16) != 0) {
+// 		return false;
+// 	}
+// 	return true;
+// }
+// void WatchdogDriver::update() {
+// 	device.write(watchdog, EB_DATA32, watchdog_value);
+// }
 
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
@@ -189,7 +189,7 @@ void TimingReceiver::setupGatewareInfo(uint32_t address)
 	eb_data_t buffer[256];
 
 	etherbone::Cycle cycle;
-	cycle.open(device);
+	cycle.open(OpenDevice::device);
 	for (unsigned i = 0; i < sizeof(buffer)/sizeof(buffer[0]); ++i) {
 		cycle.read(address + i*4, EB_DATA32, &buffer[i]);
 	}
@@ -232,13 +232,14 @@ bool TimingReceiver::poll()
 {
 	std::cerr << "TimingReceiver::poll()" << std::endl;
 	pps->getLocked();
-	watchdog->update();
+	Watchdog::update(); 
 	return true;
 }
 
 TimingReceiver::TimingReceiver(SAFTd *saftd, const std::string &n, const std::string eb_path, saftbus::Container *container)
 	: OpenDevice(saftd->get_etherbone_socket(), eb_path)
-	, EcaDriver(saftd, device, object_path, container)
+	, Watchdog(OpenDevice::device)
+	, EcaDriver(saftd, OpenDevice::device, object_path, container)
 	, object_path(saftd->get_object_path() + "/" + n)
 	, name(n)
 {
@@ -248,14 +249,14 @@ TimingReceiver::TimingReceiver(SAFTd *saftd, const std::string &n, const std::st
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
 	}
 
-	watchdog = std::move(std::unique_ptr<WatchdogDriver>(new WatchdogDriver(device)));
-	pps      = std::move(std::unique_ptr<PpsDriver>     (new PpsDriver     (device, SigLocked)));
+	// watchdog = std::move(std::unique_ptr<WatchdogDriver>(new WatchdogDriver(device)));
+	pps      = std::move(std::unique_ptr<PpsDriver>     (new PpsDriver     (OpenDevice::device, SigLocked)));
 
 	std::vector<sdb_device> infos_dev, ats_dev;
 	eb_address_t ats_addr = 0; // not every Altera FPGA model has a temperature sensor, i.e, Altera II
 
-	device.sdb_find_by_identity(BUILD_ID_ROM_VENDOR_ID, BUILD_ID_ROM_DEVICE_ID, infos_dev);
-	device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats_dev);
+	OpenDevice::device.sdb_find_by_identity(BUILD_ID_ROM_VENDOR_ID, BUILD_ID_ROM_DEVICE_ID, infos_dev);
+	OpenDevice::device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats_dev);
 
 	// only support super basic hardware for now
 	if (infos_dev.size() != 1) {
