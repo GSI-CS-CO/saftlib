@@ -10,7 +10,7 @@
 namespace eb_plugin {
 
 Watchdog::Watchdog(const etherbone::Socket &socket, const std::string& etherbone_path) 
-	: OpenDevice(socket, etherbone_path)
+	: WhiteRabbit(socket, etherbone_path)
 {
 	std::vector<sdb_device> watchdogs_dev;
 	device.sdb_find_by_identity(WATCHDOG_VENDOR_ID, WATCHDOG_DEVICE_ID, watchdogs_dev);

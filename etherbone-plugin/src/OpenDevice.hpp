@@ -19,7 +19,7 @@ class OpenDevice {
 protected:
 	std::string etherbone_path;
 	struct stat dev_stat;	
-	etherbone::Device device;
+	mutable etherbone::Device device;
 public:
 	OpenDevice(const etherbone::Socket &socket, const std::string& eb_path);
 	virtual ~OpenDevice();

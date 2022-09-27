@@ -43,7 +43,7 @@ class SAFTd;
 // class SoftwareActionSink;
 
 // class WatchdogDriver;
-class PpsDriver;
+// class PpsDriver;
 // class EcaDriver;
 
 
@@ -246,9 +246,7 @@ private:
 	bool poll();
 	saftbus::Source *poll_timeout_source;
 
-	// std::unique_ptr<WatchdogDriver> watchdog;
-	std::unique_ptr<PpsDriver>      pps;
-	// std::unique_ptr<EcaDriver>      eca;
+	// PpsDriver     pps;
 	
 	eb_address_t ats;
 	eb_address_t info;
