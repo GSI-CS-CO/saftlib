@@ -30,16 +30,17 @@
 
 #include "eb-source.hpp"
 
-#include "ActionSink.hpp"
+#include "SoftwareActionSink.hpp"
+#include "EcaDriver.hpp"
 
 namespace eb_plugin {
 
 class SAFTd;
-class SoftwareActionSink;
+// class SoftwareActionSink;
 
 class WatchdogDriver;
 class PpsDriver;
-class EcaDriver;
+// class EcaDriver;
 
 
 
@@ -300,7 +301,7 @@ private:
 	bool activate_msi_polling;
 	unsigned polling_interval_ms;
 
-	friend class ActionSink;
+	// friend class ActionSink;
 
 };
 

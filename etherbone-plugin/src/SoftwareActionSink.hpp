@@ -20,10 +20,11 @@
 #ifndef EB_PLUGIN_SOFTWARE_ACTION_SINK_H
 #define EB_PLUGIN_SOFTWARE_ACTION_SINK_H
 
+#ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
-
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
+#endif
 #include <etherbone.h>
 
 #include "Owned.hpp"

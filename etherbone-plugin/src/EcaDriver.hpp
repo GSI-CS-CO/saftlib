@@ -13,7 +13,6 @@
 #include <saftbus/error.hpp>
 
 #include "Time.hpp"
-#include "SAFTd.hpp"
 #include "TimingReceiver.hpp"
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
@@ -27,69 +26,79 @@
 
 namespace eb_plugin {
 
+class SAFTd;
+
 class EcaDriver {
+	struct Impl; std::unique_ptr<Impl> d;
 	friend class ActionSink;
-
-	SAFTd *saftd;
-	etherbone::Device  &device;
-	const std::string  &object_path;
-	saftbus::Container *container;
-
-	uint64_t sas_count; // number of SoftwareActionSinks
-
-	eb_address_t base;
-	eb_address_t stream;
-
-	// Msi address range
-	eb_address_t first;
-	eb_address_t last; 
-
-
-
-	unsigned channels;
-	unsigned search_size;
-	unsigned walker_size;
-	unsigned max_conditions;
-	unsigned used_conditions;
-	std::vector<eb_address_t> channel_msis;
-	std::vector<eb_address_t> queue_addresses;
-	std::vector<uint16_t> most_full;
-
-	// public type, even though the member is private
-	typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
-	typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
-
-	// typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
-
-	ActionSinks  actionSinks;
-
-	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
-	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
-	unsigned                                         ECA_LINUX_channel_index;
-	unsigned                                         ECA_LINUX_channel_subchannels;
-
-	uint16_t updateMostFull(unsigned channel); // returns current fill
-	void resetMostFull(unsigned channel);
-	void popMissingQueue(unsigned channel, unsigned num);
-
-
+	uint16_t getMostFull(int channel);	
 public:
-	uint64_t ReadRawCurrentTime();
-	
-	void compile();
-	etherbone::Device &get_device();
-
 	EcaDriver(SAFTd *saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont);
 	~EcaDriver();
 
-	void setHandler(unsigned channel, bool enable, eb_address_t address);
-	void msiHandler(eb_data_t msi, unsigned channel);
+	eb_address_t get_base_address();
+	const std::string &get_object_path();
+	etherbone::Device &get_device();
+	void compile();
+
+	void removeSowftwareActionSink(SoftwareActionSink *sas);
+
+	/// @brief The current time of the timingreceiver.
+	/// @return     the current time of the timingreceiver
+	///
+	/// The result is the WhiteRabbit timesamps in nanoseconds.
+	/// It is not checked if WhiteRabbit core is locked or not.
+	///
+	// @saftbus-export
+	uint64_t ReadRawCurrentTime();
+	
+
+
+	/// @brief        Create a new SoftwareActionSink.
+	/// @param name   A name for the SoftwareActionSink. Can be left blank.
+	/// @return       Object path to the created SoftwareActionSink.
+	///
+	/// SoftwareActionSinks allow a program to create conditions that match
+	/// incoming timing events.  These conditions may have callback methods
+	/// attached to them in order to receive notification.  The returned
+	/// path corresponds to a SoftwareActionSink that is owned by the
+	/// process which claimed it, and can thus be certain that no other
+	/// processes can interfere with the results.
+	///
+	// @saftbus-export	
+	std::string NewSoftwareActionSink(const std::string& name);
+	
+
+
+	/// @brief        Simulate the receipt of a timing event
+	/// @param event  The event identifier which is matched against Conditions
+	/// @param param  The parameter field, whose meaning depends on the event ID.
+	/// @param time   The execution time for the event, added to condition offsets.
+	///
+	/// Sometimes it is useful to simulate the receipt of a timing event. 
+	/// This allows software to test that configured conditions lead to the
+	/// desired behaviour without needing the data master to send anything.
+	///
+	// @saftbus-export
 	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
 
-	std::string NewSoftwareActionSink(const std::string& name);
-	void removeSowftwareActionSink(SoftwareActionSink *sas);
+	/// @brief A list of all current SoftwareActionSinks.
+	/// @return A list of all current SoftwareActionSinks.
+	///
+	/// Typically, these SoftwareActionSinks will be owned by their
+	/// processes and not of much interest to others.  Therefore, many of
+	/// the entries here may be of no interest to a particular client. 
+	/// However, it is possible for a SoftwareActionSink to be Disowned, in
+	/// which case it may be persistent and shared between programs under a
+	/// well known name.
+	///
+	// @saftbus-export
 	std::map< std::string, std::string > getSoftwareActionSinks() const;
 
+	/// @brief get a pointer to a SoftwareActionSink in a stand-alone application
+	/// @param sas_obj_path Object path of the SoftwareActionSink
+	/// @return pointer to a SoftwareActionSink 
+	///
 	SoftwareActionSink *getSoftwareActionSink(const std::string & sas_obj_path);
 };
 

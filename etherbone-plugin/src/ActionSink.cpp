@@ -41,17 +41,12 @@ ActionSink::ActionSink(EcaDriver* eca_
                      , unsigned channel_
                      , unsigned num_
                      , saftbus::Container *container_)
- : object_path(eca_->object_path + "/" + name_), 
+ : object_path(eca_->get_object_path() + "/" + name_), 
 	 eca(eca_), name(name_), channel(channel_), num(num_),
 	 minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
 	 overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
 	 container(container_)
 {
-	assert(eca_ != nullptr);
-	std::cerr << "---------------" << std::endl;
-	std::cerr << eca_->object_path << std::endl;
-	std::cerr << name_ << std::endl;
-
 
 	overflowUpdate = actionUpdate = lateUpdate = earlyUpdate = conflictUpdate = delayedUpdate = std::chrono::steady_clock::now();
 	eb_data_t raw_latency, raw_offset_bits, raw_capacity, null;
@@ -59,22 +54,22 @@ ActionSink::ActionSink(EcaDriver* eca_
 	etherbone::Cycle cycle;
 	cycle.open(eca->get_device());
 	// Grab configuration
-	cycle.write(eca->base + ECA_CHANNEL_SELECT_RW,     EB_DATA32, channel);
-	cycle.write(eca->base + ECA_CHANNEL_NUM_SELECT_RW, EB_DATA32, num);
-	cycle.read (eca->base + ECA_LATENCY_GET,           EB_DATA32, &raw_latency);
-	cycle.read (eca->base + ECA_OFFSET_BITS_GET,       EB_DATA32, &raw_offset_bits);
-	cycle.read (eca->base + ECA_CHANNEL_CAPACITY_GET,  EB_DATA32, &raw_capacity);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_SELECT_RW,     EB_DATA32, channel);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_NUM_SELECT_RW, EB_DATA32, num);
+	cycle.read (eca->get_base_address() + ECA_LATENCY_GET,           EB_DATA32, &raw_latency);
+	cycle.read (eca->get_base_address() + ECA_OFFSET_BITS_GET,       EB_DATA32, &raw_offset_bits);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_CAPACITY_GET,  EB_DATA32, &raw_capacity);
 	// Wipe out any old state:
-	cycle.read (eca->base + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
-	cycle.read (eca->base + ECA_CHANNEL_VALID_COUNT_GET,    EB_DATA32, &null);
-	cycle.write(eca->base + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_LATE);
-	cycle.read (eca->base + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
-	cycle.write(eca->base + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_EARLY);
-	cycle.read (eca->base + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
-	cycle.write(eca->base + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_CONFLICT);
-	cycle.read (eca->base + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
-	cycle.write(eca->base + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_DELAYED);
-	cycle.read (eca->base + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &null);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_VALID_COUNT_GET,    EB_DATA32, &null);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_LATE);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_EARLY);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_CONFLICT);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_CODE_SELECT_RW,     EB_DATA32, ECA_DELAYED);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_FAILED_COUNT_GET,   EB_DATA32, &null);
 	cycle.close();
 
 	latency = raw_latency;   // in nanoseconds
@@ -191,7 +186,7 @@ uint16_t ActionSink::getCapacity() const
 
 uint16_t ActionSink::getMostFull() const
 {
-	return eca->most_full[channel];
+	return eca->getMostFull(channel);
 }
 
 std::chrono::nanoseconds ActionSink::getSignalRate() const
@@ -370,10 +365,10 @@ bool ActionSink::updateOverflow() const
 
 	etherbone::Cycle cycle;
 	cycle.open(eca->get_device());
-	cycle.write(eca->base + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
-	cycle.write(eca->base + ECA_CHANNEL_NUM_SELECT_RW,      EB_DATA32, num);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_NUM_SELECT_RW,      EB_DATA32, num);
 	// reading OVERFLOW_COUNT clears the count and rearms the MSI
-	cycle.read (eca->base + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_OVERFLOW_COUNT_GET, EB_DATA32, &overflow);
 	cycle.close();
 
 	overflowCount += overflow;
@@ -391,10 +386,10 @@ bool ActionSink::updateAction() const
 
 	etherbone::Cycle cycle;
 	cycle.open(eca->get_device());
-	cycle.write(eca->base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-	cycle.write(eca->base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
 	// reading VALID_COUNT clears the count and rearms the MSI
-	cycle.read (eca->base + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &valid);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &valid);
 	cycle.close();
 
 	actionCount += valid;
@@ -411,21 +406,21 @@ ActionSink::Record ActionSink::fetchError(uint8_t code) const
 
 	etherbone::Cycle cycle;
 	cycle.open(eca->get_device());
-	cycle.write(eca->base + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-	cycle.write(eca->base + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
-	cycle.write(eca->base + ECA_CHANNEL_CODE_SELECT_RW,  EB_DATA32, code);
-	cycle.read (eca->base + ECA_CHANNEL_EVENT_ID_HI_GET, EB_DATA32, &event_hi);
-	cycle.read (eca->base + ECA_CHANNEL_EVENT_ID_LO_GET, EB_DATA32, &event_lo);
-	cycle.read (eca->base + ECA_CHANNEL_PARAM_HI_GET,    EB_DATA32, &param_hi);
-	cycle.read (eca->base + ECA_CHANNEL_PARAM_LO_GET,    EB_DATA32, &param_lo);
-	cycle.read (eca->base + ECA_CHANNEL_TAG_GET,         EB_DATA32, &tag);
-	cycle.read (eca->base + ECA_CHANNEL_TEF_GET,         EB_DATA32, &tef);
-	cycle.read (eca->base + ECA_CHANNEL_DEADLINE_HI_GET, EB_DATA32, &deadline_hi);
-	cycle.read (eca->base + ECA_CHANNEL_DEADLINE_LO_GET, EB_DATA32, &deadline_lo);
-	cycle.read (eca->base + ECA_CHANNEL_EXECUTED_HI_GET, EB_DATA32, &executed_hi);
-	cycle.read (eca->base + ECA_CHANNEL_EXECUTED_LO_GET, EB_DATA32, &executed_lo);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+	cycle.write(eca->get_base_address() + ECA_CHANNEL_CODE_SELECT_RW,  EB_DATA32, code);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_EVENT_ID_HI_GET, EB_DATA32, &event_hi);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_EVENT_ID_LO_GET, EB_DATA32, &event_lo);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_PARAM_HI_GET,    EB_DATA32, &param_hi);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_PARAM_LO_GET,    EB_DATA32, &param_lo);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_TAG_GET,         EB_DATA32, &tag);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_TEF_GET,         EB_DATA32, &tef);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_DEADLINE_HI_GET, EB_DATA32, &deadline_hi);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_DEADLINE_LO_GET, EB_DATA32, &deadline_lo);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_EXECUTED_HI_GET, EB_DATA32, &executed_hi);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_EXECUTED_LO_GET, EB_DATA32, &executed_lo);
 	// reading FAILED_COUNT clears the count, releases the record, and rearms the MSI
-	cycle.read (eca->base + ECA_CHANNEL_FAILED_COUNT_GET, EB_DATA32, &failed);
+	cycle.read (eca->get_base_address() + ECA_CHANNEL_FAILED_COUNT_GET, EB_DATA32, &failed);
 	cycle.close();
 
 	ActionSink::Record out;

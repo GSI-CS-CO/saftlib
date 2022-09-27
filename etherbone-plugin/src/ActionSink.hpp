@@ -446,7 +446,7 @@ class ActionSink
 		
 		// Useful for Condition destroy methods
 		void removeCondition(uint32_t number);
-		
+
 	protected:
 		std::string object_path;
 		EcaDriver* eca;
