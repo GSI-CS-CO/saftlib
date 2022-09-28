@@ -26,12 +26,18 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/SoftwareActionSink.cpp                  \
 	src/SoftwareActionSink_Service.cpp           \
 	src/OpenDevice.cpp                            \
-	src/WhiteRabbit.cpp                            \
-	src/Watchdog.cpp                                \
-	src/ECA.cpp                                      \
-	src/ECA_Service.cpp                               \
-	src/TimingReceiver.cpp                             \
-	src/TimingReceiver_Service.cpp                      \
+	src/OpenDevice_Service.cpp                     \
+	src/WhiteRabbit.cpp                             \
+	src/WhiteRabbit_Service.cpp                      \
+	src/Watchdog.cpp                                  \
+	src/ECA.cpp                                        \
+	src/ECA_Service.cpp                                 \
+	src/BuildIdRom.cpp                                   \
+	src/BuildIdRom_Service.cpp                            \
+	src/TempSensor.cpp                                     \
+	src/TempSensor_Service.cpp                              \
+	src/TimingReceiver.cpp                                   \
+	src/TimingReceiver_Service.cpp                            \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@/service
@@ -52,11 +58,17 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/SoftwareActionSink.hpp                       \
 	src/SoftwareActionSink_Service.hpp                \
 	src/OpenDevice.hpp                                 \
-	src/WhiteRabbit.hpp                                 \
-	src/Watchdog.hpp                                     \
-	src/ECA.hpp                                           \
-	src/ECA_Service.hpp                                    \
-	src/TimingReceiver.hpp                                  \
+	src/OpenDevice_Service.hpp                          \
+	src/WhiteRabbit.hpp                                  \
+	src/WhiteRabbit_Service.hpp                           \
+	src/Watchdog.hpp                                       \
+	src/ECA.hpp                                             \
+	src/ECA_Service.hpp                                      \
+	src/BuildIdRom.hpp                                        \
+	src/BuildIdRom_Service.hpp                                 \
+	src/TempSensor.hpp                                          \
+	src/TempSensor_Service.hpp                                   \
+	src/TimingReceiver.hpp                                        \
 	src/TimingReceiver_Service.hpp                           
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
@@ -71,6 +83,8 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/OpenDevice_Proxy.cpp              \
 	src/WhiteRabbit_Proxy.cpp              \
 	src/ECA_Proxy.cpp                       \
+	src/BuildIdRom_Proxy.cpp                 \
+	src/TempSensor_Proxy.cpp                  \
 	src/TimingReceiver_Proxy.cpp         
 
 
@@ -86,6 +100,8 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/OpenDevice_Proxy.hpp                 \
 	src/WhiteRabbit_Proxy.hpp                 \
 	src/ECA_Proxy.hpp                          \
+	src/BuildIdRom_Proxy.hpp                    \
+	src/TempSensor_Proxy.hpp                     \
 	src/TimingReceiver_Proxy.hpp
 
 # the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time

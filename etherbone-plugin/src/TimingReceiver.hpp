@@ -36,6 +36,8 @@
 #include "WhiteRabbit.hpp"
 #include "Watchdog.hpp"
 #include "ECA.hpp"
+#include "BuildIdRom.hpp"
+#include "TempSensor.hpp"
 
 // @saftbus-include
 #include <Time.hpp>
@@ -92,7 +94,12 @@ class SAFTd;
 /// interfaces property. The SCU backplane would be found under the
 /// SCUbusActionSink key, and as there is only one, it would be the 0th.
 ///
-class TimingReceiver : public OpenDevice, public WhiteRabbit, public Watchdog, public ECA {
+class TimingReceiver : public OpenDevice
+                     , public WhiteRabbit
+                     , public Watchdog
+                     , public ECA
+                     , public BuildIdRom
+                     , public TempSensor {
 public:
 	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
 		           saftbus::Container *container = nullptr);
@@ -136,41 +143,12 @@ public:
 	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
 
 
-	/// @brief Key-value map of hardware build information
-	/// @return Key-value map of hardware build information
-	///
-	// @saftbus-export
-	std::map< std::string, std::string > getGatewareInfo() const;
-
-	/// @brief Hardware build version
-	/// @return "major.minor.tiny" if version is valid (or "N/A" if not available)
-	///
-	// @saftbus-export
-	std::string getGatewareVersion() const;
-	
 
 	/// @brief This signal is sent when the Lock Property changes
 	///
 	// @saftbus-signal
 	std::function<void(bool locked)> SigLocked;
 	
-
-	/// @brief Check if a temperature sensor is available
-	/// @return Check if a temperature sensor is available
-	///
-	/// in a timing receiver.
-	///
-	// // @saftbus-export
-	// bool getTemperatureSensorAvail() const;
-
-	/// @brief The current temperature in degree Celsius.
-	/// @return         Temperature in degree Celsius.
-	///
-	/// The valid temperature range is from -70 to 127 degree Celsius.
-	/// The data type is 32-bit signed integer.
-	///
-	// // @saftbus-export
-	// int32_t CurrentTemperature();
 
 
 	/// @brief A list of all current SoftwareActionSinks.
@@ -229,16 +207,13 @@ public:
 private:
 
 
-	void setupGatewareInfo(uint32_t address);
-	std::map<std::string, std::string> gateware_info;
+
 
 	bool poll();
 	saftbus::Source *poll_timeout_source;
 
-	// PpsDriver     pps;
 	
 	eb_address_t ats;
-	eb_address_t info;
 
 	std::string object_path;
 	std::string name;
@@ -248,7 +223,6 @@ private:
 	bool activate_msi_polling;
 	unsigned polling_interval_ms;
 
-	// friend class ActionSink;
 
 };
 
