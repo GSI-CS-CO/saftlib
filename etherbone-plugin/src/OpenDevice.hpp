@@ -21,8 +21,15 @@ protected:
 	struct stat dev_stat;	
 	mutable etherbone::Device device;
 public:
-	OpenDevice(const etherbone::Socket &socket, const std::string& eb_path);
+	OpenDevice(const etherbone::Socket &socket, const std::string& etherbone_path);
 	virtual ~OpenDevice();
+
+
+	/// @brief The path through which the device is reached.
+	/// @return The path through which the device is reached.
+	///
+	// @saftbus-export
+	std::string getEtherbonePath() const;
 };
 
 

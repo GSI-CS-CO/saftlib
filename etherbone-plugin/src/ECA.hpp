@@ -2,9 +2,12 @@
 #define EB_PLUGIN_ECA_DRIVER_HPP_
 
 
-
-
-#include "Watchdog.hpp"
+#ifndef ETHERBONE_THROWS
+#define ETHERBONE_THROWS 1
+#define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
+#endif
+#include <etherbone.h>
 
 #include <saftbus/service.hpp>
 
@@ -14,8 +17,9 @@ namespace eb_plugin {
 
 class SAFTd;
 class SoftwareActionSink;
+class OpenDevice;
 
-class ECA : public Watchdog {
+class ECA {
 	struct Impl; std::unique_ptr<Impl> d;
 
 	friend class SoftwareActionSink;
@@ -29,7 +33,7 @@ class ECA : public Watchdog {
 
 public:
 
-	ECA(SAFTd &saftd, const std::string &etherbone_path, const std::string &object_path, saftbus::Container *container);
+	ECA(SAFTd &saftd, etherbone::Device &device, const std::string &object_path, saftbus::Container *container);
 	virtual ~ECA();
 
 

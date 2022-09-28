@@ -32,6 +32,9 @@
 
 // #include "SoftwareActionSink.hpp"
 
+#include "OpenDevice.hpp"
+#include "WhiteRabbit.hpp"
+#include "Watchdog.hpp"
 #include "ECA.hpp"
 
 // @saftbus-include
@@ -89,9 +92,9 @@ class SAFTd;
 /// interfaces property. The SCU backplane would be found under the
 /// SCUbusActionSink key, and as there is only one, it would be the 0th.
 ///
-class TimingReceiver : public ECA {
+class TimingReceiver : public OpenDevice, public WhiteRabbit, public Watchdog, public ECA {
 public:
-	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string etherbone_path, 
+	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
 		           saftbus::Container *container = nullptr);
 	~TimingReceiver();
 
@@ -101,12 +104,6 @@ public:
 	///
 	// @saftbus-export
 	void Remove();
-
-	/// @brief The path through which the device is reached.
-	/// @return The path through which the device is reached.
-	///
-	// @saftbus-export
-	std::string getEtherbonePath() const;
 
 	/// @brief The logical name with which the device was connected.
 	/// @return The logical name with which the device was connected.
@@ -151,14 +148,6 @@ public:
 	// @saftbus-export
 	std::string getGatewareVersion() const;
 	
-	/// @brief The timing receiver is locked to the timing grandmaster.
-	/// @return The timing receiver is locked to the timing grandmaster.
-	///
-	/// Upon power-up it takes approximately one minute until the timing
-	/// receiver has a correct timestamp.
-	///
-	// @saftbus-export
-	bool getLocked() const;
 
 	/// @brief This signal is sent when the Lock Property changes
 	///

@@ -1,5 +1,4 @@
 #include "ECA.hpp"
-
 #include "SAFTd.hpp"
 
 #include <stdlib.h>
@@ -13,7 +12,6 @@
 #include <saftbus/error.hpp>
 #include <saftbus/service.hpp>
 
-#include "Time.hpp"
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
 
@@ -578,6 +576,10 @@ void ECA::Impl::compile()
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
+
+
+
+
 uint16_t ECA::getMostFull(int channel)
 {
 	return d->most_full[channel];
@@ -595,9 +597,8 @@ void ECA::compile()
 }
 
 
-ECA::ECA(SAFTd &saftd, const std::string &etherbone_path, const std::string &object_path, saftbus::Container *container)
-	: Watchdog(saftd.get_etherbone_socket(), etherbone_path)
-	, d(std::unique_ptr<ECA::Impl>(new ECA::Impl(OpenDevice::device, object_path, container)))
+ECA::ECA(SAFTd &saftd, etherbone::Device &device, const std::string &object_path, saftbus::Container *container)
+	: d(std::unique_ptr<ECA::Impl>(new ECA::Impl(device, object_path, container)))
 {
 	std::cerr << "ECA::ECA()" << std::endl;
 	d->probeConfiguration();
@@ -677,7 +678,7 @@ SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 
 
 etherbone::Device &ECA::get_device() {
-	return OpenDevice::device;
+	return d->device;
 }
 
 static inline bool not_isalnum_(char c)

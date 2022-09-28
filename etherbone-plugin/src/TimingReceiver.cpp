@@ -47,8 +47,11 @@
 
 namespace eb_plugin {
 
-TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string ethterbone_path, saftbus::Container *container)
-	: ECA(saftd, ethterbone_path, object_path, container)
+TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string &eb_path, saftbus::Container *container)
+	: OpenDevice(saftd.get_etherbone_socket(), eb_path)
+	, WhiteRabbit(OpenDevice::device)
+	, Watchdog(OpenDevice::device)
+	, ECA(saftd, OpenDevice::device, object_path, container)
 	, object_path(saftd.get_object_path() + "/" + n)
 	, name(n)
 {
@@ -154,10 +157,7 @@ const std::string &TimingReceiver::get_object_path() const
 void TimingReceiver::Remove() {
 	throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver::Remove is deprecated, use SAFTd::Remove instead");
 }
-std::string TimingReceiver::getEtherbonePath() const
-{
-	return etherbone_path;
-}
+
 std::string TimingReceiver::getName() const
 {
 	return name;
@@ -183,11 +183,6 @@ std::string TimingReceiver::getGatewareVersion() const
 	pos = pos + findString.length(); // get rid of findString '-v'
 
 	return(rawVersion.substr(pos, rawVersion.length() - pos));
-}
-
-bool TimingReceiver::getLocked() const
-{
-	return WhiteRabbit::getLocked();
 }
 
 eb_plugin::Time TimingReceiver::CurrentTime()

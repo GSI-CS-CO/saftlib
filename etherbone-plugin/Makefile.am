@@ -9,30 +9,55 @@ lib_LTLIBRARIES = \
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
 lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) 
 lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)
-lib@PACKAGE@_service_la_SOURCES =                                 \
-	src/Time.cpp                        src/Time.hpp               \
-	src/eb-source.cpp                   src/eb-source.hpp           \
-	src/eb-forward.cpp                  src/eb-forward.hpp           \
-	src/Owned.cpp                       src/Owned.hpp                 \
-	src/Owned_Service.cpp               src/Owned_Service.hpp          \
-	src/SAFTd.cpp                       src/SAFTd.hpp                   \
-	src/SAFTd_Service.cpp               src/SAFTd_Service.hpp            \
-	src/Condition.cpp                   src/Condition.hpp                 \
-	src/Condition_Service.cpp           src/Condition_Service.hpp          \
-	src/ActionSink.cpp                  src/ActionSink.hpp                  \
-	src/ActionSink_Service.cpp          src/ActionSink_Service.hpp           \
-	src/SoftwareCondition.cpp           src/SoftwareCondition.hpp             \
-	src/SoftwareCondition_Service.cpp   src/SoftwareCondition_Service.hpp      \
-	src/SoftwareActionSink.cpp          src/SoftwareActionSink.hpp              \
-	src/SoftwareActionSink_Service.cpp  src/SoftwareActionSink_Service.hpp       \
-	src/OpenDevice.cpp                  src/OpenDevice.hpp                        \
-	src/WhiteRabbit.cpp                 src/WhiteRabbit.hpp                        \
-	src/Watchdog.cpp                    src/Watchdog.hpp                            \
-	src/ECA.cpp                         src/ECA.hpp                                  \
-	src/ECA_Service.cpp                 src/ECA_Service.hpp                           \
-	src/TimingReceiver.cpp              src/TimingReceiver.hpp                         \
-	src/TimingReceiver_Service.cpp      src/TimingReceiver_Service.hpp                  \
+lib@PACKAGE@_service_la_SOURCES = \
+	src/Time.cpp                   \
+	src/eb-source.cpp               \
+	src/eb-forward.cpp               \
+	src/Owned.cpp                     \
+	src/Owned_Service.cpp              \
+	src/SAFTd.cpp                       \
+	src/SAFTd_Service.cpp                \
+	src/Condition.cpp                     \
+	src/Condition_Service.cpp              \
+	src/ActionSink.cpp                      \
+	src/ActionSink_Service.cpp               \
+	src/SoftwareCondition.cpp                 \
+	src/SoftwareCondition_Service.cpp          \
+	src/SoftwareActionSink.cpp                  \
+	src/SoftwareActionSink_Service.cpp           \
+	src/OpenDevice.cpp                            \
+	src/WhiteRabbit.cpp                            \
+	src/Watchdog.cpp                                \
+	src/ECA.cpp                                      \
+	src/ECA_Service.cpp                               \
+	src/TimingReceiver.cpp                             \
+	src/TimingReceiver_Service.cpp                      \
 	src/create_service.cpp
+
+lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@/service
+lib@PACKAGE@_service_include_HEADERS = \
+	src/Time.hpp                        \
+	src/eb-source.hpp                    \
+	src/eb-forward.hpp                    \
+	src/Owned.hpp                          \
+	src/Owned_Service.hpp                   \
+	src/SAFTd.hpp                            \
+	src/SAFTd_Service.hpp                     \
+	src/Condition.hpp                          \
+	src/Condition_Service.hpp                   \
+	src/ActionSink.hpp                           \
+	src/ActionSink_Service.hpp                    \
+	src/SoftwareCondition.hpp                      \
+	src/SoftwareCondition_Service.hpp               \
+	src/SoftwareActionSink.hpp                       \
+	src/SoftwareActionSink_Service.hpp                \
+	src/OpenDevice.hpp                                 \
+	src/WhiteRabbit.hpp                                 \
+	src/Watchdog.hpp                                     \
+	src/ECA.hpp                                           \
+	src/ECA_Service.hpp                                    \
+	src/TimingReceiver.hpp                                  \
+	src/TimingReceiver_Service.hpp                           
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =   \
@@ -43,7 +68,9 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/ActionSink_Proxy.cpp           \
 	src/SoftwareCondition_Proxy.cpp     \
 	src/SoftwareActionSink_Proxy.cpp     \
-	src/ECA_Proxy.cpp                     \
+	src/OpenDevice_Proxy.cpp              \
+	src/WhiteRabbit_Proxy.cpp              \
+	src/ECA_Proxy.cpp                       \
 	src/TimingReceiver_Proxy.cpp         
 
 
@@ -56,7 +83,9 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/ActionSink_Proxy.hpp              \
 	src/SoftwareCondition_Proxy.hpp        \
 	src/SoftwareActionSink_Proxy.hpp        \
-	src/ECA_Proxy.hpp                        \
+	src/OpenDevice_Proxy.hpp                 \
+	src/WhiteRabbit_Proxy.hpp                 \
+	src/ECA_Proxy.hpp                          \
 	src/TimingReceiver_Proxy.hpp
 
 # the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time

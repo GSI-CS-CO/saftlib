@@ -1,4 +1,5 @@
 #include "Watchdog.hpp"
+#include "OpenDevice.hpp"
 
 #include <saftbus/error.hpp>
 
@@ -9,8 +10,8 @@
 
 namespace eb_plugin {
 
-Watchdog::Watchdog(const etherbone::Socket &socket, const std::string& etherbone_path) 
-	: WhiteRabbit(socket, etherbone_path)
+Watchdog::Watchdog(etherbone::Device &dev) 
+	: device(dev)
 {
 	std::vector<sdb_device> watchdogs_dev;
 	device.sdb_find_by_identity(WATCHDOG_VENDOR_ID, WATCHDOG_DEVICE_ID, watchdogs_dev);

@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
 
 	eb_plugin::SAFTd saftd;
 
+	std::cerr << argv[2] << std::endl;
 	auto tr_obj_path = saftd.AttachDevice(argv[1], argv[2]);
 	for (auto &device: saftd.getDevices()) {
 		std::cerr << device.first << " " << device.second << std::endl;
