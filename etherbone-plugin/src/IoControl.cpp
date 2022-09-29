@@ -88,6 +88,7 @@ IoControl::IoControl(etherbone::Device &dev)
 		}
 	}
 
+	std::cerr << "************** NUM IOS " << (io_GPIOTotal + io_LVDSTotal) << std::endl;
 	// /* Create an action sink for each IO */
 	// unsigned eca_in = 0, eca_out = 0;
 
@@ -127,10 +128,12 @@ IoControl::IoControl(etherbone::Device &dev)
 		std::string IOName = cIOName;
 
 
+		std::cerr << "IOName: " << IOName <<  " " << channel << std::endl;
 
 	// 	/* Create the IO controller object */
-		Io io(device, channel, internal_id, special, logic_level, oe_available,
-	 		term_available, spec_out_available, spec_in_available, ioctl_address);
+		ios.push_back(Io(device, channel, internal_id, special, logic_level, oe_available,
+	 		term_available, spec_out_available, spec_in_available, ioctl_address));
+
 	// 	InoutImpl::ConstructorType impl_args = {
 	// 		tr, channel, internal_id, special, logic_level, oe_available,
 	// 		term_available, spec_out_available, spec_in_available, ioctl_address, clkgen_address };

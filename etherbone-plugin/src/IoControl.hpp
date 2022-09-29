@@ -14,6 +14,8 @@ namespace eb_plugin {
 
 class IoControl {
 	etherbone::Device &device;
+
+	std::vector<Io> ios;
 public:
 	IoControl(etherbone::Device &device);
 };

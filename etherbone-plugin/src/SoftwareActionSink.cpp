@@ -38,7 +38,7 @@ SoftwareActionSink::SoftwareActionSink(ECA &eca
                                       , const std::string &name
                                       , unsigned channel, unsigned num, eb_address_t queue_address
                                       , saftbus::Container *container)
-  : Owned(container), ActionSink(eca, name, channel, num, container), queue(queue_address)
+  : ActionSink(eca, name, channel, num, container), queue(queue_address)
 {}
 
 

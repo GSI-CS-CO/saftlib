@@ -32,6 +32,7 @@
 #include <Time.hpp>
 
 #include "Condition.hpp"
+#include "Owned.hpp"
 
 namespace eb_plugin {
 
@@ -109,7 +110,7 @@ class ECA;
 /// For SoftwareActionSinks, delays can probably always be ignored because
 /// the handler is much much slower than the hardware.  For a kicker, on
 /// the other hand, a delay is probably a critical error.
-class ActionSink 
+class ActionSink : public Owned 
 {
 	public:
 		/// @brief  ActionSink constructor

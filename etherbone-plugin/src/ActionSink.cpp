@@ -41,11 +41,12 @@ ActionSink::ActionSink(ECA &eca_
                      , unsigned channel_
                      , unsigned num_
                      , saftbus::Container *container_)
- : object_path(eca_.get_object_path() + "/" + name_), 
-	 eca(eca_), name(name_), channel(channel_), num(num_),
-	 minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
-	 overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
-	 container(container_)
+ :	Owned(container), 
+    object_path(eca_.get_object_path() + "/" + name_), 
+	eca(eca_), name(name_), channel(channel_), num(num_),
+	minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
+	overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),
+	container(container_)
 {
 
 	overflowUpdate = actionUpdate = lateUpdate = earlyUpdate = conflictUpdate = delayedUpdate = std::chrono::steady_clock::now();
@@ -109,53 +110,57 @@ ActionSink::~ActionSink()
 
 void ActionSink::ToggleActive()
 {
-	// //ownerOnly();
+	ownerOnly();
 
-	// // Toggle raw to prevent recompile at each step
-	// Conditions::iterator i;
-	// for (i = conditions.begin(); i != conditions.end(); ++i)
-	//   i->second->setRawActive(!i->second->getActive());
+	// Toggle raw to prevent recompile at each step
+	Conditions::iterator i;
+	for (i = conditions.begin(); i != conditions.end(); ++i) {
+		i->second->setRawActive(!i->second->getActive());
+	}
 
-	// try {
-	//   compile();
-	// } catch (...) {
-	//   // failed => undo flips
-	//   for (i = conditions.begin(); i != conditions.end(); ++i)
-	//     i->second->setRawActive(!i->second->getActive());
-	//   throw;
-	// }
+	try {
+		compile();
+	} catch (...) {
+		// failed => undo flips
+		for (i = conditions.begin(); i != conditions.end(); ++i) {
+			i->second->setRawActive(!i->second->getActive());
+		}
+		throw;
+	}
 }
 
 uint16_t ActionSink::ReadFill()
 {
-	// return dev->updateMostFull(channel);
-	return 0;
+	return eca.updateMostFull(channel);
 }
 
 std::vector< std::string > ActionSink::getAllConditions() const
 {
 	std::vector< std::string > out;
-	// Conditions::const_iterator i;
-	// for (i = conditions.begin(); i != conditions.end(); ++i)
-	//   out.push_back(i->second->getObjectPath());
+	Conditions::const_iterator i;
+	for (i = conditions.begin(); i != conditions.end(); ++i) {
+		out.push_back(i->second->getObjectPath());
+	}
 	return out;
 }
 
 std::vector< std::string > ActionSink::getActiveConditions() const
 {
 	std::vector< std::string > out;
-	// Conditions::const_iterator i;
-	// for (i = conditions.begin(); i != conditions.end(); ++i)
-	//   if (i->second->getActive()) out.push_back(i->second->getObjectPath());
+	Conditions::const_iterator i;
+	for (i = conditions.begin(); i != conditions.end(); ++i) {
+		if (i->second->getActive()) out.push_back(i->second->getObjectPath());
+	}
 	return out;
 }
 
 std::vector< std::string > ActionSink::getInactiveConditions() const
 {
 	std::vector< std::string > out;
-	// Conditions::const_iterator i;
-	// for (i = conditions.begin(); i != conditions.end(); ++i)
-	//   if (!i->second->getActive()) out.push_back(i->second->getObjectPath());
+	Conditions::const_iterator i;
+	for (i = conditions.begin(); i != conditions.end(); ++i) {
+		if (!i->second->getActive()) out.push_back(i->second->getObjectPath());
+	}
 	return out;
 }
 

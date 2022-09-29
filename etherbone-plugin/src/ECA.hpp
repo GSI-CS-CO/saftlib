@@ -32,11 +32,15 @@ class ECA {
 	void compile();
 
 public:
+	typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
+
 
 	ECA(SAFTd &saftd, etherbone::Device &device, const std::string &object_path, saftbus::Container *container);
 	virtual ~ECA();
 
 
+	uint16_t updateMostFull(unsigned channel); // returns current fill
+	
 	void removeSowftwareActionSink(SoftwareActionSink *sas);
 
 	/// @brief The current time of the timingreceiver.

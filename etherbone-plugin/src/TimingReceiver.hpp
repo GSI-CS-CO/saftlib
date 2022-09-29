@@ -26,18 +26,13 @@
 
 #include <saftbus/loop.hpp>
 
-// #include <sys/stat.h>
-
-// #include "eb-source.hpp"
-
-// #include "SoftwareActionSink.hpp"
-
 #include "OpenDevice.hpp"
 #include "WhiteRabbit.hpp"
 #include "Watchdog.hpp"
 #include "ECA.hpp"
 #include "BuildIdRom.hpp"
 #include "TempSensor.hpp"
+#include "IoControl.hpp"
 
 // @saftbus-include
 #include <Time.hpp>
@@ -45,12 +40,6 @@
 namespace eb_plugin {
 
 class SAFTd;
-// class SoftwareActionSink;
-
-// class WatchdogDriver;
-// class PpsDriver;
-// class EcaDriver;
-
 
 /// de.gsi.saftlib.TimingReceiver:
 /// @brief A timing receiver.
@@ -206,7 +195,7 @@ public:
 
 private:
 
-
+	IoControl io_control;
 
 
 	bool poll();

@@ -27,7 +27,6 @@
 #endif
 #include <etherbone.h>
 
-#include "Owned.hpp"
 #include "ActionSink.hpp"
 
 namespace eb_plugin {
@@ -48,7 +47,7 @@ namespace eb_plugin {
 	/// If two SoftwareConditions are created on the same SoftwareActionSink
 	/// which require simultaneous delivery of two Actions, then they will be
 	/// delivered in arbitrary order, both having the 'conflict' flag set.
-	class SoftwareActionSink : public Owned , public ActionSink {
+	class SoftwareActionSink : public ActionSink {
 	public:
 		SoftwareActionSink(ECA &eca
 			             , const std::string &name

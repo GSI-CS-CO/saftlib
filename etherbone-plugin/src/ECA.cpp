@@ -54,16 +54,15 @@ struct ECA::Impl {
 	std::vector<uint16_t> most_full;
 
 	// public type, even though the member is private
-	typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
 	typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
-
-	// typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
 	ActionSinks  actionSinks;
 
 	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
 	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
 	unsigned                                         ECA_LINUX_channel_index;
 	unsigned                                         ECA_LINUX_channel_subchannels;
+
+	// typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
 
 	uint16_t updateMostFull(unsigned channel); // returns current fill
 	void resetMostFull(unsigned channel);
@@ -577,6 +576,10 @@ void ECA::Impl::compile()
 ////////////////////////////////////////////////////////////////
 
 
+void attach_io_control(const IoControl &io_control) 
+{
+
+}
 
 
 
@@ -619,6 +622,11 @@ ECA::~ECA()
 			}
 		}
 	}
+}
+
+uint16_t ECA::updateMostFull(unsigned channel)
+{
+	return d->updateMostFull(channel);
 }
 
 eb_address_t ECA::get_base_address() 

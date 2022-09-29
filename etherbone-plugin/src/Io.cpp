@@ -162,7 +162,9 @@ void Io::setOutputEnable(bool val)
 	}
 
 	device.write(io_control_addr + reg + 4*id_high, EB_DATA32, id_mask);
-	OutputEnable(val);
+	if (OutputEnable) {
+		OutputEnable(val);
+	}
 }
 
 bool Io::ReadInput()
@@ -256,7 +258,9 @@ void Io::setInputTermination(bool val)
 		}
 	}
 	cycle.close();
-	InputTermination(val);
+	if (InputTermination) {
+		InputTermination(val);
+	}
 }
 
 bool Io::getOutputEnableAvailable() const
@@ -355,7 +359,9 @@ void Io::setSpecialPurposeOut(bool val)
 		}
 	}
 	cycle.close();
-	SpecialPurposeOut(val);
+	if (SpecialPurposeOut) {
+		SpecialPurposeOut(val);
+	}
 }
 
 bool Io::getGateOut() const
@@ -434,7 +440,9 @@ void Io::setGateOut(bool val)
 		}
 	}
 	cycle.close();
-	//GateOut(val);
+	//if (GateOut) {
+	//	GateOut(val);
+	//}
 }
 
 bool Io::getSpecialPurposeIn() const
@@ -513,7 +521,9 @@ void Io::setSpecialPurposeIn(bool val)
 		}
 	}
 	cycle.close();
-	SpecialPurposeIn(val);
+	if (SpecialPurposeIn) {
+		SpecialPurposeIn(val);
+	}
 }
 
 bool Io::getGateIn() const
@@ -592,7 +602,9 @@ void Io::setGateIn(bool val)
 		}
 	}
 	cycle.close();
-	GateIn(val);
+	if (GateIn) {
+		GateIn(val);
+	}
 }
 
 
@@ -673,7 +685,9 @@ void Io::setBuTiSMultiplexer(bool val)
 		}
 	}
 	cycle.close();
-	BuTiSMultiplexer(val);
+	if (BuTiSMultiplexer) {
+		BuTiSMultiplexer(val);
+	}
 }
 
 bool Io::getPPSMultiplexer() const
@@ -752,7 +766,9 @@ void Io::setPPSMultiplexer(bool val)
 		}
 	}
 	cycle.close();
-	PPSMultiplexer(val);
+	if (PPSMultiplexer) {
+		PPSMultiplexer(val);
+	}
 }
 
 

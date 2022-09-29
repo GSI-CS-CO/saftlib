@@ -22,6 +22,7 @@
 #include "SAFTd.hpp"
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
+#include "IoControl.hpp"
 
 #include <saftbus/error.hpp>
 
@@ -47,6 +48,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, ECA(saftd, OpenDevice::device, object_path, container)
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
+	, io_control(OpenDevice::device)
 	, object_path(saftd.get_object_path() + "/" + n)
 	, name(n)
 {
@@ -55,15 +57,11 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
 	}
+	
+	// couple the IoControls to ECA channel 0 and event source
 
 
-	// only support super basic hardware for now
-
-
-
-
-	// update locked status ...
-	poll();
+	poll(); // update locked status ...
 	//    ... and repeat every 1s 
 	poll_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 			std::bind(&TimingReceiver::poll, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000)
