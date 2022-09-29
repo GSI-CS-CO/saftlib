@@ -54,8 +54,8 @@ struct ECA::Impl {
 	std::vector<uint16_t> most_full;
 
 	// public type, even though the member is private
-	typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
-	ActionSinks  actionSinks;
+	// typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
+	// ActionSinks  actionSinks;
 
 	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
 	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
@@ -623,6 +623,15 @@ ECA::~ECA()
 		}
 	}
 }
+
+// not sure if thet is the correct signature
+bool addActionSink(int channel, std::unique_ptr<ActionSink> &sink) 
+{
+	///// TODO:
+	// just do ECAchannels[channel].push_back(std::move(sink)) ???
+return false; 
+}
+
 
 uint16_t ECA::updateMostFull(unsigned channel)
 {

@@ -18,6 +18,7 @@ namespace eb_plugin {
 class SAFTd;
 class SoftwareActionSink;
 class OpenDevice;
+class ActionSink;
 
 class ECA {
 	struct Impl; std::unique_ptr<Impl> d;
@@ -39,8 +40,11 @@ public:
 	virtual ~ECA();
 
 
+	/// @brief add sink to the ECA and let ECA take ownership of the sink object
+	bool addActionSink(int channel, std::unique_ptr<ActionSink> &sink);
+
 	uint16_t updateMostFull(unsigned channel); // returns current fill
-	
+
 	void removeSowftwareActionSink(SoftwareActionSink *sas);
 
 	/// @brief The current time of the timingreceiver.

@@ -514,7 +514,7 @@ Condition *ActionSink::getCondition(const std::string object_path) {
 
 unsigned ActionSink::prepareCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey)//, ConditionConstructor constructor)
 {
-//   //ownerOnly();
+	ownerOnly();
 
 	// sanity check arguments
 	if (offset < minOffset || offset > maxOffset)
@@ -531,28 +531,7 @@ unsigned ActionSink::prepareCondition(bool active, uint64_t id, uint64_t mask, i
 	}
 	while (conditions.find(number) != conditions.end());
 
-
-//   // Setup a destruction callback
-//   sigc::slot<void> destroy = sigc::bind(sigc::mem_fun(this, &ActionSink::removeCondition), attempt.first);
-
-
 	return number;
-
-//   std::shared_ptr<Condition> condition;
-//   try {
-//     Condition::Condition_ConstructorType args = {
-//       path, this, active, id, mask, offset, tagIsKey?attempt.first->first:tag, destroy
-//     };
-//     condition = constructor(args);
-//     condition->initOwner(getConnection(), getSender());
-//     attempt.first->second = condition;
-//     if (active) compile();
-//   } catch (...) {
-//     destroy();
-//     throw;
-//   }
-
-	//return condition->getObjectPath();
 }
 
 
