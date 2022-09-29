@@ -30,14 +30,17 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/WhiteRabbit.cpp                             \
 	src/WhiteRabbit_Service.cpp                      \
 	src/Watchdog.cpp                                  \
-	src/ECA.cpp                                        \
-	src/ECA_Service.cpp                                 \
-	src/BuildIdRom.cpp                                   \
-	src/BuildIdRom_Service.cpp                            \
-	src/TempSensor.cpp                                     \
-	src/TempSensor_Service.cpp                              \
-	src/TimingReceiver.cpp                                   \
-	src/TimingReceiver_Service.cpp                            \
+	src/SerdesClockGen.cpp                             \
+	src/Io.cpp                                          \
+	src/IoControl.cpp                                    \
+	src/ECA.cpp                                           \
+	src/ECA_Service.cpp                                    \
+	src/BuildIdRom.cpp                                      \
+	src/BuildIdRom_Service.cpp                               \
+	src/TempSensor.cpp                                        \
+	src/TempSensor_Service.cpp                                 \
+	src/TimingReceiver.cpp                                      \
+	src/TimingReceiver_Service.cpp                               \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@/service
@@ -62,13 +65,16 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/WhiteRabbit.hpp                                  \
 	src/WhiteRabbit_Service.hpp                           \
 	src/Watchdog.hpp                                       \
-	src/ECA.hpp                                             \
-	src/ECA_Service.hpp                                      \
-	src/BuildIdRom.hpp                                        \
-	src/BuildIdRom_Service.hpp                                 \
-	src/TempSensor.hpp                                          \
-	src/TempSensor_Service.hpp                                   \
-	src/TimingReceiver.hpp                                        \
+	src/SerdesClockGen.hpp                                  \
+	src/Io.hpp                                               \
+	src/IoControl.hpp                                         \
+	src/ECA.hpp                                                \
+	src/ECA_Service.hpp                                         \
+	src/BuildIdRom.hpp                                           \
+	src/BuildIdRom_Service.hpp                                    \
+	src/TempSensor.hpp                                             \
+	src/TempSensor_Service.hpp                                      \
+	src/TimingReceiver.hpp                                           \
 	src/TimingReceiver_Service.hpp                           
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
