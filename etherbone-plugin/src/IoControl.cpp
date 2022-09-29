@@ -2,6 +2,8 @@
 
 #include "io_control_regs.h"
 
+#include "Io.hpp"
+
 #include <saftbus/error.hpp>
 
 #include <vector>
@@ -27,12 +29,11 @@ IoControl::IoControl(etherbone::Device &dev)
 	eb_data_t fixed_count_reg;
 	eb_data_t get_param;
 	etherbone::Cycle cycle;
-	std::vector<sdb_device> ioctl, tlus, clkgen;
+	std::vector<sdb_device> ioctl, tlus;
 
 	/* Find IO control module */
 	device.sdb_find_by_identity(IO_CONTROL_VENDOR_ID,     IO_CONTROL_PRODUCT_ID,     ioctl);
 	// tr->getDevice().sdb_find_by_identity(ECA_TLU_SDB_VENDOR_ID,    ECA_TLU_SDB_DEVICE_ID,     tlus);
-	// tr->getDevice().sdb_find_by_identity(IO_SER_CLK_GEN_VENDOR_ID, IO_SER_CLK_GEN_PRODUCT_ID, clkgen);
 
 	if (ioctl.size() < 1) {
 		throw saftbus::Error(saftbus::Error::FAILED, "No IO control module found");
@@ -43,7 +44,6 @@ IoControl::IoControl(etherbone::Device &dev)
 	//if (ioctl.size() != 1 || tlus.size() != 1 || clkgen.size() != 1) return -1;
 	eb_address_t ioctl_address = ioctl[0].sdb_component.addr_first;
 	// eb_address_t tlu = tlus[0].sdb_component.addr_first;
-	// eb_address_t clkgen_address = clkgen[0].sdb_component.addr_first;
 
 	/* Get number of IOs */
 	cycle.open(device);
@@ -126,7 +126,11 @@ IoControl::IoControl(etherbone::Device &dev)
 		cIOName = s_aIOCONTROL_SetupField[io_table_iterator].uName;
 		std::string IOName = cIOName;
 
+
+
 	// 	/* Create the IO controller object */
+		Io io(device, channel, internal_id, special, logic_level, oe_available,
+	 		term_available, spec_out_available, spec_in_available, ioctl_address);
 	// 	InoutImpl::ConstructorType impl_args = {
 	// 		tr, channel, internal_id, special, logic_level, oe_available,
 	// 		term_available, spec_out_available, spec_in_available, ioctl_address, clkgen_address };

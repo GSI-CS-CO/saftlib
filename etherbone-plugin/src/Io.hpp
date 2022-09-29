@@ -23,7 +23,6 @@ class Io {
 	bool io_spec_out_available;
 	bool io_spec_in_available;
 	eb_address_t io_control_addr;
-	eb_address_t io_ser_clk_gen_addr;
 public:
 	Io(etherbone::Device &device
 	   , unsigned io_channel
@@ -35,7 +34,6 @@ public:
 	   , bool io_spec_out_available
 	   , bool io_spec_in_available
 	   , eb_address_t io_control_addr
-	   , eb_address_t io_ser_clk_gen_addr
 	);
 
 

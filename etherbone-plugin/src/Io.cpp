@@ -17,8 +17,7 @@ Io::Io(etherbone::Device &dev
 	 , bool term_available
 	 , bool spec_out_available
 	 , bool spec_in_available
-	 , eb_address_t control_addr
-	 , eb_address_t ser_clk_gen_addr ) 
+	 , eb_address_t control_addr ) 
 	: device(dev)
 	, io_channel(channel)
 	, io_index(index)
@@ -29,7 +28,6 @@ Io::Io(etherbone::Device &dev
 	, io_spec_out_available(spec_out_available)
 	, io_spec_in_available(spec_in_available)
 	, io_control_addr(control_addr)
-	, io_ser_clk_gen_addr(ser_clk_gen_addr)
 {}
 
 
@@ -757,45 +755,7 @@ void Io::setPPSMultiplexer(bool val)
 	PPSMultiplexer(val);
 }
 
-bool Io::StartClock(double high_phase, double low_phase, uint64_t phase_offset) { return ConfigureClock(high_phase, low_phase, phase_offset); }
-bool Io::StopClock() { return ConfigureClock(0.0, 0.0, 0); }
-bool Io::ConfigureClock(double high_phase, double low_phase, uint64_t phase_offset)
-{
-	s_SerClkGenControl control;
-	etherbone::Cycle cycle;
 
-	/* Check if available */
-	switch (io_channel)
-	{
-		case IO_CFG_CHANNEL_LVDS:
-		{
-			break;
-		}
-		default:
-		{
-			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Clock generator is only available for LVDS outputs!");
-			return false;
-		}
-	}
-
-	/* Calculate values */
-	CalcClockParameters(high_phase, low_phase, phase_offset, &control);
-
-	/* Write values to clock generator */
-	cycle.open(device);
-	cycle.write(io_ser_clk_gen_addr+eSCK_selr,      EB_DATA32, io_index);
-	cycle.write(io_ser_clk_gen_addr+eSCK_perr,      EB_DATA32, control.period_integer);
-	cycle.write(io_ser_clk_gen_addr+eSCK_perhir,    EB_DATA32, control.period_high);
-	cycle.write(io_ser_clk_gen_addr+eSCK_fracr,     EB_DATA32, control.period_fraction);
-	cycle.write(io_ser_clk_gen_addr+eSCK_normmaskr, EB_DATA32, control.bit_pattern_normal);
-	cycle.write(io_ser_clk_gen_addr+eSCK_skipmaskr, EB_DATA32, control.bit_pattern_skip);
-	cycle.write(io_ser_clk_gen_addr+eSCK_phofslr,   EB_DATA32, (uint32_t)(control.phase_offset));
-	cycle.write(io_ser_clk_gen_addr+eSCK_phofshr,   EB_DATA32, (uint32_t)(control.phase_offset >> 32));
-	cycle.close();
-
-	if ((low_phase == 0.0) && (high_phase == 0.0) && (phase_offset == 0)) { return false; }
-	else                                                                  { return true; }
-}
 
 std::string Io::getLogicLevelOut() const { return getLogicLevel(); }
 std::string Io::getLogicLevelIn() const { return getLogicLevel(); }
