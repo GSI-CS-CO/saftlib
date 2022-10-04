@@ -147,6 +147,8 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			if (verbose) {
 				std::cerr << "leave scope \'" << scope.back() << "\'" << std::endl;
 			}
+			last_comments.clear();
+			comment_buffer.clear();
 			scope.pop_back();
 		}
 		// namespace
@@ -349,8 +351,9 @@ struct ClassDefinition {
 	std::vector<FunctionSignature> exportedfunctions;
 	std::vector<SignalSignature> exportedsignals;
 	std::vector<std::string> comments;
-	ClassDefinition(const std::string &scope_, const std::string &line, const std::vector<std::string> &comment) 
-		: scope(scope_), comments(comment)
+	std::vector<std::string> includes; // #includes with a '// @saftbus-include' tag
+	ClassDefinition(const std::string &scope_, const std::string &line, const std::vector<std::string> &comment, const std::vector<std::string> includes_) 
+		: scope(scope_), comments(comment), includes(includes_)
 	{
 		auto colon_pos = line.find(':');
 		if (colon_pos == line.npos) {
@@ -461,7 +464,7 @@ struct ClassDefinition {
 };
 
 
-static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, std::map<std::string, std::string> &defines, std::vector<ClassDefinition> &classes, const std::vector<std::string> &include_paths, std::vector<std::string> &include_exports)
+static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, std::map<std::string, std::string> &defines, std::vector<ClassDefinition> &classes, const std::vector<std::string> &include_paths)
 {
 	std::ifstream in(source_name);
 	if (!in) {
@@ -473,6 +476,8 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 	if (verbose) {
 		std::cerr << "parsing config file " << source_name << std::endl;
 	}
+
+	std::vector<std::string> include_exports;
 
 	bool block_comment = false;
 	std::vector<std::string> scope;
@@ -554,7 +559,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		if (in_class_definition) {
 			class_definition.append(line);
 			if (class_definition.find('{') != class_definition.npos) {
-				classes.push_back(ClassDefinition(build_namespace(scope), class_definition, last_comments));
+				classes.push_back(ClassDefinition(build_namespace(scope), class_definition, last_comments, include_exports));
 				in_class_definition = false;
 			}
 			continue;
@@ -584,7 +589,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		if (keyword == "class") {
 			std::getline(lin, class_definition);
 			if (class_definition.find('{') != class_definition.npos) {
-				classes.push_back(ClassDefinition(build_namespace(scope), class_definition, last_comments));
+				classes.push_back(ClassDefinition(build_namespace(scope), class_definition, last_comments, include_exports));
 			} else {
 				if (class_definition.find(';') == class_definition.npos) { // don't react on class declarations "class MyClass;"
 					in_class_definition = true;
@@ -715,7 +720,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 						if (verbose) {
 							std::cerr << "recursively parse " << path_and_include_filename << std::endl;
 						}
-						cpp_parser(path_and_include_filename, defines, classes, include_paths, include_exports);
+						cpp_parser(path_and_include_filename, defines, classes, include_paths);
 						success = true;
 						break;
 					}
@@ -730,7 +735,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 				//... if it can be opened, call the parse function recursively
 					std::cerr << "recursively parse " << include_filename << std::endl;
 				}
-				cpp_parser(include_filename, defines, classes, include_paths, include_exports);
+				cpp_parser(include_filename, defines, classes, include_paths);
 			}
 		} else if (!saftbus_export_tag) {
 			// do nothing
@@ -1026,7 +1031,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 }
 
 
-void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &class_definition, std::vector<std::string> &include_exports) {
+void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &class_definition) {
 	std::string header_filename = outputdirectory;
 	if (header_filename.size()) {
 		header_filename.append("/");
@@ -1046,7 +1051,7 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "#include <functional>" << std::endl;	
 	header_out << std::endl;
 
-	for (auto &include_export: include_exports) {
+	for (auto &include_export: class_definition.includes) {
 		header_out << include_export << std::endl;
 	}
 	header_out << std::endl;
@@ -1323,8 +1328,7 @@ int main(int argc, char **argv)
 	for (auto &source_file: source_files) {
 		std::map<std::string, std::string> defines;
 		std::vector<ClassDefinition> classes;
-		std::vector<std::string> include_exports; // the #include directives from class files that are supposed to appear also in the _Proxy file
-		cpp_parser(source_file, defines, classes, include_paths, include_exports);
+		cpp_parser(source_file, defines, classes, include_paths);
 
 		for (auto &class_def: classes) {
 			class_def.finalize(classes);
@@ -1338,7 +1342,7 @@ int main(int argc, char **argv)
 				generate_service_header(output_directory, class_def);
 				generate_service_implementation(output_directory, class_def);
 
-				generate_proxy_header(output_directory, class_def, include_exports);
+				generate_proxy_header(output_directory, class_def);
 				generate_proxy_implementation(output_directory, class_def);
 
 			}
