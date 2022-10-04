@@ -9,11 +9,14 @@
 #include <etherbone.h>
 
 #include "Io.hpp"
+#include "SerdesClockGen.hpp"
 
 namespace eb_plugin {
 
 class IoControl {
 	etherbone::Device &device;
+
+	SerdesClockGen clkgen;
 
 	std::vector<Io> ios;
 public:

@@ -2,6 +2,7 @@
 #include <TimingReceiver.hpp>
 #include <SoftwareActionSink.hpp>
 #include <SoftwareCondition.hpp>
+#include <IoControl.hpp>
 
 #include <saftbus/client.hpp>
 #include <memory>
@@ -43,6 +44,8 @@ int main(int argc, char *argv[]) {
 
 	auto sw_condition = softwareActionSink->getCondition(condition_obj_path);
 	sw_condition->SigAction = &on_action;
+
+
 
 	saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 		std::bind([](eb_plugin::TimingReceiver* tr){tr->InjectEvent(0,0,tr->CurrentTime()+100000000); return true;}, tr), 

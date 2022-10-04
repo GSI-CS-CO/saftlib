@@ -17,7 +17,8 @@ Io::Io(etherbone::Device &dev
 	 , bool term_available
 	 , bool spec_out_available
 	 , bool spec_in_available
-	 , eb_address_t control_addr ) 
+	 , eb_address_t control_addr
+	 , SerdesClockGen &clkgen ) 
 	: device(dev)
 	, io_channel(channel)
 	, io_index(index)
@@ -28,6 +29,7 @@ Io::Io(etherbone::Device &dev
 	, io_spec_out_available(spec_out_available)
 	, io_spec_in_available(spec_in_available)
 	, io_control_addr(control_addr)
+	, io_clkgen(clkgen)
 {}
 
 
@@ -771,7 +773,13 @@ void Io::setPPSMultiplexer(bool val)
 	}
 }
 
+bool Io::StartClock(double high_phase, double low_phase, uint64_t phase_offset) { 
+	return io_clkgen.StartClock(io_channel, io_index, high_phase, low_phase, phase_offset); 
+}
 
+bool Io::StopClock() { 
+	return io_clkgen.StopClock(io_channel, io_index); 
+}
 
 std::string Io::getLogicLevelOut() const { return getLogicLevel(); }
 std::string Io::getLogicLevelIn() const { return getLogicLevel(); }

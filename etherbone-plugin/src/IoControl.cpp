@@ -12,7 +12,7 @@
 namespace eb_plugin {
 
 IoControl::IoControl(etherbone::Device &dev)
-	: device(dev)
+	: device(dev), clkgen(device)
 {
 	/* Helpers */
 	unsigned io_table_entries_id     = 0;
@@ -132,7 +132,7 @@ IoControl::IoControl(etherbone::Device &dev)
 
 	// 	/* Create the IO controller object */
 		ios.push_back(Io(device, channel, internal_id, special, logic_level, oe_available,
-	 		term_available, spec_out_available, spec_in_available, ioctl_address));
+	 		term_available, spec_out_available, spec_in_available, ioctl_address, clkgen));
 
 	// 	InoutImpl::ConstructorType impl_args = {
 	// 		tr, channel, internal_id, special, logic_level, oe_available,

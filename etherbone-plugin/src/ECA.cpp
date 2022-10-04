@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <memory>
 #include <algorithm>
+#include <cassert>
 
 #include <saftbus/error.hpp>
 #include <saftbus/service.hpp>
@@ -625,11 +626,14 @@ ECA::~ECA()
 }
 
 // not sure if thet is the correct signature
-bool addActionSink(int channel, std::unique_ptr<ActionSink> &sink) 
+bool ECA::addActionSink(int channel, std::unique_ptr<ActionSink> &sink) 
 {
 	///// TODO:
 	// just do ECAchannels[channel].push_back(std::move(sink)) ???
-return false; 
+// return false; 
+	assert(channel >= 0 && channel < d->ECAchannels.size());
+	d->ECAchannels[channel].push_back(std::move(sink));
+	return true;
 }
 
 

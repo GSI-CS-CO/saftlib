@@ -120,7 +120,7 @@ class ActionSink : public Owned
 		/// @param channel the ECA channel that feeds the ActionSink
 		/// @param num     subchannel of the ECA channel
 		///
-		/// Create a new action sink on an ECA deive with a given name. If the name is an 
+		/// Create a new action sink on an ECA device with a given name. If the name is an 
 		/// empty string, a name in the form "_<number>" will be generated. The ActionSink
 		/// is attached to the given ECA channel/subchannel.
 		ActionSink(ECA &eca

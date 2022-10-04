@@ -17,150 +17,163 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#define ETHERBONE_THROWS 1
 
-#define __STDC_FORMAT_MACROS
-#define __STDC_CONSTANT_MACROS
+#include "Output.hpp"
+// #include "OutputCondition.h"
 
-#include "Output.h"
-#include "OutputCondition.h"
-#include "RegisteredObject.h"
+namespace eb_plugin {
 
-namespace saftlib {
+// std::shared_ptr<Output> Output::create(const ConstructorType& args)
+// {
+// 	return RegisteredObject<Output>::create(args.objectPath, args);
+// }
 
-std::shared_ptr<Output> Output::create(const ConstructorType& args)
+Output::Output(ECA &eca
+     , const std::string &name
+     , const std::string &objectPath
+     , const std::string &partnerPath_
+     , unsigned channel
+     , unsigned num
+     , Io *io_
+     , saftbus::Container *container)
+	: ActionSink(eca, name, channel, num, container), io(io_), partnerPath(partnerPath_)
 {
-  return RegisteredObject<Output>::create(args.objectPath, args);
+
 }
 
-Output::Output(const ConstructorType& args) :
-  ActionSink(args.objectPath, args.dev, args.name, args.channel, args.num, args.destroy),
-  impl(args.impl), partnerPath(args.partnerPath)
-{
-}
+// Output::Output(const ConstructorType& args) :
+// 	ActionSink(args.objectPath, args.dev, args.name, args.channel, args.num, args.destroy),
+// 	impl(args.impl), partnerPath(args.partnerPath)
+// {
+// }
 
-const char *Output::getInterfaceName() const
-{
-  return "Output";
-}
+// const char *Output::getInterfaceName() const
+// {
+// 	return "Output";
+// }
 
 std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)
 {
-  return NewConditionHelper(active, id, mask, offset, on?2:1, false, // 2 is on, 1 is off
-    sigc::ptr_fun(&OutputCondition::create));
+	unsigned number = prepareCondition(active, id, mask, offset, 0, true);
+	std::ostringstream path;
+	path << getObjectPath() << "/_" << number;
+
+	return "";
+	// return NewConditionHelper(active, id, mask, offset, on?2:1, false, // 2 is on, 1 is off
+	// 	sigc::ptr_fun(&OutputCondition::create));
 }
 
 uint32_t Output::getIndexOut() const
 {
-  return impl->getIndexOut();
+	return io->getIndexOut();
 }
 
 void Output::WriteOutput(bool value)
 {
-  ownerOnly();
-  return impl->WriteOutput(value);
+	ownerOnly();
+	return io->WriteOutput(value);
 }
 
 bool Output::ReadOutput()
 {
-  return impl->ReadOutput();
+	return io->ReadOutput();
 }
 
 bool Output::ReadCombinedOutput()
 {
-  return impl->ReadCombinedOutput();
+	return io->ReadCombinedOutput();
 }
 
 bool Output::getOutputEnable() const
 {
-  return impl->getOutputEnable();
+	return io->getOutputEnable();
 }
 
 bool Output::getSpecialPurposeOut() const
 {
-  return impl->getSpecialPurposeOut();
+	return io->getSpecialPurposeOut();
 }
 
 bool Output::getGateOut() const
 {
-  return impl->getGateOut();
+	return io->getGateOut();
 }
 
 bool Output::getBuTiSMultiplexer() const
 {
-  return impl->getBuTiSMultiplexer();
+	return io->getBuTiSMultiplexer();
 }
 
 bool Output::getPPSMultiplexer() const
 {
-  return impl->getPPSMultiplexer();
+	return io->getPPSMultiplexer();
 }
 
 bool Output::getOutputEnableAvailable() const
 {
-  return impl->getOutputEnableAvailable();
+	return io->getOutputEnableAvailable();
 }
 
 bool Output::getSpecialPurposeOutAvailable() const
 {
-  return impl->getSpecialPurposeOutAvailable();
+	return io->getSpecialPurposeOutAvailable();
 }
 
 bool Output::StartClock(double high_phase, double low_phase, uint64_t phase_offset)
 {
-  ownerOnly();
-  return impl->StartClock(high_phase, low_phase, phase_offset);
+	ownerOnly();
+	return io->StartClock(high_phase, low_phase, phase_offset);
 }
 
 bool Output::StopClock()
 {
-  ownerOnly();
-  return impl->StopClock();
+	ownerOnly();
+	return io->StopClock();
 }
 
 std::string Output::getLogicLevelOut() const
 {
-  return impl->getLogicLevelOut();
+	return io->getLogicLevelOut();
 }
 
 std::string Output::getTypeOut() const
 {
-  return impl->getTypeOut();
+	return io->getTypeOut();
 }
 
 std::string Output::getInput() const
 {
-  return partnerPath;
+	return partnerPath;
 }
 
 void Output::setOutputEnable(bool val)
 {
-  ownerOnly();
-  return impl->setOutputEnable(val);
+	ownerOnly();
+	return io->setOutputEnable(val);
 }
 
 void Output::setSpecialPurposeOut(bool val)
 {
-  ownerOnly();
-  return impl->setSpecialPurposeOut(val);
+	ownerOnly();
+	return io->setSpecialPurposeOut(val);
 }
 
 void Output::setGateOut(bool val)
 {
-  ownerOnly();
-  return impl->setGateOut(val);
+	ownerOnly();
+	return io->setGateOut(val);
 }
 
 void Output::setBuTiSMultiplexer(bool val)
 {
-  ownerOnly();
-  return impl->setBuTiSMultiplexer(val);
+	ownerOnly();
+	return io->setBuTiSMultiplexer(val);
 }
 
 void Output::setPPSMultiplexer(bool val)
 {
-  ownerOnly();
-  return impl->setPPSMultiplexer(val);
+	ownerOnly();
+	return io->setPPSMultiplexer(val);
 }
 
 }

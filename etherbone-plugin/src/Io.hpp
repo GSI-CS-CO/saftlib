@@ -12,6 +12,8 @@
 
 namespace eb_plugin {
 
+class SerdesClockGen;
+
 class Io {
 	etherbone::Device &device;
 	unsigned io_channel;
@@ -23,6 +25,7 @@ class Io {
 	bool io_spec_out_available;
 	bool io_spec_in_available;
 	eb_address_t io_control_addr;
+	SerdesClockGen &io_clkgen;
 public:
 	Io(etherbone::Device &device
 	   , unsigned io_channel
@@ -34,6 +37,7 @@ public:
 	   , bool io_spec_out_available
 	   , bool io_spec_in_available
 	   , eb_address_t io_control_addr
+	   , SerdesClockGen &clkgen
 	);
 
 
