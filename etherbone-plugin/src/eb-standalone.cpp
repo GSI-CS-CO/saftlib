@@ -8,6 +8,8 @@
 #include <memory>
 #include <iostream>
 
+int action_count = 0;
+
 void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) {
 	std::cerr << "event " << event << " " 
 	          << "param " << param << " " 
@@ -15,6 +17,7 @@ void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plug
 	          << "executed " << executed.getTAI() << " " 
 	          << "flags " << flags << " "
 	          << std::endl;
+	++action_count;
 }
 
 int main(int argc, char *argv[]) {
@@ -51,8 +54,11 @@ int main(int argc, char *argv[]) {
 		std::bind([](eb_plugin::TimingReceiver* tr){tr->InjectEvent(0,0,tr->CurrentTime()+100000000); return true;}, tr), 
 		std::chrono::milliseconds(1000));
 
-	for (int i = 0; i < 30 ; ++i) {
+	for (;;) {
 		saftbus::Loop::get_default().iteration(true);	
+		if (action_count > 4) {
+			break;
+		}
 	}
 	return 0;
 }

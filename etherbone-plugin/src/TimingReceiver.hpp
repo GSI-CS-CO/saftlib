@@ -91,7 +91,7 @@ class TimingReceiver : public OpenDevice
                      , public TempSensor {
 public:
 	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
-		           saftbus::Container *container = nullptr);
+		           int polling_interval_ms = 1, saftbus::Container *container = nullptr);
 	~TimingReceiver();
 
 	const std::string &get_object_path() const;

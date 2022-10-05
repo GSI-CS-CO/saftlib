@@ -1,5 +1,4 @@
 #include "Watchdog.hpp"
-#include "OpenDevice.hpp"
 
 #include <saftbus/error.hpp>
 

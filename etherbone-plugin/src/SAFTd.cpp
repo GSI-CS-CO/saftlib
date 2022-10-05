@@ -75,22 +75,22 @@ namespace eb_plugin {
 		          << std::dec 
 		          << std::endl;
 	    
-	    std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
-	    if (it != irqs.end()) {
-	      try {
-	        it->second(data);
-	      } catch (...) {
-	        std::cerr << "Unhandled unknown exception in MSI handler for 0x" 
-	             << std::hex << address << std::dec << std::endl;
-	      }
-	    } else {
-	      std::cerr << "No handler for MSI 0x" << std::hex << address << std::dec << std::endl;
-	    }
+		std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
+		if (it != irqs.end()) {
+			try {
+				it->second(data);
+			} catch (...) {
+				std::cerr << "Unhandled unknown exception in MSI handler for 0x" 
+				<< std::hex << address << std::dec << std::endl;
+			}
+		} else {
+			std::cerr << "No handler for MSI 0x" << std::hex << address << std::dec << std::endl;
+		}
 
 		return EB_OK;
 	}
 
-	std::string SAFTd::AttachDevice(const std::string& name, const std::string& etherbone_path) 
+	std::string SAFTd::AttachDevice(const std::string& name, const std::string& etherbone_path, int polling_interval_ms) 
 	{
 		std::cerr << etherbone_path << std::endl;
 		if (attached_devices.find(name) != attached_devices.end()) {
@@ -98,7 +98,7 @@ namespace eb_plugin {
 		}
 		try {
 			// create a new TimingReceiver object and add it to the attached_devices
-			TimingReceiver *timing_receiver = new TimingReceiver(*this, name, etherbone_path, container);
+			TimingReceiver *timing_receiver = new TimingReceiver(*this, name, etherbone_path, polling_interval_ms, container);
 			attached_devices[name] = std::move(std::unique_ptr<TimingReceiver>(timing_receiver));
 
 			// crate a TimingReceiver_Service object
@@ -184,6 +184,7 @@ namespace eb_plugin {
 	void SAFTd::release_irq(eb_address_t irq) {
 		auto it = irqs.find(irq);
 		if (it != irqs.end()) {
+			std::cerr << "release irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
 			irqs.erase(it);
 		}
 	}

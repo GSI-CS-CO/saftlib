@@ -20,6 +20,9 @@ namespace eb_plugin {
 		/// @brief Instruct saftd to control a new device.
 		/// @param name  The logical name for the device
 		/// @param path  The etherbone path where the device can be found
+		/// @param polling_interval_ms Is the MSI polling interval in 
+		///                            milliseconds which is only relevant for 
+		///                            devices that have no native MSI support
 		/// @return      Object path of the created device
 		///
 		/// Devices are attached to saftlib by specifying a name and a path.  The
@@ -34,7 +37,7 @@ namespace eb_plugin {
 		/// name, even though the path might be different.		
 		///
 		// @saftbus-export
-		std::string AttachDevice(const std::string& name, const std::string& path);
+		std::string AttachDevice(const std::string& name, const std::string& path, int polling_interval_ms = 1);
 
 		/// @brief Remove the device from saftlib management.
 		///
@@ -106,17 +109,17 @@ namespace eb_plugin {
 
 		TimingReceiver* getTimingReceiver(const std::string &object_path);
 
+		// Override the virtual functions from etherbone::Handler base class
+		// to receive incoming etherbone read/write requests from the device.
+		// Only write is ever used (an incoming MSI causes a write request).
+		eb_status_t read (eb_address_t address, eb_width_t width, eb_data_t* data);
+		eb_status_t write(eb_address_t address, eb_width_t width, eb_data_t data);
 	private:
 		void RemoveObject(const std::string& name);
 
 		// The sdb structure for this "virtual" etherbone device
 		sdb_device eb_slave_sdb;
 
-		// Override the virtual functions from etherbone::Handler base class
-		// to receive incoming etherbone read/write requests from the device.
-		// Only write is ever used (an incoming MSI causes a write request).
-		eb_status_t read (eb_address_t address, eb_width_t width, eb_data_t* data);
-		eb_status_t write(eb_address_t address, eb_width_t width, eb_data_t data);
 
 		// Need a pointer to saftbus::Container to insert new Service Objects (instances of TimingReceiver_Service)
 		// and the object_path of the SAFTd_Service (normally "/de/gsi/saftlib") as prefix for the object_path of TimingReceiver_Service objects
