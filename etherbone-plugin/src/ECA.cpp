@@ -631,7 +631,7 @@ bool ECA::addActionSink(int channel, std::unique_ptr<ActionSink> &sink)
 	///// TODO:
 	// just do ECAchannels[channel].push_back(std::move(sink)) ???
 // return false; 
-	assert(channel >= 0 && channel < d->ECAchannels.size());
+	assert(channel >= 0 && channel < static_cast<int>(d->ECAchannels.size()));
 	d->ECAchannels[channel].push_back(std::move(sink));
 	return true;
 }

@@ -41,7 +41,7 @@ ActionSink::ActionSink(ECA &eca_
                      , unsigned channel_
                      , unsigned num_
                      , saftbus::Container *container_)
- :	Owned(container), 
+ :	Owned(container_), 
     object_path(eca_.get_object_path() + "/" + name_), 
 	eca(eca_), name(name_), channel(channel_), num(num_),
 	minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
