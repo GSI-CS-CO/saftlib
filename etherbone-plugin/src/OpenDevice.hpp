@@ -8,8 +8,6 @@
 #endif
 #include <etherbone.h>
 
-#include <saftbus/loop.hpp>
-
 #include <memory>
 
 #include <sys/stat.h>
@@ -20,7 +18,9 @@ class SAFTd;
 class Mailbox;
 /// @brief etherbone::Device that is opened on construction and closed before destruction
 ///
-/// It also remembers its etherbone path and restores the device settings before destruction
+/// It remembers its etherbone path and restores the device settings before destruction.
+/// It also checks on startup if MSI needs to be polled from the etherbone-slave config regisers
+/// or if the hardware has the capability to deliver real MSIs
 class OpenDevice {
 protected:
 	std::string etherbone_path;
@@ -42,19 +42,26 @@ public:
 
 
 private:
-	void check_msi_callback(eb_data_t value);
-	bool poll_msi();
+	// polling for MSIs on hardware that doesn't support real MSIs
+	bool poll_msi(bool only_once);
 	int polling_interval_ms;
-	// following members are only used for testing MSI capability (real or polled MSIs)
-	std::unique_ptr<Mailbox> mbox;
-	SAFTd *saftd;
-	eb_address_t irq_adr; 
-	int slot_idx;        
-	eb_address_t first, last, mask;
-	eb_address_t msi_first;
-	bool check_msi_type, needs_polling;
-	saftbus::Source *poll_timeout_source;
 
+	// following members are for testing MSI capability (real or polled MSIs)
+	// The procedure is:
+	//  - Register a MSI callback function for a specific address
+	//  - Use the Mailbox device to create an MSI with that specific address
+	//  - start the periodic polling function
+	//  - if the polling function is called and finds the specific MSI, it continues to poll
+	//  - if the MSI callback function is called and the polling function didn't see the MSI before, the polling function will be removed from the event loop
+	void check_msi_callback(eb_data_t value);
+	std::unique_ptr<Mailbox> mbox; // the Mailbox is used to create an MSI
+	int slot_idx;         // the Mailbox slot needs to be stored to free the Mailbox slot after MSI type checking is done
+	SAFTd *saftd;         // a pointer to SAFTd is needed because in case of polled MSIs the OpenDevice needs to call SAFTds write function
+	eb_address_t first, last, mask; // range of addresses that are valid for MSI
+	eb_address_t msi_first;         // address offset which needs to be subtracted 
+	eb_address_t irq_adr; // the MSI callback function is registered under this address, and the Mailbox is configured with irq_adr+msi_first
+	bool check_msi_phase, needs_polling; // check_msi_phase is true until the MSI type was determined.
+	                                     // needs_polling is false in the beginning. It is set to true if the poll_msi function receives the injected MSI.
 };
 
 

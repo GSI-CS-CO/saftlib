@@ -15,26 +15,19 @@ const eb_data_t MSI_TEST_VALUE = 0x12345678;
 void OpenDevice::check_msi_callback(eb_data_t value) 
 {
 	assert(value == MSI_TEST_VALUE);
-	check_msi_type = false;
+	check_msi_phase = false;
 	mbox->FreeSlot(slot_idx);
 	saftd->release_irq(irq_adr);
 	mbox.reset();
-	if (!needs_polling) {
-		// if we got the callback without polling, the poll timeout source can be removed
-		std::cerr << "OpenDevice has real MSIs" << std::endl;
-	} else {
-		std::cerr << "OpenDevice has polled MSIs" << std::endl;
-	}
 }
-bool OpenDevice::poll_msi() {
-	// std::cerr << "OpenDevice::poll_msi" << std::endl;
-	if (!check_msi_type && !needs_polling) return false;
+bool OpenDevice::poll_msi(bool only_once) {
+	std::cerr << "OpenDevice::poll_msi" << std::endl;
 	etherbone::Cycle cycle;
 	eb_data_t msi_adr = 0;
 	eb_data_t msi_dat = 0;
 	eb_data_t msi_cnt = 0;
 	bool found_msi = false;
-	const int MAX_MSIS_IN_ONE_GO = 3; // not too many MSIs at once to not block saftd 
+	const int MAX_MSIS_IN_ONE_GO = 5; // not too many MSIs at once to not block event loop for too long 
 	for (int i = 0; i < MAX_MSIS_IN_ONE_GO; ++i) { // never more this many MSIs in one go
 		cycle.open(device);
 		cycle.read_config(0x40, EB_DATA32, &msi_adr);
@@ -43,35 +36,41 @@ bool OpenDevice::poll_msi() {
 		cycle.close();
 		if (msi_cnt & 1) {
 			msi_adr -= msi_first;
-			needs_polling = true;
-			saftd->write(msi_adr, EB_DATA32, msi_dat);
+			needs_polling = true; // this value is 
+			found_msi = true;
+			saftd->write(msi_adr, EB_DATA32, msi_dat); // this functon is normally called by etherbone::Socket when it receives an MSI
 		}
-		if (!(msi_cnt & 2)) { // no more msi to poll
+		if (!(msi_cnt & 2)) { // no more msi to poll (second bit of msi_cnt is not set)
 			break; 
 		}
 	}
 	if ((msi_cnt & 2) || found_msi) {
-		// if we polled MAX_MSIS_IN_ONE_GO but there are more MSIs
+		// if we polled MAX_MSIS_IN_ONE_GO but there are more MSIs (second bit of msi_cnt is set)
 		// OR if there was at least one MSI present 
 		// we have to schedule the next check immediately because the 
 		// MSI we just polled may cause actions that trigger other MSIs.
+		// however, this TimeoutSource will be called only once, because the only_once argument is true
+		bool only_once;
+		std::cerr << "add an only_once timeout source" << std::endl;
 		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-				std::bind(&OpenDevice::poll_msi, this), std::chrono::milliseconds(0)
+				std::bind(&OpenDevice::poll_msi, this, only_once=true), std::chrono::milliseconds(0), std::chrono::milliseconds(0)
 			);
-	} else {
-		// if there was no MSI present we continue with the normal polling schedule
-		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-				std::bind(&OpenDevice::poll_msi, this), 
-				std::chrono::milliseconds(polling_interval_ms),
-				std::chrono::milliseconds(polling_interval_ms)
-			);
-	}
+	} 
 
-	return false;
+	if (only_once) {
+		std::cerr << "polled only_once " << found_msi << std::endl;
+		// returning false removes the TimeoutSource from the event loop
+		return false;
+	}
+	if (!check_msi_phase && !needs_polling) {
+		// return false if checking phase is over, and we found out that no polling is needed 
+		return false;
+	}
+	return true;
 }
 
 OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_path, int polling_iv_ms, SAFTd *sd)
-	: etherbone_path(eb_path), polling_interval_ms(polling_iv_ms), saftd(sd), check_msi_type(true), needs_polling(true) 
+	: etherbone_path(eb_path), polling_interval_ms(polling_iv_ms), saftd(sd), check_msi_phase(true), needs_polling(false) 
 {
 	std::cerr << "OpenDevice::OpenDevice(\"" << eb_path << "\")" << std::endl;
 	device.open(socket, etherbone_path.c_str());
@@ -96,8 +95,9 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 			}
 			slot_idx = mbox->ConfigureSlot(irq_adr + msi_first);
 			mbox->UseSlot(slot_idx, MSI_TEST_VALUE); // make one single irq that should call our check_msi_callback
+			bool only_once;
 			saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-					std::bind(&OpenDevice::poll_msi, this), 
+					std::bind(&OpenDevice::poll_msi, this, only_once=false), 
 					std::chrono::milliseconds(polling_interval_ms),
 					std::chrono::milliseconds(polling_interval_ms)
 				);
