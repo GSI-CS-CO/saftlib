@@ -21,7 +21,7 @@ namespace eb_plugin {
 
 		bool accept_connection(int condition);
 
-		std::string saft_eb_devide();
+		std::string eb_forward_path();
 
 	private:
 		void write_all(int fd, char *ptr, int size);

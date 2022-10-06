@@ -24,6 +24,7 @@ namespace eb_plugin {
 			                    S_IRGRP | S_IWGRP | 
 			                    S_IROTH | S_IWOTH );
 
+		std::cerr << "eb-forward " << eb_forward_path() << std::endl;
 		//Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
 		saftbus::Loop::get_default().connect<saftbus::IoSource>(std::bind(&EB_Forward::accept_connection, this, std::placeholders::_1), _pts_fd, POLLIN);
 	}
@@ -52,6 +53,7 @@ namespace eb_plugin {
 
 	bool EB_Forward::accept_connection(int condition)
 	{
+		std::cerr << "EB_Forward::accept_connection" << std::endl;
 		static std::vector<uint8_t> request;  // data from eb-tool
 		static std::vector<uint8_t> response; // data from device
 		request.clear();
@@ -165,7 +167,7 @@ namespace eb_plugin {
 		}
 	}
 
-	std::string EB_Forward::saft_eb_devide()
+	std::string EB_Forward::eb_forward_path()
 	{
 		return std::string(ptsname(_pts_fd));
 	}

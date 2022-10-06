@@ -1,6 +1,7 @@
 #include "OpenDevice.hpp"
 #include "Mailbox.hpp"
 #include "SAFTd.hpp"
+#include "eb-forward.hpp"
 
 #include <saftbus/error.hpp>
 
@@ -70,7 +71,7 @@ bool OpenDevice::poll_msi(bool only_once) {
 }
 
 OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_path, int polling_iv_ms, SAFTd *sd)
-	: etherbone_path(eb_path), polling_interval_ms(polling_iv_ms), saftd(sd), check_msi_phase(true), needs_polling(false) 
+	: etherbone_path(eb_path), eb_forward_path(eb_path), polling_interval_ms(polling_iv_ms), saftd(sd), check_msi_phase(true), needs_polling(false) 
 {
 	std::cerr << "OpenDevice::OpenDevice(\"" << eb_path << "\")" << std::endl;
 	device.open(socket, etherbone_path.c_str());
@@ -102,6 +103,14 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 					std::chrono::milliseconds(polling_interval_ms)
 				);
 		}
+
+		// assume that only the /dev/ttyUSB<n> devices and /dev/pts/<n> devices need eb-forwarding
+		if (eb_path.find("/ttyUSB") != eb_path.npos || eb_path.find("/pts/") != eb_path.npos ) {
+			std::cerr << "create forwarding device" << std::endl;
+			eb_forward = std::unique_ptr<EB_Forward>(new EB_Forward(eb_path));
+			eb_forward_path = eb_forward->eb_forward_path();
+		}
+
 	} catch (saftbus::Error& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
@@ -115,6 +124,11 @@ OpenDevice::~OpenDevice()
 std::string OpenDevice::getEtherbonePath() const
 {
 	return etherbone_path;
+}
+
+std::string OpenDevice::getEbForwardPath() const
+{
+	return eb_forward_path;
 }
 
 
