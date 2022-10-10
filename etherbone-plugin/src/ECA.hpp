@@ -23,16 +23,15 @@ class ActionSink;
 class ECA {
 	struct Impl; std::unique_ptr<Impl> d;
 
-	friend class SoftwareActionSink;
 	friend class ActionSink;
 
 	uint16_t getMostFull(int channel);	
 	eb_address_t get_base_address();
 	const std::string &get_object_path();
-	etherbone::Device &get_device();
-	void compile();
 
 public:
+	etherbone::Device &get_device();
+	void compile();
 	typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
 
 
@@ -41,7 +40,7 @@ public:
 
 
 	/// @brief add sink to the ECA and let ECA take ownership of the sink object
-	bool addActionSink(int channel, std::unique_ptr<ActionSink> &sink);
+	bool addActionSink(int channel, std::unique_ptr<ActionSink> sink);
 
 	uint16_t updateMostFull(unsigned channel); // returns current fill
 

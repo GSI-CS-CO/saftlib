@@ -9,6 +9,8 @@
 #include <etherbone.h>
 
 #include <functional>
+#include <string>
+#include "io_control_regs.h"
 
 namespace eb_plugin {
 
@@ -16,6 +18,8 @@ class SerdesClockGen;
 
 class Io {
 	etherbone::Device &device;
+	std::string io_name;
+	unsigned io_direction;
 	unsigned io_channel;
 	unsigned io_index;
 	unsigned io_special_purpose;
@@ -28,6 +32,8 @@ class Io {
 	SerdesClockGen &io_clkgen;
 public:
 	Io(etherbone::Device &device
+	   , const std::string &io_name
+	   , unsigned io_direction
 	   , unsigned io_channel
 	   , unsigned io_index
 	   , unsigned io_special_purpose
@@ -42,6 +48,8 @@ public:
 
 
 
+	const std::string &getName() const;
+	unsigned getDirection() const;
 	// iOutputActionSink
 	uint32_t getIndexOut() const;
 	uint32_t getIndexIn() const;

@@ -21,6 +21,8 @@ class IoControl {
 	std::vector<Io> ios;
 public:
 	IoControl(etherbone::Device &device);
+
+	std::vector<Io> & get_ios();
 };
 
 }

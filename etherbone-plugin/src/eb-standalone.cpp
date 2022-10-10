@@ -51,7 +51,10 @@ int main(int argc, char *argv[]) {
 
 
 	saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-		std::bind([](eb_plugin::TimingReceiver* tr){tr->InjectEvent(0,0,tr->CurrentTime()+100000000); return true;}, tr), 
+		std::bind([](eb_plugin::TimingReceiver* tr){
+			std::cerr << "inject event" << std::endl;
+			tr->InjectEvent(0,0,tr->CurrentTime()+100000000); return true;
+		}, tr), 
 		std::chrono::milliseconds(1000));
 
 	for (;;) {

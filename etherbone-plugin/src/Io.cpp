@@ -9,6 +9,8 @@
 namespace eb_plugin {
 
 Io::Io(etherbone::Device &dev
+	 , const std::string &name
+	 , unsigned direction
 	 , unsigned channel
 	 , unsigned index
 	 , unsigned special_purpose
@@ -20,6 +22,8 @@ Io::Io(etherbone::Device &dev
 	 , eb_address_t control_addr
 	 , SerdesClockGen &clkgen ) 
 	: device(dev)
+	, io_name(name)
+	, io_direction(direction)
 	, io_channel(channel)
 	, io_index(index)
 	, io_special_purpose(special_purpose)
@@ -32,6 +36,14 @@ Io::Io(etherbone::Device &dev
 	, io_clkgen(clkgen)
 {}
 
+
+const std::string &Io::getName() const {
+	return io_name;
+}
+
+unsigned Io::getDirection() const {
+	return io_direction;
+}
 
 uint32_t Io::getIndexOut() const
 {

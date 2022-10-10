@@ -626,7 +626,7 @@ ECA::~ECA()
 }
 
 // not sure if thet is the correct signature
-bool ECA::addActionSink(int channel, std::unique_ptr<ActionSink> &sink) 
+bool ECA::addActionSink(int channel, std::unique_ptr<ActionSink> sink) 
 {
 	///// TODO:
 	// just do ECAchannels[channel].push_back(std::move(sink)) ???

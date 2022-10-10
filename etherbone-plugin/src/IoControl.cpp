@@ -131,7 +131,7 @@ IoControl::IoControl(etherbone::Device &dev)
 		std::cerr << "IOName: " << IOName <<  " " << channel << std::endl;
 
 	// 	/* Create the IO controller object */
-		ios.push_back(Io(device, channel, internal_id, special, logic_level, oe_available,
+		ios.push_back(Io(device, IOName, direction, channel, internal_id, special, logic_level, oe_available,
 	 		term_available, spec_out_available, spec_in_available, ioctl_address, clkgen));
 
 	// 	InoutImpl::ConstructorType impl_args = {
@@ -182,6 +182,11 @@ IoControl::IoControl(etherbone::Device &dev)
 	// 		}
 	// 	}
 	}
+}
+
+std::vector<Io> & IoControl::get_ios()
+{
+	return ios;
 }
 
 
