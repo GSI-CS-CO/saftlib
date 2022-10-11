@@ -38,24 +38,6 @@ namespace eb_plugin {
 class Output : public ActionSink
 {
 	public:
-		// typedef Output_Service ServiceType;
-		// struct ConstructorType {
-		//   std::string name;
-		//   std::string objectPath;
-		//   std::string partnerPath;
-		//   TimingReceiver* dev;
-		//   unsigned channel;
-		//   unsigned num;
-		//   std::shared_ptr<InoutImpl> impl;
-		//   sigc::slot<void> destroy;
-		// };
-				// ECA &eca
-		  //        , const std::string& name
-		  //        , unsigned channel
-		  //        , unsigned num
-		  //        , saftbus::Container *container = nullptr);
-
-		// static std::shared_ptr<Output> create(const ConstructorType& args);
 		Output(ECA &eca
 		     , const std::string &name
 		     , const std::string &partnerPath
@@ -63,8 +45,6 @@ class Output : public ActionSink
 		     , unsigned num
 		     , Io *io
 		     , saftbus::Container *container = nullptr);
-
-		// const char *getInterfaceName() const;
 
 		/// @brief Create a condition to match incoming events
 		///

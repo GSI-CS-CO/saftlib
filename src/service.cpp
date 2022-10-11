@@ -58,10 +58,11 @@ namespace saftbus {
 		d->destruction_callback = destruction_callback;
 	}
 	Service::~Service() {
+		std::cerr << "~Service " << d->object_path << std::endl;
 		if (d->destruction_callback) {
 			d->destruction_callback();
 		}
-		std::cerr << "~Service " << d->object_path << std::endl;
+		std::cerr << "~Service done" << std::endl;
 	}
 
 	// Generate the mapping from interface_name to interface_no for all interface_names,
