@@ -50,10 +50,14 @@ int main(int argc, char *argv[]) {
 	sw_condition->SigAction = &on_action;
 
 	auto B1 = tr->getOutput("/de/gsi/saftlib/tr0/outputs/B1");
-
 	B1->setOutputEnable(true);
 	B1->NewCondition(true, 0, 0xffffffffffffffff,         0, true);
 	B1->NewCondition(true, 0, 0xffffffffffffffff, 100000000, false);
+
+	auto B2 = tr->getOutput("/de/gsi/saftlib/tr0/outputs/B2");
+	B2->setOutputEnable(true);
+	B2->NewCondition(true, 0, 0xffffffffffffffff,         0, true);
+	B2->NewCondition(true, 0, 0xffffffffffffffff, 100000000, false);
 
 
 	saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(

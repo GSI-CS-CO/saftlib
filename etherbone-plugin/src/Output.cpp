@@ -32,7 +32,6 @@ namespace eb_plugin {
 
 Output::Output(ECA &eca
      , const std::string &name
-     , const std::string &objectPath
      , const std::string &partnerPath_
      , unsigned channel
      , unsigned num

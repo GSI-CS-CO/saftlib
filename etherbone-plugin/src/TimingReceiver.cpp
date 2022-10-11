@@ -61,13 +61,8 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	}
 	
 	unsigned eca_channel = 0; // ECA channel 0 is always for IO
-	std::string input_path  = object_path;
-	input_path.append("/inputs/");
 
-	std::string output_path = object_path;
-	output_path.append("/outputs/");
-
-	// creat connections to ECA for all inputs and outputs
+	// create connections to ECA for all inputs and outputs
 	auto &ios = io_control.get_ios();
 	for(auto &io: ios) {
 
@@ -100,16 +95,15 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 		// 	break;
 
 		if (io.getDirection() == IO_CFG_FIELD_DIR_OUTPUT || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
-			std::string path = output_path;
-			path.append(io.getName());
 			std::string io_name = "outputs/";
 			io_name.append(io.getName());
-			std::cerr << "add output under path " << path << std::endl;
-			std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io_name, path, "", 
+			std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io_name, "", 
 													  eca_channel, io.getIndexOut(), &io, container));
 			if (container) {
+				std::string output_object_path = object_path;
+				output_object_path.append(io.getName());
 				std::unique_ptr<Output_Service> service(new Output_Service(output.get()));
-				container->create_object(path, std::move(service));
+				container->create_object(output_object_path, std::move(service));
 			}
 			addActionSink(eca_channel, std::move(output));
 

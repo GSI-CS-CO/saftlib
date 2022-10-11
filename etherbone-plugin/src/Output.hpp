@@ -58,7 +58,6 @@ class Output : public ActionSink
 		// static std::shared_ptr<Output> create(const ConstructorType& args);
 		Output(ECA &eca
 		     , const std::string &name
-		     , const std::string &objectPath
 		     , const std::string &partnerPath
 		     , unsigned channel
 		     , unsigned num

@@ -157,7 +157,8 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			std::string name;
 			in >> name;
 			if (!in) {
-				throw std::runtime_error("identifier expected after \'namespace\'");
+				name = "anonymous_namespace";
+				// throw std::runtime_error("identifier expected after \'namespace\'");
 			}
 			if (name.find('{') != name.npos) {
 				throw std::runtime_error("please insert whitespace before \"{\" in \"" + name + "\"");
@@ -173,7 +174,8 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			std::string name;
 			in >> name;
 			if (!in) {
-				throw std::runtime_error("identifier expected after \'class\'");
+				name = "anonymous_class";
+				// throw std::runtime_error("identifier expected after \'class\'");
 			}
 			if (name.find('{') != name.npos) {
 				throw std::runtime_error("please insert whitespace before \"{\" in \"" + name + "\"");
@@ -189,7 +191,8 @@ void manage_scopes(const std::string &line, std::vector<std::string> &scope, std
 			std::string name;
 			in >> name;
 			if (!in) {
-				throw std::runtime_error("identifier expected after \'struct\'");
+				name = "anonymous_struct";
+				// throw std::runtime_error("identifier expected after \'struct\'");
 			}
 			if (name.find('{') != name.npos) {
 				throw std::runtime_error("please insert whitespace before \"{\" in \"" + name + "\"");
