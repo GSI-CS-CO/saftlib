@@ -61,8 +61,11 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	}
 	
 	unsigned eca_channel = 0; // ECA channel 0 is always for IO
-	std::string input_path  = object_path + "/inputs/";
-	std::string output_path = object_path + "/outputs/";
+	std::string input_path  = object_path;
+	input_path.append("/inputs/");
+
+	std::string output_path = object_path;
+	output_path.append("/outputs/");
 
 	// creat connections to ECA for all inputs and outputs
 	auto &ios = io_control.get_ios();
@@ -73,54 +76,49 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 
 		// sigc::slot<void> nill;
 
-		switch(io.getDirection())
-		{
-			case IO_CFG_FIELD_DIR_OUTPUT:
-			{
-				std::string path = output_path;
-				output_path.append(io.getName());
-				std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io.getName(), path, "", 
-														  eca_channel, io.getIndexOut(), &io, container));
-				addActionSink(eca_channel, std::move(output));
+		// switch(io.getDirection())
+		// {
+		// 	case IO_CFG_FIELD_DIR_OUTPUT:
+		// 	{
+		// 		std::string path = output_path;
+		// 		output_path.append(io.getName());
+		// 		std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io.getName(), path, "", 
+		// 												  eca_channel, io.getIndexOut(), &io, container));
+		// 		addActionSink(eca_channel, std::move(output));
 
-				// Output::ConstructorType out_args = { IOName, output_path, "", tr, eca_channel, eca_out, impl, nill };
-				// actionSinks[key_out] = Output::create(out_args);
-				// ++eca_out;
-			}
-			break;
-			case IO_CFG_FIELD_DIR_INPUT:
-			{
-				// Input::ConstructorType  in_args  = { IOName, input_path,  "", tr, tlu,         eca_in,  impl, nill };
-				// eventSources[key_in] = Input::create(in_args);
-				// ++eca_in;
-			}
-			break;
-			case IO_CFG_FIELD_DIR_INOUT:
-			{
-				std::string path = output_path;
-				path.append(io.getName());
-				std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io.getName(), path, "", 
-														  eca_channel, io.getIndexOut(), &io, container));
-				if (container) {
-					std::unique_ptr<Output_Service> service(new Output_Service(output.get()));
-					container->create_object(path, std::move(service));
-				}
-				addActionSink(eca_channel, std::move(output));
+		// 		// Output::ConstructorType out_args = { IOName, output_path, "", tr, eca_channel, eca_out, impl, nill };
+		// 		// actionSinks[key_out] = Output::create(out_args);
+		// 		// ++eca_out;
+		// 	}
+		// 	break;
+		// 	case IO_CFG_FIELD_DIR_INPUT:
+		// 	{
+		// 		// Input::ConstructorType  in_args  = { IOName, input_path,  "", tr, tlu,         eca_in,  impl, nill };
+		// 		// eventSources[key_in] = Input::create(in_args);
+		// 		// ++eca_in;
+		// 	}
+		// 	break;
 
-				// Output::ConstructorType out_args = { IOName, output_path, input_path,  tr, eca_channel, eca_out, impl, nill };
-				// Input::ConstructorType  in_args  = { IOName, input_path,  output_path, tr, tlu,         eca_in,  impl, nill };
-				// actionSinks[key_out] = Output::create(out_args);
-				// eventSources[key_in] = Input::create(in_args);
-				// ++eca_out;
-				// ++eca_in;
+		if (io.getDirection() == IO_CFG_FIELD_DIR_OUTPUT || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
+			std::string path = output_path;
+			path.append(io.getName());
+			std::string io_name = "outputs/";
+			io_name.append(io.getName());
+			std::cerr << "add output under path " << path << std::endl;
+			std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io_name, path, "", 
+													  eca_channel, io.getIndexOut(), &io, container));
+			if (container) {
+				std::unique_ptr<Output_Service> service(new Output_Service(output.get()));
+				container->create_object(path, std::move(service));
 			}
-			break;
-			default:
-			{
-				// clog << kLogErr << "Found IO with unknown direction!" << std::endl;
-				// return -1;
-			}
-			break;
+			addActionSink(eca_channel, std::move(output));
+
+			// Output::ConstructorType out_args = { IOName, output_path, input_path,  tr, eca_channel, eca_out, impl, nill };
+			// Input::ConstructorType  in_args  = { IOName, input_path,  output_path, tr, tlu,         eca_in,  impl, nill };
+			// actionSinks[key_out] = Output::create(out_args);
+			// eventSources[key_in] = Input::create(in_args);
+			// ++eca_out;
+			// ++eca_in;
 		}
 
 

@@ -428,15 +428,15 @@ class ActionSink : public Owned
 		void compile();
 		
 		// The name under which this ActionSink is listed in TimingReceiver::Iterfaces
-		const std::string &getObjectName() const { return name; }
+		const std::string &getObjectName() const;
 
-		const std::string &getObjectPath() const { return object_path; }
+		const std::string &getObjectPath() const;
 
 		// Used by TimingReciever::compile
 		typedef std::map< uint32_t, std::unique_ptr<Condition> > Conditions;
-		const Conditions& getConditions() const { return conditions; }
-		unsigned getChannel() const { return channel; }
-		unsigned getNum() const { return num; }
+		const Conditions& getConditions() const;
+		unsigned getChannel() const;
+		unsigned getNum() const;
 		
 		// Receive MSI from TimingReceiver
 		virtual void receiveMSI(uint8_t code);

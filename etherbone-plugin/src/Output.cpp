@@ -62,7 +62,7 @@ std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_
 
 
 
-	std::unique_ptr<OutputCondition> condition(new OutputCondition(path.str(), this, active, id, mask, offset, number, container));
+	std::unique_ptr<OutputCondition> condition(new OutputCondition(path.str(), this, active, id, mask, offset, on?2:1, container));
 	std::cerr << "Output::NewCondition" << std::endl;
 	if (container) {
 		std::cerr << "Output:: have a container" << std::endl;

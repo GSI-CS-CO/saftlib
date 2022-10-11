@@ -16,9 +16,10 @@
 namespace eb_plugin {
 
 class SAFTd;
-class SoftwareActionSink;
 class OpenDevice;
 class ActionSink;
+class SoftwareActionSink;
+class Output;
 
 class ECA {
 	struct Impl; std::unique_ptr<Impl> d;
@@ -99,6 +100,8 @@ public:
 	/// @return pointer to a SoftwareActionSink 
 	///
 	SoftwareActionSink *getSoftwareActionSink(const std::string & sas_obj_path);
+
+	Output *getOutput(const std::string &output_obj_path);
 };
 
 

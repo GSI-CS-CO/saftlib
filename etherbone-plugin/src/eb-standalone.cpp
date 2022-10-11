@@ -3,6 +3,7 @@
 #include <SoftwareActionSink.hpp>
 #include <SoftwareCondition.hpp>
 #include <IoControl.hpp>
+#include <Output.hpp>
 
 #include <saftbus/client.hpp>
 #include <memory>
@@ -48,6 +49,11 @@ int main(int argc, char *argv[]) {
 	auto sw_condition = softwareActionSink->getCondition(condition_obj_path);
 	sw_condition->SigAction = &on_action;
 
+	auto B1 = tr->getOutput("/de/gsi/saftlib/tr0/outputs/B1");
+
+	B1->setOutputEnable(true);
+	B1->NewCondition(true, 0, 0xffffffffffffffff,         0, true);
+	B1->NewCondition(true, 0, 0xffffffffffffffff, 100000000, false);
 
 
 	saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(

@@ -15,6 +15,7 @@
 
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
+#include "Output.hpp"
 
 #include "eca_regs.h"
 #include "eca_flags.h"
@@ -625,12 +626,8 @@ ECA::~ECA()
 	}
 }
 
-// not sure if thet is the correct signature
 bool ECA::addActionSink(int channel, std::unique_ptr<ActionSink> sink) 
 {
-	///// TODO:
-	// just do ECAchannels[channel].push_back(std::move(sink)) ???
-// return false; 
 	assert(channel >= 0 && channel < static_cast<int>(d->ECAchannels.size()));
 	d->ECAchannels[channel].push_back(std::move(sink));
 	return true;
@@ -694,8 +691,21 @@ SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 			return dynamic_cast<SoftwareActionSink*>(softwareActionSink.get());
 		}
 	}
-	throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
+	throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such SoftwareActionSink");
 }
+
+
+Output *ECA::getOutput(const std::string &output_obj_path)
+{
+	for (auto &output: d->ECAchannels[0]) { // outputs are always on channel 0
+		std::cerr << "getOutput " << output->getObjectPath() << " " << output_obj_path << std::endl;
+		if (output->getObjectPath() == output_obj_path) {
+			return dynamic_cast<Output*>(output.get());
+		}
+	}
+	throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such Output");
+}
+
 
 
 etherbone::Device &ECA::get_device() {

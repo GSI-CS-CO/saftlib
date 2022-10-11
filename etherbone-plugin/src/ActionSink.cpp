@@ -500,6 +500,33 @@ void ActionSink::compile()
 	eca.compile();
 }
 
+const std::string &ActionSink::getObjectName() const 
+{ 
+	return name; 
+}
+
+const std::string &ActionSink::getObjectPath() const 
+{ 
+	return object_path; 
+}
+
+const ActionSink::Conditions& ActionSink::getConditions() const 
+{
+	return conditions; 
+}
+
+unsigned ActionSink::getChannel() const 
+{
+	return channel; 
+}
+
+unsigned ActionSink::getNum() const 
+{
+	return num; 
+}
+
+
+
 Condition *ActionSink::getCondition(const std::string object_path) {
 	for (auto &pair: conditions) {
 		// auto number = pair.first;
