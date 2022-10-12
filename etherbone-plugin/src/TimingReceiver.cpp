@@ -25,6 +25,8 @@
 #include "IoControl.hpp"
 #include "Output.hpp"
 #include "Output_Service.hpp"
+#include "Input.hpp"
+#include "Input_Service.hpp"
 
 #include <saftbus/error.hpp>
 
@@ -48,6 +50,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, WhiteRabbit(OpenDevice::device)
 	, Watchdog(OpenDevice::device)
 	, ECA(saftd, OpenDevice::device, object_path, container)
+	, ECA_TLU(OpenDevice::device)
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
 	, io_control(OpenDevice::device)
@@ -94,16 +97,22 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 		// 	}
 		// 	break;
 
-		if (io.getDirection() == IO_CFG_FIELD_DIR_OUTPUT || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
-			std::string io_name = "outputs/";
+		if (io.getDirection() == IO_CFG_FIELD_DIR_INPUT  || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
+			std::string io_name = "inputs/";
 			io_name.append(io.getName());
-			std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io_name, "", 
-													  eca_channel, io.getIndexOut(), &io, container));
+			std::unique_ptr<Input> input(new Input(*dynamic_cast<ECA*>(this), *dynamic_cast<ECA_TLU*>(this), io_name, "", 
+												   eca_channel, io.getIndexIn(), &io, container));
+
+			//addEventSource(std::move(input));
+
+		}
+
+		if (io.getDirection() == IO_CFG_FIELD_DIR_OUTPUT || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
+			std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io, "", 
+													  eca_channel, container));
 			if (container) {
-				std::string output_object_path = object_path;
-				output_object_path.append(io.getName());
 				std::unique_ptr<Output_Service> service(new Output_Service(output.get()));
-				container->create_object(output_object_path, std::move(service));
+				container->create_object(output->getObjectPath(), std::move(service));
 			}
 			addActionSink(eca_channel, std::move(output));
 

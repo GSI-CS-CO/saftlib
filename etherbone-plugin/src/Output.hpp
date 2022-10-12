@@ -39,11 +39,9 @@ class Output : public ActionSink
 {
 	public:
 		Output(ECA &eca
-		     , const std::string &name
+		     , Io &io
 		     , const std::string &partnerPath
 		     , unsigned channel
-		     , unsigned num
-		     , Io *io
 		     , saftbus::Container *container = nullptr);
 
 		/// @brief Create a condition to match incoming events
@@ -199,7 +197,7 @@ class Output : public ActionSink
 		//   sigc::signal< void, bool > BuTiSMultiplexer;
 
 	protected:
-		Io *io;
+		Io &io;
 		std::string partnerPath;
 };
 

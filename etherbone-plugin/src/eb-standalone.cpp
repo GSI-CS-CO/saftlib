@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
 	B2->NewCondition(true, 0, 0xffffffffffffffff, 100000000, false);
 
 
+
 	saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 		std::bind([](eb_plugin::TimingReceiver* tr){
 			std::cerr << "inject event" << std::endl;

@@ -30,6 +30,7 @@
 #include "WhiteRabbit.hpp"
 #include "Watchdog.hpp"
 #include "ECA.hpp"
+#include "ECA_TLU.hpp"
 #include "BuildIdRom.hpp"
 #include "TempSensor.hpp"
 #include "IoControl.hpp"
@@ -87,6 +88,7 @@ class TimingReceiver : public OpenDevice
                      , public WhiteRabbit
                      , public Watchdog
                      , public ECA
+                     , public ECA_TLU
                      , public BuildIdRom
                      , public TempSensor {
 public:

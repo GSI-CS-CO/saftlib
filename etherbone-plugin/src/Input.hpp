@@ -17,81 +17,71 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef EB_PLUGIN_INPUT_HPP_
+#define EB_PLUGIN_INPUT_HPP_
 
-#include "InoutImpl.h"
-#include "EventSource.h"
-#include "interfaces/Input.h"
-#include "interfaces/iInputEventSource.h"
+#include "Io.hpp"
+#include "ECA.hpp"
+#include "ECA_TLU.hpp"
+#include "EventSource.hpp"
 
-namespace saftlib {
+namespace eb_plugin {
 
-class Input : public EventSource, public iInputEventSource
+class Input : public EventSource
 {
-  public:
-    typedef Input_Service ServiceType;
-    struct ConstructorType {
-      std::string name;
-      std::string objectPath;
-      std::string partnerPath;
-      TimingReceiver* dev;
-      eb_address_t tlu;
-      unsigned channel;
-      std::shared_ptr<InoutImpl> impl;
-      sigc::slot<void> destroy;
-    };
+	public:
 
-    static std::shared_ptr<Input> create(const ConstructorType& args);
+		Input(ECA &eca
+			, ECA_TLU &eca_tlu
+		    , const std::string &name
+		    , const std::string &partnerPath
+		    , unsigned channel
+		    , unsigned num
+		    , Io *io
+		    , saftbus::Container *container = nullptr);
 
-    const char *getInterfaceName() const;
+		// Methods
+		bool ReadInput();
+		// Property getters
+		uint32_t getStableTime() const;
+		uint32_t getIndexIn() const;
+		bool getInputTermination() const;
+		bool getSpecialPurposeIn() const;
+		bool getGateIn() const;
+		bool getInputTerminationAvailable() const;
+		bool getSpecialPurposeInAvailable() const;
+		std::string getLogicLevelIn() const;
+		std::string getTypeIn() const;
+		std::string getOutput() const;
+		// Property setters
+		void setStableTime(uint32_t val);
+		void setInputTermination(bool val);
+		void setSpecialPurposeIn(bool val);
+		void setGateIn(bool val);
 
-    // Methods
-    bool ReadInput();
-    // Property getters
-    uint32_t getStableTime() const;
-    uint32_t getIndexIn() const;
-    bool getInputTermination() const;
-    bool getSpecialPurposeIn() const;
-    bool getGateIn() const;
-    bool getInputTerminationAvailable() const;
-    bool getSpecialPurposeInAvailable() const;
-    std::string getLogicLevelIn() const;
-    std::string getTypeIn() const;
-    std::string getOutput() const;
-    // Property setters
-    void setStableTime(uint32_t val);
-    void setInputTermination(bool val);
-    void setSpecialPurposeIn(bool val);
-    void setGateIn(bool val);
+		// From iEventSource
+		uint64_t getResolution() const;
+		uint32_t getEventBits() const;
+		bool getEventEnable() const;
+		uint64_t getEventPrefix() const;
 
-    // Property signals
-    //  sigc::signal< void, uint32_t > StableTime;
-    //  sigc::signal< void, bool > InputTermination;
-    //  sigc::signal< void, bool > SpecialPurposeIn;
+		void setEventEnable(bool val);
+		void setEventPrefix(uint64_t val);
+		//  sigc::signal< void, bool > EventEnable;
+		//  sigc::signal< void, uint64_t > EventPrefix;
 
-    // From iEventSource
-    uint64_t getResolution() const;
-    uint32_t getEventBits() const;
-    bool getEventEnable() const;
-    uint64_t getEventPrefix() const;
+	private:
+		ECA &eca;
+		ECA_TLU &eca_tlu;
+		Io *io;
+		std::string partnerPath;
+		eb_address_t tlu;
+		unsigned channel;
+		bool enable;
+		uint64_t event;
+		uint32_t stable;
 
-    void setEventEnable(bool val);
-    void setEventPrefix(uint64_t val);
-    //  sigc::signal< void, bool > EventEnable;
-    //  sigc::signal< void, uint64_t > EventPrefix;
-
-  protected:
-    Input(const ConstructorType& args);
-    std::shared_ptr<InoutImpl> impl;
-    std::string partnerPath;
-    eb_address_t tlu;
-    unsigned channel;
-    bool enable;
-    uint64_t event;
-    uint32_t stable;
-
-    void configInput();
+		// void configInput();
 };
 
 }

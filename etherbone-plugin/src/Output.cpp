@@ -31,27 +31,14 @@ namespace eb_plugin {
 // }
 
 Output::Output(ECA &eca
-     , const std::string &name
+     , Io &io_
      , const std::string &partnerPath_
      , unsigned channel
-     , unsigned num
-     , Io *io_
      , saftbus::Container *container)
-	: ActionSink(eca, name, channel, num, container), io(io_), partnerPath(partnerPath_)
+	: ActionSink(eca, std::string("outputs/")+io_.getName(), channel, io_.getIndexOut(), container), io(io_), partnerPath(partnerPath_)
 {
 
 }
-
-// Output::Output(const ConstructorType& args) :
-// 	ActionSink(args.objectPath, args.dev, args.name, args.channel, args.num, args.destroy),
-// 	impl(args.impl), partnerPath(args.partnerPath)
-// {
-// }
-
-// const char *Output::getInterfaceName() const
-// {
-// 	return "Output";
-// }
 
 std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)
 {
@@ -79,80 +66,80 @@ std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_
 
 uint32_t Output::getIndexOut() const
 {
-	return io->getIndexOut();
+	return io.getIndexOut();
 }
 
 void Output::WriteOutput(bool value)
 {
 	ownerOnly();
-	return io->WriteOutput(value);
+	return io.WriteOutput(value);
 }
 
 bool Output::ReadOutput()
 {
-	return io->ReadOutput();
+	return io.ReadOutput();
 }
 
 bool Output::ReadCombinedOutput()
 {
-	return io->ReadCombinedOutput();
+	return io.ReadCombinedOutput();
 }
 
 bool Output::getOutputEnable() const
 {
-	return io->getOutputEnable();
+	return io.getOutputEnable();
 }
 
 bool Output::getSpecialPurposeOut() const
 {
-	return io->getSpecialPurposeOut();
+	return io.getSpecialPurposeOut();
 }
 
 bool Output::getGateOut() const
 {
-	return io->getGateOut();
+	return io.getGateOut();
 }
 
 bool Output::getBuTiSMultiplexer() const
 {
-	return io->getBuTiSMultiplexer();
+	return io.getBuTiSMultiplexer();
 }
 
 bool Output::getPPSMultiplexer() const
 {
-	return io->getPPSMultiplexer();
+	return io.getPPSMultiplexer();
 }
 
 bool Output::getOutputEnableAvailable() const
 {
-	return io->getOutputEnableAvailable();
+	return io.getOutputEnableAvailable();
 }
 
 bool Output::getSpecialPurposeOutAvailable() const
 {
-	return io->getSpecialPurposeOutAvailable();
+	return io.getSpecialPurposeOutAvailable();
 }
 
 bool Output::StartClock(double high_phase, double low_phase, uint64_t phase_offset)
 {
 	ownerOnly();
-	return io->StartClock(high_phase, low_phase, phase_offset);
+	return io.StartClock(high_phase, low_phase, phase_offset);
 }
 
 bool Output::StopClock()
 {
 	ownerOnly();
-	return io->StopClock();
+	return io.StopClock();
 }
 
 std::string Output::getLogicLevelOut() const
 {
-	return io->getLogicLevelOut();
+	return io.getLogicLevelOut();
 }
 
 std::string Output::getTypeOut() const
 {
-	return io->getTypeOut();
+	return io.getTypeOut();
 }
 
 std::string Output::getInput() const
@@ -163,31 +150,31 @@ std::string Output::getInput() const
 void Output::setOutputEnable(bool val)
 {
 	ownerOnly();
-	return io->setOutputEnable(val);
+	return io.setOutputEnable(val);
 }
 
 void Output::setSpecialPurposeOut(bool val)
 {
 	ownerOnly();
-	return io->setSpecialPurposeOut(val);
+	return io.setSpecialPurposeOut(val);
 }
 
 void Output::setGateOut(bool val)
 {
 	ownerOnly();
-	return io->setGateOut(val);
+	return io.setGateOut(val);
 }
 
 void Output::setBuTiSMultiplexer(bool val)
 {
 	ownerOnly();
-	return io->setBuTiSMultiplexer(val);
+	return io.setBuTiSMultiplexer(val);
 }
 
 void Output::setPPSMultiplexer(bool val)
 {
 	ownerOnly();
-	return io->setPPSMultiplexer(val);
+	return io.setPPSMultiplexer(val);
 }
 
 }

@@ -35,7 +35,7 @@ namespace eb_plugin {
 		// @saftbus-export
 		void Own();
 
-
+	protected:
 		/// @brief Throw an exception if the caller is not the owner
 		void ownerOnly() const;
 	private:

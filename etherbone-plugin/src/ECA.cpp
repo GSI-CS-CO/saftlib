@@ -17,6 +17,8 @@
 #include "SoftwareActionSink_Service.hpp"
 #include "Output.hpp"
 
+#include "EventSource.hpp"
+
 #include "eca_regs.h"
 #include "eca_flags.h"
 #include "eca_queue_regs.h"
@@ -65,6 +67,8 @@ struct ECA::Impl {
 	unsigned                                         ECA_LINUX_channel_subchannels;
 
 	// typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
+
+	std::vector<std::vector< std::unique_ptr<EventSource> > > EventSources;
 
 	uint16_t updateMostFull(unsigned channel); // returns current fill
 	void resetMostFull(unsigned channel);
