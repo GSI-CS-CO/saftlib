@@ -269,6 +269,7 @@ std::vector<FunctionArgument> split_arguments(std::string argument_list) {
 struct FunctionSignature {
 	std::string scope;
 	std::string name;
+	bool is_virtual;
 	std::string return_type;
 	std::vector<FunctionArgument> argument_list;
 	std::vector<std::string> comments;
@@ -282,6 +283,12 @@ struct FunctionSignature {
 		auto name_start = returntype_and_name.find_last_of(" &");
 		name        = strip(line.substr(name_start+1,paranthesis_open-name_start-1));
 		return_type = strip(line.substr(0,name_start+1));
+		if (return_type.find("virtual") != return_type.npos) {
+			is_virtual = true;
+			return_type = strip(return_type.substr(7));
+		} else {
+			is_virtual = false;
+		}
 	}
 	void print() {
 		std::cerr << "  Function        " << std::endl;
@@ -1102,7 +1109,11 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 		for( auto &comment_line: function.comments) {
 			header_out << comment_line << std::endl;
 		}
-		header_out << "\t\t" << function.return_type << " " << function.name << "(";
+		header_out << "\t\t";
+		if (function.is_virtual) {
+			header_out << "virtual ";
+		}
+		header_out << function.return_type << " " << function.name << "(";
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 			header_out << function.argument_list[i].declaration();
 			if (i != function.argument_list.size()-1) {
