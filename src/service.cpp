@@ -23,7 +23,7 @@ namespace saftbus {
 		std::function<void()> destruction_callback; // a funtion can be attatched here that is called whenever the service is destroyed
 		void remove_signal_fd(int fd);
 		~Impl()  {
-			std::cerr << "Service::~Impl()" << std::endl;
+			std::cerr << "Service::~Impl(" << object_path << ")" << std::endl;
 		}
 	};
 
@@ -408,6 +408,8 @@ namespace saftbus {
 	}
 	void Container::client_hung_up(int fd) {
 		std::cerr << "Container::client_hung_up(" << fd << ")" << std::endl;
+		// TODO: there are parent-child relations between service objects and somehow
+		//       it must be ensured that children are always destroyed before their parents
 		for(;;) {
 			auto iter = std::find(d->objects.begin(), d->objects.end(), fd);
 			if (iter == d->objects.end()) {
