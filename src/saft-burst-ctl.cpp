@@ -614,8 +614,12 @@ static int  bg_invoke_async(std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t i
   saftlib::wait_for_signal(3000);         // wait for response or time-out (burst generator checks its mailbox every second)
 
   uint32_t response = bg->getResponse();  // check response
-  if ((response & 0xFFFF) != inst_code)
+  uint32_t ret_code = response & 0xFFFF;
+  if (ret_code != inst_code)
+  {
+    std::cerr << "Failed to execute an instruction: " << std::hex << ret_code << " (expected: " << inst_code << ")" << std::endl;
     return -1;
+  }
 
   return (response >> 16) & 0xFFFF;       // return instruction result, if instruction is complete
 }
@@ -1437,9 +1441,10 @@ static int  bg_config_io(uint32_t t_high, uint32_t t_period, int64_t t_burst, ui
       std::cout << std::endl;
     }
 
-    if (bg_invoke_async(bg, CMD_GET_PARAM, args))
+    result = bg_invoke_async(bg, CMD_GET_PARAM, args);
+    if (result)
     {
-      std::cerr << "Failed to send the pulse parameters. Try again!" << std::endl;
+      std::cerr << "Failed to send the pulse parameters. Return code: " << result << std::endl;
       return -1;
     }
 
