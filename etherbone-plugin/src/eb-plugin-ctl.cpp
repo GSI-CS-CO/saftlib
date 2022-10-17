@@ -12,7 +12,7 @@
 #include <iostream>
 
 int action_count = 0;
-
+std::shared_ptr<eb_plugin::TimingReceiver_Proxy> tr;
 void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) {
 	std::cerr << "event " << event << " " 
 	          << "param " << param << " " 
@@ -20,6 +20,8 @@ void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plug
 	          << "executed " << executed.getTAI() << " " 
 	          << "flags " << flags << " "
 	          << std::endl;
+	tr->InjectEvent(0,0,tr->CurrentTime()+1000000000); 
+	std::cerr << "action_count=" << action_count << std::endl;
 	++action_count;
 }
 
@@ -41,25 +43,23 @@ int main(int argc, char *argv[]) {
 			std::cerr << device.first << " " << device.second << std::endl;
 		}
 
-		auto tr = eb_plugin::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
+		tr = eb_plugin::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
 		auto sas_object_path = tr->NewSoftwareActionSink("");
 		std::cerr << "sas_object_path = " << sas_object_path << std::endl;
-		auto sas_object_path2 = tr->NewSoftwareActionSink("");
-		std::cerr << "sas_object_path2 = " << sas_object_path2 << std::endl;
+		// auto sas_object_path2 = tr->NewSoftwareActionSink("");
+		// std::cerr << "sas_object_path2 = " << sas_object_path2 << std::endl;
 
 		auto sas_proxy = eb_plugin::SoftwareActionSink_Proxy::create(sas_object_path);
-		auto sas_proxy2 = eb_plugin::SoftwareActionSink_Proxy::create(sas_object_path2);
+		// auto sas_proxy2 = eb_plugin::SoftwareActionSink_Proxy::create(sas_object_path2);
 
 		auto condition_obj_path = sas_proxy->NewCondition(true, 0, 0, 0);
 		std::cerr << "new Condition: " << condition_obj_path << std::endl; 
 
-		auto condition_obj_path2 = sas_proxy2->NewCondition(true, 0, 0, 0);
-		std::cerr << "new Condition2: " << condition_obj_path2 << std::endl; 
+		// auto condition_obj_path2 = sas_proxy2->NewCondition(true, 0, 0, 0);
+		// std::cerr << "new Condition2: " << condition_obj_path2 << std::endl; 
 
 		auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
 		cond_proxy->SigAction = &on_action;
-
-		tr->InjectEvent(1,2,tr->CurrentTime()+1000000000);
 
 
 		// auto B1 = eb_plugin::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B1");
@@ -73,20 +73,18 @@ int main(int argc, char *argv[]) {
 		// B2->NewCondition(true, 0, 0xffffffffffffffff, 100000000, false);
 
 
-		auto saftbus = saftbus::Container_Proxy::create();
-		saftbus->get_status();
+		// auto saftbus = saftbus::Container_Proxy::create();
+		// saftbus->get_status();
 
-		// tr->InjectEvent(0,0,tr->CurrentTime()+1000000000); return true;
-		// tr->InjectEvent(0,0,tr->CurrentTime()+2000000000); return true;
-		// tr->InjectEvent(0,0,tr->CurrentTime()+3000000000); return true;
-		// tr->InjectEvent(0,0,tr->CurrentTime()+4000000000); return true;
-		// tr->InjectEvent(0,0,tr->CurrentTime()+5000000000); return true;
-		// for (;;) {
-		// 	saftbus::SignalGroup::get_global().wait_for_signal(1000);
-		// 	if (action_count > 4) {
-		// 		break;
-		// 	}
-		// }
+		tr->InjectEvent(0,0,tr->CurrentTime()+1000000000); 
+
+		for (;;) {
+			std::cerr << "loop" << std::endl;
+			saftbus::SignalGroup::get_global().wait_for_signal(2000);
+			if (action_count > 4) {
+				break;
+			}
+		}
 	}
 
 

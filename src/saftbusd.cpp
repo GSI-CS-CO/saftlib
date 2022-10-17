@@ -9,5 +9,6 @@ int main() {
 	// in case of sources loaded into the loop, they must be destroyed before the plugins are unloaded
 	saftbus::Loop::get_default().clear(); 
 
+	std::cerr << "===================== saftbusd quit ============================" << std::endl;
 	return 0;
 }

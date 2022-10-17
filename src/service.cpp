@@ -24,6 +24,10 @@ namespace saftbus {
 		void remove_signal_fd(int fd);
 		~Impl()  {
 			std::cerr << "Service::~Impl(" << object_path << ")" << std::endl;
+			if (destruction_callback) {
+				std::cerr << "Service::~Impl() -> destruction_callback" << std::endl;
+				destruction_callback();
+			}
 		}
 	};
 
@@ -37,6 +41,14 @@ namespace saftbus {
 		Impl() {}
 		~Impl()  {
 			std::cerr << "Container::~Impl()" << std::endl;
+			// Make sure that service objects are destroyed in the opposite order (youngest object first).
+			// The std::map "objects" is sorted after object id, which is increasing for all created objects.
+			// starting with the last object in the map, the correct destruction order is assured.
+			while(objects.size()) {
+				auto last = objects.end();
+				--last;
+				objects.erase(last);
+			}
 		}
 	};
 
@@ -59,9 +71,6 @@ namespace saftbus {
 	}
 	Service::~Service() {
 		std::cerr << "~Service " << d->object_path << std::endl;
-		if (d->destruction_callback) {
-			d->destruction_callback();
-		}
 		std::cerr << "~Service done" << std::endl;
 	}
 
@@ -366,6 +375,7 @@ namespace saftbus {
 	}
 	void Container::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
 	{
+		std::cerr << "Container::unregister_proxy(" << saftlib_object_id << ")" << std::endl;
 		auto find_result = d->objects.find(saftlib_object_id);
 		if (find_result == d->objects.end()) {
 			std::cerr << "object " << saftlib_object_id << " already gone" << std::endl;
@@ -408,11 +418,16 @@ namespace saftbus {
 	}
 	void Container::client_hung_up(int fd) {
 		std::cerr << "Container::client_hung_up(" << fd << ")" << std::endl;
-		// TODO: there are parent-child relations between service objects and somehow
-		//       it must be ensured that children are always destroyed before their parents
+		// There may be parent-child relations between service objects it must be ensured 
+		// that children are always destroyed before their parents.
+		// All service objects get an object id which is always increasing.
+		// Thus, children always have larger numbers then their parents.
+		// Thus a viable strategy to remove children before parents is
+		// the use of reverse iterators when selecting the owned service objects.
+		// This works because iterating a map with object ids as key value is sorted.
 		for(;;) {
-			auto iter = std::find(d->objects.begin(), d->objects.end(), fd);
-			if (iter == d->objects.end()) {
+			auto iter = std::find(d->objects.rbegin(), d->objects.rend(), fd);
+			if (iter == d->objects.rend()) {
 				break;
 			}
 			std::cerr << "remove object " << iter->second->get_object_path() << std::endl;

@@ -783,6 +783,7 @@ void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	ActionSink *as = sas;
 	d->ECA_LINUX_channel->erase(std::remove(d->ECA_LINUX_channel->begin(), d->ECA_LINUX_channel->end(), as),
 	                            d->ECA_LINUX_channel->end());
+	--d->sas_count;
 }
 
 std::map< std::string, std::string > ECA::getSoftwareActionSinks() const
