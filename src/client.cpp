@@ -134,6 +134,7 @@ namespace saftbus {
 	};
 
 	struct Proxy::Impl {
+		static std::shared_ptr<ClientConnection> connection;
 		int saftlib_object_id;
 		int client_id, signal_group_id; // is determined at registration time and needs to be saved for de-registration
 		Serializer   send;
@@ -142,6 +143,7 @@ namespace saftbus {
 		std::vector<std::string>   interface_names;
 		std::map<std::string, int> interface_name2no_map;
 	};
+	std::shared_ptr<ClientConnection> Proxy::Impl::connection;
 
 	SignalGroup::SignalGroup() 
 		: d(std2::make_unique<Impl>())
@@ -299,6 +301,7 @@ namespace saftbus {
 			d->send.put(signal_group.d->signal_group_id); 
 			int send_result    = get_connection().send(d->send);
 			if (send_result <= 0) {
+
 				throw std::runtime_error("Proxy cannot send data to server");
 			}
 			signal_group.register_proxy(this);
@@ -367,8 +370,10 @@ namespace saftbus {
 	}
 
 	ClientConnection& Proxy::get_connection() {
-		static ClientConnection connection;
-		return connection;
+		if (!Proxy::Impl::connection) {
+			Proxy::Impl::connection = std::make_shared<ClientConnection>();
+		}
+		return *(Proxy::Impl::connection);
 	}
 	Serializer& Proxy::get_send()
 	{

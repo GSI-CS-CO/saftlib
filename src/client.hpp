@@ -19,10 +19,9 @@ namespace saftbus {
 		struct Impl; std::unique_ptr<Impl> d;		
 	friend class SignalGroup;
 	friend class Proxy;
-	private:
+	public:
 		ClientConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ClientConnection();
-	public:
 		// send whatever data is in serial buffer to the server
 		int send(Serializer &serializer, int timeout_ms = -1); 
 		// wait for data to arrive from the server
