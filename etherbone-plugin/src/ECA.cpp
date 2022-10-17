@@ -474,6 +474,8 @@ void ECA::Impl::compile()
 				oc.channel = actionSink->getChannel();
 				oc.num     = actionSink->getNum();
 
+				std::cerr << "compile condition on channel " << oc.channel << " num " << oc.num << std::endl;
+
 				// Push the open record
 				id_space.push_back(oc);
 
@@ -784,6 +786,7 @@ void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	d->ECA_LINUX_channel->erase(std::remove(d->ECA_LINUX_channel->begin(), d->ECA_LINUX_channel->end(), as),
 	                            d->ECA_LINUX_channel->end());
 	--d->sas_count;
+	compile();
 }
 
 std::map< std::string, std::string > ECA::getSoftwareActionSinks() const

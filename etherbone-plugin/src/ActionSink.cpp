@@ -84,15 +84,10 @@ ActionSink::~ActionSink()
 	std::cerr << "~ActionSink" << std::endl;
 	// unhook any pending updates
 	saftbus::Loop::get_default().remove(overflowPending);
-	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
 	saftbus::Loop::get_default().remove(actionPending);
-	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
 	saftbus::Loop::get_default().remove(latePending);
-	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
 	saftbus::Loop::get_default().remove(earlyPending);
-	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
 	saftbus::Loop::get_default().remove(conflictPending);
-	std::cerr << "~ActionSink remove timeoutsource" << std::endl;
 	saftbus::Loop::get_default().remove(delayedPending);
 	std::cerr << "~ActionSink done " << std::endl;
 
@@ -304,6 +299,7 @@ void ActionSink::setDelayedCount(uint64_t val)
 
 void ActionSink::receiveMSI(uint8_t code)
 {
+	std::cerr << "ActionSink::receiveMSI(" << code << ")" << std::endl;
 	std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point exec; 
 	std::chrono::milliseconds interval(0);
@@ -481,6 +477,7 @@ bool ActionSink::updateDelayed() const
 
 void ActionSink::removeCondition(uint32_t number)
 {
+	std::cerr << "ActionSink::removeCondition(" << number << ")" << std::endl;
 	auto found = conditions.find(number);
 	if (found != conditions.end()) {
 		bool active = found->second->getActive();
@@ -497,6 +494,7 @@ void ActionSink::removeCondition(uint32_t number)
 
 void ActionSink::compile()
 {
+	std::cerr << "ActionSink::compile()" << std::endl;
 	eca.compile();
 }
 

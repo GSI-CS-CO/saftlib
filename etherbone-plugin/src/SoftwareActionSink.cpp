@@ -139,12 +139,12 @@ SoftwareCondition * SoftwareActionSink::getCondition(const std::string object_pa
 
 std::string SoftwareActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset)
 {
+  std::cerr << "SoftwareActionSink::NewCondition" << std::endl;
   unsigned number = prepareCondition(active, id, mask, offset, 0, true);
   std::ostringstream path;
   path << getObjectPath() << "/_" << number;
 
   std::unique_ptr<SoftwareCondition> software_condition(new SoftwareCondition(path.str(), this, active, id, mask, offset, number, container));
-  std::cerr << "SoftwareActionSink::NewCondition" << std::endl;
   if (container) {
     std::cerr << "have a container" << std::endl;
     std::unique_ptr<SoftwareCondition_Service> service(new SoftwareCondition_Service(software_condition.get(), std::bind(&ActionSink::removeCondition, this, number)));

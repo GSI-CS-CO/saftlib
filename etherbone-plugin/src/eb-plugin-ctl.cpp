@@ -20,9 +20,9 @@ void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plug
 	          << "executed " << executed.getTAI() << " " 
 	          << "flags " << flags << " "
 	          << std::endl;
-	tr->InjectEvent(0,0,tr->CurrentTime()+1000000000); 
-	std::cerr << "action_count=" << action_count << std::endl;
+	// tr->InjectEvent(0,0,tr->CurrentTime()+1000000000); 
 	++action_count;
+	std::cerr << "action_count=" << action_count << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -58,8 +58,16 @@ int main(int argc, char *argv[]) {
 		// auto condition_obj_path2 = sas_proxy2->NewCondition(true, 0, 0, 0);
 		// std::cerr << "new Condition2: " << condition_obj_path2 << std::endl; 
 
-		auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
-		cond_proxy->SigAction = &on_action;
+		// irgendwas ist hier komisch:
+		// wenn die SoftwareCondition_Proxy angelegt wird, dann lauft das Programm nur 1 mal korrekt.
+		// Wenn es danach nochmal gestartet wirt (ohne saftbusd neu zu starten), dann kommen keine ECA MSIs mehr.
+		// Vermutung, Beim Abmelden des SoftwareCondition_Proxy wird irgendwas kaputt gemacht.
+		// 
+
+		// auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
+		// cond_proxy->SigAction = &on_action;
+
+
 
 
 		// auto B1 = eb_plugin::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B1");
@@ -77,10 +85,16 @@ int main(int argc, char *argv[]) {
 		// saftbus->get_status();
 
 		tr->InjectEvent(0,0,tr->CurrentTime()+1000000000); 
+		tr->InjectEvent(0,0,tr->CurrentTime()+1500000000); 
+		tr->InjectEvent(0,0,tr->CurrentTime()+2000000000); 
+		tr->InjectEvent(0,0,tr->CurrentTime()+2500000000); 
+		tr->InjectEvent(0,0,tr->CurrentTime()+3000000000); 
+		tr->InjectEvent(0,0,tr->CurrentTime()+3500000000); 
+		tr->InjectEvent(0,0,tr->CurrentTime()+4000000000); 
 
-		for (;;) {
+		for (int i = 0; i < 5; ++i) {
 			std::cerr << "loop" << std::endl;
-			saftbus::SignalGroup::get_global().wait_for_signal(2000);
+			saftbus::SignalGroup::get_global().wait_for_signal(1000);
 			if (action_count > 4) {
 				break;
 			}

@@ -1,6 +1,7 @@
 #include "client.hpp"
 #include "make_unique.hpp"
 #include "saftbus.hpp"
+#include "error.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -237,6 +238,7 @@ namespace saftbus {
 						std::cerr << "failed to read data from fd " << d->pfd.fd << std::endl;
 						if (d->pfd.revents & POLLHUP) {
 							std::cerr << "service hung up" << std::endl;
+							throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Service hung up"); 
 						}
 						return -1;
 					} 

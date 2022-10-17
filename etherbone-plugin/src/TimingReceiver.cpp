@@ -179,6 +179,7 @@ eb_plugin::Time TimingReceiver::CurrentTime()
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
 {
+	std::cerr << "TimingReceiver::InjectEvent" << std::endl;
 	ECA::InjectEventRaw(event, param, time.getTAI());
 }
 
