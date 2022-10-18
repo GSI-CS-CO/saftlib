@@ -123,9 +123,11 @@ namespace saftbus {
 						assert(false);
 					} else {
 						// remove all signal fds associated with this client from all services
-						for(auto &signal_fd: (*removed_client)->signal_fd_use_count) {
-							std::cerr << "remove client signal fd " << signal_fd.first << std::endl;
-							container_of_services.remove_signal_fd(signal_fd.second);
+						for(auto &sigfd_usecount: (*removed_client)->signal_fd_use_count) {
+							int sigfd = sigfd_usecount.first;
+							// int count = sigfd_usecount.second;
+							std::cerr << "remove client signal fd " << sigfd << std::endl;
+							container_of_services.remove_signal_fd(sigfd);
 						}
 						clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
 					}
