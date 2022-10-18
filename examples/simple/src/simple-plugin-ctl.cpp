@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 			return 0;
 		} else {
 			std::cout << "usage: " << argv[0] << " once | start | stop " << std::endl;
+			std::cout << "     without any arguments, the program waits for dice throws" << std::endl;
 			return 0;
 		}
 	}
