@@ -64,7 +64,7 @@ namespace saftbus {
 		d->running_depth = 0; // 0 means: the loop is not running
 	}
 	Loop::~Loop() {
-		std::cerr << "~Loop()" << std::endl;
+		// std::cerr << "~Loop()" << std::endl;
 		d->sources.clear();
 		d->added_sources.clear();
 	}

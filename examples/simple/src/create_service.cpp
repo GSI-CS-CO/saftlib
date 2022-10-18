@@ -30,7 +30,7 @@ std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_
 	++ref_count;
 	std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > services;
 	services.push_back(std::make_pair(
-		"/saftbus/Dice", 
+		"/simple/Dice", 
 		std::move(std::unique_ptr<simple::Dice_Service>(new simple::Dice_Service(dice.get(), std::bind(&destroy_service))))
 		));
 

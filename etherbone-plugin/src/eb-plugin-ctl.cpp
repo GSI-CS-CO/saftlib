@@ -62,7 +62,8 @@ int main(int argc, char *argv[]) {
 		// wenn die SoftwareCondition_Proxy angelegt wird, dann lauft das Programm nur 1 mal korrekt.
 		// Wenn es danach nochmal gestartet wirt (ohne saftbusd neu zu starten), dann kommen keine ECA MSIs mehr.
 		// Vermutung, Beim Abmelden des SoftwareCondition_Proxy wird irgendwas kaputt gemacht.
-		// 
+		// Wenn aber das Probramm mit SigAbort beendet wird (also auch kein SoftwareActionSink_Proxy destruktor sich abmelden kann),
+		// Dann geht es beim naechsten Start wieder nicht
 
 		// auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
 		// cond_proxy->SigAction = &on_action;
