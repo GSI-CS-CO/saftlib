@@ -14,7 +14,7 @@
 int action_count = 0;
 std::shared_ptr<eb_plugin::TimingReceiver_Proxy> tr;
 void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) {
-	std::cerr << "event " << event << " " 
+	std::cout << "event " << event << " " 
 	          << "param " << param << " " 
 	          << "deadline " << deadline.getTAI() << " "
 	          << "executed " << executed.getTAI() << " " 
@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
 		// Wenn aber das Probramm mit SigAbort beendet wird (also auch kein SoftwareActionSink_Proxy destruktor sich abmelden kann),
 		// Dann geht es beim naechsten Start wieder nicht
 
-		// auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
-		// cond_proxy->SigAction = &on_action;
+		auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
+		cond_proxy->SigAction = &on_action;
 
 
 

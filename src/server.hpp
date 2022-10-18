@@ -23,7 +23,8 @@ namespace saftbus {
 	class ServerConnection {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
-		ServerConnection(const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
+		ServerConnection(const std::vector<std::string> &plugins = std::vector<std::string>(), 
+			             const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
 
 		void register_signal_id_for_client(int client_id, int signal_id);
