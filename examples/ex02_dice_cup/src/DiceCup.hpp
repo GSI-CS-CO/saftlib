@@ -13,6 +13,7 @@
 
 namespace ex02 {
 
+
 	class DiceCup : public Dice {
 		saftbus::Container *container;
 		std::string object_path;
@@ -37,6 +38,7 @@ namespace ex02 {
 		/// @result the sum of all dices in the cup
 		// @saftbus-export
 		int throwOnce();
+
 	};
 
 

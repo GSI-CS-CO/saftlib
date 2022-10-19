@@ -22,16 +22,16 @@ namespace saftbus {
 	// receive a file descriptor
 	int recvfd(int socket);
 
-	class Serializer;
-	class Deserializer;
+	// class Serializer;
+	// class Deserializer;
 
-	// custom types can be sent over saftbus if they derive from 
-	// this class and implement serialize and deserializ methods
-	struct SerDesAble {
-		virtual ~SerDesAble() = default;
-		virtual void serialize(Serializer &ser) const = 0;
-		virtual void deserialize(Deserializer &des) const = 0;
-	};
+	// // custom types can be sent over saftbus if they derive from 
+	// // this class and implement serialize and deserializ methods
+	// struct SerDesAble {
+	// 	virtual ~SerDesAble() = default;
+	// 	virtual void serialize(Serializer &ser) const = 0;
+	// 	virtual void deserialize(const Deserializer &des) = 0;
+	// };
 
 
 	// Simple classes for serialization and de-serialization 
@@ -63,6 +63,13 @@ namespace saftbus {
 		bool write_to(int fd);
 		bool write_to_no_init(int fd);
 
+		// this looses in overload resolution against put<SerDesAble>(const T &val)
+		// so the wrong function is called... :(
+		// void put(const SerDesAble &val) {
+		// 	std::cerr << "put(SerDesAble)" << std::endl;
+		// 	val.serialize(*this);
+		// }
+
 		// POD struct and build-in types
 		template<typename T>
 		void put(const T &val) {
@@ -71,6 +78,7 @@ namespace saftbus {
 			const char* end   = begin + sizeof(val);
 			_data.insert(_data.end(), begin, end);
 		}
+
 		// std::vector and nested std::vector
 		template<typename T>
 		void put(const std::vector<T>& std_vector) {
@@ -115,10 +123,6 @@ namespace saftbus {
 				put(it->second);
 			}
 		}
-		// Custom SerDesAble types
-		void put(const SerDesAble &x) {
-			x.serialize(*this);
-		}
 		// // nested Serializer
 		// void put(Serializer &ser) {
 		// 	put(ser._data);
@@ -156,6 +160,7 @@ namespace saftbus {
 			val    = *const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
 			_iter += sizeof(val);
 		}
+
 		// std::vector and nested std::vector
 		template<typename T>
 		void get(std::vector<T> &std_vector) const {
@@ -198,7 +203,7 @@ namespace saftbus {
 		}
 		// std::map
 		template<typename K, typename V>
-		void get(std::map<K,V> &std_map) {
+		void get(std::map<K,V> &std_map) const {
 			std_map.clear();
 			size_t size;
 			get(size);
@@ -209,10 +214,6 @@ namespace saftbus {
 				get(value);
 				std_map.insert(std::make_pair(key,value));
 			}
-		}
-		// Custom SerDesAble types
-		void get(const SerDesAble &x) {
-			x.deserialize(*this);
 		}
 		// // nested Deserializer
 		// void get(Deserializer &ser) const {

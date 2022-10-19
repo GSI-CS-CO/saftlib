@@ -11,7 +11,6 @@ void dice_thrown_callback(int result) {
 int main(int argc, char *argv[]) {
 
 	auto dice_cup = ex02::DiceCup_Proxy::create("/ex02/DiceCup");
-
 	std::shared_ptr<ex02::Dice_Proxy> dice_listen;
 
 	for (int i = 1; i < argc; ++i) {
