@@ -13,12 +13,33 @@ The aim is to make the deamon itself realtime friendly. That means
 
 ## plugin developer guide
 
+The daemon (saftbusd) is not useful by itself. Plugins need to be loaded to make it functional.
+This section describes general rules for plugin developers.
+
+Plugins are defined as C++ classes, that have some tagged public methods and some tagged public 
+signals (std::function or sigc::slot). These tagged classes can be processed by saftbus-gen which
+generates a matchin Service and Proxy class. All Service classes need to be bundled into a shared 
+library together with an implementation of two (extern "C") functions: 
+  create_services and destroy_service
+
+saftbusd can load such a library either on startup or during runtime with saftbus-ctl.
+When a library is loaded, the create_services function is called once. It returns a 
+std::vector of pairs of object_path (an std::string) and Service. All these services are installed on 
+the saftbus and are addressable by their object path. Services can create and install new 
+Services. As a general rule, the instance of the driver class owns the instances of all driver 
+classes it creates. The ownership of the Service classes is transferred to saftbusd after construction.
+
+
+With a little care, a plugin can be written in a way to make the driver class usable in standalone 
+applications with almost the same syntax as in IPC applications. 
+
+
 ## developer guide
 
 ### Concepts
 #### general coding style
-The Pimpl idom is used for all classes.
-The class declaration always looks like this:
+The Pimpl idom is used for some classes.
+Classes that use the Pimpl idom look like this:
 
     class Classname {
         struct Impl; std::unique_ptr<Impl> d;
@@ -26,7 +47,7 @@ The class declaration always looks like this:
         // public interface
     }
 
-All private members are defined in the Classname::Impl structure in the .cpp file.
+For these classes, all private members are defined in the Classname::Impl structure in the .cpp file.
 
 
 Server: 

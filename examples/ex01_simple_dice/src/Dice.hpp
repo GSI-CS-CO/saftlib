@@ -7,7 +7,7 @@
 #include <functional>
 #include <memory>
 
-namespace simple {
+namespace ex01 {
 
 	class Dice {
 

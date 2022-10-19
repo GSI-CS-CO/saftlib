@@ -1,4 +1,4 @@
-AC_INIT([saftbus-simple-plugin], [0.0])
+AC_INIT([saftbus-ex01-plugin], [0.0])
 LT_INIT
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])

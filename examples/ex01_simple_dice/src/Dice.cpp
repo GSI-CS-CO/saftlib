@@ -2,7 +2,7 @@
 
 #include <saftbus/error.hpp>
 
-namespace simple {
+namespace ex01 {
 
 	Dice::Dice() 
 		: throw_timeout_source(nullptr)
