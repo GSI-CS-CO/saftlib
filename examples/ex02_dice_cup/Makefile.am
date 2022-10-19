@@ -17,7 +17,7 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/DiceCup_Service.cpp              \
 	src/create_service.cpp
 
-lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@/service
+lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@
 lib@PACKAGE@_service_include_HEADERS = \
 	src/Dice.hpp                        \
 	src/Dice6.hpp                        \

@@ -29,8 +29,6 @@ namespace saftbus {
 	}
 	Service::~Service() = default;
 
-	// Generate the mapping from interface_name to interface_no for all interface_names,
-	// return true if all interface_names are found, false otherwise
 	bool Service::get_interface_name2no_map(const std::vector<std::string> &interface_names, std::map<std::string, int> &interface_name2no_map)
 	{
 		assert(false);
@@ -74,11 +72,6 @@ namespace saftbus {
 	}
 	Container_Service::~Container_Service() = default;
 
-	bool Container_Service::emit_periodical_signal() {
-		assert(false);
-		return false;
-	}
-
 	void Container_Service::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
 		assert(false);
 	}
@@ -106,11 +99,6 @@ namespace saftbus {
 		assert(false);
 		return false;
 	}
-	// bool Container::remove_object_delayed(const std::string &object_path)
-	// {
-	// 	assert(false);
-	// 	return false;
-	// }
 
 	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
 	{

@@ -2,7 +2,6 @@
 #define SAFTBUS_CLIENT_CONNECTION_HPP_
 
 #include "saftbus.hpp"
-#include "saftbus.hpp"
 
 #include <cstdint>
 #include <memory>

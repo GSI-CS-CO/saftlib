@@ -22,11 +22,22 @@ namespace saftbus {
 	// receive a file descriptor
 	int recvfd(int socket);
 
+	class Serializer;
+	class Deserializer;
+
+	// custom types can be sent over saftbus if they derive from 
+	// this class and implement serialize and deserializ methods
+	struct SerDesAble {
+		virtual ~SerDesAble() = default;
+		virtual void serialize(Serializer &ser) const = 0;
+		virtual void deserialize(Deserializer &des) const = 0;
+	};
+
 
 	// Simple classes for serialization and de-serialization 
 	// without storing type information, i.e. de-serialization 
 	// only works if the type composition is known (but this 
-	// is the case in all saftlib transfers)
+	// is the case in all saftbus transfers)
 	// sending data works like this:
 	//   serializer.put(value1);
 	//   serializer.put(value2);
@@ -103,6 +114,10 @@ namespace saftbus {
 				put(it->first);
 				put(it->second);
 			}
+		}
+		// Custom SerDesAble types
+		void put(const SerDesAble &x) {
+			x.serialize(*this);
 		}
 		// // nested Serializer
 		// void put(Serializer &ser) {
@@ -194,6 +209,10 @@ namespace saftbus {
 				get(value);
 				std_map.insert(std::make_pair(key,value));
 			}
+		}
+		// Custom SerDesAble types
+		void get(const SerDesAble &x) {
+			x.deserialize(*this);
 		}
 		// // nested Deserializer
 		// void get(Deserializer &ser) const {

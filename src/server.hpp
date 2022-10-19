@@ -1,7 +1,6 @@
 #ifndef SAFTBUS_SERVER_CONNECTION_HPP_
 #define SAFTBUS_SERVER_CONNECTION_HPP_
 
-
 #include <memory>
 #include <string>
 #include <vector>

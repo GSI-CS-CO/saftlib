@@ -171,7 +171,6 @@ namespace saftbus {
 	// mainly Proxy (de-)registration 
 	class Container_Service : public Service {
 		struct Impl; std::unique_ptr<Impl> d;
-		bool emit_periodical_signal();
 	public:
 		Container_Service(Container *container);
 		~Container_Service();

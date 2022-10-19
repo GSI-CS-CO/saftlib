@@ -159,27 +159,10 @@ namespace saftbus {
 	{
 		d->container = container;
 		//Service::d->owner = 0; // special case. owner 0 should not appear as client id.
-		// Loop::get_default().connect<saftbus::TimeoutSource>(
-		// 	std::bind(&Container_Service::emit_periodical_signal, this), std::chrono::milliseconds(1000)
-		// );
-
 	}
 	Container_Service::~Container_Service() 
 	{
 		std::cerr << "~Container_Service" << std::endl;
-	}
-
-	bool Container_Service::emit_periodical_signal() {
-		static int count = 0;
-		d->serialized_signal.put(get_object_id());
-		int interface_no = 0;
-		d->serialized_signal.put(interface_no);
-		int signal_no = 0;
-		d->serialized_signal.put(signal_no);
-		d->serialized_signal.put(++count);
-		// std::cerr << "emit signal with counter value " << count << std::endl;
-		emit(d->serialized_signal);
-		return true;
 	}
 
 	void Container_Service::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {

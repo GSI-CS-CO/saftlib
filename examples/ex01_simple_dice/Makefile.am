@@ -29,7 +29,7 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 
 bin_PROGRAMS = ex01-plugin-ctl ex01-standalone
 ex01_plugin_ctl_LDADD   = $(SAFTBUS_LIBS) lib@PACKAGE@_proxy.la
-ex01_plugin_ctl_SOURCES = src/ex01-plugin-ctl.cpp
+ex01_plugin_ctl_SOURCES = src/ex01-plugin-ctl.cpp src/Dice_Proxy.hpp
 
 ex01_standalone_LDADD   = $(SAFTBUS_LIBS) -lsaftbus-standalone lib@PACKAGE@_service.la
 ex01_standalone_SOURCES = src/ex01-standalone.cpp
