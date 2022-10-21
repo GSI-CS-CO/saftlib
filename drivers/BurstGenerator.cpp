@@ -69,6 +69,9 @@ namespace saftlib {
     // subscribe the mailbox slot (set own msi path to the configuration register)
     my_slot = --slot;
     device.write(mb_base + my_slot * 8 + 4, EB_DATA32, my_msi_path);
+    clog << kLogDebug << "BurstGenerator: subscribed mailbox" << std::hex <<
+      " slot: " << my_slot << " addr: " << mb_base + my_slot * 8 <<
+      " path: " << my_msi_path << std::endl;
 
     clog << kLogDebug << "BurstGenerator: detecting the burst generator" << std::endl;
 
@@ -127,10 +130,9 @@ namespace saftlib {
 
       cpu_idx = i;
 
-      clog << kLogInfo << "BurstGenerator: LM32 ram base: " << std::hex << ram_base <<
-        ", my msi path = 0x" << std::hex << (uint32_t)my_msi_path <<
-        ", my mailbox slot = 0x" << std::hex << my_slot <<
-        " (available for LM32 at 0x" << std::hex << (uint32_t)(ram_base + SHM_MB_SLOT_HOST) << ")"  << std::endl;
+      clog << kLogInfo << "BurstGenerator: LM32 ram base = 0x" << std::hex << ram_base <<
+        ", my mailbox slot = " << my_slot <<
+        " is stored at 0x" << std::hex << (uint32_t)(ram_base + SHM_MB_SLOT_HOST) << " in the shared memory for LM32."  << std::endl;
 
       clog << kLogInfo << "BurstGenerator: firmware is running." << std::endl;
       break;
@@ -145,8 +147,8 @@ namespace saftlib {
     }
 
     clog << kLogDebug << "BurstGenerator: the burst generator id: " << bg_id << std::endl;
-    clog << kLogDebug << "BurstGenerator: bg mailbox slot = " << bg_slot << ", lm32 cpu index = " << cpu_idx <<
-      ", ram base = " << std::hex << ram_base << std::endl;
+    clog << kLogDebug << "BurstGenerator: bg mailbox addr = " << bg_slot << ", lm32 cpu index = " << cpu_idx <<
+      ", ram base = 0x" << std::hex << ram_base << std::endl;
 
   }
 
@@ -208,7 +210,7 @@ namespace saftlib {
     try
     {
       // write the instruction arguments into the shared memory
-      Cycle cycle;
+      etherbone::Cycle cycle;
       cycle.open(device);
 
       cycle.write(ram_base + SHM_CMD, EB_DATA32, 0); // clear cmd register
