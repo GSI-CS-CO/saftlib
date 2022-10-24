@@ -21,6 +21,7 @@
 #define EB_PLUGIN_ACTION_SINK_HPP
 
 #include <map>
+#include <set>
 #include <chrono>
 #include <vector>
 #include <string>
@@ -33,10 +34,11 @@
 
 #include "Condition.hpp"
 #include "Owned.hpp"
+#include "ECA.hpp"
 
 namespace eb_plugin {
 
-class ECA;
+// class ECA;
 
 // de.gsi.eb_plugin.ActionSink:
 /// @brief An output through which actions flow.
@@ -422,8 +424,6 @@ class ActionSink : public Owned
 		// typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
 		// std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey);//, ConditionConstructor constructor);
 
-		/// @brief Sanity checks for the construction arguments of a condition and selection of a unique random number 
-		unsigned prepareCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey);
 
 		void compile();
 		
@@ -432,9 +432,11 @@ class ActionSink : public Owned
 
 		const std::string &getObjectPath() const;
 
+
 		// Used by TimingReciever::compile
-		typedef std::map< uint32_t, std::unique_ptr<Condition> > Conditions;
+		typedef std::map<unsigned, std::unique_ptr<Condition> > Conditions;
 		const Conditions& getConditions() const;
+		
 		unsigned getChannel() const;
 		unsigned getNum() const;
 		
@@ -446,7 +448,31 @@ class ActionSink : public Owned
 		Condition *getCondition(const std::string object_path);
 		
 		// Useful for Condition destroy methods
-		void removeCondition(uint32_t number);
+		void removeCondition(Condition *condition);
+
+		// choose a random number that is not already used by another condition
+		unsigned createConditionNumber();
+
+		template<typename ConditionType, typename... Args>
+		std::string NewConditionHelper(bool active, Args&&... args) {
+			unsigned number = createConditionNumber();
+			std::unique_ptr<ConditionType> condition(new ConditionType(this, number, active, std::forward<Args>(args)...));
+			std::string path = condition->getObjectPath();
+			std::cerr << "Output::NewCondition " << path << std::endl;
+			if (container) {
+				std::cerr << "Output:: have a container" << std::endl;
+				std::unique_ptr<typename ConditionType::ServiceType> service(new typename ConditionType::ServiceType(condition.get(), std::bind(&ActionSink::removeCondition, this, condition.get())));
+				container->set_owner(service.get());
+				container->create_object(path, std::move(service));
+			}
+			conditions.insert(std::make_pair(number, std::move(condition)));
+			if (active) {
+				std::cerr << "Output:: compile" << std::endl;
+				eca.compile();
+			}
+			return path;
+		}
+
 
 	protected:
 		std::string object_path;

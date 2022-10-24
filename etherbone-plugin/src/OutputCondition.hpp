@@ -32,10 +32,15 @@
 
 namespace eb_plugin {
 
+class OutputCondition_Service;
+
 class OutputCondition : public Owned, public Condition 
 {
 public:
-	OutputCondition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container);
+	OutputCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container);
+
+    // this typedef is needed for the ActionSink::NewCondition template function
+    typedef OutputCondition_Service ServiceType;
 };
 
 }

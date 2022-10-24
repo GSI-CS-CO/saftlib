@@ -34,6 +34,7 @@
 namespace eb_plugin {
 
 
+class SoftwareCondition_Service;
 /// de.gsi.saftlib.SoftwareCondition
 /// @brief Matched against incoming events on a SoftwareActionSink.
 ///
@@ -43,7 +44,7 @@ namespace eb_plugin {
 class SoftwareCondition : public Owned, public Condition
 {
 public:
-	SoftwareCondition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container);
+	SoftwareCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, saftbus::Container *container);
 
 	/// @brief    Emitted whenever the condition matches a timing event.
 	/// 
@@ -66,6 +67,7 @@ public:
 	// @saftbus-signal
 	std::function< void(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) > SigAction;
 
+	typedef SoftwareCondition_Service ServiceType;
 };
 
 }

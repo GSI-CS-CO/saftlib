@@ -37,7 +37,7 @@ class Condition
 {
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
-    Condition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
+    Condition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
     virtual ~Condition() = default; 
     
 
@@ -125,9 +125,14 @@ class Condition
     uint32_t getRawTag() const { return tag; }
     void setRawActive(bool val) { active = val; }
     
+
+    unsigned getNumber() const { return number; } 
   protected:
+
     std::string objectPath;
     ActionSink* sink;
+    unsigned number;
+    
     uint64_t id;
     uint64_t mask;
     int64_t offset;

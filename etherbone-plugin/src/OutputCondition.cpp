@@ -23,8 +23,8 @@
 
 namespace eb_plugin {
 
-OutputCondition::OutputCondition(const std::string &objectPath, ActionSink *sink, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr)
- : Owned(container), Condition(objectPath, sink, active, id, mask, offset, tag)
+OutputCondition::OutputCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr)
+ : Owned(container), Condition(sink, number, active, id, mask, offset, tag)
 {
 }
 

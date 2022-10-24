@@ -81,7 +81,7 @@ ActionSink::ActionSink(ECA &eca_
 
 ActionSink::~ActionSink()
 {
-	std::cerr << "~ActionSink" << std::endl;
+	std::cerr << "~ActionSink " << getObjectPath() << std::endl;
 	// unhook any pending updates
 	saftbus::Loop::get_default().remove(overflowPending);
 	saftbus::Loop::get_default().remove(actionPending);
@@ -89,7 +89,6 @@ ActionSink::~ActionSink()
 	saftbus::Loop::get_default().remove(earlyPending);
 	saftbus::Loop::get_default().remove(conflictPending);
 	saftbus::Loop::get_default().remove(delayedPending);
-	std::cerr << "~ActionSink done " << std::endl;
 
 	if (container) {
 		while (conditions.size()) {
@@ -97,9 +96,11 @@ ActionSink::~ActionSink()
 		}
 		assert(conditions.size() == 0);
 	} else {
+		std::cerr << "~ActionSink clear all conditions" << std::endl;
 		conditions.clear();
 	}
 
+	std::cerr << "~ActionSink done " << std::endl;
 	// No need to recompile; done in TimingReceiver.cpp
 }
 
@@ -475,10 +476,11 @@ bool ActionSink::updateDelayed() const
 	return false;
 }
 
-void ActionSink::removeCondition(uint32_t number)
+void ActionSink::removeCondition(Condition *condition)
 {
-	std::cerr << "ActionSink::removeCondition(" << number << ")" << std::endl;
-	auto found = conditions.find(number);
+	std::cerr << "ActionSink::removeCondition(" << (uint64_t)condition << ")" << std::endl;
+	// Convert naked pointer into unique_ptr 
+	auto found = conditions.find(condition->getNumber());
 	if (found != conditions.end()) {
 		bool active = found->second->getActive();
 		conditions.erase(found);
@@ -488,7 +490,7 @@ void ActionSink::removeCondition(uint32_t number)
 			std::cerr << "Failed to recompile after removing condition (should be impossible)" << std::endl;
 		}
 	} else {
-		std::cerr << "ActionSink::removeCondition no condition with number " << number << " found" << std::endl;
+		std::cerr << "ActionSink::removeCondition no condition  " << (uint64_t)condition << " found" << std::endl;
 	}
 }
 
@@ -526,37 +528,22 @@ unsigned ActionSink::getNum() const
 
 
 Condition *ActionSink::getCondition(const std::string object_path) {
-	for (auto &pair: conditions) {
+	for (auto &condition: conditions) {
 		// auto number = pair.first;
-		auto cond   = pair.second.get();
-		if (cond->getObjectPath() == object_path) {
-			return cond;
+		if (condition.second->getObjectPath() == object_path) {
+			return condition.second.get();
 		}
 	}
 	return nullptr;
 }
 
-
-unsigned ActionSink::prepareCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey)//, ConditionConstructor constructor)
-{
-	ownerOnly();
-
-	// sanity check arguments
-	if (offset < minOffset || offset > maxOffset)
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
-	if ((~mask & (~mask+1)) != 0)
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
-	if ((id & mask) != id)
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
-
-	// Pick a random number that is not already present in the map
-	unsigned number;
-	do {
-		number = random();
+unsigned ActionSink::createConditionNumber() {
+	for(;;) {
+		unsigned number = rand();
+		if (conditions.find(number) == conditions.end()) {
+			return number;
+		}
 	}
-	while (conditions.find(number) != conditions.end());
-
-	return number;
 }
 
 

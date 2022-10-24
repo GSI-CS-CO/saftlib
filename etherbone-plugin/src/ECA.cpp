@@ -692,8 +692,11 @@ void ECA::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time)
 
 SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 {
+	std::cerr << "getSoftwareActionSink " << d->ECA_LINUX_channel->size() << std::endl;
 	for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
+		std::cerr << "." << std::endl;
 		if (softwareActionSink->getObjectPath() == sas_obj_path) {
+			std::cerr << "return " << softwareActionSink->getObjectPath() << std::endl;
 			return dynamic_cast<SoftwareActionSink*>(softwareActionSink.get());
 		}
 	}

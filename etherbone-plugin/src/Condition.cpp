@@ -22,18 +22,34 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include <sstream>
+
+#include <saftbus/error.hpp>
+
 #include "Condition.hpp"
 #include "ActionSink.hpp"
 #include "TimingReceiver.hpp"
 
 namespace eb_plugin {
 
-Condition::Condition(const std::string &objectPath_, ActionSink *sink_, bool active_, uint64_t id_, uint64_t mask_, int64_t offset_, uint32_t tag_)
- : objectPath(objectPath_), sink(sink_), 
+Condition::Condition(ActionSink *sink_, unsigned number_, bool active_, uint64_t id_, uint64_t mask_, int64_t offset_, uint32_t tag_)
+ : objectPath(sink_->getObjectPath()), sink(sink_), number(number_),
    id(id_), mask(mask_), offset(offset_), tag(tag_),
    acceptLate(false), acceptEarly(false), acceptConflict(false), acceptDelayed(true),
    active(active_)
 {
+  // sanity check arguments
+  if (offset < sink->getMinOffset() || offset > sink->getMaxOffset())
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "offset is out of range; adjust {min,max}Offset?");
+  if ((~mask & (~mask+1)) != 0)
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "mask is not a prefix");
+  if ((id & mask) != id)
+    throw saftbus::Error(saftbus::Error::INVALID_ARGS, "id has bits set that are not in the mask");
+
+  objectPath.append("/_");
+  std::ostringstream number_str;
+  number_str << std::dec << number;
+  objectPath.append(number_str.str());
 }
 
 uint64_t Condition::getID() const

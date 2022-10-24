@@ -42,26 +42,9 @@ Output::Output(ECA &eca
 
 std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)
 {
-	unsigned number = prepareCondition(active, id, mask, offset, 0, true);
-	std::ostringstream path;
-	path << getObjectPath() << "/_" << number;
-
-
-
-	std::unique_ptr<OutputCondition> condition(new OutputCondition(path.str(), this, active, id, mask, offset, on?2:1, container));
-	std::cerr << "Output::NewCondition" << std::endl;
-	if (container) {
-		std::cerr << "Output:: have a container" << std::endl;
-		std::unique_ptr<OutputCondition_Service> service(new OutputCondition_Service(condition.get(), std::bind(&ActionSink::removeCondition, this, number)));
-		container->set_owner(service.get());
-		container->create_object(path.str(), std::move(service));
-	}
-	conditions[number] = std::move(condition);
-	if (active) {
-		std::cerr << "Output:: compile" << std::endl;
-		eca.compile();
-	}
-	return path.str();
+	// the tag parameter is 2 if output should go on 
+	//                  and 1 if output should go off
+	return NewConditionHelper<OutputCondition>(active, id, mask, offset, on?2:1, container);
 }
 
 uint32_t Output::getIndexOut() const
