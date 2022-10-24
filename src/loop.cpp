@@ -1,0 +1,353 @@
+#include "loop.hpp"
+#include "make_unique.hpp"
+
+#include <chrono>
+#include <algorithm>
+#include <array>
+#include <thread>
+#include <iostream>
+#include <cstring>
+#include <cassert>
+
+#include <poll.h>
+
+namespace saftbus {
+
+
+	Source::Source() 
+	{
+		valid = true;
+	}
+	Source::~Source() = default;
+
+	void Source::add_poll(pollfd *pfd)
+	{
+		// std::cerr << "add poll " << pfd->fd << std::endl;
+		pfds.push_back(pfd);
+	}
+	void Source::remove_poll(pollfd *pfd)
+	{
+		// std::cerr << "remove poll " << pfd->fd << std::endl;
+		pfds.erase(pfds.begin(), std::remove(pfds.begin(), pfds.end(), pfd));
+	}
+	void Source::clear_poll() {
+		pfds.clear();
+	}
+	bool operator==(const std::unique_ptr<Source> &lhs, const Source *rhs)
+	{
+		return &*lhs == rhs;
+	}
+
+	//////////////////////////////
+	//////////////////////////////
+	//////////////////////////////
+
+	struct Loop::Impl {
+		std::vector<Source*> removed_sources;
+		std::vector<std::unique_ptr<Source> > added_sources;
+		std::vector<std::unique_ptr<Source> > sources;
+		bool running;
+		int running_depth; 
+	};
+
+	
+	Loop::Loop() 
+		: d(std2::make_unique<Impl>())
+	{
+		// reserve all the vectors with enough space to avoid 
+		// dynamic allocation in normal operation
+		const size_t revserve_that_much = 32;
+		d->removed_sources.reserve(revserve_that_much);
+		d->added_sources.reserve(revserve_that_much);
+		d->sources.reserve(revserve_that_much);
+		d->running = true;
+		d->running_depth = 0; // 0 means: the loop is not running
+	}
+	Loop::~Loop() {
+		// std::cerr << "~Loop()" << std::endl;
+		d->sources.clear();
+		d->added_sources.clear();
+	}
+
+	Loop& Loop::get_default() {
+		static Loop default_loop;
+		return default_loop;
+	}
+
+	bool Loop::iteration(bool may_block) {
+		++d->running_depth;
+		// std::cerr << ".";
+		static const auto no_timeout = std::chrono::milliseconds(-1);
+		std::vector<struct pollfd> pfds;
+		// pfds.reserve(16);
+		std::vector<struct pollfd*> source_pfds;
+		// source_pfds.reserve(16);
+		auto timeout = no_timeout; 
+
+		unsigned us = 0;
+		auto start = std::chrono::steady_clock::now();
+		auto stop = std::chrono::steady_clock::now();
+
+		// std::cerr << "sources.size() = " << d->sources.size() << std::endl;
+
+		//////////////////
+		// preparation 
+		// (find the earliest timeout)
+		//////////////////
+		for(auto &source: d->sources) {
+			if (!source->valid) continue; 
+
+			auto timeout_from_source = no_timeout;
+			source->prepare(timeout_from_source); // source may leave timeout_from_source unchanged 
+			if (timeout_from_source != no_timeout) {
+				if (timeout == no_timeout) {
+					timeout = timeout_from_source;
+				} else {
+					timeout = std::min(timeout, timeout_from_source);
+				}
+			}
+			for(auto it = source->pfds.cbegin(); it != source->pfds.cbegin()+source->pfds.size(); ++it) {
+				// create a packed array of pfds that can be passed to poll()
+				pfds.push_back(**it);
+				// also create an array of pointers to pfds to where the poll() results can be copied back
+				source_pfds.push_back(*it);
+				// std::cerr << "added fd=" << (*it)->fd << std::endl;
+			}
+		}
+		if (!may_block) {
+			timeout = std::chrono::milliseconds(0);
+		}
+		//////////////////
+		// polling / waiting
+		//////////////////
+		// std::cerr << "poll pfds size " << pfds.size() << std::endl;
+		if (pfds.size() > 0) {
+			// std::cerr << "polling timeout_ms = " << timeout.count() << std::endl;
+			int poll_result = 0;
+			// stop = std::chrono::steady_clock::now();
+			// us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
+			if ((poll_result = poll(&pfds[0], pfds.size(), timeout.count())) > 0) {
+				// std::cerr << "poll result = " << poll_result << std::endl;
+				// copy the results back to the owners of the pfds
+				for (unsigned i = 0; i < pfds.size();++i) {
+					source_pfds[i]->revents = pfds[i].revents;
+					// if (pfds[i].revents & POLLHUP) {
+					// 	std::cerr << "POLLHUP on pfds[" << i << "]" << std::endl;
+					// }
+					// if (pfds[i].revents & POLLERR) {
+					// 	std::cerr << "POLLERR on pfds[" << i << "]" << std::endl;
+					// }
+				}
+			} else if (poll_result < 0) {
+				std::cerr << "poll error: " << strerror(errno) << std::endl;
+			} else {
+				// std::cerr << "poll result = " << poll_result << std::endl;
+			}
+			start = std::chrono::steady_clock::now();
+
+		} else if (timeout > std::chrono::milliseconds(0)) {
+			// stop = std::chrono::steady_clock::now();
+			// us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
+
+			// std::cerr << "sleeping" << std::endl;
+			std::this_thread::sleep_for(timeout);
+			start = std::chrono::steady_clock::now();
+			
+		}
+		// start = std::chrono::steady_clock::now();
+
+		//////////////////
+		// dispatching
+		//////////////////
+		for (auto &source: d->sources) {
+			if (!source->valid) continue;
+
+			if (source->check()) { // if check returns true, dispatch is called
+				if (!source->dispatch()) { // if dispatch returns false, the source is removed
+					remove(source.get());
+				}
+			}
+		}
+
+		//////////////////////////////////////////////////////
+		// cleanup of finished sources
+		// and addition of new sources
+		// only if this is not a nested iteration
+		//////////////////////////////////////////////////////
+		bool changes = false;
+		if (d->running_depth == 1) {
+			// std::cerr << "cleaning up sources" << std::endl;
+			for (auto removed_source: d->removed_sources) {
+				// std::cerr << "cleaning a source " << std::endl;
+				d->sources.erase(std::remove(d->sources.begin(), d->sources.end(), removed_source), 
+					          d->sources.end());
+				changes = true;
+			}
+			d->removed_sources.clear();
+
+			// adding new sources
+			for (auto &added_source: d->added_sources) {
+				// std::cerr << "adding a source" << std::endl;
+				d->sources.push_back(std::move(added_source));
+				changes = true;
+			}
+			d->added_sources.clear();
+		}
+
+		--d->running_depth;
+
+		stop = std::chrono::steady_clock::now();
+		// std::cerr << changes << "    " << us << " , " << std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count() << std::endl;
+
+
+
+		return !d->sources.empty();
+	}
+
+	void Loop::run() {
+		d->running = true;
+		while (d->running) {
+			if (!iteration(true)) {
+				d->running = false;
+			}
+		}
+	}
+
+	bool Loop::quit() {
+		return d->running = false;
+	}
+
+	bool Loop::quit_in(std::chrono::milliseconds wait_ms) {
+		// //wait_ms = std::max(wait_ms, std::chrono::milliseconds(1)); // no less then 1 ms
+		// connect(std::move(
+		// 		std2::make_unique<saftbus::TimeoutSource>
+		// 			(std::bind(&Loop::quit, this), wait_ms)
+		// 	)
+		// );
+		connect<saftbus::TimeoutSource>(std::bind(&Loop::quit, this), wait_ms);
+		return false;
+	}
+
+
+	Source *Loop::connect(std::unique_ptr<Source> source) {
+		// std::cerr << "Loop::connect" << std::endl;
+		source->loop = this;
+		Source *result = source.get();
+		if (d->running_depth) {
+			// durin an iteration, the source vector may not be changed.
+			// put the source in a buffer vector which is cpoied into 
+			// the source vector after the iteration is done
+			d->added_sources.push_back(std::move(source));
+		} else {
+			d->sources.push_back(std::move(source));
+		}
+		return result;
+	}
+
+	void Loop::remove(Source *source) {
+		// std::cerr << "Loop::remove" << std::endl;
+		if (std::find(d->sources.begin(), d->sources.end(), source) != d->sources.end() ||
+			std::find(d->added_sources.begin(), d->added_sources.end(), source) != d->added_sources.end()) {
+
+			d->removed_sources.push_back(source);
+			source->valid = false;
+		}
+	}
+
+	void Loop::clear() {
+		d->sources.clear();
+		d->added_sources.clear();
+	}
+
+
+	//////////////////////////////
+	//////////////////////////////
+	//////////////////////////////
+
+
+	TimeoutSource::TimeoutSource(std::function<bool(void)> s, std::chrono::milliseconds i, std::chrono::milliseconds o) 
+		: slot(s), interval(i), dispatch_time(std::chrono::steady_clock::now()+o)
+	{
+		if (interval <= std::chrono::milliseconds(0)) {
+			interval = std::chrono::milliseconds(1);
+		}
+	}
+
+	TimeoutSource::~TimeoutSource() = default;
+
+	// prepare is called by Loop to find out the next dispatch_time of all sources
+	// and it will wait for min() of all reported dispatch_times.
+	bool TimeoutSource::prepare(std::chrono::milliseconds &timeout_ms) {
+		auto now = std::chrono::steady_clock::now();
+		timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dispatch_time - now); 
+		if (timeout_ms.count() <= 0) {
+			timeout_ms = std::chrono::milliseconds(0);
+			return true;
+		}
+		return false;
+	}
+
+	// After the wait phase, the loop will call check on all source.
+	// Loop will call dispatch on all sources where check returns true. 
+	bool TimeoutSource::check() {
+		auto now = std::chrono::steady_clock::now();
+		auto timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dispatch_time - now); 
+		if (timeout_ms.count() <= 0) {
+			return true;
+		}
+		return false;
+	}
+
+	// Execute whatever action is attached to the source
+	bool TimeoutSource::dispatch() {
+		auto now = std::chrono::steady_clock::now();
+		do {
+			dispatch_time += interval;
+		} while (now >= dispatch_time);
+		return slot();
+	}
+
+
+
+	//////////////////////////////
+	//////////////////////////////
+	//////////////////////////////
+
+
+	IoSource::IoSource(std::function<bool(int, int)> s, int f, int c) 
+		: slot(s)
+	{
+		pfd.fd            = f;
+		pfd.events        = c;
+		pfd.revents       = 0;
+		add_poll(&pfd);
+	}
+	IoSource::~IoSource() 
+	{
+		remove_poll(&pfd);
+	}
+
+	bool IoSource::prepare(std::chrono::milliseconds &timeout_ms) {
+		if (pfd.revents & pfd.events) {
+			return true;
+		}
+		return false;
+	}
+
+	bool IoSource::check() {
+		if (pfd.revents & pfd.events) {
+			return true;
+		}
+		return false;
+	}
+
+	bool IoSource::dispatch() {
+		auto result = slot(pfd.fd, pfd.revents);
+		pfd.revents = 0; // clear the events after  the dispatching
+		return result;
+	}
+
+
+
+
+}
