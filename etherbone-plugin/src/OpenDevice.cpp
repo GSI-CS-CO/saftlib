@@ -97,7 +97,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 			slot_idx = mbox->ConfigureSlot(irq_adr + msi_first);
 			mbox->UseSlot(slot_idx, MSI_TEST_VALUE); // make one single irq that should call our check_msi_callback
 			bool only_once;
-			saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+			poll_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 					std::bind(&OpenDevice::poll_msi, this, only_once=false), 
 					std::chrono::milliseconds(polling_interval_ms),
 					std::chrono::milliseconds(polling_interval_ms)
@@ -117,6 +117,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 }
 OpenDevice::~OpenDevice()
 {
+	saftbus::Loop::get_default().remove(poll_timeout_source);
 	chmod(etherbone_path.c_str(), dev_stat.st_mode);
 	device.close();
 }
