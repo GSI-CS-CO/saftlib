@@ -96,7 +96,7 @@ public:
 		           int polling_interval_ms = 1, saftbus::Container *container = nullptr);
 	~TimingReceiver();
 
-	const std::string &get_object_path() const;
+	const std::string &getObjectPath() const;
 
 	/// @brief Remove the device from saftlib management.
 	///

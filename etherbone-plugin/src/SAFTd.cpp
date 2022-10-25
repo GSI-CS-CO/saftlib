@@ -47,8 +47,8 @@ namespace eb_plugin {
 		std::cerr << "~SAFTd()" << std::endl;
 		if (container) {
 			for (auto &device: attached_devices) {
-				std::cerr << "  remove " << device.second->get_object_path() << std::endl;
-				container->remove_object(device.second->get_object_path());
+				std::cerr << "  remove " << device.second->getObjectPath() << std::endl;
+				container->remove_object(device.second->getObjectPath());
 			}
 		}
 		std::cerr << "attached_devices.clear()" << std::endl;
@@ -106,11 +106,11 @@ namespace eb_plugin {
 				std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver, std::bind(&SAFTd::RemoveObject, this, name)));
 
 				// insert the Service object
-				container->create_object(timing_receiver->get_object_path(), std::move(service));
+				container->create_object(timing_receiver->getObjectPath(), std::move(service));
 			}
 
 			// return the object path to the new Service object
-			return timing_receiver->get_object_path();
+			return timing_receiver->getObjectPath();
 
 		} catch (const etherbone::exception_t& e) {
 			std::ostringstream str;
@@ -134,7 +134,7 @@ namespace eb_plugin {
 		}
 		std::cerr << "SAFTd::RemoveDevice(" << name << ") was found" << std::endl;
 		if (container) {
-			container->remove_object(device->second->get_object_path()); // the destruction_callback will call RemoveObject
+			container->remove_object(device->second->getObjectPath()); // the destruction_callback will call RemoveObject
 		} else {
 			RemoveObject(name); // if we are not living inside of a saftbus::Container, we call RemoveObject ourselfs
 		}
@@ -163,7 +163,7 @@ namespace eb_plugin {
 	std::map< std::string, std::string > SAFTd::getDevices() const {
 		std::map<std::string, std::string> result;
 		for (auto &device: attached_devices) {
-			result.insert(std::make_pair(device.first, device.second->getEtherbonePath()));
+			result.insert(std::make_pair(device.first, device.second->getObjectPath()));
 		}
 		return result;
 	}
@@ -189,7 +189,7 @@ namespace eb_plugin {
 		}
 	}
 
-	std::string SAFTd::get_object_path() {
+	std::string SAFTd::getObjectPath() {
 		return object_path;
 	}
 

@@ -54,7 +54,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
 	, io_control(OpenDevice::device)
-	, object_path(saftd.get_object_path() + "/" + n)
+	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
 {
 	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
@@ -155,7 +155,7 @@ bool TimingReceiver::poll()
 }
 
 
-const std::string &TimingReceiver::get_object_path() const
+const std::string &TimingReceiver::getObjectPath() const
 {
 	return object_path;
 }

@@ -19,8 +19,8 @@ namespace saftbus {
 	struct Container::Impl {
 	};
 
-	struct Container_Service::Impl {
-	};
+	// struct Container_Service::Impl {
+	// };
 
 
 	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback) 
@@ -65,7 +65,7 @@ namespace saftbus {
 
 
 
-	Container_Service::Container_Service(Container *container)
+	Container_Service::Container_Service(Container* instance, std::function<void()> destruction_callback )
 		: Service(get_interface_names())
 	{
 		assert(false);

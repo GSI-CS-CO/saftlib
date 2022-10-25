@@ -407,71 +407,157 @@ namespace saftbus {
 	//////////////////////////////////////////	
 	//////////////////////////////////////////	
 
-	Container_Proxy::Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names)
-		: Proxy(object_path, signal_group, interface_names)
-	{
+	std::vector<std::string> Container_Proxy::gen_interface_names() {
+		std::vector<std::string> result; 
+		result.push_back("Container");
+		return result;
 	}
-
-	std::shared_ptr<Container_Proxy> Container_Proxy::create(SignalGroup &signal_group)
+	Container_Proxy::Container_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names)
+		: saftbus::Proxy(object_path, signal_group, interface_names)
 	{
-		std::vector<std::string> interface_names;
-		interface_names.push_back("Container");
-		return std::make_shared<Container_Proxy>("/saftbus", signal_group, interface_names);
+		interface_no = saftbus::Proxy::interface_no_from_name("Container");
 	}
-	bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content)
-	{
-		int counter;
-		signal_content.get(counter);
-		std::cerr << "Container_Proxy received a signal from interface: counter=" << counter << std::endl;
-		return true;
+	std::shared_ptr<Container_Proxy> Container_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {
+		return std2::make_unique<Container_Proxy>(object_path, signal_group, gen_interface_names()); 
 	}
-
-	void Container_Proxy::quit() 
-	{
-		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 2); 
-		{
-			std::lock_guard<std::mutex> lock(get_client_socket());
-			get_connection().send(get_send());
+	bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {
+		if (interface_no == this->interface_no) {
 		}
+		return false;
 	}
-
-	bool Container_Proxy::load_plugin(const std::string &so_filename) 
-	{
+	bool Container_Proxy::load_plugin(const std::string & so_filename	) {
 		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 3);
-		get_send().put(so_filename); 
-		// get_send().put(object_path);
+		get_send().put(interface_no);
+		get_send().put(2); // function_no
+		get_send().put(so_filename);
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());
 			get_connection().receive(get_received());
 		}
-		bool result;
-		get_received().get(result);
-		return result;
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
+		}
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
+		bool return_value_result_;
+		get_received().get(return_value_result_);
+		return return_value_result_;
 	}
-	bool Container_Proxy::remove_object(const std::string &object_path) 
-	{
+	bool Container_Proxy::remove_object(const std::string & object_path	) {
 		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 4);
-		get_send().put(object_path); 
+		get_send().put(interface_no);
+		get_send().put(3); // function_no
+		get_send().put(object_path);
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());
 			get_connection().receive(get_received());
 		}
-		bool result;
-		get_received().get(result);
-		return result;
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
+		}
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
+		bool return_value_result_;
+		get_received().get(return_value_result_);
+		return return_value_result_;
+	}
+	void Container_Proxy::quit(	) {
+		get_send().put(get_saftlib_object_id());
+		get_send().put(interface_no);
+		get_send().put(4); // function_no
+		{
+			std::lock_guard<std::mutex> lock(get_client_socket());
+			get_connection().send(get_send());
+			get_connection().receive(get_received());
+		}
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
+		}
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
 	}
 
+
+
+
+
+	// Container_Proxy::Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names)
+	// 	: Proxy(object_path, signal_group, interface_names)
+	// {
+	// }
+
+	// std::shared_ptr<Container_Proxy> Container_Proxy::create(SignalGroup &signal_group)
+	// {
+	// 	std::vector<std::string> interface_names;
+	// 	interface_names.push_back("Container");
+	// 	return std::make_shared<Container_Proxy>("/saftbus", signal_group, interface_names);
+	// }
+	// bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content)
+	// {
+	// 	int counter;
+	// 	signal_content.get(counter);
+	// 	std::cerr << "Container_Proxy received a signal from interface: counter=" << counter << std::endl;
+	// 	return true;
+	// }
+
+	// void Container_Proxy::quit() 
+	// {
+	// 	get_send().put(get_saftlib_object_id());
+	// 	unsigned interface_no, function_no;
+	// 	get_send().put(interface_no = 0);
+	// 	get_send().put(function_no  = 2); 
+	// 	{
+	// 		std::lock_guard<std::mutex> lock(get_client_socket());
+	// 		get_connection().send(get_send());
+	// 	}
+	// }
+
+	// bool Container_Proxy::load_plugin(const std::string &so_filename) 
+	// {
+	// 	get_send().put(get_saftlib_object_id());
+	// 	unsigned interface_no, function_no;
+	// 	get_send().put(interface_no = 0);
+	// 	get_send().put(function_no  = 3);
+	// 	get_send().put(so_filename); 
+	// 	// get_send().put(object_path);
+	// 	{
+	// 		std::lock_guard<std::mutex> lock(get_client_socket());
+	// 		get_connection().send(get_send());
+	// 		get_connection().receive(get_received());
+	// 	}
+	// 	bool result;
+	// 	get_received().get(result);
+	// 	return result;
+	// }
+	// bool Container_Proxy::remove_object(const std::string &object_path) 
+	// {
+	// 	get_send().put(get_saftlib_object_id());
+	// 	unsigned interface_no, function_no;
+	// 	get_send().put(interface_no = 0);
+	// 	get_send().put(function_no  = 4);
+	// 	get_send().put(object_path); 
+	// 	{
+	// 		std::lock_guard<std::mutex> lock(get_client_socket());
+	// 		get_connection().send(get_send());
+	// 		get_connection().receive(get_received());
+	// 	}
+	// 	bool result;
+	// 	get_received().get(result);
+	// 	return result;
+	// }
+
+	// this is hand-written
 	SaftbusInfo Container_Proxy::get_status()
 	{
 		SaftbusInfo result;
@@ -484,6 +570,14 @@ namespace saftbus {
 			get_connection().send(get_send());
 			get_connection().receive(get_received());
 		}
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
+		}
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
 		size_t object_count;
 		get_received().get(object_count);
 		for (int i = 0; i < 5; ++i) std::cerr << std::endl;

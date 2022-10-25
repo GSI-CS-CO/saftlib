@@ -52,14 +52,14 @@ namespace saftbus {
 		}
 	};
 
-	struct Container_Service::Impl {
-		Container *container;
-		Serializer serialized_signal;
-		static std::vector<std::string> gen_interface_names();
-		~Impl()  {
-			std::cerr << "Container_Service::~Impl()" << std::endl;
-		}
-	};
+	// struct Container_Service::Impl {
+	// 	Container *container;
+	// 	Serializer serialized_signal;
+	// 	static std::vector<std::string> gen_interface_names();
+	// 	~Impl()  {
+	// 		std::cerr << "Container_Service::~Impl()" << std::endl;
+	// 	}
+	// };
 
 
 	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback)
@@ -145,31 +145,25 @@ namespace saftbus {
 		return d->interface_names;
 	}
 
-
-
-	std::vector<std::string> Container_Service::Impl::gen_interface_names() {
-		std::vector<std::string> interface_names;
-		interface_names.push_back("Container");
-		return interface_names;
+	// created by saftbus-gen from class Container and copied here
+	std::vector<std::string> Container_Service::gen_interface_names() {
+		std::vector<std::string> result; 
+		result.push_back("Container");
+		return result;
 	}
-
-	Container_Service::Container_Service(Container *container)
-		: Service(Impl::gen_interface_names())
-		, d(std2::make_unique<Impl>())
+	Container_Service::Container_Service(Container* instance, std::function<void()> destruction_callback) 
+	: saftbus::Service(gen_interface_names(), destruction_callback), d(instance)
 	{
-		d->container = container;
-		//Service::d->owner = 0; // special case. owner 0 should not appear as client id.
 	}
 	Container_Service::~Container_Service() 
 	{
-		std::cerr << "~Container_Service" << std::endl;
 	}
-
-	void Container_Service::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
-		std::cerr << "Container_Service called with " << interface_no << " " << function_no << std::endl;
-		if (interface_no == 0) {
+	void Container_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send) {
+		try {
+		switch(interface_no) {
+			case 0: // Container
 			switch(function_no) {
-				case 0: {// register proxy
+				case 0: { // Container::register_proxy (Hand-written. It will be called by Poxy base class constructor)
 					std::cerr << "register_proxy called" << std::endl;
 					std::string object_path;
 					received.get(object_path);
@@ -186,52 +180,45 @@ namespace saftbus {
 						std::cerr << "reuse " << signal_fd << std::endl;
 					}
 					std::map<std::string, int> interface_name2no_map;
-					unsigned saftlib_object_id = d->container->register_proxy(object_path, interface_names, interface_name2no_map, client_fd, signal_fd);
+					unsigned saftlib_object_id = d->register_proxy(object_path, interface_names, interface_name2no_map, client_fd, signal_fd);
 					std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
 					send.put(saftlib_object_id);
 					send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
 					send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
 					send.put(interface_name2no_map);
-				}
-				break;
-				case 1: {// unregister proxy;
+				} return;
+				case 1: { // Container::unregister_proxy (Hand-written. It will be called by Proxy base class destructor)
 					std::cerr << "unregister_proxy called" << std::endl;
 					unsigned saftlib_object_id;
 					int received_client_fd, received_signal_group_fd;
 					received.get(saftlib_object_id);
 					received.get(received_client_fd);
 					received.get(received_signal_group_fd);
-					d->container->unregister_proxy(saftlib_object_id, received_client_fd, received_signal_group_fd);
-				}
-				break;
-				case 2: // void quit()
-					// Loop::get_default().quit_in(std::chrono::milliseconds(100));
-					// std::cerr << "saftd will quit in 100 ms" << std::endl;
-					Loop::get_default().quit();
-					std::cerr << "saftd will quit now" << std::endl;
-				break;
-				case 3: {// bool load_plugin(const std::string &so_filename, const std::string &object_path)
-					std::string so_filename;
-					// std::string object_path;
+					d->unregister_proxy(saftlib_object_id, received_client_fd, received_signal_group_fd);
+				} return;
+				case 2: { // Container::load_plugin
+					std::string  so_filename;
 					received.get(so_filename);
-					// received.get(object_path);
-					std::cerr << "loading " << so_filename << std::endl;
-					bool plugin_available = d->container->load_plugin(so_filename);
-					send.put(plugin_available);
-				}
-				break;
-				case 4: {// bool remove_service(const std::string &object_path)
-					std::string object_path;
+					bool function_call_result = d->load_plugin(so_filename);
+					send.put(saftbus::FunctionResult::RETURN);
+					send.put(function_call_result);
+				} return;
+				case 3: { // Container::remove_object
+					std::string  object_path;
 					received.get(object_path);
-					std::cerr << "remove service at object_path " << object_path << std::endl;
-					bool remove_result = d->container->remove_object(object_path);
-					send.put(remove_result);
-				}
-				break;
-				case 5: { // get_status() // report all info about server and services
-					std::cerr << "get_stats() called sending " << d->container->d->object_path_lookup_table.size() << " objects " << std::endl;
-					send.put(d->container->d->objects.size());
-					for (auto &object: d->container->d->objects) {
+					bool function_call_result = d->remove_object(object_path);
+					send.put(saftbus::FunctionResult::RETURN);
+					send.put(function_call_result);
+				} return;
+				case 4: { // Container::quit
+					d->quit();
+					send.put(saftbus::FunctionResult::RETURN);
+				} return;
+				case 5: { // get_status() // this is hand-written
+					std::cerr << "get_stats() called sending " << d->d->object_path_lookup_table.size() << " objects " << std::endl;
+					send.put(saftbus::FunctionResult::RETURN);
+					send.put(d->d->objects.size());
+					for (auto &object: d->d->objects) {
 						auto &object_id = object.first;
 						auto &service   = object.second;
 						send.put(object_id);
@@ -240,22 +227,136 @@ namespace saftbus {
 						send.put(service->d->signal_fds_use_count);
 						send.put(service->d->owner);
 					}
-					auto client_info = d->container->d->connection->get_client_info();
+					auto client_info = d->d->connection->get_client_info();
 					send.put(client_info.size());
 					for (auto &client: client_info) {
 						send.put(client.process_id);
 						send.put(client.client_fd);
 						send.put(client.signal_fds);
 					}
-				}
-				break;
-				default:
-					assert(false);
-			}
-		} else {
-			assert(false);
-		}
+				} return;
+			};
+
+		};
+		} catch (std::runtime_error &e) {
+			send.put(saftbus::FunctionResult::EXCEPTION);
+			std::string what(e.what());
+			send.put(what);
+		} catch (...) {
+			send.put(saftbus::FunctionResult::EXCEPTION);
+			std::string what("unknown exception");
+			send.put(what);
+		} 
 	}
+	// std::vector<std::string> Container_Service::Impl::gen_interface_names() {
+	// 	std::vector<std::string> interface_names;
+	// 	interface_names.push_back("Container");
+	// 	return interface_names;
+	// }
+
+	// Container_Service::Container_Service(Container *container)
+	// 	: Service(Impl::gen_interface_names())
+	// 	, d(std2::make_unique<Impl>())
+	// {
+	// 	d->container = container;
+	// 	//Service::d->owner = 0; // special case. owner 0 should not appear as client id.
+	// }
+	// Container_Service::~Container_Service() 
+	// {
+	// 	std::cerr << "~Container_Service" << std::endl;
+	// }
+
+	// void Container_Service::call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send) {
+	// 	std::cerr << "Container_Service called with " << interface_no << " " << function_no << std::endl;
+	// 	if (interface_no == 0) {
+	// 		switch(function_no) {
+	// 			case 0: {// register proxy
+	// 				std::cerr << "register_proxy called" << std::endl;
+	// 				std::string object_path;
+	// 				received.get(object_path);
+	// 				std::vector<std::string> interface_names;
+	// 				received.get(interface_names);
+	// 				int signal_fd;
+	// 				received.get(signal_fd);
+
+
+	// 				if (signal_fd == -1) {
+	// 					signal_fd = recvfd(client_fd);
+	// 					std::cerr << "got (open) " << signal_fd << std::endl;
+	// 				} else {
+	// 					std::cerr << "reuse " << signal_fd << std::endl;
+	// 				}
+	// 				std::map<std::string, int> interface_name2no_map;
+	// 				unsigned saftlib_object_id = d->container->register_proxy(object_path, interface_names, interface_name2no_map, client_fd, signal_fd);
+	// 				std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
+	// 				send.put(saftlib_object_id);
+	// 				send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
+	// 				send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
+	// 				send.put(interface_name2no_map);
+	// 			}
+	// 			break;
+	// 			case 1: {// unregister proxy;
+	// 				std::cerr << "unregister_proxy called" << std::endl;
+	// 				unsigned saftlib_object_id;
+	// 				int received_client_fd, received_signal_group_fd;
+	// 				received.get(saftlib_object_id);
+	// 				received.get(received_client_fd);
+	// 				received.get(received_signal_group_fd);
+	// 				d->container->unregister_proxy(saftlib_object_id, received_client_fd, received_signal_group_fd);
+	// 			}
+	// 			break;
+	// 			case 2: // void quit()
+	// 				// Loop::get_default().quit_in(std::chrono::milliseconds(100));
+	// 				// std::cerr << "saftd will quit in 100 ms" << std::endl;
+	// 				Loop::get_default().quit();
+	// 				std::cerr << "saftd will quit now" << std::endl;
+	// 			break;
+	// 			case 3: {// bool load_plugin(const std::string &so_filename, const std::string &object_path)
+	// 				std::string so_filename;
+	// 				// std::string object_path;
+	// 				received.get(so_filename);
+	// 				// received.get(object_path);
+	// 				std::cerr << "loading " << so_filename << std::endl;
+	// 				bool plugin_available = d->container->load_plugin(so_filename);
+	// 				send.put(plugin_available);
+	// 			}
+	// 			break;
+	// 			case 4: {// bool remove_service(const std::string &object_path)
+	// 				std::string object_path;
+	// 				received.get(object_path);
+	// 				std::cerr << "remove service at object_path " << object_path << std::endl;
+	// 				bool remove_result = d->container->remove_object(object_path);
+	// 				send.put(remove_result);
+	// 			}
+	// 			break;
+	// 			case 5: { // get_status() // report all info about server and services
+	// 				std::cerr << "get_stats() called sending " << d->container->d->object_path_lookup_table.size() << " objects " << std::endl;
+	// 				send.put(d->container->d->objects.size());
+	// 				for (auto &object: d->container->d->objects) {
+	// 					auto &object_id = object.first;
+	// 					auto &service   = object.second;
+	// 					send.put(object_id);
+	// 					send.put(service->d->object_path);
+	// 					send.put(service->d->interface_names);
+	// 					send.put(service->d->signal_fds_use_count);
+	// 					send.put(service->d->owner);
+	// 				}
+	// 				auto client_info = d->container->d->connection->get_client_info();
+	// 				send.put(client_info.size());
+	// 				for (auto &client: client_info) {
+	// 					send.put(client.process_id);
+	// 					send.put(client.client_fd);
+	// 					send.put(client.signal_fds);
+	// 				}
+	// 			}
+	// 			break;
+	// 			default:
+	// 				assert(false);
+	// 		}
+	// 	} else {
+	// 		assert(false);
+	// 	}
+	// }
 
 
 

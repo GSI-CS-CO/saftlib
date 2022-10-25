@@ -98,19 +98,44 @@ namespace saftbus {
 		};
 		std::vector<ClientInfo> client_infos;
 	};
-	class Container_Proxy : public Proxy {
+
+
+	// created by saftbus-gen from class Container and copied here
+	/// @brief A Container of Service objects.
+	///
+	/// Classes derived from Service can be stored here. One instance of Container is hold by 
+	/// the Connection object and all Service objects are available for remote Proxy objects to 
+	/// register and execute function calls through the Connection.
+	class Container_Proxy : public virtual saftbus::Proxy
+	{
+		static std::vector<std::string> gen_interface_names();
 	public:
-		Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names);
-		static std::shared_ptr<Container_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
-		// @saftbus-export
-		bool signal_dispatch(int interface_no, 
-			                 int signal_no, 
-			                 Deserializer& signal_content);
-		bool load_plugin(const std::string &so_filename);
-		bool remove_object(const std::string &object_path);
+		Container_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names = std::vector<std::string>());
+		static std::shared_ptr<Container_Proxy> create(const std::string &object_path="/saftbus", saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = std::vector<std::string>());
+		bool signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content);
+		bool load_plugin(const std::string & so_filename);
+		bool remove_object(const std::string & object_path);
 		void quit();
 		SaftbusInfo get_status();
+	private:
+		int interface_no;
+
 	};
+
+
+	// class Container_Proxy : public Proxy {
+	// public:
+	// 	Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names);
+	// 	static std::shared_ptr<Container_Proxy> create(SignalGroup &signal_group = SignalGroup::get_global());
+	// 	// @saftbus-export
+	// 	bool signal_dispatch(int interface_no, 
+	// 		                 int signal_no, 
+	// 		                 Deserializer& signal_content);
+	// 	bool load_plugin(const std::string &so_filename);
+	// 	bool remove_object(const std::string &object_path);
+	// 	void quit();
+	// 	SaftbusInfo get_status();
+	// };
 
 }
 

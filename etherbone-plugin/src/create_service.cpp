@@ -33,7 +33,7 @@ std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_
 	++ref_count;
 	std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > services;
 	services.push_back(std::make_pair(
-		saftd->get_object_path(), 
+		saftd->getObjectPath(), 
 		std::move(std::unique_ptr<eb_plugin::SAFTd_Service>(new eb_plugin::SAFTd_Service(saftd.get(), std::bind(&destroy_service))))
 		));
 

@@ -103,7 +103,7 @@ namespace eb_plugin {
 		/// @param irq the address to be released
 		void release_irq(eb_address_t irq);
 
-		std::string get_object_path();
+		std::string getObjectPath();
 
 		etherbone::Socket &get_etherbone_socket() { return socket; }
 
