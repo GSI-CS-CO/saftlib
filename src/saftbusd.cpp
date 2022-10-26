@@ -1,6 +1,6 @@
 #include "loop.hpp"
 #include "server.hpp"
-#include "chunck_allocator_rt.hpp"
+// #include "chunck_allocator_rt.hpp"
 
 int main(int argc, char *argv[]) {
 

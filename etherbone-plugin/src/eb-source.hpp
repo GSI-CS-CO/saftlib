@@ -28,6 +28,7 @@ namespace eb_plugin {
 		bool prepare(std::chrono::milliseconds &timeout_ms);
 		bool check();
 		bool dispatch();
+		std::string type(); 
 
 		~EB_Source();
 	private:

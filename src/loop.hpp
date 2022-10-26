@@ -6,6 +6,7 @@
 #include <chrono>
 #include <functional>
 #include <vector>
+#include <set>
 
 #include <poll.h>
 
@@ -21,6 +22,7 @@ namespace saftbus {
 		virtual bool prepare(std::chrono::milliseconds &timeout_ms) = 0;
 		virtual bool check() = 0;
 		virtual bool dispatch() = 0;
+		virtual std::string type() = 0;
 	protected:
 		void add_poll(pollfd *pfd);
 		void remove_poll(pollfd *pfd);
@@ -66,6 +68,7 @@ namespace saftbus {
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;
 		bool dispatch() override;
+		std::string type() override;
 	private:
 		std::function<bool(void)> slot;
 		std::chrono::milliseconds interval;
@@ -75,6 +78,7 @@ namespace saftbus {
 	// call <slot> whenever <fd> fulfills <condition> (usually POLLIN or POLLOUT)
 	// source is destroyed if POLLHP is seen on <fd>
 	class IoSource : public Source {
+		friend class Loop;
 		// struct Impl; std::unique_ptr<Impl> d;
 	public:
 		IoSource(std::function<bool(int, int)> slot, int fd, int condition);
@@ -82,6 +86,8 @@ namespace saftbus {
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;
 		bool dispatch() override;
+		std::string type() override;
+		static std::set<int> all_fds;
 	private:
 		std::function<bool(int, int)> slot;
 		pollfd pfd;

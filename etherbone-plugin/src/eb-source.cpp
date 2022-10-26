@@ -131,5 +131,7 @@ namespace eb_plugin {
 		return true;
 	}
 
-
+	std::string EB_Source::type() {
+		return "EB_Source";
+	}
 }

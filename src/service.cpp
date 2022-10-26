@@ -71,7 +71,7 @@ namespace saftbus {
 	}
 	Service::~Service() {
 		std::cerr << "~Service " << d->object_path << std::endl;
-		std::cerr << "~Service done" << std::endl;
+		// std::cerr << "~Service done" << std::endl;
 	}
 
 	// Generate the mapping from interface_name to interface_no for all interface_names,
@@ -82,19 +82,19 @@ namespace saftbus {
 		// If yes, return a map of interface_name -> interface_no for this particular service object
 		bool implement_all_interfaces = true;
 		for (auto &interface_name: interface_names) {
-			std::cerr << "  check for interface " << interface_name << std::endl;
+			// std::cerr << "  check for interface " << interface_name << std::endl;
 			bool interface_implemented = false;
 			for (unsigned i = 0; i <  get_interface_names().size(); ++i) {
-				std::cerr << "    check against " << get_interface_names()[i] << std::endl;
+				// std::cerr << "    check against " << get_interface_names()[i] << std::endl;
 				if (interface_name == get_interface_names()[i]) {
 					interface_name2no_map[interface_name] = i; // for this particular service object, i is the interface_no for interface_name
 					interface_implemented = true;
 				}
 			}
-			std::cerr << "  => " << interface_implemented << std::endl;
+			// std::cerr << "  => " << interface_implemented << std::endl;
 			if (!interface_implemented) {
 				implement_all_interfaces = false;
-				std::cerr << "requested interface " << interface_name << "is not implemented by " << get_object_path() << std::endl;
+				// std::cerr << "requested interface " << interface_name << "is not implemented by " << get_object_path() << std::endl;
 			}
 		}
 		return implement_all_interfaces;

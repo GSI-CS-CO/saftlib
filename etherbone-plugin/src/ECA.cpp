@@ -744,6 +744,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	}
 
 	// find the first free slot in ECA_LINUX_channel
+	std::cerr << "ECA::NewSoftwareActionSink:   find 1 in " << std::dec << d->ECA_LINUX_channel->size() << "slots" << std::endl;
 	unsigned num = 0;
 	for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
 		if (!softwareActionSink) break;
