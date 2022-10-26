@@ -39,10 +39,6 @@
 #include <algorithm>
 
 
-
-
-
-
 namespace eb_plugin {
 
 TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string &eb_path, int polling_interval_ms, saftbus::Container *container)
@@ -69,42 +65,12 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	auto &ios = io_control.get_ios();
 	for(auto &io: ios) {
 
-		// TimingReceiver::SinkKey key_in (eca_channel, eca_in);  // order: gpio_inout, gpio_in,  lvds_inout, lvds_in
-		// TimingReceiver::SinkKey key_out(eca_channel, eca_out); // order: gpio_inout, gpio_out, lvds_inout, lvds_out
-
-		// sigc::slot<void> nill;
-
-		// switch(io.getDirection())
-		// {
-		// 	case IO_CFG_FIELD_DIR_OUTPUT:
-		// 	{
-		// 		std::string path = output_path;
-		// 		output_path.append(io.getName());
-		// 		std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io.getName(), path, "", 
-		// 												  eca_channel, io.getIndexOut(), &io, container));
-		// 		addActionSink(eca_channel, std::move(output));
-
-		// 		// Output::ConstructorType out_args = { IOName, output_path, "", tr, eca_channel, eca_out, impl, nill };
-		// 		// actionSinks[key_out] = Output::create(out_args);
-		// 		// ++eca_out;
-		// 	}
-		// 	break;
-		// 	case IO_CFG_FIELD_DIR_INPUT:
-		// 	{
-		// 		// Input::ConstructorType  in_args  = { IOName, input_path,  "", tr, tlu,         eca_in,  impl, nill };
-		// 		// eventSources[key_in] = Input::create(in_args);
-		// 		// ++eca_in;
-		// 	}
-		// 	break;
-
 		if (io.getDirection() == IO_CFG_FIELD_DIR_INPUT  || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
 			std::string io_name = "inputs/";
 			io_name.append(io.getName());
 			std::unique_ptr<Input> input(new Input(*dynamic_cast<ECA*>(this), *dynamic_cast<ECA_TLU*>(this), io_name, "", 
 												   eca_channel, io.getIndexIn(), &io, container));
-
 			//addEventSource(std::move(input));
-
 		}
 
 		if (io.getDirection() == IO_CFG_FIELD_DIR_OUTPUT || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
@@ -115,13 +81,6 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 				container->create_object(output->getObjectPath(), std::move(service));
 			}
 			addActionSink(eca_channel, std::move(output));
-
-			// Output::ConstructorType out_args = { IOName, output_path, input_path,  tr, eca_channel, eca_out, impl, nill };
-			// Input::ConstructorType  in_args  = { IOName, input_path,  output_path, tr, tlu,         eca_in,  impl, nill };
-			// actionSinks[key_out] = Output::create(out_args);
-			// eventSources[key_in] = Input::create(in_args);
-			// ++eca_out;
-			// ++eca_in;
 		}
 
 
@@ -134,17 +93,12 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 		);
 }
 
-
-
 TimingReceiver::~TimingReceiver() 
 {
 	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
 	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
 	saftbus::Loop::get_default().remove(poll_timeout_source);
 }
-
-
-
 
 bool TimingReceiver::poll()
 {

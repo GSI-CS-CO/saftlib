@@ -309,7 +309,7 @@ void ECA::Impl::prepareChannels()
 					ECA_LINUX_channel_index = channel_idx;
 					ECA_LINUX_channel = &ECAchannels[channel_idx];
 					ECA_LINUX_channel_subchannels = raw_max_num;
-					ECA_LINUX_channel->reserve(raw_max_num); // allocate enough memory for all hareware resources
+					ECA_LINUX_channel->resize(raw_max_num); // create enough slots for as much SoftwareActionSinks as the hardware supports
 				} else {
 					std::cerr << "more than one Linux facing ECA channel. We will use the first of them and ignore the rest" << std::endl;
 				}
@@ -456,6 +456,9 @@ void ECA::Impl::compile()
 	// Step one is to find all active conditions on all action sinks
 	for (auto &channel: ECAchannels) {
 		for (auto &actionSink: channel) {
+			if (!actionSink) {
+				continue;
+			}
 			for (auto &number_condition: actionSink->getConditions()) {
 				auto &condition = number_condition.second;
 				if (!condition->getActive()) continue;
@@ -694,7 +697,11 @@ SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 {
 	std::cerr << "getSoftwareActionSink " << d->ECA_LINUX_channel->size() << std::endl;
 	for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
-		std::cerr << "." << std::endl;
+		if (!softwareActionSink) {
+			std::cerr << "." << std::endl;
+			continue;
+		}
+		std::cerr << "+" << std::endl;
 		if (softwareActionSink->getObjectPath() == sas_obj_path) {
 			std::cerr << "return " << softwareActionSink->getObjectPath() << std::endl;
 			return dynamic_cast<SoftwareActionSink*>(softwareActionSink.get());
@@ -735,7 +742,14 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	if (d->ECA_LINUX_channel == nullptr) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
 	}
-	if (d->ECA_LINUX_channel->size() >= d->ECA_LINUX_channel_subchannels) {
+
+	// find the first free slot in ECA_LINUX_channel
+	unsigned num = 0;
+	for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
+		if (!softwareActionSink) break;
+		++num;
+	}
+	if (num >= d->ECA_LINUX_channel_subchannels) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "All available Linux facing ECA subchannels are already in use");
 	}
 
@@ -765,8 +779,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	}
 	
 	unsigned channel = d->ECA_LINUX_channel_index;
-	unsigned num     = d->ECA_LINUX_channel->size(); 
-		std::cerr << "channel = " << channel << " num = " << num << " queue_addresses.size() = " << d->queue_addresses.size() << std::endl;
+	std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << d->queue_addresses.size() << std::endl;
 	eb_address_t address = d->queue_addresses[channel];
 
 	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(*this, name, channel, num, address, d->container));
@@ -776,7 +789,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 		d->container->set_owner(service.get());
 		d->container->create_object(sink_object_path, std::move(service));
 	}
-	d->ECA_LINUX_channel->push_back(std::move(software_action_sink));
+	(*d->ECA_LINUX_channel)[num] = std::move(software_action_sink);
 
 	return sink_object_path;
 }
@@ -786,9 +799,8 @@ bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
 }
 void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	ActionSink *as = sas;
-	d->ECA_LINUX_channel->erase(std::remove(d->ECA_LINUX_channel->begin(), d->ECA_LINUX_channel->end(), as),
-	                            d->ECA_LINUX_channel->end());
-	--d->sas_count;
+	std::cout << "========= removeSowftwareActionSink ======== " << as->getNum() << std::endl;
+	(*d->ECA_LINUX_channel)[as->getNum()].reset();
 	compile();
 }
 
@@ -797,7 +809,9 @@ std::map< std::string, std::string > ECA::getSoftwareActionSinks() const
 	std::map< std::string, std::string > out;
 	if (d->ECA_LINUX_channel != nullptr) {
 		for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
-			out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
+			if (softwareActionSink) {
+				out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
+			}
 		}
 	}
 	return out;
