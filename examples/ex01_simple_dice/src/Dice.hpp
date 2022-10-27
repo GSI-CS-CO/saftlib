@@ -10,8 +10,8 @@
 namespace ex01 {
 
 	class Dice {
-
-		saftbus::Source *throw_timeout_source;
+		bool auto_throwing_enabled;
+		saftbus::SourceHandle throw_timeout_source;
 	public:
 		/// @brief convenience function to allow similar creation compared to Proxy class
 		/// @param object_path is ignored
