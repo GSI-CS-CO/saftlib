@@ -25,7 +25,7 @@ namespace ex02 {
 		static std::shared_ptr<DiceCup> create(const std::string &object_path);
 
 		DiceCup(const std::string &object_path, saftbus::Container *container = nullptr);
-
+		
 		Dice* getDice(const std::string &name);
 
 		// @saftbus-export
