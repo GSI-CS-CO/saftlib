@@ -415,28 +415,50 @@ namespace saftbus {
 		std::cerr << "remove_object " << object_path << " now" << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
-			// we dont have this object 
-			std::cerr << "remove_object: object path " << object_path << " not found " << std::endl;
-			return false;
+			std::string msg = "cannot remove object \"";
+			msg.append(object_path);
+			msg.append("\" because its object_path was not found");
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg);
 		}
 		auto object_id = find_result->second;
 		auto &service = d->objects[object_id];
 		if (service->d->owner != -1) { // the service is owned
 			if (service->d->owner != d->connection->get_calling_client_id()) {
-				std::cerr << "only the owner can remove an owned object" << std::endl;
-				return false;
+				std::ostringstream msg;
+				msg << "cannot remove object \"" << object_path << "\" because it owned by " << service->d->owner;
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
 			}
 		}
-		d->objects.erase(object_id);
+
+		// make sure that non of the children of the object to be removed has a foreign owner
+		// the child relationship is determined only based on the object path
+		// it is in the responability of the Service developer that all child 
+		// relationships are properly reflected by the object paths.
+		for (auto &object: d->object_path_lookup_table) {
+			auto &other_path = object.first;
+			if (other_path == "/saftbus") {
+				continue;
+			}
+			if (other_path != object_path &&              // check if other_path differs
+			    other_path.find(object_path)==0 &&        // check if other_path starts with object_path
+			    other_path.size() > object_path.size() && // check if other_path is longer then object_path (child object paths are always longer)
+			    other_path[object_path.size()] == '/' ) { // and the first non-commom character in a child path is '/', as in "/parent/child".
+				auto object_id = object.second;
+				auto &service = d->objects[object_id];
+				if (service->d->owner != -1) { // the service is owned
+					if (service->d->owner != d->connection->get_calling_client_id()) {
+						std::ostringstream msg;
+						msg << "cannot remove object \"" << object_path << "\" because of child object\" " << other_path << " with foreign ownership " << service->d->owner;
+						throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
+					}
+				}
+			}
+		}
+
 		d->object_path_lookup_table.erase(object_path);
+		d->objects.erase(object_id);
 		return false;
 	}
-	// bool Container::remove_object_delayed(const std::string &object_path)
-	// {
-	// 	Loop::get_default().connect<TimeoutSource>(std::bind(&Container::remove_object,this, object_path), std::chrono::milliseconds(1));
-	// 	return false;
-	// }
-
 
 	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
 	{

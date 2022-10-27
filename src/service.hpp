@@ -158,6 +158,9 @@ namespace saftbus {
 		void unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd);
 		// @saftbus-export
 		bool load_plugin(const std::string &so_filename);
+
+		/// @brief remove an object
+		/// @param object_path the object path of the service object to be removed
 		// @saftbus-export
 		bool remove_object(const std::string &object_path);
 		// @saftbus-export
