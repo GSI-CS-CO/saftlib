@@ -172,7 +172,7 @@ namespace saftbus {
 			if (!source->valid) continue;
 
 			if (source->check()) { // if check returns true, dispatch is called
-				std::cerr << "Loop::iteration dispatching to " << source->type() << std::endl;
+				// std::cerr << "Loop::iteration dispatching to " << source->type() << std::endl;
 				if (!source->dispatch()) { // if dispatch returns false, the source is removed
 					source->valid = false;
 				}
@@ -366,7 +366,7 @@ namespace saftbus {
 		// if (pfd.revents & POLLIN)  { std::cout << "POLLIN " ; }
 		// if (pfd.revents & POLLHUP) { std::cout << "POLLHUP "; }
 		// if (pfd.revents & POLLERR) { std::cout << "POLLERR "; }
-		std::cout << std::endl;
+		// std::cout << std::endl;
 		if (pfd.revents & pfd.events) {
 			return true;
 		}

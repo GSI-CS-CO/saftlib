@@ -32,6 +32,7 @@ namespace saftbus {
 		saftbus::SourceHandle check_timeout;
 		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  {
 			// connect a timeout callback that checks once per second that all fds are still in the fds-set of the Main Loop.
+			// TODO: remove this before release
 			check_timeout = Loop::get_default().connect<TimeoutSource>(
 				std::bind(&Client::check, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000));
 		}
@@ -48,27 +49,27 @@ namespace saftbus {
 			}
 		}
 		bool check() {
-			std::cout << "check Client " << socket_fd;
+			// std::cout << "check Client " << socket_fd;
 			pollfd pfd;
 			pfd.fd = socket_fd;
 			pfd.events = POLLIN | POLLHUP | POLLERR;
 			int poll_result = poll(&pfd, 1, 0);
 			if (poll_result == -1) { // timeout
-				std::cout << " error: " << strerror(errno);
+				std::cerr << " error: " << strerror(errno) << std::endl;
 			}
-			if (poll_result == 0) {
-				std::cout << " nothing";
-			}
-			if (pfd.revents & POLLHUP) {
-				std::cout << " POLLHUP";
-			}
-			if (pfd.revents & POLLIN) {
-				std::cout << " POLLIN";
-			}
-			if (pfd.revents & POLLERR) {
-				std::cout << " POLLERR";
-			}
-			std::cout << std::endl;
+			// if (poll_result == 0) {
+			// 	std::cout << " nothing";
+			// }
+			// if (pfd.revents & POLLHUP) {
+			// 	std::cout << " POLLHUP";
+			// }
+			// if (pfd.revents & POLLIN) {
+			// 	std::cout << " POLLIN";
+			// }
+			// if (pfd.revents & POLLERR) {
+			// 	std::cout << " POLLERR";
+			// }
+			// std::cout << std::endl;
 			if (saftbus::IoSource::all_fds.find(socket_fd) == saftbus::IoSource::all_fds.end()) assert(false);
 			return true;
 		}
@@ -155,16 +156,16 @@ namespace saftbus {
 			// are executed. But not more then 100 times. 
 			bool read_result = received.read_from(fd);
 			if (!read_result) {
-				std::cerr << "failed to read data from fd " << fd << std::endl;
+				// std::cerr << "failed to read data from fd " << fd << std::endl;
 				client_hung_up(fd);
-				std::cout << "remove client IoSource " << fd << std::endl;
+				// std::cout << "remove client IoSource " << fd << std::endl;
 				return false;
 			}
 			unsigned saftlib_object_id;
 			received.get(saftlib_object_id);
-			std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
-			std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
-			std::cerr << "trying to call a function" << std::endl;
+			// std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
+			// std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
+			// std::cerr << "trying to call a function" << std::endl;
 			container_of_services.call_service(saftlib_object_id, fd, received, send);
 			if (!send.empty()) {
 				send.write_to(fd);
@@ -175,7 +176,7 @@ namespace saftbus {
 
 	void ServerConnection::Impl::client_hung_up(int client_fd) 
 	{
-		std::cerr << "clients.size() " << clients.size() << std::endl;
+		// std::cerr << "clients.size() " << clients.size() << std::endl;
 		auto removed_client = std::find(clients.begin(), clients.end(), client_fd);
 		if (removed_client == clients.end()) { 
 			calling_client_id = -1;
@@ -185,7 +186,7 @@ namespace saftbus {
 			for(auto &sigfd_usecount: (*removed_client)->signal_fd_use_count) {
 				int sigfd = sigfd_usecount.first;
 				// int count = sigfd_usecount.second;
-				std::cerr << "remove client signal fd " << sigfd << std::endl;
+				// std::cerr << "remove client signal fd " << sigfd << std::endl;
 				container_of_services.remove_signal_fd(sigfd);
 			}
 			clients.erase(std::remove(clients.begin(), clients.end(), client_fd), clients.end());
@@ -193,7 +194,7 @@ namespace saftbus {
 		// tell the container that a client hung up
 		// the container hast to remove all services previously owned by this client
 		container_of_services.client_hung_up(client_fd);
-		std::cerr << "clients.size() " << clients.size() << std::endl;
+		// std::cerr << "clients.size() " << clients.size() << std::endl;
 	}
 
 
