@@ -17,6 +17,9 @@ namespace saftbus {
 
 	Source::Source() 
 	{
+		if (id_counter == -1) ++id_counter; // prevent id_counter to produce an id of 0 (no source should have id 0)
+		id = ++id_counter;
+		id |= ((long)rand()%0xffffffff)<<32;
 		valid = true;
 	}
 	Source::~Source() = default;
@@ -34,10 +37,11 @@ namespace saftbus {
 	void Source::clear_poll() {
 		pfds.clear();
 	}
-	bool operator==(const std::unique_ptr<Source> &lhs, const Source *rhs)
-	{
-		return lhs.get() == rhs;
+	long Source::get_id() {
+		return id;
 	}
+
+	long Source::id_counter = 0;
 
 	//////////////////////////////
 	//////////////////////////////
@@ -48,7 +52,10 @@ namespace saftbus {
 		std::vector<std::unique_ptr<Source> > sources;
 		bool running;
 		int running_depth; 
+		long id;
+		static long id_counter;
 	};
+	long Loop::Impl::id_counter = 0;
 
 	
 	Loop::Loop() 
@@ -61,6 +68,9 @@ namespace saftbus {
 		d->sources.reserve(revserve_that_much);
 		d->running = true;
 		d->running_depth = 0; // 0 means: the loop is not running
+		if (d->id_counter == -1) ++d->id_counter; // prevent d->id_counter to produce an id of 0 (no source should have id 0)
+		d->id = ++d->id_counter;
+		d->id |= ((long)rand()%0xffffffff)<<32;
 	}
 	Loop::~Loop() {
 		// std::cerr << "~Loop()" << std::endl;
@@ -83,7 +93,7 @@ namespace saftbus {
 		// source_pfds.reserve(16);
 		auto timeout = no_timeout; 
 
-		unsigned us = 0;
+		// unsigned us = 0;
 		auto start = std::chrono::steady_clock::now();
 		auto stop = std::chrono::steady_clock::now();
 
@@ -113,7 +123,7 @@ namespace saftbus {
 				// std::cerr << "added fd=" << (*it)->fd << std::endl;
 			}
 		}
-		if (!may_block) {
+		if (!may_block) { 
 			timeout = std::chrono::milliseconds(0);
 		}
 		//////////////////
@@ -162,9 +172,9 @@ namespace saftbus {
 			if (!source->valid) continue;
 
 			if (source->check()) { // if check returns true, dispatch is called
-				// std::cerr << "Loop::iteration dispatching to " << source->type() << std::endl;
+				std::cerr << "Loop::iteration dispatching to " << source->type() << std::endl;
 				if (!source->dispatch()) { // if dispatch returns false, the source is removed
-					remove(source.get());
+					source->valid = false;
 				}
 			}
 		}
@@ -221,15 +231,18 @@ namespace saftbus {
 		// 			(std::bind(&Loop::quit, this), wait_ms)
 		// 	)
 		// );
-		connect<saftbus::TimeoutSource>(std::bind(&Loop::quit, this), wait_ms);
+		connect<saftbus::TimeoutSource>(std::bind(&Loop::quit, this), wait_ms, wait_ms);
 		return false;
 	}
 
 
-	Source *Loop::connect(std::unique_ptr<Source> source) {
+	SourceHandle Loop::connect(std::unique_ptr<Source> source) {
 		// std::cerr << "Loop::connect" << std::endl;
 		source->loop = this;
-		Source *result = source.get();
+		SourceHandle result;
+		result.loop_id   = d->id;
+		result.source_id = source->id;
+
 		if (d->running_depth) {
 			// durin an iteration, the source vector may not be changed.
 			// put the source in a buffer vector which is cpoied into 
@@ -241,15 +254,21 @@ namespace saftbus {
 		return result;
 	}
 
-	void Loop::remove(Source *source) {
-
-		if (std::find(d->sources.begin(), d->sources.end(), source) != d->sources.end()) {
-			// std::cerr << "Loop::remove " << source->type() << std::endl;
-			source->valid = false;
-		}
-		if (std::find(d->added_sources.begin(), d->added_sources.end(), source) != d->added_sources.end()) {
-			// std::cerr << "Loop::remove " << source->type() << std::endl;
-			source->valid = false;
+	bool operator==(const std::unique_ptr<Source> &lhs, const SourceHandle &rhs) {
+		return lhs->get_id() == rhs.get_source_id();
+	}
+	/// @brief public version of remove which works with a SourceHandle
+	/// @param s the source handle returned from the connect method
+	void Loop::remove(SourceHandle s) {
+		if (s.loop_id == d->id) { // make sure s was connected to this loop
+			auto source = d->sources.begin();
+			if ((source=std::find(source, d->sources.end(), s)) != d->sources.end()) {
+				(*source)->valid = false;
+			}
+			source = d->added_sources.begin();
+			if ((source=std::find(source, d->added_sources.end(), s)) != d->added_sources.end()) {
+				(*source)->valid = false;
+			}
 		}
 	}
 

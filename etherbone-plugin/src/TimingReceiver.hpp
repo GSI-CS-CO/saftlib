@@ -201,7 +201,7 @@ private:
 
 
 	bool poll();
-	saftbus::Source *poll_timeout_source;
+	saftbus::SourceHandle poll_timeout_source;
 
 	
 	eb_address_t ats;

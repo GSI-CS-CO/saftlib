@@ -29,11 +29,11 @@ namespace saftbus {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
 		pid_t process_id; // store the clients pid as additional useful information
 		std::map<int,int> signal_fd_use_count;
-		saftbus::Source* check_timeout;
+		saftbus::SourceHandle check_timeout;
 		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  {
 			// connect a timeout callback that checks once per second that all fds are still in the fds-set of the Main Loop.
-			// check_timeout = Loop::get_default().connect<TimeoutSource>(
-			// 	std::bind(&Client::check, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000));
+			check_timeout = Loop::get_default().connect<TimeoutSource>(
+				std::bind(&Client::check, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000));
 		}
 		~Client() {
 			Loop::get_default().remove(check_timeout);

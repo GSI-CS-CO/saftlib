@@ -23,6 +23,7 @@ namespace saftbus {
 		virtual bool check() = 0;
 		virtual bool dispatch() = 0;
 		virtual std::string type() = 0;
+		long get_id();
 	protected:
 		void add_poll(pollfd *pfd);
 		void remove_poll(pollfd *pfd);
@@ -30,7 +31,19 @@ namespace saftbus {
 	private:
 		Loop *loop;
 		std::vector<pollfd*> pfds;
+		static long id_counter;
+		long id; 
 		bool valid;
+	};
+
+	class SourceHandle {
+		friend class Loop;
+		long source_id;
+		long loop_id;
+	public:
+		SourceHandle() :source_id(0), loop_id(0) {}
+		long get_source_id() const {return source_id;}
+		long get_loop_id()   const {return loop_id;}
 	};
 
 	class Loop {
@@ -42,13 +55,13 @@ namespace saftbus {
 		void run();
 		bool quit();
 		bool quit_in(std::chrono::milliseconds wait_ms);
-		Source* connect(std::unique_ptr<Source> source);
+		SourceHandle connect(std::unique_ptr<Source> source);
 
 		template<typename T, typename... Args> // T must be subclass of Source
-		Source* connect(Args&&... args) {
+		SourceHandle connect(Args&&... args) {
 			return connect(std::move(std::unique_ptr<T>(new T(std::forward<Args>(args)...))));
 		}
-		void remove(Source *s);
+		void remove(SourceHandle s);
 		void clear(); // remove all sources
 		static Loop &get_default();
 	};

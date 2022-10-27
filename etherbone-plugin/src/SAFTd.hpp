@@ -128,7 +128,7 @@ namespace eb_plugin {
 
 		// 
 		etherbone::Socket socket;
-		saftbus::Source *eb_source;
+		saftbus::SourceHandle eb_source;
 
 		// remember all attached devices 
 		std::map<std::string, std::unique_ptr<TimingReceiver> > attached_devices;
