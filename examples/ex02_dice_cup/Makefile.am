@@ -25,8 +25,7 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/Dice12.hpp                         \
 	src/Dice12_Service.hpp                  \
 	src/DiceCup.hpp                          \
-	src/DiceCup_Service.hpp                   \
-	src/DataType.hpp
+	src/DiceCup_Service.hpp                   
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =   \
@@ -40,8 +39,7 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/Dice_Proxy.hpp                \
 	src/Dice6_Proxy.hpp                \
 	src/Dice12_Proxy.hpp                \
-	src/DiceCup_Proxy.hpp                \
-	src/DataType.hpp
+	src/DiceCup_Proxy.hpp                
 
 bin_PROGRAMS = ex02-plugin-ctl ex02-standalone
 ex02_plugin_ctl_LDADD   = $(SAFTBUS_LIBS) lib@PACKAGE@_proxy.la
