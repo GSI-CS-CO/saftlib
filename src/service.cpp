@@ -480,6 +480,12 @@ namespace saftbus {
 		}
 		s->d->owner = get_calling_client_id();
 	}
+	int Container::get_owner() {
+		if (d->active_service) {
+			return d->active_service->d->owner;
+		}
+		return -1;
+	}
 	void Container::release_owner() {
 		if (d->active_service) {
 			if (d->active_service->d->owner == -1) {
@@ -491,8 +497,8 @@ namespace saftbus {
 	}
 	void Container::owner_only() {
 		if (d->active_service) {
-			//if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) { // original saftlib behavior
-			if (d->active_service->d->owner != get_calling_client_id()) {                                   // doesn't this make more sense?
+			std::cout << "owner: " << d->active_service->d->owner << "            caller: " << get_calling_client_id() << std::endl;
+			if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) { 
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
 			}
 		}

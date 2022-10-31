@@ -1,4 +1,6 @@
 #include "ECA_TLU.hpp"
+#include "Input.hpp"
+
 
 #include <saftbus/error.hpp>
 
@@ -22,6 +24,11 @@ ECA_TLU::ECA_TLU(etherbone::Device &dev)
 	eca_tlu = static_cast<eb_address_t>(eca_tlu_devs[0].sdb_component.addr_first);
 }
 
+void ECA_TLU::addInput(std::unique_ptr<Input> input) {
+	inputs.push_back(std::move(input));
+}
+
+
 void ECA_TLU::configInput(unsigned channel,
 	                      bool enable,
 	                      uint64_t event,
@@ -37,5 +44,15 @@ void ECA_TLU::configInput(unsigned channel,
 	cycle.write(eca_tlu + ECA_TLU_WRITE_OWR,       EB_DATA32, 1);
 	cycle.close();
 }
+
+std::map< std::string, std::string > ECA_TLU::getInputs() const
+{
+	std::map< std::string, std::string > out;
+	for (auto &input: inputs) {
+		out[input->getObjectName()] = input->getObjectPath();
+	}
+	return out;
+}
+
 
 } // namespace

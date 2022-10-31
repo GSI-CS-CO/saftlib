@@ -8,8 +8,10 @@ namespace eb_plugin {
 class TimingReceiver;
 
 class EventSource : public Owned {
+    std::string object_path;
+    std::string object_name;
 public:
-	EventSource(saftbus::Container *container);
+	EventSource(const std::string &object_path, const std::string &name, saftbus::Container *container);
 
 	/// @brief The precision of generated timestamps in nanoseconds.
 	/// @return The precision of generated timestamps in nanoseconds.
@@ -29,6 +31,7 @@ public:
     ///
     // @saftbus-export
     virtual bool getEventEnable() const = 0;
+    // @saftbus-export
     virtual void setEventEnable(bool val) = 0;
 
     /// @brief Combined with low EventBits to create generated IDs
@@ -36,8 +39,11 @@ public:
     ///
     // @saftbus-export
     virtual uint64_t getEventPrefix() const = 0;
+    // @saftbus-export
     virtual void setEventPrefix(uint64_t val) = 0;
 
+    std::string getObjectPath() const;
+    std::string getObjectName() const;
 };
 
 }

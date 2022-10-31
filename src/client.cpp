@@ -232,7 +232,9 @@ namespace saftbus {
 			if (result > 0) {
 
 				if (d->pfd.revents & (POLLIN|POLLHUP) ) {
-					std::cerr << "POLLIN|POLLHUP" << std::endl;
+					if (d->pfd.revents & POLLIN)  std::cerr << "POLLIN"  << std::endl;
+					if (d->pfd.revents & POLLHUP) std::cerr << "POLLHUP" << std::endl;
+					// std::cerr << "POLLIN|POLLHUP" << std::endl;
 					bool result = d->received.read_from(d->pfd.fd);
 					if (!result) {
 						std::cerr << "failed to read data from fd " << d->pfd.fd << std::endl;

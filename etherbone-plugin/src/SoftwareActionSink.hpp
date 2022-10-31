@@ -50,6 +50,7 @@ namespace eb_plugin {
 	class SoftwareActionSink : public ActionSink {
 	public:
 		SoftwareActionSink(ECA &eca
+			             , const std::string &object_path
 			             , const std::string &name
 			             , unsigned channel, unsigned num, eb_address_t queue_address
 			             , saftbus::Container *container = nullptr);

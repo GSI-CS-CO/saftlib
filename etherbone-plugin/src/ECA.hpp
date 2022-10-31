@@ -20,7 +20,20 @@ class OpenDevice;
 class ActionSink;
 class SoftwareActionSink;
 class Output;
-
+/// @brief ECA (Event Condition Action) 
+/// ECA is a hardwar unit cabable of executing actions at a given time (1 ns resolution) in response to events that meet a condition.
+/// An event contains a 64-bit timestamp, 64-bit id, 64-bit flags
+/// A condition contains a 64-bit id, 64-bit prefix-mask, 64-bit time offset
+/// Action can be one of the following:
+///   - Output: change output driver (rising or falling edge on one of the GPIOs) 
+///   - SoftwareActionSink: send the content of the event to host system (store the event content in some registers and send an MSI so that the host can read the event information)
+///   - execute a preconfigured wishbone access
+///   - SCUbusActionSink: write a tag on SCU bus
+///   - ECPU : send content of the event to embedded CPU
+///
+/// Hardware supports are up to 32 SoftwareActionSink at the same time. The hardware has one single Output channel configured for the host system with 32 sub-channels for the different SoftwareActionSinks. 
+/// Each SoftwareActionSinks occupies one of the sub-channels. This implementation uses an std::vector< std::unique_ptr< ActionSink> > which is resized in the constructor to the number of available sub-channels.
+/// Each invalid unique_ptr<ActionSink> indicates an un-occupied sub-channel. Each SoftwareActionSink can have many conditions. On execution, ECA writes a tag value into the ActionSink that refers to the condition that matched the incoming event.
 class ECA {
 	struct Impl; std::unique_ptr<Impl> d;
 
@@ -28,9 +41,9 @@ class ECA {
 
 	uint16_t getMostFull(int channel);	
 	eb_address_t get_base_address();
-	const std::string &get_object_path();
 
 public:
+	const std::string &get_object_path();
 	etherbone::Device &get_device();
 	void compile();
 	typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
@@ -40,7 +53,7 @@ public:
 	virtual ~ECA();
 
 
-	/// @brief add sink to the ECA and let ECA take ownership of the sink object
+	/// @brief add sink and let ECA take ownership of the sink object
 	bool addActionSink(int channel, std::unique_ptr<ActionSink> sink);
 
 	uint16_t updateMostFull(unsigned channel); // returns current fill
@@ -100,6 +113,15 @@ public:
 	/// @return pointer to a SoftwareActionSink 
 	///
 	SoftwareActionSink *getSoftwareActionSink(const std::string & sas_obj_path);
+
+	/// @brief A list of all the high/low outputs on the receiver.
+	/// @return A list of all the high/low outputs on the receiver.
+	///
+	/// Each path refers to an object of type Output.	
+	///
+	// @saftbus-export
+	std::map< std::string, std::string > getOutputs() const;
+
 
 	Output *getOutput(const std::string &output_obj_path);
 };

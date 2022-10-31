@@ -39,6 +39,17 @@ class OutputCondition : public Owned, public Condition
 public:
 	OutputCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container);
 
+    /// de.gsi.saftlib.OutputCondition:
+    /// @brief: Matched against incoming events on an OutputActionSink.
+    /// 
+    /// OutputConditions are created by OutputActionSinks to select which
+    /// events should generate signal toggles. This interface always implies
+    /// that the object also implements the general Condition interface.
+    // @saftbus-export
+    bool getOn() const;
+    // @saftbus-export
+    void setOn(bool val);
+
     // this typedef is needed for the ActionSink::NewCondition template function
     typedef OutputCondition_Service ServiceType;
 };

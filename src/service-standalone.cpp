@@ -137,6 +137,9 @@ namespace saftbus {
 	void Container::set_owner(Service *service) {
 		assert(false);
 	}
+	int Container::get_owner() {
+		assert(false);
+	}
 	void Container::release_owner() {
 		assert(false);
 	}

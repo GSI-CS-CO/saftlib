@@ -155,13 +155,6 @@ public:
 	// // @saftbus-export
 	// std::map< std::string, std::string > getSoftwareActionSinks() const;
 
-	/// @brief A list of all the high/low outputs on the receiver.
-	/// @return A list of all the high/low outputs on the receiver.
-	///
-	/// Each path refers to an object of type Output.	
-	///
-	// // @saftbus-export
-	// std::map< std::string, std::string > getOutputs() const;
 
 	/// @brief A list of all the high/low inputs on the receiver.
 	/// @return  A list of all the high/low inputs on the receiver.

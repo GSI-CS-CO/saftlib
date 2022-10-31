@@ -144,6 +144,7 @@ namespace saftbus {
 		int get_calling_client_id();
 		void set_owner();
 		void set_owner(Service *);
+		int get_owner();
 		void release_owner();
 		void owner_only();
 

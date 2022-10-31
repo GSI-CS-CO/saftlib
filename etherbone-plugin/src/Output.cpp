@@ -35,7 +35,7 @@ Output::Output(ECA &eca
      , const std::string &partnerPath_
      , unsigned channel
      , saftbus::Container *container)
-	: ActionSink(eca, std::string("outputs/")+io_.getName(), channel, io_.getIndexOut(), container), io(io_), partnerPath(partnerPath_)
+	: ActionSink(eca, eca.get_object_path() + "/outputs", io_.getName(), channel, io_.getIndexOut(), container), io(io_), partnerPath(partnerPath_)
 {
 
 }

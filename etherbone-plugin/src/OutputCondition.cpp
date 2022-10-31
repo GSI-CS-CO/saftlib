@@ -19,7 +19,7 @@
  */
 
 #include "OutputCondition.hpp"
-
+#include "ActionSink.hpp"
 
 namespace eb_plugin {
 
@@ -28,5 +28,31 @@ OutputCondition::OutputCondition(ActionSink *sink, unsigned number, bool active,
 {
 }
 
+
+bool OutputCondition::getOn() const
+{
+	return tag == 2;
+}
+
+void OutputCondition::setOn(bool v)
+{
+	uint32_t val = v?2:1; // 2 = turn-on, 1 = turn-off
+
+	ownerOnly();
+	if (val == tag) {
+		return;
+	}
+	uint32_t old = tag;
+
+	tag = val;
+	try {
+		if (active) {
+			sink->compile();
+		}
+	} catch (...) {
+		tag = old;
+		throw;
+	}
+}
 
 }

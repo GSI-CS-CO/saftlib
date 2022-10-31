@@ -31,15 +31,14 @@
 
 namespace eb_plugin {
 
-Input::Input(ECA &eca_
+Input::Input(const std::string &parent_object_path
 			, ECA_TLU &tlu
-			, const std::string &name_
 			, const std::string &partnerPath_
 			, unsigned channel
 			, unsigned num
 			, Io *io_
 			, saftbus::Container *container)
-	: EventSource(container), eca(eca_), eca_tlu(tlu), io(io_), partnerPath(partnerPath_)
+	: EventSource(parent_object_path + "/inputs/" + io_->getName(), io_->getName(), container), eca_tlu(tlu), io(io_), partnerPath(partnerPath_)
 	, channel(channel), enable(false), event(0), stable(80)
 {
 	eca_tlu.configInput(channel, enable, event, stable);
@@ -177,18 +176,5 @@ void Input::setStableTime(uint32_t val)
 
 	eca_tlu.configInput(channel, enable, event, stable);
 }
-
-// void Input::configInput()
-// {
-// 	etherbone::Cycle cycle;
-// 	cycle.open(device);
-// 	cycle.write(tlu + ECA_TLU_INPUT_SELECT_RW, EB_DATA32, channel);
-// 	cycle.write(tlu + ECA_TLU_ENABLE_RW,       EB_DATA32, enable?1:0);
-// 	cycle.write(tlu + ECA_TLU_STABLE_RW,       EB_DATA32, stable/8 - 1);
-// 	cycle.write(tlu + ECA_TLU_EVENT_HI_RW,     EB_DATA32, event >> 32);
-// 	cycle.write(tlu + ECA_TLU_EVENT_LO_RW,     EB_DATA32, (uint32_t)event);
-// 	cycle.write(tlu + ECA_TLU_WRITE_OWR,       EB_DATA32, 1);
-// 	cycle.close();
-// }
 
 }

@@ -17,8 +17,6 @@
 #include "SoftwareActionSink_Service.hpp"
 #include "Output.hpp"
 
-#include "EventSource.hpp"
-
 #include "eca_regs.h"
 #include "eca_flags.h"
 #include "eca_queue_regs.h"
@@ -67,8 +65,6 @@ struct ECA::Impl {
 	unsigned                                         ECA_LINUX_channel_subchannels;
 
 	// typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
-
-	std::vector<std::vector< std::unique_ptr<EventSource> > > EventSources;
 
 	uint16_t updateMostFull(unsigned channel); // returns current fill
 	void resetMostFull(unsigned channel);
@@ -642,7 +638,6 @@ bool ECA::addActionSink(int channel, std::unique_ptr<ActionSink> sink)
 	return true;
 }
 
-
 uint16_t ECA::updateMostFull(unsigned channel)
 {
 	return d->updateMostFull(channel);
@@ -755,7 +750,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	}
 
 	// build a name. For SoftwareActionSinks it always starts with "software/<name>"
-	std::string name("software/");
+	std::string name;
 	if (name_ == "") {
 		// if no name is provided, we generate one 
 		std::string seq;
@@ -783,7 +778,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << d->queue_addresses.size() << std::endl;
 	eb_address_t address = d->queue_addresses[channel];
 
-	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(*this, name, channel, num, address, d->container));
+	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(*this, get_object_path() + "/software", name, channel, num, address, d->container));
 	std::string sink_object_path = software_action_sink->getObjectPath();
 	if (d->container) {
 		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&ECA::removeSowftwareActionSink,this, software_action_sink.get())));
@@ -817,6 +812,21 @@ std::map< std::string, std::string > ECA::getSoftwareActionSinks() const
 	}
 	return out;
 }
+
+std::map< std::string, std::string > ECA::getOutputs() const
+{
+	std::map< std::string, std::string > out;
+	assert(d->ECAchannels.size() > 0);
+	for (auto &action_sink: d->ECAchannels[0]) {
+		Output* output = dynamic_cast<Output*>(action_sink.get());
+		if (output) {
+		    out[output->getObjectName()] = output->getObjectPath();
+		}
+	}
+	return out;
+}
+
+
 
 
 } // namespace

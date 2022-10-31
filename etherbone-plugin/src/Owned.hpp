@@ -35,6 +35,17 @@ namespace eb_plugin {
 		// @saftbus-export
 		void Own();
 
+		/// @brief The client which owns this object.
+		/// @return client which owns this object.
+		///
+		/// If there is no Owner, the empty string is returned.
+		/// Only the owner may access privileged methods on the object.
+		/// When the owning client disconnects, ownership will be 
+		/// automatically released, and if the object is Destructable,
+		/// the object will also be automatically Destroyed.
+		// @saftbus-export
+		std::string getOwner() const;
+
 	protected:
 		/// @brief Throw an exception if the caller is not the owner
 		void ownerOnly() const;
