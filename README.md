@@ -34,6 +34,12 @@ With a little care, a plugin can be written in a way to make the driver class us
 applications with almost the same syntax as in IPC applications. 
 
 
+### Rules for correct plugins
+There is a set of rules that emerge from the design of saftbus. Breaking these rules results in uexpected behavior of the services
+  - The destructor of a driver class must remove the service that points to it. If not it may happen that the service points to nonexisting driver object. The service object is removed by calling saftbus::Container::remove_object(const std::string &object_path). A consequence is that all driver classes need to store the object path.
+  - If the ownership feature of saftbus is used, object paths must reflect the parent child relationship correctly (if there is such a relationship). saftbus::Container::remove_object uses the object path to check if the removal candidate has children with a different owner. If that is the case removal is not possible. For example objects "/parent" and "/parent/child" are available on saftbus. If "/parent/child" is owned by client 4, and client 5 calls remove_object("/parent"), an exception will be thrown and the removal will not happen. If the child driver class can operate independently from the parent driver class the objects paths should be "/parent" and "/child" instead.
+  
+
 ## developer guide
 
 ### Concepts
