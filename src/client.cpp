@@ -166,7 +166,8 @@ namespace saftbus {
 	int SignalGroup::register_proxy(Proxy *proxy) 
 	{
 		// send one of the two socket ends to the server
-		std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for signals " << std::endl;
+		std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for service to send signals " << std::endl;
+		std::cerr << "register_proxy: keeping one fd " << d->fd_pair[1] << " for us to receive signals " << std::endl;
 
 		if (d->signal_group_id == -1) {
 			int fdresult = sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
@@ -221,7 +222,7 @@ namespace saftbus {
 	//   < 0 in case of failure (e.g. service object was destroyed)
 	int SignalGroup::wait_for_one_signal(int timeout_ms)
 	{
-		std::cerr << "wait_for_one_signal(" << timeout_ms << ")" << std::endl;
+		std::cerr << "wait_for_one_signal(" << timeout_ms << ") on fd " << d->pfd.fd << std::endl;
 		int result;
 		{
 			std::cerr << "wait for mutex" << std::endl;
@@ -232,8 +233,8 @@ namespace saftbus {
 			if (result > 0) {
 
 				if (d->pfd.revents & (POLLIN|POLLHUP) ) {
-					if (d->pfd.revents & POLLIN)  std::cerr << "POLLIN"  << std::endl;
-					if (d->pfd.revents & POLLHUP) std::cerr << "POLLHUP" << std::endl;
+					if (d->pfd.revents & POLLIN)  std::cerr << d->pfd.fd << " POLLIN"  << std::endl;
+					if (d->pfd.revents & POLLHUP) std::cerr << d->pfd.fd << " POLLHUP" << std::endl;
 					// std::cerr << "POLLIN|POLLHUP" << std::endl;
 					bool result = d->received.read_from(d->pfd.fd);
 					if (!result) {

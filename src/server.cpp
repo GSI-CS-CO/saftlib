@@ -45,6 +45,7 @@ namespace saftbus {
 			close(socket_fd);
 			// close all signal_fds
 			for (auto& fd_use_count: signal_fd_use_count) {
+				std::cout << "close signal fd " << fd_use_count.first << " with " << fd_use_count.second << " users " << std::endl;
 				close(fd_use_count.first);
 			}
 		}
@@ -76,14 +77,20 @@ namespace saftbus {
 		void use_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			++count;
+			std::cout << "Client::use_signal_fd(" << fd << ") count=" << count << std::endl;
 		}
 		void release_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			--count;
+			std::cout << "Client::release_signal_fd(" << fd << ") count=" << count << std::endl;
 			assert(count >= 0);
 			if (count == 0) {
-				close(fd);
-				signal_fd_use_count.erase(fd);
+				std::cout << "Client::release_signal_fd close(" << fd << ")" << std::endl;
+				// don't close it because the client might create other proxies later
+				// if fd would be closed here, client must be able to detect this in the proxy constructor and 
+				// send a new socket-pair-fd so that the connection can be re-established
+				// close(fd);
+				// signal_fd_use_count.erase(fd);
 			}
 		}
 	};

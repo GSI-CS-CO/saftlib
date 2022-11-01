@@ -35,8 +35,8 @@
 namespace eb_plugin {
 
 SoftwareActionSink::SoftwareActionSink(ECA &eca
-                                     , const std::string &name
 			                         , const std::string &obj_path
+                                     , const std::string &name
                                      , unsigned channel, unsigned num, eb_address_t queue_address
                                      , saftbus::Container *container)
 	: ActionSink(eca, obj_path, name, channel, num, container), queue(queue_address)

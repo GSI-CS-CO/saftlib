@@ -578,6 +578,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
     /* Check inputs */
     for (std::map<std::string,std::string>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
     {
+      std::cout << it->first << " " << it->second << std::endl;
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
         /* Set name */

@@ -67,8 +67,8 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 
 		if (io.getDirection() == IO_CFG_FIELD_DIR_INPUT  || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
 			std::unique_ptr<Input> input(new Input(object_path, *dynamic_cast<ECA_TLU*>(this), "", 
-												   eca_channel, io.getIndexIn(), &io, container));
-			std::cout << "add input " << input->getObjectPath() << std::endl;
+												   io.getIndexIn(), &io, container));
+			std::cout << "add input " << input->getObjectPath() << " index=" << io.getIndexIn() << std::endl;
 			if (container) {
 				std::unique_ptr<Input_Service> service(new Input_Service(input.get()));
 				container->create_object(input->getObjectPath(), std::move(service));

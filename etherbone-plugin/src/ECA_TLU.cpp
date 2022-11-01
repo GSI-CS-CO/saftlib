@@ -34,6 +34,7 @@ void ECA_TLU::configInput(unsigned channel,
 	                      uint64_t event,
 	                      uint32_t stable)
 {
+	std::cout << "ECA_TLU::configInput(channel=" << channel <<", enable=" << enable << ", event=" << event << ", stable=" << stable << ")" << std::endl;
 	etherbone::Cycle cycle;
 	cycle.open(device);
 	cycle.write(eca_tlu + ECA_TLU_INPUT_SELECT_RW, EB_DATA32, channel);
