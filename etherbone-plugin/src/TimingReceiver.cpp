@@ -46,7 +46,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, WhiteRabbit(OpenDevice::device)
 	, Watchdog(OpenDevice::device)
 	, ECA(saftd, OpenDevice::device, object_path, container)
-	, ECA_TLU(OpenDevice::device)
+	, ECA_TLU(OpenDevice::device, container)
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
 	, io_control(OpenDevice::device)
@@ -59,34 +59,46 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
 	}
 	
-	unsigned eca_channel = 0; // ECA channel 0 is always for IO
+	unsigned eca_channel_for_outputs = 0; // ECA channel 0 is always for IO
 
-	// create connections to ECA for all inputs and outputs
+	// attach Outputs to ECA and Inputs to ECA_TLU
 	auto &ios = io_control.get_ios();
 	for(auto &io: ios) {
-
+		// the object paths need to be created before, because Input needs Output-Partner-Path and vice versa
+		std::string input_path;
+		std::string output_path;
 		if (io.getDirection() == IO_CFG_FIELD_DIR_INPUT  || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
-			std::unique_ptr<Input> input(new Input(object_path, *dynamic_cast<ECA_TLU*>(this), "", 
+			input_path.append(object_path);
+			input_path.append("/inputs/");
+			input_path.append(io.getName());
+		}
+		if (io.getDirection() == IO_CFG_FIELD_DIR_OUTPUT || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
+			output_path.append(object_path);
+			output_path.append("/outputs/");
+			output_path.append(io.getName());
+		}
+
+		// create inputs
+		if (io.getDirection() == IO_CFG_FIELD_DIR_INPUT  || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
+			std::unique_ptr<Input> input(new Input(*dynamic_cast<ECA_TLU*>(this), input_path, output_path, 
 												   io.getIndexIn(), &io, container));
-			std::cout << "add input " << input->getObjectPath() << " index=" << io.getIndexIn() << std::endl;
 			if (container) {
 				std::unique_ptr<Input_Service> service(new Input_Service(input.get()));
-				container->create_object(input->getObjectPath(), std::move(service));
+				container->create_object(input_path, std::move(service));
 			}
 			addInput(std::move(input));
 		}
 
+		// create output
 		if (io.getDirection() == IO_CFG_FIELD_DIR_OUTPUT || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
-			std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io, "", 
-													  eca_channel, container));
+			std::unique_ptr<Output> output(new Output(*dynamic_cast<ECA*>(this), io, output_path, input_path, 
+													  eca_channel_for_outputs, container));
 			if (container) {
 				std::unique_ptr<Output_Service> service(new Output_Service(output.get()));
-				container->create_object(output->getObjectPath(), std::move(service));
+				container->create_object(output_path, std::move(service));
 			}
-			addActionSink(eca_channel, std::move(output));
+			addActionSink(eca_channel_for_outputs, std::move(output));
 		}
-
-
 	}
 
 	poll(); // update locked status ...

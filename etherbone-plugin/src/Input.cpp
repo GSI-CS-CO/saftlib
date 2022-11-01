@@ -31,13 +31,13 @@
 
 namespace eb_plugin {
 
-Input::Input(const std::string &parent_object_path
-			, ECA_TLU &tlu
-			, const std::string &partnerPath_
+Input::Input( ECA_TLU &tlu
+			, const std::string &input_object_path
+			, const std::string &output_partner_path
 			, unsigned io_idx
 			, Io *io_
 			, saftbus::Container *container)
-	: EventSource(parent_object_path + "/inputs/" + io_->getName(), io_->getName(), container), eca_tlu(tlu), io(io_), partnerPath(partnerPath_)
+	: EventSource(input_object_path, io_->getName(), container), eca_tlu(tlu), io(io_), partnerPath(output_partner_path)
 	, io_index(io_idx), enable(false), event(0), stable(80)
 {
 	eca_tlu.configInput(io_index, enable, event, stable);

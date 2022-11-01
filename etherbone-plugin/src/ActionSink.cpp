@@ -37,13 +37,13 @@ namespace eb_plugin {
 
 // ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, saftbus::Container *container_)//, sigc::slot<void> destroy)
 ActionSink::ActionSink(ECA &eca_
-                 	   , const std::string& obj_path
+                 	   , const std::string& action_sink_object_path
                      , const std::string& name_
                      , unsigned channel_
                      , unsigned num_
                      , saftbus::Container *container_)
  :	Owned(container_), 
-   object_path(obj_path + "/" + name_), 
+   object_path(action_sink_object_path), 
 	eca(eca_), name(name_), channel(channel_), num(num_),
 	minOffset(-1000000000L),  maxOffset(1000000000L), signalRate(std::chrono::nanoseconds(100000000L)),
 	overflowCount(0), actionCount(0), lateCount(0), earlyCount(0), conflictCount(0), delayedCount(0),

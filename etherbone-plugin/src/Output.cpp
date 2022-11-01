@@ -32,10 +32,11 @@ namespace eb_plugin {
 
 Output::Output(ECA &eca
      , Io &io_
-     , const std::string &partnerPath_
+     , const std::string &output_object_path
+     , const std::string &input_partner_path
      , unsigned channel
      , saftbus::Container *container)
-	: ActionSink(eca, eca.get_object_path() + "/outputs", io_.getName(), channel, io_.getIndexOut(), container), io(io_), partnerPath(partnerPath_)
+	: ActionSink(eca, output_object_path, io_.getName(), channel, io_.getIndexOut(), container), io(io_), partnerPath(input_partner_path)
 {
 
 }

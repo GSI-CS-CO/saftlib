@@ -11,18 +11,22 @@
 #include <memory>
 #include <map>
 
+#include <saftbus/service.hpp>
+
 namespace eb_plugin {
 
 class Input;
 
 class ECA_TLU {
 	etherbone::Device &device;
-	eb_address_t eca_tlu;
+	saftbus::Container *container;
 
+	eb_address_t eca_tlu;
 	std::vector<std::unique_ptr<Input> > inputs;
 
 public:
-	ECA_TLU(etherbone::Device &device);
+	ECA_TLU(etherbone::Device &device, saftbus::Container *container = nullptr);
+	~ECA_TLU();
 
 	/// @brief add source and let ECA take ownership of the sink object
 	void addInput(std::unique_ptr<Input> input);

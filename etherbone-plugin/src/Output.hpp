@@ -40,7 +40,8 @@ class Output : public ActionSink
 	public:
 		Output(ECA &eca
 		     , Io &io
-		     , const std::string &partnerPath
+		     , const std::string &output_object_path
+		     , const std::string &input_partner_path
 		     , unsigned channel
 		     , saftbus::Container *container = nullptr);
 

@@ -126,7 +126,7 @@ class ActionSink : public Owned
 		/// empty string, a name in the form "_<number>" will be generated. The ActionSink
 		/// is attached to the given ECA channel/subchannel.
 		ActionSink(ECA &eca
-			 	 , const std::string& object_path
+			 	 , const std::string& action_sink_object_path
 		         , const std::string& name
 		         , unsigned channel
 		         , unsigned num

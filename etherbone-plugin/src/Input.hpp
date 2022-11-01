@@ -31,9 +31,9 @@ class Input : public EventSource
 {
 	public:
 
-		Input(const std::string &parent_object_path
-			, ECA_TLU &eca_tlu
-		    , const std::string &partnerPath
+		Input(ECA_TLU &eca_tlu
+		    , const std::string &input_object_path
+			, const std::string &output_partner_path
 		    , unsigned io_index
 		    , Io *io
 		    , saftbus::Container *container = nullptr);
