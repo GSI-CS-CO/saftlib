@@ -141,12 +141,15 @@ namespace saftbus {
 
 
 		// these can be called whenever a client request ist handled
-		int get_calling_client_id();
-		void set_owner();
+		int get_calling_client_id() const;
 		void set_owner(Service *);
-		int get_owner();
-		void release_owner();
-		void owner_only();
+		void active_service_set_owner();
+		int  active_service_get_owner() const;
+		void active_service_release_owner();
+		void active_service_owner_only() const;
+		bool active_service_has_destruction_callback() const;
+		void active_service_remove();
+
 
 		void clear();
 

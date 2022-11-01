@@ -40,7 +40,8 @@ SoftwareActionSink::SoftwareActionSink(ECA &eca
                                      , unsigned channel, unsigned num, eb_address_t queue_address
                                      , saftbus::Container *container)
 	: ActionSink(eca, obj_path, name, channel, num, container), queue(queue_address)
-{}
+{
+}
 
 
 // SoftwareActionSink::SoftwareActionSink(const std::string &object_path, TimingReceiver *dev, const std::string &name, unsigned channel, unsigned num, eb_address_t queue, saftbus::Container *container)

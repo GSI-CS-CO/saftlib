@@ -21,6 +21,7 @@ namespace saftbus {
 		std::string object_path;
 		uint64_t object_id;
 		std::function<void()> destruction_callback; // a funtion can be attatched here that is called whenever the service is destroyed
+		bool active_service_remove; // initialized to false, only set to true by Container::active_service_remove() to allow services to remove themselves safely
 		void remove_signal_fd(int fd);
 		~Impl()  {
 			std::cerr << "Service::~Impl(" << object_path << ")" << std::endl;
@@ -68,6 +69,7 @@ namespace saftbus {
 		d->owner = -1;
 		d->interface_names = interface_names;
 		d->destruction_callback = destruction_callback;
+		d->active_service_remove = false;  
 	}
 	Service::~Service() {
 		std::cerr << "~Service " << d->object_path << std::endl;
@@ -313,7 +315,7 @@ namespace saftbus {
 		if (service->d->owner != -1) { // the service is owned
 			if (service->d->owner != d->connection->get_calling_client_id()) {
 				std::ostringstream msg;
-				msg << "cannot remove object \"" << object_path << "\" because it owned by " << service->d->owner;
+				msg << "cannot remove object \"" << object_path << "\" because it owned by other client" << service->d->owner;
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
 			}
 		}
@@ -393,6 +395,12 @@ namespace saftbus {
 		auto &service = find_result->second;
 		d->active_service = service.get();
 		service->call(client_fd, received, send);
+
+		if (d->active_service->d->active_service_remove) { // if the service marked itself as removed by calling Container::active_service_remove()
+			std::cerr << "active_service_remove true for " << d->active_service->d->object_path << std::endl;
+			remove_object(d->active_service->d->object_path);
+		}
+
 		d->active_service = nullptr;
 		return true;
 	}
@@ -425,7 +433,13 @@ namespace saftbus {
 				break;
 			}
 			std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
-			remove_object(iter->second->get_object_path());
+			if (iter->second->d->destruction_callback) {
+				// only remove those objects with a destruction_callback
+				remove_object(iter->second->get_object_path());
+			} else {
+				// if there is no destruction_callback, release object from clients ownership (because the client hung up)
+				iter->second->d->owner = -1;
+			}
 		} 
 	}
 
@@ -463,16 +477,8 @@ namespace saftbus {
 		saftbus::Loop::get_default().quit();
 	}
 
-	int Container::get_calling_client_id() {
+	int Container::get_calling_client_id() const {
 		return d->connection->get_calling_client_id();
-	}
-	void Container::set_owner() {
-		if (d->active_service) {
-			if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) {
-				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
-			}
-			d->active_service->d->owner = get_calling_client_id();
-		}
 	}
 	void Container::set_owner(Service *s) {
 		if (s->d->owner != -1 && s->d->owner != get_calling_client_id()) {
@@ -480,30 +486,50 @@ namespace saftbus {
 		}
 		s->d->owner = get_calling_client_id();
 	}
-	int Container::get_owner() {
+	void Container::active_service_set_owner() {
+		if (d->active_service) {
+			if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) {
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Already have an Owner");
+			}
+			d->active_service->d->owner = get_calling_client_id();
+		}
+	}
+	int Container::active_service_get_owner() const {
 		if (d->active_service) {
 			return d->active_service->d->owner;
 		}
 		return -1;
 	}
-	void Container::release_owner() {
+	void Container::active_service_release_owner() {
 		if (d->active_service) {
 			if (d->active_service->d->owner == -1) {
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Do not have an Owner");
 			}
-			owner_only();
+			active_service_owner_only();
 			d->active_service->d->owner = -1;
 		}
 	}
-	void Container::owner_only() {
+	void Container::active_service_owner_only() const {
 		if (d->active_service) {
-			std::cout << "owner: " << d->active_service->d->owner << "            caller: " << get_calling_client_id() << std::endl;
+			// std::cout << "owner: " << d->active_service->d->owner << "            caller: " << get_calling_client_id() << std::endl;
 			if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) { 
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
 			}
 		}
 	}
-
+	bool Container::active_service_has_destruction_callback() const {
+		if (d->active_service) {
+			if (d->active_service->d->destruction_callback) {
+				return true;
+			} 
+		}
+		return false;
+	}
+	void Container::active_service_remove() {
+		if (d->active_service) {
+			d->active_service->d->active_service_remove = true;
+		}
+	}
 
 	void Container::clear() {
 		d->objects.clear();

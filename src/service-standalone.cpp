@@ -127,23 +127,29 @@ namespace saftbus {
 		return true;
 	}
 
-	int Container::get_calling_client_id() {
+	int Container::get_calling_client_id() const {
 		assert(false);
 		return -1;
-	}
-	void Container::set_owner() {
-		assert(false);
 	}
 	void Container::set_owner(Service *service) {
 		assert(false);
 	}
-	int Container::get_owner() {
+	void Container::active_service_set_owner() {
 		assert(false);
 	}
-	void Container::release_owner() {
+	int Container::active_service_get_owner() const {
 		assert(false);
 	}
-	void Container::owner_only() {
+	void Container::active_service_release_owner() {
+		assert(false);
+	}
+	void Container::active_service_owner_only() const {
+		assert(false);
+	}
+	bool Container::active_service_has_destruction_callback() const {
+		assert(false);
+	}
+	void Container::active_service_remove() {
 		assert(false);
 	}
 

@@ -186,14 +186,13 @@ static int io_destroy (bool verbose_mode)
 {
   /* Helper */
   std::string c_name = "Unknown";
-  // std::vector <std::shared_ptr<OutputCondition_Proxy> > prox;
+  std::vector <std::shared_ptr<OutputCondition_Proxy> > prox;
 
   /* Perform selected action(s) */
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    auto container_proxy = saftbus::Container_Proxy::create("/saftbus");
 
     /* Search for IO name */
     std::map< std::string, std::string > outs;
@@ -212,17 +211,15 @@ static int io_destroy (bool verbose_mode)
         {
           std::shared_ptr<OutputCondition_Proxy> destroy_condition = OutputCondition_Proxy::create(all_conditions[condition_it]);
           c_name = all_conditions[condition_it];
-          //if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
-          try
+          if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
           {
-            container_proxy->remove_object(c_name);
-            // prox.push_back ( OutputCondition_Proxy::create(all_conditions[condition_it]));
-            // prox.back()->Destroy();
+            prox.push_back ( OutputCondition_Proxy::create(all_conditions[condition_it]));
+            prox.back()->Destroy();
             if (verbose_mode) { std::cout << "Destroyed " << c_name << "!" << std::endl; }
-          } catch (saftbus::Error &e)
-          //else
+          }
+          else
           {
-            if (verbose_mode) { std::cout << c_name << ": " << e.what() << std::endl; }
+            if (verbose_mode) { std::cout << "Found " << c_name << " but is not destructible!" << std::endl; }
           }
         }
       }
@@ -273,8 +270,7 @@ static int io_flip (bool verbose_mode)
           c_name = all_conditions[condition_it];
 
           /* Flip unowned conditions */
-          //if ((flip_condition->getOwner() == ""))
-          try
+          if ((flip_condition->getOwner() == ""))
           {
             if (verbose_mode) { std::cout << "Flipped " << c_name; }
             if (flip_condition->getActive())
@@ -287,10 +283,10 @@ static int io_flip (bool verbose_mode)
               flip_condition->setActive(true);
               if (verbose_mode) { std::cout << " to active!" << std::endl; }
             }
-          } catch(saftbus::Error & e)
-          // else
+          }
+          else
           {
-            if (verbose_mode) { std::cout << c_name << ": " << e.what() << std::endl; }
+            if (verbose_mode) { std::cout << "Found " << c_name << " but is already owned!" << std::endl; }
           }
         }
       }
@@ -388,7 +384,7 @@ static int io_list (void)
           if (info_condition->getActive())         { std::cout << "Active    "; }
           else                                     { std::cout << "Inactive  "; }
           std::cout << std::dec;
-          // std::cout << info_condition->getOwner() << " ";
+          std::cout << info_condition->getOwner() << " ";
           std::cout << std::endl;
         }
       }
@@ -578,7 +574,6 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
     /* Check inputs */
     for (std::map<std::string,std::string>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
     {
-      std::cout << it->first << " " << it->second << std::endl;
       if (((ioNameGiven && (it->first == ioName)) || !ioNameGiven))
       {
         /* Set name */
@@ -634,7 +629,6 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
         std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
         while(true) {
-          //eb_plugin::wait_for_signal();
           saftbus::SignalGroup::get_global().wait_for_signal();
         }
       }

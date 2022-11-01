@@ -173,7 +173,13 @@ namespace saftbus {
 			// std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
 			// std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
 			// std::cerr << "trying to call a function" << std::endl;
-			container_of_services.call_service(saftlib_object_id, fd, received, send);
+			if (!container_of_services.call_service(saftlib_object_id, fd, received, send)) { 
+				// call_service returns false if the service object was not found
+				// in this case an exception is sent to the Proxy 
+				send.put(saftbus::FunctionResult::EXCEPTION);
+				std::string what("remote call failed because service object was not found");
+				send.put(what);
+			} 
 			if (!send.empty()) {
 				send.write_to(fd);
 			}

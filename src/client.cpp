@@ -166,8 +166,8 @@ namespace saftbus {
 	int SignalGroup::register_proxy(Proxy *proxy) 
 	{
 		// send one of the two socket ends to the server
-		std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for service to send signals " << std::endl;
-		std::cerr << "register_proxy: keeping one fd " << d->fd_pair[1] << " for us to receive signals " << std::endl;
+		// std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for service to send signals " << std::endl;
+		// std::cerr << "register_proxy: keeping one fd " << d->fd_pair[1] << " for us to receive signals " << std::endl;
 
 		if (d->signal_group_id == -1) {
 			int fdresult = sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
