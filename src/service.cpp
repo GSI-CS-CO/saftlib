@@ -39,6 +39,22 @@ namespace saftbus {
 		std::map<unsigned, std::unique_ptr<Service> > objects; // Container owns the Service objects
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
 		Service *active_service; // this is set only during the call_service function
+		void erase_children_first(const std::string &object_path) {
+			bool found_child = false;
+			for (auto &obj: objects) {
+				if (obj.second->d->object_path.find(object_path) == 0 && 
+					obj.second->d->object_path.size() > object_path.size() && 
+					obj.second->d->object_path[object_path.size()] == '/') {
+					found_child = true;
+					erase_children_first(obj.second->d->object_path);
+				}
+			}
+			if (!found_child) {
+				auto id = object_path_lookup_table[object_path];
+				object_path_lookup_table.erase(object_path);
+				objects.erase(id);
+			}
+		}
 		Impl() {}
 		~Impl()  {
 			std::cerr << "Container::~Impl()" << std::endl;
@@ -48,7 +64,7 @@ namespace saftbus {
 			while(objects.size()) {
 				auto last = objects.end();
 				--last;
-				objects.erase(last);
+				erase_children_first(last->second->d->object_path);
 			}
 		}
 	};
@@ -311,6 +327,11 @@ namespace saftbus {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg);
 		}
 		auto object_id = find_result->second;
+		std::cerr << "Container::remove_object remove object id " << object_id << std::endl;
+		std::cerr << "all objects " << std::endl;
+		for (auto &obj: d->objects) {
+			std::cerr << "    " << obj.first << " owner " << obj.second->d->owner << std::endl;
+		}
 		auto &service = d->objects[object_id];
 		if (service->d->owner != -1) { // the service is owned
 			if (service->d->owner != d->connection->get_calling_client_id()) {

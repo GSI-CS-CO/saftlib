@@ -25,6 +25,7 @@
 #include <string>
 
 #include <saftbus/loop.hpp>
+#include <saftbus/service.hpp>
 
 #include "OpenDevice.hpp"
 #include "WhiteRabbit.hpp"

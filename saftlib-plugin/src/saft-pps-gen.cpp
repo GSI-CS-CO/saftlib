@@ -54,7 +54,7 @@ uint64_t delayed_counter       = 0;
 
 /* Prototypes */
 /* ==================================================================================================== */
-void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule);
+void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule, std::shared_ptr<SoftwareActionSink_Proxy> sink);
 void onOverflowCount(uint64_t count);
 void onActionCount(uint64_t count);
 void onLateCount(uint64_t count);
@@ -66,7 +66,7 @@ static void pps_help (void);
 
 /* Function onAction() */
 /* ==================================================================================================== */
-void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule)
+void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule, std::shared_ptr<SoftwareActionSink_Proxy> sink)
 {
   std::cout << "Got event at: 0x" << std::hex << (UTC?executed.getUTC():executed.getTAI()) << " -> " << tr_formatDate(executed, (verbose_mode?PMODE_VERBOSE:PMODE_NONE) | (UTC?PMODE_UTC:PMODE_NONE) ) << std::endl;
   if (verbose_mode)
@@ -75,12 +75,12 @@ void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::T
     std::cout << "  Flags:            0x" << flags << std::endl;
     std::cout << "  Rule:             0x" << rule << std::endl;
     std::cout << std::dec;
-    std::cout << "  Action Counter:   " << action_counter << std::endl;
-    std::cout << "  Overflow Counter: " << overflow_counter << std::endl;
-    std::cout << "  Late Counter:     " << late_counter << std::endl;
-    std::cout << "  Early Counter:    " << early_counter << std::endl;
-    std::cout << "  Conflict Counter: " << conflict_counter << std::endl;
-    std::cout << "  Delayed Counter:  " << delayed_counter << std::endl;
+    std::cout << "  Action Counter:   " << sink->getActionCount() << std::endl;
+    std::cout << "  Overflow Counter: " << sink->getOverflowCount() << std::endl;
+    std::cout << "  Late Counter:     " << sink->getLateCount() << std::endl;
+    std::cout << "  Early Counter:    " << sink->getEarlyCount() << std::endl;
+    std::cout << "  Conflict Counter: " << sink->getConflictCount() << std::endl;
+    std::cout << "  Delayed Counter:  " << sink->getDelayedCount() << std::endl;
   }
 }
 
@@ -338,7 +338,7 @@ int main (int argc, char** argv)
                                                   , std::placeholders::_3
                                                   , std::placeholders::_4
                                                   , std::placeholders::_5
-                                                  , 0);
+                                                  , 0, sink);
         
         /* Accept all kinds of events */
         condition->setAcceptConflict(true);

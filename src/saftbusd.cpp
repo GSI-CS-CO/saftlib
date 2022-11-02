@@ -24,8 +24,6 @@ int main(int argc, char *argv[]) {
 
 	saftbus::ServerConnection server_connection(plugins_and_args);
 	saftbus::Loop::get_default().run();
-	// in case of sources loaded into the loop, they must be destroyed before the plugins are unloaded
-	saftbus::Loop::get_default().clear(); 
 
 	std::cerr << "===================== saftbusd quit ============================" << std::endl;
 	return 0;

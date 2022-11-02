@@ -1,6 +1,7 @@
 #include "plugins.hpp"
 #include "make_unique.hpp"
 #include "service.hpp"
+#include "loop.hpp"
 
 #include <ltdl.h>
 
@@ -48,6 +49,9 @@ namespace saftbus {
 	LibraryLoader::~LibraryLoader()
 	{
 		std::cerr << "~LibraryLoader()" << std::endl;
+
+		// in case of sources loaded into the loop from this plugin, they must be destroyed before the plugin is unloaded
+		saftbus::Loop::get_default().clear(); 
 
 		if (d->handle != nullptr) {
 			lt_dlclose(d->handle);

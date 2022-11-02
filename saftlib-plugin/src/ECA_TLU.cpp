@@ -31,7 +31,11 @@ ECA_TLU::~ECA_TLU() {
 		for (auto &input: inputs) {
 			if (input) {
 				std::cerr << "   remove " << input->getObjectPath() << std::endl;
-				container->remove_object(input->getObjectPath());
+				try {
+					container->remove_object(input->getObjectPath());
+				} catch (saftbus::Error &e) {
+					std::cerr << "removal attempt failed: " << e.what() << std::endl;
+				}
 			}
 		}
 	}

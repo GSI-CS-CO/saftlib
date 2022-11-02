@@ -17,12 +17,15 @@ namespace saftbus {
 
 	Source::Source() 
 	{
+		std::cerr << "+++++++++++++++++    Sourc::Source()" << std::endl;
 		if (id_counter == -1) ++id_counter; // prevent id_counter to produce an id of 0 (no source should have id 0)
 		id = ++id_counter;
 		id |= ((long)rand()%0xffffffff)<<32;
 		valid = true;
 	}
-	Source::~Source() = default;
+	Source::~Source() {
+		std::cerr << "Source::~Source()" << std::endl;
+	}
 
 	void Source::add_poll(pollfd *pfd)
 	{
@@ -85,7 +88,7 @@ namespace saftbus {
 
 	bool Loop::iteration(bool may_block) {
 		++d->running_depth;
-		// std::cerr << "Loop::iteration " << d->running_depth << std::endl;
+		std::cerr << "Loop::iteration " << d->running_depth << std::endl;
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 		std::vector<struct pollfd> pfds;
 		// pfds.reserve(16);
@@ -263,16 +266,19 @@ namespace saftbus {
 		if (s.loop_id == d->id) { // make sure s was connected to this loop
 			auto source = d->sources.begin();
 			if ((source=std::find(source, d->sources.end(), s)) != d->sources.end()) {
+				std::cerr << "Loop::remove found in sources" << std::endl;
 				(*source)->valid = false;
 			}
 			source = d->added_sources.begin();
 			if ((source=std::find(source, d->added_sources.end(), s)) != d->added_sources.end()) {
+				std::cerr << "Loop::remove found in added sources" << std::endl;
 				(*source)->valid = false;
 			}
 		}
 	}
 
 	void Loop::clear() {
+		std::cerr << "************ Loop::clear()" << std::endl;
 		d->sources.clear();
 		d->added_sources.clear();
 	}
@@ -291,7 +297,9 @@ namespace saftbus {
 		}
 	}
 
-	TimeoutSource::~TimeoutSource() = default;
+	TimeoutSource::~TimeoutSource() {
+		std::cerr << "TimeoutSource::~TimeoutSource()" << std::endl;
+	}
 
 	// prepare is called by Loop to find out the next dispatch_time of all sources
 	// and it will wait for min() of all reported dispatch_times.
@@ -348,7 +356,7 @@ namespace saftbus {
 	}
 	IoSource::~IoSource() 
 	{
-		// std::cout << "IOSource::~IOSource() " << pfd.fd << std::endl;
+		std::cout << "IOSource::~IOSource() " << pfd.fd << std::endl;
 		remove_poll(&pfd);
 		if (all_fds.find(pfd.fd) == all_fds.end()) assert(false);
 		all_fds.erase(pfd.fd);

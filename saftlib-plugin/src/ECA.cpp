@@ -619,12 +619,17 @@ ECA::ECA(SAFTd &saftd, etherbone::Device &device, const std::string &object_path
 
 ECA::~ECA() 
 {
+	std::cerr << "ECA::~ECA()" << std::endl;
 	if (d->container) {
 		for (auto &channel: d->ECAchannels) {
 			for (auto &actionSink: channel) {
 				if (actionSink) {
 					std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
-					d->container->remove_object(actionSink->getObjectPath());
+					try {
+						d->container->remove_object(actionSink->getObjectPath());
+					} catch (saftbus::Error &e) {
+						std::cerr << "removal attempt failed: " << e.what() << std::endl;
+					}
 				}
 			}
 		}
