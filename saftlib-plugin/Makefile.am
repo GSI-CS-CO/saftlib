@@ -143,6 +143,7 @@ leapseconddir = $(datadir)/@PACKAGE@
 leapsecond_DATA = leap-seconds.list
 EXTRA_DIST = leap-seconds.list
 
+dist_bin_SCRIPTS = src/saftd
 
 
 bin_PROGRAMS = eb-plugin-ctl eb-standalone software-tr soft-tr wait-msi saft-ctl saft-io-ctl
