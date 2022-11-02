@@ -66,8 +66,8 @@ namespace saftlib {
 		void Destroy();
 
 		/// @brief The object was destroyed.
-		// @saftbus-signal
-		std::function<void()> Destroyed;
+		// // @saftbus-signal
+		// std::function<void()> Destroyed;
 
 	protected:
 		/// @brief Throw an exception if the caller is not the owner

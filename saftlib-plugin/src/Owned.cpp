@@ -7,9 +7,9 @@ namespace saftlib {
 	{ }
 
 	Owned::~Owned() {
-		if (Destroyed) {
-			Destroyed();
-		}
+		// if (Destroyed) {
+		// 	Destroyed();
+		// }
 	}
 
 	void Owned::Disown() {
@@ -52,9 +52,9 @@ namespace saftlib {
 		if (cont) {
 			cont->active_service_remove();
 		}
-		if (Destroyed) {
-			Destroyed();
-		}
+		// if (Destroyed) {
+		// 	Destroyed();
+		// }
 	}
  
 
