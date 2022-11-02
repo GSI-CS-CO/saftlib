@@ -7,7 +7,7 @@
 #define MAILBOX_VENDOR_ID        0x651
 #define MAILBOX_DEVICE_ID       0xfab0bdd8
 
-namespace eb_plugin {
+namespace saftlib {
 
 Mailbox::Mailbox(etherbone::Device &dev) 
 	: device(dev)

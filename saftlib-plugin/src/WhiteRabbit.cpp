@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace eb_plugin {
+namespace saftlib {
 
 #define WR_API_VERSION          4
 

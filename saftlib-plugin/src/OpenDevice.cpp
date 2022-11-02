@@ -9,7 +9,7 @@
 #include <functional>
 #include <cassert>
 
-namespace eb_plugin {
+namespace saftlib {
 
 const eb_data_t MSI_TEST_VALUE = 0x12345678;
 

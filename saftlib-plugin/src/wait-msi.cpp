@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
 	Handler handler(socket);
 
-	saftbus::Loop::get_default().connect<eb_plugin::EB_Source>(socket);
+	saftbus::Loop::get_default().connect<saftlib::EB_Source>(socket);
 
 	saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 		[](){

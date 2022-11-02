@@ -13,7 +13,7 @@
 #include <iomanip>
 #include <functional>
 
-namespace eb_plugin {
+namespace saftlib {
 
 	void EB_Forward::open_pts() 
 	{

@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_ECA_DRIVER_HPP_
-#define EB_PLUGIN_ECA_DRIVER_HPP_
+#ifndef saftlib_ECA_DRIVER_HPP_
+#define saftlib_ECA_DRIVER_HPP_
 
 
 #ifndef ETHERBONE_THROWS
@@ -13,7 +13,7 @@
 
 #include <memory>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class SAFTd;
 class OpenDevice;

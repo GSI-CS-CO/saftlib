@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_TEMP_SENSOR_HPP_
-#define EB_PLUGIN_TEMP_SENSOR_HPP_
+#ifndef saftlib_TEMP_SENSOR_HPP_
+#define saftlib_TEMP_SENSOR_HPP_
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -12,7 +12,7 @@
 #include <map>
 #include <string>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class TempSensor {
 	etherbone::Device &device;

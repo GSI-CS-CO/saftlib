@@ -39,7 +39,7 @@
 #include <algorithm>
 
 
-namespace eb_plugin {
+namespace saftlib {
 
 TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string &eb_path, int polling_interval_ms, saftbus::Container *container)
 	: OpenDevice(saftd.get_etherbone_socket(), eb_path, polling_interval_ms, &saftd)
@@ -138,15 +138,15 @@ std::string TimingReceiver::getName() const
 	return name;
 }
 
-eb_plugin::Time TimingReceiver::CurrentTime()
+saftlib::Time TimingReceiver::CurrentTime()
 {
 	if (!WhiteRabbit::locked) {
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
 	}
-	return eb_plugin::makeTimeTAI(ReadRawCurrentTime());
+	return saftlib::makeTimeTAI(ReadRawCurrentTime());
 }
 
-void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time)
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time)
 {
 	std::cerr << "TimingReceiver::InjectEvent" << std::endl;
 	ECA::InjectEventRaw(event, param, time.getTAI());

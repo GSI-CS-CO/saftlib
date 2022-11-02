@@ -29,7 +29,7 @@
 #include "Input.hpp"
 #include "eca_tlu_regs.h"
 
-namespace eb_plugin {
+namespace saftlib {
 
 Input::Input( ECA_TLU &tlu
 			, const std::string &input_object_path

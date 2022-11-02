@@ -31,7 +31,7 @@
 
 #include <functional>
 
-namespace eb_plugin {
+namespace saftlib {
 
 
 class SoftwareCondition_Service;
@@ -65,7 +65,7 @@ public:
 	/// specified that the respective error should be accepted.
 	/// 
 	// @saftbus-signal
-	std::function< void(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) > SigAction;
+	std::function< void(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) > SigAction;
 
 	typedef SoftwareCondition_Service ServiceType;
 };

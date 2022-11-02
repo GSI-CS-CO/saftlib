@@ -1,6 +1,6 @@
 #include "EventSource.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 	EventSource::EventSource(const std::string &obj_path, const std::string &name, saftbus::Container *container) 
 		: Owned(container)

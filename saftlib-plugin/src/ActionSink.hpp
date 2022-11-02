@@ -17,8 +17,8 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef EB_PLUGIN_ACTION_SINK_HPP
-#define EB_PLUGIN_ACTION_SINK_HPP
+#ifndef saftlib_ACTION_SINK_HPP
+#define saftlib_ACTION_SINK_HPP
 
 #include <map>
 #include <set>
@@ -36,11 +36,11 @@
 #include "Owned.hpp"
 #include "ECA.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 // class ECA;
 
-// de.gsi.eb_plugin.ActionSink:
+// de.gsi.saftlib.ActionSink:
 /// @brief An output through which actions flow.
 /// 
 /// Conditions created on this ActionSink specify which timing events are
@@ -337,7 +337,7 @@ class ActionSink : public Owned
 		/// action.		
 		///
 		// @saftbus-signal		
-		std::function< void(uint32_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigLate;
+		std::function< void(uint32_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigLate;
 
 
 
@@ -366,7 +366,7 @@ class ActionSink : public Owned
 		/// @param deadline The desired execution timestamp (event time + offset).
 		/// @param executed The actual execution timestamp.
 		// @saftbus-signal		
-		std::function< void(uint32_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigEarly;
+		std::function< void(uint32_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigEarly;
 
 		/// @brief  The number of actions which conflicted. 
 		/// @return The number of actions which conflicted. 
@@ -391,7 +391,7 @@ class ActionSink : public Owned
 		/// @param executed The timestamp when the action was actually executed.	
 		///
 		// @saftbus-signal		
-		std::function< void(uint64_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigConflict;
+		std::function< void(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigConflict;
 
 		/// @brief  The number of actions which have been delayed.
 		/// @return The number of actions which have been delayed.
@@ -418,7 +418,7 @@ class ActionSink : public Owned
 		/// @param executed The timestamp when the action was actually executed.	
 		///
 		// @saftbus-signal		
-		std::function< void(uint64_t count, uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed) > SigDelayed;
+		std::function< void(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigDelayed;
 		
 
 		// Do the grunt work to create a condition

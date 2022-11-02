@@ -54,7 +54,7 @@ bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
 
 // this will be called, in case we are snooping for events
-static void on_action(uint64_t id, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags)
+static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
   std::cout << tr_formatActionEvent(id, pmode);
@@ -64,7 +64,7 @@ static void on_action(uint64_t id, uint64_t param, eb_plugin::Time deadline, eb_
 } // on_action
 
 
-using namespace eb_plugin;
+using namespace saftlib;
 using namespace std;
 
 // display help
@@ -111,7 +111,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
                           std::shared_ptr<SoftwareActionSink_Proxy> sink) {
   uint32_t       nFreeConditions;
   bool          wrLocked;
-  eb_plugin::Time   wrTime;
+  saftlib::Time   wrTime;
   int           width;
   string        fmt;
 
@@ -267,9 +267,9 @@ int main(int argc, char** argv)
   uint64_t eventID     = 0x0;     // full 64 bit EventID contained in the timing message
   uint64_t eventParam  = 0x0;     // full 64 bit parameter contained in the timing message
   uint64_t eventTNext  = 0x0;     // time for next event (this value is added to the current time or the next PPS, see option -p
-  eb_plugin::Time eventTime;     // time for next event in PTP time
-  eb_plugin::Time ppsNext;     // time for next PPS
-  eb_plugin::Time wrTime;     // current WR time
+  saftlib::Time eventTime;     // time for next event in PTP time
+  saftlib::Time ppsNext;     // time for next PPS
+  saftlib::Time wrTime;     // current WR time
 
   // variables attach, remove
   char    *deviceName = NULL;
@@ -525,9 +525,9 @@ int main(int argc, char** argv)
         eventTime = (ppsNext + eventTNext); }
       else if (absoluteTime) {
         if (UTC) {
-          eventTime = eb_plugin::makeTimeUTC(eventTNext, UTCleap);
+          eventTime = saftlib::makeTimeUTC(eventTNext, UTCleap);
         } else {
-          eventTime = eb_plugin::makeTimeTAI(eventTNext);
+          eventTime = saftlib::makeTimeTAI(eventTNext);
         }
       } // ppsAlign
       else eventTime = wrTime + eventTNext;

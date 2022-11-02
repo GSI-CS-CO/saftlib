@@ -8,7 +8,7 @@
 
 #include "eca_tlu_regs.h"
 
-namespace eb_plugin {
+namespace saftlib {
 
 ECA_TLU::ECA_TLU(etherbone::Device &dev, saftbus::Container *cont) 
 	: device(dev)

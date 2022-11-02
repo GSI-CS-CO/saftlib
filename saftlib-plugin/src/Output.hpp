@@ -17,13 +17,13 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef EB_PLUGIN_OUTPUT_HPP
-#define EB_PLUGIN_OUTPUT_HPP
+#ifndef saftlib_OUTPUT_HPP
+#define saftlib_OUTPUT_HPP
 
 #include "Io.hpp"
 #include "ActionSink.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 /// de.gsi.saftlib.OutputActionSink
 /// @brief An output through which on/off actions flow.

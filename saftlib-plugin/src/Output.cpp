@@ -23,7 +23,7 @@
 #include "OutputCondition.hpp"
 #include "OutputCondition_Service.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 // std::shared_ptr<Output> Output::create(const ConstructorType& args)
 // {

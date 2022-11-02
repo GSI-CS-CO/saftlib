@@ -36,7 +36,7 @@
 
 #define IO_SER_CLK_GEN_DEBUG_MODE    0
 
-namespace eb_plugin {
+namespace saftlib {
 
 
 class SerdesClockGen 

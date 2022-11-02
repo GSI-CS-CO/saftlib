@@ -16,7 +16,7 @@
 #include "TimingReceiver_Service.hpp"
 
 
-namespace eb_plugin {
+namespace saftlib {
 
 
 	SAFTd::SAFTd(saftbus::Container *cont)
@@ -39,7 +39,7 @@ namespace eb_plugin {
 		socket.attach(&eb_slave_sdb, this);
 
 		// connect the eb-source to saftbus::Loop in order to react on incoming MSIs from hardware
-		eb_source = saftbus::Loop::get_default().connect<eb_plugin::EB_Source>(socket);
+		eb_source = saftbus::Loop::get_default().connect<saftlib::EB_Source>(socket);
 	}
 
 	SAFTd::~SAFTd() 

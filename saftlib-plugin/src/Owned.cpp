@@ -1,7 +1,7 @@
 #include "Owned.hpp"
 
 
-namespace eb_plugin {
+namespace saftlib {
 
 	Owned::Owned(saftbus::Container *container) : cont(container) 
 	{ }

@@ -10,7 +10,7 @@
 
 #include "TimingReceiver.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 	class SAFTd : public etherbone::Handler {
 	public:

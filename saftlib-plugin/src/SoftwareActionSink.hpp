@@ -17,8 +17,8 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef EB_PLUGIN_SOFTWARE_ACTION_SINK_H
-#define EB_PLUGIN_SOFTWARE_ACTION_SINK_H
+#ifndef saftlib_SOFTWARE_ACTION_SINK_H
+#define saftlib_SOFTWARE_ACTION_SINK_H
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -29,7 +29,7 @@
 
 #include "ActionSink.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 	class SoftwareCondition;
 	class ECA;

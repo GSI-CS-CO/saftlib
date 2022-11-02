@@ -7,7 +7,7 @@
 #define WATCHDOG_VENDOR_ID        0x00000651
 #define WATCHDOG_DEVICE_ID        0xb6232cd3
 
-namespace eb_plugin {
+namespace saftlib {
 
 Watchdog::Watchdog(etherbone::Device &dev) 
 	: device(dev)

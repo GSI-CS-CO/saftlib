@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 	Handler handler(socket);
 	socket.attach(&eb_slave_sdb, &handler);
 	
-	saftbus::Loop::get_default().connect<eb_plugin::EB_Source>(socket);
+	saftbus::Loop::get_default().connect<saftlib::EB_Source>(socket);
 	try {
 		saftbus::Loop::get_default().run();
 	} catch (etherbone::exception_t &e) {

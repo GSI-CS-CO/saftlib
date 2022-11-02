@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 
-namespace eb_plugin
+namespace saftlib
 {
 		
 	//extern const int64_t leap_second_list[][2];

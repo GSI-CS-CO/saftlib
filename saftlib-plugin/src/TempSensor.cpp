@@ -2,7 +2,7 @@
 
 #include "ats_regs.h"
 
-namespace eb_plugin {
+namespace saftlib {
 
 TempSensor::TempSensor(etherbone::Device &dev) 
 	: device(dev)

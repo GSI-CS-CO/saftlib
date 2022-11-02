@@ -59,7 +59,7 @@
 
 /* Namespace */
 /* ==================================================================================================== */
-using namespace eb_plugin;
+using namespace saftlib;
 using namespace std;
 
 /* Global */
@@ -84,7 +84,7 @@ static int  io_flip        (bool verbose_mode);
 static int  io_list        (void);
 static int  io_list_i_to_e (void);
 static int  io_print_table (bool verbose_mode);
-static void io_catch_input (uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags);
+static void io_catch_input (uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags);
 static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
 /* Function io_create() */
@@ -164,7 +164,7 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
     if (disown) { condition->Disown(); }
     else        { std::cout << "Condition created..." << std::endl; 
       while(true) {
-        // eb_plugin::wait_for_signal();
+        // saftlib::wait_for_signal();
         saftbus::SignalGroup::get_global().wait_for_signal();
       }
     }
@@ -526,10 +526,10 @@ static int io_list_i_to_e()
 
 /* Function io_catch_input() */
 /* ==================================================================================================== */
-static void io_catch_input(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags)
+static void io_catch_input(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
   /* Helpers */
-  eb_plugin::Time time = deadline - IO_CONDITION_OFFSET;
+  saftlib::Time time = deadline - IO_CONDITION_OFFSET;
   std::string catched_io = "Unknown";
 
   /* !!! evaluate prefix<>name map */

@@ -10,7 +10,7 @@
 
 namespace saftbus {
 
-	extern "C" typedef std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > (*create_services_function) (saftbus::Container *container, const std::vector<std::string> &args);
+	extern "C" typedef void (*create_services_function) (saftbus::Container *container, const std::vector<std::string> &args);
 
 	struct LibraryLoader::Impl {
 		lt_dlhandle handle;
@@ -41,21 +41,20 @@ namespace saftbus {
 		}
 	}
 
-	std::vector<std::pair<std::string, std::unique_ptr<Service> > > LibraryLoader::create_services(Container *container, const std::vector<std::string> &args) {
-		auto result = d->create_services(container, args);
-		return result;
+	void LibraryLoader::create_services(Container *container, const std::vector<std::string> &args) {
+		d->create_services(container, args);
 	}
 
 	LibraryLoader::~LibraryLoader()
 	{
-		// std::cerr << "~LibraryLoader()" << std::endl;
+		std::cerr << "~LibraryLoader()" << std::endl;
 
 		if (d->handle != nullptr) {
 			lt_dlclose(d->handle);
 		}		
 		int result = lt_dlexit();
 		assert(result == 0);
-		// std::cerr << "lt_dlexit was successful" << std::endl;
+		std::cerr << "lt_dlexit was successful" << std::endl;
 	}
 
 }

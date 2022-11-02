@@ -17,8 +17,8 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef EB_PLUGIN_TIMING_RECEIVER_HPP_
-#define EB_PLUGIN_TIMING_RECEIVER_HPP_
+#ifndef saftlib_TIMING_RECEIVER_HPP_
+#define saftlib_TIMING_RECEIVER_HPP_
 
 #include <deque>
 #include <memory>
@@ -38,7 +38,7 @@
 // @saftbus-include
 #include <Time.hpp>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class SAFTd;
 
@@ -119,7 +119,7 @@ public:
 	/// milliseconds behind the true time.
 	///
 	// @saftbus-export
-	eb_plugin::Time CurrentTime();
+	saftlib::Time CurrentTime();
 
 	/// @brief        Simulate the receipt of a timing event
 	/// @param event  The event identifier which is matched against Conditions
@@ -131,7 +131,7 @@ public:
 	/// desired behaviour without needing the data master to send anything.
 	///
 	// @saftbus-export
-	void InjectEvent(uint64_t event, uint64_t param, eb_plugin::Time time);
+	void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time);
 
 
 

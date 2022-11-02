@@ -33,7 +33,7 @@
 #include <sstream>
 #include <cassert>
 
-namespace eb_plugin {
+namespace saftlib {
 
 // ActionSink::ActionSink(const std::string& objectPath, TimingReceiver* dev_, const std::string& name_, unsigned channel_, unsigned num_, saftbus::Container *container_)//, sigc::slot<void> destroy)
 ActionSink::ActionSink(ECA &eca_

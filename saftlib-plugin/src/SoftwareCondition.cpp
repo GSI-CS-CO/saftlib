@@ -24,7 +24,7 @@
 
 #include "SoftwareCondition.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 SoftwareCondition::SoftwareCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, saftbus::Container *container = nullptr)
  : Owned(container), Condition(sink, number, active, id, mask, offset, number)

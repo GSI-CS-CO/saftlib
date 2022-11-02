@@ -12,8 +12,8 @@
 #include <iostream>
 
 int action_count = 0;
-std::shared_ptr<eb_plugin::TimingReceiver_Proxy> tr;
-void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) {
+std::shared_ptr<saftlib::TimingReceiver_Proxy> tr;
+void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
 	std::cout << "event " << event << " " 
 	          << "param " << param << " " 
 	          << "deadline " << deadline.getTAI() << " "
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
 
 
-	auto saftd = eb_plugin::SAFTd_Proxy::create("/de/gsi/saftlib");
+	auto saftd = saftlib::SAFTd_Proxy::create("/de/gsi/saftlib");
 
 	if (argc == 3 ) {
 
@@ -43,14 +43,14 @@ int main(int argc, char *argv[]) {
 			std::cerr << device.first << " " << device.second << std::endl;
 		}
 
-		tr = eb_plugin::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
+		tr = saftlib::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
 		auto sas_object_path = tr->NewSoftwareActionSink("");
 		std::cerr << "sas_object_path = " << sas_object_path << std::endl;
 		// auto sas_object_path2 = tr->NewSoftwareActionSink("");
 		// std::cerr << "sas_object_path2 = " << sas_object_path2 << std::endl;
 
-		auto sas_proxy = eb_plugin::SoftwareActionSink_Proxy::create(sas_object_path);
-		// auto sas_proxy2 = eb_plugin::SoftwareActionSink_Proxy::create(sas_object_path2);
+		auto sas_proxy = saftlib::SoftwareActionSink_Proxy::create(sas_object_path);
+		// auto sas_proxy2 = saftlib::SoftwareActionSink_Proxy::create(sas_object_path2);
 
 		auto condition_obj_path = sas_proxy->NewCondition(true, 0, 0, 0);
 		std::cerr << "new Condition: " << condition_obj_path << std::endl; 
@@ -65,18 +65,18 @@ int main(int argc, char *argv[]) {
 		// Wenn aber das Probramm mit SigAbort beendet wird (also auch kein SoftwareActionSink_Proxy destruktor sich abmelden kann),
 		// Dann geht es beim naechsten Start wieder nicht
 
-		auto cond_proxy = eb_plugin::SoftwareCondition_Proxy::create(condition_obj_path);
+		auto cond_proxy = saftlib::SoftwareCondition_Proxy::create(condition_obj_path);
 		cond_proxy->SigAction = &on_action;
 
 
 
 
-		// auto B1 = eb_plugin::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B1");
+		// auto B1 = saftlib::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B1");
 		// B1->setOutputEnable(true);
 		// B1->NewCondition(true, 0, 0xffffffffffffffff,         0, true);
 		// B1->NewCondition(true, 0, 0xffffffffffffffff, 100000000, false);
 
-		// auto B2 = eb_plugin::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B2");
+		// auto B2 = saftlib::Output_Proxy::create("/de/gsi/saftlib/tr0/outputs/B2");
 		// B2->setOutputEnable(true);
 		// B2->NewCondition(true, 0, 0xffffffffffffffff,         0, true);
 		// B2->NewCondition(true, 0, 0xffffffffffffffff, 100000000, false);

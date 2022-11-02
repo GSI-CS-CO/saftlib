@@ -17,8 +17,8 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef EB_PLUGIN_OUTPUT_CONDITION_HPP
-#define EB_PLUGIN_OUTPUT_CONDITION_HPP
+#ifndef saftlib_OUTPUT_CONDITION_HPP
+#define saftlib_OUTPUT_CONDITION_HPP
 
 #include "Owned.hpp"
 #include "Condition.hpp"
@@ -30,7 +30,7 @@
 
 #include <functional>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class OutputCondition_Service;
 

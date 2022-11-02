@@ -30,7 +30,7 @@
 #include "ActionSink.hpp"
 #include "TimingReceiver.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 Condition::Condition(ActionSink *sink_, unsigned number_, bool active_, uint64_t id_, uint64_t mask_, int64_t offset_, uint32_t tag_)
  : objectPath(sink_->getObjectPath()), sink(sink_), number(number_),

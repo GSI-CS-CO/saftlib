@@ -6,7 +6,7 @@
 
 #include <saftbus/error.hpp>
 
-namespace eb_plugin {
+namespace saftlib {
 
 Io::Io(etherbone::Device &dev
 	 , const std::string &name

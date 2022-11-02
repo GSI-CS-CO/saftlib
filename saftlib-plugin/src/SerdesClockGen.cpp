@@ -32,7 +32,7 @@
 #include <iostream>
 
 
-namespace eb_plugin {
+namespace saftlib {
 
 void SerdesClockGen::CalcClockParameters(double hi, double lo, uint64_t phase, struct SerClkGenControl *control)
 {

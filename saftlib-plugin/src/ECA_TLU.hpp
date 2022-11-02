@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_ECA_TLU_HPP_
-#define EB_PLUGIN_ECA_TLU_HPP_
+#ifndef saftlib_ECA_TLU_HPP_
+#define saftlib_ECA_TLU_HPP_
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -13,7 +13,7 @@
 
 #include <saftbus/service.hpp>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class Input;
 

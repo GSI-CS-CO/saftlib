@@ -41,7 +41,7 @@ uint64_t     tr_mask(int i                    	  // number of bits
                     );
 
 // formatting of date for output
-std::string tr_formatDate(eb_plugin::Time time,     // time [ns]
+std::string tr_formatDate(saftlib::Time time,     // time [ns]
                           uint32_t pmode      	  // mode for printing
                           );
 

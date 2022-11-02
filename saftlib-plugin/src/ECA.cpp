@@ -24,7 +24,7 @@
 #include "ats_regs.h"
 
 
-namespace eb_plugin {
+namespace saftlib {
 
 
 #define EVENT_SDB_DEVICE_ID             0x8752bf45

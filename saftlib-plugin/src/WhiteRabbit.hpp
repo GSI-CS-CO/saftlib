@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_WHITE_RABBIT_HPP_
-#define EB_PLUGIN_WHITE_RABBIT_HPP_
+#ifndef saftlib_WHITE_RABBIT_HPP_
+#define saftlib_WHITE_RABBIT_HPP_
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -10,7 +10,7 @@
 
 #include <functional>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class WhiteRabbit {
 	eb_address_t pps;

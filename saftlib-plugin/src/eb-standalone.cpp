@@ -11,7 +11,7 @@
 
 int action_count = 0;
 
-void on_action(uint64_t event, uint64_t param, eb_plugin::Time deadline, eb_plugin::Time executed, uint16_t flags) {
+void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
 	std::cout << "event " << event << " " 
 	          << "param " << param << " " 
 	          << "deadline " << deadline.getTAI() << " "
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 	}	
 
 
-	eb_plugin::SAFTd saftd;
+	saftlib::SAFTd saftd;
 
 	std::cerr << argv[2] << std::endl;
 	auto tr_obj_path = saftd.AttachDevice(argv[1], argv[2], 100);
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 			std::cerr << device.first << " " << device.second << std::endl;
 		}
 
-		eb_plugin::TimingReceiver* tr = saftd.getTimingReceiver(tr_obj_path);
+		saftlib::TimingReceiver* tr = saftd.getTimingReceiver(tr_obj_path);
 		auto softwareActionSink_obj_path = tr->NewSoftwareActionSink("");
 		std::cerr << "new NewSoftwareActionSink: " << softwareActionSink_obj_path << std::endl; 
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
 
 		auto timeout = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind([](eb_plugin::TimingReceiver* tr){
+			std::bind([](saftlib::TimingReceiver* tr){
 				std::cout << "inject event" << std::endl;
 				tr->InjectEvent(0,0,tr->CurrentTime()+100000000); return true;
 			}, tr), 

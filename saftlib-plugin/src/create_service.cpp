@@ -8,8 +8,7 @@
 #include <string>
 #include <sstream>
 
-std::unique_ptr<eb_plugin::SAFTd> saftd;
-// eb_plugin::SAFTd_Service *saftd_service;
+std::unique_ptr<saftlib::SAFTd> saftd;
 int ref_count = 0;
                                                                                     
 extern "C" 
@@ -24,21 +23,23 @@ void destroy_service() {
 }
 
 extern "C" 
-std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_services(saftbus::Container *container, const std::vector<std::string> &args) {
+void create_services(saftbus::Container *container, const std::vector<std::string> &args) {
 	if (!saftd) {
 		// There can only be one saftd.
 		// Always return the same instance of saftd.
-		saftd         = std::move(std::unique_ptr<eb_plugin::SAFTd>(new eb_plugin::SAFTd(container)));
+		saftd         = std::move(std::unique_ptr<saftlib::SAFTd>(new saftlib::SAFTd(container)));
 	}
 
 	// create a new Service and return it. Maintain a reference count
 	++ref_count;
-	std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > services;
-	// services.push_back(std::make_pair(
-	// 	saftd->getObjectPath(), 
-	// 	std::move(std::unique_ptr<eb_plugin::SAFTd_Service>(new eb_plugin::SAFTd_Service(saftd.get(), std::bind(&destroy_service))))
-	// 	));
+	container->create_object(saftd->getObjectPath(), std::move(std::unique_ptr<saftlib::SAFTd_Service>(new saftlib::SAFTd_Service(saftd.get(), std::bind(&destroy_service)))));
 
+	// attach devices as specified in args
+	// this must happen after the SAFTd_Service was moved to the saftbus::Container
+	// saftbus::Container remembers the order of creation of all services and in case of shutdown, 
+	// it destroyes them in reverse order. If SAFTd_Service is destroyed before the attached devices 
+	// then destroying the attached devices will result in segmentation faults (because the destruction_callback
+	// is part of SAFTd_Service which doesnt exist anymore)
 	for (auto &arg: args) {
 		size_t pos = arg.find(':'); // the position of the first colon ':'
 		if (pos == arg.npos || pos+1 == arg.size()) {
@@ -61,10 +62,6 @@ std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_
 		}
 		saftd->AttachDevice(name, path, poll_interval_ms);
 	}
-
-	container->create_object(saftd->getObjectPath(), std::move(std::unique_ptr<eb_plugin::SAFTd_Service>(new eb_plugin::SAFTd_Service(saftd.get(), std::bind(&destroy_service)))));
-
-	return services;
 }
 
 

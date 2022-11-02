@@ -1,9 +1,9 @@
-#ifndef EB_PLUGIN_OWNED_HPP_
-#define EB_PLUGIN_OWNED_HPP_
+#ifndef saftlib_OWNED_HPP_
+#define saftlib_OWNED_HPP_
 
 #include <saftbus/service.hpp>
 
-namespace eb_plugin {
+namespace saftlib {
 	/// de.gsi.saftlib.Owned:
 	/// @brief An object which can grant exclusive access if used in a saftbus::Container
 	///

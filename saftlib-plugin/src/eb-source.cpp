@@ -8,7 +8,7 @@
 #include <cstring>
 #include <cassert>
 
-namespace eb_plugin {
+namespace saftlib {
 
 
 	EB_Source::EB_Source(etherbone::Socket socket_)

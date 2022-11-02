@@ -15,7 +15,7 @@
 
 #include <saftbus/loop.hpp>
 
-namespace eb_plugin {
+namespace saftlib {
 
 	class EB_Source : public saftbus::Source
 	{

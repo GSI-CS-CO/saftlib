@@ -17,15 +17,15 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef EB_PLUGIN_INPUT_HPP_
-#define EB_PLUGIN_INPUT_HPP_
+#ifndef saftlib_INPUT_HPP_
+#define saftlib_INPUT_HPP_
 
 #include "Io.hpp"
 #include "ECA.hpp"
 #include "ECA_TLU.hpp"
 #include "EventSource.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 class Input : public EventSource
 {

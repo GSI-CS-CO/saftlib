@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_BUILD_ID_ROM_HPP_
-#define EB_PLUGIN_BUILD_ID_ROM_HPP_
+#ifndef saftlib_BUILD_ID_ROM_HPP_
+#define saftlib_BUILD_ID_ROM_HPP_
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -12,7 +12,7 @@
 #include <map>
 #include <string>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class BuildIdRom {
 	etherbone::Device &device;

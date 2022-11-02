@@ -32,7 +32,7 @@
 #include <sstream>
 #include <memory>
 
-namespace eb_plugin {
+namespace saftlib {
 
 SoftwareActionSink::SoftwareActionSink(ECA &eca
 			                         , const std::string &obj_path
@@ -117,7 +117,7 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
 		SoftwareCondition* sw_cond = dynamic_cast<SoftwareCondition*>(cond);
 		if (sw_cond->SigAction) {
 			std::cerr << "SigAction" << std::endl;
-			sw_cond->SigAction(id, param, eb_plugin::makeTimeTAI(deadline), eb_plugin::makeTimeTAI(executed), flags & 0xF);
+			sw_cond->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);
 		} else {
 			std::cerr << "nothing connected to SigAction" << std::endl;
 		}

@@ -1,9 +1,9 @@
-#ifndef EB_PLUGIN_EVENTSOURCE_HPP_
-#define EB_PLUGIN_EVENTSOURCE_HPP_
+#ifndef saftlib_EVENTSOURCE_HPP_
+#define saftlib_EVENTSOURCE_HPP_
 
 #include "Owned.hpp"
 
-namespace eb_plugin {
+namespace saftlib {
 
 class TimingReceiver;
 

@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <string>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class ActionSink;
 

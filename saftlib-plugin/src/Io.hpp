@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_IO_HPP_
-#define EB_PLUGIN_IO_HPP_
+#ifndef saftlib_IO_HPP_
+#define saftlib_IO_HPP_
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -12,7 +12,7 @@
 #include <string>
 #include "io_control_regs.h"
 
-namespace eb_plugin {
+namespace saftlib {
 
 class SerdesClockGen;
 

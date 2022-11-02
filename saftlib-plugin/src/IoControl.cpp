@@ -9,7 +9,7 @@
 #include <vector>
 #include <iostream>
 
-namespace eb_plugin {
+namespace saftlib {
 
 IoControl::IoControl(etherbone::Device &dev)
 	: device(dev), clkgen(device)

@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_OPEN_DEVICE_HPP_
-#define EB_PLUGIN_OPEN_DEVICE_HPP_
+#ifndef saftlib_OPEN_DEVICE_HPP_
+#define saftlib_OPEN_DEVICE_HPP_
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -14,7 +14,7 @@
 
 #include <sys/stat.h>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class SAFTd;
 class Mailbox;

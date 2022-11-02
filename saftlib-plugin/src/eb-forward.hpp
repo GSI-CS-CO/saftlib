@@ -12,7 +12,7 @@
 // #include <string.h>
 #include <string>
 
-namespace eb_plugin {
+namespace saftlib {
 
 	class EB_Forward {
 	public:

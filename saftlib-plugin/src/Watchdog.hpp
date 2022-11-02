@@ -1,5 +1,5 @@
-#ifndef EB_PLUGIN_WATCHDOG_HPP_
-#define EB_PLUGIN_WATCHDOG_HPP_
+#ifndef saftlib_WATCHDOG_HPP_
+#define saftlib_WATCHDOG_HPP_
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -8,7 +8,7 @@
 #endif
 #include <etherbone.h>
 
-namespace eb_plugin {
+namespace saftlib {
 
 class Watchdog {
 	etherbone::Device &device;

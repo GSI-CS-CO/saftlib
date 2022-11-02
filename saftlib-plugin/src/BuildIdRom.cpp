@@ -4,7 +4,7 @@
 
 #include <sstream>
 
-namespace eb_plugin {
+namespace saftlib {
 
 #define BUILD_ID_ROM_VENDOR_ID 0x00000651
 #define BUILD_ID_ROM_DEVICE_ID 0x2d39fa8b

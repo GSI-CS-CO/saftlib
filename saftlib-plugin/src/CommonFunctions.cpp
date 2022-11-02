@@ -26,7 +26,7 @@ uint64_t tr_mask(int i)
 } //tr_mask
 
 // 
-std::string tr_formatDate(eb_plugin::Time time, uint32_t pmode)
+std::string tr_formatDate(saftlib::Time time, uint32_t pmode)
 {
   uint64_t t     = time.getTAI();
   if (pmode & PMODE_UTC) {

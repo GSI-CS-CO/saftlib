@@ -462,13 +462,7 @@ namespace saftbus {
 			}
 		}
 		if (plugin_available) {
-			std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(this, args);
-			// for (auto &object_path_and_service: services) {
-			// 	std::string              &object_path = object_path_and_service.first;
-			// 	std::unique_ptr<Service> &service     = object_path_and_service.second;
-			// 	unsigned object_id = create_object(object_path, std::move(service));
-			// 	std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
-			// }
+			plugin->second->create_services(this, args);
 		}
 		return plugin_available;
 	}
