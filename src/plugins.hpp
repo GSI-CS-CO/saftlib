@@ -17,10 +17,10 @@ namespace saftbus {
 		~LibraryLoader();
 		// the service objects are owned by the plugin, we only get a naked pointer to it
 		// the std::string is the object path under which the respective Servie object should be mounted		
-		std::vector<std::pair<std::string, std::unique_ptr<Service> > > create_services(Container *container); 
+		std::vector<std::pair<std::string, std::unique_ptr<Service> > > create_services(Container *container, const std::vector<std::string> &args = std::vector<std::string>()); 
 
 		// we are done with the Service object, tell the plugin that it is safe to destroy it
-		void destroy_service(Service *service); 
+		// void destroy_service(Service *service); 
 	};
 
 }

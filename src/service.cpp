@@ -444,7 +444,7 @@ namespace saftbus {
 	}
 
 
-	bool Container::load_plugin(const std::string &so_filename) {
+	bool Container::load_plugin(const std::string &so_filename, const std::vector<std::string> &args) {
 		std::cerr << "loading " << so_filename << std::endl;
 		bool plugin_available = false;
 		auto plugin = d->plugins.find(so_filename);
@@ -462,13 +462,13 @@ namespace saftbus {
 			}
 		}
 		if (plugin_available) {
-			std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(this);
-			for (auto &object_path_and_service: services) {
-				std::string              &object_path = object_path_and_service.first;
-				std::unique_ptr<Service> &service     = object_path_and_service.second;
-				unsigned object_id = create_object(object_path, std::move(service));
-				std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
-			}
+			std::vector<std::pair<std::string, std::unique_ptr<Service> > > services = plugin->second->create_services(this, args);
+			// for (auto &object_path_and_service: services) {
+			// 	std::string              &object_path = object_path_and_service.first;
+			// 	std::unique_ptr<Service> &service     = object_path_and_service.second;
+			// 	unsigned object_id = create_object(object_path, std::move(service));
+			// 	std::cerr << "created new object under object_path " << object_path << " with object_id " << object_id << std::endl;
+			// }
 		}
 		return plugin_available;
 	}

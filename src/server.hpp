@@ -22,7 +22,7 @@ namespace saftbus {
 	class ServerConnection {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
-		ServerConnection(const std::vector<std::string> &plugins = std::vector<std::string>(), 
+		ServerConnection(const std::vector<std::pair<std::string, std::vector<std::string> > > &plugins_and_args = std::vector<std::pair<std::string, std::vector<std::string> > >(), 
 			             const std::string &socket_name = "/var/run/mini-saftlib/saftbus");
 		~ServerConnection();
 

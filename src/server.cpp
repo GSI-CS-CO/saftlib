@@ -211,7 +211,7 @@ namespace saftbus {
 	}
 
 
-	ServerConnection::ServerConnection(const std::vector<std::string> &plugins, const std::string &socket_name) 
+	ServerConnection::ServerConnection(const std::vector<std::pair<std::string, std::vector<std::string> > > &plugins_and_args, const std::string &socket_name) 
 		: d(std2::make_unique<Impl>(this))
 	{
 		std::ostringstream msg;
@@ -262,10 +262,12 @@ namespace saftbus {
 
 		Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::accept_client, d.get(), std::placeholders::_1, std::placeholders::_2), base_socket_fd, POLLIN | POLLHUP | POLLERR);
 
-		for (auto &plugin: plugins) {
-			if (!d->container_of_services.load_plugin(plugin)) {
+		for (auto &plugin_and_args: plugins_and_args) {
+			auto& plugin_name = plugin_and_args.first;
+			auto& plugin_args = plugin_and_args.second;
+			if (!d->container_of_services.load_plugin(plugin_name, plugin_args)) {
 				std::string msg("cannot load plugin ");
-				msg.append(plugin);
+				msg.append(plugin_name);
 				throw std::runtime_error(msg);
 			}
 		}

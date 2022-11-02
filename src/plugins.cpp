@@ -10,14 +10,11 @@
 
 namespace saftbus {
 
-	extern "C" typedef std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > (*create_services_function) (saftbus::Container *container);
-	extern "C" typedef void                                                                     (*destroy_service_function) (saftbus::Service *service);
+	extern "C" typedef std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > (*create_services_function) (saftbus::Container *container, const std::vector<std::string> &args);
 
 	struct LibraryLoader::Impl {
 		lt_dlhandle handle;
 		create_services_function create_services;
-		destroy_service_function destroy_service;
-		std::set<saftbus::Service*> services;
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
@@ -25,11 +22,10 @@ namespace saftbus {
 	{
 		int result = lt_dlinit();
 		assert(result == 0);
-		// std::cerr << "lt_dlinit was successful" << std::endl;
 
 
 		d->handle = lt_dlopen(so_filename.c_str());
-		if (d->handle == NULL) {
+		if (d->handle == nullptr) {
 			std::ostringstream msg;
 			msg << "cannot load plugin: fail to open file " << so_filename;
 			throw std::runtime_error(msg.str());
@@ -43,36 +39,18 @@ namespace saftbus {
 			lt_dlclose(d->handle);
 			throw std::runtime_error("cannot load plugin because symbol \"create_services\" cannot be loaded");
 		}
-		d->destroy_service = (destroy_service_function)lt_dlsym(d->handle,"destroy_service");
-		if (d->destroy_service == nullptr) {
-			lt_dlclose(d->handle);
-			throw std::runtime_error("cannot load plugin because symbol \"destroy_service\" cannot be loaded");
-		}
 	}
 
-	std::vector<std::pair<std::string, std::unique_ptr<Service> > > LibraryLoader::create_services(Container *container) {
-		auto result = d->create_services(container);
-		for (auto &name_service: result) {
-			d->services.insert(name_service.second.get());
-		}
+	std::vector<std::pair<std::string, std::unique_ptr<Service> > > LibraryLoader::create_services(Container *container, const std::vector<std::string> &args) {
+		auto result = d->create_services(container, args);
 		return result;
-	}
-
-	void LibraryLoader::destroy_service(Service *service) {
-		// std::cerr << "LibraryLoader::destroy_service " << std::endl;
-		d->destroy_service(service);
-		d->services.erase(service);
 	}
 
 	LibraryLoader::~LibraryLoader()
 	{
 		// std::cerr << "~LibraryLoader()" << std::endl;
 
-		if (d->handle != NULL) {
-			for (auto &service: d->services) {
-				d->destroy_service(service);
-			}
-			d->services.clear();
+		if (d->handle != nullptr) {
 			lt_dlclose(d->handle);
 		}		
 		int result = lt_dlexit();

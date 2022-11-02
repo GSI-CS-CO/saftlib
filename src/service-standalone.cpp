@@ -121,7 +121,7 @@ namespace saftbus {
 		assert(false);
 	}
 
-	bool Container::load_plugin(const std::string &so_filename) 
+	bool Container::load_plugin(const std::string &so_filename, const std::vector<std::string> &args) 
 	{
 		assert(false);
 		return true;
