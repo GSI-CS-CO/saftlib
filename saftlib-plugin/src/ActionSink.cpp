@@ -191,9 +191,9 @@ uint16_t ActionSink::getMostFull() const
 	return eca.getMostFull(channel);
 }
 
-std::chrono::nanoseconds ActionSink::getSignalRate() const
+uint64_t ActionSink::getSignalRate() const
 {
-	return signalRate;
+	return signalRate.count();
 }
 
 uint64_t ActionSink::getOverflowCount() const
@@ -234,67 +234,67 @@ uint64_t ActionSink::getDelayedCount() const
 
 void ActionSink::setMinOffset(int64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	minOffset = val;
 }
 
 void ActionSink::setMaxOffset(int64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	maxOffset = val;
 }
 
 void ActionSink::setMostFull(uint16_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set MostFull to 0");
-	// dev->resetMostFull(channel);
+	eca.resetMostFull(channel);
 }
 
-void ActionSink::setSignalRate(std::chrono::nanoseconds val)
+void ActionSink::setSignalRate(uint64_t val)
 {
-	//ownerOnly();
-	signalRate = val;
+	ownerOnly();
+	signalRate = std::chrono::nanoseconds(val);
 }
 
 void ActionSink::setOverflowCount(uint64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set OverflowCount to 0");
 	overflowCount = 0;
 }
 
 void ActionSink::setActionCount(uint64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ActionCount to 0");
 	actionCount = 0;
 }
 
 void ActionSink::setLateCount(uint64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set LateCount to 0");
 	lateCount = 0;
 }
 
 void ActionSink::setEarlyCount(uint64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set EarlyCount to 0");
 	earlyCount = 0;
 }
 
 void ActionSink::setConflictCount(uint64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set ConflictCount to 0");
 	conflictCount = 0;
 }
 
 void ActionSink::setDelayedCount(uint64_t val)
 {
-	//ownerOnly();
+	ownerOnly();
 	if (val != 0) throw saftbus::Error(saftbus::Error::INVALID_ARGS, "can only set DelayedCount to 0");
 	delayedCount = 0;
 }

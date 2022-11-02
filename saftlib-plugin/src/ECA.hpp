@@ -122,6 +122,15 @@ public:
 	// @saftbus-export
 	std::map< std::string, std::string > getOutputs() const;
 
+	/// @brief The number of additional conditions that may be activated.
+	///
+	/// The ECA has limited hardware resources in its match table.
+	/// @return number of additional conditions that may be activated.
+	// @saftbus-export
+	uint32_t getFree() const;
+
+	void resetMostFull(unsigned channel);
+
 
 	Output *getOutput(const std::string &output_obj_path);
 };

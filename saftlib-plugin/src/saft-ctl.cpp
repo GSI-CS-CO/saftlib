@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include <saftbus/error.hpp>
-#include <saftbus/client.hpp>
 
 #include "SAFTd_Proxy.hpp"
 #include "TimingReceiver_Proxy.hpp"
@@ -131,8 +130,8 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
   else std::cout << "no WR lock!!!" << std::endl;
 
   // display ECA status
-  // nFreeConditions  = receiver->getFree();
-  std::cout << "receiver free conditions: ??not implemented yet";// << nFreeConditions;
+  nFreeConditions  = receiver->getFree();
+  std::cout << "receiver free conditions: " << nFreeConditions;
 
   std::cout << ", max (capacity of HW): " << sink->getMostFull()
             << "(" << sink->getCapacity() << ")"
@@ -157,7 +156,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
                 << ", late: "       << aSink->getLateCount()
                 << ", early: "      << aSink->getEarlyCount()
                 << ", overflow: "   << aSink->getOverflowCount()
-                << " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate().count() / 1000000000.0) << "Hz)"
+                << " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate() / 1000000000.0) << "Hz)"
                 << std::endl;
       // get all conditions for this sink
       vector< std::string > allConditions = aSink->getAllConditions();
@@ -170,8 +169,8 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
                   << ", mask: "         << fmt << std::setw(width) << std::setfill('0') << condition->getMask()
                   << ", offset: "       << fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
                   << ", active: "       << std::dec << condition->getActive()
-                  // << ", destructible: " << condition->getDestructible()
-                  // << ", owner: "        << condition->getOwner()
+                  << ", destructible: " << condition->getDestructible()
+                  << ", owner: "        << condition->getOwner()
                   << std::endl;
       } // for all conditions
     } // for all sinks
@@ -209,7 +208,6 @@ static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
 
   std::cout << "devices attached on this host   : " << allDevices.size() << std::endl;
   for (i = allDevices.begin(); i != allDevices.end(); i++ ) {
-    std::cerr << i->first << " " << i->second << std::endl;
     aDevice =  TimingReceiver_Proxy::create(i->second);
     std::cout << "  device: " << i->second;
     std::cout << ", name: " << aDevice->getName();
@@ -456,7 +454,7 @@ int main(int argc, char** argv)
 
   try {
     // initialize required stuff
-    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create("/de/gsi/saftlib");
+    std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
 
     // do display information that is INDEPENDANT of a specific device
     if (infoDispSW) {
@@ -490,7 +488,7 @@ int main(int argc, char** argv)
     }
 
     // get a specific device
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver;
     if (useFirstDev) {
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);

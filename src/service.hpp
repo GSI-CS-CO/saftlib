@@ -115,9 +115,11 @@ namespace saftbus {
 	/// the Connection object and all Service objects are available for remote Proxy objects to 
 	/// register and execute function calls through the Connection.
 	class Container {
+		// @saftbus-default-object-path /saftbus
 		struct Impl; std::unique_ptr<Impl> d;
 		friend class Container_Service;
 	public:
+		
 		/// @brief create a Container for saftbus::Service objects
 		///
 		/// @param connection The Connection object that owns the Container

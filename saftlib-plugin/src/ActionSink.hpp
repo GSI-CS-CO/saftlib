@@ -271,9 +271,9 @@ class ActionSink : public Owned
 		/// updates to these values.
 		///
 		// @saftbus-export
-		std::chrono::nanoseconds getSignalRate() const;
+		uint64_t getSignalRate() const;
 		// @saftbus-export
-		void setSignalRate(std::chrono::nanoseconds val);
+		void setSignalRate(uint64_t val);
 
 		/// @brief The number of actions lost due to Overflow.
 		///

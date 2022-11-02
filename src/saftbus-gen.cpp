@@ -70,6 +70,14 @@ static ExportTag remove_line_comments(std::string &line) {
 					return INCLUDE_EXPORT;
 				}
 			}
+			if (i+1+saftbus_include_tag.size() <= line.size()) {
+				// std::cerr << "++ " << line.substr(i+1,saftbus_include_tag.size()) << std::endl;
+				if (line.substr(i+1,saftbus_include_tag.size()) == saftbus_include_tag) {
+					line = line.substr(0,i-1);
+					// std::cerr << "saftbus export " << line << std::endl;
+					return INCLUDE_EXPORT;
+				}
+			}
 			line = line.substr(0,1);
 			return NO_EXPORT;
 		}
@@ -250,10 +258,13 @@ std::vector<FunctionArgument> split_arguments(std::string argument_list) {
 	std::vector<FunctionArgument> result;
 	std::string buffer;
 	int scope = 0; // count the nesting level of < ... > where commas do not separate arguments
+	int scopep = 0; // count the nesting level of ( ... ) where commas do not separate arguments
 	for (auto &ch: argument_list) {
 		if (ch == '<') ++scope;
 		if (ch == '>') --scope;
-		if (ch == ',' && scope == 0) {
+		if (ch == '(') ++scopep;
+		if (ch == ')') --scopep;
+		if (ch == ',' && scope == 0 && scopep == 0) {
 			result.push_back(FunctionArgument(strip(buffer)));
 			buffer.clear();
 		} else {
@@ -276,8 +287,22 @@ struct FunctionSignature {
 	FunctionSignature(const std::string &s, const std::string &line, const std::vector<std::string> &comment) 
 		: scope(s), comments(comment)
 	{
-		auto paranthesis_open = line.find('(');
-		auto paranthesis_close = line.find(')');
+		// scan the argument list of the function declaration.
+		// we have to count paranthesis here because arguments may contain paranthesis (in default parameters)
+		int paranthesis_level = 0;
+		size_t paranthesis_open = 0;
+		size_t paranthesis_close = 0;
+		for (size_t pos = 0; pos < line.size(); ++pos) {
+			if (line[pos] == '(') {
+				if (paranthesis_level == 0) paranthesis_open = pos;
+				++paranthesis_level;
+			}
+			if (line[pos] == ')') {
+				if (paranthesis_level == 1) paranthesis_close = pos;
+				--paranthesis_level;
+			}
+		}
+		assert(paranthesis_open != paranthesis_close);
 		argument_list = split_arguments(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
 		std::string returntype_and_name = line.substr(0,paranthesis_open);
 		auto name_start = returntype_and_name.find_last_of(" &");
@@ -355,6 +380,7 @@ std::vector<std::string> split_bases(std::string argument_list) {
 struct ClassDefinition {
 	std::string scope;
 	std::string name;
+	std::string default_object_path; // if this is non-empty the _Proxy::create() method will have this string as default argument for the object path
 	std::vector<std::string> bases;       // direct base classes
 	std::vector<ClassDefinition*> direct_bases;// direct base classes
 	std::vector<ClassDefinition*> all_bases;   // base classes and base classes of them
@@ -511,6 +537,16 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 				throw std::runtime_error(msg.str());
 			}
 			break;
+		}
+
+		// look for default_object_path_tag
+		if (classes.size() > 0 && classes.back().scope == build_namespace(scope)) {
+			std::string default_object_path_tag = "// @saftbus-default-object-path ";
+			size_t pos = line.find(default_object_path_tag);
+			if (pos != line.npos) {
+				classes.back().default_object_path = strip(line.substr(pos+default_object_path_tag.size()));
+				std::cerr << "found default_object_path_tag: " << classes.back().default_object_path << std::endl;
+			}
 		}
 
 		// remove line comments and detect @saftbus-export tag (is has to be the first word in a line comment)
@@ -1101,8 +1137,12 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "\t{" << std::endl;
 	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
 	header_out << "\tpublic:" << std::endl;
-	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
-	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
+	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = gen_interface_names());" << std::endl;
+	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path";
+	if (class_definition.default_object_path.size()) {
+		header_out << " = \"" << class_definition.default_object_path << "\"";
+	}
+	header_out << ", saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global());" << std::endl;
 	header_out << "\t\t" << "bool signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content);" << std::endl;
 	for (auto &function: class_definition.exportedfunctions) {
 		// recreate comments from this function
@@ -1205,7 +1245,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "\t" << "{" << std::endl;
 	cpp_out << "\t\t" << "interface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\");" << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
-	cpp_out << "\t" << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {" << std::endl;
+	cpp_out << "\t" << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group) {" << std::endl;
 	cpp_out << "\t\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
 	cpp_out << "\t"     << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;

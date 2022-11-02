@@ -826,6 +826,14 @@ std::map< std::string, std::string > ECA::getOutputs() const
 	return out;
 }
 
+uint32_t ECA::getFree() const 
+{
+	return d->max_conditions - d->used_conditions;
+}
+
+void ECA::resetMostFull(unsigned channel) {
+	d->resetMostFull(channel);
+}
 
 
 

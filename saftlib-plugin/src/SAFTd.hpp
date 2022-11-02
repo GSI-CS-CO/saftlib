@@ -13,6 +13,7 @@
 namespace saftlib {
 
 	class SAFTd : public etherbone::Handler {
+		// @saftbus-default-object-path /de/gsi/saftlib
 	public:
 		SAFTd(saftbus::Container *container = nullptr);
 		~SAFTd();

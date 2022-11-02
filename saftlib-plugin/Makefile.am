@@ -52,48 +52,49 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/TimingReceiver_Service.cpp                                        \
 	src/create_service.cpp
 
-lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@/service
+lib@PACKAGE@_service_includedir = $(includedir)/saftlib/service
 lib@PACKAGE@_service_include_HEADERS = \
 	src/Time.hpp                        \
 	src/eb-source.hpp                    \
 	src/eb-forward.hpp                    \
 	src/Owned.hpp                          \
-	src/Owned_Service.hpp                   \
-	src/SAFTd.hpp                            \
-	src/SAFTd_Service.hpp                     \
-	src/Condition.hpp                          \
-	src/Condition_Service.hpp                   \
-	src/ActionSink.hpp                           \
-	src/ActionSink_Service.hpp                    \
-	src/SoftwareCondition.hpp                      \
-	src/SoftwareCondition_Service.hpp               \
-	src/SoftwareActionSink.hpp                       \
-	src/SoftwareActionSink_Service.hpp                \
-	src/OpenDevice.hpp                                 \
-	src/OpenDevice_Service.hpp                          \
-	src/WhiteRabbit.hpp                                  \
-	src/WhiteRabbit_Service.hpp                           \
-	src/Mailbox.hpp                                        \
-	src/Watchdog.hpp                                        \
-	src/SerdesClockGen.hpp                                   \
-	src/Io.hpp                                                \
-	src/IoControl.hpp                                          \
-	src/Output.hpp                                              \
-	src/Output_Service.hpp                                       \
-	src/OutputCondition.hpp                                       \
-	src/OutputCondition_Service.hpp                                \
-	src/EventSource.hpp                                             \
-	src/Input.hpp                                                    \
-	src/Input_Service.hpp                                             \
-	src/ECA.hpp                                                        \
-	src/ECA_Service.hpp                                                 \
-	src/ECA_TLU.cpp                                                      \
-	src/BuildIdRom.hpp                                                    \
-	src/BuildIdRom_Service.hpp                                             \
-	src/TempSensor.hpp                                                      \
-	src/TempSensor_Service.hpp                                               \
-	src/TimingReceiver.hpp                                                    \
-	src/TimingReceiver_Service.hpp                           
+	src/SAFTd.hpp                           \
+	src/Condition.hpp                        \
+	src/ActionSink.hpp                        \
+	src/SoftwareCondition.hpp                  \
+	src/SoftwareActionSink.hpp                  \
+	src/OpenDevice.hpp                           \
+	src/WhiteRabbit.hpp                           \
+	src/Mailbox.hpp                                \
+	src/Watchdog.hpp                                \
+	src/SerdesClockGen.hpp                           \
+	src/Io.hpp                                        \
+	src/IoControl.hpp                                  \
+	src/Output.hpp                                      \
+	src/OutputCondition.hpp                              \
+	src/EventSource.hpp                                   \
+	src/Input.hpp                                          \
+	src/ECA.hpp                                             \
+	src/ECA_TLU.cpp                                          \
+	src/BuildIdRom.hpp                                        \
+	src/TempSensor.hpp                                         \
+	src/TimingReceiver.hpp                                      
+# 	src/Owned_Service.hpp                  \
+# 	src/SAFTd_Service.hpp                   \
+# 	src/Condition_Service.hpp                \
+# 	src/ActionSink_Service.hpp                \
+# 	src/SoftwareCondition_Service.hpp          \
+# 	src/SoftwareActionSink_Service.hpp          \
+# 	src/OpenDevice_Service.hpp                   \
+# 	src/WhiteRabbit_Service.hpp                   \
+# 	src/Output_Service.hpp                         \
+# 	src/OutputCondition_Service.hpp                 \
+# 	src/Input_Service.hpp                            \
+# 	src/ECA_Service.hpp                               \
+# 	src/BuildIdRom_Service.hpp                         \
+# 	src/TempSensor_Service.hpp                          \
+# 	src/TimingReceiver_Service.hpp                           
+# the service headers are not neede by client programs (event standalone ones), right???
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =   \
@@ -117,7 +118,7 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/TimingReceiver_Proxy.cpp         
 
 
-lib@PACKAGE@_proxy_includedir = $(includedir)/@PACKAGE@
+lib@PACKAGE@_proxy_includedir = $(includedir)/saftlib
 lib@PACKAGE@_proxy_include_HEADERS = \
 	src/Time.hpp                      \
 	src/Owned_Proxy.hpp                \
