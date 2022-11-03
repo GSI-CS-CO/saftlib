@@ -45,7 +45,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	: OpenDevice(saftd.get_etherbone_socket(), eb_path, polling_interval_ms, &saftd)
 	, WhiteRabbit(OpenDevice::device)
 	, Watchdog(OpenDevice::device)
-	, ECA(saftd, OpenDevice::device, object_path, container)
+	, ECA(saftd, OpenDevice::device, saftd.getObjectPath() + "/" + n, container)
 	, ECA_TLU(OpenDevice::device, container)
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
@@ -151,6 +151,18 @@ void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time t
 	std::cerr << "TimingReceiver::InjectEvent" << std::endl;
 	ECA::InjectEventRaw(event, param, time.getTAI());
 }
+
+std::map< std::string, std::map< std::string, std::string > > TimingReceiver::getInterfaces() const
+{
+	std::map< std::string, std::map< std::string, std::string > > result;
+	
+	result["SoftwareActionSink"] = ECA::getSoftwareActionSinks();
+	result["SCUbusActionSink"]   = ECA::getSCUbusActionSinks();
+	result["Input"]              = ECA_TLU::getInputs();
+	
+	return result;
+}
+
 
 
 } // namespace saftlib

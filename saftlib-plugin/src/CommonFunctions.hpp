@@ -62,4 +62,15 @@ std::string tr_formatActionFlags(uint16_t flags,    // 16bit flags
                                  uint32_t pmode     // mode for printing
                                  );
 
+namespace saftlib {
+    /// @brief wait for a signal from anay Proxy connected to saftbus::SignalGroup::get_global()
+    /// @param timeout_ms if no signal arrives return after so many milliseconds
+    /// @return >0 if a signal was received, 0 if timeout was hit, < 0 in case of failure
+    int wait_for_signal(int timeout_ms = 0);
+
+
+}
+
+
+
 #endif /* #ifndef COMMON_FUNCTIONS_H */

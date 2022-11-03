@@ -171,8 +171,8 @@ public:
 	/// The key in the dictionary is the name of the interface.
 	/// The value is all object paths to hardware implementing that interface.	
 	///
-	// // @saftbus-export
-	// std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
+	// @saftbus-export
+	std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
 
 	/// @brief The number of additional conditions that may be activated.
 	/// @return The number of additional conditions that may be activated.

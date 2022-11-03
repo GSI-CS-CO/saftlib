@@ -17,6 +17,8 @@
  */
 #include "CommonFunctions.hpp"
 
+#include <saftbus/client.hpp>
+
 using namespace std;
 
 /* Format mask for action sink */
@@ -141,3 +143,10 @@ std::string tr_formatActionFlags(uint16_t flags, uint64_t delay, uint32_t pmode)
   return full.str();
 } // tr_formatActionFlags
 
+namespace saftlib {
+
+    int wait_for_signal(int timeout_ms) {
+        return saftbus::SignalGroup::get_global().wait_for_signal(timeout_ms);
+    }
+
+}

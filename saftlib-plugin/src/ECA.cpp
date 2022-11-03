@@ -15,6 +15,8 @@
 
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
+#include "SCUbusActionSink.hpp"
+#include "SCUbusActionSink_Service.hpp"
 #include "Output.hpp"
 
 #include "eca_regs.h"
@@ -30,67 +32,10 @@ namespace saftlib {
 #define EVENT_SDB_DEVICE_ID             0x8752bf45
 
 
-struct ECA::Impl {
-	Impl(etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont); 
-
-	etherbone::Device  &device;
-	const std::string  &object_path;
-	saftbus::Container *container;
-	uint64_t sas_count; // counts number of SoftwareActionSinks
-
-
-	
-	eb_address_t base;        // address of ECA control slave
-	eb_address_t stream;      // address of ECA event input slave
-	eb_address_t first, last; // Msi address range
-	eb_address_t msi_first, msi_last;
-
-
-	unsigned channels;        // number of available ECA otput channels
-	unsigned search_size;
-	unsigned walker_size;
-	unsigned max_conditions;
-	unsigned used_conditions;
-	std::vector<eb_address_t> channel_msis;
-	std::vector<eb_address_t> queue_addresses;
-	std::vector<uint16_t> most_full;
-
-	// public type, even though the member is private
-	// typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
-	// ActionSinks  actionSinks;
-
-	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
-	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
-	unsigned                                         ECA_LINUX_channel_index;
-	unsigned                                         ECA_LINUX_channel_subchannels;
-
-	// typedef std::map< SinkKey, std::unique_ptr<EventSource> > EventSources;
-
-	uint16_t updateMostFull(unsigned channel); // returns current fill
-	void resetMostFull(unsigned channel);
-	void popMissingQueue(unsigned channel, unsigned num);	
-	void probeConfiguration();
-	void prepareChannels();
-	void setMsiHandlers(SAFTd &saftd);
-	void msiHandler(eb_data_t msi, unsigned channel);
-	void setHandler(unsigned channel, bool enable, eb_address_t address);
-
-	void compile();
-
-};
-
-ECA::Impl::Impl(etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
-	: device(dev)
-	, object_path(obj_path)
-	, container(cont)
-	, sas_count(0)
-{
-	std::cerr << "ECA::Impl::Impl()" << std::endl;
-}
 
 
 
-uint16_t ECA::Impl::updateMostFull(unsigned channel)
+uint16_t ECA::updateMostFull(unsigned channel)
 {
 	if (channel >= most_full.size()) return 0;
 
@@ -112,7 +57,7 @@ uint16_t ECA::Impl::updateMostFull(unsigned channel)
 	return used;
 }
 
-void ECA::Impl::resetMostFull(unsigned channel)
+void ECA::resetMostFull(unsigned channel)
 {
 	if (channel >= most_full.size()) return;
 
@@ -125,7 +70,7 @@ void ECA::Impl::resetMostFull(unsigned channel)
 	cycle.close();
 }
 
-void ECA::Impl::popMissingQueue(unsigned channel, unsigned num)
+void ECA::popMissingQueue(unsigned channel, unsigned num)
 {
 	etherbone::Cycle cycle;
 	eb_data_t nill;
@@ -143,7 +88,7 @@ void ECA::Impl::popMissingQueue(unsigned channel, unsigned num)
 
 
 
-void ECA::Impl::probeConfiguration() 
+void ECA::probeConfiguration() 
 {
 	std::vector<etherbone::sdb_msi_device> ecas_dev;
 	std::vector<sdb_device> streams_dev;
@@ -250,7 +195,7 @@ void ECA::Impl::probeConfiguration()
 	most_full.resize(channels, 0);
 }
 
-void ECA::Impl::prepareChannels()
+void ECA::prepareChannels()
 {
 	eb_data_t raw_type, raw_max_num, raw_capacity;
 	etherbone::Cycle cycle;
@@ -312,15 +257,29 @@ void ECA::Impl::prepareChannels()
 			break;
 			// case ECA_WBM:
 			// break;
-			// case ECA_SCUBUS:
-			// break;
+			case ECA_SCUBUS: {
+				std::cerr << "============== FOUND SCU_BUS ACTION SINK object_path = " << object_path << std::endl;
+				std::vector<sdb_device> scubus;
+				device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
+				if (scubus.size() == 1) {
+					std::string path = object_path + "/scubus";
+
+					std::unique_ptr<SCUbusActionSink> scubus_sink(new SCUbusActionSink( device, *this, path, "scubus", channel_idx, (eb_address_t)scubus[0].sdb_component.addr_first, container  ));
+					if (container) {
+						std::unique_ptr<SCUbusActionSink_Service> service(new SCUbusActionSink_Service(scubus_sink.get()));
+						container->create_object(path, std::move(service));
+					}
+					ECAchannels[channel_idx].push_back(std::move(scubus_sink));
+					scubus_action_sinks["scubus"] = path;
+				}
+			} break;
 			// case ECA_EMBEDDED_CPU:
 			// break;
 		}
 	}
 }
 
-void ECA::Impl::setMsiHandlers(SAFTd &saftd) 
+void ECA::setMsiHandlers(SAFTd &saftd) 
 {
 	// set MSI handlers
 
@@ -343,7 +302,7 @@ void ECA::Impl::setMsiHandlers(SAFTd &saftd)
 			// Select an IRQ
 			eb_address_t irq = ((rand() & mask) + base) & (~0x3);
 			// try to attach
-			if ( saftd.request_irq(irq, std::bind(&ECA::Impl::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
+			if ( saftd.request_irq(irq, std::bind(&ECA::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
 				std::cerr << "registered irq under address " << std::hex << std::setw(8) << std::setfill('0') << irq 
 									<< std::dec
 									<< std::endl;
@@ -357,7 +316,7 @@ void ECA::Impl::setMsiHandlers(SAFTd &saftd)
 }
 
 
-void ECA::Impl::msiHandler(eb_data_t msi, unsigned channel)
+void ECA::msiHandler(eb_data_t msi, unsigned channel)
 {
 	std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
 	unsigned code = msi >> 16;
@@ -385,7 +344,7 @@ void ECA::Impl::msiHandler(eb_data_t msi, unsigned channel)
 	}
 }
 
-void ECA::Impl::setHandler(unsigned channel, bool enable, eb_address_t address)
+void ECA::setHandler(unsigned channel, bool enable, eb_address_t address)
 {
 	etherbone::Cycle cycle;
 	cycle.open(device);
@@ -442,9 +401,9 @@ struct WalkEntry {
 
 
 
-void ECA::Impl::compile()
+void ECA::compile()
 {
-	std::cerr << "ECA::Impl::compile" << std::endl;
+	std::cerr << "ECA::compile" << std::endl;
 	// Store all active conditions into a vector for processing
 	typedef std::vector<ECA_OpenClose> ID_Space;
 	ID_Space id_space;
@@ -592,41 +551,44 @@ void attach_io_control(const IoControl &io_control)
 
 uint16_t ECA::getMostFull(int channel)
 {
-	return d->most_full[channel];
+	return most_full[channel];
 }
 
 const std::string &ECA::get_object_path()
 {
-	return d->object_path;
+	return object_path;
 }
 
 
-void ECA::compile() 
-{
-	d->compile();
-}
+// void ECA::compile() 
+// {
+// 	compile();
+// }
 
 
-ECA::ECA(SAFTd &saftd, etherbone::Device &device, const std::string &object_path, saftbus::Container *container)
-	: d(std::unique_ptr<ECA::Impl>(new ECA::Impl(device, object_path, container)))
+ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
+	: device(dev)
+	, object_path(obj_path)
+	, container(cont)
+	, sas_count(0)
 {
-	std::cerr << "ECA::ECA()" << std::endl;
-	d->probeConfiguration();
-	d->compile(); // remove old rules
-	d->prepareChannels();
-	d->setMsiHandlers(saftd); // hook
+	std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
+	probeConfiguration();
+	compile(); // remove old rules
+	prepareChannels();
+	setMsiHandlers(saftd); // hook
 }
 
 ECA::~ECA() 
 {
 	std::cerr << "ECA::~ECA()" << std::endl;
-	if (d->container) {
-		for (auto &channel: d->ECAchannels) {
+	if (container) {
+		for (auto &channel: ECAchannels) {
 			for (auto &actionSink: channel) {
 				if (actionSink) {
 					std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
 					try {
-						d->container->remove_object(actionSink->getObjectPath());
+						container->remove_object(actionSink->getObjectPath());
 					} catch (saftbus::Error &e) {
 						std::cerr << "removal attempt failed: " << e.what() << std::endl;
 					}
@@ -638,19 +600,14 @@ ECA::~ECA()
 
 bool ECA::addActionSink(int channel, std::unique_ptr<ActionSink> sink) 
 {
-	assert(channel >= 0 && channel < static_cast<int>(d->ECAchannels.size()));
-	d->ECAchannels[channel].push_back(std::move(sink));
+	assert(channel >= 0 && channel < static_cast<int>(ECAchannels.size()));
+	ECAchannels[channel].push_back(std::move(sink));
 	return true;
-}
-
-uint16_t ECA::updateMostFull(unsigned channel)
-{
-	return d->updateMostFull(channel);
 }
 
 eb_address_t ECA::get_base_address() 
 {
-	return d->base;
+	return base;
 }
 
 uint64_t ECA::ReadRawCurrentTime()
@@ -659,10 +616,10 @@ uint64_t ECA::ReadRawCurrentTime()
 	eb_data_t time1, time0, time2;
 
 	do {
-		cycle.open(d->device);
-		cycle.read(d->base + ECA_TIME_HI_GET, EB_DATA32, &time1);
-		cycle.read(d->base + ECA_TIME_LO_GET, EB_DATA32, &time0);
-		cycle.read(d->base + ECA_TIME_HI_GET, EB_DATA32, &time2);
+		cycle.open(device);
+		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time1);
+		cycle.read(base + ECA_TIME_LO_GET, EB_DATA32, &time0);
+		cycle.read(base + ECA_TIME_HI_GET, EB_DATA32, &time2);
 		cycle.close();
 	} while (time1 != time2);
 
@@ -675,15 +632,15 @@ void ECA::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time)
 {
 	etherbone::Cycle cycle;
 
-	cycle.open(d->device);
-	cycle.write(d->stream, EB_DATA32, event >> 32);
-	cycle.write(d->stream, EB_DATA32, event & 0xFFFFFFFFUL);
-	cycle.write(d->stream, EB_DATA32, param >> 32);
-	cycle.write(d->stream, EB_DATA32, param & 0xFFFFFFFFUL);
-	cycle.write(d->stream, EB_DATA32, 0); // reserved
-	cycle.write(d->stream, EB_DATA32, 0); // TEF
-	cycle.write(d->stream, EB_DATA32, time >> 32);
-	cycle.write(d->stream, EB_DATA32, time & 0xFFFFFFFFUL);
+	cycle.open(device);
+	cycle.write(stream, EB_DATA32, event >> 32);
+	cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+	cycle.write(stream, EB_DATA32, param >> 32);
+	cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+	cycle.write(stream, EB_DATA32, 0); // reserved
+	cycle.write(stream, EB_DATA32, 0); // TEF
+	cycle.write(stream, EB_DATA32, time >> 32);
+	cycle.write(stream, EB_DATA32, time & 0xFFFFFFFFUL);
 	cycle.close();
 }
 
@@ -695,8 +652,8 @@ void ECA::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time)
 
 SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 {
-	std::cerr << "getSoftwareActionSink " << d->ECA_LINUX_channel->size() << std::endl;
-	for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
+	std::cerr << "getSoftwareActionSink " << ECA_LINUX_channel->size() << std::endl;
+	for (auto &softwareActionSink: *ECA_LINUX_channel) {
 		if (!softwareActionSink) {
 			std::cerr << "." << std::endl;
 			continue;
@@ -713,7 +670,7 @@ SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 
 Output *ECA::getOutput(const std::string &output_obj_path)
 {
-	for (auto &output: d->ECAchannels[0]) { // outputs are always on channel 0
+	for (auto &output: ECAchannels[0]) { // outputs are always on channel 0
 		std::cerr << "getOutput " << output->getObjectPath() << " " << output_obj_path << std::endl;
 		if (output->getObjectPath() == output_obj_path) {
 			return dynamic_cast<Output*>(output.get());
@@ -725,7 +682,7 @@ Output *ECA::getOutput(const std::string &output_obj_path)
 
 
 etherbone::Device &ECA::get_device() {
-	return d->device;
+	return device;
 }
 
 static inline bool not_isalnum_(char c)
@@ -735,22 +692,22 @@ static inline bool not_isalnum_(char c)
 
 std::string ECA::NewSoftwareActionSink(const std::string& name_)
 {
-	if (d->container) {
-		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << d->container->get_calling_client_id() << std::endl;
+	if (container) {
+		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
 	}
 
-	if (d->ECA_LINUX_channel == nullptr) {
+	if (ECA_LINUX_channel == nullptr) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
 	}
 
 	// find the first free slot in ECA_LINUX_channel
-	std::cerr << "ECA::NewSoftwareActionSink:   find 1 in " << std::dec << d->ECA_LINUX_channel->size() << "slots" << std::endl;
+	std::cerr << "ECA::NewSoftwareActionSink:   find 1 in " << std::dec << ECA_LINUX_channel->size() << "slots" << std::endl;
 	unsigned num = 0;
-	for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
+	for (auto &softwareActionSink: *ECA_LINUX_channel) {
 		if (!softwareActionSink) break;
 		++num;
 	}
-	if (num >= d->ECA_LINUX_channel_subchannels) {
+	if (num >= ECA_LINUX_channel_subchannels) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "All available Linux facing ECA subchannels are already in use");
 	}
 
@@ -761,7 +718,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 		std::string seq;
 		std::ostringstream str;
 		str.imbue(std::locale("C"));
-		str << "_" << ++d->sas_count;
+		str << "_" << ++sas_count;
 		seq = str.str();
 		name.append(seq);
 	} else {
@@ -779,18 +736,18 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 		name.append(name_);
 	}
 	
-	unsigned channel = d->ECA_LINUX_channel_index;
-	std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << d->queue_addresses.size() << std::endl;
-	eb_address_t address = d->queue_addresses[channel];
+	unsigned channel = ECA_LINUX_channel_index;
+	std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
+	eb_address_t address = queue_addresses[channel];
 
-	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(*this, get_object_path() + "/software/" + name, name, channel, num, address, d->container));
+	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(*this, get_object_path() + "/software/" + name, name, channel, num, address, container));
 	std::string sink_object_path = software_action_sink->getObjectPath();
-	if (d->container) {
+	if (container) {
 		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&ECA::removeSowftwareActionSink,this, software_action_sink.get())));
-		d->container->set_owner(service.get());
-		d->container->create_object(sink_object_path, std::move(service));
+		container->set_owner(service.get());
+		container->create_object(sink_object_path, std::move(service));
 	}
-	(*d->ECA_LINUX_channel)[num] = std::move(software_action_sink);
+	(*ECA_LINUX_channel)[num] = std::move(software_action_sink);
 
 	return sink_object_path;
 }
@@ -801,15 +758,15 @@ bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
 void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	ActionSink *as = sas;
 	std::cout << "========= removeSowftwareActionSink ======== " << as->getNum() << std::endl;
-	(*d->ECA_LINUX_channel)[as->getNum()].reset();
+	(*ECA_LINUX_channel)[as->getNum()].reset();
 	compile();
 }
 
 std::map< std::string, std::string > ECA::getSoftwareActionSinks() const
 {
 	std::map< std::string, std::string > out;
-	if (d->ECA_LINUX_channel != nullptr) {
-		for (auto &softwareActionSink: *d->ECA_LINUX_channel) {
+	if (ECA_LINUX_channel != nullptr) {
+		for (auto &softwareActionSink: *ECA_LINUX_channel) {
 			if (softwareActionSink) {
 				out[softwareActionSink->getObjectName()] = softwareActionSink->getObjectPath();
 			}
@@ -818,11 +775,17 @@ std::map< std::string, std::string > ECA::getSoftwareActionSinks() const
 	return out;
 }
 
+std::map< std::string, std::string > ECA::getSCUbusActionSinks() const 
+{
+	return scubus_action_sinks;
+}
+
+
 std::map< std::string, std::string > ECA::getOutputs() const
 {
 	std::map< std::string, std::string > out;
-	assert(d->ECAchannels.size() > 0);
-	for (auto &action_sink: d->ECAchannels[0]) {
+	assert(ECAchannels.size() > 0);
+	for (auto &action_sink: ECAchannels[0]) {
 		Output* output = dynamic_cast<Output*>(action_sink.get());
 		if (output) {
 		    out[output->getObjectName()] = output->getObjectPath();
@@ -833,13 +796,8 @@ std::map< std::string, std::string > ECA::getOutputs() const
 
 uint32_t ECA::getFree() const 
 {
-	return d->max_conditions - d->used_conditions;
+	return max_conditions - used_conditions;
 }
-
-void ECA::resetMostFull(unsigned channel) {
-	d->resetMostFull(channel);
-}
-
 
 
 } // namespace
