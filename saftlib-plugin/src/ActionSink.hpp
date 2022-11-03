@@ -294,6 +294,8 @@ class ActionSink : public Owned
 		uint64_t getOverflowCount() const;
 		// @saftbus-export
 		void setOverflowCount(uint64_t val);
+		// @saftbus-signal
+		std::function< void(uint64_t val)> OverflowCount;
 
 		/// @brief  The number of actions processed by the Sink.
 		/// @return The number of actions processed by the Sink.
@@ -306,6 +308,8 @@ class ActionSink : public Owned
 		uint64_t getActionCount() const;
 		// @saftbus-export
 		void setActionCount(uint64_t val);
+		// @saftbus-signal
+		std::function< void(uint64_t val)> ActionCount;
 
 		/// @brief  The number of actions delivered late.
 		/// @return The number of actions delivered late.
@@ -324,6 +328,10 @@ class ActionSink : public Owned
 		uint64_t getLateCount() const;
 		// @saftbus-export
 		void setLateCount(uint64_t val);
+		// @saftbus-signal
+		std::function< void(uint64_t val)> LateCount;
+
+
 		/// @brief:      An example of a late action since last LateCount change.
 		///
 		/// @param count    The new value of LateCount when this signal was raised.
@@ -358,6 +366,9 @@ class ActionSink : public Owned
 		uint64_t getEarlyCount() const;
 		// @saftbus-export
 		void setEarlyCount(uint64_t val);
+		// @saftbus-signal
+		std::function< void(uint64_t val)> EarlyCount;
+
 		/// @brief     An example of an early action since last EarlyCount change.
 		///
 		/// @param count    The new value of LateCount when this signal was raised.
@@ -382,6 +393,9 @@ class ActionSink : public Owned
 		uint64_t getConflictCount() const;
 		// @saftbus-export
 		void setConflictCount(uint64_t val);
+		// @saftbus-signal
+		std::function< void(uint64_t val)> ConflictCount;
+
 		/// @brief   An example of a conflict since last ConflictCount change.
 		///
 		/// @param count    The new value of ConflictCount when this signal was raised.
@@ -409,6 +423,10 @@ class ActionSink : public Owned
 		uint64_t getDelayedCount() const;
 		// @saftbus-export
 		void setDelayedCount(uint64_t val);
+		// @saftbus-signal
+		std::function< void(uint64_t val)> DelayedCount;
+
+
 		/// @brief   An example of a delayed action the last DelayedCount change.
 		///
 		/// @param count    The value of DelayedCount when this signal was raised.

@@ -20,8 +20,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "CommonFunctions.hpp"
 #include <saftbus/error.hpp>
+#include "CommonFunctions.hpp"
 
 #include "SAFTd_Proxy.hpp"
 #include "TimingReceiver_Proxy.hpp"
@@ -53,7 +53,7 @@ uint64_t delayed_counter       = 0;
 
 /* Prototypes */
 /* ==================================================================================================== */
-void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule, std::shared_ptr<SoftwareActionSink_Proxy> sink);
+void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule);
 void onOverflowCount(uint64_t count);
 void onActionCount(uint64_t count);
 void onLateCount(uint64_t count);
@@ -65,7 +65,7 @@ static void pps_help (void);
 
 /* Function onAction() */
 /* ==================================================================================================== */
-void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule, std::shared_ptr<SoftwareActionSink_Proxy> sink)
+void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule)
 {
   std::cout << "Got event at: 0x" << std::hex << (UTC?executed.getUTC():executed.getTAI()) << " -> " << tr_formatDate(executed, (verbose_mode?PMODE_VERBOSE:PMODE_NONE) | (UTC?PMODE_UTC:PMODE_NONE) ) << std::endl;
   if (verbose_mode)
@@ -74,23 +74,23 @@ void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::T
     std::cout << "  Flags:            0x" << flags << std::endl;
     std::cout << "  Rule:             0x" << rule << std::endl;
     std::cout << std::dec;
-    std::cout << "  Action Counter:   " << sink->getActionCount() << std::endl;
-    std::cout << "  Overflow Counter: " << sink->getOverflowCount() << std::endl;
-    std::cout << "  Late Counter:     " << sink->getLateCount() << std::endl;
-    std::cout << "  Early Counter:    " << sink->getEarlyCount() << std::endl;
-    std::cout << "  Conflict Counter: " << sink->getConflictCount() << std::endl;
-    std::cout << "  Delayed Counter:  " << sink->getDelayedCount() << std::endl;
+    std::cout << "  Action Counter:   " << action_counter << std::endl;
+    std::cout << "  Overflow Counter: " << overflow_counter << std::endl;
+    std::cout << "  Late Counter:     " << late_counter << std::endl;
+    std::cout << "  Early Counter:    " << early_counter << std::endl;
+    std::cout << "  Conflict Counter: " << conflict_counter << std::endl;
+    std::cout << "  Delayed Counter:  " << delayed_counter << std::endl;
   }
 }
 
 /* Generic counter functions */
 /* ==================================================================================================== */
-void onActionCount(uint64_t count)   { action_counter++; }
-void onOverflowCount(uint64_t count) { overflow_counter++; }
-void onLateCount(uint64_t count)     { late_counter++; }
-void onEarlyCount(uint64_t count)    { early_counter++; }
-void onConflictCount(uint64_t count) { conflict_counter++; }
-void onDelayedCount(uint64_t count)  { delayed_counter++; }
+void onActionCount(uint64_t count)   { action_counter=count; } 
+void onOverflowCount(uint64_t count) { overflow_counter=count; }
+void onLateCount(uint64_t count)     { late_counter=count; }
+void onEarlyCount(uint64_t count)    { early_counter=count; }
+void onConflictCount(uint64_t count) { conflict_counter=count; }
+void onDelayedCount(uint64_t count)  { delayed_counter=count; }
 
 /* Function pps_help() */
 /* ==================================================================================================== */
@@ -332,12 +332,7 @@ int main (int argc, char** argv)
         std::cout << "Waiting for timing events..." << std::endl;
         std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
-        condition->SigAction = std::bind(&onAction, std::placeholders::_1//, .connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
-                                                  , std::placeholders::_2
-                                                  , std::placeholders::_3
-                                                  , std::placeholders::_4
-                                                  , std::placeholders::_5
-                                                  , 0, sink);
+        condition->SigAction = std::bind(&onAction, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, 0);//.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Accept all kinds of events */
         condition->setAcceptConflict(true);
@@ -345,8 +340,13 @@ int main (int argc, char** argv)
         condition->setAcceptEarly(true);
         condition->setAcceptLate(true);
         
-
-
+        /* Attach to counter signals */
+        sink->OverflowCount = &onOverflowCount;    //.connect(sigc::ptr_fun(&onOverflowCount));
+        sink->ActionCount   = &onActionCount;      //.connect(sigc::ptr_fun(&onActionCount));
+        sink->LateCount     = &onLateCount;        //.connect(sigc::ptr_fun(&onLateCount));
+        sink->EarlyCount    = &onEarlyCount;       //.connect(sigc::ptr_fun(&onEarlyCount));
+        sink->ConflictCount = &onConflictCount;    //.connect(sigc::ptr_fun(&onConflictCount));
+        sink->DelayedCount  = &onDelayedCount;     //.connect(sigc::ptr_fun(&onDelayedCount));
         
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
         while (true) {

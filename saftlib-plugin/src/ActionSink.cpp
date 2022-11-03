@@ -313,7 +313,7 @@ void ActionSink::receiveMSI(uint8_t code)
 		exec = overflowUpdate + signalRate;
 		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
 		overflowPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateOverflow, this),interval);
+			std::bind(&ActionSink::updateOverflow, this),interval,interval);
 		break;
 	case ECA_VALID:
 		//DRIVER_LOG("ECA_VALID",-1, -1);
@@ -321,7 +321,7 @@ void ActionSink::receiveMSI(uint8_t code)
 		exec = actionUpdate + signalRate;
 		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
 		actionPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateAction, this),interval);
+			std::bind(&ActionSink::updateAction, this),interval,interval);
 		break;
 	case ECA_LATE:
 		//DRIVER_LOG("ECA_LATE",-1, -1);
@@ -329,7 +329,7 @@ void ActionSink::receiveMSI(uint8_t code)
 		exec = lateUpdate + signalRate;
 		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
 		latePending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateLate, this),interval);
+			std::bind(&ActionSink::updateLate, this),interval,interval);
 		break;
 	case ECA_EARLY:
 		//DRIVER_LOG("ECA_EARLY",-1, -1);
@@ -337,7 +337,7 @@ void ActionSink::receiveMSI(uint8_t code)
 		exec = earlyUpdate + signalRate;
 		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
 		earlyPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateEarly, this),interval);
+			std::bind(&ActionSink::updateEarly, this),interval,interval);
 		break;
 	case ECA_CONFLICT:
 		//DRIVER_LOG("ECA_CONFLICT",-1, -1);
@@ -345,7 +345,7 @@ void ActionSink::receiveMSI(uint8_t code)
 		exec = conflictUpdate + signalRate;
 		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
 		conflictPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateConflict, this),interval);
+			std::bind(&ActionSink::updateConflict, this),interval,interval);
 		break;
 	case ECA_DELAYED:
 		//DRIVER_LOG("ECA_DELAYED",-1, -1);
@@ -353,7 +353,7 @@ void ActionSink::receiveMSI(uint8_t code)
 		exec = delayedUpdate + signalRate;
 		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
 		delayedPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateDelayed, this),interval);
+			std::bind(&ActionSink::updateDelayed, this),interval,interval);
 		break;
 	default:
 		//clog << kLogErr << "Asked to handle an invalid MSI condition code in ActionSink.cpp" << std::endl;
@@ -375,6 +375,7 @@ bool ActionSink::updateOverflow() const
 	cycle.close();
 
 	overflowCount += overflow;
+	if (OverflowCount) OverflowCount(overflowCount);
 
 	overflowUpdate = std::chrono::steady_clock::now();
 	
@@ -384,6 +385,7 @@ bool ActionSink::updateOverflow() const
 
 bool ActionSink::updateAction() const
 {
+	std::cout << "ActionSink::updateAction" << std::endl;
 	//DRIVER_LOGT("start",name.c_str(),-1,channel);
 	eb_data_t valid;
 
@@ -396,6 +398,12 @@ bool ActionSink::updateAction() const
 	cycle.close();
 
 	actionCount += valid;
+	if (ActionCount) {
+		std::cout << "ActionCount send signal ActionCount " << actionCount<< std::endl;
+		ActionCount(actionCount);
+	}
+
+
 	actionUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1,channel);
 	return false;
@@ -442,6 +450,8 @@ bool ActionSink::updateLate() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_LATE);
 	lateCount += r.count;
+	if (LateCount) LateCount(lateCount);
+
 	lateUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);
 	return false;
@@ -452,6 +462,8 @@ bool ActionSink::updateEarly() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_EARLY);
 	earlyCount += r.count;
+	if (EarlyCount) EarlyCount(earlyCount);
+
 	earlyUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);
 	return false;
@@ -462,6 +474,8 @@ bool ActionSink::updateConflict() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_CONFLICT);
 	conflictCount += r.count;
+	if (ConflictCount) ConflictCount(conflictCount);
+
 	conflictUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);
 	return false;
@@ -472,6 +486,8 @@ bool ActionSink::updateDelayed() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_DELAYED);
 	delayedCount += r.count;
+	if (DelayedCount) DelayedCount(delayedCount);
+
 	delayedUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);
 	return false;
