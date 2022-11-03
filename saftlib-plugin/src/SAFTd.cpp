@@ -122,6 +122,10 @@ namespace saftlib {
 
 
 	std::string SAFTd::EbForward(const std::string& saftlib_device) {
+		auto dev = attached_devices.find(saftlib_device);
+		if (dev != attached_devices.end()) {
+			return dev->second->getEbForwardPath();
+		}
 		return std::string();
 	}
 

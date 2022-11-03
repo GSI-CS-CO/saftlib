@@ -109,7 +109,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 			std::cerr << "create forwarding device" << std::endl;
 			eb_forward = std::unique_ptr<EB_Forward>(new EB_Forward(eb_path));
 			eb_forward_path = eb_forward->eb_forward_path();
-		}
+		} 
 
 	} catch (saftbus::Error& e) {
 		std::cerr << "Error: " << e.what() << std::endl;

@@ -75,8 +75,8 @@ namespace saftlib {
 				if (request.size() == 4) {
 					if ( request[0]     == 0x4e  // test for Etherbone magic word
 					  && request[1]     == 0x6f 
-					  && request[2]     == 0x11 
-					  )//&& (request[3]     == 0xff || request[3] == 0x77)) // on 32 bit systems, the host will send 0x77 while on 64 bit systems the host will send 0xff
+					  )//&& request[2]     == 0x11 
+					   //&& (request[3]     == 0xff || request[3] == 0x77)) // on 32 bit systems, the host will send 0x77 while on 64 bit systems the host will send 0xff
 					{
 						// hard-coded response
 						response.push_back(0x4e);

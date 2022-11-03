@@ -9,6 +9,7 @@
 #include <map>
 
 #include "TimingReceiver.hpp"
+#include "eb-forward.hpp"
 
 namespace saftlib {
 
@@ -130,6 +131,8 @@ namespace saftlib {
 		// 
 		etherbone::Socket socket;
 		saftbus::SourceHandle eb_source;
+
+		std::map< std::string, std::unique_ptr<EB_Forward> > eb_forward; 
 
 		// remember all attached devices 
 		std::map<std::string, std::unique_ptr<TimingReceiver> > attached_devices;
