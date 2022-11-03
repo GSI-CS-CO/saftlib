@@ -117,7 +117,7 @@ TimingReceiver::~TimingReceiver()
 
 bool TimingReceiver::poll()
 {
-	std::cerr << "TimingReceiver::poll()" << std::endl;
+	// std::cerr << "TimingReceiver::poll()" << std::endl;
 	WhiteRabbit::getLocked();
 	Watchdog::update(); 
 	return true;

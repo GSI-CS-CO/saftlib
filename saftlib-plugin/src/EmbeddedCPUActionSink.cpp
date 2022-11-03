@@ -18,34 +18,36 @@
  *******************************************************************************
  */
 
-#include "SCUbusCondition.hpp"
+#include "EmbeddedCPUActionSink.hpp"
+#include "ECA.hpp"
+#include "eca_queue_regs.h"
+#include "eca_flags.h"
+
+#include "Condition.hpp"
+#include "EmbeddedCPUCondition.hpp"
+#include "EmbeddedCPUCondition_Service.hpp"
+
+
+#include <cassert>
+#include <sstream>
+#include <memory>
 
 namespace saftlib {
 
-SCUbusCondition::SCUbusCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container)
- : Owned(container), Condition(sink, number, active, id, mask, offset, tag)
+EmbeddedCPUActionSink::EmbeddedCPUActionSink(ECA &eca
+                                  , const std::string &obj_path
+                                  , const std::string &name
+                                  , unsigned channel
+                                  , saftbus::Container *container)
+	: ActionSink(eca, obj_path, name, channel, 0, container)
 {
-  std::cerr << "SCUbusCondition::SCUbusCondition()" << std::endl;
 }
 
-uint32_t SCUbusCondition::getTag() const
-{
-  return tag;
-}
 
-void SCUbusCondition::setTag(uint32_t val)
+
+std::string EmbeddedCPUActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag)
 {
-  ownerOnly();
-  if (val == tag) return;
-  uint32_t old = tag;
-  
-  tag = val;
-  try {
-    if (active) sink->compile();
-  } catch (...) {
-    tag = old;
-    throw;
-  }
+	return NewConditionHelper<EmbeddedCPUCondition>(active, id, mask, offset, tag, container);
 }
 
 }

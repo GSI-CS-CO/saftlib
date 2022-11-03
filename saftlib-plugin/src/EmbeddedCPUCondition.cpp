@@ -18,22 +18,22 @@
  *******************************************************************************
  */
 
-#include "SCUbusCondition.hpp"
+#include "EmbeddedCPUCondition.hpp"
 
 namespace saftlib {
 
-SCUbusCondition::SCUbusCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container)
+EmbeddedCPUCondition::EmbeddedCPUCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container)
  : Owned(container), Condition(sink, number, active, id, mask, offset, tag)
 {
-  std::cerr << "SCUbusCondition::SCUbusCondition()" << std::endl;
+  std::cerr << "EmbeddedCPUCondition::EmbeddedCPUCondition()" << std::endl;
 }
 
-uint32_t SCUbusCondition::getTag() const
+uint32_t EmbeddedCPUCondition::getTag() const
 {
   return tag;
 }
 
-void SCUbusCondition::setTag(uint32_t val)
+void EmbeddedCPUCondition::setTag(uint32_t val)
 {
   ownerOnly();
   if (val == tag) return;

@@ -17,6 +17,8 @@
 #include "SoftwareActionSink_Service.hpp"
 #include "SCUbusActionSink.hpp"
 #include "SCUbusActionSink_Service.hpp"
+#include "EmbeddedCPUActionSink.hpp"
+#include "EmbeddedCPUActionSink_Service.hpp"
 #include "Output.hpp"
 
 #include "eca_regs.h"
@@ -273,6 +275,30 @@ void ECA::prepareChannels()
 					scubus_action_sinks["scubus"] = path;
 				}
 			} break;
+			case ECA_EMBEDDED_CPU: {
+				std::cerr << "ECA: Found queue..." << std::endl;
+				for (unsigned queue_id = 1; queue_id < channels; ++queue_id) {
+					eb_data_t get_id;
+					cycle.open(device);
+					cycle.read(queue_addresses[queue_id]+ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &get_id);
+					cycle.close();
+					std::cerr << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
+					std::cerr << "ECA: Found queue with ID: " << get_id << std::endl;
+					if (get_id == ECA_EMBEDDED_CPU) {
+						std::cerr << "ECA: Found embedded CPU channel!" << std::endl;
+						std::string path = object_path + "/embedded_cpu";
+
+						std::unique_ptr<EmbeddedCPUActionSink> ecpu_sink(new EmbeddedCPUActionSink(*this, path, "embedded_cpu", channel_idx, container));
+						if (container) {
+							std::unique_ptr<EmbeddedCPUActionSink_Service> service(new EmbeddedCPUActionSink_Service(ecpu_sink.get()));
+							container->create_object(path, std::move(service));
+						}
+						ECAchannels[channel_idx].push_back(std::move(ecpu_sink));
+						ecpu_action_sinks["embedded_cpu"] = path;
+					}
+				}
+			}			
+			break;
 			// case ECA_EMBEDDED_CPU:
 			// break;
 		}
@@ -788,6 +814,11 @@ std::map< std::string, std::string > ECA::getSoftwareActionSinks() const
 std::map< std::string, std::string > ECA::getSCUbusActionSinks() const 
 {
 	return scubus_action_sinks;
+}
+
+std::map< std::string, std::string > ECA::getEmbeddedCPUActionSinks() const 
+{
+	return ecpu_action_sinks;
 }
 
 

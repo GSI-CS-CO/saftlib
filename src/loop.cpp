@@ -88,7 +88,7 @@ namespace saftbus {
 
 	bool Loop::iteration(bool may_block) {
 		++d->running_depth;
-		std::cerr << "Loop::iteration " << d->running_depth << std::endl;
+		// std::cerr << "Loop::iteration " << d->running_depth << std::endl;
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 		std::vector<struct pollfd> pfds;
 		// pfds.reserve(16);

@@ -71,6 +71,7 @@ class ECA {
 	unsigned                                         ECA_LINUX_channel_subchannels;
 
 	std::map<std::string, std::string > scubus_action_sinks; // a list of scubus_action_sinks that is created on construction and returned by getSCUbusActionSinks()
+	std::map<std::string, std::string > ecpu_action_sinks; // a list of ecpu_action_sinks that is created on construction and returned by getEmbeddedCPUActionSinks()
 
 	void popMissingQueue(unsigned channel, unsigned num);	
 	void probeConfiguration();
@@ -157,6 +158,12 @@ public:
 	///
 	// @saftbus-export
 	std::map< std::string, std::string > getSCUbusActionSinks() const;
+
+	/// @brief A list of all EmbeddedCPUActionSinks
+	/// @return A list of all EmbeddedCPUActionSinks
+	///
+	// @saftbus-export
+	std::map< std::string, std::string > getEmbeddedCPUActionSinks() const;
 
 	/// @brief get a pointer to a SoftwareActionSink in a stand-alone application
 	/// @param sas_obj_path Object path of the SoftwareActionSink
