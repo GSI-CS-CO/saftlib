@@ -752,14 +752,14 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Output enable is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
 
         /* Check if OE option is available */
         if (!(output_proxy->getOutputEnableAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Output enable does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -770,13 +770,13 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Input termination is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
         /* Check if TERM option is available */
         if (!(input_proxy->getInputTerminationAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Input termination option does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -786,13 +786,13 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       {
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Special purpose out is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
         /* Check if SPEC OUT option is available */
         if (!(output_proxy->getSpecialPurposeOutAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Special purpose out does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -802,13 +802,13 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       {
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Special purpose in is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
         /* Check if SPEC OUT option is available */
         if (!(input_proxy->getSpecialPurposeInAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Special purpose in does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -828,7 +828,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       {
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Gate is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -839,7 +839,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Mux is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -850,7 +850,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: PPS is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -861,7 +861,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Setting drive value is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -872,7 +872,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Setting stable time is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
