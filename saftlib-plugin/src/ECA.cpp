@@ -19,6 +19,8 @@
 #include "SCUbusActionSink_Service.hpp"
 #include "EmbeddedCPUActionSink.hpp"
 #include "EmbeddedCPUActionSink_Service.hpp"
+#include "WbmActionSink.hpp"
+#include "WbmActionSink_Service.hpp"
 #include "Output.hpp"
 
 #include "eca_regs.h"
@@ -257,8 +259,22 @@ void ECA::prepareChannels()
 					std::cerr << "more than one Linux facing ECA channel. We will use the first of them and ignore the rest" << std::endl;
 				}
 			break;
-			// case ECA_WBM:
-			// break;
+			case ECA_WBM: {
+				std::cerr << "============== FOUND WBM ACTION SINK object_path = " << object_path << std::endl;
+				std::vector<sdb_device> acwbm;
+				device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x18415778, acwbm);
+				if (acwbm.size() == 1) {
+					std::string path = object_path + "/acwbm";
+
+					std::unique_ptr<WbmActionSink> wbm_sink(new WbmActionSink( device, *this, path, "acwbm", channel_idx, (eb_address_t)acwbm[0].sdb_component.addr_first, container  ));
+					if (container) {
+						std::unique_ptr<WbmActionSink_Service> service(new WbmActionSink_Service(wbm_sink.get()));
+						container->create_object(path, std::move(service));
+					}
+					ECAchannels[channel_idx].push_back(std::move(wbm_sink));
+					wbm_action_sinks["acwbm"] = path;
+				}
+			} break;
 			case ECA_SCUBUS: {
 				std::cerr << "============== FOUND SCU_BUS ACTION SINK object_path = " << object_path << std::endl;
 				std::vector<sdb_device> scubus;
@@ -819,6 +835,11 @@ std::map< std::string, std::string > ECA::getSCUbusActionSinks() const
 std::map< std::string, std::string > ECA::getEmbeddedCPUActionSinks() const 
 {
 	return ecpu_action_sinks;
+}
+
+std::map< std::string, std::string > ECA::getWbmActionSinks() const 
+{
+	return wbm_action_sinks;
 }
 
 

@@ -33,31 +33,35 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/EmbeddedCPUCondition_Service.cpp               \
 	src/EmbeddedCPUActionSink.cpp                       \
 	src/EmbeddedCPUActionSink_Service.cpp                \
-	src/OpenDevice.cpp                                    \
-	src/OpenDevice_Service.cpp                             \
-	src/WhiteRabbit.cpp                                     \
-	src/WhiteRabbit_Service.cpp                              \
-	src/Mailbox.cpp                                           \
-	src/Watchdog.cpp                                           \
-	src/SerdesClockGen.cpp                                      \
-	src/Io.cpp                                                   \
-	src/IoControl.cpp                                             \
-	src/Output.cpp                                                 \
-	src/Output_Service.cpp                                          \
-	src/OutputCondition.cpp                                          \
-	src/OutputCondition_Service.cpp                                   \
-	src/EventSource.cpp                                                \
-	src/Input.cpp                                                       \
-	src/Input_Service.cpp                                                \
-	src/ECA.cpp                                                           \
-	src/ECA_Service.cpp                                                    \
-	src/ECA_TLU.cpp                                                         \
-	src/BuildIdRom.cpp                                                       \
-	src/BuildIdRom_Service.cpp                                                \
-	src/TempSensor.cpp                                                         \
-	src/TempSensor_Service.cpp                                                  \
-	src/TimingReceiver.cpp                                                       \
-	src/TimingReceiver_Service.cpp                                                \
+	src/WbmCondition.cpp                                  \
+	src/WbmCondition_Service.cpp                           \
+	src/WbmActionSink.cpp                                   \
+	src/WbmActionSink_Service.cpp                            \
+	src/OpenDevice.cpp                                        \
+	src/OpenDevice_Service.cpp                                 \
+	src/WhiteRabbit.cpp                                         \
+	src/WhiteRabbit_Service.cpp                                  \
+	src/Mailbox.cpp                                               \
+	src/Watchdog.cpp                                               \
+	src/SerdesClockGen.cpp                                          \
+	src/Io.cpp                                                       \
+	src/IoControl.cpp                                                 \
+	src/Output.cpp                                                     \
+	src/Output_Service.cpp                                              \
+	src/OutputCondition.cpp                                              \
+	src/OutputCondition_Service.cpp                                       \
+	src/EventSource.cpp                                                    \
+	src/Input.cpp                                                           \
+	src/Input_Service.cpp                                                    \
+	src/ECA.cpp                                                               \
+	src/ECA_Service.cpp                                                        \
+	src/ECA_TLU.cpp                                                             \
+	src/BuildIdRom.cpp                                                           \
+	src/BuildIdRom_Service.cpp                                                    \
+	src/TempSensor.cpp                                                             \
+	src/TempSensor_Service.cpp                                                      \
+	src/TimingReceiver.cpp                                                           \
+	src/TimingReceiver_Service.cpp                                                    \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/saftlib/service
@@ -75,21 +79,23 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/SCUbusActionSink.hpp                      \
 	src/EmbeddedCPUCondition.hpp                   \
 	src/EmbeddedCPUActionSink.hpp                   \
-	src/OpenDevice.hpp                               \
-	src/WhiteRabbit.hpp                               \
-	src/Mailbox.hpp                                    \
-	src/Watchdog.hpp                                    \
-	src/SerdesClockGen.hpp                               \
-	src/Io.hpp                                            \
-	src/IoControl.hpp                                      \
-	src/Output.hpp                                          \
-	src/OutputCondition.hpp                                  \
-	src/EventSource.hpp                                       \
-	src/Input.hpp                                              \
-	src/ECA.hpp                                                 \
-	src/ECA_TLU.cpp                                              \
-	src/BuildIdRom.hpp                                            \
-	src/TempSensor.hpp                                             \
+	src/WbmCondition.hpp                             \
+	src/WbmActionSink.hpp                             \
+	src/OpenDevice.hpp                                 \
+	src/WhiteRabbit.hpp                                 \
+	src/Mailbox.hpp                                      \
+	src/Watchdog.hpp                                      \
+	src/SerdesClockGen.hpp                                 \
+	src/Io.hpp                                              \
+	src/IoControl.hpp                                        \
+	src/Output.hpp                                            \
+	src/OutputCondition.hpp                                    \
+	src/EventSource.hpp                                         \
+	src/Input.hpp                                                \
+	src/ECA.hpp                                                   \
+	src/ECA_TLU.cpp                                                \
+	src/BuildIdRom.hpp                                              \
+	src/TempSensor.hpp                                               \
 	src/TimingReceiver.hpp                                        
 # 	src/Owned_Service.hpp                  \
 # 	src/SAFTd_Service.hpp                   \
@@ -101,14 +107,16 @@ lib@PACKAGE@_service_include_HEADERS = \
 # 	src/SCUbusActionSink_Service.hpp              \
 # 	src/EmbeddedCPUCondition_Service.hpp           \
 # 	src/EmbeddedCPUActionSink_Service.hpp           \
-# 	src/OpenDevice_Service.hpp                       \
-# 	src/WhiteRabbit_Service.hpp                       \
-# 	src/Output_Service.hpp                             \
-# 	src/OutputCondition_Service.hpp                     \
-# 	src/Input_Service.hpp                                \
-# 	src/ECA_Service.hpp                                   \
-# 	src/BuildIdRom_Service.hpp                             \
-# 	src/TempSensor_Service.hpp                              \
+# 	src/WbmCondition_Service.hpp                     \
+# 	src/WbmActionSink_Service.hpp                     \
+# 	src/OpenDevice_Service.hpp                         \
+# 	src/WhiteRabbit_Service.hpp                         \
+# 	src/Output_Service.hpp                               \
+# 	src/OutputCondition_Service.hpp                       \
+# 	src/Input_Service.hpp                                  \
+# 	src/ECA_Service.hpp                                     \
+# 	src/BuildIdRom_Service.hpp                               \
+# 	src/TempSensor_Service.hpp                                \
 # 	src/TimingReceiver_Service.hpp                           
 # the service headers are not neede by client programs (event standalone ones), right???
 
@@ -125,16 +133,18 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/SCUbusActionSink_Proxy.cpp         \
 	src/EmbeddedCPUCondition_Proxy.cpp      \
 	src/EmbeddedCPUActionSink_Proxy.cpp      \
-	src/OpenDevice_Proxy.cpp                  \
-	src/WhiteRabbit_Proxy.cpp                  \
-	src/Output_Proxy.cpp                        \
-	src/OutputCondition_Proxy.cpp                \
-	src/Input_Proxy.cpp                           \
-	src/EventSource_Proxy.cpp                      \
-	src/ECA_Proxy.cpp                               \
-	src/ECA_TLU_Proxy.cpp                            \
-	src/BuildIdRom_Proxy.cpp                          \
-	src/TempSensor_Proxy.cpp                           \
+	src/WbmCondition_Proxy.cpp                \
+	src/WbmActionSink_Proxy.cpp                \
+	src/OpenDevice_Proxy.cpp                    \
+	src/WhiteRabbit_Proxy.cpp                    \
+	src/Output_Proxy.cpp                          \
+	src/OutputCondition_Proxy.cpp                  \
+	src/Input_Proxy.cpp                             \
+	src/EventSource_Proxy.cpp                        \
+	src/ECA_Proxy.cpp                                 \
+	src/ECA_TLU_Proxy.cpp                              \
+	src/BuildIdRom_Proxy.cpp                            \
+	src/TempSensor_Proxy.cpp                             \
 	src/TimingReceiver_Proxy.cpp         
 
 
@@ -151,16 +161,18 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/SCUbusActionSink_Proxy.hpp            \
 	src/EmbeddedCPUCondition_Proxy.hpp         \
 	src/EmbeddedCPUActionSink_Proxy.hpp         \
-	src/OpenDevice_Proxy.hpp                     \
-	src/WhiteRabbit_Proxy.hpp                     \
-	src/Output_Proxy.hpp                           \
-	src/OutputCondition_Proxy.hpp                   \
-	src/Input_Proxy.hpp                              \
-	src/EventSource_Proxy.hpp                         \
-	src/ECA_Proxy.hpp                                  \
-	src/ECA_TLU_Proxy.hpp                               \
-	src/BuildIdRom_Proxy.hpp                             \
-	src/TempSensor_Proxy.hpp                              \
+	src/WbmCondition_Proxy.hpp                   \
+	src/WbmActionSink_Proxy.hpp                   \
+	src/OpenDevice_Proxy.hpp                       \
+	src/WhiteRabbit_Proxy.hpp                       \
+	src/Output_Proxy.hpp                             \
+	src/OutputCondition_Proxy.hpp                     \
+	src/Input_Proxy.hpp                                \
+	src/EventSource_Proxy.hpp                           \
+	src/ECA_Proxy.hpp                                    \
+	src/ECA_TLU_Proxy.hpp                                 \
+	src/BuildIdRom_Proxy.hpp                               \
+	src/TempSensor_Proxy.hpp                                \
 	src/TimingReceiver_Proxy.hpp 
 
 # the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
@@ -171,7 +183,7 @@ EXTRA_DIST = leap-seconds.list
 dist_bin_SCRIPTS = src/saftd
 
 
-bin_PROGRAMS = eb-plugin-ctl eb-standalone software-tr soft-tr wait-msi saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl
+bin_PROGRAMS = eb-plugin-ctl eb-standalone software-tr soft-tr wait-msi saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl
 eb_plugin_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
 eb_plugin_ctl_SOURCES = src/eb-plugin-ctl.cpp
 
@@ -207,6 +219,9 @@ saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp src/CommonFunctions.cpp
 
 saft_ecpu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
+
+saft_wbm_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_wbm_ctl_SOURCES = src/saft-wbm-ctl.cpp src/CommonFunctions.cpp
 
 # autogenerated files
 %_Service.cpp %_Service.hpp %_Proxy.cpp %_Proxy.hpp: %.hpp

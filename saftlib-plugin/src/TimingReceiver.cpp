@@ -156,9 +156,12 @@ std::map< std::string, std::map< std::string, std::string > > TimingReceiver::ge
 {
 	std::map< std::string, std::map< std::string, std::string > > result;
 	
-	result["SoftwareActionSink"] = ECA::getSoftwareActionSinks();
-	result["SCUbusActionSink"]   = ECA::getSCUbusActionSinks();
-	result["Input"]              = ECA_TLU::getInputs();
+	result["SoftwareActionSink"]    = ECA::getSoftwareActionSinks();
+	result["SCUbusActionSink"]      = ECA::getSCUbusActionSinks();
+	result["WbmActionSink"]         = ECA::getWbmActionSinks();
+	result["EmbeddedCPUActionSink"] = ECA::getEmbeddedCPUActionSinks();
+	result["Output"]                = ECA::getOutputs();
+	result["Input"]                 = ECA_TLU::getInputs();
 	
 	return result;
 }

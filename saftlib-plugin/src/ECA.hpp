@@ -72,6 +72,7 @@ class ECA {
 
 	std::map<std::string, std::string > scubus_action_sinks; // a list of scubus_action_sinks that is created on construction and returned by getSCUbusActionSinks()
 	std::map<std::string, std::string > ecpu_action_sinks; // a list of ecpu_action_sinks that is created on construction and returned by getEmbeddedCPUActionSinks()
+	std::map<std::string, std::string > wbm_action_sinks; 
 
 	void popMissingQueue(unsigned channel, unsigned num);	
 	void probeConfiguration();
@@ -164,6 +165,12 @@ public:
 	///
 	// @saftbus-export
 	std::map< std::string, std::string > getEmbeddedCPUActionSinks() const;
+
+	/// @brief A list of all WbmActionSinks
+	/// @return A list of all WbmActionSinks
+	///
+	// @saftbus-export
+	std::map< std::string, std::string > getWbmActionSinks() const;
 
 	/// @brief get a pointer to a SoftwareActionSink in a stand-alone application
 	/// @param sas_obj_path Object path of the SoftwareActionSink
