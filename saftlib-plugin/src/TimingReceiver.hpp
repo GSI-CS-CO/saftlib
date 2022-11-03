@@ -135,36 +135,6 @@ public:
 	void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time);
 
 
-
-	/// @brief This signal is sent when the Lock Property changes
-	///
-	// @saftbus-signal
-	std::function<void(bool locked)> SigLocked;
-	
-
-
-	/// @brief A list of all current SoftwareActionSinks.
-	/// @return A list of all current SoftwareActionSinks.
-	///
-	/// Typically, these SoftwareActionSinks will be owned by their
-	/// processes and not of much interest to others.  Therefore, many of
-	/// the entries here may be of no interest to a particular client. 
-	/// However, it is possible for a SoftwareActionSink to be Disowned, in
-	/// which case it may be persistent and shared between programs under a
-	/// well known name.
-	///
-	// // @saftbus-export
-	// std::map< std::string, std::string > getSoftwareActionSinks() const;
-
-
-	/// @brief A list of all the high/low inputs on the receiver.
-	/// @return  A list of all the high/low inputs on the receiver.
-	///
-	/// Each path refers to an object of type Input.	
-	///
-	// // @saftbus-export
-	// std::map< std::string, std::string > getInputs() const;
-
 	/// @brief List of all object instances of various hardware.
 	/// @return List of all object instances of various hardware.
 	///
@@ -173,21 +143,6 @@ public:
 	///
 	// @saftbus-export
 	std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
-
-	/// @brief The number of additional conditions that may be activated.
-	/// @return The number of additional conditions that may be activated.
-	///
-	/// The ECA has limited hardware resources in its match table.	
-	///
-	// // @saftbus-export
-	// uint32_t getFree() const;
-
-
-
-	// etherbone::Device& getDevice() { return OpenDevice::device; }
-
-//	SoftwareActionSink *getSoftwareActionSink(const std::string & object_path);
-
 
 private:
 
