@@ -740,7 +740,17 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
 	eb_address_t address = queue_addresses[channel];
 
-	std::unique_ptr<SoftwareActionSink> software_action_sink(new SoftwareActionSink(*this, get_object_path() + "/software/" + name, name, channel, num, address, container));
+	std::string path = object_path;
+	path.append("/software/");
+	path.append(name);
+	std::unique_ptr<SoftwareActionSink> software_action_sink(
+		new SoftwareActionSink(*this, 
+			path, 
+			name, 
+			channel, 
+			num, 
+			address, 
+			container));
 	std::string sink_object_path = software_action_sink->getObjectPath();
 	if (container) {
 		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&ECA::removeSowftwareActionSink,this, software_action_sink.get())));

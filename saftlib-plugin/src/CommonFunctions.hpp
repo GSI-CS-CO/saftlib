@@ -64,9 +64,9 @@ std::string tr_formatActionFlags(uint16_t flags,    // 16bit flags
 
 namespace saftlib {
     /// @brief wait for a signal from anay Proxy connected to saftbus::SignalGroup::get_global()
-    /// @param timeout_ms if no signal arrives return after so many milliseconds
+    /// @param timeout_ms if no signal arrives return after so many milliseconds, default is -1 which means: no timeout
     /// @return >0 if a signal was received, 0 if timeout was hit, < 0 in case of failure
-    int wait_for_signal(int timeout_ms = 0);
+    int wait_for_signal(int timeout_ms = -1);
 
 
 }

@@ -20,9 +20,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include <saftbus/error.hpp>
-
 #include "CommonFunctions.hpp"
+#include <saftbus/error.hpp>
 
 #include "SAFTd_Proxy.hpp"
 #include "TimingReceiver_Proxy.hpp"
@@ -31,8 +30,8 @@
 #include "Output_Proxy.hpp"
 #include "OutputCondition_Proxy.hpp"
 #include "Input_Proxy.hpp"
-//#include "SCUbusActionSink.hpp"
-//#include "SCUbusCondition.hpp"
+#include "SCUbusActionSink_Proxy.hpp"
+#include "SCUbusCondition_Proxy.hpp"
 
 /* Namespace */
 /* ==================================================================================================== */
@@ -269,29 +268,29 @@ int main (int argc, char** argv)
       /* Output some information */
       std::cout << "ECA configuration done for " << total_ios << " IO(s)!" << std::endl;
       
-      // /* Create condition for the SCU bus (if wanted) */
-      // if (setup_scu_bus)
-      // {
-      //   /* Search for SCU bus channel */
-      //   map<std::string, std::string> e_scubusses = receiver->getInterfaces()["SCUbusActionSink"];
-      //   if (e_scubusses.size() != 1)
-      //   {
-      //     std::cerr << "Device '" << receiver->getName() << "' has no SCU bus!" << std::endl;
-      //     return (-1);
-      //  }
+      /* Create condition for the SCU bus (if wanted) */
+      if (setup_scu_bus)
+      {
+        /* Search for SCU bus channel */
+        map<std::string, std::string> e_scubusses = receiver->getInterfaces()["SCUbusActionSink"];
+        if (e_scubusses.size() != 1)
+        {
+          std::cerr << "Device '" << receiver->getName() << "' has no SCU bus!" << std::endl;
+          return (-1);
+       }
        
-      //  /* Get connection */
-      //  std::shared_ptr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
-      //  std::shared_ptr<SCUbusCondition_Proxy> scubus_condition;
-      //  scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
+       /* Get connection */
+       std::shared_ptr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
+       std::shared_ptr<SCUbusCondition_Proxy> scubus_condition;
+       scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
         
-      //  /* Accept every kind of event */
-      //  scubus_condition->setAcceptConflict(true);
-      //  scubus_condition->setAcceptDelayed(true);
-      //  scubus_condition->setAcceptEarly(true);
-      //  scubus_condition->setAcceptLate(true);
-      //  std::cout << "ECA configuration done for SCU bus!" << std::endl;
-      // }
+       /* Accept every kind of event */
+       scubus_condition->setAcceptConflict(true);
+       scubus_condition->setAcceptDelayed(true);
+       scubus_condition->setAcceptEarly(true);
+       scubus_condition->setAcceptLate(true);
+       std::cout << "ECA configuration done for SCU bus!" << std::endl;
+      }
       
       /* Trigger ECA continuously? */ 
       if (!external_trigger)
@@ -346,18 +345,12 @@ int main (int argc, char** argv)
         condition->setAcceptEarly(true);
         condition->setAcceptLate(true);
         
-        /* Attach to counter signals */
-        //sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
-        //sink->ActionCount.connect(sigc::ptr_fun(&onActionCount));
-        //sink->LateCount.connect(sigc::ptr_fun(&onLateCount));
-        //sink->EarlyCount.connect(sigc::ptr_fun(&onEarlyCount));
-        //sink->ConflictCount.connect(sigc::ptr_fun(&onConflictCount));
-        //sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
+
+
         
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
         while (true) {
-          saftbus::SignalGroup::get_global().wait_for_signal();
-          // saftlib::wait_for_signal();
+          saftlib::wait_for_signal();
         }
       }
     }

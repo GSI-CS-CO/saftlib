@@ -12,9 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <unistd.h>
-
 #include <saftbus/error.hpp>
-
 #include "SAFTd_Proxy.hpp"
 #include "TimingReceiver_Proxy.hpp"
 #include "SCUbusActionSink_Proxy.hpp"
@@ -202,7 +200,7 @@ int main (int argc, char** argv)
       {
         std::cout << "SCU bus Action sink configured..." << std::endl;
         while (true) {
-          saftlib::wait_for_signal();
+          std::cout << saftlib::wait_for_signal() << std::endl;
         }
       }
     }

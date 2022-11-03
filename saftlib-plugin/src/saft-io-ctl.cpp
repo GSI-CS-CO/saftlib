@@ -40,9 +40,7 @@
 #include <inttypes.h>
 #include <string>
 #include <unistd.h>
-
 #include <saftbus/error.hpp>
-
 #include "SAFTd_Proxy.hpp"
 #include "TimingReceiver_Proxy.hpp"
 #include "SoftwareActionSink_Proxy.hpp"
@@ -107,7 +105,7 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
@@ -164,8 +162,7 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
     if (disown) { condition->Disown(); }
     else        { std::cout << "Condition created..." << std::endl; 
       while(true) {
-        // saftlib::wait_for_signal();
-        saftbus::SignalGroup::get_global().wait_for_signal();
+        saftlib::wait_for_signal();
       }
     }
   }
@@ -191,7 +188,7 @@ static int io_destroy (bool verbose_mode)
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
@@ -247,7 +244,7 @@ static int io_flip (bool verbose_mode)
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
@@ -315,7 +312,7 @@ static int io_list (void)
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
@@ -478,7 +475,7 @@ static int io_list_i_to_e()
   /* Get inputs and snoop */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > inputs = receiver->getInputs();
 
@@ -567,7 +564,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
   /* Get inputs and snoop */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > inputs = receiver->getInputs();
 
@@ -629,7 +626,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
         std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
         while(true) {
-          saftbus::SignalGroup::get_global().wait_for_signal();
+          saftlib::wait_for_signal();
         }
       }
     }
@@ -681,7 +678,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
   /* Perform selected action(s) */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     /* Search for IO name */
@@ -995,7 +992,7 @@ static int io_print_table(bool verbose_mode)
   /* Try to get the table */
   try
   {
-    map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     std::map< std::string, std::string > outs;
     std::map< std::string, std::string > ins;
@@ -1236,7 +1233,7 @@ int main (int argc, char** argv)
     return (__IO_RETURN_FAILURE);
   }
 //  Gio::init();
-  map<std::string, std::string> devices = SAFTd_Proxy::create("/de/gsi/saftlib")->getDevices();
+  map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
   if (devices.find(deviceName) == devices.end())
   {
     std::cerr << "Device " << deviceName << " does not exist!" << std::endl;

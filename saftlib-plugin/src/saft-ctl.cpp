@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include <saftbus/error.hpp>
-
 #include "SAFTd_Proxy.hpp"
 #include "TimingReceiver_Proxy.hpp"
 #include "SoftwareActionSink_Proxy.hpp"
@@ -568,7 +567,7 @@ int main(int argc, char** argv)
         snoopMilliSeconds = snoopSeconds;
       }
       while(runSnoop) {
-        saftbus::SignalGroup::get_global().wait_for_signal(snoopMilliSeconds);
+        saftlib::wait_for_signal();
       }
       tSnoop.join();
     } // eventSnoop (without UNILAC option)

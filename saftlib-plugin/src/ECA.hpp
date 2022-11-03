@@ -40,7 +40,7 @@ class ECA {
 
 
 	etherbone::Device  &device;
-	const std::string  &object_path;
+	std::string        object_path;
 	saftbus::Container *container;
 	uint64_t sas_count; // counts number of SoftwareActionSinks
 
