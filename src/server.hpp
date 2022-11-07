@@ -34,10 +34,6 @@ namespace saftbus {
 		struct ClientInfo {
 			pid_t process_id;
 			int client_fd;
-			struct SignalFD {
-				int fd;
-				int use_count;
-			};
 			std::map<int,int> signal_fds;
 		};
 		std::vector<ClientInfo> get_client_info();

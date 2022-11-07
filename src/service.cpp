@@ -232,26 +232,10 @@ namespace saftbus {
 					d->quit();
 					send.put(saftbus::FunctionResult::RETURN);
 				} return;
-				case 5: { // get_status() // this is hand-written
-					// std::cerr << "get_stats() called sending " << d->d->object_path_lookup_table.size() << " objects " << std::endl;
+				case 5: { // Container::get_status
+					SaftbusInfo function_call_result = d->get_status();
 					send.put(saftbus::FunctionResult::RETURN);
-					send.put(d->d->objects.size());
-					for (auto &object: d->d->objects) {
-						auto &object_id = object.first;
-						auto &service   = object.second;
-						send.put(object_id);
-						send.put(service->d->object_path);
-						send.put(service->d->interface_names);
-						send.put(service->d->signal_fds_use_count);
-						send.put(service->d->owner);
-					}
-					auto client_info = d->d->connection->get_client_info();
-					send.put(client_info.size());
-					for (auto &client: client_info) {
-						send.put(client.process_id);
-						send.put(client.client_fd);
-						send.put(client.signal_fds);
-					}
+					send.put(function_call_result);
 				} return;
 			};
 
@@ -549,6 +533,30 @@ namespace saftbus {
 	void Container::clear() {
 		d->objects.clear();
 		d->object_path_lookup_table.clear();
+	}
+
+
+	SaftbusInfo Container::get_status() {
+		SaftbusInfo result;
+		for (auto &obj: d->objects) {
+			SaftbusInfo::ObjectInfo object_info;
+			object_info.object_id = obj.first;
+			object_info.object_path = obj.second->d->object_path;
+			object_info.interface_names = obj.second->d->interface_names;
+			object_info.signal_fds_use_count = obj.second->d->signal_fds_use_count;
+			object_info.owner = obj.second->d->owner;
+			object_info.has_desctruction_callback = obj.second->d->destruction_callback?true:false;
+			result.object_infos.push_back(object_info);
+		}
+		for (auto &client: d->connection->get_client_info()) {
+			SaftbusInfo::ClientInfo client_info;
+			client_info.process_id = client.process_id;
+			client_info.client_fd  = client.client_fd;
+			client_info.signal_fds = client.signal_fds;
+			result.client_infos.push_back(client_info);
+		}
+
+		return result;
 	}
 
 

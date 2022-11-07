@@ -4,6 +4,10 @@
 #include "saftbus.hpp"
 #include "server.hpp"
 
+// for the SaftbusInfo type
+// @saftbus-export
+#include "client.hpp" 
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -171,6 +175,9 @@ namespace saftbus {
 		bool remove_object(const std::string &object_path);
 		// @saftbus-export
 		void quit();
+
+		// @saftbus-export
+		SaftbusInfo get_status();
 	};
 
 	// created by saftbus-gen from class Container and copied here

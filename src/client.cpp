@@ -490,17 +490,10 @@ namespace saftbus {
 		}
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
 	}
-
-
-
-	// this is hand-written
-	SaftbusInfo Container_Proxy::get_status()
-	{
-		SaftbusInfo result;
+	SaftbusInfo Container_Proxy::get_status(	) {
 		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 5);
+		get_send().put(interface_no);
+		get_send().put(5); // function_no
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());
@@ -514,45 +507,8 @@ namespace saftbus {
 			throw std::runtime_error(what);
 		}
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
-		size_t object_count;
-		get_received().get(object_count);
-		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
-		for (unsigned i = 0; i < object_count; ++i) {
-			result.object_infos.push_back(SaftbusInfo::ObjectInfo());
-			auto &object_info = result.object_infos.back();
-
-			get_received().get(object_info.object_id);
-			get_received().get(object_info.object_path);
-			get_received().get(object_info.interface_names);
-			get_received().get(object_info.signal_fds_use_count);
-			get_received().get(object_info.owner);
-
-			std::cerr << object_info.object_path << "=>" << object_info.object_id << " owner:" << object_info.owner << " sig_fd/use_cnt: ";
-			for (auto &signal_fd_use_count: object_info.signal_fds_use_count) {
-				std::cerr << signal_fd_use_count.first << "/" << signal_fd_use_count.second << " ";
-			}
-			std::cerr << std::endl;
-			for (auto &interface_name: object_info.interface_names) {
-				std::cerr << "    " << interface_name << std::endl;
-			}
-			std::cerr << std::endl;
-		}
-		std::cerr << std::endl;
-		size_t client_count;
-		get_received().get(client_count);
-		for (unsigned i = 0; i < client_count; ++i) {
-			result.client_infos.push_back(SaftbusInfo::ClientInfo());
-			auto &client_info = result.client_infos.back();
-			get_received().get(client_info.process_id);
-			get_received().get(client_info.client_fd);
-			get_received().get(client_info.signal_fds);
-			std::cerr << "client " << client_info.client_fd << "(pid=" << client_info.process_id << ") with signal_fds: ";
-			for (auto &signal_fd: client_info.signal_fds) {
-				std::cerr << signal_fd.first << "/" << signal_fd.second << " " ;
-			}
-			std::cerr << std::endl;
-		}
-		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
-		return result;
+		SaftbusInfo return_value_result_;
+		get_received().get(return_value_result_);
+		return return_value_result_;
 	}
 }

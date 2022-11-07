@@ -42,7 +42,6 @@ namespace saftbus {
 
 		int get_fd(); // this can be used to hook the SignalGroup into an event loop
 
-		// @saftbus-export
 		int wait_for_signal(int timeout_ms = -1);
 		int wait_for_one_signal(int timeout_ms = -1);
 
@@ -78,25 +77,71 @@ namespace saftbus {
 		int interface_no_from_name(const std::string &interface_name); 
 	};
 
-	struct SaftbusInfo {
-		struct ObjectInfo {
+	struct SaftbusInfo : public SerDesAble {
+		struct ObjectInfo : public SerDesAble {
 			unsigned object_id;
 			std::string object_path;
 			std::vector<std::string> interface_names;
 			std::map<int, int> signal_fds_use_count;
 			int owner;
+			bool has_desctruction_callback;
+			void serialize(Serializer &ser) const {
+				ser.put(object_id);
+				ser.put(object_path);
+				ser.put(interface_names);
+				ser.put(signal_fds_use_count);
+				ser.put(owner);
+				ser.put(has_desctruction_callback);
+			}
+			void deserialize(const Deserializer &des) {
+				des.get(object_id);
+				des.get(object_path);
+				des.get(interface_names);
+				des.get(signal_fds_use_count);
+				des.get(owner);
+				des.get(has_desctruction_callback);
+			}
 		};
 		std::vector<ObjectInfo> object_infos;
-		struct ClientInfo {
+		struct ClientInfo : public SerDesAble {
 			pid_t process_id;
 			int client_fd;
-			struct SignalFD {
-				int fd;
-				int use_count;
-			};
 			std::map<int,int> signal_fds;
+			void serialize(Serializer &ser) const {
+				ser.put(process_id);
+				ser.put(client_fd);
+				ser.put(signal_fds);
+			}
+			void deserialize(const Deserializer &des) {
+				des.get(process_id);
+				des.get(client_fd);
+				des.get(signal_fds);
+			}
 		};
 		std::vector<ClientInfo> client_infos;
+		void serialize(Serializer &ser) const {
+			ser.put(object_infos.size());
+			for (auto &object: object_infos) {
+				ser.put(object);
+			}
+			ser.put(client_infos.size());
+			for (auto &client: client_infos) {
+				ser.put(client);
+			}
+		}
+		void deserialize(const Deserializer &des) {
+			size_t size;
+			des.get(size);
+			object_infos.resize(size);
+			for (unsigned i = 0; i < size; ++i) {
+				des.get(object_infos[i]);
+			}
+			des.get(size);
+			client_infos.resize(size);
+			for (unsigned i = 0; i < size; ++i) {
+				des.get(client_infos[i]);
+			}
+		}
 	};
 
 
