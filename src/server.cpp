@@ -236,7 +236,7 @@ namespace saftbus {
 		}
 		std::string dirname = socketname.substr(0,socketname.find_last_of('/'));
 		std::ostringstream command;
-		if (mkdir(dirname.c_str(), 0777)) {
+		if (mkdir(dirname.c_str(), 0755)) {
 			if (errno != EEXIST) {
 				msg << "cannot create socket directory: " << dirname;
 				throw std::runtime_error(msg.str());
@@ -254,11 +254,11 @@ namespace saftbus {
 			throw std::runtime_error(msg.str());
 		}
 		chmod(socketname.c_str(), S_IRUSR | S_IWUSR | 
-			                      S_IRGRP | S_IWGRP | 
+			                      S_IRGRP | S_IWGRP |  
 			                      S_IROTH | S_IWOTH );
-		chmod(dirname.c_str(), S_IRUSR | S_IWUSR | 
-			                   S_IRGRP | S_IWGRP | 
-			                   S_IROTH | S_IWOTH );
+		chmod(dirname.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | 
+			                   S_IRGRP |           S_IXGRP | 
+			                   S_IROTH |           S_IXOTH );
 
 		Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::accept_client, d.get(), std::placeholders::_1, std::placeholders::_2), base_socket_fd, POLLIN | POLLHUP | POLLERR);
 
