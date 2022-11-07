@@ -8,6 +8,7 @@ AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
 
 PKG_CHECK_MODULES([SAFTBUS], [saftbus])
+PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

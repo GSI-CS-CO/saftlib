@@ -21,6 +21,7 @@ namespace ex01 {
 		int result = rand()%6+1;
 		if (was_thrown) {
 			was_thrown(result);
+			was_thrown_sigc(result);
 		}
 		return result;
 	}

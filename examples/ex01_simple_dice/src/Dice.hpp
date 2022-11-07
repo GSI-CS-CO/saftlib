@@ -7,6 +7,8 @@
 #include <functional>
 #include <memory>
 
+#include <sigc++/sigc++.h>
+
 namespace ex01 {
 
 	class Dice {
@@ -32,8 +34,11 @@ namespace ex01 {
 		// @saftbus-export
 		void stopThrowing();
 
-		// @saftbus-signal
+		// @saftbus-export
 		std::function<void(int result)> was_thrown;
+
+		// @saftbus-export
+		sigc::signal<void, int> was_thrown_sigc;
 	};
 
 
