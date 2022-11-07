@@ -11,17 +11,17 @@ lib_LTLIBRARIES = libsaftbus.la libsaftbus-standalone.la libsaftbus-server.la
 
 saftbus_includedir    = $(includedir)/saftbus
 libsaftbus_la_SOURCES = \
-	src/loop.cpp        \
-	src/saftbus.cpp      \
-	src/error.cpp         \
+	src/loop.cpp         \
+	src/saftbus.cpp       \
+	src/error.cpp          \
 	src/client.cpp    
 
 libsaftbus_standalone_la_SOURCES = \
 	src/service-standalone.cpp
 
 libsaftbus_server_la_SOURCES = \
-	src/service.cpp   \
-	src/plugins.cpp    \
+	src/service.cpp             \
+	src/plugins.cpp              \
 	src/server.cpp        
 
 saftbus_include_HEADERS = \

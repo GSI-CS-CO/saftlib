@@ -43,5 +43,9 @@ namespace ex01 {
 		auto_throwing_enabled = false;
 	}
 
+	MyType Dice::passthrough(const MyType &val) {
+		return val;
+	}
+
 
 }

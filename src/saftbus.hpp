@@ -22,16 +22,16 @@ namespace saftbus {
 	// receive a file descriptor
 	int recvfd(int socket);
 
-	// class Serializer;
-	// class Deserializer;
+	class Serializer;
+	class Deserializer;
 
-	// // custom types can be sent over saftbus if they derive from 
-	// // this class and implement serialize and deserializ methods
-	// struct SerDesAble {
-	// 	virtual ~SerDesAble() = default;
-	// 	virtual void serialize(Serializer &ser) const = 0;
-	// 	virtual void deserialize(const Deserializer &des) = 0;
-	// };
+	// custom types can be sent over saftbus if they derive from 
+	// this class and implement serialize and deserializ methods
+	struct SerDesAble {
+		virtual ~SerDesAble() = default;
+		virtual void serialize(Serializer &ser) const = 0;
+		virtual void deserialize(const Deserializer &des) = 0;
+	};
 
 
 	// Simple classes for serialization and de-serialization 
@@ -70,9 +70,22 @@ namespace saftbus {
 		// 	val.serialize(*this);
 		// }
 
+    // template <typename T>
+    // std::enable_if_t<!std::is_base_of<serializable,T>::value> put(const T&) { std::cout << "const T& \n";}
+
+    // template <typename T>
+    // typename std::enable_if<std::is_base_of<serializable,T>::value>::type put(const T&) { std::cout << "T inherits from serializable \n";}
+
+
+		// Types derived from SerDesAble 
+		template<typename T>
+		typename std::enable_if<std::is_base_of<SerDesAble,T>::value>::type put(const T &val) {
+			val.serialize(*this);
+		}
+
 		// POD struct and build-in types
 		template<typename T>
-		void put(const T &val) {
+		typename std::enable_if<!std::is_base_of<SerDesAble,T>::value>::type put(const T &val) {
 			while(_data.size()%sizeof(T) != 0) _data.push_back('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
 			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
 			const char* end   = begin + sizeof(val);
@@ -153,9 +166,17 @@ namespace saftbus {
 		// fill the serdes data buffer by reading data from the file descriptor fd
 		bool read_from(int fd);
 
+		// Types derived from SerDesAble
+		template<typename T>
+		typename std::enable_if<std::is_base_of<SerDesAble,T>::value>::type // this method competed in overload resulution with template<typename T> get(T &val). "enable_if" lets this version win if a daughter class of SerDesAble is used.
+		get(T &val) const {
+			val.deserialize(*this);
+		}
+
 		// POD struct and build-in types
 		template<typename T>
-		void get(T &val) const {
+		typename std::enable_if<!std::is_base_of<SerDesAble,T>::value>::type // "enable_if" excludes this method from the overload resolution for all tpes derived from SerDesAble.
+		get(T &val) const {
 			while((_iter-_data.begin())%sizeof(T) != 0) _iter+=sizeof('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
 			val    = *const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
 			_iter += sizeof(val);

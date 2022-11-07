@@ -9,7 +9,6 @@
 std::unique_ptr<ex01::Dice> dice;
 int ref_count = 0;                                                                                    
 
-extern "C" 
 void destroy_service() {
 	--ref_count;
 	std::cerr << "destroy_service was called " << ref_count << std::endl;

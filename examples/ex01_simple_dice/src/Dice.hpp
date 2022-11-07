@@ -1,6 +1,8 @@
 #ifndef DICE_HPP_
 #define DICE_HPP_
 
+// @saftbus-export
+#include "MyType.hpp"
 
 #include <saftbus/loop.hpp>
 
@@ -33,6 +35,10 @@ namespace ex01 {
 		/// @brief stop periodic throwing. 
 		// @saftbus-export
 		void stopThrowing();
+
+		/// @brief example of a custum type (must be derived from saftbus::SerDesAble)
+		// @saftbus-export
+		MyType passthrough(const MyType &val);
 
 		// @saftbus-export
 		std::function<void(int result)> was_thrown;
