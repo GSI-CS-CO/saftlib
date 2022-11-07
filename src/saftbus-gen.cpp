@@ -565,6 +565,17 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 		}
 		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
 
+		// @saftbus-export peeks into next line and autodetects if FUNCTION_EXPORT, SIGNAL_EXPORT or INCLUDE_EXPORT is needed
+		if (saftbus_export_tag_in_previous_line == FUNCTION_EXPORT) {
+			if (strip(line).find("function<") == 0 || strip(line).find("std::function<") == 0) {
+				saftbus_export_tag_in_previous_line = SIGNAL_EXPORT;
+			}
+			if (strip(line).find("#include") == 0) {
+				saftbus_export_tag_in_previous_line = INCLUDE_EXPORT;
+			}
+		}
+
+
 		// extract signal or function signature
 		if (saftbus_export_tag_in_previous_line == SIGNAL_EXPORT) {
 			function_or_signal_signature.append(line);

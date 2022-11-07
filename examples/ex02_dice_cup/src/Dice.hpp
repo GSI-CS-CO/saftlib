@@ -28,7 +28,7 @@ namespace ex02 {
 		// @saftbus-export
 		void stopThrowing();
 
-		// @saftbus-signal
+		// @saftbus-export
 		std::function<void(int result)> was_thrown;
 	};
 
