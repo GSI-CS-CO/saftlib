@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <set>
 
 namespace saftbus {
