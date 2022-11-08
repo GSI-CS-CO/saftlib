@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 		// Dann geht es beim naechsten Start wieder nicht
 
 		auto cond_proxy = saftlib::SoftwareCondition_Proxy::create(condition_obj_path);
-		cond_proxy->SigAction = &on_action;
+		cond_proxy->Action = &on_action;
 
 
 

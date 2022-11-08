@@ -40,17 +40,17 @@
 #include <inttypes.h>
 #include <string>
 #include <unistd.h>
-#include <saftbus/error.hpp>
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
-#include "SoftwareCondition_Proxy.hpp"
-// #include "iDevice_Proxy.hpp"
-#include "Output_Proxy.hpp"
-#include "Input_Proxy.hpp"
-#include "OutputCondition_Proxy.hpp"
 
-#include "CommonFunctions.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SoftwareActionSink.h"
+#include "interfaces/SoftwareCondition.h"
+#include "interfaces/iDevice.h"
+#include "interfaces/Output.h"
+#include "interfaces/Input.h"
+#include "interfaces/OutputCondition.h"
+
+#include "CommonFunctions.h"
 
 #include "eca_flags.h"
 #include "io_control_regs.h"
@@ -585,7 +585,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
           {
             sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
             proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
-            proxies.back()->SigAction = &io_catch_input;//.connect(sigc::ptr_fun(&io_catch_input));
+            proxies.back()->SigAction.connect(sigc::ptr_fun(&io_catch_input));
             proxies.back()->setAcceptConflict(true);
             proxies.back()->setAcceptDelayed(true);
             proxies.back()->setAcceptEarly(true);

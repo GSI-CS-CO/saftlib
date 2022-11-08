@@ -20,18 +20,18 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include <saftbus/error.hpp>
-#include "CommonFunctions.hpp"
+#include "CommonFunctions.h"
 
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
-#include "SoftwareCondition_Proxy.hpp"
-#include "Output_Proxy.hpp"
-#include "OutputCondition_Proxy.hpp"
-#include "Input_Proxy.hpp"
-#include "SCUbusActionSink_Proxy.hpp"
-#include "SCUbusCondition_Proxy.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SoftwareActionSink.h"
+#include "interfaces/SoftwareCondition.h"
+#include "interfaces/iDevice.h"
+#include "interfaces/Output.h"
+#include "interfaces/OutputCondition.h"
+#include "interfaces/Input.h"
+#include "interfaces/SCUbusActionSink.h"
+#include "interfaces/SCUbusCondition.h"
 
 /* Namespace */
 /* ==================================================================================================== */
@@ -332,7 +332,7 @@ int main (int argc, char** argv)
         std::cout << "Waiting for timing events..." << std::endl;
         std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
-        condition->SigAction = std::bind(&onAction, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, 0);//.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
+        condition->SigAction.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Accept all kinds of events */
         condition->setAcceptConflict(true);
@@ -341,12 +341,12 @@ int main (int argc, char** argv)
         condition->setAcceptLate(true);
         
         /* Attach to counter signals */
-        sink->OverflowCount = &onOverflowCount;    //.connect(sigc::ptr_fun(&onOverflowCount));
-        sink->ActionCount   = &onActionCount;      //.connect(sigc::ptr_fun(&onActionCount));
-        sink->LateCount     = &onLateCount;        //.connect(sigc::ptr_fun(&onLateCount));
-        sink->EarlyCount    = &onEarlyCount;       //.connect(sigc::ptr_fun(&onEarlyCount));
-        sink->ConflictCount = &onConflictCount;    //.connect(sigc::ptr_fun(&onConflictCount));
-        sink->DelayedCount  = &onDelayedCount;     //.connect(sigc::ptr_fun(&onDelayedCount));
+        sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
+        sink->ActionCount.connect(sigc::ptr_fun(&onActionCount));
+        sink->LateCount.connect(sigc::ptr_fun(&onLateCount));
+        sink->EarlyCount.connect(sigc::ptr_fun(&onEarlyCount));
+        sink->ConflictCount.connect(sigc::ptr_fun(&onConflictCount));
+        sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
         
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
         while (true) {

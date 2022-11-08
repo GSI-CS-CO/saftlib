@@ -1,5 +1,4 @@
-#include "SAFTd_Proxy.hpp"
-#include <saftbus/error.hpp>
+#include "interfaces/SAFTd.h"
 #include <iostream>
 
 int main(int argc, char *argv[])

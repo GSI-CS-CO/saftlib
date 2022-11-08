@@ -375,7 +375,7 @@ bool ActionSink::updateOverflow() const
 	cycle.close();
 
 	overflowCount += overflow;
-	if (OverflowCount) OverflowCount(overflowCount);
+	OverflowCount(overflowCount);
 
 	overflowUpdate = std::chrono::steady_clock::now();
 	
@@ -398,11 +398,7 @@ bool ActionSink::updateAction() const
 	cycle.close();
 
 	actionCount += valid;
-	if (ActionCount) {
-		std::cout << "ActionCount send signal ActionCount " << actionCount<< std::endl;
-		ActionCount(actionCount);
-	}
-
+	ActionCount(actionCount);
 
 	actionUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1,channel);
@@ -450,7 +446,7 @@ bool ActionSink::updateLate() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_LATE);
 	lateCount += r.count;
-	if (LateCount) LateCount(lateCount);
+	LateCount(lateCount);
 
 	lateUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);
@@ -462,7 +458,7 @@ bool ActionSink::updateEarly() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_EARLY);
 	earlyCount += r.count;
-	if (EarlyCount) EarlyCount(earlyCount);
+	EarlyCount(earlyCount);
 
 	earlyUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);
@@ -474,7 +470,7 @@ bool ActionSink::updateConflict() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_CONFLICT);
 	conflictCount += r.count;
-	if (ConflictCount) ConflictCount(conflictCount);
+	ConflictCount(conflictCount);
 
 	conflictUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);
@@ -486,7 +482,7 @@ bool ActionSink::updateDelayed() const
 	//DRIVER_LOG("start",-1, -1);
 	Record r = fetchError(ECA_DELAYED);
 	delayedCount += r.count;
-	if (DelayedCount) DelayedCount(delayedCount);
+	DelayedCount(delayedCount);
 
 	delayedUpdate = std::chrono::steady_clock::now();
 	//DRIVER_LOG("done",-1, -1);

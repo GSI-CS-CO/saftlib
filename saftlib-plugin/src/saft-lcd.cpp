@@ -39,13 +39,13 @@
 #include <cstdint>
 #include <unistd.h>
 
-#include <saftbus/error.hpp>
-
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
-#include "SoftwareCondition_Proxy.hpp"
-#include "CommonFunctions.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SoftwareActionSink.h"
+#include "interfaces/SoftwareCondition.h"
+#include "interfaces/iDevice.h"
+#include "interfaces/iOwned.h"
+#include "CommonFunctions.h"
 
 // FID
 #define FID          0x1
@@ -458,7 +458,7 @@ int main(int argc, char** argv)
         condition[i]->setAcceptEarly(true);
         condition[i]->setAcceptConflict(true);
         condition[i]->setAcceptDelayed(true);
-        condition[i]->SigAction = &on_action_op;//.connect(sigc::ptr_fun(&on_action_op));
+        condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_op));
         condition[i]->setActive(true);    
       } // for i
 

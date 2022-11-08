@@ -12,13 +12,13 @@
 #include <stdio.h>
 #include <iostream>
 #include <unistd.h>
-#include <saftbus/error.hpp>
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SCUbusActionSink_Proxy.hpp"
-#include "SCUbusCondition_Proxy.hpp"
 
-#include "CommonFunctions.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SCUbusActionSink.h"
+#include "interfaces/SCUbusCondition.h"
+
+#include "CommonFunctions.h"
 
 /* Namespaces */
 /* ==================================================================================================== */
@@ -200,7 +200,7 @@ int main (int argc, char** argv)
       {
         std::cout << "SCU bus Action sink configured..." << std::endl;
         while (true) {
-          std::cout << saftlib::wait_for_signal() << std::endl;
+          saftlib::wait_for_signal();
         }
       }
     }

@@ -12,15 +12,15 @@
 #include <stdio.h>
 #include <iostream>
 #include <unistd.h>
-#include <saftbus/error.hpp>
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
-#include "SoftwareCondition_Proxy.hpp"
-#include "WbmActionSink_Proxy.hpp"
-#include "WbmCondition_Proxy.hpp"
 
-#include "CommonFunctions.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SoftwareActionSink.h"
+#include "interfaces/SoftwareCondition.h"
+#include "interfaces/WbmActionSink.h"
+#include "interfaces/WbmCondition.h"
+
+#include "CommonFunctions.h"
 
 /* Namespaces */
 /* ==================================================================================================== */

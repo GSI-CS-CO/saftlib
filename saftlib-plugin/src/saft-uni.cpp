@@ -35,13 +35,13 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include <saftbus/error.hpp>
-
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
-#include "SoftwareCondition_Proxy.hpp"
-#include "CommonFunctions.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SoftwareActionSink.h"
+#include "interfaces/SoftwareCondition.h"
+#include "interfaces/iDevice.h"
+#include "interfaces/iOwned.h"
+#include "CommonFunctions.h"
 
 using namespace std;
 
@@ -513,13 +513,13 @@ int main(int argc, char** argv)
         condition[i]->setAcceptDelayed(true);
         switch (uniSnoopType) {
           case 2:
-            condition[i]->SigAction = &on_action_uni_vacc;//.connect(sigc::ptr_fun(&on_action_uni_vacc));
+            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_vacc));
             break;
           case 1:
-            condition[i]->SigAction = &on_action_uni_cycle;//.connect(sigc::ptr_fun(&on_action_uni_cycle));
+            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_cycle));
             break;
           default : 
-            condition[i]->SigAction = &on_action;//.connect(sigc::ptr_fun(&on_action));
+            condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
             break;
         }
         condition[i]->setActive(true);    

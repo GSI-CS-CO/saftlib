@@ -115,12 +115,8 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
 		std::cerr << "cast" << std::endl;
 		Condition* cond = it->second.get();
 		SoftwareCondition* sw_cond = dynamic_cast<SoftwareCondition*>(cond);
-		if (sw_cond->SigAction) {
-			std::cerr << "SigAction" << std::endl;
-			sw_cond->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);
-		} else {
-			std::cerr << "nothing connected to SigAction" << std::endl;
-		}
+		std::cerr << "SigAction" << std::endl;
+		sw_cond->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);
 		
 	} else {
 		std::cerr << "not ECA_VALID" << std::endl;

@@ -17,15 +17,15 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include <saftbus/error.hpp>
 
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
-#include "SoftwareCondition_Proxy.hpp"
-#include "Output_Proxy.hpp"
-#include "OutputCondition_Proxy.hpp"
-#include "Input_Proxy.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SoftwareActionSink.h"
+#include "interfaces/SoftwareCondition.h"
+#include "interfaces/iDevice.h"
+#include "interfaces/Output.h"
+#include "interfaces/OutputCondition.h"
+#include "interfaces/Input.h"
 
 /* Namespace */
 /* ==================================================================================================== */

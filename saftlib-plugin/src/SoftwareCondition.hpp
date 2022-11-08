@@ -26,8 +26,11 @@
 
 // @saftbus-include
 #include <Time.hpp>
+// @saftbus-include
+#include <sigc++/sigc++.h>
 
 #include <saftbus/service.hpp>
+
 
 #include <functional>
 
@@ -64,8 +67,10 @@ public:
 	/// delivered to this signal if the Condition which generated them
 	/// specified that the respective error should be accepted.
 	/// 
-	// @saftbus-signal
-	std::function< void(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) > SigAction;
+	// @saftbus-export
+	std::function< void(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) > Action;
+	// @saftbus-export
+	sigc::signal<void, uint64_t, uint64_t, saftlib::Time, saftlib::Time, uint16_t > SigAction;
 
 	typedef SoftwareCondition_Service ServiceType;
 };

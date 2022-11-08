@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 		std::cerr << "new Condition: " << condition_obj_path << std::endl; 
 
 		auto sw_condition = softwareActionSink->getCondition(condition_obj_path);
-		sw_condition->SigAction = &on_action;
+		sw_condition->Action = &on_action;
 
 		auto B1 = tr->getOutput("/de/gsi/saftlib/tr0/outputs/B1");
 		B1->setOutputEnable(true);

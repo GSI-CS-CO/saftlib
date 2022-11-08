@@ -36,12 +36,13 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include <saftbus/error.hpp>
-#include "SAFTd_Proxy.hpp"
-#include "TimingReceiver_Proxy.hpp"
-#include "SoftwareActionSink_Proxy.hpp"
-#include "SoftwareCondition_Proxy.hpp"
-#include "CommonFunctions.hpp"
+#include "interfaces/SAFTd.h"
+#include "interfaces/TimingReceiver.h"
+#include "interfaces/SoftwareActionSink.h"
+#include "interfaces/SoftwareCondition.h"
+#include "interfaces/iDevice.h"
+#include "interfaces/iOwned.h"
+#include "CommonFunctions.h"
 
 using namespace std;
 
@@ -549,7 +550,7 @@ int main(int argc, char** argv)
       condition->setAcceptEarly(true);
       condition->setAcceptConflict(true);
       condition->setAcceptDelayed(true);
-      condition->SigAction = &on_action;
+      condition->SigAction.connect(sigc::ptr_fun(&on_action));
       condition->setActive(true);
       // set up new thread to snoop for the given number of seconds
       bool runSnoop = true;
@@ -567,7 +568,7 @@ int main(int argc, char** argv)
         snoopMilliSeconds = snoopSeconds;
       }
       while(runSnoop) {
-        saftlib::wait_for_signal();
+        saftlib::wait_for_signal(snoopMilliSeconds);
       }
       tSnoop.join();
     } // eventSnoop (without UNILAC option)

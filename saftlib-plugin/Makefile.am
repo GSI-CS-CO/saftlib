@@ -173,9 +173,56 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/ECA_TLU_Proxy.hpp                                 \
 	src/BuildIdRom_Proxy.hpp                               \
 	src/TempSensor_Proxy.hpp                                \
-	src/TimingReceiver_Proxy.hpp 
+	src/TimingReceiver_Proxy.hpp                             \
+	src/interfaces/BurstGenerator.h                              \
+	src/interfaces/SAFTd.h                                       \
+	src/interfaces/iDevice.h                                     \
+	src/interfaces/iOwned.h                                      \
+	src/interfaces/CommonFunctions.h                             \
+	src/interfaces/SCUbusActionSink.h                            \
+	src/interfaces/iEmbeddedCPUActionSink.h                      \
+	src/interfaces/iSAFTd.h                                      \
+	src/interfaces/EmbeddedCPUActionSink.h                       \
+	src/interfaces/SCUbusCondition.h                             \
+	src/interfaces/iEmbeddedCPUCondition.h                       \
+	src/interfaces/iSCUbusActionSink.h                           \
+	src/interfaces/EmbeddedCPUCondition.h                        \
+	src/interfaces/SoftwareActionSink.h                          \
+	src/interfaces/iEventSource.h                                \
+	src/interfaces/iSCUbusCondition.h                            \
+	src/interfaces/FunctionGenerator.h                           \
+	src/interfaces/SoftwareCondition.h                           \
+	src/interfaces/iFunctionGenerator.h                          \
+	src/interfaces/iSoftwareActionSink.h                         \
+	src/interfaces/FunctionGeneratorFirmware.h                   \
+	src/interfaces/TimingReceiver.h                              \
+	src/interfaces/iFunctionGeneratorFirmware.h                  \
+	src/interfaces/iSoftwareCondition.h                          \
+	src/interfaces/Input.h                                       \
+	src/interfaces/WbmActionSink.h                               \
+	src/interfaces/iInputEventSource.h                           \
+	src/interfaces/iTimingReceiver.h                             \
+	src/interfaces/MILbusActionSink.h                            \
+	src/interfaces/WbmCondition.h                                \
+	src/interfaces/iMILbusActionSink.h                           \
+	src/interfaces/iWbmActionSink.h                              \
+	src/interfaces/MILbusCondition.h                             \
+	src/interfaces/WrMilGateway.h                                \
+	src/interfaces/iMILbusCondition.h                            \
+	src/interfaces/iWbmCondition.h                               \
+	src/interfaces/MasterFunctionGenerator.h                     \
+	src/interfaces/iActionSink.h                                 \
+	src/interfaces/iMasterFunctionGenerator.h                    \
+	src/interfaces/iWrMilGateway.h                               \
+	src/interfaces/Output.h                                      \
+	src/interfaces/iBurstGenerator.h                             \
+	src/interfaces/iOutputActionSink.h                           \
+	src/interfaces/OutputCondition.h                             \
+	src/interfaces/iCondition.h                                  \
+	src/interfaces/iOutputCondition.h
 
-# the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
+
+#                                                            \the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
 leapseconddir = $(datadir)/@PACKAGE@
 leapsecond_DATA = leap-seconds.list
 EXTRA_DIST = leap-seconds.list
