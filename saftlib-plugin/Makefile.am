@@ -5,6 +5,12 @@ AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir
 pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftlib.pc
 EXTRA_DIST = saftlib.pc.in
+#the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
+leapseconddir = $(datadir)/@PACKAGE@
+leapsecond_DATA = leap-seconds.list
+EXTRA_DIST += leap-seconds.list
+
+dist_bin_SCRIPTS = src/saftd
 
 
 lib_LTLIBRARIES = \
@@ -12,8 +18,8 @@ lib_LTLIBRARIES = \
 	lib@PACKAGE@-proxy.la    
 # @PACKAGE@ is substituded with the string given to AC_INIT([...])
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
-lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) 
-lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)
+lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) $(SIGCPP_CFLAGS)
+lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)
 lib@PACKAGE@_service_la_SOURCES = \
 	src/Time.cpp                   \
 	src/eb-source.cpp               \
@@ -125,7 +131,7 @@ lib@PACKAGE@_service_include_HEADERS = \
 # 	src/TimingReceiver_Service.hpp                           
 # the service headers are not neede by client programs (event standalone ones), right???
 
-lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS)
+lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/Time.cpp                   \
 	src/Owned_Proxy.cpp             \
@@ -227,19 +233,13 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/interfaces/iOutputCondition.h
 
 
-#                                                            \the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
-leapseconddir = $(datadir)/@PACKAGE@
-leapsecond_DATA = leap-seconds.list
-EXTRA_DIST = leap-seconds.list
-
-dist_bin_SCRIPTS = src/saftd
 
 
 bin_PROGRAMS = eb-plugin-ctl eb-standalone software-tr soft-tr wait-msi saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd
-eb_plugin_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+eb_plugin_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 eb_plugin_ctl_SOURCES = src/eb-plugin-ctl.cpp
 
-eb_standalone_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
+eb_standalone_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
 eb_standalone_SOURCES = src/eb-standalone.cpp
 
 # software timing receiver program
@@ -249,48 +249,48 @@ software_tr_LDADD    = $(EB_LIBS)
 software_tr_SOURCES  = src/software-tr.cpp 
 
 # another software timing receiver program
-soft_tr_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
+soft_tr_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
 soft_tr_SOURCES  = src/soft-tr.cpp 
 
 # simple program to find out how to receive MSIs from soft-tr
-wait_msi_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
+wait_msi_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
 wait_msi_SOURCES  = src/wait-msi.cpp 
 
 
-saft_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_ctl_SOURCES = src/saft-ctl.cpp src/CommonFunctions.cpp
 
-saft_io_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_io_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp src/CommonFunctions.cpp
 
-saft_pps_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_pps_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_pps_gen_SOURCES = src/saft-pps-gen.cpp src/CommonFunctions.cpp
 
-saft_scu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_scu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp src/CommonFunctions.cpp
 
-saft_ecpu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_ecpu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp src/CommonFunctions.cpp
 
-saft_wbm_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_wbm_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_wbm_ctl_SOURCES = src/saft-wbm-ctl.cpp src/CommonFunctions.cpp
 
-saft_clk_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_clk_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_clk_gen_SOURCES = src/saft-clk-gen.cpp src/CommonFunctions.cpp
 
-saft_dm_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_dm_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_dm_SOURCES = src/saft-dm.cpp src/CommonFunctions.cpp
 
-saft_eb_fwd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_eb_fwd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_eb_fwd_SOURCES = src/saft-eb-fwd.cpp src/CommonFunctions.cpp
 
-saft_gmt_check_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_gmt_check_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_gmt_check_SOURCES = src/saft-gmt-check.cpp src/CommonFunctions.cpp
 
-saft_uni_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_uni_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_uni_SOURCES = src/saft-uni.cpp src/CommonFunctions.cpp
 
-saft_lcd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) lib@PACKAGE@-proxy.la
+saft_lcd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_lcd_SOURCES = src/saft-lcd.cpp src/CommonFunctions.cpp
 
 
