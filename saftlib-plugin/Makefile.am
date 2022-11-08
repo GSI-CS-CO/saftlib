@@ -2,6 +2,11 @@ AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -DDATADIR='"$(datadir)/@PACKAGE@"'
 
+pkgdir = @libdir@/pkgconfig
+pkg_DATA = saftlib.pc
+EXTRA_DIST = saftlib.pc.in
+
+
 lib_LTLIBRARIES = \
 	lib@PACKAGE@-service.la  \
 	lib@PACKAGE@-proxy.la    
