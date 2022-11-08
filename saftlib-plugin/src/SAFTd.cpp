@@ -44,23 +44,23 @@ namespace saftlib {
 
 	SAFTd::~SAFTd() 
 	{
-		std::cerr << "~SAFTd()" << std::endl;
+		// std::cerr << "~SAFTd()" << std::endl;
 		if (container) {
 			for (auto &device: attached_devices) {
-				std::cerr << "  remove " << device.second->getObjectPath() << std::endl;
+				// std::cerr << "  remove " << device.second->getObjectPath() << std::endl;
 				container->remove_object(device.second->getObjectPath());
 			}
 		}
-		std::cerr << "attached_devices.clear()" << std::endl;
+		// std::cerr << "attached_devices.clear()" << std::endl;
 		attached_devices.clear();
-		std::cerr << "saftbus::Loop::get_default().remove(eb_source);" << std::endl;
+		// std::cerr << "saftbus::Loop::get_default().remove(eb_source);" << std::endl;
 		saftbus::Loop::get_default().remove(eb_source);
 		try {
-			std::cerr << "socket.close()" << std::endl;
+			// std::cerr << "socket.close()" << std::endl;
 			socket.close();
-			std::cerr << "~SAftd done" << std::endl;
+			// std::cerr << "~SAftd done" << std::endl;
 		} catch (etherbone::exception_t &e) {
-			std::cerr << "~SAftd exception: " << e << std::endl;
+			// std::cerr << "~SAftd exception: " << e << std::endl;
 		}
 	}
 
@@ -70,10 +70,10 @@ namespace saftlib {
 	}
 
 	eb_status_t SAFTd::write(eb_address_t address, eb_width_t width, eb_data_t data) {
-		std::cerr << "write callback " << std::hex << std::setw(8) << std::setfill('0') << address 
-		          <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
-		          << std::dec 
-		          << std::endl;
+		// std::cerr << "write callback " << std::hex << std::setw(8) << std::setfill('0') << address 
+		//           <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
+		//           << std::dec 
+		//           << std::endl;
 	    
 		std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
 		if (it != irqs.end()) {
@@ -131,12 +131,12 @@ namespace saftlib {
 
 
 	void SAFTd::RemoveDevice(const std::string& name) {
-		std::cerr << "SAFTd::RemoveDevice(" << name << ")" << std::endl;
+		// std::cerr << "SAFTd::RemoveDevice(" << name << ")" << std::endl;
 		std::map< std::string, std::unique_ptr<TimingReceiver> >::iterator device = attached_devices.find(name);
 		if (device == attached_devices.end()) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 		}
-		std::cerr << "SAFTd::RemoveDevice(" << name << ") was found" << std::endl;
+		// std::cerr << "SAFTd::RemoveDevice(" << name << ") was found" << std::endl;
 		if (container) {
 			container->remove_object(device->second->getObjectPath()); // the destruction_callback will call RemoveObject
 		} else {
@@ -178,7 +178,7 @@ namespace saftlib {
 		auto it = irqs.find(irq);
 		if (it == irqs.end()) {
 			// the requested address is still free
-			std::cerr << "attach irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
+			// std::cerr << "attach irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
 			irqs[irq] = slot;
 			return true;
 		}
@@ -188,7 +188,7 @@ namespace saftlib {
 	void SAFTd::release_irq(eb_address_t irq) {
 		auto it = irqs.find(irq);
 		if (it != irqs.end()) {
-			std::cerr << "release irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
+			// std::cerr << "release irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
 			irqs.erase(it);
 		}
 	}
@@ -200,17 +200,17 @@ namespace saftlib {
 
 	TimingReceiver* SAFTd::getTimingReceiver(const std::string &tr_obj_path) {
 		size_t pos;
-		std::cerr << "is " << object_path << " contained in " << tr_obj_path << "? " << std::endl;
+		// std::cerr << "is " << object_path << " contained in " << tr_obj_path << "? " << std::endl;
 		if ((pos=tr_obj_path.find(object_path)) == tr_obj_path.npos) {
-			std::cerr << "no" << std::endl;
+			// std::cerr << "no" << std::endl;
 			const std::string &tr_name = tr_obj_path; // maybe the name of the TimingReceiver was given instead of its object_path
 			if (attached_devices.find(tr_name) != attached_devices.end()) {
 				return attached_devices[tr_name].get();
 			} 
 		} else {
-			std::cerr << "yes" << std::endl;
+			// std::cerr << "yes" << std::endl;
 			std::string name = tr_obj_path.substr(object_path.size()+1);
-			std::cerr << "get_timing_receiver " << name << std::endl;
+			// std::cerr << "get_timing_receiver " << name << std::endl;
 			return attached_devices[name].get();
 		}
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");

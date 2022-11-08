@@ -40,9 +40,9 @@ int main(int argc, char **argv)
 		for (int i = 1; i < argc; ++i) {
 			std::string argvi(argv[i]);
 			if (argvi == "-q") {
-				std::cerr << "call proxy->quit()" << std::endl;
+				//===std::cerr << "call proxy->quit()" << std::endl;
 				core_service_proxy->quit();
-				std::cerr << "quit done" << std::endl;
+				//===std::cerr << "quit done" << std::endl;
 			} if (argvi == "-s") {
 				saftbus::SaftbusInfo saftbus_info = core_service_proxy->get_status();
 				print_status(saftbus_info);

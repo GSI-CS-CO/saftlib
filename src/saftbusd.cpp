@@ -9,12 +9,12 @@ int main(int argc, char *argv[]) {
 		std::string argvi(argv[i]);
 		bool argvi_is_plugin = (argvi.find(".la") == argvi.size()-3);
 		if (argvi_is_plugin) {
-			std::cerr << argvi << "is plugin name" << std::endl;
+			//===std::cerr << argvi << "is plugin name" << std::endl;
 			plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
 		} else {
-			std::cerr << argvi << "is argument" << std::endl;
+			//===std::cerr << argvi << "is argument" << std::endl;
 			if (plugins_and_args.empty()) {
-				std::cerr << "no plugin specified (these are files ending with .la)" << std::endl;
+				//===std::cerr << "no plugin specified (these are files ending with .la)" << std::endl;
 				return 1;
 			} else {
 				plugins_and_args.back().second.push_back(argvi);
@@ -25,6 +25,6 @@ int main(int argc, char *argv[]) {
 	saftbus::ServerConnection server_connection(plugins_and_args);
 	saftbus::Loop::get_default().run();
 
-	std::cerr << "===================== saftbusd quit ============================" << std::endl;
+	//===std::cerr << "===================== saftbusd quit ============================" << std::endl;
 	return 0;
 }

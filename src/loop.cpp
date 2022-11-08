@@ -17,24 +17,24 @@ namespace saftbus {
 
 	Source::Source() 
 	{
-		std::cerr << "+++++++++++++++++    Sourc::Source()" << std::endl;
+		//===std::cerr << "+++++++++++++++++    Sourc::Source()" << std::endl;
 		if (id_counter == -1) ++id_counter; // prevent id_counter to produce an id of 0 (no source should have id 0)
 		id = ++id_counter;
 		id |= ((long)rand()%0xffffffff)<<32;
 		valid = true;
 	}
 	Source::~Source() {
-		std::cerr << "Source::~Source()" << std::endl;
+		//===std::cerr << "Source::~Source()" << std::endl;
 	}
 
 	void Source::add_poll(pollfd *pfd)
 	{
-		// std::cerr << "add poll " << pfd->fd << std::endl;
+		// //===std::cerr << "add poll " << pfd->fd << std::endl;
 		pfds.push_back(pfd);
 	}
 	void Source::remove_poll(pollfd *pfd)
 	{
-		// std::cerr << "remove poll " << pfd->fd << std::endl;
+		// //===std::cerr << "remove poll " << pfd->fd << std::endl;
 		pfds.erase(pfds.begin(), std::remove(pfds.begin(), pfds.end(), pfd));
 	}
 	void Source::clear_poll() {
@@ -76,7 +76,7 @@ namespace saftbus {
 		d->id |= ((long)rand()%0xffffffff)<<32;
 	}
 	Loop::~Loop() {
-		// std::cerr << "~Loop()" << std::endl;
+		// //===std::cerr << "~Loop()" << std::endl;
 		d->sources.clear();
 		d->added_sources.clear();
 	}
@@ -88,7 +88,7 @@ namespace saftbus {
 
 	bool Loop::iteration(bool may_block) {
 		++d->running_depth;
-		// std::cerr << "Loop::iteration " << d->running_depth << std::endl;
+		// //===std::cerr << "Loop::iteration " << d->running_depth << std::endl;
 		static const auto no_timeout = std::chrono::milliseconds(-1);
 		std::vector<struct pollfd> pfds;
 		// pfds.reserve(16);
@@ -100,7 +100,7 @@ namespace saftbus {
 		auto start = std::chrono::steady_clock::now();
 		auto stop = std::chrono::steady_clock::now();
 
-		// std::cerr << "sources.size() = " << d->sources.size() << std::endl;
+		// //===std::cerr << "sources.size() = " << d->sources.size() << std::endl;
 
 		//////////////////
 		// preparation 
@@ -123,7 +123,7 @@ namespace saftbus {
 				pfds.push_back(**it);
 				// also create an array of pointers to pfds to where the poll() results can be copied back
 				source_pfds.push_back(*it);
-				// std::cerr << "added fd=" << (*it)->fd << std::endl;
+				// //===std::cerr << "added fd=" << (*it)->fd << std::endl;
 			}
 		}
 		if (!may_block) { 
@@ -132,28 +132,28 @@ namespace saftbus {
 		//////////////////
 		// polling / waiting
 		//////////////////
-		// std::cerr << "poll pfds size " << pfds.size() << std::endl;
+		// //===std::cerr << "poll pfds size " << pfds.size() << std::endl;
 		if (pfds.size() > 0) {
-			// std::cerr << "polling timeout_ms = " << timeout.count() << std::endl;
+			// //===std::cerr << "polling timeout_ms = " << timeout.count() << std::endl;
 			int poll_result = 0;
 			// stop = std::chrono::steady_clock::now();
 			// us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
 			if ((poll_result = poll(&pfds[0], pfds.size(), timeout.count())) > 0) {
-				// std::cerr << "poll result = " << poll_result << std::endl;
+				// //===std::cerr << "poll result = " << poll_result << std::endl;
 				// copy the results back to the owners of the pfds
 				for (unsigned i = 0; i < pfds.size();++i) {
 					source_pfds[i]->revents = pfds[i].revents;
 					// if (pfds[i].revents & POLLHUP) {
-					// 	std::cerr << "POLLHUP on pfds[" << i << "]" << std::endl;
+					// 	//===std::cerr << "POLLHUP on pfds[" << i << "]" << std::endl;
 					// }
 					// if (pfds[i].revents & POLLERR) {
-					// 	std::cerr << "POLLERR on pfds[" << i << "]" << std::endl;
+					// 	//===std::cerr << "POLLERR on pfds[" << i << "]" << std::endl;
 					// }
 				}
 			} else if (poll_result < 0) {
-				std::cerr << "poll error: " << strerror(errno) << std::endl;
+				//===std::cerr << "poll error: " << strerror(errno) << std::endl;
 			} else {
-				// std::cerr << "poll result = " << poll_result << std::endl;
+				// //===std::cerr << "poll result = " << poll_result << std::endl;
 			}
 			start = std::chrono::steady_clock::now();
 
@@ -161,7 +161,7 @@ namespace saftbus {
 			// stop = std::chrono::steady_clock::now();
 			// us += std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count();
 
-			// std::cerr << "sleeping" << std::endl;
+			// //===std::cerr << "sleeping" << std::endl;
 			std::this_thread::sleep_for(timeout);
 			start = std::chrono::steady_clock::now();
 			
@@ -175,7 +175,7 @@ namespace saftbus {
 			if (!source->valid) continue;
 
 			if (source->check()) { // if check returns true, dispatch is called
-				// std::cerr << "Loop::iteration dispatching to " << source->type() << std::endl;
+				// //===std::cerr << "Loop::iteration dispatching to " << source->type() << std::endl;
 				if (!source->dispatch()) { // if dispatch returns false, the source is removed
 					source->valid = false;
 				}
@@ -189,13 +189,13 @@ namespace saftbus {
 		//////////////////////////////////////////////////////
 		// bool changes = false;
 		if (d->running_depth == 1) {
-			// std::cerr << "cleaning up sources" << std::endl;
+			// //===std::cerr << "cleaning up sources" << std::endl;
 			d->sources.erase(std::remove_if(d->sources.begin(), d->sources.end(), [](std::unique_ptr<Source> &s){return !s->valid;}), 
 				          d->sources.end());
 
 			// adding new sources
 			for (auto &added_source: d->added_sources) {
-				// std::cerr << "adding a source" << std::endl;
+				// //===std::cerr << "adding a source" << std::endl;
 				if (added_source->valid) {
 					d->sources.push_back(std::move(added_source));
 					// changes = true;
@@ -207,7 +207,7 @@ namespace saftbus {
 		--d->running_depth;
 
 		stop = std::chrono::steady_clock::now();
-		// std::cerr << changes << "    " << us << " , " << std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count() << std::endl;
+		// //===std::cerr << changes << "    " << us << " , " << std::chrono::duration_cast<std::chrono::nanoseconds>(stop-start).count() << std::endl;
 
 
 
@@ -240,7 +240,7 @@ namespace saftbus {
 
 
 	SourceHandle Loop::connect(std::unique_ptr<Source> source) {
-		// std::cerr << "Loop::connect" << std::endl;
+		// //===std::cerr << "Loop::connect" << std::endl;
 		source->loop = this;
 		SourceHandle result;
 		result.loop_id   = d->id;
@@ -266,19 +266,19 @@ namespace saftbus {
 		if (s.loop_id == d->id) { // make sure s was connected to this loop
 			auto source = d->sources.begin();
 			if ((source=std::find(source, d->sources.end(), s)) != d->sources.end()) {
-				std::cerr << "Loop::remove found in sources" << std::endl;
+				//===std::cerr << "Loop::remove found in sources" << std::endl;
 				(*source)->valid = false;
 			}
 			source = d->added_sources.begin();
 			if ((source=std::find(source, d->added_sources.end(), s)) != d->added_sources.end()) {
-				std::cerr << "Loop::remove found in added sources" << std::endl;
+				//===std::cerr << "Loop::remove found in added sources" << std::endl;
 				(*source)->valid = false;
 			}
 		}
 	}
 
 	void Loop::clear() {
-		std::cerr << "************ Loop::clear()" << std::endl;
+		//===std::cerr << "************ Loop::clear()" << std::endl;
 		d->sources.clear();
 		d->added_sources.clear();
 	}
@@ -298,7 +298,7 @@ namespace saftbus {
 	}
 
 	TimeoutSource::~TimeoutSource() {
-		std::cerr << "TimeoutSource::~TimeoutSource()" << std::endl;
+		//===std::cerr << "TimeoutSource::~TimeoutSource()" << std::endl;
 	}
 
 	// prepare is called by Loop to find out the next dispatch_time of all sources

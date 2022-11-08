@@ -31,7 +31,7 @@ namespace saftbus {
 			msg << "cannot load plugin: fail to open file " << so_filename;
 			throw std::runtime_error(msg.str());
 		} else {
-			// std::cerr << "successfully opened " << so_filename << std::endl;
+			// //===std::cerr << "successfully opened " << so_filename << std::endl;
 		}
 
 		// load the function pointers
@@ -48,7 +48,7 @@ namespace saftbus {
 
 	LibraryLoader::~LibraryLoader()
 	{
-		std::cerr << "~LibraryLoader()" << std::endl;
+		//===std::cerr << "~LibraryLoader()" << std::endl;
 
 		// in case of sources loaded into the loop from this plugin, they must be destroyed before the plugin is unloaded
 		saftbus::Loop::get_default().clear(); 
@@ -58,7 +58,7 @@ namespace saftbus {
 		}		
 		int result = lt_dlexit();
 		assert(result == 0);
-		std::cerr << "lt_dlexit was successful" << std::endl;
+		//===std::cerr << "lt_dlexit was successful" << std::endl;
 	}
 
 }

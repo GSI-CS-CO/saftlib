@@ -1130,7 +1130,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 				}
 			}
 			out << ") {" << std::endl;
-			out << "\t\t" << "std::cerr << \"service dispatch function called!!!!!!!!!!!!\" << std::endl;" << std::endl;
+			// out << "\t\t" << "std::cerr << \"service dispatch function called!!!!!!!!!!!!\" << std::endl;" << std::endl;
 			out << "\t\t" << "saftbus::Serializer serialized_signal;" << std::endl;
 			out << "\t\t" << "serialized_signal.put(get_object_id());" << std::endl;
 			out << "\t\t" << "serialized_signal.put(" << interface_no    << ");" << std::endl;

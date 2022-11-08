@@ -82,7 +82,7 @@ ActionSink::ActionSink(ECA &eca_
 
 ActionSink::~ActionSink()
 {
-	std::cerr << "~ActionSink " << getObjectPath() << std::endl;
+	// std::cerr << "~ActionSink " << getObjectPath() << std::endl;
 	// unhook any pending updates
 	saftbus::Loop::get_default().remove(overflowPending);
 	saftbus::Loop::get_default().remove(actionPending);
@@ -97,11 +97,11 @@ ActionSink::~ActionSink()
 		}
 		assert(conditions.size() == 0);
 	} else {
-		std::cerr << "~ActionSink clear all conditions" << std::endl;
+		// std::cerr << "~ActionSink clear all conditions" << std::endl;
 		conditions.clear();
 	}
 
-	std::cerr << "~ActionSink done " << std::endl;
+	// std::cerr << "~ActionSink done " << std::endl;
 	// No need to recompile; done in TimingReceiver.cpp
 }
 
@@ -301,7 +301,7 @@ void ActionSink::setDelayedCount(uint64_t val)
 
 void ActionSink::receiveMSI(uint8_t code)
 {
-	std::cerr << "ActionSink::receiveMSI(" << code << ")" << std::endl;
+	// std::cerr << "ActionSink::receiveMSI(" << code << ")" << std::endl;
 	std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point exec; 
 	std::chrono::milliseconds interval(0);
@@ -385,7 +385,7 @@ bool ActionSink::updateOverflow() const
 
 bool ActionSink::updateAction() const
 {
-	std::cout << "ActionSink::updateAction" << std::endl;
+	// std::cout << "ActionSink::updateAction" << std::endl;
 	//DRIVER_LOGT("start",name.c_str(),-1,channel);
 	eb_data_t valid;
 
@@ -491,7 +491,7 @@ bool ActionSink::updateDelayed() const
 
 void ActionSink::removeCondition(Condition *condition)
 {
-	std::cerr << "ActionSink::removeCondition(" << (uint64_t)condition << ")" << std::endl;
+	// std::cerr << "ActionSink::removeCondition(" << (uint64_t)condition << ")" << std::endl;
 	// Convert naked pointer into unique_ptr 
 	auto found = conditions.find(condition->getNumber());
 	if (found != conditions.end()) {
@@ -509,7 +509,7 @@ void ActionSink::removeCondition(Condition *condition)
 
 void ActionSink::compile()
 {
-	std::cerr << "ActionSink::compile()" << std::endl;
+	// std::cerr << "ActionSink::compile()" << std::endl;
 	eca.compile();
 }
 

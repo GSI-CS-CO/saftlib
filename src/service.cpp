@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <cassert>
+#include <sstream>
 
 #include <unistd.h>
 
@@ -24,9 +25,9 @@ namespace saftbus {
 		bool active_service_remove; // initialized to false, only set to true by Container::active_service_remove() to allow services to remove themselves safely
 		void remove_signal_fd(int fd);
 		~Impl()  {
-			std::cerr << "Service::~Impl(" << object_path << ")" << std::endl;
+			//===std::cerr << "Service::~Impl(" << object_path << ")" << std::endl;
 			if (destruction_callback) {
-				std::cerr << "Service::~Impl() -> destruction_callback" << std::endl;
+				//===std::cerr << "Service::~Impl() -> destruction_callback" << std::endl;
 				destruction_callback();
 			}
 		}
@@ -57,7 +58,7 @@ namespace saftbus {
 		}
 		Impl() {}
 		~Impl()  {
-			std::cerr << "Container::~Impl()" << std::endl;
+			//===std::cerr << "Container::~Impl()" << std::endl;
 			// Make sure that service objects are destroyed in the opposite order (youngest object first).
 			// The std::map "objects" is sorted after object id, which is increasing for all created objects.
 			// starting with the last object in the map, the correct destruction order is assured.
@@ -74,7 +75,7 @@ namespace saftbus {
 	// 	Serializer serialized_signal;
 	// 	static std::vector<std::string> gen_interface_names();
 	// 	~Impl()  {
-	// 		std::cerr << "Container_Service::~Impl()" << std::endl;
+	// 		//===std::cerr << "Container_Service::~Impl()" << std::endl;
 	// 	}
 	// };
 
@@ -88,8 +89,8 @@ namespace saftbus {
 		d->active_service_remove = false;  
 	}
 	Service::~Service() {
-		std::cerr << "~Service " << d->object_path << std::endl;
-		// std::cerr << "~Service done" << std::endl;
+		//===std::cerr << "~Service " << d->object_path << std::endl;
+		// //===std::cerr << "~Service done" << std::endl;
 	}
 
 	// Generate the mapping from interface_name to interface_no for all interface_names,
@@ -100,19 +101,19 @@ namespace saftbus {
 		// If yes, return a map of interface_name -> interface_no for this particular service object
 		bool implement_all_interfaces = true;
 		for (auto &interface_name: interface_names) {
-			// std::cerr << "  check for interface " << interface_name << std::endl;
+			// //===std::cerr << "  check for interface " << interface_name << std::endl;
 			bool interface_implemented = false;
 			for (unsigned i = 0; i <  get_interface_names().size(); ++i) {
-				// std::cerr << "    check against " << get_interface_names()[i] << std::endl;
+				// //===std::cerr << "    check against " << get_interface_names()[i] << std::endl;
 				if (interface_name == get_interface_names()[i]) {
 					interface_name2no_map[interface_name] = i; // for this particular service object, i is the interface_no for interface_name
 					interface_implemented = true;
 				}
 			}
-			// std::cerr << "  => " << interface_implemented << std::endl;
+			// //===std::cerr << "  => " << interface_implemented << std::endl;
 			if (!interface_implemented) {
 				implement_all_interfaces = false;
-				// std::cerr << "requested interface " << interface_name << "is not implemented by " << get_object_path() << std::endl;
+				// //===std::cerr << "requested interface " << interface_name << "is not implemented by " << get_object_path() << std::endl;
 			}
 		}
 		return implement_all_interfaces;
@@ -122,27 +123,27 @@ namespace saftbus {
 		int interface_no, function_no;
 		received.get(interface_no);
 		received.get(function_no);
-		// std::cerr << "Service::call got " << interface_no << " " << function_no << std::endl;
+		// //===std::cerr << "Service::call got " << interface_no << " " << function_no << std::endl;
 		call(interface_no, function_no, client_fd, received, send);
 	}
 
 	void Service::Impl::remove_signal_fd(int fd)
 	{
-		std::cerr << "Service::Impl::remove_signal_fd " << fd << std::endl;
+		//===std::cerr << "Service::Impl::remove_signal_fd " << fd << std::endl;
 		auto found_use_count = signal_fds_use_count.find(fd);
 		if (found_use_count != signal_fds_use_count.end()) {
 			signal_fds_use_count.erase(fd);
 		}
-		std::cerr << " number of signal fds: " << signal_fds_use_count.size() << std::endl;
+		//===std::cerr << " number of signal fds: " << signal_fds_use_count.size() << std::endl;
 	}
 
 	void Service::emit(Serializer &send)
 	{
-		// std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
+		// //===std::cerr << "emitting signal. number of signal fds: " << d->signal_fds_use_count.size() << std::endl;
 		for (auto &fd_use_count: d->signal_fds_use_count) {
 			if (fd_use_count.second > 0) { // only send data if use count is > 0
 				int fd = fd_use_count.first;
-				std::cerr << "   to " << fd << std::endl;
+				//===std::cerr << "   to " << fd << std::endl;
 				send.write_to_no_init(fd); // The same data is written multiple times. Therefore the
 				                          // put_init function must not be called automatically after write
 			}                            //
@@ -182,7 +183,7 @@ namespace saftbus {
 			case 0: // Container
 			switch(function_no) {
 				case 0: { // Container::register_proxy (Hand-written. It will be called by Poxy base class constructor)
-					std::cerr << "register_proxy called" << std::endl;
+					//===std::cerr << "register_proxy called" << std::endl;
 					std::string object_path;
 					received.get(object_path);
 					std::vector<std::string> interface_names;
@@ -193,20 +194,20 @@ namespace saftbus {
 
 					if (signal_fd == -1) {
 						signal_fd = recvfd(client_fd);
-						// std::cerr << "got (open) " << signal_fd << std::endl;
+						// //===std::cerr << "got (open) " << signal_fd << std::endl;
 					} else {
-						// std::cerr << "reuse " << signal_fd << std::endl;
+						// //===std::cerr << "reuse " << signal_fd << std::endl;
 					}
 					std::map<std::string, int> interface_name2no_map;
 					unsigned saftlib_object_id = d->register_proxy(object_path, interface_names, interface_name2no_map, client_fd, signal_fd);
-					std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
+					//===std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
 					send.put(saftlib_object_id);
 					send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
 					send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
 					send.put(interface_name2no_map);
 				} return;
 				case 1: { // Container::unregister_proxy (Hand-written. It will be called by Proxy base class destructor)
-					std::cerr << "unregister_proxy called" << std::endl;
+					//===std::cerr << "unregister_proxy called" << std::endl;
 					unsigned saftlib_object_id;
 					int received_client_fd, received_signal_group_fd;
 					received.get(saftlib_object_id);
@@ -273,14 +274,14 @@ namespace saftbus {
 
 	Container::~Container() 
 	{
-		std::cerr << "~Container" << std::endl;
+		//===std::cerr << "~Container" << std::endl;
 	}
 
 	unsigned Container::create_object(const std::string &object_path, std::unique_ptr<Service> service)
 	{
 		if (d->object_path_lookup_table.find(object_path) != d->object_path_lookup_table.end()) {
 			// we have already registered an object under this object path
-			std::cerr << "object path " << object_path << " already in use by object_id " << d->object_path_lookup_table[object_path] << ". cannot register another object under the same path" << std::endl;
+			//===std::cerr << "object path " << object_path << " already in use by object_id " << d->object_path_lookup_table[object_path] << ". cannot register another object under the same path" << std::endl;
 			return 0;
 		}
 		unsigned saftlib_object_id = d->generate_saftlib_object_id();
@@ -291,7 +292,7 @@ namespace saftbus {
 		if (insertion_took_place) {
 			inserted_object->d->object_path = object_path; // set the object_path of the Service object
 			d->object_path_lookup_table[object_path] = saftlib_object_id;
-			std::cerr << "inserted object under object_path " << object_path << " with object_id " << saftlib_object_id << std::endl;
+			//===std::cerr << "inserted object under object_path " << object_path << " with object_id " << saftlib_object_id << std::endl;
 			return saftlib_object_id;
 		}
 		return 0;
@@ -302,7 +303,7 @@ namespace saftbus {
 		if (object_path == "/saftbus") {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "cannot remove /saftbus");
 		}
-		// std::cerr << "remove_object " << object_path << " now" << std::endl;
+		// //===std::cerr << "remove_object " << object_path << " now" << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
 			std::string msg = "cannot remove object \"";
@@ -311,10 +312,10 @@ namespace saftbus {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg);
 		}
 		auto object_id = find_result->second;
-		std::cerr << "Container::remove_object remove object id " << object_id << std::endl;
-		std::cerr << "all objects " << std::endl;
+		//===std::cerr << "Container::remove_object remove object id " << object_id << std::endl;
+		//===std::cerr << "all objects " << std::endl;
 		for (auto &obj: d->objects) {
-			std::cerr << "    " << obj.first << " owner " << obj.second->d->owner << std::endl;
+			//===std::cerr << "    " << obj.first << " owner " << obj.second->d->owner << std::endl;
 		}
 		auto &service = d->objects[object_id];
 		if (service->d->owner != -1) { // the service is owned
@@ -365,7 +366,7 @@ namespace saftbus {
 			auto &service    = find_result->second;
 			if (service->get_interface_name2no_map(interface_names, interface_name2no_map)) { //returns false if not all requested interfaces are implemented
 				service->d->signal_fds_use_count[signal_group_fd]++;
-				std::cerr << "register_proxy for object path " << object_path << " . object use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
+				//===std::cerr << "register_proxy for object path " << object_path << " . object use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
 				d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 				return saftlib_object_id;
 			}
@@ -376,16 +377,16 @@ namespace saftbus {
 	}
 	void Container::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
 	{
-		std::cerr << "Container::unregister_proxy(" << saftlib_object_id << ")" << std::endl;
+		//===std::cerr << "Container::unregister_proxy(" << saftlib_object_id << ")" << std::endl;
 		auto find_result = d->objects.find(saftlib_object_id);
 		if (find_result == d->objects.end()) {
-			std::cerr << "object " << saftlib_object_id << " already gone" << std::endl;
+			//===std::cerr << "object " << saftlib_object_id << " already gone" << std::endl;
 			return;
 		}
 		auto    &service    = find_result->second;
 		service->d->signal_fds_use_count[signal_group_fd]--;
 		d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
-		std::cerr << "unregister_proxy: signal fd " << signal_group_fd << " use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
+		//===std::cerr << "unregister_proxy: signal fd " << signal_group_fd << " use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
 		if (service->d->signal_fds_use_count[signal_group_fd] == 0) {
 			service->d->signal_fds_use_count.erase(signal_group_fd);
 		}
@@ -402,7 +403,7 @@ namespace saftbus {
 		service->call(client_fd, received, send);
 
 		if (d->active_service->d->active_service_remove) { // if the service marked itself as removed by calling Container::active_service_remove()
-			std::cerr << "active_service_remove true for " << d->active_service->d->object_path << std::endl;
+			//===std::cerr << "active_service_remove true for " << d->active_service->d->object_path << std::endl;
 			remove_object(d->active_service->d->object_path);
 		}
 
@@ -413,7 +414,7 @@ namespace saftbus {
 	void Container::remove_signal_fd(int fd)
 	{
 		for(auto &service: d->objects) {
-			// std::cerr << "remove_signal_fd(" << fd << ") for object " << service.second->d->object_path << std::endl;
+			// //===std::cerr << "remove_signal_fd(" << fd << ") for object " << service.second->d->object_path << std::endl;
 			service.second->d->remove_signal_fd(fd);
 		}
 	}
@@ -424,7 +425,7 @@ namespace saftbus {
 		return p.second->d->owner == fd;
 	}
 	void Container::client_hung_up(int fd) {
-		std::cerr << "Container::client_hung_up(" << fd << ")" << std::endl;
+		//===std::cerr << "Container::client_hung_up(" << fd << ")" << std::endl;
 		// There may be parent-child relations between service objects it must be ensured 
 		// that children are always destroyed before their parents.
 		// All service objects get an object id which is always increasing.
@@ -437,7 +438,7 @@ namespace saftbus {
 			if (iter == d->objects.rend()) {
 				break;
 			}
-			std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
+			//===std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
 			if (iter->second->d->destruction_callback) {
 				// only remove those objects with a destruction_callback
 				remove_object(iter->second->get_object_path());
@@ -450,20 +451,20 @@ namespace saftbus {
 
 
 	bool Container::load_plugin(const std::string &so_filename, const std::vector<std::string> &args) {
-		std::cerr << "loading " << so_filename << std::endl;
+		//===std::cerr << "loading " << so_filename << std::endl;
 		bool plugin_available = false;
 		auto plugin = d->plugins.find(so_filename);
 		if (plugin != d->plugins.end()) {
-			std::cerr << "plugin found" << std::endl;
+			//===std::cerr << "plugin found" << std::endl;
 			plugin_available = true;
 		} else {
 			auto insertion_result = d->plugins.insert(std::make_pair(so_filename, std::move(std2::make_unique<LibraryLoader>(so_filename))));
 			if (insertion_result.second) {
-				std::cerr << "plugin inserted" << std::endl;
+				//===std::cerr << "plugin inserted" << std::endl;
 				plugin = insertion_result.first;
 				plugin_available = true;
 			} else {
-				std::cerr << "plugin insertion failed" << std::endl;
+				//===std::cerr << "plugin insertion failed" << std::endl;
 			}
 		}
 		if (plugin_available) {

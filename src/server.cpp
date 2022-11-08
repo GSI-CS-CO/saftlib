@@ -39,7 +39,7 @@ namespace saftbus {
 		~Client() {
 			Loop::get_default().remove(check_timeout);
 			if (signal_fd_use_count.size() > 0) {
-				std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
+				//===std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
 			}
 			// close socket_fd
 			close(socket_fd);
@@ -56,7 +56,7 @@ namespace saftbus {
 			pfd.events = POLLIN | POLLHUP | POLLERR;
 			int poll_result = poll(&pfd, 1, 0);
 			if (poll_result == -1) { // timeout
-				std::cerr << " error: " << strerror(errno) << std::endl;
+				//===std::cerr << " error: " << strerror(errno) << std::endl;
 			}
 			// if (poll_result == 0) {
 			// 	std::cout << " nothing";
@@ -106,7 +106,7 @@ namespace saftbus {
 		int calling_client_id; // this is equal to the client id as long as a client request is handled
 		Impl(ServerConnection *connection) : container_of_services(connection), calling_client_id(-1) {}
 		~Impl() {
-			std::cerr << "ServerConnection::~Impl()" << std::endl;
+			//===std::cerr << "ServerConnection::~Impl()" << std::endl;
 		}
 		bool accept_client(int fd, int condition);
 		bool handle_client_request(int fd, int condition);
@@ -163,16 +163,16 @@ namespace saftbus {
 			// are executed. But not more then 100 times. 
 			bool read_result = received.read_from(fd);
 			if (!read_result) {
-				// std::cerr << "failed to read data from fd " << fd << std::endl;
+				// //===std::cerr << "failed to read data from fd " << fd << std::endl;
 				client_hung_up(fd);
 				// std::cout << "remove client IoSource " << fd << std::endl;
 				return false;
 			}
 			unsigned saftlib_object_id;
 			received.get(saftlib_object_id);
-			// std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
-			// std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
-			// std::cerr << "trying to call a function" << std::endl;
+			// //===std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
+			// //===std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
+			// //===std::cerr << "trying to call a function" << std::endl;
 			if (!container_of_services.call_service(saftlib_object_id, fd, received, send)) { 
 				// call_service returns false if the service object was not found
 				// in this case an exception is sent to the Proxy 
@@ -189,7 +189,7 @@ namespace saftbus {
 
 	void ServerConnection::Impl::client_hung_up(int client_fd) 
 	{
-		// std::cerr << "clients.size() " << clients.size() << std::endl;
+		// //===std::cerr << "clients.size() " << clients.size() << std::endl;
 		auto removed_client = std::find(clients.begin(), clients.end(), client_fd);
 		if (removed_client == clients.end()) { 
 			calling_client_id = -1;
@@ -199,7 +199,7 @@ namespace saftbus {
 			for(auto &sigfd_usecount: (*removed_client)->signal_fd_use_count) {
 				int sigfd = sigfd_usecount.first;
 				// int count = sigfd_usecount.second;
-				// std::cerr << "remove client signal fd " << sigfd << std::endl;
+				// //===std::cerr << "remove client signal fd " << sigfd << std::endl;
 				container_of_services.remove_signal_fd(sigfd);
 			}
 			clients.erase(std::remove(clients.begin(), clients.end(), client_fd), clients.end());
@@ -207,7 +207,7 @@ namespace saftbus {
 		// tell the container that a client hung up
 		// the container hast to remove all services previously owned by this client
 		container_of_services.client_hung_up(client_fd);
-		// std::cerr << "clients.size() " << clients.size() << std::endl;
+		// //===std::cerr << "clients.size() " << clients.size() << std::endl;
 	}
 
 
@@ -275,12 +275,12 @@ namespace saftbus {
 
 	ServerConnection::~ServerConnection() 
 	{
-		std::cerr << "~ServerConnection" << std::endl;
+		//===std::cerr << "~ServerConnection" << std::endl;
 	}
 
 	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		std::cerr << "register signal fd " << signal_fd << " for client " << client_fd << std::endl;
+		//===std::cerr << "register signal fd " << signal_fd << " for client " << client_fd << std::endl;
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
 		if (client == d->clients.end()) {
 			assert(false);
@@ -291,7 +291,7 @@ namespace saftbus {
 
 	void ServerConnection::unregister_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		std::cerr << "unregister signal fd " << signal_fd << " for client " << client_fd << std::endl;
+		//===std::cerr << "unregister signal fd " << signal_fd << " for client " << client_fd << std::endl;
 
 		// auto client = d->clients.find(client_fd);
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);

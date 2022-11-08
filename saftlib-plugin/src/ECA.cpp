@@ -360,11 +360,11 @@ void ECA::setMsiHandlers(SAFTd &saftd)
 
 void ECA::msiHandler(eb_data_t msi, unsigned channel)
 {
-	std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
+	// std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
 	unsigned code = msi >> 16;
 	unsigned num  = msi & 0xFFFF;
 
-	std::cerr << "MSI: " << channel << " " << num << " " << code << std::endl;
+	// std::cerr << "MSI: " << channel << " " << num << " " << code << std::endl;
 
 	// MAX_FULL is tracked by this object, not the subchannel
 	if (code == ECA_MAX_FULL) {
@@ -445,7 +445,7 @@ struct WalkEntry {
 
 void ECA::compile()
 {
-	std::cerr << "ECA::compile" << std::endl;
+	// std::cerr << "ECA::compile" << std::endl;
 	// Store all active conditions into a vector for processing
 	typedef std::vector<ECA_OpenClose> ID_Space;
 	ID_Space id_space;
@@ -474,7 +474,7 @@ void ECA::compile()
 				oc.channel = actionSink->getChannel();
 				oc.num     = actionSink->getNum();
 
-				std::cerr << "compile condition on channel " << oc.channel << " num " << oc.num << std::endl;
+				// std::cerr << "compile condition on channel " << oc.channel << " num " << oc.num << std::endl;
 
 				// Push the open record
 				id_space.push_back(oc);
@@ -532,13 +532,13 @@ void ECA::compile()
 		search.push_back(SearchEntry(cursor, next));
 	}
 	
-#if DEBUG_COMPILE
-	clog << kLogDebug << "Table compilation complete!" << std::endl;
-	for (i = 0; i < search.size(); ++i)
-		clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
-	for (i = 0; i < walk.size(); ++i)
-		clog << kLogDebug << "W: " << walk[i].next << " " << walk[i].offset << " " << walk[i].tag << " " << walk[i].flags << " " << (int)walk[i].channel << " " << (int)walk[i].num << std::endl;
-#endif
+// #if DEBUG_COMPILE
+// 	clog << kLogDebug << "Table compilation complete!" << std::endl;
+// 	for (i = 0; i < search.size(); ++i)
+// 		clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
+// 	for (i = 0; i < walk.size(); ++i)
+// 		clog << kLogDebug << "W: " << walk[i].next << " " << walk[i].offset << " " << walk[i].tag << " " << walk[i].flags << " " << (int)walk[i].channel << " " << (int)walk[i].num << std::endl;
+// #endif
 
 	etherbone::Cycle cycle;
 	for (unsigned i = 0; i < search_size; ++i) {
@@ -614,7 +614,7 @@ ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saft
 	, container(cont)
 	, sas_count(0)
 {
-	std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
+	// std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
 	probeConfiguration();
 	compile(); // remove old rules
 	prepareChannels();
@@ -623,16 +623,16 @@ ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saft
 
 ECA::~ECA() 
 {
-	std::cerr << "ECA::~ECA()" << std::endl;
+	// std::cerr << "ECA::~ECA()" << std::endl;
 	if (container) {
 		for (auto &channel: ECAchannels) {
 			for (auto &actionSink: channel) {
 				if (actionSink) {
-					std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
+					// std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
 					try {
 						container->remove_object(actionSink->getObjectPath());
 					} catch (saftbus::Error &e) {
-						std::cerr << "removal attempt failed: " << e.what() << std::endl;
+						// std::cerr << "removal attempt failed: " << e.what() << std::endl;
 					}
 				}
 			}
