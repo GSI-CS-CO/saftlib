@@ -39,6 +39,8 @@ namespace ex01 {
 		/// @brief example of a custum type (must be derived from saftbus::SerDesAble)
 		// @saftbus-export
 		MyType passthrough(const MyType &val);
+		// @saftbus-export
+		int passthrough2(const int &val);
 
 		// @saftbus-export
 		std::function<void(int result)> was_thrown;

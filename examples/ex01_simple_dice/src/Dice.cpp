@@ -46,6 +46,9 @@ namespace ex01 {
 	MyType Dice::passthrough(const MyType &val) {
 		return val;
 	}
+	int Dice::passthrough2(const int &val) {
+		return val;
+	}
 
 
 }
