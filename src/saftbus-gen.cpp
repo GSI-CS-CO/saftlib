@@ -408,7 +408,7 @@ struct SignalSignature {
 			// sigc::signal<return_value, arg1 name1, arg2 name2, arg3 name3, ... , argN nameN) signal_name;
 			for (unsigned i = 1; i < return_value_and_arguments.size(); ++i) {
 				argument_list.push_back(return_value_and_arguments[i]);
-				std::cerr << "signal list add" << argument_list.back().declaration() << std::endl;
+				// std::cerr << "signal list add " << argument_list.back().declaration() << std::endl;
 			}
 			name = strip(line.substr(template_close+1,semicolon-template_close-1));
 		} else {

@@ -50,6 +50,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, ECA_TLU(OpenDevice::device, container)
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
+	, Reset(OpenDevice::device)
 	, io_control(OpenDevice::device)
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
@@ -121,6 +122,7 @@ bool TimingReceiver::poll()
 	// std::cerr << "TimingReceiver::poll()" << std::endl;
 	WhiteRabbit::getLocked();
 	Watchdog::update(); 
+	Reset::WdRetrigger();
 	return true;
 }
 

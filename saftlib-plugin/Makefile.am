@@ -71,9 +71,11 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/BuildIdRom_Service.cpp                                                    \
 	src/TempSensor.cpp                                                             \
 	src/TempSensor_Service.cpp                                                      \
-	src/TimingReceiver.cpp                                                           \
-	src/TimingReceiver_Service.cpp                                                    \
-	src/CommonFunctions.cpp                                                            \
+	src/Reset.cpp                                                                    \
+	src/Reset_Service.cpp                                                             \
+	src/TimingReceiver.cpp                                                             \
+	src/TimingReceiver_Service.cpp                                                      \
+	src/CommonFunctions.cpp                                                              \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/saftlib/service
@@ -108,7 +110,8 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/ECA_TLU.cpp                                                \
 	src/BuildIdRom.hpp                                              \
 	src/TempSensor.hpp                                               \
-	src/TimingReceiver.hpp                                            \
+	src/Reset.hpp                                                     \
+	src/TimingReceiver.hpp                                             \
 	src/CommonFunctions.hpp                                            
 # 	src/Owned_Service.hpp                  \
 # 	src/SAFTd_Service.hpp                   \
@@ -130,6 +133,7 @@ lib@PACKAGE@_service_include_HEADERS = \
 # 	src/ECA_Service.hpp                                     \
 # 	src/BuildIdRom_Service.hpp                               \
 # 	src/TempSensor_Service.hpp                                \
+# 	src/Reset_Service.hpp                                      \
 # 	src/TimingReceiver_Service.hpp                           
 # the service headers are not neede by client programs (event standalone ones), right???
 
@@ -158,7 +162,8 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/ECA_TLU_Proxy.cpp                              \
 	src/BuildIdRom_Proxy.cpp                            \
 	src/TempSensor_Proxy.cpp                             \
-	src/TimingReceiver_Proxy.cpp                          \
+	src/Reset_Proxy.cpp                                   \
+	src/TimingReceiver_Proxy.cpp                           \
 	src/CommonFunctions.cpp                               
 
 
@@ -187,8 +192,9 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/ECA_TLU_Proxy.hpp                                 \
 	src/BuildIdRom_Proxy.hpp                               \
 	src/TempSensor_Proxy.hpp                                \
-	src/TimingReceiver_Proxy.hpp                             \
-	src/CommonFunctions.hpp                                   \
+	src/Reset_Proxy.hpp                                      \
+	src/TimingReceiver_Proxy.hpp                              \
+	src/CommonFunctions.hpp                                    \
 	src/interfaces/BurstGenerator.h                              \
 	src/interfaces/SAFTd.h                                       \
 	src/interfaces/iDevice.h                                     \

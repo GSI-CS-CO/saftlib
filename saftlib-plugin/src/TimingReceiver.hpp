@@ -36,6 +36,7 @@
 #include "ECA_TLU.hpp"
 #include "BuildIdRom.hpp"
 #include "TempSensor.hpp"
+#include "Reset.hpp"
 #include "IoControl.hpp"
 
 // @saftbus-include
@@ -93,6 +94,7 @@ class TimingReceiver : public OpenDevice
                      , public ECA
                      , public ECA_TLU
                      , public BuildIdRom
+                     , public Reset
                      , public TempSensor {
 public:
 	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
