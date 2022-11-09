@@ -65,7 +65,7 @@ namespace saftbus {
 			close(socket_fd);
 			// close all signal_fds
 			for (auto& fd_use_count: signal_fd_use_count) {
-				std::cout << "close signal fd " << fd_use_count.first << " with " << fd_use_count.second << " users " << std::endl;
+				// std::cout << "close signal fd " << fd_use_count.first << " with " << fd_use_count.second << " users " << std::endl;
 				close(fd_use_count.first);
 			}
 		}
@@ -97,15 +97,15 @@ namespace saftbus {
 		void use_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			++count;
-			std::cout << "Client::use_signal_fd(" << fd << ") count=" << count << std::endl;
+			// std::cout << "Client::use_signal_fd(" << fd << ") count=" << count << std::endl;
 		}
 		void release_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			--count;
-			std::cout << "Client::release_signal_fd(" << fd << ") count=" << count << std::endl;
+			// std::cout << "Client::release_signal_fd(" << fd << ") count=" << count << std::endl;
 			assert(count >= 0);
 			if (count == 0) {
-				std::cout << "Client::release_signal_fd close(" << fd << ")" << std::endl;
+				// std::cout << "Client::release_signal_fd close(" << fd << ")" << std::endl;
 				// don't close it because the client might create other proxies later
 				// if fd would be closed here, client must be able to detect this in the proxy constructor and 
 				// send a new socket-pair-fd so that the connection can be re-established
@@ -147,7 +147,7 @@ namespace saftbus {
 	bool ServerConnection::Impl::accept_client(int fd, int condition) {
 		if (condition & POLLIN) {
 			int client_socket_fd = recvfd(fd);
-			std::cout << "got (open) " << client_socket_fd << std::endl;
+			// std::cout << "got (open) " << client_socket_fd << std::endl;
 			if (client_socket_fd == -1) {
 				std::cout << "cannot receive socket fd" << std::endl;
 				assert(false);
