@@ -377,6 +377,7 @@ struct FunctionSignature {
 	void print() {
 		std::cerr << "  Function        " << std::endl;
 		std::cerr << "    scope       : " << scope << std::endl;
+		std::cerr << "    virtual     : " << is_virtual << std::endl;
 		std::cerr << "    name        : " << name << std::endl;
 		std::cerr << "    return type : " << return_type << std::endl;
 		std::cerr << "    arguments   : ";
@@ -1088,10 +1089,20 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 					out << "\t\t\t\t\t" << "received.get(" << function.argument_list[i].name << ");" << std::endl;
 				} 
 			}
-			if (function.return_type != "void") {
-				out << "\t\t\t\t\t" << function.return_type << " function_call_result = " << "d->" << function.name << "(";	
+			// prefer the fully qualified function name (in case there are multiple funcions with same name in different base classes)
+			// unless it is a virtual function. Virtual functions should not be fully qualified to enable polymophsim
+			std::string function_name;
+			if (function.is_virtual) {
+				function_name.append(function.name);
 			} else {
-				out << "\t\t\t\t\t" << "d->" << function.name << "(";
+				function_name = class_and_all_base_classes[interface_no]->name;
+				function_name.append("::");
+				function_name.append(function.name);
+			}
+			if (function.return_type != "void") {
+				out << "\t\t\t\t\t" << function.return_type << " function_call_result = " << "d->" << function_name << "(";	
+			} else {
+				out << "\t\t\t\t\t" << "d->" << function_name << "(";
 			}
 			for (unsigned i = 0; i < function.argument_list.size(); ++i) {
 				out << function.argument_list[i].name;
