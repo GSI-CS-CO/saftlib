@@ -5,9 +5,9 @@
 namespace ex01 {
 
 	Dice::Dice() 
-		: throw_timeout_source(nullptr)
-	{
-	}
+		: auto_throwing_enabled(false)
+		, throw_timeout_source()
+	{}
 
 	Dice::~Dice() {
 		stopThrowing();
@@ -21,12 +21,13 @@ namespace ex01 {
 		int result = rand()%6+1;
 		if (was_thrown) {
 			was_thrown(result);
+			was_thrown_sigc(result);
 		}
 		return result;
 	}
 
 	void Dice::throwPeriodically(int period_ms) {
-		if (throw_timeout_source) {
+		if (auto_throwing_enabled) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "periodic throwing is already enabled");
 		}
 		throw_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
@@ -34,13 +35,19 @@ namespace ex01 {
 			std::chrono::milliseconds(period_ms),
 			std::chrono::milliseconds(period_ms)
 			);
+		auto_throwing_enabled = true;
 	}
 
 	void Dice::stopThrowing() {
-		if (throw_timeout_source != nullptr) {
-			saftbus::Loop::get_default().remove(throw_timeout_source);
-			throw_timeout_source = nullptr;
-		}
+		saftbus::Loop::get_default().remove(throw_timeout_source);
+		auto_throwing_enabled = false;
+	}
+
+	MyType Dice::passthrough(const MyType &val) {
+		return val;
+	}
+	int Dice::passthrough2(const int &val) {
+		return val;
 	}
 
 

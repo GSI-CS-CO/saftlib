@@ -32,7 +32,7 @@ namespace saftbus {
 		std::lock_guard<std::mutex> lock1(d->m_base_socket);
 
 		std::ostringstream msg;
-		msg << "ClientConnection constructor : ";
+		// msg << "ClientConnection constructor : ";
 		char *socketname_env = getenv("SAFTBUS_SOCKET_PATH");
 		std::string socketname = socket_name;
 		if (socketname_env != nullptr) {
@@ -83,7 +83,7 @@ namespace saftbus {
 			msg << "cannot read client id" << strerror(errno) << std::endl;
 			throw std::runtime_error(msg.str());
 		}
-		std::cerr << "got client id " << d->client_id << std::endl;
+		// std::cerr << "got client id " << d->client_id << std::endl;
 	}
 
 	ClientConnection::~ClientConnection() 
@@ -149,10 +149,10 @@ namespace saftbus {
 	SignalGroup::SignalGroup() 
 		: d(std2::make_unique<Impl>())
 	{
-		std::cerr << "SignalGroup constructor" << std::endl;
+		// std::cerr << "SignalGroup constructor" << std::endl;
 		std::ostringstream msg;
 		if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, d->fd_pair) != 0) {
-			msg << "cannot create socket pair: " << strerror(errno);
+			// msg << "cannot create socket pair: " << strerror(errno);
 			throw std::runtime_error(msg.str());
 		}
 		// keep the other socket end in order to listen for events
@@ -166,7 +166,8 @@ namespace saftbus {
 	int SignalGroup::register_proxy(Proxy *proxy) 
 	{
 		// send one of the two socket ends to the server
-		std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for signals " << std::endl;
+		// std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for service to send signals " << std::endl;
+		// std::cerr << "register_proxy: keeping one fd " << d->fd_pair[1] << " for us to receive signals " << std::endl;
 
 		if (d->signal_group_id == -1) {
 			int fdresult = sendfd(Proxy::get_connection().d->pfd.fd, d->fd_pair[0]);
@@ -175,7 +176,7 @@ namespace saftbus {
 			                      // when the server closed the other end (because here we
 			                      // still have an open descriptor to the same end)
 			if (fdresult <= 0) {
-				std::cerr << "SignalGroup::register_proxy cannot send file descriptor to server" << std::endl;
+				// std::cerr << "SignalGroup::register_proxy cannot send file descriptor to server" << std::endl;
 			}
 		} 
 		d->proxies.push_back(proxy);
@@ -184,7 +185,7 @@ namespace saftbus {
 
 	void SignalGroup::unregister_proxy(Proxy *proxy) 
 	{
-		std::cerr << "unregister_proxy" << std::endl;
+		// std::cerr << "unregister_proxy" << std::endl;
 		d->proxies.erase(std::remove(d->proxies.begin(), d->proxies.end(), proxy), d->proxies.end());
 	}
 
@@ -202,10 +203,10 @@ namespace saftbus {
 	//   < 0 in case of failure (e.g. service object was destroyed)
 	int SignalGroup::wait_for_signal(int timeout_ms)
 	{
-		std::cerr << "wait_for_signal(" << timeout_ms << ")" << std::endl;
+		// std::cerr << "wait_for_signal(" << timeout_ms << ")" << std::endl;
 		int result = wait_for_one_signal(timeout_ms);
 		if (result >= 0) {
-			std::cerr << "." << std::endl;
+			// std::cerr << "." << std::endl;
 			// there was a signal, timeout was not hit. 
 			// In this case look for other pending signals 
 			// using a timeout of 0
@@ -221,23 +222,25 @@ namespace saftbus {
 	//   < 0 in case of failure (e.g. service object was destroyed)
 	int SignalGroup::wait_for_one_signal(int timeout_ms)
 	{
-		std::cerr << "wait_for_one_signal(" << timeout_ms << ")" << std::endl;
+		// std::cerr << "wait_for_one_signal(" << timeout_ms << ") on fd " << d->pfd.fd << std::endl;
 		int result;
 		{
-			std::cerr << "wait for mutex" << std::endl;
+			// std::cerr << "wait for mutex" << std::endl;
 			std::lock_guard<std::mutex> lock1(d->m1);
-			std::cerr << "SignalGroup poll call " << d->pfd.events << " " << timeout_ms << std::endl;
+			// std::cerr << "SignalGroup poll call " << d->pfd.events << " " << timeout_ms << std::endl;
 			result = poll(&d->pfd, 1, timeout_ms);
-			std::cerr << "SignalGroup poll done " << result << std::endl;
+			// std::cerr << "SignalGroup poll done " << result << std::endl;
 			if (result > 0) {
 
 				if (d->pfd.revents & (POLLIN|POLLHUP) ) {
-					std::cerr << "POLLIN|POLLHUP" << std::endl;
+					// if (d->pfd.revents & POLLIN)  std::cerr << d->pfd.fd << " POLLIN"  << std::endl;
+					// if (d->pfd.revents & POLLHUP) std::cerr << d->pfd.fd << " POLLHUP" << std::endl;
+					// std::cerr << "POLLIN|POLLHUP" << std::endl;
 					bool result = d->received.read_from(d->pfd.fd);
 					if (!result) {
-						std::cerr << "failed to read data from fd " << d->pfd.fd << std::endl;
+						// std::cerr << "failed to read data from fd " << d->pfd.fd << std::endl;
 						if (d->pfd.revents & POLLHUP) {
-							std::cerr << "service hung up" << std::endl;
+							// std::cerr << "service hung up" << std::endl;
 							throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Service hung up"); 
 						}
 						return -1;
@@ -248,9 +251,9 @@ namespace saftbus {
 					d->received.get(saftlib_object_id);
 					d->received.get(interface_no);
 					d->received.get(signal_no);
-					std::cerr << "object_id = " << saftlib_object_id << " inteface = " << interface_no << "   signal = " << signal_no << " d->proxies.size()=" << d->proxies.size() <<  std::endl;
+					// std::cerr << "object_id = " << saftlib_object_id << " inteface = " << interface_no << "   signal = " << signal_no << " d->proxies.size()=" << d->proxies.size() <<  std::endl;
 					for (auto &proxy: d->proxies) {
-						std::cerr << "proxy object id = " << proxy->d->saftlib_object_id << "  signal_group_id = " << proxy->d->signal_group_id << std::endl;
+						// std::cerr << "proxy object id = " << proxy->d->saftlib_object_id << "  signal_group_id = " << proxy->d->signal_group_id << std::endl;
 						if (proxy->d->saftlib_object_id == saftlib_object_id) {
 							d->received.save();
 							proxy->signal_dispatch(interface_no, signal_no, d->received);
@@ -262,7 +265,7 @@ namespace saftbus {
 					assert(false); // did the server crash? this should never happen
 				}
 			}
-			std::cerr << "SignalGroup poll call done" << std::endl;
+			// std::cerr << "SignalGroup poll call done" << std::endl;
 		}
 
 		{
@@ -284,7 +287,7 @@ namespace saftbus {
 	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group, const std::vector<std::string> &interface_names) 
 		: d(std2::make_unique<Impl>()) 
 	{
-		std::cerr << "Proxy constructor for " << object_path << std::endl;
+		// std::cerr << "Proxy constructor for " << object_path << std::endl;
 		d->signal_group = &signal_group;
 		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
 		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
@@ -320,13 +323,13 @@ namespace saftbus {
 		// if we get saftlib_object_id=0, the object path was not found
 		if (d->saftlib_object_id == 0) {
 			std::ostringstream msg;
-			msg << "object path \"" << object_path << "\" not found" << std::endl;
+			// msg << "object path \"" << object_path << "\" not found" << std::endl;
 			throw std::runtime_error(msg.str());
 		}
 		// if we get saftlib_object_id=-1, the object path was found found bu one of the requested interfaces is not implemented
 		if (d->saftlib_object_id == -1) { 
 			std::ostringstream msg;
-			msg << "object \"" << object_path << "\" does not implement requested interfaces: ";
+			// msg << "object \"" << object_path << "\" does not implement requested interfaces: ";
 			for (auto &interface_name: interface_names) {
 				if (d->interface_name2no_map.find(interface_name) == d->interface_name2no_map.end()) {
 					msg << "\""<< interface_name << "\"" << std::endl;
@@ -335,20 +338,20 @@ namespace saftbus {
 			throw std::runtime_error(msg.str());
 		}
 		if (signal_group.d->signal_group_id == -1) {
-			std::cerr << "set signal_group_id " << d->signal_group_id << std::endl;
+			// std::cerr << "set signal_group_id " << d->signal_group_id << std::endl;
 			signal_group.d->signal_group_id = d->signal_group_id;
 		}
-		std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
-		std::cerr << "interface name to no mapping: " << std::endl;
-		for (auto &pair: d->interface_name2no_map) {
-			std::cerr << "\t" << pair.first << " -> " << pair.second << std::endl;
-		}
+		// std::cerr << "Proxy got saftlib_object_id: " << d->saftlib_object_id << std::endl;
+		// std::cerr << "interface name to no mapping: " << std::endl;
+		// for (auto &pair: d->interface_name2no_map) {
+		// 	std::cerr << "\t" << pair.first << " -> " << pair.second << std::endl;
+		// }
 	}
 	Proxy::~Proxy()
 	{
 		std::lock_guard<std::mutex> lock2(d->signal_group->d->m2);
 		std::lock_guard<std::mutex> lock1(d->signal_group->d->m1);
-		std::cerr << "destroy Proxy" << std::endl;
+		// std::cerr << "destroy Proxy" << std::endl;
 		// de-register from server
 		// client connection is shared among threads
 		// only one thread can access the connection at a time
@@ -407,122 +410,105 @@ namespace saftbus {
 	//////////////////////////////////////////	
 	//////////////////////////////////////////	
 
-	Container_Proxy::Container_Proxy(const std::string &object_path, SignalGroup &signal_group, std::vector<std::string> interface_names)
-		: Proxy(object_path, signal_group, interface_names)
-	{
+	std::vector<std::string> Container_Proxy::gen_interface_names() {
+		std::vector<std::string> result; 
+		result.push_back("Container");
+		return result;
 	}
-
-	std::shared_ptr<Container_Proxy> Container_Proxy::create(SignalGroup &signal_group)
+	Container_Proxy::Container_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names)
+		: saftbus::Proxy(object_path, signal_group, interface_names)
 	{
-		std::vector<std::string> interface_names;
-		interface_names.push_back("Container");
-		return std::make_shared<Container_Proxy>("/saftbus", signal_group, interface_names);
+		interface_no = saftbus::Proxy::interface_no_from_name("Container");
 	}
-	bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content)
-	{
-		int counter;
-		signal_content.get(counter);
-		std::cerr << "Container_Proxy received a signal from interface: counter=" << counter << std::endl;
-		return true;
+	std::shared_ptr<Container_Proxy> Container_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {
+		return std2::make_unique<Container_Proxy>(object_path, signal_group, gen_interface_names()); 
 	}
-
-	void Container_Proxy::quit() 
-	{
-		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 2); 
-		{
-			std::lock_guard<std::mutex> lock(get_client_socket());
-			get_connection().send(get_send());
+	bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {
+		if (interface_no == this->interface_no) {
 		}
+		return false;
 	}
-
-	bool Container_Proxy::load_plugin(const std::string &so_filename) 
-	{
+	bool Container_Proxy::load_plugin(const std::string & so_filename	) {
 		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 3);
-		get_send().put(so_filename); 
-		// get_send().put(object_path);
+		get_send().put(interface_no);
+		get_send().put(2); // function_no
+		get_send().put(so_filename);
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());
 			get_connection().receive(get_received());
 		}
-		bool result;
-		get_received().get(result);
-		return result;
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
+		}
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
+		bool return_value_result_;
+		get_received().get(return_value_result_);
+		return return_value_result_;
 	}
-	bool Container_Proxy::remove_object(const std::string &object_path) 
-	{
+	bool Container_Proxy::remove_object(const std::string & object_path	) {
 		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 4);
-		get_send().put(object_path); 
+		get_send().put(interface_no);
+		get_send().put(3); // function_no
+		get_send().put(object_path);
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());
 			get_connection().receive(get_received());
 		}
-		bool result;
-		get_received().get(result);
-		return result;
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
+		}
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
+		bool return_value_result_;
+		get_received().get(return_value_result_);
+		return return_value_result_;
 	}
-
-	SaftbusInfo Container_Proxy::get_status()
-	{
-		SaftbusInfo result;
+	void Container_Proxy::quit(	) {
 		get_send().put(get_saftlib_object_id());
-		unsigned interface_no, function_no;
-		get_send().put(interface_no = 0);
-		get_send().put(function_no  = 5);
+		get_send().put(interface_no);
+		get_send().put(4); // function_no
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());
 			get_connection().receive(get_received());
 		}
-		size_t object_count;
-		get_received().get(object_count);
-		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
-		for (unsigned i = 0; i < object_count; ++i) {
-			result.object_infos.push_back(SaftbusInfo::ObjectInfo());
-			auto &object_info = result.object_infos.back();
-
-			get_received().get(object_info.object_id);
-			get_received().get(object_info.object_path);
-			get_received().get(object_info.interface_names);
-			get_received().get(object_info.signal_fds_use_count);
-			get_received().get(object_info.owner);
-
-			std::cerr << object_info.object_path << "=>" << object_info.object_id << " owner:" << object_info.owner << " sig_fd/use_cnt: ";
-			for (auto &signal_fd_use_count: object_info.signal_fds_use_count) {
-				std::cerr << signal_fd_use_count.first << "/" << signal_fd_use_count.second << " ";
-			}
-			std::cerr << std::endl;
-			for (auto &interface_name: object_info.interface_names) {
-				std::cerr << "    " << interface_name << std::endl;
-			}
-			std::cerr << std::endl;
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
 		}
-		std::cerr << std::endl;
-		size_t client_count;
-		get_received().get(client_count);
-		for (unsigned i = 0; i < client_count; ++i) {
-			result.client_infos.push_back(SaftbusInfo::ClientInfo());
-			auto &client_info = result.client_infos.back();
-			get_received().get(client_info.process_id);
-			get_received().get(client_info.client_fd);
-			get_received().get(client_info.signal_fds);
-			std::cerr << "client " << client_info.client_fd << "(pid=" << client_info.process_id << ") with signal_fds: ";
-			for (auto &signal_fd: client_info.signal_fds) {
-				std::cerr << signal_fd.first << "/" << signal_fd.second << " " ;
-			}
-			std::cerr << std::endl;
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
+	}
+	SaftbusInfo Container_Proxy::get_status(	) {
+		get_send().put(get_saftlib_object_id());
+		get_send().put(interface_no);
+		get_send().put(5); // function_no
+		{
+			std::lock_guard<std::mutex> lock(get_client_socket());
+			get_connection().send(get_send());
+			get_connection().receive(get_received());
 		}
-		for (int i = 0; i < 5; ++i) std::cerr << std::endl;
-		return result;
+		saftbus::FunctionResult function_result_;
+		get_received().get(function_result_);
+		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
+			std::string what;
+			get_received().get(what);
+			throw std::runtime_error(what);
+		}
+		assert(function_result_ == saftbus::FunctionResult::RETURN);
+		SaftbusInfo return_value_result_;
+		get_received().get(return_value_result_);
+		return return_value_result_;
 	}
 }

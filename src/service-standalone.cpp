@@ -19,8 +19,8 @@ namespace saftbus {
 	struct Container::Impl {
 	};
 
-	struct Container_Service::Impl {
-	};
+	// struct Container_Service::Impl {
+	// };
 
 
 	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback) 
@@ -65,7 +65,7 @@ namespace saftbus {
 
 
 
-	Container_Service::Container_Service(Container *container)
+	Container_Service::Container_Service(Container* instance, std::function<void()> destruction_callback )
 		: Service(get_interface_names())
 	{
 		assert(false);
@@ -121,26 +121,35 @@ namespace saftbus {
 		assert(false);
 	}
 
-	bool Container::load_plugin(const std::string &so_filename) 
+	bool Container::load_plugin(const std::string &so_filename, const std::vector<std::string> &args) 
 	{
 		assert(false);
 		return true;
 	}
 
-	int Container::get_calling_client_id() {
+	int Container::get_calling_client_id() const {
 		assert(false);
 		return -1;
-	}
-	void Container::set_owner() {
-		assert(false);
 	}
 	void Container::set_owner(Service *service) {
 		assert(false);
 	}
-	void Container::release_owner() {
+	void Container::active_service_set_owner() {
 		assert(false);
 	}
-	void Container::owner_only() {
+	int Container::active_service_get_owner() const {
+		assert(false);
+	}
+	void Container::active_service_release_owner() {
+		assert(false);
+	}
+	void Container::active_service_owner_only() const {
+		assert(false);
+	}
+	bool Container::active_service_has_destruction_callback() const {
+		assert(false);
+	}
+	void Container::active_service_remove() {
 		assert(false);
 	}
 

@@ -70,6 +70,14 @@ static ExportTag remove_line_comments(std::string &line) {
 					return INCLUDE_EXPORT;
 				}
 			}
+			if (i+1+saftbus_include_tag.size() <= line.size()) {
+				// std::cerr << "++ " << line.substr(i+1,saftbus_include_tag.size()) << std::endl;
+				if (line.substr(i+1,saftbus_include_tag.size()) == saftbus_include_tag) {
+					line = line.substr(0,i-1);
+					// std::cerr << "saftbus export " << line << std::endl;
+					return INCLUDE_EXPORT;
+				}
+			}
 			line = line.substr(0,1);
 			return NO_EXPORT;
 		}
@@ -246,14 +254,53 @@ struct FunctionArgument {
 	}
 };
 
+// this extracts a list of FunctionArgument from a string like this "type, templatetype<int>, int& , double*"
+std::vector<FunctionArgument> split_template_arguments(std::string template_argument_list) {
+	std::vector<FunctionArgument> result;
+	std::string buffer;
+	int scope = 0; // count the nesting level of < ... > where commas do not separate arguments
+	int scopep = 0; // count the nesting level of ( ... ) where commas do not separate arguments
+	int counter = 0; // used to create the argument names (which are missing in template arguemnt lists)
+	std::string name_prefix = "arg_";
+
+	for (auto &ch: template_argument_list) {
+		if (ch == '<') ++scope;
+		if (ch == '>') --scope;
+		if (ch == '(') ++scopep;
+		if (ch == ')') --scopep;
+		if (ch == ',' && scope == 0 && scopep == 0) {
+			std::ostringstream arg_and_name;
+			arg_and_name << strip(buffer) << " arg_" << counter++;
+			// std::cerr << template_argument_list << "   FunctionArgument(" << arg_and_name.str() << ")" << std::endl;
+			result.push_back(FunctionArgument(arg_and_name.str()));
+			// std::cerr << result.back().definition() << std::endl;
+			buffer.clear();
+		} else {
+			buffer.push_back(ch);
+		}
+	}
+	if (buffer.size() > 0) {
+		std::ostringstream arg_and_name;
+		arg_and_name << strip(buffer) << " arg_" << counter++;
+		// std::cerr << template_argument_list << "   FunctionArgument(" << arg_and_name.str() << ")" << std::endl;
+		result.push_back(FunctionArgument(strip(arg_and_name.str())));
+		// std::cerr << result.back().definition() << std::endl;
+	}
+	return result;
+}
+
+// this extracts a list of FunctionArgument from a string like this "type name1, templatetype<int> name2, int &name3, double *x"
 std::vector<FunctionArgument> split_arguments(std::string argument_list) {
 	std::vector<FunctionArgument> result;
 	std::string buffer;
 	int scope = 0; // count the nesting level of < ... > where commas do not separate arguments
+	int scopep = 0; // count the nesting level of ( ... ) where commas do not separate arguments
 	for (auto &ch: argument_list) {
 		if (ch == '<') ++scope;
 		if (ch == '>') --scope;
-		if (ch == ',' && scope == 0) {
+		if (ch == '(') ++scopep;
+		if (ch == ')') --scopep;
+		if (ch == ',' && scope == 0 && scopep == 0) {
 			result.push_back(FunctionArgument(strip(buffer)));
 			buffer.clear();
 		} else {
@@ -276,8 +323,25 @@ struct FunctionSignature {
 	FunctionSignature(const std::string &s, const std::string &line, const std::vector<std::string> &comment) 
 		: scope(s), comments(comment)
 	{
-		auto paranthesis_open = line.find('(');
-		auto paranthesis_close = line.find(')');
+		// scan the argument list of the function declaration.
+		// we have to count paranthesis here because arguments may contain paranthesis (in default parameters)
+		int paranthesis_level = 0;
+		size_t paranthesis_open = 0;
+		size_t paranthesis_close = 0;
+		for (size_t pos = 0; pos < line.size(); ++pos) {
+			if (line[pos] == '(') {
+				if (paranthesis_level == 0) paranthesis_open = pos;
+				++paranthesis_level;
+			}
+			if (line[pos] == ')') {
+				if (paranthesis_level == 1) paranthesis_close = pos;
+				--paranthesis_level;
+			}
+		}
+		if (paranthesis_open == paranthesis_close) {
+			std::cerr << line << std::endl;
+		}
+		assert(paranthesis_open != paranthesis_close);
 		argument_list = split_arguments(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
 		std::string returntype_and_name = line.substr(0,paranthesis_open);
 		auto name_start = returntype_and_name.find_last_of(" &");
@@ -308,15 +372,34 @@ struct SignalSignature {
 	std::string name;
 	std::vector<FunctionArgument> argument_list;
 	std::vector<std::string> comments;
+	bool sigc_signal; // true if this is a sigc::signal<>, false if this is a std::fucntion<>
 	SignalSignature(const std::string &s, const std::string &line, const std::vector<std::string> &comment) 
 		: scope(s), comments(comment)
 	{
-		auto paranthesis_open = line.find('(');
-		auto paranthesis_close = line.find(')');
-		auto template_close = line.find('>');
-		auto semicolon = line.find(';');
-		argument_list = split_arguments(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
-		name = strip(line.substr(template_close+1,semicolon-template_close-1));
+		// check if we have a sigc::signal<>. If not, assume that we have a std::function<>
+		sigc_signal = false;
+		if (strip(line).find("signal<") == 0 || strip(line).find("sigc::signal<") == 0) sigc_signal = true;
+
+		if (sigc_signal) {
+			auto template_open = line.find('<');
+			auto template_close = line.find_last_of('>');
+			auto semicolon = line.find(';');
+			auto return_value_and_arguments = split_template_arguments(line.substr(template_open+1, template_close-template_open-1));
+			// sigc::signal<return_value, arg1 name1, arg2 name2, arg3 name3, ... , argN nameN) signal_name;
+			for (unsigned i = 1; i < return_value_and_arguments.size(); ++i) {
+				argument_list.push_back(return_value_and_arguments[i]);
+				std::cerr << "signal list add" << argument_list.back().declaration() << std::endl;
+			}
+			name = strip(line.substr(template_close+1,semicolon-template_close-1));
+		} else {
+			auto paranthesis_open = line.find('(');
+			auto paranthesis_close = line.find_last_of(')');
+			auto template_close = line.find_last_of('>');
+			auto semicolon = line.find(';');
+			argument_list = split_arguments(line.substr(paranthesis_open+1, paranthesis_close-paranthesis_open-1));
+			// std::function<return_value(arg1 name1, arg2 name2, arg3 name3, .... , argN nameN) signal_name;
+			name = strip(line.substr(template_close+1,semicolon-template_close-1));
+		}
 	}
 	void print() {
 		std::cerr << "  Signal        " << std::endl;
@@ -355,6 +438,7 @@ std::vector<std::string> split_bases(std::string argument_list) {
 struct ClassDefinition {
 	std::string scope;
 	std::string name;
+	std::string default_object_path; // if this is non-empty the _Proxy::create() method will have this string as default argument for the object path
 	std::vector<std::string> bases;       // direct base classes
 	std::vector<ClassDefinition*> direct_bases;// direct base classes
 	std::vector<ClassDefinition*> all_bases;   // base classes and base classes of them
@@ -513,6 +597,16 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			break;
 		}
 
+		// look for default_object_path_tag
+		if (classes.size() > 0 && classes.back().scope == build_namespace(scope)) {
+			std::string default_object_path_tag = "// @saftbus-default-object-path ";
+			size_t pos = line.find(default_object_path_tag);
+			if (pos != line.npos) {
+				classes.back().default_object_path = strip(line.substr(pos+default_object_path_tag.size()));
+				std::cerr << "found default_object_path_tag: " << classes.back().default_object_path << std::endl;
+			}
+		}
+
 		// remove line comments and detect @saftbus-export tag (is has to be the first word in a line comment)
 		ExportTag saftbus_export_tag = remove_line_comments(line);
 
@@ -528,6 +622,20 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			throw std::runtime_error(msg.str());
 		}
 		// std::cerr << line_no << " " << build_namespace(scope) << std::endl;
+
+		// @saftbus-export peeks into next line and autodetects if FUNCTION_EXPORT, SIGNAL_EXPORT or INCLUDE_EXPORT is needed
+		if (saftbus_export_tag_in_previous_line == FUNCTION_EXPORT) {
+			if (strip(line).find("function<") == 0 || strip(line).find("std::function<") == 0) {
+				saftbus_export_tag_in_previous_line = SIGNAL_EXPORT;
+			}
+			if (strip(line).find("signal<") == 0 || strip(line).find("sigc::signal<") == 0) {
+				saftbus_export_tag_in_previous_line = SIGNAL_EXPORT;
+			}
+			if (strip(line).find("#include") == 0) {
+				saftbus_export_tag_in_previous_line = INCLUDE_EXPORT;
+			}
+		}
+
 
 		// extract signal or function signature
 		if (saftbus_export_tag_in_previous_line == SIGNAL_EXPORT) {
@@ -916,11 +1024,15 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "\t" << "{" << std::endl;
 	for (auto& class_def: class_and_all_base_classes) {
 		for (auto &signal: class_def->exportedsignals) {
-			out << "\t\t" << "d->" << signal.name << " = std::bind(&" << class_definition.name << "_Service::" << signal.name << "_dispatch_function, this";
-			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
-				out << ", std::placeholders::_" << i+1;
+			if (signal.sigc_signal) {
+				out << "\t\t" << "d->" << signal.name << ".connect(sigc::mem_fun(this, &" << class_definition.name << "_Service::" << signal.name << "_dispatch_function));" << std::endl;
+			} else {
+				out << "\t\t" << "d->" << signal.name << " = std::bind(&" << class_definition.name << "_Service::" << signal.name << "_dispatch_function, this";
+				for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+					out << ", std::placeholders::_" << i+1;
+				}
+				out << ");" << std::endl;
 			}
-			out << ");" << std::endl;
 		}
 	}
 	out << "\t" << "}" << std::endl;
@@ -1018,7 +1130,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 				}
 			}
 			out << ") {" << std::endl;
-			out << "\t\t" << "std::cerr << \"service dispatch function called!!!!!!!!!!!!\" << std::endl;" << std::endl;
+			// out << "\t\t" << "std::cerr << \"service dispatch function called!!!!!!!!!!!!\" << std::endl;" << std::endl;
 			out << "\t\t" << "saftbus::Serializer serialized_signal;" << std::endl;
 			out << "\t\t" << "serialized_signal.put(get_object_id());" << std::endl;
 			out << "\t\t" << "serialized_signal.put(" << interface_no    << ");" << std::endl;
@@ -1058,7 +1170,20 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << std::endl;
 	header_out << "#include <saftbus/client.hpp>" << std::endl;	
 	header_out << std::endl;
-	header_out << "#include <functional>" << std::endl;	
+
+	bool have_sigc_signals = false;
+	bool have_stdfunction_signals = false;
+	for (auto &signal: class_definition.exportedsignals) {
+		if (signal.sigc_signal) have_sigc_signals        = true;
+		else                    have_stdfunction_signals = true;
+	};
+
+	if (have_sigc_signals) {
+		header_out << "#include <functional>" << std::endl;	
+	}
+	if (have_stdfunction_signals) {
+		header_out << "#include <sigc++/sigc++.h>" << std::endl;	
+	}
 	header_out << std::endl;
 
 	for (auto &include_export: class_definition.includes) {
@@ -1101,8 +1226,12 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << "\t{" << std::endl;
 	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
 	header_out << "\tpublic:" << std::endl;
-	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
-	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = std::vector<std::string>());" << std::endl;
+	header_out << "\t\t" << class_definition.name << "_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = gen_interface_names());" << std::endl;
+	header_out << "\t\t" << "static std::shared_ptr<" << class_definition.name << "_Proxy> create(const std::string &object_path";
+	if (class_definition.default_object_path.size()) {
+		header_out << " = \"" << class_definition.default_object_path << "\"";
+	}
+	header_out << ", saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global());" << std::endl;
 	header_out << "\t\t" << "bool signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content);" << std::endl;
 	for (auto &function: class_definition.exportedfunctions) {
 		// recreate comments from this function
@@ -1129,14 +1258,26 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 		for( auto &comment_line: signal.comments) {
 			header_out << comment_line << std::endl;
 		}
-		header_out << "\t\t" << "std::function<void(";
-		for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
-			if (i > 0) {
-				header_out << ", ";
+		// different output for sigc::signal and std::function
+		if (signal.sigc_signal) {
+			header_out << "\t\t" << "sigc::signal<void, ";
+			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+				if (i > 0) {
+					header_out << ", ";
+				}
+				header_out << signal.argument_list[i].type;
 			}
-			header_out << signal.argument_list[i].definition();
+			header_out << "> " << signal.name << ";" << std::endl;
+		} else {
+			header_out << "\t\t" << "std::function<void(";
+			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
+				if (i > 0) {
+					header_out << ", ";
+				}
+				header_out << signal.argument_list[i].definition();
+			}
+			header_out << ")> " << signal.name << ";" << std::endl;
 		}
-		header_out << ")> " << signal.name << ";" << std::endl;
 	}
 
 
@@ -1205,7 +1346,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "\t" << "{" << std::endl;
 	cpp_out << "\t\t" << "interface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\");" << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
-	cpp_out << "\t" << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {" << std::endl;
+	cpp_out << "\t" << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group) {" << std::endl;
 	cpp_out << "\t\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
 	cpp_out << "\t"     << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
@@ -1219,7 +1360,11 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 				cpp_out << "\t\t\t\t" << signal.argument_list[i].definition() << ";" << std::endl;
 				cpp_out << "\t\t\t\t" << "signal_content.get(" << signal.argument_list[i].name << ");" << std::endl;
 			}
-			cpp_out << "\t\t\t\t" << "if (" << signal.name << ") " << signal.name << "(";
+			if (signal.sigc_signal) {
+				cpp_out << "\t\t\t\t" << signal.name << "(";
+			} else {
+				cpp_out << "\t\t\t\t" << "if (" << signal.name << ") " << signal.name << "(";
+			}
 			for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
 				if (i > 0) {
 					cpp_out << ", ";

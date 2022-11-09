@@ -1,17 +1,21 @@
 #ifndef DICE_HPP_
 #define DICE_HPP_
 
+// @saftbus-export
+#include "MyType.hpp"
 
 #include <saftbus/loop.hpp>
 
 #include <functional>
 #include <memory>
 
+#include <sigc++/sigc++.h>
+
 namespace ex01 {
 
 	class Dice {
-
-		saftbus::Source *throw_timeout_source;
+		bool auto_throwing_enabled;
+		saftbus::SourceHandle throw_timeout_source;
 	public:
 		/// @brief convenience function to allow similar creation compared to Proxy class
 		/// @param object_path is ignored
@@ -32,8 +36,17 @@ namespace ex01 {
 		// @saftbus-export
 		void stopThrowing();
 
-		// @saftbus-signal
+		/// @brief example of a custum type (must be derived from saftbus::SerDesAble)
+		// @saftbus-export
+		MyType passthrough(const MyType &val);
+		// @saftbus-export
+		int passthrough2(const int &val);
+
+		// @saftbus-export
 		std::function<void(int result)> was_thrown;
+
+		// @saftbus-export
+		sigc::signal<void, int> was_thrown_sigc;
 	};
 
 

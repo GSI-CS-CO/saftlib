@@ -25,6 +25,7 @@ namespace ex02 {
 		static std::shared_ptr<DiceCup> create(const std::string &object_path);
 
 		DiceCup(const std::string &object_path, saftbus::Container *container = nullptr);
+		~DiceCup();
 
 		Dice* getDice(const std::string &name);
 
@@ -33,6 +34,8 @@ namespace ex02 {
 
 		// @saftbus-export
 		void addDice12(const std::string &name);
+
+		void removeDice(const std::string &object_path);
 
 		/// @brief throw dice once and return the result.
 		/// @result the sum of all dices in the cup

@@ -29,24 +29,68 @@ namespace saftbus {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
 		pid_t process_id; // store the clients pid as additional useful information
 		std::map<int,int> signal_fd_use_count;
-		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  {}
+		saftbus::SourceHandle check_timeout;
+		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  {
+			// connect a timeout callback that checks once per second that all fds are still in the fds-set of the Main Loop.
+			// TODO: remove this before release
+			check_timeout = Loop::get_default().connect<TimeoutSource>(
+				std::bind(&Client::check, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000));
+		}
 		~Client() {
+			Loop::get_default().remove(check_timeout);
 			if (signal_fd_use_count.size() > 0) {
-				std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
+				//===std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
 			}
+			// close socket_fd
 			close(socket_fd);
+			// close all signal_fds
+			for (auto& fd_use_count: signal_fd_use_count) {
+				std::cout << "close signal fd " << fd_use_count.first << " with " << fd_use_count.second << " users " << std::endl;
+				close(fd_use_count.first);
+			}
+		}
+		bool check() {
+			// std::cout << "check Client " << socket_fd;
+			pollfd pfd;
+			pfd.fd = socket_fd;
+			pfd.events = POLLIN | POLLHUP | POLLERR;
+			int poll_result = poll(&pfd, 1, 0);
+			if (poll_result == -1) { // timeout
+				//===std::cerr << " error: " << strerror(errno) << std::endl;
+			}
+			// if (poll_result == 0) {
+			// 	std::cout << " nothing";
+			// }
+			// if (pfd.revents & POLLHUP) {
+			// 	std::cout << " POLLHUP";
+			// }
+			// if (pfd.revents & POLLIN) {
+			// 	std::cout << " POLLIN";
+			// }
+			// if (pfd.revents & POLLERR) {
+			// 	std::cout << " POLLERR";
+			// }
+			// std::cout << std::endl;
+			if (saftbus::IoSource::all_fds.find(socket_fd) == saftbus::IoSource::all_fds.end()) assert(false);
+			return true;
 		}
 		void use_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			++count;
+			std::cout << "Client::use_signal_fd(" << fd << ") count=" << count << std::endl;
 		}
 		void release_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			--count;
+			std::cout << "Client::release_signal_fd(" << fd << ") count=" << count << std::endl;
 			assert(count >= 0);
 			if (count == 0) {
-				close(fd);
-				signal_fd_use_count.erase(fd);
+				std::cout << "Client::release_signal_fd close(" << fd << ")" << std::endl;
+				// don't close it because the client might create other proxies later
+				// if fd would be closed here, client must be able to detect this in the proxy constructor and 
+				// send a new socket-pair-fd so that the connection can be re-established
+				// close(fd);
+				// signal_fd_use_count.erase(fd);
 			}
 		}
 	};
@@ -59,13 +103,14 @@ namespace saftbus {
 		std::vector<std::unique_ptr<Client> > clients;
 		Serializer   send;
 		Deserializer received;
-		int calling_client_id; // this is set to the client id as long as a client request is handled
+		int calling_client_id; // this is equal to the client id as long as a client request is handled
 		Impl(ServerConnection *connection) : container_of_services(connection), calling_client_id(-1) {}
 		~Impl() {
-			std::cerr << "ServerConnection::~Impl()" << std::endl;
+			//===std::cerr << "ServerConnection::~Impl()" << std::endl;
 		}
 		bool accept_client(int fd, int condition);
 		bool handle_client_request(int fd, int condition);
+		void client_hung_up(int client_fd);
 	};
 
 	std::vector<ServerConnection::ClientInfo> ServerConnection::get_client_info() {
@@ -82,14 +127,15 @@ namespace saftbus {
 	bool ServerConnection::Impl::accept_client(int fd, int condition) {
 		if (condition & POLLIN) {
 			int client_socket_fd = recvfd(fd);
-			std::cerr << "got (open) " << client_socket_fd << std::endl;
+			std::cout << "got (open) " << client_socket_fd << std::endl;
 			if (client_socket_fd == -1) {
-				std::cerr << "cannot receive socket fd" << std::endl;
+				std::cout << "cannot receive socket fd" << std::endl;
+				assert(false);
 			}
 			// read process_id from client
 			pid_t pid;
 			read(client_socket_fd, &pid, sizeof(pid));
-			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), (int)client_socket_fd, (int)POLLIN)));
+			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), client_socket_fd, POLLIN | POLLHUP | POLLERR)));
 			// register the client
 			clients.push_back(std::move(std2::make_unique<Client>(client_socket_fd, pid)));
 			// send the ID back to client (the file descriptor integer number is used as ID)
@@ -107,45 +153,33 @@ namespace saftbus {
 			~ClientID() { ref = -1; }
 		} ccid(calling_client_id, fd); 
 
+		// if (condition & POLLIN)  { std::cout << "POLLIN" << std::endl; }
+		// if (condition & POLLHUP) { std::cout << "POLLHUP" << std::endl; }
+		// if (condition & POLLERR) { std::cout << "POLLERR" << std::endl; }
+
 		if (condition & (POLLIN|POLLHUP) ) {
+			// if POLLHUP is received, there may still be data inside the pipe
+			// we have to loop and read until all data is read and all remaining actions 
+			// are executed. But not more then 100 times. 
 			bool read_result = received.read_from(fd);
 			if (!read_result) {
-				std::cerr << "failed to read data from fd " << fd << std::endl;
-
-				if (condition & POLLHUP) {
-					std::cerr << "client hung up" << std::endl;
-
-					std::cerr << "clients.size() " << clients.size() << std::endl;
-					// auto client = clients.find(fd);
-					auto removed_client = std::find(clients.begin(), clients.end(), fd);
-					if (removed_client == clients.end()) { 
-						calling_client_id = -1;
-						assert(false);
-					} else {
-						// remove all signal fds associated with this client from all services
-						for(auto &sigfd_usecount: (*removed_client)->signal_fd_use_count) {
-							int sigfd = sigfd_usecount.first;
-							// int count = sigfd_usecount.second;
-							std::cerr << "remove client signal fd " << sigfd << std::endl;
-							container_of_services.remove_signal_fd(sigfd);
-						}
-						clients.erase(std::remove(clients.begin(), clients.end(), fd), clients.end());
-					}
-					// tell the container that a client hung up
-					// the container hast to remove all services previously owned by this client
-					container_of_services.client_hung_up(fd);
-					std::cerr << "clients.size() " << clients.size() << std::endl;
-					return false;
-				}
-
+				// //===std::cerr << "failed to read data from fd " << fd << std::endl;
+				client_hung_up(fd);
+				// std::cout << "remove client IoSource " << fd << std::endl;
 				return false;
 			}
 			unsigned saftlib_object_id;
 			received.get(saftlib_object_id);
-			std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
-			std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
-			std::cerr << "trying to call a function" << std::endl;
-			container_of_services.call_service(saftlib_object_id, fd, received, send);
+			// //===std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
+			// //===std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
+			// //===std::cerr << "trying to call a function" << std::endl;
+			if (!container_of_services.call_service(saftlib_object_id, fd, received, send)) { 
+				// call_service returns false if the service object was not found
+				// in this case an exception is sent to the Proxy 
+				send.put(saftbus::FunctionResult::EXCEPTION);
+				std::string what("remote call failed because service object was not found");
+				send.put(what);
+			} 
 			if (!send.empty()) {
 				send.write_to(fd);
 			}
@@ -153,8 +187,31 @@ namespace saftbus {
 		return true;
 	}
 
+	void ServerConnection::Impl::client_hung_up(int client_fd) 
+	{
+		// //===std::cerr << "clients.size() " << clients.size() << std::endl;
+		auto removed_client = std::find(clients.begin(), clients.end(), client_fd);
+		if (removed_client == clients.end()) { 
+			calling_client_id = -1;
+			assert(false);
+		} else {
+			// remove all signal fds associated with this client from all services
+			for(auto &sigfd_usecount: (*removed_client)->signal_fd_use_count) {
+				int sigfd = sigfd_usecount.first;
+				// int count = sigfd_usecount.second;
+				// //===std::cerr << "remove client signal fd " << sigfd << std::endl;
+				container_of_services.remove_signal_fd(sigfd);
+			}
+			clients.erase(std::remove(clients.begin(), clients.end(), client_fd), clients.end());
+		}
+		// tell the container that a client hung up
+		// the container hast to remove all services previously owned by this client
+		container_of_services.client_hung_up(client_fd);
+		// //===std::cerr << "clients.size() " << clients.size() << std::endl;
+	}
 
-	ServerConnection::ServerConnection(const std::vector<std::string> &plugins, const std::string &socket_name) 
+
+	ServerConnection::ServerConnection(const std::vector<std::pair<std::string, std::vector<std::string> > > &plugins_and_args, const std::string &socket_name) 
 		: d(std2::make_unique<Impl>(this))
 	{
 		std::ostringstream msg;
@@ -179,7 +236,7 @@ namespace saftbus {
 		}
 		std::string dirname = socketname.substr(0,socketname.find_last_of('/'));
 		std::ostringstream command;
-		if (mkdir(dirname.c_str(), 0777)) {
+		if (mkdir(dirname.c_str(), 0755)) {
 			if (errno != EEXIST) {
 				msg << "cannot create socket directory: " << dirname;
 				throw std::runtime_error(msg.str());
@@ -197,18 +254,20 @@ namespace saftbus {
 			throw std::runtime_error(msg.str());
 		}
 		chmod(socketname.c_str(), S_IRUSR | S_IWUSR | 
-			                      S_IRGRP | S_IWGRP | 
+			                      S_IRGRP | S_IWGRP |  
 			                      S_IROTH | S_IWOTH );
-		chmod(dirname.c_str(), S_IRUSR | S_IWUSR | 
-			                   S_IRGRP | S_IWGRP | 
-			                   S_IROTH | S_IWOTH );
+		chmod(dirname.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | 
+			                   S_IRGRP |           S_IXGRP | 
+			                   S_IROTH |           S_IXOTH );
 
-		Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::accept_client, d.get(), std::placeholders::_1, std::placeholders::_2), base_socket_fd, POLLIN);
+		Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::accept_client, d.get(), std::placeholders::_1, std::placeholders::_2), base_socket_fd, POLLIN | POLLHUP | POLLERR);
 
-		for (auto &plugin: plugins) {
-			if (!d->container_of_services.load_plugin(plugin)) {
+		for (auto &plugin_and_args: plugins_and_args) {
+			auto& plugin_name = plugin_and_args.first;
+			auto& plugin_args = plugin_and_args.second;
+			if (!d->container_of_services.load_plugin(plugin_name, plugin_args)) {
 				std::string msg("cannot load plugin ");
-				msg.append(plugin);
+				msg.append(plugin_name);
 				throw std::runtime_error(msg);
 			}
 		}
@@ -216,12 +275,12 @@ namespace saftbus {
 
 	ServerConnection::~ServerConnection() 
 	{
-		std::cerr << "~ServerConnection" << std::endl;
+		//===std::cerr << "~ServerConnection" << std::endl;
 	}
 
 	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		std::cerr << "register signal fd " << signal_fd << " for client " << client_fd << std::endl;
+		//===std::cerr << "register signal fd " << signal_fd << " for client " << client_fd << std::endl;
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
 		if (client == d->clients.end()) {
 			assert(false);
@@ -232,7 +291,7 @@ namespace saftbus {
 
 	void ServerConnection::unregister_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		std::cerr << "unregister signal fd " << signal_fd << " for client " << client_fd << std::endl;
+		//===std::cerr << "unregister signal fd " << signal_fd << " for client " << client_fd << std::endl;
 
 		// auto client = d->clients.find(client_fd);
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);

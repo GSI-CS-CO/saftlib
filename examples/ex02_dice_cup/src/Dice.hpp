@@ -10,8 +10,8 @@
 namespace ex02 {
 
 	class Dice {
-
-		saftbus::Source *throw_timeout_source;
+		bool auto_throwing_enabled;
+		saftbus::SourceHandle throw_timeout_source;
 	public:
 		Dice();
 		virtual ~Dice();
@@ -28,7 +28,7 @@ namespace ex02 {
 		// @saftbus-export
 		void stopThrowing();
 
-		// @saftbus-signal
+		// @saftbus-export
 		std::function<void(int result)> was_thrown;
 	};
 

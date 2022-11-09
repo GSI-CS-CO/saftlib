@@ -5,16 +5,17 @@
 namespace ex02 {
 
 	Dice::Dice() 
-		: throw_timeout_source(nullptr)
+		: auto_throwing_enabled(false)
 	{
 	}
 
 	Dice::~Dice() {
+		std::cerr << "Dice::~Dice()" << std::endl;
 		stopThrowing();
 	}
 
 	void Dice::throwPeriodically(int period_ms) {
-		if (throw_timeout_source) {
+		if (auto_throwing_enabled) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "periodic throwing is already enabled");
 		}
 		throw_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
@@ -22,13 +23,12 @@ namespace ex02 {
 			std::chrono::milliseconds(period_ms),
 			std::chrono::milliseconds(period_ms)
 			);
+		auto_throwing_enabled = true;
 	}
 
 	void Dice::stopThrowing() {
-		if (throw_timeout_source != nullptr) {
-			saftbus::Loop::get_default().remove(throw_timeout_source);
-			throw_timeout_source = nullptr;
-		}
+		saftbus::Loop::get_default().remove(throw_timeout_source);
+		auto_throwing_enabled = false;
 	}
 
 

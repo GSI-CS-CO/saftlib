@@ -20,6 +20,16 @@ namespace ex02 {
 		, object_path(obj_path)
 	{
 	}
+	DiceCup::~DiceCup() {
+		std::cerr << "DiceCup::~DiceCup" << std::endl;
+		// If the DiceCup is destroyed, all Dices contained in it will be destroyed, too.
+		// Make sure that the service objects of these Dices are also removed from the service container.
+		if (container) {
+			for (auto &obj_dice: dices) {
+				container->remove_object(obj_dice.first);
+			}
+		}
+	}
 
 	std::string DiceCup::check_name(const std::string &name) {
 		std::string dice_name(object_path);
@@ -38,7 +48,7 @@ namespace ex02 {
 		std::string dice_name = check_name(name);
 		auto instance = std::unique_ptr<Dice6>(new Dice6);
 		if (container) {
-			std::unique_ptr<Dice6_Service> service (new Dice6_Service(instance.get()));
+			std::unique_ptr<Dice6_Service> service (new Dice6_Service(instance.get(), std::bind(&DiceCup::removeDice, this, dice_name)));
 			container->create_object(dice_name, std::move(service));
 		}
 		dices[dice_name] = std::move(instance);
@@ -48,10 +58,20 @@ namespace ex02 {
 		std::string dice_name = check_name(name);
 		auto instance = std::unique_ptr<Dice12>(new Dice12);
 		if (container) {
-			std::unique_ptr<Dice12_Service> service (new Dice12_Service(instance.get()));
+			std::unique_ptr<Dice12_Service> service (new Dice12_Service(instance.get(), std::bind(&DiceCup::removeDice, this, dice_name)));
 			container->create_object(dice_name, std::move(service));
 		}
 		dices[dice_name] = std::move(instance);
+	}
+
+	void DiceCup::removeDice(const std::string &object_path) {
+		if (dices.find(object_path) == dices.end()) {
+			std::string msg("No dice with name ");
+			msg.append(object_path);
+			msg.append(" found");
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg);
+		}
+		dices.erase(object_path);
 	}
 
 	Dice* DiceCup::getDice(const std::string &name){

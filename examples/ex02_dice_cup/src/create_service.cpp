@@ -21,7 +21,7 @@ void destroy_service() {
 }
 
 extern "C" 
-std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_services(saftbus::Container *container) {
+void create_services(saftbus::Container *container) {
 	std::string object_path = "/ex02/DiceCup";
 
 	if (!dice_cup) {
@@ -30,13 +30,8 @@ std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > create_
 
 	// create a new Service and return it. Maintain a reference count
 	++ref_count;
-	std::vector<std::pair<std::string, std::unique_ptr<saftbus::Service> > > services;
-	services.push_back(std::make_pair(
-		"/ex02/DiceCup", 
-		std::move(std::unique_ptr<ex02::DiceCup_Service>(new ex02::DiceCup_Service(dice_cup.get(), std::bind(&destroy_service))))
-		));
+	container->create_object(object_path, std::move(std::unique_ptr<ex02::DiceCup_Service>(new ex02::DiceCup_Service(dice_cup.get(), std::bind(&destroy_service)))));
 
-	return services;
 }
 
 
