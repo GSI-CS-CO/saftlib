@@ -28,5 +28,12 @@ To do the same in saftlib-v3, the following is needed:
 
 The saftbusd programm is not a deamon yet and it has to be detached from the terminal manually.
 
-The saftlib-plugin installs a wrapper script "saftd" that calls saftbusd and loads the libsaftd-service.la plugin.
+The saftlib-plugin installs a wrapper script "saftd" that allows to use the saftlib-v2 syntax to start saftbusd with the saftlib-plugin.
+
+## use saftlib in an application
+
+the saftlib-plugin installs a pkg-config file. In order to compile an application, use the following:
+
+    g++ `pkg-config saftlib --libs --cflags` -o application application.cpp
+    
 
