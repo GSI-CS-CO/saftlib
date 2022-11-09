@@ -249,7 +249,7 @@ eb_standalone_SOURCES = src/eb-standalone.cpp
 # software timing receiver program
 software_tr_sdb_DATA = src/software-tr.sdb
 software_tr_sdbdir   = $(datadir)/@PACKAGE@
-software_tr_LDADD    = $(EB_LIBS)
+software_tr_LDADD    = $(EB_LIBS) -lpthread
 software_tr_SOURCES  = src/software-tr.cpp 
 
 # another software timing receiver program
@@ -261,7 +261,7 @@ wait_msi_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lsaftbus-standalo
 wait_msi_SOURCES  = src/wait-msi.cpp 
 
 
-saft_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lpthread lib@PACKAGE@-proxy.la
 saft_ctl_SOURCES = src/saft-ctl.cpp
 
 saft_io_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
