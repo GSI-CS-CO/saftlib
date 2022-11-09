@@ -118,15 +118,15 @@ void ECA::probeConfiguration()
 	std::vector<etherbone::sdb_msi_device> ecas_dev;
 	std::vector<sdb_device> streams_dev;
 
-	std::cerr << "A" << std::endl;
+	// std::cerr << "A" << std::endl;
 	device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
-	std::cerr << "B" << std::endl;
+	// std::cerr << "B" << std::endl;
 	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, EVENT_SDB_DEVICE_ID, streams_dev);
 
-	std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
-						<< "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
-						<< std::dec
-						<< std::endl;
+	// std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
+	// 					<< "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
+	// 					<< std::dec
+	// 					<< std::endl;
 
 	if (ecas_dev.size() < 1) {
 		throw saftbus::Error(saftbus::Error::FAILED, "no ECA_UNIT:CONTROL device found on hardware");
@@ -148,8 +148,8 @@ void ECA::probeConfiguration()
 	// This just reads the MSI address range out of the ehterbone config space registers
 	// It does not actually enable anything ... MSIs also work without this
 	device.enable_msi(&first, &last);
-	std::cerr << "TimingReceiver enable_msi first=0x" << std::hex << std::setw(8) << std::setfill('0') << first 
-	          <<                           " last=0x" << std::hex << std::setw(8) << std::setfill('0') << last << std::endl;
+	// std::cerr << "TimingReceiver enable_msi first=0x" << std::hex << std::setw(8) << std::setfill('0') << first 
+	//           <<                           " last=0x" << std::hex << std::setw(8) << std::setfill('0') << last << std::endl;
 
 	// Confirm the device is an aligned power of 2
 	eb_address_t size = last - first;
@@ -192,10 +192,10 @@ void ECA::probeConfiguration()
 		throw etherbone::exception_t("request_irq/misaligned", EB_FAIL);
 	}
 
-	std::cerr << "first = 0x" << std::hex << std::setw(8) << std::setfill('0') << first << std::endl;
-	std::cerr << "last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << last  << std::endl;
-	std::cerr << "eca msi_first = 0x" << std::hex << std::setw(8) << std::setfill('0') << msi_first << std::endl;
-	std::cerr << "eca msi_last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << sdb.msi_last  << std::endl;
+	// std::cerr << "first = 0x" << std::hex << std::setw(8) << std::setfill('0') << first << std::endl;
+	// std::cerr << "last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << last  << std::endl;
+	// std::cerr << "eca msi_first = 0x" << std::hex << std::setw(8) << std::setfill('0') << msi_first << std::endl;
+	// std::cerr << "eca msi_last  = 0x" << std::hex << std::setw(8) << std::setfill('0') << sdb.msi_last  << std::endl;
 
 
 	// Probe the configuration of the ECA
@@ -241,7 +241,7 @@ void ECA::prepareChannels()
 
 	ECAchannels.resize(channels);
 
-	std::cerr << "TimingReceiver with " << channels << " ECA channels" << std::endl;
+	// std::cerr << "TimingReceiver with " << channels << " ECA channels" << std::endl;
 
 	// Create the IOs (channel 0)
 	// InoutImpl::probe(this, actionSinks, eventSources);
@@ -258,7 +258,7 @@ void ECA::prepareChannels()
 		cycle.read (base + ECA_CHANNEL_CAPACITY_GET, EB_DATA32, &raw_capacity);
 		cycle.close();
 
-		std::cerr << "channel=" << channel_idx << "   raw_max_num=" << raw_max_num <<	std::endl;
+		// std::cerr << "channel=" << channel_idx << "   raw_max_num=" << raw_max_num <<	std::endl;
 
 		switch(raw_type) {
 			case ECA_LINUX:
@@ -281,7 +281,7 @@ void ECA::prepareChannels()
 				}
 			break;
 			case ECA_WBM: {
-				std::cerr << "============== FOUND WBM ACTION SINK object_path = " << object_path << std::endl;
+				// std::cerr << "============== FOUND WBM ACTION SINK object_path = " << object_path << std::endl;
 				std::vector<sdb_device> acwbm;
 				device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x18415778, acwbm);
 				if (acwbm.size() == 1) {
@@ -297,7 +297,7 @@ void ECA::prepareChannels()
 				}
 			} break;
 			case ECA_SCUBUS: {
-				std::cerr << "============== FOUND SCU_BUS ACTION SINK object_path = " << object_path << std::endl;
+				// std::cerr << "============== FOUND SCU_BUS ACTION SINK object_path = " << object_path << std::endl;
 				std::vector<sdb_device> scubus;
 				device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
 				if (scubus.size() == 1) {
@@ -313,16 +313,16 @@ void ECA::prepareChannels()
 				}
 			} break;
 			case ECA_EMBEDDED_CPU: {
-				std::cerr << "ECA: Found queue..." << std::endl;
+				// std::cerr << "ECA: Found queue..." << std::endl;
 				for (unsigned queue_id = 1; queue_id < channels; ++queue_id) {
 					eb_data_t get_id;
 					cycle.open(device);
 					cycle.read(queue_addresses[queue_id]+ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &get_id);
 					cycle.close();
-					std::cerr << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
-					std::cerr << "ECA: Found queue with ID: " << get_id << std::endl;
+					// std::cerr << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
+					// std::cerr << "ECA: Found queue with ID: " << get_id << std::endl;
 					if (get_id == ECA_EMBEDDED_CPU) {
-						std::cerr << "ECA: Found embedded CPU channel!" << std::endl;
+						// std::cerr << "ECA: Found embedded CPU channel!" << std::endl;
 						std::string path = object_path + "/embedded_cpu";
 
 						std::unique_ptr<EmbeddedCPUActionSink> ecpu_sink(new EmbeddedCPUActionSink(*this, path, "embedded_cpu", channel_idx, container));
@@ -366,9 +366,9 @@ void ECA::setMsiHandlers(SAFTd &saftd)
 			eb_address_t irq = ((rand() & mask) + base) & (~0x3);
 			// try to attach
 			if ( saftd.request_irq(irq, std::bind(&ECA::msiHandler, this, std::placeholders::_1, channel_idx)) ) {
-				std::cerr << "registered irq under address " << std::hex << std::setw(8) << std::setfill('0') << irq 
-									<< std::dec
-									<< std::endl;
+				// std::cerr << "registered irq under address " << std::hex << std::setw(8) << std::setfill('0') << irq 
+				// 					<< std::dec
+				// 					<< std::endl;
 				channel_msis.push_back(irq);
 				// configure the output channel with the chosen irq address
 				setHandler(channel_idx, true, channel_msis.back() + msi_first);
@@ -755,16 +755,16 @@ static inline bool not_isalnum_(char c)
 
 std::string ECA::NewSoftwareActionSink(const std::string& name_)
 {
-	if (container) {
-		std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
-	}
+	// if (container) {
+	// 	std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
+	// }
 
 	if (ECA_LINUX_channel == nullptr) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "ECA has no available linux-facing queues");
 	}
 
 	// find the first free slot in ECA_LINUX_channel
-	std::cerr << "ECA::NewSoftwareActionSink:   find 1 in " << std::dec << ECA_LINUX_channel->size() << "slots" << std::endl;
+	// std::cerr << "ECA::NewSoftwareActionSink:   find 1 in " << std::dec << ECA_LINUX_channel->size() << "slots" << std::endl;
 	unsigned num = 0;
 	for (auto &softwareActionSink: *ECA_LINUX_channel) {
 		if (!softwareActionSink) break;
@@ -800,7 +800,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	}
 	
 	unsigned channel = ECA_LINUX_channel_index;
-	std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
+	// std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
 	eb_address_t address = queue_addresses[channel];
 
 	std::string path = object_path;
@@ -830,7 +830,7 @@ bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
 }
 void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	ActionSink *as = sas;
-	std::cout << "========= removeSowftwareActionSink ======== " << as->getNum() << std::endl;
+	// std::cout << "========= removeSowftwareActionSink ======== " << as->getNum() << std::endl;
 	(*ECA_LINUX_channel)[as->getNum()].reset();
 	compile();
 }

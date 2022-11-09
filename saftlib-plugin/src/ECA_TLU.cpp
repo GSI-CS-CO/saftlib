@@ -47,11 +47,11 @@ ECA_TLU::ECA_TLU(etherbone::Device &dev, saftbus::Container *cont)
 }
 
 ECA_TLU::~ECA_TLU() {
-	std::cerr << "ECA_TLU::~ECA_TLU() " << std::endl;
+	// std::cerr << "ECA_TLU::~ECA_TLU() " << std::endl;
 	if (container) {
 		for (auto &input: inputs) {
 			if (input) {
-				std::cerr << "   remove " << input->getObjectPath() << std::endl;
+				// std::cerr << "   remove " << input->getObjectPath() << std::endl;
 				try {
 					container->remove_object(input->getObjectPath());
 				} catch (saftbus::Error &e) {
@@ -64,7 +64,7 @@ ECA_TLU::~ECA_TLU() {
 
 
 void ECA_TLU::addInput(std::unique_ptr<Input> input) {
-	std::cerr << "ECA_TLU::addInput() " << input->getObjectPath() << std::endl;
+	// std::cerr << "ECA_TLU::addInput() " << input->getObjectPath() << std::endl;
 	inputs.push_back(std::move(input));
 }
 
@@ -74,7 +74,7 @@ void ECA_TLU::configInput(unsigned channel,
 	                      uint64_t event,
 	                      uint32_t stable)
 {
-	std::cout << "ECA_TLU::configInput(channel=" << channel <<", enable=" << enable << ", event=" << event << ", stable=" << stable << ")" << std::endl;
+	// std::cout << "ECA_TLU::configInput(channel=" << channel <<", enable=" << enable << ", event=" << event << ", stable=" << stable << ")" << std::endl;
 	etherbone::Cycle cycle;
 	cycle.open(device);
 	cycle.write(eca_tlu + ECA_TLU_INPUT_SELECT_RW, EB_DATA32, channel);

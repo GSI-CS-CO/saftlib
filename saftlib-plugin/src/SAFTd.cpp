@@ -112,7 +112,7 @@ namespace saftlib {
 
 	std::string SAFTd::AttachDevice(const std::string& name, const std::string& etherbone_path, int polling_interval_ms) 
 	{
-		std::cerr << etherbone_path << std::endl;
+		// std::cerr << etherbone_path << std::endl;
 		if (attached_devices.find(name) != attached_devices.end()) {
 	        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
 		}
