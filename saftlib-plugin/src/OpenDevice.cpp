@@ -43,7 +43,7 @@ void OpenDevice::check_msi_callback(eb_data_t value)
 	mbox.reset();
 }
 bool OpenDevice::poll_msi(bool only_once) {
-	std::cerr << "OpenDevice::poll_msi" << std::endl;
+	// std::cerr << "OpenDevice::poll_msi" << std::endl;
 	etherbone::Cycle cycle;
 	eb_data_t msi_adr = 0;
 	eb_data_t msi_dat = 0;
@@ -73,14 +73,14 @@ bool OpenDevice::poll_msi(bool only_once) {
 		// MSI we just polled may cause actions that trigger other MSIs.
 		// however, this TimeoutSource will be called only once, because the only_once argument is true
 		bool only_once;
-		std::cerr << "add an only_once timeout source" << std::endl;
+		// std::cerr << "add an only_once timeout source" << std::endl;
 		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 				std::bind(&OpenDevice::poll_msi, this, only_once=true), std::chrono::milliseconds(0), std::chrono::milliseconds(0)
 			);
 	} 
 
 	if (only_once) {
-		std::cerr << "polled only_once " << found_msi << std::endl;
+		// std::cerr << "polled only_once " << found_msi << std::endl;
 		// returning false removes the TimeoutSource from the event loop
 		return false;
 	}
@@ -94,7 +94,7 @@ bool OpenDevice::poll_msi(bool only_once) {
 OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_path, int polling_iv_ms, SAFTd *sd)
 	: etherbone_path(eb_path), eb_forward_path(eb_path), polling_interval_ms(polling_iv_ms), saftd(sd), check_msi_phase(true), needs_polling(false) 
 {
-	std::cerr << "OpenDevice::OpenDevice(\"" << eb_path << "\")" << std::endl;
+	// std::cerr << "OpenDevice::OpenDevice(\"" << eb_path << "\")" << std::endl;
 	device.open(socket, etherbone_path.c_str());
 	stat(etherbone_path.c_str(), &dev_stat);
 
@@ -107,10 +107,10 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 			mask = last - first;
 			mbox = std::unique_ptr<Mailbox>(new Mailbox(device));
 			msi_first = mbox->get_msi_first();
-			std::cerr << "first=" << std::hex << first << " last=" << last << " msi_first=" << msi_first << std::endl;
+			// std::cerr << "first=" << std::hex << first << " last=" << last << " msi_first=" << msi_first << std::endl;
 			for (;;) {
 				irq_adr = ((rand() & mask) + first) & (~0x3);
-				std::cerr << "try to attach irq " << std::hex << irq_adr << std::endl;
+				// std::cerr << "try to attach irq " << std::hex << irq_adr << std::endl;
 				if (saftd->request_irq(irq_adr, std::bind(&OpenDevice::check_msi_callback, this, std::placeholders::_1))) {
 					break;
 				}
@@ -127,7 +127,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 
 		// assume that only the /dev/ttyUSB<n> devices and /dev/pts/<n> devices need eb-forwarding
 		if (eb_path.find("/ttyUSB") != eb_path.npos || eb_path.find("/pts/") != eb_path.npos ) {
-			std::cerr << "create forwarding device" << std::endl;
+			// std::cerr << "create forwarding device" << std::endl;
 			eb_forward = std::unique_ptr<EB_Forward>(new EB_Forward(eb_path));
 			eb_forward_path = eb_forward->eb_forward_path();
 		} 

@@ -491,16 +491,13 @@ class ActionSink : public Owned
 			unsigned number = createConditionNumber();
 			std::unique_ptr<ConditionType> condition(new ConditionType(this, number, active, std::forward<Args>(args)...));
 			std::string path = condition->getObjectPath();
-			std::cerr << "Output::NewCondition " << path << std::endl;
 			if (container) {
-				std::cerr << "Output:: have a container" << std::endl;
 				std::unique_ptr<typename ConditionType::ServiceType> service(new typename ConditionType::ServiceType(condition.get(), std::bind(&ActionSink::removeCondition, this, condition.get())));
 				container->set_owner(service.get());
 				container->create_object(path, std::move(service));
 			}
 			conditions.insert(std::make_pair(number, std::move(condition)));
 			if (active) {
-				std::cerr << "Output:: compile" << std::endl;
 				eca.compile();
 			}
 			return path;

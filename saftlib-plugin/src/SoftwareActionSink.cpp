@@ -52,17 +52,17 @@ SoftwareActionSink::SoftwareActionSink(ECA &eca
 
 void SoftwareActionSink::receiveMSI(uint8_t code)
 {
-	std::cerr << "SoftwareActionSink::receiveMSI " << (int)code << std::endl;
+	// std::cerr << "SoftwareActionSink::receiveMSI " << (int)code << std::endl;
 	// Intercept valid action counter increase
 	if (code == ECA_VALID) {
-		std::cerr << "ECA_VALID" << std::endl;
+		// std::cerr << "ECA_VALID" << std::endl;
 		// DRIVER_LOG("MSI-ECA_VALID",-1, code);
 		updateAction(); // increase the counter, rearming the MSI
 		
 		eb_data_t flags, rawNum, event_hi, event_lo, param_hi, param_lo, 
 							tag, tef, deadline_hi, deadline_lo, executed_hi, executed_lo;
 		
-		std::cerr << "read data" << std::endl;
+		// std::cerr << "read data" << std::endl;
 		etherbone::Cycle cycle;
 		cycle.open(eca.get_device());
 		cycle.read(queue + ECA_QUEUE_FLAGS_GET,       EB_DATA32, &flags);
@@ -79,7 +79,7 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
 		cycle.read(queue + ECA_QUEUE_EXECUTED_LO_GET, EB_DATA32, &executed_lo);
 		cycle.write(queue + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
 		cycle.close();
-		std::cerr << "read done" << std::endl;
+		// std::cerr << "read done" << std::endl;
 		
 		uint64_t id       = uint64_t(event_hi)    << 32 | event_lo;
 		uint64_t param    = uint64_t(param_hi)    << 32 | param_lo;
@@ -113,14 +113,14 @@ void SoftwareActionSink::receiveMSI(uint8_t code)
 		// DRIVER_LOG("id",      -1, id);
 		// Inform clients
 		// softwareCondition->Action(id, param, deadline, executed, flags & 0xF);
-		std::cerr << "cast" << std::endl;
+		// std::cerr << "cast" << std::endl;
 		Condition* cond = it->second.get();
 		SoftwareCondition* sw_cond = dynamic_cast<SoftwareCondition*>(cond);
-		std::cerr << "SigAction" << std::endl;
+		// std::cerr << "SigAction" << std::endl;
 		sw_cond->SigAction(id, param, saftlib::makeTimeTAI(deadline), saftlib::makeTimeTAI(executed), flags & 0xF);
 		
 	} else {
-		std::cerr << "not ECA_VALID" << std::endl;
+		// std::cerr << "not ECA_VALID" << std::endl;
 		// DRIVER_LOG("MSI-ECA_NOT_VALID",-1, code);
 		// deal with the MSI the normal way
 		ActionSink::receiveMSI(code);

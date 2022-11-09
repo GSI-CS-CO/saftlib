@@ -54,7 +54,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
 {
-	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
+	// std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
 
 	if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
@@ -111,8 +111,8 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 
 TimingReceiver::~TimingReceiver() 
 {
-	std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
-	std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
+	// std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
+	// std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
 	saftbus::Loop::get_default().remove(poll_timeout_source);
 }
 
@@ -149,7 +149,7 @@ saftlib::Time TimingReceiver::CurrentTime()
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time)
 {
-	std::cerr << "TimingReceiver::InjectEvent" << std::endl;
+	// std::cerr << "TimingReceiver::InjectEvent" << std::endl;
 	ECA::InjectEventRaw(event, param, time.getTAI());
 }
 

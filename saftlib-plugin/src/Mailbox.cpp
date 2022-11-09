@@ -33,7 +33,7 @@ namespace saftlib {
 Mailbox::Mailbox(etherbone::Device &dev) 
 	: device(dev)
 {
-	std::cerr << "Mailbox::Mailbox()" << std::endl;
+	// std::cerr << "Mailbox::Mailbox()" << std::endl;
 	std::vector<sdb_device> mailbox_dev;
 	device.sdb_find_by_identity(MAILBOX_VENDOR_ID, MAILBOX_DEVICE_ID, mailbox_dev);
 
@@ -58,12 +58,12 @@ Mailbox::Mailbox(etherbone::Device &dev)
 
 	mailbox_msi_first = mailbox_msi[0].msi_first;
 
-	std::cerr << "Mailbox msi_first = " << std::hex << mailbox_msi_first << std::endl;
+	// std::cerr << "Mailbox msi_first = " << std::hex << mailbox_msi_first << std::endl;
 }
 
 int Mailbox::ConfigureSlot(uint32_t target_address) 
 {
-	std::cerr << "Mailbox::ConfigureSlot()" << std::endl;
+	// std::cerr << "Mailbox::ConfigureSlot()" << std::endl;
 	const auto num_slots = 128;
 	eb_data_t mb_value;
 	unsigned slot_index = 0;
@@ -85,7 +85,7 @@ int Mailbox::ConfigureSlot(uint32_t target_address)
 
 void Mailbox::UseSlot(int slot_index, uint32_t value)
 {
-	std::cerr << "Mailbox::UseSlot()" << std::endl;
+	// std::cerr << "Mailbox::UseSlot()" << std::endl;
 	device.write(mailbox + slot_index * 4 * 2, EB_DATA32, (eb_data_t)value);
 }
 
