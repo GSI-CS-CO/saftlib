@@ -1212,10 +1212,10 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	header_out << std::endl;
 
 	std::string include_prefix("");
-	if (outputdirectory != "") {
-		include_prefix = outputdirectory;
-		include_prefix.append("/");
-	}
+	// if (outputdirectory != "") {
+	// 	include_prefix = outputdirectory;
+	// 	include_prefix.append("/");
+	// }
 	for (auto &base: class_definition.direct_bases) {
 		if (base->has_exports()) {
 			header_out << "#include \"" << include_prefix << base->name << "_Proxy.hpp\"" << std::endl;
