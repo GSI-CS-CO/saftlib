@@ -51,6 +51,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
 	, Reset(OpenDevice::device)
+	, LM32Cluster(OpenDevice::device)
 	, io_control(OpenDevice::device)
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)

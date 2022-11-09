@@ -37,6 +37,7 @@
 #include "BuildIdRom.hpp"
 #include "TempSensor.hpp"
 #include "Reset.hpp"
+#include "LM32Cluster.hpp"
 #include "IoControl.hpp"
 
 // @saftbus-include
@@ -94,8 +95,9 @@ class TimingReceiver : public OpenDevice
                      , public ECA
                      , public ECA_TLU
                      , public BuildIdRom
+                     , public TempSensor
                      , public Reset
-                     , public TempSensor {
+                     , public LM32Cluster {
 public:
 	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
 		           int polling_interval_ms = 1, saftbus::Container *container = nullptr);

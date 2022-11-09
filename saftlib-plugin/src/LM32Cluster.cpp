@@ -44,6 +44,8 @@ LM32Cluster::LM32Cluster(etherbone::Device &dev)
         dpram_lm32.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
     }
 
+    std::cerr << "found " << dpram_lm32.size() << " lm32 cpus" << std::endl;
+
 }
 
 void LM32Cluster::WdRetrigger() 
