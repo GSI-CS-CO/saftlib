@@ -1,3 +1,22 @@
+/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *  @author Michael Reese <m.reese@gsi.de>
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
 #ifndef SAFTBUS_CHUNCK_ALLOCATOR_RT_HPP_
 #define SAFTBUS_CHUNCK_ALLOCATOR_RT_HPP_
 
@@ -99,7 +118,7 @@ public:
 		// allocator_1->print_size();
 		// allocator_2->print_size();
 		// allocator_3->print_size();
-		       if (allocator_1->fits(n) && !allocator_1->full()) {
+					 if (allocator_1->fits(n) && !allocator_1->full()) {
 			return allocator_1->malloc(n);
 		} else if (allocator_2->fits(n) && !allocator_2->full()) {
 			return allocator_2->malloc(n);
@@ -111,7 +130,7 @@ public:
 		}
 	}
 	void free(char *ptr) {
-		       if (allocator_1->contains(ptr)) {
+					 if (allocator_1->contains(ptr)) {
 			allocator_1->free(ptr);
 		} else if (allocator_2->contains(ptr)) {
 			allocator_2->free(ptr);
@@ -133,15 +152,15 @@ private:
 
 
 static Allocator *get_allocator() {
-  static Allocator *allocator = new(::malloc(sizeof(*allocator))) Allocator;
-  return allocator;
+	static Allocator *allocator = new(::malloc(sizeof(*allocator))) Allocator;
+	return allocator;
 }
 void *operator new(std::size_t n) {
-  return get_allocator()->malloc(n);
+	return get_allocator()->malloc(n);
 }
 void operator delete(void *p) {
-  char *ptr = reinterpret_cast<char*>(p);
-  get_allocator()->free(ptr);
+	char *ptr = reinterpret_cast<char*>(p);
+	get_allocator()->free(ptr);
 }
 
 #endif

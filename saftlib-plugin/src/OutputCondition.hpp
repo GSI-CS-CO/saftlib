@@ -1,6 +1,7 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
+ *          Michael Reese <m.reese@gsi.de>
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -17,6 +18,7 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+
 #ifndef saftlib_OUTPUT_CONDITION_HPP
 #define saftlib_OUTPUT_CONDITION_HPP
 
