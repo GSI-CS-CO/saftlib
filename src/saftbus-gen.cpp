@@ -1020,7 +1020,6 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 
 	out << "#include \"" << class_definition.name << ".hpp\"" << std::endl;
 	out << "#include \"" << class_definition.name << "_Service.hpp\"" << std::endl;
-	out << "#include <saftbus/make_unique.hpp> " << std::endl;
 	out << std::endl;
 
 	out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
@@ -1345,7 +1344,6 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 
 	cpp_out << "#include \"" << class_definition.name << "_Proxy.hpp\"" << std::endl;
 	cpp_out << "#include <saftbus/saftbus.hpp>" << std::endl;
-	cpp_out << "#include <saftbus/make_unique.hpp>" << std::endl;
 	cpp_out << "#include <cassert>" << std::endl;
 	cpp_out << std::endl;
 	// cpp_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
@@ -1378,7 +1376,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	cpp_out << "\t\t" << "interface_no = saftbus::Proxy::interface_no_from_name(\"" << class_definition.name << "\");" << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
 	cpp_out << "\t" << "std::shared_ptr<" << class_definition.name << "_Proxy> " << class_definition.name << "_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group) {" << std::endl;
-	cpp_out << "\t\t" << "return std2::make_unique<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
+	cpp_out << "\t\t" << "return std::make_shared<" << class_definition.name << "_Proxy>(object_path, signal_group, gen_interface_names()); " << std::endl;
 	cpp_out << "\t" << "}" << std::endl;
 	cpp_out << "\t"     << "bool " << class_definition.name << "_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {" << std::endl;
 	cpp_out << "\t\t"   <<   "if (interface_no == this->interface_no) {" << std::endl;

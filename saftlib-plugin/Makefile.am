@@ -75,9 +75,11 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/Reset_Service.cpp                                                             \
 	src/LM32Cluster.cpp                                                                \
 	src/LM32Cluster_Service.cpp                                                         \
-	src/TimingReceiver.cpp                                                               \
-	src/TimingReceiver_Service.cpp                                                        \
-	src/CommonFunctions.cpp                                                                \
+	src/LM32Firmware.cpp                                                                 \
+	src/LM32Firmware_Service.cpp                                                          \
+	src/TimingReceiver.cpp                                                                 \
+	src/TimingReceiver_Service.cpp                                                          \
+	src/CommonFunctions.cpp                                                                  \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/saftlib/service
@@ -114,7 +116,8 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/TempSensor.hpp                                               \
 	src/Reset.hpp                                                     \
 	src/LM32Cluster.hpp                                                \
-	src/TimingReceiver.hpp                                              \
+	src/LM32Firmware.hpp                                                \
+	src/TimingReceiver.hpp                                               \
 	src/CommonFunctions.hpp                                            
 # 	src/Owned_Service.hpp                  \
 # 	src/SAFTd_Service.hpp                   \
@@ -138,6 +141,7 @@ lib@PACKAGE@_service_include_HEADERS = \
 # 	src/TempSensor_Service.hpp                                \
 # 	src/Reset_Service.hpp                                      \
 # 	src/LM32Cluster_Service.hpp                                 \
+# 	src/LM32Firmware_Service.hpp                                 \
 # 	src/TimingReceiver_Service.hpp                           
 # the service headers are not neede by client programs (event standalone ones), right???
 
@@ -168,7 +172,8 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/TempSensor_Proxy.cpp                             \
 	src/Reset_Proxy.cpp                                   \
 	src/LM32Cluster_Proxy.cpp                              \
-	src/TimingReceiver_Proxy.cpp                            \
+	src/LM32Firmware_Proxy.cpp                              \
+	src/TimingReceiver_Proxy.cpp                             \
 	src/CommonFunctions.cpp                               
 
 
@@ -199,8 +204,9 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/TempSensor_Proxy.hpp                                \
 	src/Reset_Proxy.hpp                                      \
 	src/LM32Cluster_Proxy.hpp                                 \
-	src/TimingReceiver_Proxy.hpp                               \
-	src/CommonFunctions.hpp                                     \
+	src/LM32Firmware_Proxy.hpp                                 \
+	src/TimingReceiver_Proxy.hpp                                \
+	src/CommonFunctions.hpp                                      \
 	src/interfaces/BurstGenerator.h                              \
 	src/interfaces/SAFTd.h                                       \
 	src/interfaces/iDevice.h                                     \

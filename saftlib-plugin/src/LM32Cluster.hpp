@@ -30,25 +30,33 @@
 #include <etherbone.h>
 
 #include <vector>
+#include <memory>
+
+// @saftbus-export
+#include "LM32Firmware.hpp"
 
 namespace saftlib {
+
 
 class LM32Cluster {
 	etherbone::Device &device;
 
-	std::vector<eb_address_t> dpram_lm32;
+	std::vector<eb_address_t>                   dpram_lm32;
+    std::vector<std::unique_ptr<LM32Firmware> > firmware_drivers;
 
-    int num_cores;
-    int ram_per_core;
+    unsigned num_cores;
+    unsigned ram_per_core;
     bool is_dm;
 public:
 	LM32Cluster(etherbone::Device &device);
-	/// @brief retrigger reset watchdog. 
-	/// 
-	/// If reset watchdog is enabled and not retriggered within 10 minutes it will reset the FPGA
+	/// @brief number of CPUs
+	/// @return number of instanciated User LM32 Cores
 	/// 
 	// @saftbus-export
-	void WdRetrigger();
+	unsigned getCpuCount();
+
+
+    void AttachFirwareDriver(unsigned idx, std::unique_ptr<LM32Firmware> &firmware_driver);
 };
 
 }

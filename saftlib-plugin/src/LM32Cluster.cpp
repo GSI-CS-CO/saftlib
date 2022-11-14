@@ -46,13 +46,27 @@ LM32Cluster::LM32Cluster(etherbone::Device &dev)
         dpram_lm32.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
     }
 
+    num_cores = dpram_lm32.size();
+    firmware_drivers.resize(num_cores);
+
     std::cerr << "found " << dpram_lm32.size() << " lm32 cpus" << std::endl;
 
 }
 
-void LM32Cluster::WdRetrigger() 
+unsigned LM32Cluster::getCpuCount()
 {
-	//device.write(reset + FPGA_RESET_WATCHDOG_TRG, EB_DATA32, (eb_data_t)FPGA_RESET_WATCHDOG_TRG_VALUE);
+	return dpram_lm32.size();
 }
+
+
+void LM32Cluster::AttachFirwareDriver(unsigned idx, std::unique_ptr<LM32Firmware> &firmware_driver)
+{
+    if (idx >= 0 && idx <= num_cores) {
+        firmware_drivers[idx] = std::move(firmware_driver);
+    } else {
+        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "invalid cpu index");
+    }
+}
+
 
 } // namespace
