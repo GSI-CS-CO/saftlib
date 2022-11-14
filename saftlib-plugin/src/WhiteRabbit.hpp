@@ -29,7 +29,8 @@
 #endif
 #include <etherbone.h>
 
-#include <functional>
+// @saftbus-export
+#include <sigc++/sigc++.h>
 
 namespace saftlib {
 
@@ -40,7 +41,7 @@ protected:
 	mutable bool locked;
 public:
 	WhiteRabbit(etherbone::Device &device);
-	std::function<void(bool locked)> SigLocked;
+
 	/// @brief The timing receiver is locked to the timing grandmaster.
 	/// @return The timing receiver is locked to the timing grandmaster.
 	///
@@ -49,6 +50,9 @@ public:
 	///
 	// @saftbus-export
 	bool getLocked() const;
+	
+    // @saftbus-export
+    sigc::signal<void, bool> Locked;
 };
 
 }

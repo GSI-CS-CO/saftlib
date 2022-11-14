@@ -24,11 +24,21 @@
 
 #include <iostream>
 
+// this should later #include "bel_projects/tools/wb_slaves.h"
+// for now, just redefine the register offsets
 #define RESET_VENDOR_ID         0x651
 #define RESET_DEVICE_ID         0x3a362063
 
 #define FPGA_RESET_WATCHDOG_TRG       0x0010
 #define FPGA_RESET_WATCHDOG_TRG_VALUE 0xcafebabe
+
+
+#define FPGA_RESET_RESET             0x0000              // reset register of FPGA (write)
+#define FPGA_RESET_USERLM32_GET      0x0004              // get reset status of user lm32, one bit per CPU, bit 0 is CPU 0 (read)
+#define FPGA_RESET_USERLM32_SET      0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0 (write)
+#define FPGA_RESET_USERLM32_CLEAR    0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0 (write)
+#define FPGA_RESET_WATCHDOG_DISABLE  0x0004              // disables watchdog (write), write 'cafebabe' to prevent auto-restart
+
 
 namespace saftlib {
 
@@ -51,6 +61,23 @@ Reset::Reset(etherbone::Device &dev)
 void Reset::WdRetrigger() 
 {
 	device.write(reset + FPGA_RESET_WATCHDOG_TRG, EB_DATA32, (eb_data_t)FPGA_RESET_WATCHDOG_TRG_VALUE);
+}
+
+void Reset::CpuHalt(int idx) 
+{
+
+}
+
+void Reset::CpuReset(int idx) 
+{
+
+}
+
+uint32_t Reset::CpuHaltStatus() 
+{
+	eb_data_t    status;
+	device.read(reset + FPGA_RESET_USERLM32_GET, EB_DATA32, &status);
+	return (uint32_t)status;
 }
 
 } // namespace

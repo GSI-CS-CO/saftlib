@@ -30,7 +30,6 @@
 #include "eb-source.hpp"
 
 #include "SAFTd.hpp"
-#include "SAFTd_Service.hpp"
 
 #include "TimingReceiver.hpp"
 #include "TimingReceiver_Service.hpp"

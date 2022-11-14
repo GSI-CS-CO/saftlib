@@ -29,6 +29,8 @@
 #endif
 #include <etherbone.h>
 
+
+
 namespace saftlib {
 
 class Reset {
@@ -42,6 +44,24 @@ public:
 	/// 
 	// @saftbus-export
 	void WdRetrigger();
+
+	/// @brief permanently assert reset line of cpu[idx]
+	/// @param idx halt cpu[idx]
+	/// 
+	// @saftbus-export
+	void CpuHalt(int idx);
+
+	/// @brief release reset line of cpu[idx]
+	/// @param idx cpu[idx] is reset and stats excecuting its program
+	/// 
+	// @saftbus-export
+	void CpuReset(int idx);
+
+	/// @brief get the 'halt status' of all user lm32 (rightmost bit: CPU 0). bit='1' means halted.
+	/// @return 32 bits, where bit at position idx represents the halt status of cpu[idx]. '1' means haltet.
+	///
+	// @saftbus-export
+	uint32_t CpuHaltStatus();
 };
 
 }

@@ -20,7 +20,6 @@
 
 #include "service.hpp"
 
-#include "make_unique.hpp"
 #include "plugins.hpp"
 #include "loop.hpp"
 

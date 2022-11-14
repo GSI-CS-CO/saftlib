@@ -26,6 +26,8 @@
 #include <iomanip>
 #include "Time.hpp"
 
+#include <saftbus/client.hpp>
+
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -72,7 +74,7 @@ namespace saftlib {
     /// @return >0 if a signal was received, 0 if timeout was hit, < 0 in case of failure
     int wait_for_signal(int timeout_ms = -1);
 
-
+    typedef saftbus::SignalGroup SignalGroup;
 }
 
 

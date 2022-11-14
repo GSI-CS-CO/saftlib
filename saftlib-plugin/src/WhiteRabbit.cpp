@@ -64,9 +64,7 @@ bool WhiteRabbit::getLocked() const
 	/* Update signal */
 	if (newLocked != locked) {
 		locked = newLocked;
-		if (SigLocked) {
-			SigLocked(locked);
-		}
+		Locked(locked);
 	}
 
 	return newLocked;

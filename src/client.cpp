@@ -19,7 +19,6 @@
  */
 
 #include "client.hpp"
-#include "make_unique.hpp"
 #include "saftbus.hpp"
 #include "error.hpp"
 
@@ -47,7 +46,7 @@ namespace saftbus {
 
 
 	ClientConnection::ClientConnection(const std::string &socket_name) 
-		: d(std2::make_unique<Impl>())
+		: d(new Impl)
 	{
 		std::lock_guard<std::mutex> lock1(d->m_base_socket);
 
@@ -167,7 +166,7 @@ namespace saftbus {
 	std::shared_ptr<ClientConnection> Proxy::Impl::connection;
 
 	SignalGroup::SignalGroup() 
-		: d(std2::make_unique<Impl>())
+		: d(new Impl)
 	{
 		// std::cerr << "SignalGroup constructor" << std::endl;
 		std::ostringstream msg;
@@ -305,7 +304,7 @@ namespace saftbus {
 	/////////////////////////////
 
 	Proxy::Proxy(const std::string &object_path, SignalGroup &signal_group, const std::vector<std::string> &interface_names) 
-		: d(std2::make_unique<Impl>()) 
+		: d(new Impl) 
 	{
 		// std::cerr << "Proxy constructor for " << object_path << std::endl;
 		d->signal_group = &signal_group;
@@ -441,7 +440,7 @@ namespace saftbus {
 		interface_no = saftbus::Proxy::interface_no_from_name("Container");
 	}
 	std::shared_ptr<Container_Proxy> Container_Proxy::create(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names) {
-		return std2::make_unique<Container_Proxy>(object_path, signal_group, gen_interface_names()); 
+		return std::make_shared<Container_Proxy>(object_path, signal_group, gen_interface_names()); 
 	}
 	bool Container_Proxy::signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content) {
 		if (interface_no == this->interface_no) {

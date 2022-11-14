@@ -22,7 +22,6 @@
 #include "service.hpp"
 #include "saftbus.hpp"
 #include "loop.hpp"
-#include "make_unique.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -155,9 +154,9 @@ namespace saftbus {
 			// read process_id from client
 			pid_t pid;
 			read(client_socket_fd, &pid, sizeof(pid));
-			Loop::get_default().connect(std::move(std2::make_unique<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), client_socket_fd, POLLIN | POLLHUP | POLLERR)));
+			Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), client_socket_fd, POLLIN | POLLHUP | POLLERR);
 			// register the client
-			clients.push_back(std::move(std2::make_unique<Client>(client_socket_fd, pid)));
+			clients.push_back(std::move(std::unique_ptr<Client>(new Client(client_socket_fd, pid))));
 			// send the ID back to client (the file descriptor integer number is used as ID)
 			write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
 		}
@@ -232,7 +231,7 @@ namespace saftbus {
 
 
 	ServerConnection::ServerConnection(const std::vector<std::pair<std::string, std::vector<std::string> > > &plugins_and_args, const std::string &socket_name) 
-		: d(std2::make_unique<Impl>(this))
+		: d(new Impl(this))
 	{
 		std::ostringstream msg;
 		msg << "ServerConnection constructor : ";

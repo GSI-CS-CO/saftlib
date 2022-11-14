@@ -19,7 +19,6 @@
  */
 
 #include "loop.hpp"
-#include "make_unique.hpp"
 
 #include <chrono>
 #include <algorithm>
@@ -82,7 +81,7 @@ namespace saftbus {
 
 	
 	Loop::Loop() 
-		: d(std2::make_unique<Impl>())
+		: d(new Impl)
 	{
 		// reserve all the vectors with enough space to avoid 
 		// dynamic allocation in normal operation

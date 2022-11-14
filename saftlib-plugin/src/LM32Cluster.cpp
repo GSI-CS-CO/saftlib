@@ -29,6 +29,8 @@
 
 namespace saftlib {
 
+class LM32Firmware;
+
 LM32Cluster::LM32Cluster(etherbone::Device &dev) 
 	: device(dev)
 {

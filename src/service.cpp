@@ -20,7 +20,6 @@
 
 #include "service.hpp"
 
-#include "make_unique.hpp"
 #include "plugins.hpp"
 #include "loop.hpp"
 #include "error.hpp"
@@ -101,7 +100,7 @@ namespace saftbus {
 
 
 	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback)
-		: d(std2::make_unique<Impl>())
+		: d(new Impl)
 	{
 		d->owner = -1;
 		d->interface_names = interface_names;
@@ -284,7 +283,7 @@ namespace saftbus {
 	}
 
 	Container::Container(ServerConnection *connection) 
-		: d(std2::make_unique<Impl>())
+		: d(new Impl)
 	{
 		unsigned object_id = create_object("/saftbus", std::move(std::unique_ptr<Container_Service>(new Container_Service(this))));
 		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
@@ -478,7 +477,7 @@ namespace saftbus {
 			//===std::cerr << "plugin found" << std::endl;
 			plugin_available = true;
 		} else {
-			auto insertion_result = d->plugins.insert(std::make_pair(so_filename, std::move(std2::make_unique<LibraryLoader>(so_filename))));
+			auto insertion_result = d->plugins.insert(std::make_pair(so_filename, std::move(std::unique_ptr<LibraryLoader>(new LibraryLoader(so_filename)))));
 			if (insertion_result.second) {
 				//===std::cerr << "plugin inserted" << std::endl;
 				plugin = insertion_result.first;

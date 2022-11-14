@@ -19,7 +19,6 @@
  */
 
 #include "plugins.hpp"
-#include "make_unique.hpp"
 #include "service.hpp"
 #include "loop.hpp"
 
@@ -40,7 +39,7 @@ namespace saftbus {
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
-		: d(std2::make_unique<Impl>())
+		: d(new Impl)
 	{
 		int result = lt_dlinit();
 		assert(result == 0);
