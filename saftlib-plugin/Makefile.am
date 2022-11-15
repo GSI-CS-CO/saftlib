@@ -118,32 +118,31 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/LM32Cluster.hpp                                                \
 	src/LM32Firmware.hpp                                                \
 	src/TimingReceiver.hpp                                               \
-	src/CommonFunctions.hpp                                            
-# 	src/Owned_Service.hpp                  \
-# 	src/SAFTd_Service.hpp                   \
-# 	src/Condition_Service.hpp                \
-# 	src/ActionSink_Service.hpp                \
-# 	src/SoftwareCondition_Service.hpp          \
-# 	src/SoftwareActionSink_Service.hpp          \
-# 	src/SCUbusCondition_Service.hpp              \
-# 	src/SCUbusActionSink_Service.hpp              \
-# 	src/EmbeddedCPUCondition_Service.hpp           \
-# 	src/EmbeddedCPUActionSink_Service.hpp           \
-# 	src/WbmCondition_Service.hpp                     \
-# 	src/WbmActionSink_Service.hpp                     \
-# 	src/OpenDevice_Service.hpp                         \
-# 	src/WhiteRabbit_Service.hpp                         \
-# 	src/Output_Service.hpp                               \
-# 	src/OutputCondition_Service.hpp                       \
-# 	src/Input_Service.hpp                                  \
-# 	src/ECA_Service.hpp                                     \
-# 	src/BuildIdRom_Service.hpp                               \
-# 	src/TempSensor_Service.hpp                                \
-# 	src/Reset_Service.hpp                                      \
-# 	src/LM32Cluster_Service.hpp                                 \
-# 	src/LM32Firmware_Service.hpp                                 \
-# 	src/TimingReceiver_Service.hpp                           
-# the service headers are not neede by client programs (event standalone ones), right???
+	src/CommonFunctions.hpp                                               \
+ 	src/Owned_Service.hpp                  \
+ 	src/SAFTd_Service.hpp                   \
+ 	src/Condition_Service.hpp                \
+ 	src/ActionSink_Service.hpp                \
+ 	src/SoftwareCondition_Service.hpp          \
+ 	src/SoftwareActionSink_Service.hpp          \
+ 	src/SCUbusCondition_Service.hpp              \
+ 	src/SCUbusActionSink_Service.hpp              \
+ 	src/EmbeddedCPUCondition_Service.hpp           \
+ 	src/EmbeddedCPUActionSink_Service.hpp           \
+ 	src/WbmCondition_Service.hpp                     \
+ 	src/WbmActionSink_Service.hpp                     \
+ 	src/OpenDevice_Service.hpp                         \
+ 	src/WhiteRabbit_Service.hpp                         \
+ 	src/Output_Service.hpp                               \
+ 	src/OutputCondition_Service.hpp                       \
+ 	src/Input_Service.hpp                                  \
+ 	src/ECA_Service.hpp                                     \
+ 	src/BuildIdRom_Service.hpp                               \
+ 	src/TempSensor_Service.hpp                                \
+ 	src/Reset_Service.hpp                                      \
+ 	src/LM32Cluster_Service.hpp                                 \
+ 	src/LM32Firmware_Service.hpp                                 \
+ 	src/TimingReceiver_Service.hpp                           
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =   \

@@ -24,6 +24,7 @@
 #include "SoftwareActionSink.hpp"
 #include "SoftwareActionSink_Service.hpp"
 #include "IoControl.hpp"
+#include "io_control_regs.h"
 #include "Output.hpp"
 #include "Output_Service.hpp"
 #include "Input.hpp"
