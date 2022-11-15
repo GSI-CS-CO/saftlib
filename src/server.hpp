@@ -51,6 +51,8 @@ namespace saftbus {
 
 		int get_calling_client_id();
 
+		Container* get_container();
+
 		struct ClientInfo {
 			pid_t process_id;
 			int client_fd;

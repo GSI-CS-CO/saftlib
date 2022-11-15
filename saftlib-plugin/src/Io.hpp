@@ -31,7 +31,6 @@
 
 #include <functional>
 #include <string>
-#include "io_control_regs.h"
 
 namespace saftlib {
 

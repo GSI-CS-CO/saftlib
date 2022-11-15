@@ -329,4 +329,9 @@ namespace saftbus {
 	void owner_only();
 
 
+	Container* ServerConnection::get_container() {
+		return &(d->container_of_services);
+	}
+
+
 }

@@ -111,7 +111,7 @@ lib@PACKAGE@_service_include_HEADERS = \
 	src/EventSource.hpp                                         \
 	src/Input.hpp                                                \
 	src/ECA.hpp                                                   \
-	src/ECA_TLU.cpp                                                \
+	src/ECA_TLU.hpp                                                \
 	src/BuildIdRom.hpp                                              \
 	src/TempSensor.hpp                                               \
 	src/Reset.hpp                                                     \
