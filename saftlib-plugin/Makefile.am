@@ -82,7 +82,7 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/CommonFunctions.cpp                                                                  \
 	src/create_service.cpp
 
-lib@PACKAGE@_service_includedir = $(includedir)/saftlib/service
+lib@PACKAGE@_service_includedir = $(includedir)/saftlib
 lib@PACKAGE@_service_include_HEADERS = \
 	src/Time.hpp                        \
 	src/eb-source.hpp                    \
