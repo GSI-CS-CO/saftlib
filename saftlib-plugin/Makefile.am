@@ -1,14 +1,15 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -DDATADIR='"$(datadir)/@PACKAGE@"'
+AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -I $(top_srcdir)/src/interfaces -I $(top_builddir)/src/interfaces -DDATADIR='"$(datadir)/@PACKAGE@"'
 
 pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftlib.pc
-EXTRA_DIST = saftlib.pc.in
+EXTRA_DIST = saftlib.pc.in 
 #the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
 leapseconddir = $(datadir)/@PACKAGE@
 leapsecond_DATA = leap-seconds.list
-EXTRA_DIST += leap-seconds.list
+EXTRA_DIST += leap-seconds.list 
+EXTRA_DIST += src/software-tr.sdb
 
 dist_bin_SCRIPTS = src/saftd
 
@@ -89,7 +90,18 @@ lib@PACKAGE@_service_la_SOURCES =\
 
 lib@PACKAGE@_service_includedir = $(includedir)/saftlib
 lib@PACKAGE@_service_include_HEADERS =\
-    src/build.hpp                      \
+	version.h                      \
+	src/ats_regs.h                 \
+	src/bg_regs.h                  \
+	src/eca_ac_wbm_regs.h          \
+	src/eca_queue_regs.h           \
+	src/eca_regs.h                 \
+	src/eca_flags.h                \
+	src/eca_tlu_regs.h             \
+	src/fg_regs.h                  \
+	src/io_control_regs.h          \
+	src/wr_mil_gw_regs.h           \
+	src/build.hpp                      \
 	src/Time.hpp                        \
 	src/eb-source.hpp                    \
 	src/eb-forward.hpp                    \
