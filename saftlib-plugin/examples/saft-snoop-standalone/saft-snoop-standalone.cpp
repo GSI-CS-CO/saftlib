@@ -42,18 +42,17 @@ int main(int argc, char *argv[]) {
 	// the next lines makes a fully functional saftd out of the program 
 	saftbus::ServerConnection server_connection;
 	saftbus::Container *container = server_connection.get_container();
-	saftlib::SAFTd saftd(container); // if a non-nullptr is passed to saftd constructor, it will visibly attach timingreceivers when AttachDevice is called
+	saftlib::SAFTd saftd(container); 
 	std::unique_ptr<saftlib::SAFTd_Service> saftd_service(new saftlib::SAFTd_Service(&saftd));
 	container->create_object("/de/gsi/saftlib", std::move(saftd_service));
 	// end of saftd part
 
-	//saftlib::SAFTd saftd; // without arguments the saftd will not install services to any saftbus::Container
-	auto tr_obj_path                 = saftd.AttachDevice("tr0", argv[1], 100);
-	saftlib::TimingReceiver* tr      = saftd.getTimingReceiver(tr_obj_path);
-	auto softwareActionSink_obj_path = tr->NewSoftwareActionSink("");
-	auto softwareActionSink          = tr->getSoftwareActionSink(softwareActionSink_obj_path);
-	auto condition_obj_path          = softwareActionSink->NewCondition(true, id, mask, param);
-	auto sw_condition                = softwareActionSink->getCondition(condition_obj_path);
+	auto tr_obj_path                 = saftd.AttachDevice("tr0", argv[1], 100);                  
+	saftlib::TimingReceiver* tr      = saftd.getTimingReceiver(tr_obj_path);                     
+	auto softwareActionSink_obj_path = tr->NewSoftwareActionSink("");                            
+	auto softwareActionSink          = tr->getSoftwareActionSink(softwareActionSink_obj_path);   
+	auto condition_obj_path          = softwareActionSink->NewCondition(true, id, mask, param);  
+	auto sw_condition                = softwareActionSink->getCondition(condition_obj_path);     
 
 	sw_condition->setAcceptEarly(true);
 	sw_condition->setAcceptLate(true);
