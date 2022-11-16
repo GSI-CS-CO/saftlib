@@ -31,6 +31,8 @@
 
 #include "SAFTd.hpp"
 
+#include "build.hpp"
+
 #include "TimingReceiver.hpp"
 #include "TimingReceiver_Service.hpp"
 
@@ -176,11 +178,11 @@ namespace saftlib {
 
 
 	std::string SAFTd::getSourceVersion() const {
-		return std::string();
+		return sourceVersion;
 	}
 
 	std::string SAFTd::getBuildInfo() const {
-		return std::string();
+		return buildInfo;
 	}
 
 	std::map< std::string, std::string > SAFTd::getDevices() const {

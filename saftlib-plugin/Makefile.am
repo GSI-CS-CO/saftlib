@@ -13,6 +13,10 @@ EXTRA_DIST += leap-seconds.list
 dist_bin_SCRIPTS = src/saftd
 
 
+BUILT_SOURCES = version.h
+.PHONY: version.h # causes build.cpp to be rebuilt every run
+
+
 lib_LTLIBRARIES = \
 	lib@PACKAGE@-service.la  \
 	lib@PACKAGE@-proxy.la    
@@ -20,7 +24,8 @@ lib_LTLIBRARIES = \
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
 lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) $(SIGCPP_CFLAGS)
 lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)
-lib@PACKAGE@_service_la_SOURCES = \
+lib@PACKAGE@_service_la_SOURCES =\
+	src/build.cpp                 \
 	src/Time.cpp                   \
 	src/eb-source.cpp               \
 	src/eb-forward.cpp               \
@@ -83,7 +88,8 @@ lib@PACKAGE@_service_la_SOURCES = \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/saftlib
-lib@PACKAGE@_service_include_HEADERS = \
+lib@PACKAGE@_service_include_HEADERS =\
+    src/build.hpp                      \
 	src/Time.hpp                        \
 	src/eb-source.hpp                    \
 	src/eb-forward.hpp                    \
@@ -253,6 +259,15 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/interfaces/iCondition.h                                  \
 	src/interfaces/iOutputCondition.h
 
+if GIT_TREE
+version.h:
+	echo '#define GIT_ID "'$$(git describe --dirty --always --tags)'"' > version.h.tmp
+	echo '#define SOURCE_DATE "'$$(date +'%b %d %Y %H:%M:%S' --date=@$$(git log -n1 --pretty='format:%ct'))'"' >> version.h.tmp
+	mv -f version.h.tmp version.h
+debian:
+	cp debian/libsaftlib.install.in debian/libsaftlib@SAFTLIB_SONAME@.install
+	./config.status --file=debian/control
+endif
 
 
 

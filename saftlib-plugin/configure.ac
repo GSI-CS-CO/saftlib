@@ -11,5 +11,29 @@ PKG_CHECK_MODULES([SAFTBUS], [saftbus])
 PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0], [AC_DEFINE([HAVE_EB], [1], [Use EB])] , [AC_DEFINE([NO_EB], [1], [No etherbone was found, compiling without etherbone support])] )
 PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
 
+#####################################
+# the following is needed to extract build info (relevant for src/build.cpp src/build.hpp src/version.h)
+#####################################
+AC_PATH_PROG([UNAME], [uname], [false])
+AC_PATH_PROG([LSB_RELEASE], [lsb_release], [false])
+AC_PATH_PROG([SW_VERS], [sw_vers], [false])
+AC_CACHE_CHECK([for operating system], [ac_cv_OS], [AS_CASE([`${UNAME} -s`],
+  [Linux], [AS_IF(["${LSB_RELEASE}" -d -s 2>/dev/null >/dev/null],
+                  [os=`"${LSB_RELEASE}" -d -s`; os="${os%\"}"; ac_cv_OS="${os#\"}"],
+                  [AC_MSG_ERROR([lsb_release is required])])],
+  [Darwin], [AS_IF(["${SW_VERS}" 2>/dev/null >/dev/null],
+                   [ac_cv_OS="`${SW_VERS} -productName` `${SW_VERS} -productVersion`"],
+                   [AC_MSG_ERROR([sw_vers is required])])],
+  [ac_cv_OS="`${UNAME} -s`"])])
+AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OS"], [The operating system of the build system])
+AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the build system])
+AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
+AC_PATH_PROGS([GIT], [git])
+AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e ../.git])
+#####################################
+# end of build info stuff
+#####################################
+
+
 AC_CONFIG_FILES([Makefile saftlib.pc])
 AC_OUTPUT
