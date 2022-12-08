@@ -24,7 +24,7 @@ lib_LTLIBRARIES = \
 # @PACKAGE@ is substituded with the string given to AC_INIT([...])
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
 lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) $(SIGCPP_CFLAGS)
-lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)
+lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)  -lltdl
 lib@PACKAGE@_service_la_SOURCES =\
 	src/build.cpp                 \
 	src/Time.cpp                   \
@@ -57,37 +57,30 @@ lib@PACKAGE@_service_la_SOURCES =\
 	src/SdbDevice.cpp                                        \
 	src/MsiDevice.cpp                                        \
 	src/OpenDevice.cpp                                        \
-	src/OpenDevice_Service.cpp                                 \
 	src/WhiteRabbit.cpp                                         \
-	src/WhiteRabbit_Service.cpp                                  \
-	src/Mailbox.cpp                                               \
-	src/Watchdog.cpp                                               \
-	src/SerdesClockGen.cpp                                          \
-	src/Io.cpp                                                       \
-	src/IoControl.cpp                                                 \
-	src/Output.cpp                                                     \
-	src/Output_Service.cpp                                              \
-	src/OutputCondition.cpp                                              \
-	src/OutputCondition_Service.cpp                                       \
-	src/EventSource.cpp                                                    \
-	src/Input.cpp                                                           \
-	src/Input_Service.cpp                                                    \
-	src/ECA.cpp                                                               \
-	src/ECA_Service.cpp                                                        \
-	src/ECA_TLU.cpp                                                             \
-	src/BuildIdRom.cpp                                                           \
-	src/BuildIdRom_Service.cpp                                                    \
-	src/TempSensor.cpp                                                             \
-	src/TempSensor_Service.cpp                                                      \
-	src/Reset.cpp                                                                    \
-	src/Reset_Service.cpp                                                             \
-	src/LM32Cluster.cpp                                                                \
-	src/LM32Cluster_Service.cpp                                                         \
-	src/LM32Firmware.cpp                                                                 \
-	src/LM32Firmware_Service.cpp                                                          \
-	src/TimingReceiver.cpp                                                                 \
-	src/TimingReceiver_Service.cpp                                                          \
-	src/CommonFunctions.cpp                                                                  \
+	src/Mailbox.cpp                                              \
+	src/Watchdog.cpp                                             \
+	src/SerdesClockGen.cpp                                       \
+	src/Io.cpp                                                   \
+	src/IoControl.cpp                                            \
+	src/Output.cpp                                               \
+	src/Output_Service.cpp                                       \
+	src/OutputCondition.cpp                                      \
+	src/OutputCondition_Service.cpp                              \
+	src/EventSource.cpp                                          \
+	src/Input.cpp                                                \
+	src/Input_Service.cpp                                        \
+	src/ECA.cpp                                                  \
+	src/ECA_TLU.cpp                                              \
+	src/BuildIdRom.cpp                                           \
+	src/TempSensor.cpp                                           \
+	src/Reset.cpp                                                \
+	src/LM32Cluster.cpp                                          \
+	src/LM32Firmware.cpp                                         \
+	src/LM32Firmware_Service.cpp                                 \
+	src/TimingReceiver.cpp                                       \
+	src/TimingReceiver_Service.cpp                               \
+	src/CommonFunctions.cpp                                      \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/saftlib
@@ -125,45 +118,38 @@ lib@PACKAGE@_service_include_HEADERS =\
 	src/WhiteRabbit.hpp                                 \
 	src/Mailbox.hpp                                      \
 	src/Watchdog.hpp                                      \
-	src/SerdesClockGen.hpp                                 \
-	src/Io.hpp                                              \
-	src/IoControl.hpp                                        \
-	src/Output.hpp                                            \
-	src/OutputCondition.hpp                                    \
-	src/EventSource.hpp                                         \
-	src/Input.hpp                                                \
-	src/ECA.hpp                                                   \
-	src/ECA_TLU.hpp                                                \
-	src/BuildIdRom.hpp                                              \
-	src/TempSensor.hpp                                               \
-	src/Reset.hpp                                                     \
-	src/LM32Cluster.hpp                                                \
-	src/LM32Firmware.hpp                                                \
-	src/TimingReceiver.hpp                                               \
-	src/CommonFunctions.hpp                                               \
- 	src/Owned_Service.hpp                  \
- 	src/SAFTd_Service.hpp                   \
- 	src/Condition_Service.hpp                \
- 	src/ActionSink_Service.hpp                \
- 	src/SoftwareCondition_Service.hpp          \
- 	src/SoftwareActionSink_Service.hpp          \
- 	src/SCUbusCondition_Service.hpp              \
- 	src/SCUbusActionSink_Service.hpp              \
- 	src/EmbeddedCPUCondition_Service.hpp           \
- 	src/EmbeddedCPUActionSink_Service.hpp           \
- 	src/WbmCondition_Service.hpp                     \
- 	src/WbmActionSink_Service.hpp                     \
- 	src/OpenDevice_Service.hpp                         \
- 	src/WhiteRabbit_Service.hpp                         \
- 	src/Output_Service.hpp                               \
+	src/SerdesClockGen.hpp                                \
+	src/Io.hpp                                            \
+	src/IoControl.hpp                                     \
+	src/Output.hpp                                        \
+	src/OutputCondition.hpp                               \
+	src/EventSource.hpp                                   \
+	src/Input.hpp                                         \
+	src/ECA.hpp                                           \
+	src/ECA_TLU.hpp                                       \
+	src/BuildIdRom.hpp                                    \
+	src/TempSensor.hpp                                    \
+	src/Reset.hpp                                         \
+	src/LM32Cluster.hpp                                   \
+	src/LM32Firmware.hpp                                  \
+	src/TimingReceiver.hpp                                \
+	src/CommonFunctions.hpp                               \
+ 	src/Owned_Service.hpp                                 \
+ 	src/SAFTd_Service.hpp                                 \
+ 	src/Condition_Service.hpp                             \
+ 	src/ActionSink_Service.hpp                            \
+ 	src/SoftwareCondition_Service.hpp                     \
+ 	src/SoftwareActionSink_Service.hpp                    \
+ 	src/SCUbusCondition_Service.hpp                       \
+ 	src/SCUbusActionSink_Service.hpp                      \
+ 	src/EmbeddedCPUCondition_Service.hpp                  \
+ 	src/EmbeddedCPUActionSink_Service.hpp                 \
+ 	src/WbmCondition_Service.hpp                          \
+ 	src/WbmActionSink_Service.hpp                         \
+ 	src/Output_Service.hpp                                \
  	src/OutputCondition_Service.hpp                       \
- 	src/Input_Service.hpp                                  \
- 	src/ECA_Service.hpp                                     \
- 	src/BuildIdRom_Service.hpp                               \
- 	src/TempSensor_Service.hpp                                \
- 	src/Reset_Service.hpp                                      \
- 	src/LM32Cluster_Service.hpp                                 \
- 	src/LM32Firmware_Service.hpp                                 \
+ 	src/Input_Service.hpp                                 \
+ 	src/LM32Firmware_Service.hpp                          \
  	src/TimingReceiver_Service.hpp                           
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)

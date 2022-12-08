@@ -19,54 +19,116 @@
  */
 
 #include "LM32Cluster.hpp"
+#include "TimingReceiver.hpp"
 
 #include <saftbus/error.hpp>
 
 #include <iostream>
+#include <cassert>
 
-#define DPRAMLM32_VENDOR_ID         0x651
-#define DPRAMLM32_DEVICE_ID         0x54111351
+#define LM32_RAM_USER_VENDOR      0x0651             // vendor ID
+#define LM32_RAM_USER_PRODUCT     0x54111351         // product ID
+#define LM32_RAM_USER_VMAJOR      1                  // major revision
+#define LM32_RAM_USER_VMINOR      0                  // minor revision
+
 
 namespace saftlib {
 
 class LM32Firmware;
 
-LM32Cluster::LM32Cluster(etherbone::Device &dev) 
+LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver) 
 	: device(dev)
+	, tr(timing_receiver)
 {
+	std::cerr << "LM32Cluster::LM32Cluster" << std::endl;
 	// look for lm32 dual port ram
 	std::vector<sdb_device> dpram_lm32_devs;
-	device.sdb_find_by_identity(DPRAMLM32_VENDOR_ID, DPRAMLM32_DEVICE_ID, dpram_lm32_devs);
+	device.sdb_find_by_identity(LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, dpram_lm32_devs);
 
 	if (dpram_lm32_devs.size() < 1) {
 		throw saftbus::Error(saftbus::Error::FAILED, "no lm32 user ram found on hardware");
 	}
 
-    for (auto& dpram_lm32_dev: dpram_lm32_devs) {
-        dpram_lm32.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
-    }
+	for (auto& dpram_lm32_dev: dpram_lm32_devs) {
+		dpram_lm32.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
+		dpram_lm32_last.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_last));
+	}
 
-    num_cores = dpram_lm32.size();
-    firmware_drivers.resize(num_cores);
+	num_cores = dpram_lm32.size();
+	firmware_drivers.resize(num_cores);
 
-    std::cerr << "found " << dpram_lm32.size() << " lm32 cpus" << std::endl;
+	std::cerr << "found " << dpram_lm32.size() << " lm32 cpus" << std::endl;
 
+	int result = lt_dlinit();
+	assert(result == 0);
+}
+LM32Cluster::~LM32Cluster() {
+	int result = lt_dlexit();
+	assert(result == 0);
+}
+
+void LM32Cluster::load_plugin(const std::string &filename) 
+{
+	auto plugin = plugins.find(filename);
+	if (plugin != plugins.end()) {
+		// open the file
+		lt_dlhandle handle = lt_dlopen(filename.c_str());
+		if (handle == nullptr) {
+			std::ostringstream msg;
+			msg << "cannot load firmware driver plugin: failed to open file " << filename;
+			throw std::runtime_error(msg.str());
+		}
+		// load the function pointer
+		attach_firmware_driver_function function = (attach_firmware_driver_function)lt_dlsym(handle, "attach_firmware_driver");
+		if (function == nullptr) {
+			lt_dlclose(handle);
+			throw std::runtime_error("cannot load plugin because symbol \"attach_firmware_driver\" cannot be loaded");
+		}
+		plugins[filename].handle                 = handle;
+		plugins[filename].attach_firmware_driver = function;
+	}
 }
 
 unsigned LM32Cluster::getCpuCount()
 {
+	std::cerr << "getCpuCount" << std::endl;
 	return dpram_lm32.size();
 }
 
-
-void LM32Cluster::AttachFirwareDriver(unsigned idx, std::unique_ptr<LM32Firmware> &firmware_driver)
+void LM32Cluster::safeHaltCpu(unsigned cpu_idx)
 {
-    if (idx >= 0 && idx <= num_cores) {
-        firmware_drivers[idx] = std::move(firmware_driver);
-    } else {
-        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "invalid cpu index");
-    }
+	std::cerr << "safeHaltCpu " << cpu_idx << std::endl;
+	tr->CpuHalt(cpu_idx);
+	// overwrite the RAM with trap instructions (a trap instruction is a jump to the address of the flummi instruction)
+	eb_address_t adr = dpram_lm32[cpu_idx];
+	eb_address_t last = dpram_lm32_last[cpu_idx];
+	eb_data_t jump_instruction = 0xe0000000;
+	std::cerr << std::hex << adr << " " << last << std::endl;
+	while (adr < last) {
+		std::cerr << ".";
+		etherbone::Cycle cycle;
+		cycle.open(device);
+		for (int i = 0; i < 32 && adr < last; ++i) {
+			cycle.write(adr, EB_DATA32, (eb_data_t)jump_instruction);
+			adr += 4;
+		}
+		cycle.close();
+	}
+	
+	tr->CpuReset(cpu_idx);
+	tr->CpuHalt(cpu_idx);
 }
+
+
+
+// void LM32Cluster::AttachFirwareDriver(unsigned idx, const std::string &filename)
+// {
+// 	if (idx >= 0 && idx <= num_cores) {
+// 		firmware_drivers[idx] = std::move(firmware_driver);
+// 	} else {
+// 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "invalid cpu index");
+// 	}
+// }
 
 
 } // namespace

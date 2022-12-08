@@ -46,16 +46,16 @@ public:
 	void WdRetrigger();
 
 	/// @brief permanently assert reset line of cpu[idx]
-	/// @param idx halt cpu[idx]
+	/// @param idx halt cpu[idx] (no check if idx is valid)
 	/// 
 	// @saftbus-export
-	void CpuHalt(int idx);
+	void CpuHalt(unsigned idx);
 
 	/// @brief release reset line of cpu[idx]
-	/// @param idx cpu[idx] is reset and stats excecuting its program
+	/// @param idx cpu[idx] is reset and stats excecuting its program (no check if idx is valid)
 	/// 
 	// @saftbus-export
-	void CpuReset(int idx);
+	void CpuReset(unsigned idx);
 
 	/// @brief get the 'halt status' of all user lm32 (rightmost bit: CPU 0). bit='1' means halted.
 	/// @return 32 bits, where bit at position idx represents the halt status of cpu[idx]. '1' means haltet.

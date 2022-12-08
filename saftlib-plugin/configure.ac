@@ -12,7 +12,7 @@ PKG_CHECK_MODULES([EB], [etherbone >= 2.1.0], [AC_DEFINE([HAVE_EB], [1], [Use EB
 PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
 
 #####################################
-# the following is needed to extract build info (relevant for src/build.cpp src/build.hpp src/version.h)
+# the following is needed to extract build info (relevant for src/build.cpp src/build.hpp version.h)
 #####################################
 AC_PATH_PROG([UNAME], [uname], [false])
 AC_PATH_PROG([LSB_RELEASE], [lsb_release], [false])
