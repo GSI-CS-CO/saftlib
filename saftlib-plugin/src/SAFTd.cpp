@@ -213,8 +213,16 @@ namespace saftlib {
 			irqs.erase(it);
 		}
 	}
-	eb_address_t SAFTd::request_irq(const MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
-		
+	eb_address_t SAFTd::request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
+		eb_address_t first, last, mask;
+		msi.device.enable_msi(&first, &last);
+		mask = last - first;
+		for (;;) {
+			eb_address_t irq_adr = ((rand() & mask) + first) & (~0x3);
+			if (request_irq(irq_adr, slot)) {
+				return msi.msi_device.msi_first + irq_adr; // return the adress that triggers the msi
+			}
+		}		
 	}
 
 

@@ -35,6 +35,7 @@ class SdbDevice {
     friend class SAFTd; // SAFTd can use an MsiDevice to register a callbak on MSIs
 protected:
     eb_address_t adr_first;
+    etherbone::Device &device;
 public:
     SdbDevice(etherbone::Device &device, uint32_t VENDOR_ID, uint32_t DEVICE_ID);
 

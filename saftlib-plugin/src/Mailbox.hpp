@@ -29,9 +29,11 @@
 #endif
 #include <etherbone.h>
 
+#include <MsiDevice.hpp>
+
 namespace saftlib {
 
-class Mailbox {
+class Mailbox : public MsiDevice {
 	etherbone::Device &device;
 	eb_address_t mailbox;
 	eb_address_t mailbox_msi_first;
@@ -56,8 +58,6 @@ public:
 	///
 	// @saftbus-export
 	void FreeSlot(int slot_index);
-
-	eb_address_t get_msi_first() {return mailbox_msi_first; }
 };
 
 }

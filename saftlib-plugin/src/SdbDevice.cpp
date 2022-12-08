@@ -29,7 +29,9 @@
 
 namespace saftlib {
 
-    SdbDevice::SdbDevice(etherbone::Device &device, uint32_t VENDOR_ID, uint32_t DEVICE_ID) {
+    SdbDevice::SdbDevice(etherbone::Device &dev, uint32_t VENDOR_ID, uint32_t DEVICE_ID) 
+        : device(dev)
+    {
 		std::vector<sdb_device> devs;
 		device.sdb_find_by_identity(VENDOR_ID, DEVICE_ID, devs);
 

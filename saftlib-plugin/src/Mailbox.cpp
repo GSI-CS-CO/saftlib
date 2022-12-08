@@ -30,35 +30,12 @@
 
 namespace saftlib {
 
-Mailbox::Mailbox(etherbone::Device &dev) 
-	: device(dev)
+Mailbox::Mailbox(etherbone::Device &dev)
+	: MsiDevice(dev, MAILBOX_VENDOR_ID, MAILBOX_DEVICE_ID) 
+	, device(dev)
 {
-	// std::cerr << "Mailbox::Mailbox()" << std::endl;
-	std::vector<sdb_device> mailbox_dev;
-	device.sdb_find_by_identity(MAILBOX_VENDOR_ID, MAILBOX_DEVICE_ID, mailbox_dev);
-
-	if (mailbox_dev.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "no mailbox device found on hardware");
-	}
-	if (mailbox_dev.size() > 1) {
-		std::cerr << "more than one mailbox device found on hardware, taking the first one" << std::endl;
-	}
-	mailbox = static_cast<eb_address_t>(mailbox_dev[0].sdb_component.addr_first);
-
-
-	std::vector<etherbone::sdb_msi_device> mailbox_msi;
-	device.sdb_find_by_identity_msi(MAILBOX_VENDOR_ID, MAILBOX_DEVICE_ID, mailbox_msi);
-	if (mailbox_msi.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "mailbox has no MSI");
-	}
-	if (mailbox_msi.size() > 1) {
-		std::cerr << "more than one mailbox MSI device found on hardware, taking the first one" << std::endl;
-	}
-
-
-	mailbox_msi_first = mailbox_msi[0].msi_first;
-
-	// std::cerr << "Mailbox msi_first = " << std::hex << mailbox_msi_first << std::endl;
+	mailbox = adr_first;
+	mailbox_msi_first = msi_device.msi_first;
 }
 
 int Mailbox::ConfigureSlot(uint32_t target_address) 

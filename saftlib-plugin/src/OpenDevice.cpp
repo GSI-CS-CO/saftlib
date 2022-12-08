@@ -38,6 +38,7 @@ void OpenDevice::check_msi_callback(eb_data_t value)
 {
 	assert(value == MSI_TEST_VALUE);
 	check_msi_phase = false;
+	std::cerr << "needs polling? " << needs_polling << std::endl;
 	mbox->FreeSlot(slot_idx);
 	saftd->release_irq(irq_adr);
 	mbox.reset();
@@ -103,19 +104,9 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 	// it needs to be polled from eb-slave config registers.
 	try {
 		if (saftd != nullptr) {
-			device.enable_msi(&first, &last);
-			mask = last - first;
 			mbox = std::unique_ptr<Mailbox>(new Mailbox(device));
-			msi_first = mbox->get_msi_first();
-			// std::cerr << "first=" << std::hex << first << " last=" << last << " msi_first=" << msi_first << std::endl;
-			for (;;) {
-				irq_adr = ((rand() & mask) + first) & (~0x3);
-				// std::cerr << "try to attach irq " << std::hex << irq_adr << std::endl;
-				if (saftd->request_irq(irq_adr, std::bind(&OpenDevice::check_msi_callback, this, std::placeholders::_1))) {
-					break;
-				}
-			}
-			slot_idx = mbox->ConfigureSlot(irq_adr + msi_first);
+			eb_address_t msi_target_adr = saftd->request_irq(*mbox, std::bind(&OpenDevice::check_msi_callback, this, std::placeholders::_1));
+			slot_idx = mbox->ConfigureSlot(msi_target_adr);
 			mbox->UseSlot(slot_idx, MSI_TEST_VALUE); // make one single irq that should call our check_msi_callback
 			bool only_once;
 			poll_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(

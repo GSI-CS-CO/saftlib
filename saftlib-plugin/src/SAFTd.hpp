@@ -127,7 +127,7 @@ namespace saftlib {
 		/// @param irq the address to be released
 		void release_irq(eb_address_t irq);
 
-		eb_address_t request_irq(const MsiDevice &msi, const std::function<void(eb_data_t)>& slot);
+		eb_address_t request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot);
 
 		std::string getObjectPath();
 
