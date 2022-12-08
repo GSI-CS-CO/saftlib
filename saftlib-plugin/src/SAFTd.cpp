@@ -213,6 +213,10 @@ namespace saftlib {
 			irqs.erase(it);
 		}
 	}
+	eb_address_t SAFTd::request_irq(const MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
+		
+	}
+
 
 	std::string SAFTd::getObjectPath() {
 		return object_path;

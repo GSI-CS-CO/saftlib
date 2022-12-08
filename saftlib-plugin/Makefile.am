@@ -54,6 +54,8 @@ lib@PACKAGE@_service_la_SOURCES =\
 	src/WbmCondition_Service.cpp                           \
 	src/WbmActionSink.cpp                                   \
 	src/WbmActionSink_Service.cpp                            \
+	src/SdbDevice.cpp                                        \
+	src/MsiDevice.cpp                                        \
 	src/OpenDevice.cpp                                        \
 	src/OpenDevice_Service.cpp                                 \
 	src/WhiteRabbit.cpp                                         \
@@ -117,6 +119,8 @@ lib@PACKAGE@_service_include_HEADERS =\
 	src/EmbeddedCPUActionSink.hpp                   \
 	src/WbmCondition.hpp                             \
 	src/WbmActionSink.hpp                             \
+	src/SdbDevice.hpp                                 \
+	src/MsiDevice.hpp                                 \
 	src/OpenDevice.hpp                                 \
 	src/WhiteRabbit.hpp                                 \
 	src/Mailbox.hpp                                      \
