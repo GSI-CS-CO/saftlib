@@ -38,7 +38,7 @@ void OpenDevice::check_msi_callback(eb_data_t value)
 {
 	assert(value == MSI_TEST_VALUE);
 	check_msi_phase = false;
-	std::cerr << "needs polling? " << needs_polling << std::endl;
+	std::cerr << "needs polling? " << (needs_polling?"yes":"no") << std::endl;
 	mbox->FreeSlot(slot_idx);
 	saftd->release_irq(irq_adr);
 	mbox.reset();
@@ -58,7 +58,7 @@ bool OpenDevice::poll_msi(bool only_once) {
 		cycle.read_config(0x48, EB_DATA32, &msi_cnt);
 		cycle.close();
 		if (msi_cnt & 1) {
-			msi_adr -= msi_first;
+			msi_adr = msi_adr & mask;
 			needs_polling = true; // this value is 
 			found_msi = true;
 			saftd->write(msi_adr, EB_DATA32, msi_dat); // this functon is normally called by etherbone::Socket when it receives an MSI
@@ -95,9 +95,12 @@ bool OpenDevice::poll_msi(bool only_once) {
 OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_path, int polling_iv_ms, SAFTd *sd)
 	: etherbone_path(eb_path), eb_forward_path(eb_path), polling_interval_ms(polling_iv_ms), saftd(sd), check_msi_phase(true), needs_polling(false) 
 {
-	// std::cerr << "OpenDevice::OpenDevice(\"" << eb_path << "\")" << std::endl;
+	std::cerr << "OpenDevice::OpenDevice(\"" << eb_path << "\")" << std::endl;
 	device.open(socket, etherbone_path.c_str());
 	stat(etherbone_path.c_str(), &dev_stat);
+	device.enable_msi(&first, &last);
+	mask = last-first;
+	std::cerr << "OpenDevice first,last,mask = " << std::hex << first << "," << last << "," << mask << std::endl;
 
 	// Use the mailbox device to send us an MSI. 
 	// We need to find out if it arrives as "real" MSI or if
@@ -106,6 +109,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 		if (saftd != nullptr) {
 			mbox = std::unique_ptr<Mailbox>(new Mailbox(device));
 			eb_address_t msi_target_adr = saftd->request_irq(*mbox, std::bind(&OpenDevice::check_msi_callback, this, std::placeholders::_1));
+			std::cerr << "msi_target_adr for poll check: " << std::hex << std::setw(8) << std::setfill('0') << msi_target_adr << std::dec << std::endl;
 			slot_idx = mbox->ConfigureSlot(msi_target_adr);
 			mbox->UseSlot(slot_idx, MSI_TEST_VALUE); // make one single irq that should call our check_msi_callback
 			bool only_once;

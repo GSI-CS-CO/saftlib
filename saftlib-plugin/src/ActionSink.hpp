@@ -453,11 +453,6 @@ class ActionSink : public Owned
 		// std::function< void(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigDelayed;
 		
 
-		// Do the grunt work to create a condition
-		// typedef sigc::slot<std::shared_ptr<Condition>, const Condition::Condition_ConstructorType&> ConditionConstructor;
-		// std::string NewConditionHelper(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, bool tagIsKey);//, ConditionConstructor constructor);
-
-
 		void compile();
 		
 		// The name under which this ActionSink is listed in TimingReceiver::Iterfaces

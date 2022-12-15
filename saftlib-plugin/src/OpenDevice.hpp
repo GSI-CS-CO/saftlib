@@ -95,7 +95,7 @@ private:
 	int slot_idx;         // the Mailbox slot needs to be stored to free the Mailbox slot after MSI type checking is done
 	SAFTd *saftd;         // a pointer to SAFTd is needed because in case of polled MSIs the OpenDevice needs to call SAFTds write function
 	eb_address_t first, last, mask; // range of addresses that are valid for MSI
-	eb_address_t msi_first;         // address offset which needs to be subtracted 
+	eb_address_t msi_first, msi_last;         // address offset which needs to be subtracted 
 	eb_address_t irq_adr; // the MSI callback function is registered under this address, and the Mailbox is configured with irq_adr+msi_first
 	bool check_msi_phase, needs_polling; // check_msi_phase is true until the MSI type was determined.
 	                                     // needs_polling is false in the beginning. It is set to true if the poll_msi function receives the injected MSI.
