@@ -105,7 +105,7 @@ namespace saftlib {
 
       // read the buffer for the FW ID until wait time expires (2 seconds)
       int timeout = 20;
-      while ((static_cast<uint32_t>(bg_id) != BG_FW_ID) || (timeout != 0)) {
+      while ((static_cast<uint32_t>(bg_id) != BG_FW_ID) && (timeout != 0)) {
         usleep(100000);
         --timeout;
         device.read(ram_base + SHM_FW_ID, EB_DATA32, &bg_id);
