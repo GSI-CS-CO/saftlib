@@ -227,12 +227,14 @@ namespace saftbus
 		// POD struct and build-in types
 		template<typename T>
 		void put(const T &val) {
+			while(_data.size()%sizeof(T) != 0) _data.push_back('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
 			const char* begin = const_cast<char*>(reinterpret_cast<const char*>(&val));
 			const char* end   = begin + sizeof(val);
 			_data.insert(_data.end(), begin, end);
 		}
 		template<typename T>
 		void get(T &val) const {
+			while((_iter-_data.begin())%sizeof(T) != 0) _iter+=sizeof('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
 			val    = *const_cast<T*>(reinterpret_cast<const T*>(&(*_iter)));
 			_iter += sizeof(val);
 		}
