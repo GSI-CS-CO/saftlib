@@ -79,7 +79,7 @@ AC_ARG_ENABLE([pdf-doc],
 AM_CONDITIONAL([INTERFACE_DOCS], [test x$ENABLE_PDF_DOC != x -a x$DOCBOOK2TEXI != x -a x$TEXI2PDF != x -a x$GDBUS_CODEGEN != x])
 AM_CONDITIONAL([REBUILD_MAN_PAGES], [test x$DOCBOOK2MAN != x])
 AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e .git])
-if test -e .git -a "x$DOCBOOK2MAN" = "x"; then
+if test -e .git -a "x$DOCBOOK2MAN" = "x" -a "x$ENABLE_PDF_DOC" = "xyes" ; then
   AC_MSG_ERROR([Building from a git checkout requires docbook2man])
 fi
 
