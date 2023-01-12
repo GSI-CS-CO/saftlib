@@ -38,9 +38,8 @@ Mailbox::Mailbox(etherbone::Device &dev)
 	mailbox_msi_first = msi_device.msi_first;
 }
 
-int Mailbox::ConfigureSlot(uint32_t target_address) 
+std::unique_ptr<Mailbox::Slot> Mailbox::ConfigureSlot(uint32_t target_address) 
 {
-	// std::cerr << "Mailbox::ConfigureSlot()" << std::endl;
 	const auto num_slots = 128;
 	eb_data_t mb_value;
 	unsigned slot_index = 0;
@@ -54,21 +53,41 @@ int Mailbox::ConfigureSlot(uint32_t target_address)
 
 	if (slot_index < num_slots) {
 		device.write(mailbox + slot_index * 4 * 2 + 4, EB_DATA32, (eb_data_t)target_address);
-		return slot_index;
+		return std::unique_ptr<Mailbox::Slot>(new Mailbox::Slot(this, slot_index));
 	}
 	std::cerr << "no free mailbox slots " << std::endl;
-	return -1;
+	return std::unique_ptr<Mailbox::Slot>();
 }
 
 void Mailbox::UseSlot(int slot_index, uint32_t value)
 {
-	// std::cerr << "Mailbox::UseSlot()" << std::endl;
 	device.write(mailbox + slot_index * 4 * 2, EB_DATA32, (eb_data_t)value);
 }
 
 void Mailbox::FreeSlot(int slot_index)
 {
 	device.write(mailbox + slot_index * 4 * 2 + 4, EB_DATA32, 0xffffffff);
+}
+
+Mailbox::Slot::Slot(Mailbox *mailbox, int index) 
+	: mb(mailbox)
+	, slot_index(index) 
+{
+}
+Mailbox::Slot::~Slot()
+{
+	mb->FreeSlot(slot_index);
+}
+
+int Mailbox::Slot::getIndex()
+{
+	return slot_index;
+}
+
+
+void Mailbox::Slot::Use(uint32_t value)
+{
+	mb->UseSlot(slot_index, value);
 }
 
 

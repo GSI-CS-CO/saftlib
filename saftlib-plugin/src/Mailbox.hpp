@@ -31,33 +31,52 @@
 
 #include <MsiDevice.hpp>
 
+#include <memory>
+
 namespace saftlib {
 
 class Mailbox : public MsiDevice {
 	etherbone::Device &device;
 	eb_address_t mailbox;
 	eb_address_t mailbox_msi_first;
+	friend class Slot;
+	/// @brief write a value to the preconfigured address.
+	/// @param slot_index the slot to be used (return value of ConfigureSlot)
+	/// @param value is the value to be written
+	///
+	void UseSlot(int slot_index, uint32_t value);
+	/// @brief if a slot is no longer used, it should be marked as free by using this function
+	/// @param slot_index the slot to be freed
+	///
+	void FreeSlot(int slot_index);
+
 public:
+	class Slot {
+		Mailbox *mb;
+		int slot_index;
+		Slot(Mailbox *mailbox, int index);
+		friend class Mailbox;
+	public:
+		/// @brief free Mailbox hardware ressources for that slot
+		~Slot();
+
+		/// @brief the slot index that is owned
+		/// @return slot index
+		int getIndex();
+
+		/// @brief write a value to the preconfigured address.
+		/// @param slot_index the slot to be used (return value of ConfigureSlot)
+		/// @param value is the value to be written
+		///
+		void Use(uint32_t value);
+	};
+
 	Mailbox(etherbone::Device &device);
 	/// @brief find a free slot in the mailbox and configure it with target_address
 	/// @param target_address specifies to which address the value in UseSlot will be written
 	/// @return the slot number which was used, -1 if no free slot was found
 	///
-	// @saftbus-export
-	int ConfigureSlot(uint32_t target_address);
-
-	/// @brief write a value to the preconfigured address.
-	/// @param slot_index the slot to be used (return value of ConfigureSlot)
-	/// @param value is the value to be written
-	///
-	// @saftbus-export
-	void UseSlot(int slot_index, uint32_t value);
-
-	/// @brief if a slot is no longer used, it should be marked as free by using this function
-	/// @param slot_index the slot to be freed
-	///
-	// @saftbus-export
-	void FreeSlot(int slot_index);
+	std::unique_ptr<Slot> ConfigureSlot(uint32_t target_address);
 };
 
 }

@@ -116,17 +116,15 @@ namespace saftlib {
 		// @saftbus-export
 		std::string EbForward(const std::string& saftlib_device);
 
-		/// @brief try to attach a callback to an irq address
-		///
-		/// @param irq the address at which the callback should be attached
-		/// @param slot the function object
-		/// @return true if the requested address was still free, false if the 
-		///         requested address was already in use
-		bool request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
 		/// @brief release a callback
 		/// @param irq the address to be released
 		void release_irq(eb_address_t irq);
 
+		/// @brief try to attach a callback to an irq address
+		///
+		/// @param object of type MsiDevice or derived from MsiDevice. MsiDevices are masters on the MSI-crossbar interconnect
+		/// @param slot function object that is called when an MSI with the correct address (return value of this fuction) arrives
+		/// @return the address that is associated with the function object connected to slot.
 		eb_address_t request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot);
 
 		std::string getObjectPath();
@@ -140,7 +138,18 @@ namespace saftlib {
 		// Only write is ever used (an incoming MSI causes a write request).
 		eb_status_t read (eb_address_t address, eb_width_t width, eb_data_t* data);
 		eb_status_t write(eb_address_t address, eb_width_t width, eb_data_t data);
+
+		/// @brief try to attach a callback to an irq address
+		///
+		/// @param irq the address at which the callback should be attached
+		/// @param slot the function object
+		/// @return true if the requested address was still free, false if the 
+		///         requested address was already in use
+		bool request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
+
 	private:
+
+
 		void RemoveObject(const std::string& name);
 
 		// The sdb structure for this "virtual" etherbone device

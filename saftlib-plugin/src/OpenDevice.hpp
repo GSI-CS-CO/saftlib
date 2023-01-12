@@ -44,13 +44,13 @@ class EB_Forward;
 ///
 /// It remembers its etherbone path and restores the device settings before destruction.
 /// It also checks on startup if MSI needs to be polled from the etherbone-slave config regisers
-/// or if the hardware has the capability to deliver real MSIs
+/// or if the hardware has the capability to deliver MSIs without polling
 /// The checking procedure for MSI type is:
 ///  - Register a MSI callback function for a specific address
-///  - Use the Mailbox device to create an MSI with that specific address
+///  - Use the Mailbox device to send an MSI value with that specific address
 ///  - start the periodic polling function
-///  - if the polling function is called and finds the specific MSI, it continues to poll
-///  - if the MSI callback function is called and the polling function didn't see the MSI before, the polling function will be removed from the event loop
+///  - if the polling function is called and finds the specific MSI value, it continues to poll
+///  - if the MSI callback function is called despite of the polling function not seeing the MSI value, the polling function will be removed from the event loop
 ///
 class OpenDevice {
 protected:
@@ -91,8 +91,6 @@ private:
 
 	// following members are for testing MSI capability (real or polled MSIs)
 	void check_msi_callback(eb_data_t value);
-	std::unique_ptr<Mailbox> mbox; // the Mailbox is used to create an MSI
-	int slot_idx;         // the Mailbox slot needs to be stored to free the Mailbox slot after MSI type checking is done
 	SAFTd *saftd;         // a pointer to SAFTd is needed because in case of polled MSIs the OpenDevice needs to call SAFTds write function
 	eb_address_t first, last, mask; // range of addresses that are valid for MSI
 	eb_address_t msi_first, msi_last;         // address offset which needs to be subtracted 
