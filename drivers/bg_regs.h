@@ -20,8 +20,8 @@
 #ifndef BG_REGS_H
 #define BG_REGS_H
 
-#include "../../modules/common-libs/include/common-defs.h"
-#include "../../modules/burst_generator/burstgen_shared_mmap.h"
+#include "common-defs.h"
+#include "burstgen_shared_mmap.h"
 
 // Locate shared memory of processors
 #define LM32_RAM_USER_VENDOR      0x651       //vendor ID
