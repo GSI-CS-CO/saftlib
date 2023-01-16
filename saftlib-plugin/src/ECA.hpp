@@ -32,7 +32,10 @@
 
 #include <saftbus/service.hpp>
 
+#include "MsiDevice.hpp"
+
 #include <memory>
+
 
 namespace saftlib {
 
@@ -55,24 +58,13 @@ class Output;
 /// Hardware supports are up to 32 SoftwareActionSink at the same time. The hardware has one single Output channel configured for the host system with 32 sub-channels for the different SoftwareActionSinks. 
 /// Each SoftwareActionSinks occupies one of the sub-channels. This implementation uses an std::vector< std::unique_ptr< ActionSink> > which is resized in the constructor to the number of available sub-channels.
 /// Each invalid unique_ptr<ActionSink> indicates an un-occupied sub-channel. Each SoftwareActionSink can have many conditions. On execution, ECA writes a tag value into the ActionSink that refers to the condition that matched the incoming event.
-class ECA {
+class ECA : public MsiDevice {
 	friend class ActionSink;
 
-
-
-	etherbone::Device  &device;
 	std::string        object_path;
 	saftbus::Container *container;
 	uint64_t sas_count; // counts number of SoftwareActionSinks
-
-
 	
-	eb_address_t base;        // address of ECA control slave
-	// eb_address_t stream;      // address of ECA event input slave
-	eb_address_t first, last; // Msi address range
-	eb_address_t msi_first, msi_last;
-
-
 	unsigned channels;        // number of available ECA otput channels
 	unsigned search_size;
 	unsigned walker_size;
@@ -82,9 +74,6 @@ class ECA {
 	std::vector<eb_address_t> queue_addresses;
 	std::vector<uint16_t> most_full;
 
-	// public type, even though the member is private
-	// typedef std::map< SinkKey, std::unique_ptr<ActionSink> >  ActionSinks;
-	// ActionSinks  actionSinks;
 
 	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
 	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX
@@ -98,13 +87,8 @@ class ECA {
 	void popMissingQueue(unsigned channel, unsigned num);	
 	void probeConfiguration();
 	void prepareChannels();
-	void setMsiHandlers(SAFTd &saftd);
 	void msiHandler(eb_data_t msi, unsigned channel);
 	void setHandler(unsigned channel, bool enable, eb_address_t address);
-
-	// void compile();
-
-
 
 	uint16_t getMostFull(int channel);	
 	eb_address_t get_base_address();

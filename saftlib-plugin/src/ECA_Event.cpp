@@ -20,44 +20,14 @@
  */
 
 #include "ECA_Event.hpp"
-// #include "SAFTd.hpp"
-
-// #include <stdlib.h>
-// #include <string.h>
-// #include <iostream>
-// #include <sstream>
-// #include <iomanip>
-// #include <memory>
-// #include <algorithm>
-// #include <cassert>
-
-// #include <saftbus/error.hpp>
-// #include <saftbus/service.hpp>
-
-// #include "SoftwareActionSink.hpp"
-// #include "SoftwareActionSink_Service.hpp"
-// #include "SCUbusActionSink.hpp"
-// #include "SCUbusActionSink_Service.hpp"
-// #include "EmbeddedCPUActionSink.hpp"
-// #include "EmbeddedCPUActionSink_Service.hpp"
-// #include "WbmActionSink.hpp"
-// #include "WbmActionSink_Service.hpp"
-// #include "Output.hpp"
 
 #include "eca_regs.h"
-// #include "eca_flags.h"
-// #include "eca_queue_regs.h"
-// #include "fg_regs.h"
-// #include "ats_regs.h"
 
 
 namespace saftlib {
 
 
 #define EVENT_SDB_DEVICE_ID             0x8752bf45
-
-
-
 
 
 ECA_Event::ECA_Event(etherbone::Device &device, saftbus::Container *container)

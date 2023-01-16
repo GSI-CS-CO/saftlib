@@ -139,6 +139,9 @@ namespace saftlib {
 		eb_status_t read (eb_address_t address, eb_width_t width, eb_data_t* data);
 		eb_status_t write(eb_address_t address, eb_width_t width, eb_data_t data);
 
+	private:
+
+
 		/// @brief try to attach a callback to an irq address
 		///
 		/// @param irq the address at which the callback should be attached
@@ -146,9 +149,6 @@ namespace saftlib {
 		/// @return true if the requested address was still free, false if the 
 		///         requested address was already in use
 		bool request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot);
-
-	private:
-
 
 		void RemoveObject(const std::string& name);
 

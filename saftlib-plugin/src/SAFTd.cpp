@@ -213,6 +213,30 @@ namespace saftlib {
 			irqs.erase(it);
 		}
 	}
+
+	// Confirm that first is aligned to size
+	// e.g. first = 0x10000  last = 0x1ffff 
+	// => size_mask = 0x0ffff
+	// => 0x10000 & 0x0ffff = 0
+	// eb_address_t size_mask = msi_last - msi_first;
+	// msi_first and msi_last is the address range in which the msi_master (on hardware) can reach the host
+	// for a host connected with PCIe, this might be msi_first=0x10000 and msi_last=0x1ffff
+	// for a host connected with USB (same hardware) msi_first=0x20000 and msi_last=0x2ffff
+
+	// the first and last values obtained from from enable_msi(&first, &last) refers to the address range 
+	// available to an etherbone master on a host connected to the pcie-wishbone bridge driver
+	// for example, if two processes are connected to dev/wbm0, 
+	// the first gets:  first = 0x00000 and last = 0x00fff
+	// the second gets: first = 0x01000 and last = 0x01fff
+	//
+	// if a hardware MSI master writes to 0x10400, the first  etherbone master (connected to dev/wbm0) will get a callback on address 0x400
+	// if a hardware MSI master writes to 0x11400, the second etherbone master (connected to dev/wbm0) will get a callback on address 0x400
+	// if a hardware MSI master writes to 0x20400, another etherbone master connected via usb will get the MSI on address 0x400
+	// if ((msi_first & size_mask) != 0) {
+	// 	throw etherbone::exception_t("request_irq/misaligned", EB_FAIL);
+	// }
+
+
 	eb_address_t SAFTd::request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
 		eb_address_t first, last, mask;
 		msi.device.enable_msi(&first, &last);
