@@ -49,6 +49,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, Watchdog(OpenDevice::device)
 	, ECA(saftd, OpenDevice::device, saftd.getObjectPath() + "/" + n, container)
 	, ECA_TLU(OpenDevice::device, container)
+	, ECA_Event(OpenDevice::device, container)
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
 	, Reset(OpenDevice::device)
@@ -154,7 +155,7 @@ saftlib::Time TimingReceiver::CurrentTime()
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time)
 {
 	// std::cerr << "TimingReceiver::InjectEvent" << std::endl;
-	ECA::InjectEventRaw(event, param, time.getTAI());
+	ECA_Event::InjectEventRaw(event, param, time.getTAI());
 }
 
 std::map< std::string, std::map< std::string, std::string > > TimingReceiver::getInterfaces() const

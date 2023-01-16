@@ -34,6 +34,7 @@
 #include "Watchdog.hpp"
 #include "ECA.hpp"
 #include "ECA_TLU.hpp"
+#include "ECA_Event.hpp"
 #include "BuildIdRom.hpp"
 #include "TempSensor.hpp"
 #include "Reset.hpp"
@@ -94,6 +95,7 @@ class TimingReceiver : public OpenDevice
                      , public Watchdog
                      , public ECA
                      , public ECA_TLU
+                     , public ECA_Event
                      , public BuildIdRom
                      , public TempSensor
                      , public Reset

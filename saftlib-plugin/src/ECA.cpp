@@ -54,7 +54,7 @@
 namespace saftlib {
 
 
-#define EVENT_SDB_DEVICE_ID             0x8752bf45
+// #define EVENT_SDB_DEVICE_ID             0x8752bf45
 
 
 
@@ -116,12 +116,12 @@ void ECA::popMissingQueue(unsigned channel, unsigned num)
 void ECA::probeConfiguration() 
 {
 	std::vector<etherbone::sdb_msi_device> ecas_dev;
-	std::vector<sdb_device> streams_dev;
+	// std::vector<sdb_device> streams_dev;
 
 	// std::cerr << "A" << std::endl;
 	device.sdb_find_by_identity_msi(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID, ecas_dev);
 	// std::cerr << "B" << std::endl;
-	device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, EVENT_SDB_DEVICE_ID, streams_dev);
+	// device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, EVENT_SDB_DEVICE_ID, streams_dev);
 
 	// std::cerr << "ecas.msi_first=" << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_first 
 	// 					<< "     msi_last="  << std::hex << std::setw(8) << std::setfill('0') << ecas_dev[0].msi_last
@@ -135,15 +135,15 @@ void ECA::probeConfiguration()
 		std::cerr << "more than one ECA_UNIT:CONTROL devices found on hardware, taking the first one" << std::endl;
 	}
 
-	if (streams_dev.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "no ECA_UNIT:EVENTS_IN device found on hardware");
-	}
-	if (streams_dev.size() > 1) {
-		std::cerr << "more than one ECA_UNIT:EVENTS_IN devices found on hardware, taking the first one" << std::endl;
-	}
+	// if (streams_dev.size() < 1) {
+	// 	throw saftbus::Error(saftbus::Error::FAILED, "no ECA_UNIT:EVENTS_IN device found on hardware");
+	// }
+	// if (streams_dev.size() > 1) {
+	// 	std::cerr << "more than one ECA_UNIT:EVENTS_IN devices found on hardware, taking the first one" << std::endl;
+	// }
 
 	base      = ecas_dev[0].sdb_component.addr_first;
-	stream    = (eb_address_t)streams_dev[0].sdb_component.addr_first;
+	// stream    = (eb_address_t)streams_dev[0].sdb_component.addr_first;
 
 	// This just reads the MSI address range out of the ehterbone config space registers
 	// It does not actually enable anything ... MSIs also work without this
@@ -691,21 +691,21 @@ uint64_t ECA::ReadRawCurrentTime()
 
 
 
-void ECA::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time)
-{
-	etherbone::Cycle cycle;
+// void ECA::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time)
+// {
+// 	etherbone::Cycle cycle;
 
-	cycle.open(device);
-	cycle.write(stream, EB_DATA32, event >> 32);
-	cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
-	cycle.write(stream, EB_DATA32, param >> 32);
-	cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
-	cycle.write(stream, EB_DATA32, 0); // reserved
-	cycle.write(stream, EB_DATA32, 0); // TEF
-	cycle.write(stream, EB_DATA32, time >> 32);
-	cycle.write(stream, EB_DATA32, time & 0xFFFFFFFFUL);
-	cycle.close();
-}
+// 	cycle.open(device);
+// 	cycle.write(stream, EB_DATA32, event >> 32);
+// 	cycle.write(stream, EB_DATA32, event & 0xFFFFFFFFUL);
+// 	cycle.write(stream, EB_DATA32, param >> 32);
+// 	cycle.write(stream, EB_DATA32, param & 0xFFFFFFFFUL);
+// 	cycle.write(stream, EB_DATA32, 0); // reserved
+// 	cycle.write(stream, EB_DATA32, 0); // TEF
+// 	cycle.write(stream, EB_DATA32, time >> 32);
+// 	cycle.write(stream, EB_DATA32, time & 0xFFFFFFFFUL);
+// 	cycle.close();
+// }
 
 
 

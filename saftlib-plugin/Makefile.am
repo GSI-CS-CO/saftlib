@@ -72,6 +72,7 @@ lib@PACKAGE@_service_la_SOURCES =\
 	src/Input_Service.cpp                                        \
 	src/ECA.cpp                                                  \
 	src/ECA_TLU.cpp                                              \
+	src/ECA_Event.cpp                                            \
 	src/BuildIdRom.cpp                                           \
 	src/TempSensor.cpp                                           \
 	src/Reset.cpp                                                \
@@ -127,6 +128,7 @@ lib@PACKAGE@_service_include_HEADERS =\
 	src/Input.hpp                                         \
 	src/ECA.hpp                                           \
 	src/ECA_TLU.hpp                                       \
+	src/ECA_Event.hpp                                     \
 	src/BuildIdRom.hpp                                    \
 	src/TempSensor.hpp                                    \
 	src/Reset.hpp                                         \
@@ -175,12 +177,13 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/EventSource_Proxy.cpp                        \
 	src/ECA_Proxy.cpp                                 \
 	src/ECA_TLU_Proxy.cpp                              \
-	src/BuildIdRom_Proxy.cpp                            \
-	src/TempSensor_Proxy.cpp                             \
-	src/Reset_Proxy.cpp                                   \
-	src/LM32Cluster_Proxy.cpp                              \
-	src/LM32Firmware_Proxy.cpp                              \
-	src/TimingReceiver_Proxy.cpp                             \
+	src/ECA_Event_Proxy.cpp                             \
+	src/BuildIdRom_Proxy.cpp                             \
+	src/TempSensor_Proxy.cpp                              \
+	src/Reset_Proxy.cpp                                    \
+	src/LM32Cluster_Proxy.cpp                               \
+	src/LM32Firmware_Proxy.cpp                               \
+	src/TimingReceiver_Proxy.cpp                              \
 	src/CommonFunctions.cpp                               
 
 
@@ -207,12 +210,13 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/EventSource_Proxy.hpp                           \
 	src/ECA_Proxy.hpp                                    \
 	src/ECA_TLU_Proxy.hpp                                 \
-	src/BuildIdRom_Proxy.hpp                               \
-	src/TempSensor_Proxy.hpp                                \
-	src/Reset_Proxy.hpp                                      \
-	src/LM32Cluster_Proxy.hpp                                 \
-	src/LM32Firmware_Proxy.hpp                                 \
-	src/TimingReceiver_Proxy.hpp                                \
+	src/ECA_Event_Proxy.hpp                                \
+	src/BuildIdRom_Proxy.hpp                                \
+	src/TempSensor_Proxy.hpp                                 \
+	src/Reset_Proxy.hpp                                       \
+	src/LM32Cluster_Proxy.hpp                                  \
+	src/LM32Firmware_Proxy.hpp                                  \
+	src/TimingReceiver_Proxy.hpp                                 \
 	src/CommonFunctions.hpp                                      \
 	src/interfaces/BurstGenerator.h                              \
 	src/interfaces/SAFTd.h                                       \

@@ -68,7 +68,7 @@ class ECA {
 
 	
 	eb_address_t base;        // address of ECA control slave
-	eb_address_t stream;      // address of ECA event input slave
+	// eb_address_t stream;      // address of ECA event input slave
 	eb_address_t first, last; // Msi address range
 	eb_address_t msi_first, msi_last;
 
@@ -149,18 +149,6 @@ public:
 	///
 	// @saftbus-export	
 	std::string NewSoftwareActionSink(const std::string& name);
-
-	/// @brief        Simulate the receipt of a timing event
-	/// @param event  The event identifier which is matched against Conditions
-	/// @param param  The parameter field, whose meaning depends on the event ID.
-	/// @param time   The execution time for the event, added to condition offsets.
-	///
-	/// Sometimes it is useful to simulate the receipt of a timing event. 
-	/// This allows software to test that configured conditions lead to the
-	/// desired behaviour without needing the data master to send anything.
-	///
-	// @saftbus-export
-	void InjectEventRaw(uint64_t event, uint64_t param, uint64_t time);
 
 	/// @brief A list of all current SoftwareActionSinks.
 	/// @return A list of all current SoftwareActionSinks.
