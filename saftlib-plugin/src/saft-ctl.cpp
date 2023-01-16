@@ -89,9 +89,10 @@ static void help(void) {
   std::cout << "  snoop   <eventID> <mask> <offset> [<seconds>] snoop events from DM, offset is in ns, " << std::endl;
   std::cout << "                                   snoop for <seconds> or use CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
   std::cout << std::endl;
-  std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
-  std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
-  std::cout << "  quit                             instructs the saftlib daemon to quit (admin only)" << std::endl << std::endl;
+  std::cout << "  attach <path> [<poll-iv>]        instruct saftd to control a new device. " << std::endl;
+  std::cout << "                                   <poll-iv> is the polling interval for MSI on USB devices (default is 1 ms)." << std::endl;
+  std::cout << "  remove                           remove the device from saftlib management " << std::endl;
+  std::cout << "  quit                             instructs the saftlib daemon to quit " << std::endl << std::endl;
   std::cout << std::endl;
   std::cout << "This tool displays Timing Receiver and related saftlib status. It can also be used to list the ECA status for" << std::endl;
   std::cout << "software actions. Furthermore, one can do simple things with a Timing Receiver (snoop for events, inject messages)." <<std::endl;
@@ -272,6 +273,7 @@ int main(int argc, char** argv)
   // variables attach, remove
   char    *deviceName = NULL;
   char    *devicePath = NULL;
+  int      devicePollIv = 1; // MSI polling interval in ms. only relevant if MSIs needs to be polled
 
   const char *command;
 
@@ -409,8 +411,8 @@ int main(int argc, char** argv)
     } // "snoop"
 
     else if (strcasecmp(command, "attach") == 0) {
-      if (optind+3  != argc) {
-        std::cerr << program << ": expecting exactly one argument: attach <path>" << std::endl;
+      if (optind+3 != argc && optind+4 != argc) {
+        std::cerr << program << ": expecting one or two arguments: attach <path> [<poll-iv>]" << std::endl;
         return 1;
       }
       deviceAttach = true;
@@ -424,6 +426,13 @@ int main(int argc, char** argv)
         std::cerr << program << ": invalid path -- " << argv[optind+2] << std::endl;
         return 1;
       } // path
+      if (optind+4 == argc) {
+        devicePollIv = atoi(argv[optind+3]);
+        if (devicePollIv <= 0) {
+          std::cerr << program << ": invalid MSI polling interval -- " << argv[optind+3] << std::endl;
+          return 1;
+        }
+      }
     } // "attach"
 
     else if (strcasecmp(command, "remove") == 0) {
@@ -469,7 +478,7 @@ int main(int argc, char** argv)
     // do commands for saftd management first
     // attach device
     if (deviceAttach) {
-      saftd->AttachDevice(deviceName, devicePath);
+      saftd->AttachDevice(deviceName, devicePath, devicePollIv);
     } // attach device
 
     // remove device
