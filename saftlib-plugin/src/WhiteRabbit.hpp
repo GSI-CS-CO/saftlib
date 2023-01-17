@@ -32,11 +32,11 @@
 // @saftbus-export
 #include <sigc++/sigc++.h>
 
+#include "SdbDevice.hpp"
+
 namespace saftlib {
 
-class WhiteRabbit {
-	eb_address_t pps;
-	etherbone::Device &device;
+class WhiteRabbit : public SdbDevice {
 protected:
 	mutable bool locked;
 public:

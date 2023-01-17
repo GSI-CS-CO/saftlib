@@ -29,6 +29,8 @@
 #endif
 #include <etherbone.h>
 
+#include "SdbDevice.hpp"
+
 #include <stdint.h>
 
 #define IO_SER_CLK_GEN_PRODUCT_ID    0x5f3eaf43
@@ -41,7 +43,7 @@
 namespace saftlib {
 
 
-class SerdesClockGen 
+class SerdesClockGen : public SdbDevice 
 {
 
 	typedef enum
@@ -66,8 +68,8 @@ class SerdesClockGen
 		uint64_t phase_offset;
 	} s_SerClkGenControl;
 
-	eb_address_t clkgen_address;
-	etherbone::Device &device;
+	// eb_address_t clkgen_address;
+	// etherbone::Device &device;
 
 	static void CalcClockParameters(double hi, double lo, uint64_t phase, struct SerClkGenControl *control);
 public:

@@ -32,8 +32,9 @@
 
 namespace saftlib {
 
-IoControl::IoControl(etherbone::Device &dev)
-	: device(dev), clkgen(device)
+IoControl::IoControl(etherbone::Device &device)
+	: SdbDevice(device, IO_CONTROL_VENDOR_ID,     IO_CONTROL_PRODUCT_ID)
+	, clkgen(device)
 {
 	/* Helpers */
 	unsigned io_table_entries_id     = 0;
@@ -52,25 +53,11 @@ IoControl::IoControl(etherbone::Device &dev)
 	etherbone::Cycle cycle;
 	std::vector<sdb_device> ioctl, tlus;
 
-	/* Find IO control module */
-	device.sdb_find_by_identity(IO_CONTROL_VENDOR_ID,     IO_CONTROL_PRODUCT_ID,     ioctl);
-	// tr->getDevice().sdb_find_by_identity(ECA_TLU_SDB_VENDOR_ID,    ECA_TLU_SDB_DEVICE_ID,     tlus);
-
-	if (ioctl.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "No IO control module found");
-	}
-	if (ioctl.size() > 1) {
-		std::cerr << "More than one IO control module found, take the first one" << std::endl;
-	}
-	//if (ioctl.size() != 1 || tlus.size() != 1 || clkgen.size() != 1) return -1;
-	eb_address_t ioctl_address = ioctl[0].sdb_component.addr_first;
-	// eb_address_t tlu = tlus[0].sdb_component.addr_first;
-
 	/* Get number of IOs */
 	cycle.open(device);
-	cycle.read(ioctl_address+eGPIO_Info, EB_DATA32, &gpio_count_reg);
-	cycle.read(ioctl_address+eLVDS_Info, EB_DATA32, &lvds_count_reg);
-	cycle.read(ioctl_address+eFIXED_Info, EB_DATA32, &fixed_count_reg);
+	cycle.read(adr_first+eGPIO_Info, EB_DATA32, &gpio_count_reg);
+	cycle.read(adr_first+eLVDS_Info, EB_DATA32, &lvds_count_reg);
+	cycle.read(adr_first+eFIXED_Info, EB_DATA32, &fixed_count_reg);
 	cycle.close();
 	io_GPIOTotal  = (gpio_count_reg&IO_INFO_TOTAL_COUNT_MASK) >> IO_INFO_TOTAL_SHIFT;
 	io_LVDSTotal  = (lvds_count_reg&IO_INFO_TOTAL_COUNT_MASK) >> IO_INFO_TOTAL_SHIFT;
@@ -84,7 +71,7 @@ IoControl::IoControl(etherbone::Device &dev)
 
 		/* Open a new cycle and get the parameter */
 		cycle.open(device);
-		cycle.read(ioctl_address+io_table_addr, EB_DATA32, &get_param);
+		cycle.read(adr_first+io_table_addr, EB_DATA32, &get_param);
 		cycle.close();
 		io_table_data_raw = (unsigned) get_param;
 
@@ -148,60 +135,10 @@ IoControl::IoControl(etherbone::Device &dev)
 		cIOName = s_aIOCONTROL_SetupField[io_table_iterator].uName;
 		std::string IOName = cIOName;
 
-
-		// std::cerr << "IOName: " << IOName <<  " " << channel << std::endl;
-
-	// 	/* Create the IO controller object */
+		/* Create the IO controller object */
 		ios.push_back(Io(device, IOName, direction, channel, internal_id, special, logic_level, oe_available,
-	 		term_available, spec_out_available, spec_in_available, ioctl_address, clkgen));
+	 		term_available, spec_out_available, spec_in_available, adr_first, clkgen));
 
-	// 	InoutImpl::ConstructorType impl_args = {
-	// 		tr, channel, internal_id, special, logic_level, oe_available,
-	// 		term_available, spec_out_available, spec_in_available, ioctl_address, clkgen_address };
-	// 	std::shared_ptr<InoutImpl> impl(new InoutImpl(impl_args));
-
-	// 	unsigned eca_channel = 0; // ECA channel 0 is always for IO
-	// 	TimingReceiver::SinkKey key_in (eca_channel, eca_in);  // order: gpio_inout, gpio_in,  lvds_inout, lvds_in
-	// 	TimingReceiver::SinkKey key_out(eca_channel, eca_out); // order: gpio_inout, gpio_out, lvds_inout, lvds_out
-
-	// 	std::string input_path  = tr->getObjectPath() + "/inputs/"  + IOName;
-	// 	std::string output_path = tr->getObjectPath() + "/outputs/" + IOName;
-	// 	sigc::slot<void> nill;
-
-	// 	/* Add sinks depending on their direction */
-	// 	switch(direction)
-	// 	{
-	// 		case IO_CFG_FIELD_DIR_OUTPUT:
-	// 		{
-	// 			Output::ConstructorType out_args = { IOName, output_path, "", tr, eca_channel, eca_out, impl, nill };
-	// 			actionSinks[key_out] = Output::create(out_args);
-	// 			++eca_out;
-	// 			break;
-	// 		}
-	// 		case IO_CFG_FIELD_DIR_INPUT:
-	// 		{
-	// 			Input::ConstructorType  in_args  = { IOName, input_path,  "", tr, tlu,         eca_in,  impl, nill };
-	// 			eventSources[key_in] = Input::create(in_args);
-	// 			++eca_in;
-	// 			break;
-	// 		}
-	// 		case IO_CFG_FIELD_DIR_INOUT:
-	// 		{
-	// 			Output::ConstructorType out_args = { IOName, output_path, input_path,  tr, eca_channel, eca_out, impl, nill };
-	// 			Input::ConstructorType  in_args  = { IOName, input_path,  output_path, tr, tlu,         eca_in,  impl, nill };
-	// 			actionSinks[key_out] = Output::create(out_args);
-	// 			eventSources[key_in] = Input::create(in_args);
-	// 			++eca_out;
-	// 			++eca_in;
-	// 			break;
-	// 		}
-	// 		default:
-	// 		{
-	// 			clog << kLogErr << "Found IO with unknown direction!" << std::endl;
-	// 			return -1;
-	// 			break;
-	// 		}
-	// 	}
 	}
 }
 

@@ -22,28 +22,23 @@
 
 namespace saftlib {
 
-TempSensor::TempSensor(etherbone::Device &dev) 
-	: device(dev)
+TempSensor::TempSensor(etherbone::Device &device) 
+	: SdbDevice(device, ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, false)
 	, temperature(0)
 {
-	std::vector<sdb_device> ats_dev;
-	device.sdb_find_by_identity(ATS_SDB_VENDOR_ID,  ATS_SDB_DEVICE_ID, ats_dev);
-	if (ats_dev.size() > 0) {
-		ats = (eb_address_t)ats_dev[0].sdb_component.addr_first;
-	}
 }
 
 
 bool TempSensor::getTemperatureSensorAvail() const
 {
-	return ats != 0;
+	return adr_first != 0;
 }
 
 int32_t TempSensor::CurrentTemperature()
 {
-	if (ats) {
+	if (adr_first) {
 		eb_data_t data;
-		device.read(ats + ALTERA_TEMP_DEGREE, EB_DATA32, &data);
+		device.read(adr_first + ALTERA_TEMP_DEGREE, EB_DATA32, &data);
 
 		if (data != 0xDEADC0DE) {
 			temperature = (int32_t) data;

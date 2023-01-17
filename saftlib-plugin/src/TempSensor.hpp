@@ -26,15 +26,14 @@
 #endif
 #include <etherbone.h>
 
+#include "SdbDevice.hpp"
 
 #include <map>
 #include <string>
 
 namespace saftlib {
 
-class TempSensor {
-	etherbone::Device &device;
-	eb_address_t ats; // "Altera Temperature Sensor" address
+class TempSensor : public SdbDevice {
     mutable int32_t temperature;
 public:
 	TempSensor(etherbone::Device &device);

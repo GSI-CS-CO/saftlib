@@ -29,16 +29,14 @@
 #endif
 #include <etherbone.h>
 
+#include "SdbDevice.hpp"
 
 #include <map>
 #include <string>
 
 namespace saftlib {
 
-class BuildIdRom {
-	etherbone::Device &device;
-	eb_address_t info;
-
+class BuildIdRom : public SdbDevice {
 	std::map<std::string, std::string> gateware_info;
 	void setupGatewareInfo(uint32_t address);
 public:

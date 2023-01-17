@@ -34,15 +34,14 @@
 
 #include <saftbus/service.hpp>
 
+#include "SdbDevice.hpp"
+
 namespace saftlib {
 
 class Input;
 
-class ECA_TLU {
-	etherbone::Device &device;
+class ECA_TLU : public SdbDevice {
 	saftbus::Container *container;
-
-	eb_address_t eca_tlu;
 	std::vector<std::unique_ptr<Input> > inputs;
 
 public:

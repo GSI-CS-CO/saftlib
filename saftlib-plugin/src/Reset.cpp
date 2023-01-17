@@ -52,41 +52,30 @@
 
 namespace saftlib {
 
-Reset::Reset(etherbone::Device &dev) 
-	: device(dev)
+Reset::Reset(etherbone::Device &device) 
+	: SdbDevice(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT)
 {
-	// std::cerr << "Reset::Reset()" << std::endl;
-	std::vector<sdb_device> reset_dev;
-	device.sdb_find_by_identity(FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, reset_dev);
-
-	if (reset_dev.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "no reset device found on hardware");
-	}
-	if (reset_dev.size() > 1) {
-		std::cerr << "more than one reset device found on hardware, taking the first one" << std::endl;
-	}
-	reset = static_cast<eb_address_t>(reset_dev[0].sdb_component.addr_first);
 }
 
 void Reset::WdRetrigger() 
 {
-	device.write(reset + FPGA_RESET_WATCHDOG_TRG, EB_DATA32, (eb_data_t)FPGA_RESET_WATCHDOG_TRG_VALUE);
+	device.write(adr_first + FPGA_RESET_WATCHDOG_TRG, EB_DATA32, (eb_data_t)FPGA_RESET_WATCHDOG_TRG_VALUE);
 }
 
 void Reset::CpuHalt(unsigned idx) 
 {
-	device.write(reset + FPGA_RESET_USERLM32_SET, EB_DATA32, (eb_data_t)(1<<idx));
+	device.write(adr_first + FPGA_RESET_USERLM32_SET, EB_DATA32, (eb_data_t)(1<<idx));
 }
 
 void Reset::CpuReset(unsigned idx) 
 {
-	device.write(reset + FPGA_RESET_USERLM32_CLEAR, EB_DATA32, (eb_data_t)(1<<idx));
+	device.write(adr_first + FPGA_RESET_USERLM32_CLEAR, EB_DATA32, (eb_data_t)(1<<idx));
 }
 
 uint32_t Reset::CpuHaltStatus() 
 {
 	eb_data_t    status;
-	device.read(reset + FPGA_RESET_USERLM32_GET, EB_DATA32, &status);
+	device.read(adr_first + FPGA_RESET_USERLM32_GET, EB_DATA32, &status);
 	return (uint32_t)status;
 }
 

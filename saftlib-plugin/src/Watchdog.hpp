@@ -29,11 +29,11 @@
 #endif
 #include <etherbone.h>
 
+#include "SdbDevice.hpp"
+
 namespace saftlib {
 
-class Watchdog {
-	etherbone::Device &device;
-	eb_address_t watchdog;
+class Watchdog : public SdbDevice {
 	eb_data_t watchdog_value;
 public:
 	Watchdog(etherbone::Device &device);

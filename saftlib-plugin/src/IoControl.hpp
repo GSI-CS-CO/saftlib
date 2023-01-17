@@ -31,12 +31,11 @@
 
 #include "Io.hpp"
 #include "SerdesClockGen.hpp"
+#include "SdbDevice.hpp"
 
 namespace saftlib {
 
-class IoControl {
-	etherbone::Device &device;
-
+class IoControl : public SdbDevice {
 	SerdesClockGen clkgen;
 
 	std::vector<Io> ios;

@@ -29,13 +29,11 @@
 #endif
 #include <etherbone.h>
 
-
+#include "SdbDevice.hpp"
 
 namespace saftlib {
 
-class Reset {
-	etherbone::Device &device;
-	eb_address_t reset;
+class Reset : public SdbDevice {
 public:
 	Reset(etherbone::Device &device);
 	/// @brief retrigger reset watchdog. 

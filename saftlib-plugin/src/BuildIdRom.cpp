@@ -30,18 +30,10 @@ namespace saftlib {
 #define BUILD_ID_ROM_VENDOR_ID 0x00000651
 #define BUILD_ID_ROM_DEVICE_ID 0x2d39fa8b
 
-BuildIdRom::BuildIdRom(etherbone::Device &dev) 
-	: device(dev)
+BuildIdRom::BuildIdRom(etherbone::Device &device) 
+	: SdbDevice(device, BUILD_ID_ROM_VENDOR_ID, BUILD_ID_ROM_DEVICE_ID)
 {
-	std::vector<sdb_device> infos_dev;
-	device.sdb_find_by_identity(BUILD_ID_ROM_VENDOR_ID, BUILD_ID_ROM_DEVICE_ID, infos_dev);
-
-	if (infos_dev.size() != 1) {
-		throw saftbus::Error(saftbus::Error::IO_ERROR, "No Build ID found");
-	}
-
-	info = (eb_address_t)infos_dev[0].sdb_component.addr_first;
-	setupGatewareInfo(info);
+	setupGatewareInfo(adr_first);
 }
 
 

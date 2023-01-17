@@ -92,20 +92,9 @@ void SerdesClockGen::CalcClockParameters(double hi, double lo, uint64_t phase, s
 #endif
 }
 
-SerdesClockGen::SerdesClockGen(etherbone::Device &dev) 
-	: device(dev)
+SerdesClockGen::SerdesClockGen(etherbone::Device &device) 
+	: SdbDevice(device, IO_SER_CLK_GEN_VENDOR_ID, IO_SER_CLK_GEN_PRODUCT_ID)
 {
-	std::vector<sdb_device> clkgen;
-	device.sdb_find_by_identity(IO_SER_CLK_GEN_VENDOR_ID, IO_SER_CLK_GEN_PRODUCT_ID, clkgen);
-
-	if (clkgen.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "No IO control module found");
-	}
-	if (clkgen.size() > 1) {
-		std::cerr << "More than one CLK_GEN module found, take the first one" << std::endl;
-	}
-
-	clkgen_address = clkgen[0].sdb_component.addr_first;
 }
 
 bool SerdesClockGen::StartClock(int io_channel, int io_index, double high_phase, double low_phase, uint64_t phase_offset) { 
@@ -140,14 +129,14 @@ bool SerdesClockGen::ConfigureClock(int io_channel, int io_index, double high_ph
 
 	/* Write values to clock generator */
 	cycle.open(device);
-	cycle.write(clkgen_address + eSCK_selr,      EB_DATA32, io_index);
-	cycle.write(clkgen_address + eSCK_perr,      EB_DATA32, control.period_integer);
-	cycle.write(clkgen_address + eSCK_perhir,    EB_DATA32, control.period_high);
-	cycle.write(clkgen_address + eSCK_fracr,     EB_DATA32, control.period_fraction);
-	cycle.write(clkgen_address + eSCK_normmaskr, EB_DATA32, control.bit_pattern_normal);
-	cycle.write(clkgen_address + eSCK_skipmaskr, EB_DATA32, control.bit_pattern_skip);
-	cycle.write(clkgen_address + eSCK_phofslr,   EB_DATA32, (uint32_t)(control.phase_offset));
-	cycle.write(clkgen_address + eSCK_phofshr,   EB_DATA32, (uint32_t)(control.phase_offset >> 32));
+	cycle.write(adr_first + eSCK_selr,      EB_DATA32, io_index);
+	cycle.write(adr_first + eSCK_perr,      EB_DATA32, control.period_integer);
+	cycle.write(adr_first + eSCK_perhir,    EB_DATA32, control.period_high);
+	cycle.write(adr_first + eSCK_fracr,     EB_DATA32, control.period_fraction);
+	cycle.write(adr_first + eSCK_normmaskr, EB_DATA32, control.bit_pattern_normal);
+	cycle.write(adr_first + eSCK_skipmaskr, EB_DATA32, control.bit_pattern_skip);
+	cycle.write(adr_first + eSCK_phofslr,   EB_DATA32, (uint32_t)(control.phase_offset));
+	cycle.write(adr_first + eSCK_phofshr,   EB_DATA32, (uint32_t)(control.phase_offset >> 32));
 	cycle.close();
 
 	if ((low_phase == 0.0) && (high_phase == 0.0) && (phase_offset == 0)) { return false; }

@@ -29,23 +29,31 @@
 
 namespace saftlib {
 
-    SdbDevice::SdbDevice(etherbone::Device &dev, uint32_t VENDOR_ID, uint32_t DEVICE_ID) 
-        : device(dev)
-    {
+	SdbDevice::SdbDevice(etherbone::Device &dev, uint32_t VENDOR_ID, uint32_t DEVICE_ID, bool throw_if_not_found) 
+		: device(dev)
+	{
 		std::vector<sdb_device> devs;
 		device.sdb_find_by_identity(VENDOR_ID, DEVICE_ID, devs);
 
 		if (devs.size() < 1) {
 			std::ostringstream msg;
 			msg << "no SDB device with VENDOR_ID=0x" << std::hex << std::setw(8) << std::setfill('0') << VENDOR_ID 
-			    <<               " and DEVICE_ID=0x" << std::hex << std::setw(8) << std::setfill('0') << DEVICE_ID;
-			throw saftbus::Error(saftbus::Error::FAILED, msg.str());
+				<<               " and DEVICE_ID=0x" << std::hex << std::setw(8) << std::setfill('0') << DEVICE_ID;
+
+			if (throw_if_not_found) {
+				throw saftbus::Error(saftbus::Error::FAILED, msg.str());
+			}
+			adr_first = 0;
+			return;
 		}
 		if (devs.size() > 1) {
 			std::cerr << "more than one SDB device found on hardware, taking the first one" << std::endl;
 		}
 		adr_first = static_cast<eb_address_t>(devs[0].sdb_component.addr_first);
-    }
+	}
+
+	SdbDevice::~SdbDevice() {
+	}
 
 
 }

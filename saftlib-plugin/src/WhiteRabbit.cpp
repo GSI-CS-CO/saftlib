@@ -40,25 +40,16 @@ namespace saftlib {
 #define WR_PPS_DEVICE_ID        0xde0d8ced
 
 
-WhiteRabbit::WhiteRabbit(etherbone::Device &dev)
-	: device(dev)
+WhiteRabbit::WhiteRabbit(etherbone::Device &device)
+	: SdbDevice(device, WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID)
 {
-	std::vector<sdb_device> pps_dev;
-	device.sdb_find_by_identity(WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID, pps_dev);
-	if (pps_dev.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "no WR-PPS device found on hardware");
-	}
-	if (pps_dev.size() > 1) {
-		std::cerr << "more than one WR-PPS device found on hardware, taking the first one" << std::endl;
-	}
-	pps = static_cast<eb_address_t>(pps_dev[0].sdb_component.addr_first);
 	getLocked();
 }
 
 bool WhiteRabbit::getLocked() const
 {
 	eb_data_t data;
-	device.read(pps + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+	device.read(adr_first + WR_PPS_GEN_ESCR, EB_DATA32, &data);
 	bool newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
 
 	/* Update signal */
