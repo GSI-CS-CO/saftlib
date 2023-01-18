@@ -29,27 +29,6 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 	}
 } 
 
-static bool inject_event() {
-	static int count = 0;
-	++count;
-	auto now = tr->CurrentTime();
-	start = std::chrono::steady_clock::now();
-	tr->InjectEvent(0xaffe, 0x0, now);
-	if (count < 10000) {
-		return true;
-	} else {
-		std::ofstream hist("histogram.dat");
-
-		for (unsigned i = 0 ; i < histogram.size() ; ++i) {
-			hist << i << " " << histogram[i] << std::endl;
-		}
-		hist.close();
-		exit(0);
-		// saftbus::Loop::get_default().quit();
-	}
-	return false;
-}
-
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
 		std::cerr << "usage: " << argv[0] << " <eb-device>" << std::endl;
@@ -69,8 +48,19 @@ int main(int argc, char *argv[]) {
 		condition->setAcceptDelayed(true);
 		condition->SigAction.connect(sigc::ptr_fun(&on_action));
 
-		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(std::bind(inject_event), std::chrono::milliseconds(1));
-		saftbus::Loop::get_default().run();
+		for (int i = 0; i < 10000; ++i) {
+			auto now = tr->CurrentTime();
+			start = std::chrono::steady_clock::now();
+			tr->InjectEvent(0xaffe, 0x0, now);
+			saftbus::Loop::get_default().iteration(true);
+			//saftbus::SignalGroup::get_global().wait_for_signal();
+		}
+
+		std::ofstream hist("histogram.dat");
+		for (unsigned i = 0 ; i < histogram.size() ; ++i) {
+			hist << i << " " << histogram[i] << std::endl;
+		}
+
 	} catch (std::runtime_error &e ) {
 		std::cerr << "exception: " << e.what() << std::endl;
 	}
