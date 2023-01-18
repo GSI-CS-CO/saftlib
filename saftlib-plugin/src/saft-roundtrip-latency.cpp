@@ -1,61 +1,67 @@
-#ifndef ETHERBONE_THROWS
-#define ETHERBONE_THROWS 1
-#define __STDC_FORMAT_MACROS
-#define __STDC_CONSTANT_MACROS
-#endif
-#include <etherbone.h>
-
-#include "SAFTd.hpp"
-#include "Mailbox.hpp"
-#include "OpenDevice.hpp"
-
-#include <saftbus/loop.hpp>
+#include "SAFTd_Proxy.hpp"
+#include "TimingReceiver_Proxy.hpp"
+#include "SoftwareActionSink_Proxy.hpp"
+#include "SoftwareCondition_Proxy.hpp"
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <exception>
+#include <chrono>
+#include <map>
 
-struct LM32testbench : public saftlib::OpenDevice
-                     , public saftlib::Mailbox 
+std::chrono::time_point<std::chrono::steady_clock> start, stop;
+
+std::vector<int> histogram(10000);
+
+std::shared_ptr<saftlib::SAFTd_Proxy>          saftd;
+std::shared_ptr<saftlib::TimingReceiver_Proxy> tr;
+
+
+static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-	std::unique_ptr<Mailbox::Slot> msi_slot_to_this_program;
-
-	LM32testbench(saftlib::SAFTd &saftd, const std::string &eb_path) 
-		: OpenDevice(saftd.get_etherbone_socket(), eb_path, 10, &saftd)
-		, Mailbox(OpenDevice::device)
-	{
-		eb_address_t msi_adr_to_this_program = saftd.request_irq(*this, std::bind(&LM32testbench::receiveMSI,this, std::placeholders::_1));
-		msi_slot_to_this_program = ConfigureSlot(msi_adr_to_this_program);
-		std::cerr << std::hex << "msi_adr of host: 0x" << msi_adr_to_this_program << std::dec << std::endl;
-		//std::cerr << "slot to host: " << msi_slot_to_this_program << std::endl;
+	stop = std::chrono::steady_clock::now();
+	std::chrono::nanoseconds duration = stop-start;
+	// std::cerr << "on_action " << duration.count() << std::endl;
+	int us = duration.count()/1000;
+	if (us >= 0 && us < (int)histogram.size()) {
+		histogram[us]++;
 	}
-	bool triggerMSI() {	
-		static int cnt = 0;
-		std::cerr << "triggerMSI: " << std::dec << cnt << std::endl;
-		msi_slot_to_this_program->Use(cnt++);
-		return true;
-	}
-	void receiveMSI(eb_data_t data) { 
-		std::cerr << "receiveMSI:     " << std::dec << data <<  std::endl;
-	}
-
-};
+} 
 
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
-		std::cerr << "usage: " << argv[0] << " <eb-device>" << std::endl;
+		std::cerr << "usage: " << argv[0] << " <saftlib-devic>" << std::endl;
 		return 1;
 	}
-	saftlib::SAFTd saftd;
-
 	try {
+		saftd = saftlib::SAFTd_Proxy::create("/de/gsi/saftlib");
+		tr    = saftlib::TimingReceiver_Proxy::create("/de/gsi/saftlib/tr0");
 
-		LM32testbench testbench(saftd, argv[1]);
-		// testbench.triggerMSI();
+		auto software_action_sink_object_path = tr->NewSoftwareActionSink("");
+		auto software_action_sink             = saftlib::SoftwareActionSink_Proxy::create(software_action_sink_object_path);
+		auto condition_object_path            = software_action_sink->NewCondition(true, 0xaffe,-1,0);
+		auto condition                        = saftlib::SoftwareCondition_Proxy::create(condition_object_path);
+		condition->setAcceptEarly(true);
+		condition->setAcceptLate(true);
+		condition->setAcceptConflict(true);
+		condition->setAcceptDelayed(true);
+		condition->SigAction.connect(sigc::ptr_fun(&on_action));
 
-		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(std::bind(&LM32testbench::triggerMSI,&testbench), std::chrono::milliseconds(1000));
+		for (int i = 0; i < 10000; ++i) {
+			// std::cerr << "blub" << std::endl;
+			auto now = tr->CurrentTime();
+			start = std::chrono::steady_clock::now();
+			tr->InjectEvent(0xaffe, 0x0, now);
+			// saftbus::Loop::get_default().iteration(true);
+			saftbus::SignalGroup::get_global().wait_for_signal();
+		}
 
-		saftbus::Loop::get_default().run();
+		std::ofstream hist("histogram_saftbus.dat");
+		for (unsigned i = 0 ; i < histogram.size() ; ++i) {
+			hist << i << " " << histogram[i] << std::endl;
+		}
+
 	} catch (std::runtime_error &e ) {
 		std::cerr << "exception: " << e.what() << std::endl;
 	}

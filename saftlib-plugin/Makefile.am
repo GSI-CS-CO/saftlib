@@ -338,7 +338,7 @@ saft_lcd_SOURCES = src/saft-lcd.cpp
 saft_standalone_mbox_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
 saft_standalone_mbox_SOURCES = src/saft-standalone-mbox.cpp
 
-saft_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la
+saft_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
 saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
 
 saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) -lsaftbus-standalone lib@PACKAGE@-service.la

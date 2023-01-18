@@ -26,15 +26,17 @@ int main(int argc, char *argv[]) {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > > plugins_and_args;
 	for (int i = 1; i < argc; ++i) {
+		// std::cerr << argv[i] << std::endl;
 		std::string argvi(argv[i]);
-		bool argvi_is_plugin = (argvi.find(".la") == argvi.size()-3);
+		bool argvi_is_plugin = //(argvi.find(".la") == argvi.size()-3) || 
+		                       (argvi.find(".so") == argvi.size()-3);
 		if (argvi_is_plugin) {
-			//===std::cerr << argvi << "is plugin name" << std::endl;
+			// std::cerr << argvi << "is plugin name" << std::endl;
 			plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
 		} else {
-			//===std::cerr << argvi << "is argument" << std::endl;
+			// std::cerr << argvi << "is argument" << std::endl;
 			if (plugins_and_args.empty()) {
-				//===std::cerr << "no plugin specified (these are files ending with .la)" << std::endl;
+				// std::cerr << "no plugin specified (these are files ending with .la or .so)" << std::endl;
 				return 1;
 			} else {
 				plugins_and_args.back().second.push_back(argvi);
