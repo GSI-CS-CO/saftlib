@@ -24,7 +24,7 @@
 #include <iomanip>
 #include <cstddef>
 #include <cassert>
-
+#include <cstddef>
 
 template<size_t MAX_CHUNCKS, size_t CHUNCKSIZE>
 class ChunckAllocatorRT {
@@ -96,7 +96,7 @@ private:
 		char buffer[CHUNCKSIZE];
 		size_t index;
 	};
-	alignas(std::max_align_t) Chunck chuncks[MAX_CHUNCKS];
+	alignas(max_align_t) Chunck chuncks[MAX_CHUNCKS];
 	size_t indices[MAX_CHUNCKS];
 	size_t allocated_chuncks;
 };
