@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <sstream>
 
 #define LM32_RAM_USER_VENDOR      0x0651             // vendor ID
 #define LM32_RAM_USER_PRODUCT     0x54111351         // product ID
