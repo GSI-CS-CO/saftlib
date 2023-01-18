@@ -32,7 +32,8 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <ltdl.h>
+// #include <ltdl.h>
+#include <dlfcn.h>
 
 // @saftbus-export
 #include "LM32Firmware.hpp"
@@ -60,7 +61,8 @@ class LM32Cluster {
 	std::vector<std::unique_ptr<LM32Firmware> > firmware_drivers;
 
 	struct FirmwarePlugin {
-		lt_dlhandle handle;
+		// lt_dlhandle handle;
+		void * handle;
 		attach_firmware_driver_function attach_firmware_driver;
 	};
 

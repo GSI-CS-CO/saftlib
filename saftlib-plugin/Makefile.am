@@ -24,7 +24,7 @@ lib_LTLIBRARIES = \
 # @PACKAGE@ is substituded with the string given to AC_INIT([...])
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
 lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) $(SIGCPP_CFLAGS)
-lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)  -lltdl
+lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)  #-lltdl
 lib@PACKAGE@_service_la_SOURCES =\
 	src/build.cpp                 \
 	src/Time.cpp                   \

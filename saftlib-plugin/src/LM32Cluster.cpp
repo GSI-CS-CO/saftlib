@@ -59,11 +59,11 @@ LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver
 
 	std::cerr << "found " << dpram_lm32.size() << " lm32 cpus" << std::endl;
 
-	int result = lt_dlinit();
+	int result = 0;//lt_dlinit();
 	assert(result == 0);
 }
 LM32Cluster::~LM32Cluster() {
-	int result = lt_dlexit();
+	int result = 0;//lt_dlexit();
 	assert(result == 0);
 }
 
@@ -72,16 +72,19 @@ void LM32Cluster::load_plugin(const std::string &filename)
 	auto plugin = plugins.find(filename);
 	if (plugin != plugins.end()) {
 		// open the file
-		lt_dlhandle handle = lt_dlopen(filename.c_str());
+		// lt_dlhandle handle = lt_dlopen(filename.c_str());
+		void * handle = dlopen(filename.c_str(), RTLD_NOW|RTLD_GLOBAL);
 		if (handle == nullptr) {
 			std::ostringstream msg;
 			msg << "cannot load firmware driver plugin: failed to open file " << filename;
 			throw std::runtime_error(msg.str());
 		}
 		// load the function pointer
-		attach_firmware_driver_function function = (attach_firmware_driver_function)lt_dlsym(handle, "attach_firmware_driver");
+		// attach_firmware_driver_function function = (attach_firmware_driver_function)lt_dlsym(handle, "attach_firmware_driver");
+		attach_firmware_driver_function function = (attach_firmware_driver_function)dlsym(handle, "attach_firmware_driver");
 		if (function == nullptr) {
-			lt_dlclose(handle);
+			// lt_dlclose(handle);
+			dlclose(handle);
 			throw std::runtime_error("cannot load plugin because symbol \"attach_firmware_driver\" cannot be loaded");
 		}
 		plugins[filename].handle                 = handle;
