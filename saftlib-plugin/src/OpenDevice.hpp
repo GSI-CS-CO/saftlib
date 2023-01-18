@@ -59,6 +59,11 @@ protected:
 	etherbone::Device device;
 
 public:
+	/// @brief open given etherbone_path on given socket. 
+	/// @param socket the etherbone Socket
+	/// @param etherbone_path path of the etherbone device
+	/// @param polling_interval_ms in case of hardware without native MSIs
+	/// @param saftd must be a valid pointer if MSIs are used
 	OpenDevice(const etherbone::Socket &socket, const std::string& etherbone_path, int polling_interval_ms = 1, SAFTd *saftd = nullptr);
 	virtual ~OpenDevice();
 

@@ -22,7 +22,8 @@
 #include "service.hpp"
 #include "loop.hpp"
 
-#include <ltdl.h>
+// #include <ltdl.h> // need libltdl for this
+#include <dlfcn.h>
 
 #include <cassert>
 #include <iostream>
@@ -34,18 +35,21 @@ namespace saftbus {
 	extern "C" typedef void (*create_services_function) (saftbus::Container *container, const std::vector<std::string> &args);
 
 	struct LibraryLoader::Impl {
-		lt_dlhandle handle;
+		// lt_dlhandle handle;
+		void *handle;
 		create_services_function create_services;
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
 		: d(new Impl)
 	{
-		int result = lt_dlinit();
+		int result = 0;//lt_dlinit();
 		assert(result == 0);
 
 
-		d->handle = lt_dlopen(so_filename.c_str());
+		// d->handle = lt_dlopen(so_filename.c_str());
+		d->handle = dlopen(so_filename.c_str(), RTLD_NOW|RTLD_GLOBAL);
+
 		if (d->handle == nullptr) {
 			std::ostringstream msg;
 			msg << "cannot load plugin: fail to open file " << so_filename;
@@ -55,9 +59,11 @@ namespace saftbus {
 		}
 
 		// load the function pointers
-		d->create_services = (create_services_function)lt_dlsym(d->handle,"create_services");
+		// d->create_services = (create_services_function)lt_dlsym(d->handle,"create_services");
+		d->create_services = (create_services_function)dlsym(d->handle,"create_services");
 		if (d->create_services == nullptr) {
-			lt_dlclose(d->handle);
+			// lt_dlclose(d->handle);
+			dlclose(d->handle);
 			throw std::runtime_error("cannot load plugin because symbol \"create_services\" cannot be loaded");
 		}
 	}
@@ -74,9 +80,10 @@ namespace saftbus {
 		saftbus::Loop::get_default().clear(); 
 
 		if (d->handle != nullptr) {
-			lt_dlclose(d->handle);
+			// lt_dlclose(d->handle);
+			dlclose(d->handle);
 		}		
-		int result = lt_dlexit();
+		int result = 0;//lt_dlexit();
 		assert(result == 0);
 		//===std::cerr << "lt_dlexit was successful" << std::endl;
 	}

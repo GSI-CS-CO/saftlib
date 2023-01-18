@@ -42,7 +42,7 @@ bin_PROGRAMS = \
 	saftbus-gen
 
 saftbusd_LDFLAGS = -Wl,--export-dynamic 
-saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la libsaftbus-server.la -lltdl
+saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la libsaftbus-server.la #-lltdl
 saftbusd_SOURCES = \
 	src/saftbusd.cpp 
 
