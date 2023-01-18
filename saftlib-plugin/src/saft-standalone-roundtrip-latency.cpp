@@ -22,7 +22,7 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 {
 	stop = std::chrono::steady_clock::now();
 	std::chrono::nanoseconds duration = stop-start;
-	std::cerr << "on_action " << duration.count() << std::endl;
+	// std::cerr << "on_action " << duration.count() << std::endl;
 	int us = duration.count()/1000;
 	if (us >= 0 && us < (int)histogram.size()) {
 		histogram[us]++;
@@ -32,10 +32,10 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 static bool inject_event() {
 	static int count = 0;
 	++count;
-	start = std::chrono::steady_clock::now();
 	auto now = tr->CurrentTime();
+	start = std::chrono::steady_clock::now();
 	tr->InjectEvent(0xaffe, 0x0, now);
-	if (count < 100) {
+	if (count < 10000) {
 		return true;
 	} else {
 		std::ofstream hist("histogram.dat");
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 		condition->setAcceptDelayed(true);
 		condition->SigAction.connect(sigc::ptr_fun(&on_action));
 
-		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(std::bind(inject_event), std::chrono::milliseconds(10));
+		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(std::bind(inject_event), std::chrono::milliseconds(1));
 		saftbus::Loop::get_default().run();
 	} catch (std::runtime_error &e ) {
 		std::cerr << "exception: " << e.what() << std::endl;
