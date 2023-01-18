@@ -21,6 +21,8 @@
 
 #include "Owned.hpp"
 
+#include <sstream>
+
 
 namespace saftlib {
 
