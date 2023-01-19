@@ -128,6 +128,9 @@ bool Output::ClockStatus(double &high_phase, double &low_phase, uint64_t &phase_
 bool Output::StopClock()
 {
 	ownerOnly();
+	clk_high_phase   = 0.0;
+	clk_low_phase    = 0.0;
+	clk_phase_offset = 0;
 	return io.StopClock();
 }
 
