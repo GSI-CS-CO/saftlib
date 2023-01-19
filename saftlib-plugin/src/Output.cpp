@@ -38,8 +38,10 @@ Output::Output(ECA &eca
      , unsigned channel
      , saftbus::Container *container)
 	: ActionSink(eca, output_object_path, io_.getName(), channel, io_.getIndexOut(), container), io(io_), partnerPath(input_partner_path)
+	, clk_low_phase(0.0)
+	, clk_high_phase(0.0)
+	, clk_phase_offset(0)
 {
-
 }
 
 std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)
@@ -108,7 +110,19 @@ bool Output::getSpecialPurposeOutAvailable() const
 bool Output::StartClock(double high_phase, double low_phase, uint64_t phase_offset)
 {
 	ownerOnly();
+	clk_high_phase   = high_phase;
+	clk_low_phase    = low_phase;
+	clk_phase_offset = phase_offset;
 	return io.StartClock(high_phase, low_phase, phase_offset);
+}
+
+bool Output::ClockStatus(double &high_phase, double &low_phase, uint64_t &phase_offset)
+{
+	high_phase   = clk_high_phase;
+	low_phase    = clk_low_phase;
+	phase_offset = clk_phase_offset;
+	if ((low_phase == 0.0) && (high_phase == 0.0) && (phase_offset == 0)) { return false; }
+	else                                                                  { return true; }
 }
 
 bool Output::StopClock()

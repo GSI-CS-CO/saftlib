@@ -105,6 +105,15 @@ class Output : public ActionSink
 		// @saftbus-export
 		bool StartClock(double high_phase, double low_phase, uint64_t phase_offset);
 
+
+		/// @brief Get the status of the clock generator
+		/// @return true if the clock is running
+		///
+		/// All parameters are in nanoseconds.
+		///
+		// @saftbus-export
+		bool ClockStatus(double &high_phase, double &low_phase, uint64_t &phase_offset);
+
 		/// @brief Stops the clock generator.
 		/// @return flase if the clock was stopped
 		///
@@ -202,6 +211,10 @@ class Output : public ActionSink
 	protected:
 		Io &io;
 		std::string partnerPath;
+
+		double   clk_low_phase;
+		double   clk_high_phase;
+		uint64_t clk_phase_offset;
 };
 
 }
