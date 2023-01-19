@@ -91,8 +91,8 @@ class SAFTd;
 /// SCUbusActionSink key, and as there is only one, it would be the 0th.
 ///
 class TimingReceiver : public OpenDevice
-                     , public WhiteRabbit
                      , public Watchdog
+                     , public WhiteRabbit
                      , public ECA
                      , public ECA_TLU
                      , public ECA_Event
