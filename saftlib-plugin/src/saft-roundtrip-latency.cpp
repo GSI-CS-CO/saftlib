@@ -27,7 +27,10 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 
 int main(int argc, char *argv[]) {
 	if (argc != 4) {
-		std::cerr << "usage: " << argv[0] << " <eb-device> <number-of-measurements> <histogram-filename>" << std::endl;
+		std::cerr << "Measure several times the duration from InjectEvent until callback" << std::endl;
+		std::cerr << "function and create a histogram of the measurment results" << std::endl;
+		std::cerr << "usage: " << argv[0] << " <saftlib-device> <number-of-measurements> <histogram-filename>" << std::endl;
+		std::cerr << "   example: " << argv[0] << " tr0 1000 histogram.dat" << std::endl;
 		return 1;
 	}
 	try {

@@ -45,8 +45,8 @@ namespace saftlib {
 
 TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string &eb_path, int polling_interval_ms, saftbus::Container *container)
 	: OpenDevice(saftd.get_etherbone_socket(), eb_path, polling_interval_ms, &saftd)
-	, WhiteRabbit(OpenDevice::device)
 	, Watchdog(OpenDevice::device)
+	, WhiteRabbit(OpenDevice::device)
 	, ECA(saftd, OpenDevice::device, saftd.getObjectPath() + "/" + n, container)
 	, ECA_TLU(OpenDevice::device, container)
 	, ECA_Event(OpenDevice::device, container)

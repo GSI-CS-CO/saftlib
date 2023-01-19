@@ -33,6 +33,9 @@ namespace saftlib {
 Watchdog::Watchdog(etherbone::Device &device) 
 	: SdbDevice(device, WATCHDOG_VENDOR_ID, WATCHDOG_DEVICE_ID)
 {
+    if (!aquire()) {
+        throw std::runtime_error("cannot aquire Watchdog");
+    }
 }
 
 bool Watchdog::aquire() {

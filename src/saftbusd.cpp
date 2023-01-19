@@ -20,7 +20,20 @@
 
 #include "loop.hpp"
 #include "server.hpp"
+#include "client.hpp"
 #include "chunck_allocator_rt.hpp"
+
+static bool saftd_already_running() 
+{
+  // if ClientConnection can be established, saftbus is already running
+  try {
+  	saftbus::ClientConnection test_connection;
+    return true;
+  } catch (...) {
+    return false;
+  }
+  return false;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -42,6 +55,11 @@ int main(int argc, char *argv[]) {
 				plugins_and_args.back().second.push_back(argvi);
 			}
 		}
+	}
+
+	if (saftd_already_running()) {
+		std::cerr << "saftbusd already running" << std::endl;
+		return 1;
 	}
 
 	saftbus::ServerConnection server_connection(plugins_and_args);
