@@ -14,17 +14,7 @@ PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
 #####################################
 # the following is needed to extract build info (relevant for src/build.cpp src/build.hpp version.h)
 #####################################
-AC_PATH_PROG([UNAME], [uname], [false])
-AC_PATH_PROG([LSB_RELEASE], [lsb_release], [false])
-AC_PATH_PROG([SW_VERS], [sw_vers], [false])
-AC_CACHE_CHECK([for operating system], [ac_cv_OS], [AS_CASE([`${UNAME} -s`],
-  [Linux], [AS_IF(["${LSB_RELEASE}" -d -s 2>/dev/null >/dev/null],
-                  [os=`"${LSB_RELEASE}" -d -s`; os="${os%\"}"; ac_cv_OS="${os#\"}"],
-                  [AC_MSG_ERROR([lsb_release is required])])],
-  [Darwin], [AS_IF(["${SW_VERS}" 2>/dev/null >/dev/null],
-                   [ac_cv_OS="`${SW_VERS} -productName` `${SW_VERS} -productVersion`"],
-                   [AC_MSG_ERROR([sw_vers is required])])],
-  [ac_cv_OS="`${UNAME} -s`"])])
+AC_CACHE_CHECK([for operating system], [ac_cv_OS], [os=`cat /etc/os-release | grep NAME | head -n 1 | cut -d"=" -f2`; os="${os%\"}"; ac_cv_OS="${os#\"}" ])
 AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OS"], [The operating system of the build system])
 AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the build system])
 AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
