@@ -3,5 +3,6 @@
 
 #include <saftbus/error.hpp>
 #include <WrMilGateway_Proxy.hpp>
+#include <CommonFunctions.hpp>
 
 #endif

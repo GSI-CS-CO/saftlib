@@ -3,5 +3,6 @@
 
 #include <saftbus/error.hpp>
 #include <SoftwareCondition_Proxy.hpp>
+#include <CommonFunctions.hpp>
 
 #endif

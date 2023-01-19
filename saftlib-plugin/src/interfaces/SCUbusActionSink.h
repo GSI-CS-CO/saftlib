@@ -3,5 +3,6 @@
 
 #include <saftbus/error.hpp>
 #include <SCUbusActionSink_Proxy.hpp>
+#include <CommonFunctions.hpp>
 
 #endif

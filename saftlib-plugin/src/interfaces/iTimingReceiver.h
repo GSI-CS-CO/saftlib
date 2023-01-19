@@ -3,5 +3,6 @@
 
 #include <saftbus/error.hpp>
 #include <TimingReceiver_Proxy.hpp>
+#include <CommonFunctions.hpp>
 
 #endif

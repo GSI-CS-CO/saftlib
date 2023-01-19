@@ -3,5 +3,6 @@
 
 #include <saftbus/error.hpp>
 #include <BurstGenerator_Proxy.hpp>
+#include <CommonFunctions.hpp>
 
 #endif

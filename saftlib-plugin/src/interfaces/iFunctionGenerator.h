@@ -3,5 +3,6 @@
 
 #include <saftbus/error.hpp>
 #include <FunctionGenerator_Proxy.hpp>
+#include <CommonFunctions.hpp>
 
 #endif
