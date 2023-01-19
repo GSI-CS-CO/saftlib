@@ -236,6 +236,7 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/LM32Firmware_Proxy.hpp                                  \
 	src/TimingReceiver_Proxy.hpp                                 \
 	src/CommonFunctions.hpp                                      \
+	src/interfaces/saftlib.h                                     \
 	src/interfaces/BurstGenerator.h                              \
 	src/interfaces/SAFTd.h                                       \
 	src/interfaces/iDevice.h                                     \
