@@ -14,8 +14,26 @@ EXTRA_DIST += src/software-tr.sdb
 dist_bin_SCRIPTS = src/saftd
 
 
-BUILT_SOURCES = version.h
 .PHONY: version.h # causes build.cpp to be rebuilt every run
+BUILT_SOURCES = version.h \
+	src/Owned_Service.cpp              \
+	src/SAFTd_Service.cpp                \
+	src/Condition_Service.cpp              \
+	src/ActionSink_Service.cpp               \
+	src/SoftwareCondition_Service.cpp          \
+	src/SoftwareActionSink_Service.cpp           \
+	src/SCUbusCondition_Service.cpp                \
+	src/SCUbusActionSink_Service.cpp                 \
+	src/EmbeddedCPUCondition_Service.cpp               \
+	src/EmbeddedCPUActionSink_Service.cpp                \
+	src/WbmCondition_Service.cpp                           \
+	src/WbmActionSink_Service.cpp                            \
+	src/Output_Service.cpp                                       \
+	src/OutputCondition_Service.cpp                              \
+	src/Input_Service.cpp                                        \
+	src/ECA_Event.cpp                                            \
+	src/LM32Firmware_Service.cpp                                 \
+	src/TimingReceiver_Service.cpp                               
 
 
 lib_LTLIBRARIES = \
@@ -264,6 +282,7 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/interfaces/OutputCondition.h                             \
 	src/interfaces/iCondition.h                                  \
 	src/interfaces/iOutputCondition.h
+
 
 if GIT_TREE
 version.h:
