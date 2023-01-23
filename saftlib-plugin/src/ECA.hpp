@@ -118,7 +118,7 @@ public:
 	/// It is not checked if WhiteRabbit core is locked or not.
 	///
 	// @saftbus-export
-	uint64_t ReadRawCurrentTime();
+	uint64_t ReadRawCurrentTime() const;
 	
 	/// @brief        Create a new SoftwareActionSink.
 	/// @param name   A name for the SoftwareActionSink. Can be left blank.

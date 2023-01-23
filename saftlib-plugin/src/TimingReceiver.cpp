@@ -53,6 +53,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
 	, Reset(OpenDevice::device)
+	, Mailbox(OpenDevice::device)
 	, LM32Cluster(OpenDevice::device, this)
 	, io_control(OpenDevice::device)
 	, object_path(saftd.getObjectPath() + "/" + n)
@@ -144,7 +145,7 @@ std::string TimingReceiver::getName() const
 	return name;
 }
 
-saftlib::Time TimingReceiver::CurrentTime()
+saftlib::Time TimingReceiver::CurrentTime() const
 {
 	if (!WhiteRabbit::locked) {
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
@@ -152,7 +153,7 @@ saftlib::Time TimingReceiver::CurrentTime()
 	return saftlib::makeTimeTAI(ReadRawCurrentTime());
 }
 
-void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time)
+void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time) const
 {
 	// std::cerr << "TimingReceiver::InjectEvent" << std::endl;
 	ECA_Event::InjectEventRaw(event, param, time.getTAI());

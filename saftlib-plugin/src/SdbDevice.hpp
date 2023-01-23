@@ -31,6 +31,18 @@
 
 namespace saftlib {
 
+/// @brief SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers.
+/// 
+/// This class is supposed to be a base class of all driver classes that interact with a single SDB device 
+/// on the hardware. Deriving from this class avoids to rewrite the boilerplate code to identify a single 
+/// device. However, it does not support the case when multiple devices with same VENDOR_ID and DEVICE_ID 
+/// exist. This class always uses the first device listed if more then one exists. It throws an exception 
+/// if the device is not found at all.
+///
+/// @param dev the etherbone::Device 
+/// @param VENDOR_ID vendor id of the device
+/// @param DEVICE_ID device id of the device
+/// @param throw_if_not_found in some cases an exception is not desired in which case this parameter can be set to false.
 class SdbDevice {
 	friend class SAFTd; // SAFTd can use an MsiDevice to register a callbak on MSIs
 protected:

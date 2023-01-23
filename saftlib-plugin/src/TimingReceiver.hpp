@@ -38,6 +38,7 @@
 #include "BuildIdRom.hpp"
 #include "TempSensor.hpp"
 #include "Reset.hpp"
+#include "Mailbox.hpp"
 #include "LM32Cluster.hpp"
 #include "IoControl.hpp"
 
@@ -99,6 +100,7 @@ class TimingReceiver : public OpenDevice
                      , public BuildIdRom
                      , public TempSensor
                      , public Reset
+                     , public Mailbox
                      , public LM32Cluster {
 public:
 	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
@@ -128,7 +130,7 @@ public:
 	/// milliseconds behind the true time.
 	///
 	// @saftbus-export
-	saftlib::Time CurrentTime();
+	saftlib::Time CurrentTime() const;
 
 	/// @brief        Simulate the receipt of a timing event
 	/// @param event  The event identifier which is matched against Conditions
@@ -140,7 +142,7 @@ public:
 	/// desired behaviour without needing the data master to send anything.
 	///
 	// @saftbus-export
-	void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time);
+	void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time) const;
 
 
 	/// @brief List of all object instances of various hardware.

@@ -35,7 +35,7 @@ ECA_Event::ECA_Event(etherbone::Device &device, saftbus::Container *container)
 {
 }
 
-void ECA_Event::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time)
+void ECA_Event::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time) const
 {
 	etherbone::Cycle cycle;
 

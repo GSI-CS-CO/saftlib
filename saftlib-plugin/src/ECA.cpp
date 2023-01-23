@@ -546,7 +546,7 @@ eb_address_t ECA::get_base_address()
 	return adr_first;
 }
 
-uint64_t ECA::ReadRawCurrentTime()
+uint64_t ECA::ReadRawCurrentTime() const 
 {
 	etherbone::Cycle cycle;
 	eb_data_t time1, time0, time2;

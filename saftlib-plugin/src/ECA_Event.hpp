@@ -56,7 +56,7 @@ public:
 	/// desired behaviour without needing the data master to send anything.
 	///
 	// @saftbus-export
-	void InjectEventRaw(uint64_t event, uint64_t param, uint64_t time);
+	void InjectEventRaw(uint64_t event, uint64_t param, uint64_t time) const;
 };
 
 
