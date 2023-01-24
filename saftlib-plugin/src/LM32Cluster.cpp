@@ -68,7 +68,7 @@ LM32Cluster::~LM32Cluster() {
 	assert(result == 0);
 }
 
-void LM32Cluster::load_plugin(const std::string &filename) 
+void LM32Cluster::load_fw_plugin(const std::string &filename) 
 {
 	auto plugin = plugins.find(filename);
 	if (plugin != plugins.end()) {

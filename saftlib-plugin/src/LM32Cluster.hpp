@@ -77,7 +77,11 @@ public:
 	LM32Cluster(etherbone::Device &device, TimingReceiver *tr);
 	~LM32Cluster();
 
-	void load_plugin(const std::string &filename);
+	/// @brief load firmware plugin
+	/// @param filename the filename of the so-file
+	/// 
+	// @saftbus-export
+	void load_fw_plugin(const std::string &filename);
 
 	/// @brief number of CPUs
 	/// @return number of instanciated User LM32 Cores

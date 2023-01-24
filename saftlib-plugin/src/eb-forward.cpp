@@ -73,7 +73,7 @@ namespace saftlib {
 
 	bool EB_Forward::accept_connection(int condition)
 	{
-		std::cerr << "EB_Forward::accept_connection" << std::endl;
+		// std::cerr << "EB_Forward::accept_connection" << std::endl;
 		static std::vector<uint8_t> request;  // data from eb-tool
 		static std::vector<uint8_t> response; // data from device
 		request.clear();
@@ -189,7 +189,7 @@ namespace saftlib {
 
 	std::string EB_Forward::eb_forward_path()
 	{
-		return std::string(ptsname(_pts_fd));
+		return std::string(ptsname(_pts_fd)).substr(1);
 	}
 
 }
