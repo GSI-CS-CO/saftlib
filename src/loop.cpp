@@ -375,7 +375,7 @@ namespace saftbus {
 	}
 	IoSource::~IoSource() 
 	{
-		std::cout << "IOSource::~IOSource() " << pfd.fd << std::endl;
+		// std::cout << "IOSource::~IOSource() " << pfd.fd << std::endl;
 		remove_poll(&pfd);
 		if (all_fds.find(pfd.fd) == all_fds.end()) assert(false);
 		all_fds.erase(pfd.fd);

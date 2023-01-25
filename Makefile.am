@@ -25,14 +25,15 @@ libsaftbus_server_la_SOURCES = \
 	src/server.cpp        
 
 saftbus_include_HEADERS = \
-	src/loop.hpp            \
-	src/error.hpp            \
-	src/saftbus.hpp           \
-	src/client.hpp             \
-	src/service.hpp             \
-	src/plugins.hpp              \
+	src/loop.hpp           \
+	src/error.hpp           \
+	src/saftbus.hpp          \
+	src/client.hpp            \
+	src/service.hpp            \
+	src/plugins.hpp             \
+	src/global_allocator.hpp     \
 	src/chunck_allocator_rt.hpp   \
-	src/server.hpp    
+	src/server.hpp
 
 
 

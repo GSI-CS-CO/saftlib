@@ -21,7 +21,7 @@
 #include "loop.hpp"
 #include "server.hpp"
 #include "client.hpp"
-#include "chunck_allocator_rt.hpp"
+#include "global_allocator.hpp"
 
 static bool saftd_already_running() 
 {

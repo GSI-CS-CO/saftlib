@@ -40,7 +40,6 @@ public:
 	char* malloc(size_t size) {
 		assert(size <= CHUNCKSIZE);
 		assert(allocated_chuncks < MAX_CHUNCKS);
-		// std::cerr << "alloc chunck " << allocated_chuncks << std::endl;
 		return chuncks[indices[allocated_chuncks++]].buffer;
 	}
 
@@ -48,7 +47,6 @@ public:
 		assert(allocated_chuncks > 0);
 		assert(contains(ptr));
 		size_t index = (ptr-chuncks[0].buffer)/sizeof(Chunck);
-		// std::cerr << "freeing chunck " << index << std::endl;
 
 		size_t &a_idx = indices[chuncks[index].index];
 		size_t &b_idx = indices[allocated_chuncks-1];
@@ -100,68 +98,6 @@ private:
 	size_t indices[MAX_CHUNCKS];
 	size_t allocated_chuncks;
 };
-
-class Allocator {
-public:
-	Allocator() {
-		allocator_1 = new(::malloc(sizeof(ChunckAllocatorRT<1024,128>))) ChunckAllocatorRT<1024,128>;
-		allocator_2 = new(::malloc(sizeof(ChunckAllocatorRT<128,1024>))) ChunckAllocatorRT<128,1024>;
-		allocator_3 = new(::malloc(sizeof(ChunckAllocatorRT<64,16384>))) ChunckAllocatorRT<64,16384>;
-	}
-	~Allocator() {
-		::free(allocator_3);
-		::free(allocator_2);
-		::free(allocator_1);
-	}
-	char* malloc(size_t n) {
-		// std::cerr << "--------malloc----------" << std::endl;
-		// allocator_1->print_size();
-		// allocator_2->print_size();
-		// allocator_3->print_size();
-					 if (allocator_1->fits(n) && !allocator_1->full()) {
-			return allocator_1->malloc(n);
-		} else if (allocator_2->fits(n) && !allocator_2->full()) {
-			return allocator_2->malloc(n);
-		} else if (allocator_3->fits(n) && !allocator_3->full()) {
-			return allocator_3->malloc(n);
-		} else {
-			std::cerr << "HEAP!!!!!!!!!!!!!!!!!!! " << n << std::endl;
-			return reinterpret_cast<char*>(::malloc(n));
-		}
-	}
-	void free(char *ptr) {
-					 if (allocator_1->contains(ptr)) {
-			allocator_1->free(ptr);
-		} else if (allocator_2->contains(ptr)) {
-			allocator_2->free(ptr);
-		} else if (allocator_3->contains(ptr)) {
-			allocator_3->free(ptr);
-		} else {
-			::free(ptr);
-		}
-		// std::cerr << "--------free------------" << std::endl;
-		// allocator_1->print_size();
-		// allocator_2->print_size();
-		// allocator_3->print_size();
-	}
-private:
-	ChunckAllocatorRT<1024,128> *allocator_1;
-	ChunckAllocatorRT<128,1024> *allocator_2;
-	ChunckAllocatorRT<64,16384> *allocator_3;
-};
-
-
-static Allocator *get_allocator() {
-	static Allocator *allocator = new(::malloc(sizeof(*allocator))) Allocator;
-	return allocator;
-}
-void *operator new(std::size_t n) {
-	return get_allocator()->malloc(n);
-}
-void operator delete(void *p) {
-	char *ptr = reinterpret_cast<char*>(p);
-	get_allocator()->free(ptr);
-}
 
 #endif
 
