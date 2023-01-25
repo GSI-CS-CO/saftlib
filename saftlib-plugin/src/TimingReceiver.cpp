@@ -92,7 +92,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 				std::unique_ptr<Input_Service> service(new Input_Service(input.get()));
 				container->create_object(input_path, std::move(service));
 			}
-			addInput(std::move(input));
+			ECA_TLU::addInput(std::move(input));
 		}
 
 		// create output
@@ -103,7 +103,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 				std::unique_ptr<Output_Service> service(new Output_Service(output.get()));
 				container->create_object(output_path, std::move(service));
 			}
-			addActionSink(eca_channel_for_outputs, std::move(output));
+			ECA::addActionSink(eca_channel_for_outputs, std::move(output));
 		}
 	}
 

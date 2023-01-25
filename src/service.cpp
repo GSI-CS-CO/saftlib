@@ -237,7 +237,9 @@ namespace saftbus {
 				case 2: { // Container::load_plugin
 					std::string  so_filename;
 					received.get(so_filename);
-					bool function_call_result = d->load_plugin(so_filename);
+					std::vector<std::string> plugin_args;
+					received.get(plugin_args);
+					bool function_call_result = d->load_plugin(so_filename, plugin_args);
 					send.put(saftbus::FunctionResult::RETURN);
 					send.put(function_call_result);
 				} return;

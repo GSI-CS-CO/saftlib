@@ -178,8 +178,8 @@ namespace saftbus {
 		Container_Proxy(const std::string &object_path, saftbus::SignalGroup &signal_group, const std::vector<std::string> &interface_names = std::vector<std::string>());
 		static std::shared_ptr<Container_Proxy> create(const std::string &object_path="/saftbus", saftbus::SignalGroup &signal_group = saftbus::SignalGroup::get_global(), const std::vector<std::string> &interface_names = std::vector<std::string>());
 		bool signal_dispatch(int interface_no, int signal_no, saftbus::Deserializer &signal_content);
-		bool load_plugin(const std::string & so_filename);
-		bool remove_object(const std::string & object_path);
+		bool load_plugin(const std::string &so_filename, const std::vector<std::string> &plugin_args = std::vector<std::string>());
+		bool remove_object(const std::string &object_path);
 		void quit();
 		SaftbusInfo get_status();
 	private:

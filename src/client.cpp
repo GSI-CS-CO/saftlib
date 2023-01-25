@@ -447,11 +447,12 @@ namespace saftbus {
 		}
 		return false;
 	}
-	bool Container_Proxy::load_plugin(const std::string & so_filename	) {
+	bool Container_Proxy::load_plugin(const std::string & so_filename, const std::vector<std::string> &plugin_args) {
 		get_send().put(get_saftlib_object_id());
 		get_send().put(interface_no);
 		get_send().put(2); // function_no
 		get_send().put(so_filename);
+		get_send().put(plugin_args);
 		{
 			std::lock_guard<std::mutex> lock(get_client_socket());
 			get_connection().send(get_send());

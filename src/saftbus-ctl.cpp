@@ -54,38 +54,56 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 
 int main(int argc, char **argv)
 {
-	auto core_service_proxy = saftbus::Container_Proxy::create();
+	try {
 
-	if (argc > 1) {
-		for (int i = 1; i < argc; ++i) {
-			std::string argvi(argv[i]);
-			if (argvi == "-q") {
-				//===std::cerr << "call proxy->quit()" << std::endl;
-				core_service_proxy->quit();
-				//===std::cerr << "quit done" << std::endl;
-			} if (argvi == "-s") {
-				saftbus::SaftbusInfo saftbus_info = core_service_proxy->get_status();
-				print_status(saftbus_info);
-				return 0;
-			} else if (argvi == "-l") {
-				if ((i+=1) < argc) {
-					core_service_proxy->load_plugin(argv[i]);
+		auto container_proxy = saftbus::Container_Proxy::create();
+
+		if (argc > 1) {
+			for (int i = 1; i < argc; ++i) {
+				std::string argvi(argv[i]);
+				if (argvi == "-q") {
+					//===std::cerr << "call proxy->quit()" << std::endl;
+					container_proxy->quit();
+					//===std::cerr << "quit done" << std::endl;
+				} if (argvi == "-s") {
+					saftbus::SaftbusInfo saftbus_info = container_proxy->get_status();
+					print_status(saftbus_info);
+					return 0;
+				} else if (argvi == "-l") {
+					if ((++i) < argc) {
+						std::string so_filename = argv[i];
+						std::vector<std::string> plugin_args;
+						for (++i; i < argc; ++i) {
+							std::cerr << "add arg : " << argv[i] << std::endl;
+							plugin_args.push_back(argv[i]);
+						}
+						container_proxy->load_plugin(so_filename, plugin_args);
+						return 1;
+					} else {
+						throw std::runtime_error("expect so-filename after -l");
+					}
+				} else if (argvi == "-r") {
+					if ((i+=1) < argc) {
+						container_proxy->remove_object(argv[i]);
+					} else {
+						throw std::runtime_error("expect object_path -r");
+					}
 				} else {
-					throw std::runtime_error("expect la-filename after -l");
-				}
-			} else if (argvi == "-r") {
-				if ((i+=1) < argc) {
-					core_service_proxy->remove_object(argv[i]);
-				} else {
-					throw std::runtime_error("expect object_path -r");
+					std::string msg("unknown argument: ");
+					msg.append(argvi);
+					throw std::runtime_error(msg);
 				}
 			}
+		} else {
+			
+			for (int i=0; i<10; ++i) {
+				saftbus::SignalGroup::get_global().wait_for_signal();
+			}
 		}
-	} else {
-		
-		for (int i=0; i<10; ++i) {
-			saftbus::SignalGroup::get_global().wait_for_signal();
-		}
+
+	} catch (std::runtime_error &e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+		return 1;
 	}
 
 	return 0;
