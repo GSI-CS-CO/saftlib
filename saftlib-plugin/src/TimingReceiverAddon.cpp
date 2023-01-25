@@ -22,9 +22,6 @@
 
 namespace saftlib {
 
-class TimingReceiverAddon;
-
-
 TimingReceiverAddon::~TimingReceiverAddon() 
 {
 }

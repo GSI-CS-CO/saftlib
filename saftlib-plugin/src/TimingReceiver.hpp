@@ -158,8 +158,13 @@ public:
 	// @saftbus-export
 	std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
 
+	/// @brief extend the functionality of the TimingReceiver using an TiminReceiverAddon object
+	/// @param interface_name the name of the addon
+	/// @param addon an instance of a subclass of TimingReceiverAddon
 	void installAddon(const std::string &interface_name, TimingReceiverAddon* addon);
 
+	/// @brief access the SAFTd object that this TimingReceiver is attached to
+	/// @return the SAFTd object that this TimingReceiver is attached to
 	SAFTd& getSAFTd();
 
 private:

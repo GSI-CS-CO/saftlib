@@ -25,9 +25,18 @@
 #include <map>
 
 namespace saftlib {
-
-class Reset;
-
+/// @brief provide additional functionality for a TimingReciever 
+/// 
+/// By inheriting from this class, and loading an instance of it into a TimingReceiver
+/// object (using the TimingReceiver::installAddon method) it is possible to extend the 
+/// functionality of a TimingReceiver (while using its ressources) in a very general way. 
+/// This may be a firmware driver, interacting with one ore many LM32 cores, but 
+/// can also be something completetly different. 
+/// For example, take control over several IOs and implement a bit-bang serial protocol. 
+/// The addon mechanism imposes no artificial limits. 
+/// It passes a pointer to a TimingReceiver object to the TimingReceiverAddon constructor. 
+/// The only thing any Addon needs to do is provide a list of Interfaces and the 
+/// ObjectPaths such that a remote user can instanciate the services over saftubs proxies.
 class TimingReceiverAddon {
 public:
     virtual ~TimingReceiverAddon();
