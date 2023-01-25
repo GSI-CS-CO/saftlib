@@ -29,9 +29,10 @@
 #include <saftbus/loop.hpp>
 #include <saftbus/service.hpp>
 
+// direct base classes of TimingReceiver
 #include "OpenDevice.hpp"
-#include "WhiteRabbit.hpp"
 #include "Watchdog.hpp"
+#include "WhiteRabbit.hpp"
 #include "ECA.hpp"
 #include "ECA_TLU.hpp"
 #include "ECA_Event.hpp"
@@ -40,7 +41,10 @@
 #include "Reset.hpp"
 #include "Mailbox.hpp"
 #include "LM32Cluster.hpp"
+
+// classes used by TimingReceiver
 #include "IoControl.hpp"
+#include "TimingReceiverAddon.hpp"
 
 // @saftbus-include
 #include <Time.hpp>
@@ -154,8 +158,12 @@ public:
 	// @saftbus-export
 	std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
 
-private:
+	void installAddon(const std::string &interface_name, TimingReceiverAddon* addon);
 
+	SAFTd& getSAFTd();
+
+private:
+	SAFTd& saft_daemon;
 	IoControl io_control;
 
 
@@ -174,6 +182,8 @@ private:
 	unsigned polling_interval_ms;
 
 
+	// TimingReceiver doesn't own TimingreceiverAddons
+	std::map<std::string, TimingReceiverAddon*> addons;
 };
 
 } // namespace

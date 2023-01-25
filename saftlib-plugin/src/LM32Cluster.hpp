@@ -36,8 +36,6 @@
 #include <dlfcn.h>
 
 // @saftbus-export
-#include "LM32Firmware.hpp"
-// @saftbus-export
 #include <saftbus/service.hpp>
 
 namespace saftlib {
@@ -58,16 +56,6 @@ class LM32Cluster {
 
 	std::vector<eb_address_t>                   dpram_lm32;
 	std::vector<eb_address_t>                   dpram_lm32_last;
-	std::vector<std::unique_ptr<LM32Firmware> > firmware_drivers;
-
-	struct FirmwarePlugin {
-		// lt_dlhandle handle;
-		void * handle;
-		attach_firmware_driver_function attach_firmware_driver;
-	};
-
-	std::map<std::string, FirmwarePlugin> plugins;
-
 
 	unsigned num_cores;
 	unsigned ram_per_core;
@@ -76,12 +64,6 @@ class LM32Cluster {
 public:
 	LM32Cluster(etherbone::Device &device, TimingReceiver *tr);
 	~LM32Cluster();
-
-	/// @brief load firmware plugin
-	/// @param filename the filename of the so-file
-	/// 
-	// @saftbus-export
-	void load_fw_plugin(const std::string &filename);
 
 	/// @brief number of CPUs
 	/// @return number of instanciated User LM32 Cores
@@ -95,9 +77,6 @@ public:
 	/// To avoid halting the cpu inside a whishbone cycle, the ram is filled with jump instructions that jump to the same location.
 	// @saftbus-export
 	void safeHaltCpu(unsigned cpu_idx);
-
-
-	// void AttachFirwareDriver(unsigned idx, std::unique_ptr<LM32Firmware> &firmware_driver);
 };
 
 }

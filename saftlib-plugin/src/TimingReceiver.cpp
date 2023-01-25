@@ -55,6 +55,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, Reset(OpenDevice::device)
 	, Mailbox(OpenDevice::device)
 	, LM32Cluster(OpenDevice::device, this)
+	, saft_daemon(saftd)
 	, io_control(OpenDevice::device)
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
@@ -169,10 +170,23 @@ std::map< std::string, std::map< std::string, std::string > > TimingReceiver::ge
 	result["EmbeddedCPUActionSink"] = ECA::getEmbeddedCPUActionSinks();
 	result["Output"]                = ECA::getOutputs();
 	result["Input"]                 = ECA_TLU::getInputs();
+	for (auto &addon: addons) {
+		result[addon.first] = addon.second->getObjects();
+	}
 	
 	return result;
 }
 
+SAFTd& TimingReceiver::getSAFTd()
+{
+	return saft_daemon;
+}
+
+
+void TimingReceiver::installAddon(const std::string &interface_name, TimingReceiverAddon* addon)
+{
+	addons[interface_name] = addon;
+}
 
 
 } // namespace saftlib

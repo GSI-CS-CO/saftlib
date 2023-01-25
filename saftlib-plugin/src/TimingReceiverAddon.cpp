@@ -1,7 +1,6 @@
 /** Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
- *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
- *          Michael Reese <m.reese@gsi.de>
+ *  @author Michael Reese <m.reese@gsi.de>
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -19,32 +18,16 @@
  *******************************************************************************
  */
 
-#ifndef SAFTLIB_LM32FIRMWARE_HPP_
-#define SAFTLIB_LM32FIRMWARE_HPP_
-
-#ifndef ETHERBONE_THROWS
-#define ETHERBONE_THROWS 1
-#define __STDC_FORMAT_MACROS
-#define __STDC_CONSTANT_MACROS
-#endif
-#include <etherbone.h>
-
-#include <vector>
+#include "TimingReceiverAddon.hpp"
 
 namespace saftlib {
 
-class Reset;
+class TimingReceiverAddon;
 
-class LM32Firmware {
-    Reset &reset;
-    int cpu_idx;
-public:
-	LM32Firmware(Reset &rst, int idx);
-    // @saftbus-export
-    void LoadProgram(const std::string& bin_filename);
 
-};
-
+TimingReceiverAddon::~TimingReceiverAddon() 
+{
 }
 
-#endif
+
+} // namespace

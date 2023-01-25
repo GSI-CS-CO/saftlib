@@ -220,6 +220,15 @@ static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
     for (j = gatewareInfo.begin(); j != gatewareInfo.end(); j++) {
       std::cout << "  ---- " << j->second << std::endl;
     } // for j
+    if (pmode & PMODE_VERBOSE) {
+      std::map<std::string, std::map<std::string, std::string> > interfaces = aDevice->getInterfaces();
+      for (auto &interface: interfaces) {
+        std::cout << "Interface: " << interface.first << std::endl;
+        for (auto &name_objpath: interface.second) {
+          std::cout << "   " << std::setw(20) << name_objpath.first << " " << name_objpath.second << std::endl;
+        }
+      }
+    }
     std::cout <<std::endl;
   } //for i
 } // displayInfoHW

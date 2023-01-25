@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2022-2023 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Michael Reese <m.reese@gsi.de>
  *
@@ -18,26 +18,24 @@
  *******************************************************************************
  */
 
-#include "LM32Firmware.hpp"
-#include "Reset.hpp"
+#ifndef SAFTLIB_TIMING_RECEIVER_ADDON_HPP_
+#define SAFTLIB_TIMING_RECEIVER_ADDON_HPP_
 
-#include <saftbus/error.hpp>
-
-#include <iostream>
+#include <string>
+#include <map>
 
 namespace saftlib {
 
-class LM32Firmware;
+class Reset;
 
-LM32Firmware::LM32Firmware(Reset &rst, int idx) 
-	: reset(rst), cpu_idx(idx)
-{
+class TimingReceiverAddon {
+public:
+    virtual ~TimingReceiverAddon();
+
+    virtual std::map<std::string, std::string> getObjects() = 0;
+
+};
+
 }
 
-void LM32Firmware::LoadProgram(const std::string &bin_filename)
-{
-    
-}
-
-
-} // namespace
+#endif

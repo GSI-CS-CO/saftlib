@@ -35,7 +35,6 @@
 
 namespace saftlib {
 
-class LM32Firmware;
 
 LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver) 
 	: device(dev)
@@ -56,41 +55,10 @@ LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver
 	}
 
 	num_cores = dpram_lm32.size();
-	firmware_drivers.resize(num_cores);
 
 	std::cerr << "found " << dpram_lm32.size() << " lm32 cpus" << std::endl;
-
-	int result = 0;//lt_dlinit();
-	assert(result == 0);
 }
 LM32Cluster::~LM32Cluster() {
-	int result = 0;//lt_dlexit();
-	assert(result == 0);
-}
-
-void LM32Cluster::load_fw_plugin(const std::string &filename) 
-{
-	auto plugin = plugins.find(filename);
-	if (plugin != plugins.end()) {
-		// open the file
-		// lt_dlhandle handle = lt_dlopen(filename.c_str());
-		void * handle = dlopen(filename.c_str(), RTLD_NOW|RTLD_GLOBAL);
-		if (handle == nullptr) {
-			std::ostringstream msg;
-			msg << "cannot load firmware driver plugin: failed to open file " << filename;
-			throw std::runtime_error(msg.str());
-		}
-		// load the function pointer
-		// attach_firmware_driver_function function = (attach_firmware_driver_function)lt_dlsym(handle, "attach_firmware_driver");
-		attach_firmware_driver_function function = (attach_firmware_driver_function)dlsym(handle, "attach_firmware_driver");
-		if (function == nullptr) {
-			// lt_dlclose(handle);
-			dlclose(handle);
-			throw std::runtime_error("cannot load plugin because symbol \"attach_firmware_driver\" cannot be loaded");
-		}
-		plugins[filename].handle                 = handle;
-		plugins[filename].attach_firmware_driver = function;
-	}
 }
 
 unsigned LM32Cluster::getCpuCount()
@@ -122,17 +90,6 @@ void LM32Cluster::safeHaltCpu(unsigned cpu_idx)
 	tr->CpuReset(cpu_idx);
 	tr->CpuHalt(cpu_idx);
 }
-
-
-
-// void LM32Cluster::AttachFirwareDriver(unsigned idx, const std::string &filename)
-// {
-// 	if (idx >= 0 && idx <= num_cores) {
-// 		firmware_drivers[idx] = std::move(firmware_driver);
-// 	} else {
-// 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "invalid cpu index");
-// 	}
-// }
 
 
 } // namespace
