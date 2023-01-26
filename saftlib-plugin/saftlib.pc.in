@@ -8,5 +8,5 @@ Description: Simplified API for Timing
 Version: @VERSION@
 Requires: sigc++-2.0 >= 0.27.1
 Requires: saftbus
-Libs: -L${libdir} -lsaftd-proxy -lz
+Libs: -L${libdir} -lsaftd-proxy -lsaftd-service -lz
 Cflags: -I${includedir}
