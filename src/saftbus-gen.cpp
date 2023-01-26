@@ -1209,10 +1209,10 @@ void generate_proxy_header(const std::string &outputdirectory, ClassDefinition &
 	};
 
 	if (have_sigc_signals) {
-		header_out << "#include <functional>" << std::endl;	
+		header_out << "#include <sigc++/sigc++.h>" << std::endl;	
 	}
 	if (have_stdfunction_signals) {
-		header_out << "#include <sigc++/sigc++.h>" << std::endl;	
+		header_out << "#include <functional>" << std::endl;	
 	}
 	header_out << std::endl;
 
