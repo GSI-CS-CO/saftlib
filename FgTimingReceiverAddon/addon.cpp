@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 		saftlib::SAFTd saftd;
 		saftlib::TimingReceiver tr(saftd, "tr0", argv[1]);
 
-		SimpleFirmware simple_fw(&tr);
+		saftlib::SimpleFirmware simple_fw(&saftd, &tr);
 		tr.installAddon("SimpleFirmware", &simple_fw);
 
 		auto interfaces = tr.getInterfaces();

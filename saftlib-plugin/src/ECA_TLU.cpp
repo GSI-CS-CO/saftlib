@@ -46,7 +46,7 @@ ECA_TLU::~ECA_TLU() {
 				try {
 					container->remove_object(input->getObjectPath());
 				} catch (saftbus::Error &e) {
-					std::cerr << "removal attempt failed: " << e.what() << std::endl;
+					// std::cerr << "removal attempt failed: " << e.what() << std::endl;
 				}
 			}
 		}

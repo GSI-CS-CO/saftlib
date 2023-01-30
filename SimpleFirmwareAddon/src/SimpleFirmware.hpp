@@ -7,12 +7,13 @@
 
 #include <sigc++/sigc++.h>
 namespace saftlib {
-	class SimpleFirmware : public saftlib::TimingReceiverAddon
+	class SimpleFirmware : public TimingReceiverAddon
 	{
 		std::string object_path;
+		saftlib::SAFTd *saftd;
 		saftlib::TimingReceiver *tr;
 		int cnt;
-
+		saftbus::SourceHandle timeout_source;
 
 		std::unique_ptr<saftlib::Mailbox::Slot> cpu_msi_slot;
 		std::unique_ptr<saftlib::Mailbox::Slot> host_msi_slot;
@@ -21,8 +22,12 @@ namespace saftlib {
 		void receive_hw_msi(uint32_t value);
 		bool send();
 	public:
-		SimpleFirmware(saftlib::SAFTd *saftd, saftlib::TimingReceiver *tr);
-	    std::map<std::string, std::string> getObjects();
+		SimpleFirmware(saftlib::SAFTd *sd, saftlib::TimingReceiver *tr);
+		~SimpleFirmware();
+	    std::string getObjectPath();
+
+		std::map< std::string, std::string > getObjects();
+
 
 	    // @saftbus-export
 	    void start();

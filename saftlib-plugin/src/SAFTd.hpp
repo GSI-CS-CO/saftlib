@@ -171,6 +171,7 @@ namespace saftlib {
 		std::map<std::string, std::unique_ptr<TimingReceiver> > attached_devices;
 
 		std::map<eb_address_t, std::function<void(eb_data_t)> > irqs;
+
 	};
 
 

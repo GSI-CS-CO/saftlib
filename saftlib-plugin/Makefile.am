@@ -94,9 +94,9 @@ lib@PACKAGE@_service_la_SOURCES =\
 	src/TempSensor.cpp                                           \
 	src/Reset.cpp                                                \
 	src/LM32Cluster.cpp                                          \
-	src/TimingReceiverAddon.cpp                                  \
 	src/TimingReceiver.cpp                                       \
 	src/TimingReceiver_Service.cpp                               \
+	src/TimingReceiverAddon.cpp                                  \
 	src/CommonFunctions.cpp                                      \
 	src/create_service.cpp
 
@@ -149,8 +149,8 @@ lib@PACKAGE@_service_include_HEADERS =\
 	src/TempSensor.hpp                                    \
 	src/Reset.hpp                                         \
 	src/LM32Cluster.hpp                                   \
-	src/TimingReceiverAddon.hpp                           \
 	src/TimingReceiver.hpp                                \
+	src/TimingReceiverAddon.hpp                           \
 	src/CommonFunctions.hpp                               \
  	src/Owned_Service.hpp                                 \
  	src/SAFTd_Service.hpp                                 \

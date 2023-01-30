@@ -42,8 +42,10 @@
 #include "Mailbox.hpp"
 #include "LM32Cluster.hpp"
 
+
 // classes used by TimingReceiver
 #include "IoControl.hpp"
+
 #include "TimingReceiverAddon.hpp"
 
 // @saftbus-include
@@ -158,19 +160,18 @@ public:
 	// @saftbus-export
 	std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
 
-	/// @brief extend the functionality of the TimingReceiver using an TiminReceiverAddon object
+	/// @brief saftbus plugins may extend the functionality of a TimingReceiver. 
+	///        They should use this method to publish the additional interfaces.
 	/// @param interface_name the name of the addon
-	/// @param addon an instance of a subclass of TimingReceiverAddon
-	void installAddon(const std::string &interface_name, TimingReceiverAddon* addon);
+	/// @param name and object path of instances of interface
+	// void addInterfaces(const std::string &interface_name, const std::map< std::string, std::string > & objects);
 
-	/// @brief access the SAFTd object that this TimingReceiver is attached to
-	/// @return the SAFTd object that this TimingReceiver is attached to
-	SAFTd& getSAFTd();
+	void installAddon(const std::string &interface_name, std::unique_ptr<TimingReceiverAddon> addon);
 
 private:
-	SAFTd& saft_daemon;
-	IoControl io_control;
+	saftbus::Container *container;
 
+	IoControl io_control;
 
 	bool poll();
 	saftbus::SourceHandle poll_timeout_source;
@@ -188,7 +189,9 @@ private:
 
 
 	// TimingReceiver doesn't own TimingreceiverAddons
-	std::map<std::string, TimingReceiverAddon*> addons;
+	// std::map<std::string, std::map< std::string, std::string > > addon_interfaces;
+	std::map<std::string, std::unique_ptr<TimingReceiverAddon> > addons;
+
 };
 
 } // namespace

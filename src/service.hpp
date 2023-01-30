@@ -156,6 +156,8 @@ namespace saftbus {
 		///         The object_id if the Service object was successfully inserted into the Container
 		unsigned create_object(const std::string &object_path, std::unique_ptr<Service> service);
 
+		Service* get_object(const std::string &object_path);
+
 
 		// call a Service identified by the saftlib_object_id
 		// return false if the saftlib_object_id is unknown

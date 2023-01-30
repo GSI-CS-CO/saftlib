@@ -43,19 +43,19 @@
 
 namespace saftlib {
 
-TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string &eb_path, int polling_interval_ms, saftbus::Container *container)
+TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string &eb_path, int polling_interval_ms, saftbus::Container *cont)
 	: OpenDevice(saftd.get_etherbone_socket(), eb_path, polling_interval_ms, &saftd)
 	, Watchdog(OpenDevice::device)
 	, WhiteRabbit(OpenDevice::device)
-	, ECA(saftd, OpenDevice::device, saftd.getObjectPath() + "/" + n, container)
-	, ECA_TLU(OpenDevice::device, container)
-	, ECA_Event(OpenDevice::device, container)
+	, ECA(saftd, OpenDevice::device, saftd.getObjectPath() + "/" + n, cont)
+	, ECA_TLU(OpenDevice::device, cont)
+	, ECA_Event(OpenDevice::device, cont)
 	, BuildIdRom(OpenDevice::device)
 	, TempSensor(OpenDevice::device)
 	, Reset(OpenDevice::device)
 	, Mailbox(OpenDevice::device)
 	, LM32Cluster(OpenDevice::device, this)
-	, saft_daemon(saftd)
+	, container(cont)
 	, io_control(OpenDevice::device)
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
@@ -71,7 +71,8 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	// attach Outputs to ECA and Inputs to ECA_TLU
 	auto &ios = io_control.get_ios();
 	for(auto &io: ios) {
-		// the object paths need to be created before, because Input needs Output-Partner-Path and vice versa
+		// the object paths need to be created before creating Input and Output objects, 
+		// because Input needs Output-Partner-Path and vice versa.
 		std::string input_path;
 		std::string output_path;
 		if (io.getDirection() == IO_CFG_FIELD_DIR_INPUT  || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
@@ -120,6 +121,22 @@ TimingReceiver::~TimingReceiver()
 	// std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
 	// std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
 	saftbus::Loop::get_default().remove(poll_timeout_source);
+
+	// remove the service objects for all addons
+	if (container != nullptr) {
+		for (auto &addon: addons) {
+			for (auto &object: addon.second->getObjects()) {
+
+				try {
+					container->remove_object(object.second);
+					// container->remove_object(actionSink->getObjectPath());
+				} catch (saftbus::Error &e) {
+					// std::cerr << "removal attempt failed: " << e.what() << std::endl;
+				}
+
+			}
+		}
+	}
 }
 
 bool TimingReceiver::poll()
@@ -171,22 +188,27 @@ std::map< std::string, std::map< std::string, std::string > > TimingReceiver::ge
 	result["Output"]                = ECA::getOutputs();
 	result["Input"]                 = ECA_TLU::getInputs();
 	for (auto &addon: addons) {
-		result[addon.first] = addon.second->getObjects();
+		for (auto &object: addon.second->getObjects()) {
+			result[addon.first][object.first] = object.second;
+		}
 	}
 	
 	return result;
 }
 
-SAFTd& TimingReceiver::getSAFTd()
+
+// void TimingReceiver::addInterfaces(const std::string &interface_name, const std::map< std::string, std::string > & objects)
+// {
+// 	for(auto &object: objects) {
+// 		addon_interfaces[interface_name][object.first] = object.second;
+// 	}
+// }
+
+void TimingReceiver::installAddon(const std::string &interface_name, std::unique_ptr<TimingReceiverAddon> addon)
 {
-	return saft_daemon;
+	addons[interface_name] = std::move(addon);
 }
 
-
-void TimingReceiver::installAddon(const std::string &interface_name, TimingReceiverAddon* addon)
-{
-	addons[interface_name] = addon;
-}
 
 
 } // namespace saftlib

@@ -64,6 +64,7 @@ int main(int argc, char **argv)
 				if (argvi == "-q") {
 					//===std::cerr << "call proxy->quit()" << std::endl;
 					container_proxy->quit();
+					return 0;
 					//===std::cerr << "quit done" << std::endl;
 				} if (argvi == "-s") {
 					saftbus::SaftbusInfo saftbus_info = container_proxy->get_status();

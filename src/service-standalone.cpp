@@ -118,6 +118,12 @@ namespace saftbus {
 		assert(false);
 		return false;
 	}
+	Service* Container::get_object(const std::string &object_path)
+	{
+		assert(false);
+		return nullptr;
+	}
+
 
 	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
 	{
@@ -173,6 +179,10 @@ namespace saftbus {
 	}
 
 	void Container::clear() {
+		assert(false);
+	}
+
+	void Container::quit() {
 		assert(false);
 	}
 

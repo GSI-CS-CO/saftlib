@@ -963,9 +963,9 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 
 	header_out << "\tclass " << class_definition.name << ";" << std::endl;
 	header_out << "\tclass " << class_definition.name << "_Service : public saftbus::Service {" << std::endl;
+	header_out << "\tpublic:" << std::endl;
 	header_out << "\t\t" << class_definition.name << "* d;" << std::endl;
 	header_out << "\t\t" << "static std::vector<std::string> gen_interface_names();" << std::endl;
-	header_out << "\tpublic:" << std::endl;
 
 	header_out << "\t\t" << "typedef " << class_definition.name << " DriverType;" << std::endl;
 

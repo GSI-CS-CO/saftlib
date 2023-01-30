@@ -319,12 +319,28 @@ namespace saftbus {
 		return 0;
 	}
 
+	Service* Container::get_object(const std::string &object_path)
+	{
+		std::cerr << "get_object " << object_path << std::endl;
+		auto find_result = d->object_path_lookup_table.find(object_path);
+		if (find_result == d->object_path_lookup_table.end()) {
+			std::string msg = "cannot get object \"";
+			msg.append(object_path);
+			msg.append("\" because its object_path was not found");
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg);
+		}
+		auto object_id = find_result->second;
+		auto &service = d->objects[object_id];
+		return service.get();
+	}
+
+
 	bool Container::remove_object(const std::string &object_path)
 	{
 		if (object_path == "/saftbus") {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "cannot remove /saftbus");
 		}
-		// //===std::cerr << "remove_object " << object_path << " now" << std::endl;
+		std::cerr << "remove_object " << object_path << " now" << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
 			std::string msg = "cannot remove object \"";
@@ -376,6 +392,7 @@ namespace saftbus {
 		d->objects.erase(object_id);
 		return false;
 	}
+
 
 	int Container::register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string, int> &interface_name2no_map, int client_fd, int signal_group_fd)
 	{
