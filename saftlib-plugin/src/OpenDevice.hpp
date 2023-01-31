@@ -93,6 +93,7 @@ private:
 	bool poll_msi(bool only_once);
 	int polling_interval_ms;
 	saftbus::SourceHandle poll_timeout_source;
+	saftbus::SourceHandle poll_once;
 
 	// following members are for testing MSI capability (real or polled MSIs)
 	void check_msi_callback(eb_data_t value);

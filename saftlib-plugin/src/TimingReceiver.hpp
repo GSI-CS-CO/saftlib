@@ -168,6 +168,8 @@ public:
 
 	void installAddon(const std::string &interface_name, std::unique_ptr<TimingReceiverAddon> addon);
 
+	void removeAddon(const std::string &interface_name);
+
 private:
 	saftbus::Container *container;
 

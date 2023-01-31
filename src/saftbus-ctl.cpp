@@ -83,6 +83,19 @@ int main(int argc, char **argv)
 					} else {
 						throw std::runtime_error("expect so-filename after -l");
 					}
+				} else if (argvi == "-u") {
+					if ((++i) < argc) {
+						std::string so_filename = argv[i];
+						std::vector<std::string> plugin_args;
+						for (++i; i < argc; ++i) {
+							std::cerr << "add arg : " << argv[i] << std::endl;
+							plugin_args.push_back(argv[i]);
+						}
+						container_proxy->unload_plugin(so_filename, plugin_args);
+						return 1;
+					} else {
+						throw std::runtime_error("expect so-filename after -u");
+					}
 				} else if (argvi == "-r") {
 					if ((i+=1) < argc) {
 						container_proxy->remove_object(argv[i]);

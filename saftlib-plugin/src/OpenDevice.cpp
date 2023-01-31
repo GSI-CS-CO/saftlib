@@ -73,7 +73,7 @@ bool OpenDevice::poll_msi(bool only_once) {
 		// however, this TimeoutSource will be called only once, because the only_once argument is true
 		bool only_once;
 		// std::cerr << "add an only_once timeout source" << std::endl;
-		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+		poll_once = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 				std::bind(&OpenDevice::poll_msi, this, only_once=true), std::chrono::milliseconds(0), std::chrono::milliseconds(0)
 			);
 	} 
@@ -132,6 +132,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 OpenDevice::~OpenDevice()
 {
 	saftbus::Loop::get_default().remove(poll_timeout_source);
+	saftbus::Loop::get_default().remove(poll_once);
 	chmod(etherbone_path.c_str(), dev_stat.st_mode);
 	device.close();
 }

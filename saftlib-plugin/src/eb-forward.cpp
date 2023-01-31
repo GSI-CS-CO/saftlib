@@ -46,7 +46,7 @@ namespace saftlib {
 
 		std::cerr << "eb-forward " << eb_forward_path() << std::endl;
 		//Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
-		saftbus::Loop::get_default().connect<saftbus::IoSource>(std::bind(&EB_Forward::accept_connection, this, std::placeholders::_1), _pts_fd, POLLIN);
+		io_source = saftbus::Loop::get_default().connect<saftbus::IoSource>(std::bind(&EB_Forward::accept_connection, this, std::placeholders::_1), _pts_fd, POLLIN);
 	}
 
 	EB_Forward::EB_Forward(const std::string& eb_name)
@@ -68,6 +68,7 @@ namespace saftlib {
 	} 
 	EB_Forward::~EB_Forward()
 	{
+		saftbus::Loop::get_default().remove(io_source);
 		close(_eb_device_fd);		
 	}
 

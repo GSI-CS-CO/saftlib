@@ -22,6 +22,7 @@
 #define SAFTLIB_EB_FORWARD_H
 
 #include <string>
+#include <saftbus/loop.hpp>
 
 namespace saftlib {
 
@@ -39,6 +40,7 @@ namespace saftlib {
 		void read_all(int fd, char *ptr, int size);
 		void open_pts();
 		int     _eb_device_fd, _pts_fd; 
+        saftbus::SourceHandle io_source;
 	};
 
 

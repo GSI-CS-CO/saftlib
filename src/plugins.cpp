@@ -37,12 +37,14 @@ namespace saftbus {
 	struct LibraryLoader::Impl {
 		// lt_dlhandle handle;
 		void *handle;
+		saftbus::Container *cont;
 		create_services_function create_services;
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
 		: d(new Impl)
 	{
+		d->cont = nullptr;
 		int result = 0;//lt_dlinit();
 		assert(result == 0);
 
@@ -74,10 +76,7 @@ namespace saftbus {
 
 	LibraryLoader::~LibraryLoader()
 	{
-		//===std::cerr << "~LibraryLoader()" << std::endl;
-
-		// in case of sources loaded into the loop from this plugin, they must be destroyed before the plugin is unloaded
-		saftbus::Loop::get_default().clear(); 
+		std::cerr << "~LibraryLoader()" << std::endl;
 
 		if (d->handle != nullptr) {
 			// lt_dlclose(d->handle);

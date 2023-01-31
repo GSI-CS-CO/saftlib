@@ -25,8 +25,10 @@ int main(int argc, char *argv[]) {
 	} 
 
 	try {
-
-		auto simple_fw = saftlib::SimpleFirmware_Proxy::create("/de/gsi/saftlib/tr0/simple-fw");
+		std::string object_path = "/de/gsi/saftlib/";
+		object_path.append(argv[1]);
+		object_path.append("/simple-fw");
+		auto simple_fw = saftlib::SimpleFirmware_Proxy::create(object_path);
 
 		simple_fw->MSI.connect(sigc::ptr_fun(on_MSI));
 		simple_fw->start();

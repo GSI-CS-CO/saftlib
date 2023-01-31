@@ -209,6 +209,11 @@ void TimingReceiver::installAddon(const std::string &interface_name, std::unique
 	addons[interface_name] = std::move(addon);
 }
 
+void TimingReceiver::removeAddon(const std::string &interface_name) {
+	std::cerr << "TimingReceiver::removeAddon(" << interface_name << ")" << std::endl;
+	addons.erase(interface_name);
+} 
+
 
 
 } // namespace saftlib

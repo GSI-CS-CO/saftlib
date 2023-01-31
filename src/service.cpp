@@ -53,7 +53,7 @@ namespace saftbus {
 	};
 
 	struct Container::Impl {
-		std::map<std::string, std::unique_ptr<LibraryLoader> > plugins;
+		std::vector<std::pair<std::string, std::unique_ptr<LibraryLoader> > > plugins;
 		unsigned generate_saftlib_object_id();
 		ServerConnection *connection;
 		std::map<unsigned, std::unique_ptr<Service> > objects; // Container owns the Service objects
@@ -75,9 +75,7 @@ namespace saftbus {
 				objects.erase(id);
 			}
 		}
-		Impl() {}
-		~Impl()  {
-			//===std::cerr << "Container::~Impl()" << std::endl;
+		void clear() {
 			// Make sure that service objects are destroyed in the opposite order (youngest object first).
 			// The std::map "objects" is sorted after object id, which is increasing for all created objects.
 			// starting with the last object in the map, the correct destruction order is assured.
@@ -86,6 +84,13 @@ namespace saftbus {
 				--last;
 				erase_children_first(last->second->d->object_path);
 			}
+			object_path_lookup_table.clear();
+
+		}
+		Impl() {}
+		~Impl()  {
+			//===std::cerr << "Container::~Impl()" << std::endl;
+			clear();
 		}
 	};
 
@@ -243,18 +248,27 @@ namespace saftbus {
 					send.put(saftbus::FunctionResult::RETURN);
 					send.put(function_call_result);
 				} return;
-				case 3: { // Container::remove_object
+				case 3: { // Container::unload_plugin
+					std::string  so_filename;
+					received.get(so_filename);
+					std::vector<std::string> plugin_args;
+					received.get(plugin_args);
+					bool function_call_result = d->unload_plugin(so_filename, plugin_args);
+					send.put(saftbus::FunctionResult::RETURN);
+					send.put(function_call_result);
+				} return;
+				case 4: { // Container::remove_object
 					std::string  object_path;
 					received.get(object_path);
 					bool function_call_result = d->remove_object(object_path);
 					send.put(saftbus::FunctionResult::RETURN);
 					send.put(function_call_result);
 				} return;
-				case 4: { // Container::quit
+				case 5: { // Container::quit
 					d->quit();
 					send.put(saftbus::FunctionResult::RETURN);
 				} return;
-				case 5: { // Container::get_status
+				case 6: { // Container::get_status
 					SaftbusInfo function_call_result = d->get_status();
 					send.put(saftbus::FunctionResult::RETURN);
 					send.put(function_call_result);
@@ -295,6 +309,9 @@ namespace saftbus {
 
 	Container::~Container() 
 	{
+		while(d->plugins.size() ) {
+			d->plugins.pop_back();
+		}
 		//===std::cerr << "~Container" << std::endl;
 	}
 
@@ -491,27 +508,40 @@ namespace saftbus {
 	bool Container::load_plugin(const std::string &so_filename, const std::vector<std::string> &args) {
 		//===std::cerr << "loading " << so_filename << std::endl;
 		bool plugin_available = false;
-		auto plugin = d->plugins.find(so_filename);
-		if (plugin != d->plugins.end()) {
-			//===std::cerr << "plugin found" << std::endl;
-			plugin_available = true;
-		} else {
-			auto insertion_result = d->plugins.insert(std::make_pair(so_filename, std::move(std::unique_ptr<LibraryLoader>(new LibraryLoader(so_filename)))));
-			if (insertion_result.second) {
-				//===std::cerr << "plugin inserted" << std::endl;
-				plugin = insertion_result.first;
+		LibraryLoader *plugin = nullptr;
+		for (auto &name_plugin: d->plugins) {
+			if (name_plugin.first == so_filename) {
 				plugin_available = true;
-			} else {
-				//===std::cerr << "plugin insertion failed" << std::endl;
+				plugin = name_plugin.second.get();
+				break;
 			}
 		}
+		//auto plugin = d->plugins.find(so_filename);
+		// if (plugin != d->plugins.end()) {
+		// 	//===std::cerr << "plugin found" << std::endl;
+		// 	plugin_available = true;
+		// } else {
+		if (!plugin_available) {			
+			d->plugins.push_back(std::make_pair(so_filename, std::move(std::unique_ptr<LibraryLoader>(new LibraryLoader(so_filename)))));
+			plugin = d->plugins.back().second.get();
+			plugin_available = true;
+		}
 		if (plugin_available) {
-			plugin->second->create_services(this, args);
+			plugin->create_services(this, args);
 		}
 		return plugin_available;
 	}
 
+	bool Container::unload_plugin(const std::string &so_filename, const std::vector<std::string> &args) {
+		if (d->plugins.size() > 0 && d->plugins.back().first == so_filename) {
+			d->plugins.pop_back();
+			return true;
+		}
+		return false;
+	}
+
 	void Container::quit() {
+		d->clear();
 		saftbus::Loop::get_default().quit();
 	}
 
@@ -570,8 +600,7 @@ namespace saftbus {
 	}
 
 	void Container::clear() {
-		d->objects.clear();
-		d->object_path_lookup_table.clear();
+		d->clear();
 	}
 
 
