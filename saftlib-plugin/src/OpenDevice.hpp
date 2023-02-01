@@ -67,6 +67,7 @@ public:
 	OpenDevice(const etherbone::Socket &socket, const std::string& etherbone_path, int polling_interval_ms = 1, SAFTd *saftd = nullptr);
 	virtual ~OpenDevice();
 
+	etherbone::Device &get_device();
 
 	/// @brief The path through which the device is reached.
 	/// @return The path through which the device is reached.

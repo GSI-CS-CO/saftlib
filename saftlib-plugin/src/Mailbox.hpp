@@ -40,14 +40,11 @@ class Mailbox : public MsiDevice {
 	eb_address_t mailbox;
 	eb_address_t mailbox_msi_first;
 	friend class Slot;
-	/// @brief write a value to the preconfigured address.
-	/// @param slot_index the slot to be used (return value of ConfigureSlot)
-	/// @param value is the value to be written
-	///
-	void UseSlot(int slot_index, uint32_t value);
+
 	/// @brief if a slot is no longer used, it should be marked as free by using this function
-	/// @param slot_index the slot to be freed
 	///
+	/// This is a private method because only Mailbox::Slot object should call it in the destructor
+	/// @param slot_index the slot to be freed
 	void FreeSlot(int slot_index);
 
 public:
@@ -64,12 +61,22 @@ public:
 		/// @return slot index
 		int getIndex();
 
+		/// @brief address of the owed slot
+		/// @return write to this eb-address to use the slot
+		eb_address_t getAddress();
+
 		/// @brief write a value to the preconfigured address.
 		/// @param slot_index the slot to be used (return value of ConfigureSlot)
 		/// @param value is the value to be written
 		///
 		void Use(uint32_t value);
 	};
+
+	/// @brief write a value to the preconfigured address.
+	/// @param slot_index the slot to be used (return value of ConfigureSlot)
+	/// @param value is the value to be written
+	///
+	void UseSlot(int slot_index, uint32_t value);
 
 	Mailbox(etherbone::Device &device);
 	/// @brief find a free slot in the mailbox and configure it with target_address

@@ -84,6 +84,11 @@ int Mailbox::Slot::getIndex()
 	return slot_index;
 }
 
+eb_address_t Mailbox::Slot::getAddress()
+{
+	return mb->mailbox + slot_index * 4 * 2;
+}
+
 
 void Mailbox::Slot::Use(uint32_t value)
 {

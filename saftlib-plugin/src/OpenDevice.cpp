@@ -137,6 +137,12 @@ OpenDevice::~OpenDevice()
 	device.close();
 }
 
+etherbone::Device &OpenDevice::get_device()
+{
+	return device;
+}
+
+
 std::string OpenDevice::getEtherbonePath() const
 {
 	return etherbone_path;

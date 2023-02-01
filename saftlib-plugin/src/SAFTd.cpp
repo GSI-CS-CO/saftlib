@@ -97,10 +97,10 @@ namespace saftlib {
 	}
 
 	eb_status_t SAFTd::write(eb_address_t address, eb_width_t width, eb_data_t data) {
-		// std::cerr << "write callback " << std::hex << std::setw(8) << std::setfill('0') << address 
-		//           <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
-		//           << std::dec 
-		//           << std::endl;
+		std::cerr << "write callback " << std::hex << std::setw(8) << std::setfill('0') << address 
+		          <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
+		          << std::dec 
+		          << std::endl;
 	    
 		std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
 		if (it != irqs.end()) {

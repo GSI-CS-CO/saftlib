@@ -32,15 +32,21 @@
 #define LM32_RAM_USER_VMAJOR      1                  // major revision
 #define LM32_RAM_USER_VMINOR      0                  // minor revision
 
+#define LM32_CLUSTER_ROM_VENDOR   0x651
+#define LM32_CLUSTER_ROM_PRODUCT  0x10040086
 
 namespace saftlib {
 
 
 LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver) 
-	: device(dev)
+	: SdbDevice(dev, LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT)
 	, tr(timing_receiver)
 {
 	std::cerr << "LM32Cluster::LM32Cluster" << std::endl;
+
+    eb_data_t cpus;
+    device.read(adr_first, EB_DATA32, &cpus);
+
 	// look for lm32 dual port ram
 	std::vector<sdb_device> dpram_lm32_devs;
 	device.sdb_find_by_identity(LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, dpram_lm32_devs);
@@ -50,13 +56,17 @@ LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver
 	}
 
 	for (auto& dpram_lm32_dev: dpram_lm32_devs) {
-		dpram_lm32.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
-		dpram_lm32_last.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_last));
+		dpram_lm32_adr_first.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
+		dpram_lm32_adr_last.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_last));
 	}
 
-	num_cores = dpram_lm32.size();
+	num_cores = dpram_lm32_devs.size();
 
-	std::cerr << "found " << dpram_lm32.size() << " lm32 cpus" << std::endl;
+	if (num_cores != cpus) {
+		throw saftbus::Error(saftbus::Error::FAILED, "number of cpus in lm32 cluster rom differs from number of number of user rams");
+	}
+
+	std::cerr << "found " << num_cores << " lm32 cpus" << std::endl;
 }
 LM32Cluster::~LM32Cluster() {
 }
@@ -64,7 +74,7 @@ LM32Cluster::~LM32Cluster() {
 unsigned LM32Cluster::getCpuCount()
 {
 	std::cerr << "getCpuCount" << std::endl;
-	return dpram_lm32.size();
+	return dpram_lm32_adr_first.size();
 }
 
 void LM32Cluster::safeHaltCpu(unsigned cpu_idx)
@@ -72,8 +82,8 @@ void LM32Cluster::safeHaltCpu(unsigned cpu_idx)
 	std::cerr << "safeHaltCpu " << cpu_idx << std::endl;
 	tr->CpuHalt(cpu_idx);
 	// overwrite the RAM with trap instructions (a trap instruction is a jump to the address of the flummi instruction)
-	eb_address_t adr = dpram_lm32[cpu_idx];
-	eb_address_t last = dpram_lm32_last[cpu_idx];
+	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
+	eb_address_t last = dpram_lm32_adr_last[cpu_idx];
 	eb_data_t jump_instruction = 0xe0000000;
 	std::cerr << std::hex << adr << " " << last << std::endl;
 	while (adr < last) {

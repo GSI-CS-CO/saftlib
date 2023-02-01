@@ -38,32 +38,23 @@
 // @saftbus-export
 #include <saftbus/service.hpp>
 
-namespace saftlib {
-	class LM32Cluster;
-	class TimingReceiver;
-}
-
-// extern "C" 
-// typedef void (*attach_firmware_driver_function) (saftbus::Container *container, saftlib::LM32Cluster *lm32_cluster, saftlib::TimingReceiver *tr, const std::vector<std::string> &args);
-extern "C" typedef void (*attach_firmware_driver_function) (saftbus::Container *container, const std::vector<std::string> &args);
+#include <SdbDevice.hpp>
 
 namespace saftlib {
 
+class TimingReceiver;
 
-
-class LM32Cluster {
-	etherbone::Device &device;
-
-	std::vector<eb_address_t>                   dpram_lm32;
-	std::vector<eb_address_t>                   dpram_lm32_last;
+class LM32Cluster : SdbDevice {
 
 	unsigned num_cores;
 	unsigned ram_per_core;
-	bool is_dm;
 	TimingReceiver *tr;
 public:
 	LM32Cluster(etherbone::Device &device, TimingReceiver *tr);
 	~LM32Cluster();
+
+	std::vector<eb_address_t> dpram_lm32_adr_first;
+	std::vector<eb_address_t> dpram_lm32_adr_last;
 
 	/// @brief number of CPUs
 	/// @return number of instanciated User LM32 Cores
