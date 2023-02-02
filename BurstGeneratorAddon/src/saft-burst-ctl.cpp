@@ -58,7 +58,7 @@
 #include "OutputCondition.h"
 #include "EmbeddedCPUActionSink.h"
 #include "EmbeddedCPUCondition.h"
-#include "BurstGenerator.h"
+#include "BurstGenerator_Proxy.hpp"
 
 #include "CommonFunctions.h"
 
@@ -647,7 +647,7 @@ static int bg_get_fw_id(void)
     std::vector<uint32_t> args;
     args.push_back(0);
 
-    if (bg_invoke_async(bg, CMD_LS_FW_ID, args) == -1)
+    if (bg_invoke_async(bg, CMD_LS_FW_ID, args))
     {
       std::cerr << "Failed to get the firmware ID. Try again!" << std::endl;
       return -1;

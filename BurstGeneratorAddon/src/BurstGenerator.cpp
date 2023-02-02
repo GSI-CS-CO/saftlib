@@ -140,12 +140,6 @@ namespace saftlib {
 
   int32_t BurstGenerator::instruct(uint32_t code, const std::vector< uint32_t >& args)
   {
-    std::cerr << "BurstGenerator::instruct code=" << code << " , args: " ;
-    for (auto &arg: args) {
-       std::cerr << arg << " ";
-    }
-    std::cerr << std::endl;
-
     int32_t failed = -20;
 
     if (ram_base == 0)
@@ -170,7 +164,7 @@ namespace saftlib {
       // send the instruction code to LM32
       device.write(ram_base + SHM_CMD, EB_DATA32, code);
 
-      std::cerr << "BurstGenerator: method call instruct(" << code << ") succeeded." << std::endl;
+      std::cerr << "BurstGenerator: method call instruct(0x" << std::hex << code << std::dec << ") succeeded." << std::endl;
       return EB_OK;
     }
     catch (etherbone::exception_t e)
@@ -252,7 +246,7 @@ namespace saftlib {
         content.push_back(static_cast<uint32_t>(data));
       }
 
-      std::cerr << "BurstGenerator: method call readSharedBuffer(" << content.size() << ") succeeded from address 0x" << std::hex << ram_base + SHM_INPUT << std::dec << std::endl;
+      std::cerr << "BurstGenerator: method call readSharedBuffer(" << content.size() << ") succeeded." << std::endl;
 
       return content;
     }
@@ -288,13 +282,12 @@ namespace saftlib {
 
   uint32_t BurstGenerator::getResponse() const
   {
-    std::cerr << "BurstGenerator::getResponse() -> " << std::hex << response << std::dec << std::endl;
     return response;
   }
 
   void BurstGenerator::msi_handler(eb_data_t msg)
   {
-    std::cerr << "BurstGenerator: msi_handler(" << msg << ") called." << std::endl;
+    //std::cerr << "BurstGenerator: msi_handler(" << msg << ") called." << std::endl;
     //if (!getOwner().empty())
     {
       response = (uint32_t)msg;
