@@ -36,13 +36,13 @@ namespace saftlib {
 Input::Input( ECA_TLU &tlu
 			, const std::string &input_object_path
 			, const std::string &output_partner_path
-			, unsigned io_idx
+			, unsigned eca_tlu_chan
 			, Io *io_
 			, saftbus::Container *container)
 	: EventSource(input_object_path, io_->getName(), container), eca_tlu(tlu), io(io_), partnerPath(output_partner_path)
-	, io_index(io_idx), enable(false), event(0), stable(80)
+	, eca_tlu_channel(eca_tlu_chan), enable(false), event(0), stable(80)
 {
-	eca_tlu.configInput(io_index, enable, event, stable);
+	eca_tlu.configInput(eca_tlu_channel, enable, event, stable);
 }
 
 uint32_t Input::getIndexIn() const
@@ -147,7 +147,7 @@ void Input::setEventEnable(bool val)
 	if (enable == val) return;
 	enable = val;
 
-	eca_tlu.configInput(io_index, enable, event, stable);
+	eca_tlu.configInput(eca_tlu_channel, enable, event, stable);
 }
 
 void Input::setEventPrefix(uint64_t val)
@@ -160,7 +160,7 @@ void Input::setEventPrefix(uint64_t val)
 	if (event == val) return;
 	event = val;
 
-	eca_tlu.configInput(io_index, enable, event, stable);
+	eca_tlu.configInput(eca_tlu_channel, enable, event, stable);
 }
 
 void Input::setStableTime(uint32_t val)
@@ -175,7 +175,7 @@ void Input::setStableTime(uint32_t val)
 	if (stable == val) return;
 	stable = val;
 
-	eca_tlu.configInput(io_index, enable, event, stable);
+	eca_tlu.configInput(eca_tlu_channel, enable, event, stable);
 }
 
 }

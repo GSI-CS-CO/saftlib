@@ -36,7 +36,7 @@ class Input : public EventSource
 		Input(ECA_TLU &eca_tlu
 		    , const std::string &input_object_path
 			, const std::string &output_partner_path
-		    , unsigned io_index
+		    , unsigned eca_tlu_chan
 		    , Io *io
 		    , saftbus::Container *container = nullptr);
 
@@ -145,7 +145,7 @@ class Input : public EventSource
 		Io *io;
 		std::string partnerPath;
 		eb_address_t tlu;
-		unsigned io_index;
+		unsigned eca_tlu_channel;
 		bool enable;
 		uint64_t event;
 		uint32_t stable;

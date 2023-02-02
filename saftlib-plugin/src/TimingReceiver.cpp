@@ -89,7 +89,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 		// create inputs
 		if (io.getDirection() == IO_CFG_FIELD_DIR_INPUT  || io.getDirection() == IO_CFG_FIELD_DIR_INOUT) {
 			std::unique_ptr<Input> input(new Input(*dynamic_cast<ECA_TLU*>(this), input_path, output_path, 
-												   io.getIndexIn(), &io, container));
+												   io.getEcaIn(), &io, container));
 			if (container) {
 				std::unique_ptr<Input_Service> service(new Input_Service(input.get()));
 				container->create_object(input_path, std::move(service));
