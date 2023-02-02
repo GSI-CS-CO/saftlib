@@ -232,7 +232,6 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/TimingReceiver_Proxy.hpp                                 \
 	src/CommonFunctions.hpp                                      \
 	src/interfaces/saftlib.h                                     \
-	src/interfaces/BurstGenerator.h                              \
 	src/interfaces/SAFTd.h                                       \
 	src/interfaces/iDevice.h                                     \
 	src/interfaces/iOwned.h                                      \
@@ -248,13 +247,9 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/interfaces/SoftwareActionSink.h                          \
 	src/interfaces/iEventSource.h                                \
 	src/interfaces/iSCUbusCondition.h                            \
-	src/interfaces/FunctionGenerator.h                           \
 	src/interfaces/SoftwareCondition.h                           \
-	src/interfaces/iFunctionGenerator.h                          \
 	src/interfaces/iSoftwareActionSink.h                         \
-	src/interfaces/FunctionGeneratorFirmware.h                   \
 	src/interfaces/TimingReceiver.h                              \
-	src/interfaces/iFunctionGeneratorFirmware.h                  \
 	src/interfaces/iSoftwareCondition.h                          \
 	src/interfaces/Input.h                                       \
 	src/interfaces/WbmActionSink.h                               \
@@ -265,15 +260,10 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/interfaces/iMILbusActionSink.h                           \
 	src/interfaces/iWbmActionSink.h                              \
 	src/interfaces/MILbusCondition.h                             \
-	src/interfaces/WrMilGateway.h                                \
 	src/interfaces/iMILbusCondition.h                            \
 	src/interfaces/iWbmCondition.h                               \
-	src/interfaces/MasterFunctionGenerator.h                     \
 	src/interfaces/iActionSink.h                                 \
-	src/interfaces/iMasterFunctionGenerator.h                    \
-	src/interfaces/iWrMilGateway.h                               \
 	src/interfaces/Output.h                                      \
-	src/interfaces/iBurstGenerator.h                             \
 	src/interfaces/iOutputActionSink.h                           \
 	src/interfaces/OutputCondition.h                             \
 	src/interfaces/iCondition.h                                  \
