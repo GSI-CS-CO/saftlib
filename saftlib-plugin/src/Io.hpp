@@ -41,6 +41,8 @@ class Io {
 	std::string io_name;
 	unsigned io_direction;
 	unsigned io_channel;
+	unsigned io_eca_in;
+	unsigned io_eca_out;
 	unsigned io_index;
 	unsigned io_special_purpose;
 	unsigned io_logic_level;
@@ -55,6 +57,8 @@ public:
 	   , const std::string &io_name
 	   , unsigned io_direction
 	   , unsigned io_channel
+	   , unsigned eca_in
+	   , unsigned eca_out
 	   , unsigned io_index
 	   , unsigned io_special_purpose
 	   , unsigned io_logic_level
@@ -73,6 +77,8 @@ public:
 	// iOutputActionSink
 	uint32_t getIndexOut() const;
 	uint32_t getIndexIn() const;
+	uint32_t getEcaIn() const;
+	uint32_t getEcaOut() const;
 	void WriteOutput(bool value);
 	bool ReadOutput();
 	bool ReadCombinedOutput();

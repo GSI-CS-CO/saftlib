@@ -98,7 +98,7 @@ IoControl::IoControl(etherbone::Device &device)
 
 	// std::cerr << "************** NUM IOS " << (io_GPIOTotal + io_LVDSTotal) << std::endl;
 	// /* Create an action sink for each IO */
-	// unsigned eca_in = 0, eca_out = 0;
+	unsigned eca_in = 0, eca_out = 0;
 
 	for (io_table_iterator = 0; io_table_iterator < (io_GPIOTotal + io_LVDSTotal); io_table_iterator++)
 	{
@@ -136,9 +136,11 @@ IoControl::IoControl(etherbone::Device &device)
 		std::string IOName = cIOName;
 
 		/* Create the IO controller object */
-		ios.push_back(Io(device, IOName, direction, channel, internal_id, special, logic_level, oe_available,
+		ios.push_back(Io(device, IOName, direction, channel, eca_in, eca_out, internal_id, special, logic_level, oe_available,
 	 		term_available, spec_out_available, spec_in_available, adr_first, clkgen));
 
+		if (direction == IO_CFG_FIELD_DIR_OUTPUT || direction == IO_CFG_FIELD_DIR_INOUT) ++eca_out;
+		if (direction == IO_CFG_FIELD_DIR_INPUT  || direction == IO_CFG_FIELD_DIR_INOUT) ++eca_in;
 	}
 }
 

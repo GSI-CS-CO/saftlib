@@ -33,6 +33,8 @@ Io::Io(etherbone::Device &dev
 	 , const std::string &name
 	 , unsigned direction
 	 , unsigned channel
+	 , unsigned eca_in
+	 , unsigned eca_out
 	 , unsigned index
 	 , unsigned special_purpose
 	 , unsigned logic_level
@@ -41,11 +43,13 @@ Io::Io(etherbone::Device &dev
 	 , bool spec_out_available
 	 , bool spec_in_available
 	 , eb_address_t control_addr
-	 , SerdesClockGen &clkgen ) 
+	 , SerdesClockGen &clkgen )
 	: device(dev)
 	, io_name(name)
 	, io_direction(direction)
 	, io_channel(channel)
+	, io_eca_in(eca_in)
+	, io_eca_out(eca_out)
 	, io_index(index)
 	, io_special_purpose(special_purpose)
 	, io_logic_level(logic_level)
@@ -75,6 +79,16 @@ uint32_t Io::getIndexIn() const
 {
 	return io_index;
 }
+
+uint32_t Io::getEcaIn() const
+{
+	return io_eca_in;
+}
+uint32_t Io::getEcaOut() const
+{
+	return io_eca_out;
+}
+
 
 void Io::WriteOutput(bool value)
 {

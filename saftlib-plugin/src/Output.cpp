@@ -37,7 +37,7 @@ Output::Output(ECA &eca
      , const std::string &input_partner_path
      , unsigned channel
      , saftbus::Container *container)
-	: ActionSink(eca, output_object_path, io_.getName(), channel, io_.getIndexOut(), container), io(io_), partnerPath(input_partner_path)
+	: ActionSink(eca, output_object_path, io_.getName(), channel, io_.getEcaOut(), container), io(io_), partnerPath(input_partner_path)
 	, clk_low_phase(0.0)
 	, clk_high_phase(0.0)
 	, clk_phase_offset(0)

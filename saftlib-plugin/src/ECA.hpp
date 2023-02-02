@@ -97,7 +97,7 @@ public:
 	const std::string &get_object_path();
 	etherbone::Device &get_device();
 	void compile();
-	typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
+	// typedef std::pair<unsigned, unsigned> SinkKey; // (channel, num)
 
 
 	ECA(SAFTd &saftd, etherbone::Device &device, const std::string &object_path, saftbus::Container *container);
