@@ -513,7 +513,9 @@ struct ClassDefinition {
 			if (base_class_definition != nullptr) {
 				result.push_back(base_class_definition);
 				for (auto &bbase: base_class_definition->generate_all_bases(class_definitions)) {
-					result.push_back(bbase);
+					if (bbase->exportedsignals.size() > 0  ||  bbase->exportedfunctions.size() > 0) {
+						result.push_back(bbase);
+					}
 				}
 			}
 		}
