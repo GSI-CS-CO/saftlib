@@ -64,6 +64,7 @@ namespace saftbus {
 		SourceHandle() :source_id(0), loop_id(0) {}
 		long get_source_id() const {return source_id;}
 		long get_loop_id()   const {return loop_id;}
+		bool connected()     const {return loop_id!=0;}
 	};
 
 	class Loop {
