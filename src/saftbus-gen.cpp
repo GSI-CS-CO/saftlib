@@ -513,7 +513,7 @@ struct ClassDefinition {
 			if (base_class_definition != nullptr) {
 				result.push_back(base_class_definition);
 				for (auto &bbase: base_class_definition->generate_all_bases(class_definitions)) {
-					if (bbase->exportedsignals.size() > 0  ||  bbase->exportedfunctions.size() > 0) {
+					if (bbase->has_exports()) {
 						result.push_back(bbase);
 					}
 				}
@@ -544,6 +544,7 @@ struct ClassDefinition {
 		all_bases    = generate_all_bases(class_definitions);
 		direct_bases = generate_direct_bases(class_definitions);
 	}
+
 	void print() {
 		std::cerr << "ClassDefinition: " << std::endl;
 		std::cerr << "  scope: " << scope << std::endl;
@@ -1488,10 +1489,20 @@ int main(int argc, char **argv)
 		if (argvi.substr(0,2) == "-I") {
 			if (argvi.size() > 2) {
 				include_paths.push_back(argvi.substr(2));
+				if (verbose) {
+					std::cerr << "add include_path: " << include_paths.back() << std::endl;
+				}
 			} else {
 				if (++i < argc) {
-					std::cerr << "add include_path: " << argv[i] << std::endl;
-					include_paths.push_back(argv[i]);
+					std::string argvipp = argv[i];
+					if (argvipp.substr(0,2) == "-I") {
+						include_paths.push_back(argvipp.substr(2));
+					} else {
+						include_paths.push_back(argvipp);
+					}
+					if (verbose) {
+						std::cerr << "add include_path: " << include_paths.back() << std::endl;
+					}
 				} else {
 					throw std::runtime_error("expecting pathname after \'-I\'");
 				}
