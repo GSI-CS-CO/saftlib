@@ -2,7 +2,7 @@
 #ifndef BURST_GENERATOR_FIRMWARE_HPP_
 #define BURST_GENERATOR_FIRMWARE_HPP_
 
-#include <Owned.hpp>
+#include "Owned.hpp"
 #include <TimingReceiver.hpp>
 #include <Mailbox.hpp>
 
