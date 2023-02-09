@@ -108,9 +108,9 @@ namespace saftlib {
     return objectPath;
   }
 
-  std::map<std::string, std::string> BurstGenerator::getObjects() {
-    std::map<std::string, std::string> result;
-    result["bg_firmware"] = objectPath;
+  std::map<std::string, std::map<std::string, std::string> > BurstGenerator::getObjects() {
+    std::map<std::string, std::map<std::string, std::string> > result;
+    result["BurstGenerator"]["bg_firmware"] = objectPath;
     return result;
   }
 

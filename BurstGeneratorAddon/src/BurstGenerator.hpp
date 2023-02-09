@@ -24,7 +24,7 @@ namespace saftlib {
   {
 
     public:
-      std::map<std::string, std::string> getObjects(); // TimingReceiverAddon pure-virtual override
+      std::map<std::string, std::map<std::string, std::string> > getObjects(); // TimingReceiverAddon pure-virtual override
       std::string getObjectPath(); // used in create_service.cpp
 
       BurstGenerator(saftbus::Container *container, SAFTd *saft_daemon, TimingReceiver *timing_receiver);
