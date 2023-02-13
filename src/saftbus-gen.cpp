@@ -972,7 +972,7 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 
 	header_out << "\t\t" << "typedef " << class_definition.name << " DriverType;" << std::endl;
 
-	header_out << "\t\t" <<        class_definition.name << "_Service(" << class_definition.name <<"* instance, std::function<void()> destruction_callback = std::function<void()>() );" << std::endl;
+	header_out << "\t\t" <<        class_definition.name << "_Service(" << class_definition.name <<"* instance, std::function<void()> destruction_callback = std::function<void()>(), bool destoy_if_owner_quits = true );" << std::endl;
 	header_out << "\t\t" <<        class_definition.name << "_Service();" << std::endl;
 	header_out << "\t\t" << "~" << class_definition.name << "_Service();" << std::endl;
 	header_out << "\t\t" << "void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);" << std::endl;
@@ -1042,8 +1042,8 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	out << "\t" << "}" << std::endl;
 
 	// constructor with instance pointer
-	out << "\t" << class_definition.name << "_Service::" << class_definition.name << "_Service(" << class_definition.name << "* instance, std::function<void()> destruction_callback) " << std::endl;
-	out << "\t" << ": saftbus::Service(gen_interface_names(), destruction_callback), d(instance)" << std::endl;
+	out << "\t" << class_definition.name << "_Service::" << class_definition.name << "_Service(" << class_definition.name << "* instance, std::function<void()> destruction_callback, bool destoy_if_owner_quits) " << std::endl;
+	out << "\t" << ": saftbus::Service(gen_interface_names(), destruction_callback, destoy_if_owner_quits), d(instance)" << std::endl;
 	out << "\t" << "{" << std::endl;
 	for (auto& class_def: class_and_all_base_classes) {
 		for (auto &signal: class_def->exportedsignals) {

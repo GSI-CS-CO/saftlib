@@ -35,7 +35,11 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 		          << object.object_path 
 		          << " " 
 		          << object.object_id
-		          << " [" << object.owner << "] ";
+		          << " [" << object.owner << "]";
+		     if (object.has_destruction_callback &&  object.destroy_if_owner_quits) std::cout << "D ";
+		else if (object.has_destruction_callback && !object.destroy_if_owner_quits) std::cout << "d ";
+		else std::cout << "  ";
+
 		for (auto &user: object.signal_fds_use_count) {
 			std::cout << user.first << "/" << user.second << " ";
 		}

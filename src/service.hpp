@@ -61,7 +61,9 @@ namespace saftbus {
 		/// @param destruction_callback is called whenever a Service is removed from saftbus::Container. 
 		///        It allows the driver class to execute some cleanup code in case its related Service object 
 		///        is removed from a saftbus::Container
-		Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback = std::function<void()>() );
+		/// @param destroy_if_owner_quits is true by default, but can be set to false if for some reason the destructible owned
+		///        service should not be destroyed when its owner quits.
+		Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback = std::function<void()>(), bool destoy_if_owner_quits = true);
 
 		/// @brief obtain a lookup table for the interface names. 
 		///

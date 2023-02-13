@@ -42,7 +42,7 @@ namespace saftbus {
 	// };
 
 
-	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback) 
+	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback, bool destoy_if_owner_quits) 
 	{
 		assert(false);
 	}

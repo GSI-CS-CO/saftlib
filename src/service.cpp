@@ -41,6 +41,7 @@ namespace saftbus {
 		std::string object_path;
 		uint64_t object_id;
 		std::function<void()> destruction_callback; // a funtion can be attatched here that is called whenever the service is destroyed
+		bool destroy_if_owner_quits; 
 		bool active_service_remove; // initialized to false, only set to true by Container::active_service_remove() to allow services to remove themselves safely
 		void remove_signal_fd(int fd);
 		~Impl()  {
@@ -104,12 +105,13 @@ namespace saftbus {
 	// };
 
 
-	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback)
+	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback, bool destroy_if_owner_quits)
 		: d(new Impl)
 	{
 		d->owner = -1;
 		d->interface_names = interface_names;
 		d->destruction_callback = destruction_callback;
+		d->destroy_if_owner_quits = destroy_if_owner_quits;
 		d->active_service_remove = false;  
 	}
 	Service::~Service() {
@@ -493,11 +495,13 @@ namespace saftbus {
 			if (iter == d->objects.rend()) {
 				break;
 			}
-			//===std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
-			if (iter->second->d->destruction_callback) {
+			std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
+			if (iter->second->d->destruction_callback && iter->second->d->destroy_if_owner_quits) {
+				std::cerr << "object has destruction_callback" << std::endl;
 				// only remove those objects with a destruction_callback
 				remove_object(iter->second->get_object_path());
 			} else {
+				std::cerr << "object has no destruction_callback" << std::endl;
 				// if there is no destruction_callback, release object from clients ownership (because the client hung up)
 				iter->second->d->owner = -1;
 			}
@@ -613,7 +617,8 @@ namespace saftbus {
 			object_info.interface_names = obj.second->d->interface_names;
 			object_info.signal_fds_use_count = obj.second->d->signal_fds_use_count;
 			object_info.owner = obj.second->d->owner;
-			object_info.has_desctruction_callback = obj.second->d->destruction_callback?true:false;
+			object_info.has_destruction_callback = obj.second->d->destruction_callback?true:false;
+			object_info.destroy_if_owner_quits = obj.second->d->destroy_if_owner_quits;
 			result.object_infos.push_back(object_info);
 		}
 		for (auto &client: d->connection->get_client_info()) {

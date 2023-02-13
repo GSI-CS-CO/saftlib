@@ -104,14 +104,16 @@ namespace saftbus {
 			std::vector<std::string> interface_names;
 			std::map<int, int> signal_fds_use_count;
 			int owner;
-			bool has_desctruction_callback;
+			bool has_destruction_callback;
+			bool destroy_if_owner_quits;
 			void serialize(Serializer &ser) const {
 				ser.put(object_id);
 				ser.put(object_path);
 				ser.put(interface_names);
 				ser.put(signal_fds_use_count);
 				ser.put(owner);
-				ser.put(has_desctruction_callback);
+				ser.put(has_destruction_callback);
+				ser.put(destroy_if_owner_quits);
 			}
 			void deserialize(const Deserializer &des) {
 				des.get(object_id);
@@ -119,7 +121,8 @@ namespace saftbus {
 				des.get(interface_names);
 				des.get(signal_fds_use_count);
 				des.get(owner);
-				des.get(has_desctruction_callback);
+				des.get(has_destruction_callback);
+				des.get(destroy_if_owner_quits);
 			}
 		};
 		std::vector<ObjectInfo> object_infos;
