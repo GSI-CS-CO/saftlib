@@ -24,6 +24,7 @@
 #include "Owned.hpp"
 #include <TimingReceiver.hpp>
 #include "FunctionGenerator.hpp"
+#include "MasterFunctionGenerator.hpp"
 
 namespace saftlib {
 
@@ -76,6 +77,9 @@ class FunctionGeneratorFirmware : public Owned, public TimingReceiverAddon
     
   protected:
 
+    /// remove all owned FunctionGenerators or MasterFunctionGenerator
+    void clear();
+
     void firmware_rescan(int host_to_lm32_mailbox_slot_idx);
 
     bool nothing_runs();
@@ -90,7 +94,8 @@ class FunctionGeneratorFirmware : public Owned, public TimingReceiverAddon
     // etherbone::sdb_msi_device  sdb_msi_base;
     // sdb_device                 mailbox;
 
-    std::map< std::string, std::shared_ptr<FunctionGenerator> > fgs;
+    std::map< std::string, std::unique_ptr<FunctionGenerator> > fgs;
+    std::unique_ptr<MasterFunctionGenerator> mfg;
     // std::map< std::string, std::shared_ptr<Owned> > &master_fgs_owned;
 
     bool have_fg_firmware;

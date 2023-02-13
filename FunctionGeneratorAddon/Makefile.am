@@ -3,8 +3,9 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) $(SAFTLIB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src 
 
 BUILT_SOURCES =                             \
-	src/FunctionGenerator_Service.hpp         \
-	src/FunctionGeneratorFirmware_Service.hpp   \
+	src/FunctionGenerator_Service.hpp        \
+	src/MasterFunctionGenerator_Service.hpp   \
+	src/FunctionGeneratorFirmware_Service.hpp  \
 	src/FunctionGeneratorFirmware_Proxy.hpp
 
 lib_LTLIBRARIES =           \
@@ -15,30 +16,36 @@ lib_LTLIBRARIES =           \
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
 lib@PACKAGE@_service_la_CPPADD = $(SIGCPP_CFLAGS)
 lib@PACKAGE@_service_la_LIBADD = $(SAFTBUS_LIBS) $(SAFTLIB_LIBS) $(SIGCPP_LIBS) -ldl
-lib@PACKAGE@_service_la_SOURCES =         \
-	src/FunctionGenerator.cpp              \
-	src/FunctionGenerator_Service.cpp       \
-	src/FunctionGeneratorImpl.cpp            \
-	src/FunctionGeneratorFirmware.cpp         \
-	src/FunctionGeneratorFirmware_Service.cpp  \
+lib@PACKAGE@_service_la_SOURCES =        \
+	src/FunctionGenerator.cpp             \
+	src/FunctionGenerator_Service.cpp      \
+	src/MasterFunctionGenerator.cpp         \
+	src/MasterFunctionGenerator_Service.cpp  \
+	src/FunctionGeneratorImpl.cpp             \
+	src/FunctionGeneratorFirmware.cpp          \
+	src/FunctionGeneratorFirmware_Service.cpp   \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@/service
-lib@PACKAGE@_service_include_HEADERS =    \
-	src/FunctionGenerator.hpp              \
-	src/FunctionGenerator_Service.hpp       \
-	src/FunctionGeneratorImpl.hpp            \
-	src/FunctionGeneratorFirmware.hpp         \
+lib@PACKAGE@_service_include_HEADERS =   \
+	src/FunctionGenerator.hpp             \
+	src/FunctionGenerator_Service.hpp      \
+	src/MasterFunctionGenerator.hpp         \
+	src/MasterFunctionGenerator_Service.hpp  \
+	src/FunctionGeneratorImpl.hpp             \
+	src/FunctionGeneratorFirmware.hpp          \
 	src/FunctionGeneratorFirmware_Service.hpp
 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SAFTLIB_LIBS) $(SIGCPP_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =             \
-	src/FunctionGenerator_Proxy.cpp           \
+	src/FunctionGenerator_Proxy.cpp          \
+	src/MasterFunctionGenerator_Proxy.cpp     \
 	src/FunctionGeneratorFirmware_Proxy.cpp   
 
 lib@PACKAGE@_proxy_includedir = $(includedir)/@PACKAGE@
 lib@PACKAGE@_proxy_include_HEADERS =        \
-	src/FunctionGenerator_Proxy.hpp           \
+	src/FunctionGenerator_Proxy.hpp          \
+	src/MasterFunctionGenerator_Proxy.hpp     \
 	src/FunctionGeneratorFirmware_Proxy.hpp   
 
 bin_PROGRAMS = saft-fg-ctl

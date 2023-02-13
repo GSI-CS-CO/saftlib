@@ -29,7 +29,7 @@
 #ifndef FUNCTION_GENERATOR_HPP_
 #define FUNCTION_GENERATOR_HPP_
 
-#include <Owned.hpp>
+#include "Owned.hpp"
 // @saftbus-export
 #include <saftlib/Time.hpp>
 

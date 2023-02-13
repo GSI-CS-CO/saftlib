@@ -137,7 +137,7 @@ static bool nothing_owned(std::shared_ptr<TimingReceiver_Proxy> receiver)
     map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];
     if (!fgs.empty())
       for (auto itr = fgs.begin(); itr != fgs.end(); ++itr) {
-        std::cerr << "trying to own fg " << itr->first << " " << itr->second << std::endl;
+        // std::cerr << "trying to own fg " << itr->first << " " << itr->second << std::endl;
         auto fg = FunctionGenerator_Proxy::create(itr->second);
         fg->Own();
         fg->Disown();
