@@ -12,7 +12,7 @@ namespace saftlib {
 		TimingReceiverAddon();
 		virtual ~TimingReceiverAddon();
 
-		virtual std::map< std::string, std::string> getObjects() = 0;
+		virtual std::map< std::string, std::map< std::string, std::string> > getObjects() = 0;
 	};
 
 

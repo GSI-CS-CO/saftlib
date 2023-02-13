@@ -124,16 +124,21 @@ TimingReceiver::~TimingReceiver()
 
 	// remove the service objects for all addons
 	if (container != nullptr) {
-		for (auto &addon: addons) {
-			for (auto &object: addon.second->getObjects()) {
+		for (auto &name_addon: addons) {
+			// const std::string& name = name_addon.first;
+			TimingReceiverAddon *addon = name_addon.second.get();
 
-				try {
-					container->remove_object(object.second);
-					// container->remove_object(actionSink->getObjectPath());
-				} catch (saftbus::Error &e) {
-					// std::cerr << "removal attempt failed: " << e.what() << std::endl;
+			for (auto &interface_objects: addon->getObjects()) {
+				// const std::string &interface = interface_objects.first;
+				std::map<std::string, std::string> &objects = interface_objects.second; // name and object_path
+				for (auto &object: objects) {
+					try {
+						container->remove_object(object.second);
+						// container->remove_object(actionSink->getObjectPath());
+					} catch (saftbus::Error &e) {
+						// std::cerr << "removal attempt failed: " << e.what() << std::endl;
+					}
 				}
-
 			}
 		}
 	}
@@ -187,9 +192,16 @@ std::map< std::string, std::map< std::string, std::string > > TimingReceiver::ge
 	result["EmbeddedCPUActionSink"] = ECA::getEmbeddedCPUActionSinks();
 	result["Output"]                = ECA::getOutputs();
 	result["Input"]                 = ECA_TLU::getInputs();
-	for (auto &addon: addons) {
-		for (auto &object: addon.second->getObjects()) {
-			result[addon.first][object.first] = object.second;
+	for (auto &name_addon: addons) {
+		// const std::string& name = name_addon.first;
+		TimingReceiverAddon *addon = name_addon.second.get();
+
+		for (auto &interface_objects: addon->getObjects()) {
+			const std::string &interface = interface_objects.first;
+			std::map<std::string, std::string> &objects = interface_objects.second; // name and object_path
+			for (auto &object: objects) {
+				result[interface][object.first] = object.second;
+			}
 		}
 	}
 	
@@ -204,14 +216,21 @@ std::map< std::string, std::map< std::string, std::string > > TimingReceiver::ge
 // 	}
 // }
 
-void TimingReceiver::installAddon(const std::string &interface_name, std::unique_ptr<TimingReceiverAddon> addon)
+void TimingReceiver::installAddon(const std::string &addon_name, std::unique_ptr<TimingReceiverAddon> addon)
 {
-	addons[interface_name] = std::move(addon);
+	if (addons.find(addon_name) != addons.end()) {
+		std::string msg("TimingReceiver::installAddon(): ");
+		msg.append(addon_name);
+		msg.append(" already exists as addon");
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg);
+	}
+	std::cerr << "TimingReceiver::installAddon(" << addon_name << ")" << std::endl;
+	addons[addon_name] = std::move(addon);
 }
 
-void TimingReceiver::removeAddon(const std::string &interface_name) {
-	std::cerr << "TimingReceiver::removeAddon(" << interface_name << ")" << std::endl;
-	addons.erase(interface_name);
+void TimingReceiver::removeAddon(const std::string &addon_name) {
+	std::cerr << "TimingReceiver::removeAddon(" << addon_name << ")" << std::endl;
+	addons.erase(addon_name);
 } 
 
 

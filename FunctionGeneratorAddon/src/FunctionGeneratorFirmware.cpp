@@ -100,6 +100,7 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(saftbus::Container *cont, S
 
 FunctionGeneratorFirmware::~FunctionGeneratorFirmware()
 {
+//  std::cerr << "~FunctionGeneratorFirmware()" << std::endl;
 }
 
 
@@ -275,10 +276,18 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
 
 std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
 {
+
+  std::cerr << "FunctionGeneratorFirmware::ScanFgChannels() getDestructible() " << getDestructible() << std::endl;
   // DRIVER_LOG("",-1,-1);
   ownerOnly();
   if (!nothing_runs()) {
     throw saftbus::Error(saftbus::Error::ACCESS_DENIED, "FunctionGeneratorFirmware::Scan is not allowed if any channel is active");
+  }
+
+  if (container) {
+    for(auto &fg: fgs) {
+      container->remove_object(fg.second->getObjectPath());
+    }
   }
 
   fgs.clear();
@@ -300,7 +309,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
 
     // swi address of fg is to be found in mailbox slot mb_slot
     // eb_address_t swi = mailbox.sdb_component.addr_first + mb_slot * 4 * 2;
-    std::cerr << "mailbox slot for swi is 0x" << mb_slot << std::endl;
+    std::cerr << "ScanFgChannels: mailbox slot for swi is 0x" << mb_slot << std::endl;
     eb_data_t num_channels, buffer_size, macros[FG_MACROS_SIZE];
     
     // firmware scan and wait until it is done
@@ -313,6 +322,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
     for (unsigned j = 0; j < FG_MACROS_SIZE; ++j)
       cycle.read(fgb + SHM_BASE + FG_MACROS + j*4, EB_DATA32, &macros[j]);
     cycle.close();
+    std::cerr << "ScanFgChannels: num_channels " << num_channels << std::endl;
     
     // Create an allocation buffer
     std::shared_ptr<std::vector<int>> allocation(

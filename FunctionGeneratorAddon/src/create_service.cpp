@@ -40,7 +40,7 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 		tr->installAddon(addon_name, std::move(fw));
 		container->create_object(fw_ptr->getObjectPath(), 
 				std::move(std::unique_ptr<saftlib::FunctionGeneratorFirmware_Service>(
-					new saftlib::FunctionGeneratorFirmware_Service(fw_ptr, std::bind(&saftlib::TimingReceiver::removeAddon, tr, addon_name))
+					new saftlib::FunctionGeneratorFirmware_Service(fw_ptr, std::bind(&saftlib::TimingReceiver::removeAddon, tr, addon_name), false)
 				)
 			)
 		);

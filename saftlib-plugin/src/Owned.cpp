@@ -26,7 +26,7 @@
 
 namespace saftlib {
 
-	Owned::Owned(saftbus::Container *container) : cont(container) 
+	Owned::Owned(saftbus::Container *container, int initial_owner) : cont(container), owner(initial_owner)
 	{ }
 
 	Owned::~Owned() {
@@ -38,11 +38,13 @@ namespace saftlib {
 	void Owned::Disown() {
 		if (cont) {
 			cont->active_service_release_owner();
+			owner = cont->active_service_get_owner();
 		}
 	}
 	void Owned::Own() {
 		if (cont) {
 			cont->active_service_set_owner();
+			owner = cont->active_service_get_owner();
 		}
 	}
 	void Owned::ownerOnly() const {
@@ -53,8 +55,7 @@ namespace saftlib {
 
 	std::string Owned::getOwner() const {
 		if (cont) {
-			int owner;
-			if ((owner=cont->active_service_get_owner()) != -1) {
+			if (owner != -1) {
 				std::ostringstream owner_str;
 				owner_str << owner;
 				return owner_str.str();

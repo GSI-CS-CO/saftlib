@@ -36,7 +36,7 @@ namespace saftlib {
 	class Owned
 	{
 	public:
-		Owned(saftbus::Container *container);
+		Owned(saftbus::Container *container, int initial_owner = -1);
 		virtual ~Owned();
 
 		/// @brief Release ownership of the object.
@@ -95,6 +95,7 @@ namespace saftlib {
 		void ownerOnly() const;
 	private:
 		saftbus::Container *cont;
+		int owner;
 	};
 
 }

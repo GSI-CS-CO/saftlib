@@ -52,7 +52,7 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 
 	// create a new Service and return it. Maintain a reference count
 	++ref_count;
-	container->create_object(saftd->getObjectPath(), std::move(std::unique_ptr<saftlib::SAFTd_Service>(new saftlib::SAFTd_Service(saftd.get(), std::bind(&destroy_service)))));
+	container->create_object(saftd->getObjectPath(), std::move(std::unique_ptr<saftlib::SAFTd_Service>(new saftlib::SAFTd_Service(saftd.get(), std::bind(&destroy_service), false ))));
 
 	// attach devices as specified in args
 	// this must happen after the SAFTd_Service was moved to the saftbus::Container

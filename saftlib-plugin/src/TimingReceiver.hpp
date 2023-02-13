@@ -191,7 +191,6 @@ private:
 
 
 	// TimingReceiver doesn't own TimingreceiverAddons
-	// std::map<std::string, std::map< std::string, std::string > > addon_interfaces;
 	std::map<std::string, std::unique_ptr<TimingReceiverAddon> > addons;
 
 };

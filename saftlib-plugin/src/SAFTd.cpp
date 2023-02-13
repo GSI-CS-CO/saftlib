@@ -130,7 +130,7 @@ namespace saftlib {
 
 			// crate a TimingReceiver_Service object
 			if (container) {
-				std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver, std::bind(&SAFTd::RemoveObject, this, name)));
+				std::unique_ptr<TimingReceiver_Service> service (new TimingReceiver_Service(timing_receiver, std::bind(&SAFTd::RemoveObject, this, name), false));
 
 				// insert the Service object
 				container->create_object(timing_receiver->getObjectPath(), std::move(service));
