@@ -15,7 +15,7 @@ lib_LTLIBRARIES =           \
 # @PACKAGE@ is substituded with the string given to AC_INIT([...])
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
 lib@PACKAGE@_service_la_CPPADD = $(SIGCPP_CFLAGS)
-lib@PACKAGE@_service_la_LIBADD = $(SAFTBUS_LIBS) $(SAFTLIB_LIBS) $(SIGCPP_LIBS) -ldl
+lib@PACKAGE@_service_la_LIBADD = $(SAFTBUS_LIBS) $(SAFTLIB_LIBS) $(SIGCPP_LIBS) -ldl -lrt
 lib@PACKAGE@_service_la_SOURCES =        \
 	src/FunctionGenerator.cpp             \
 	src/FunctionGenerator_Service.cpp      \

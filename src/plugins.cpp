@@ -52,9 +52,11 @@ namespace saftbus {
 		// d->handle = lt_dlopen(so_filename.c_str());
 		d->handle = dlopen(so_filename.c_str(), RTLD_NOW|RTLD_GLOBAL);
 
+		char *error = dlerror();
 		if (d->handle == nullptr) {
 			std::ostringstream msg;
 			msg << "cannot load plugin: fail to open file " << so_filename;
+			if (error) msg << " " << error;
 			throw std::runtime_error(msg.str());
 		} else {
 			// //===std::cerr << "successfully opened " << so_filename << std::endl;
