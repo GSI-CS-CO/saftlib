@@ -94,9 +94,8 @@ class FunctionGeneratorFirmware : public Owned, public TimingReceiverAddon
     // etherbone::sdb_msi_device  sdb_msi_base;
     // sdb_device                 mailbox;
 
-    std::map< std::string, std::unique_ptr<FunctionGenerator> > fgs;
-    std::unique_ptr<MasterFunctionGenerator> mfg;
-    // std::map< std::string, std::shared_ptr<Owned> > &master_fgs_owned;
+    std::map< std::string, std::shared_ptr<FunctionGenerator> > fgs;
+    std::shared_ptr<MasterFunctionGenerator> mfg;
 
     bool have_fg_firmware;
     eb_data_t magic;

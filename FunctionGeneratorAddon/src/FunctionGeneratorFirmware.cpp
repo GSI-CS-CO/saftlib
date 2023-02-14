@@ -102,27 +102,25 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(saftbus::Container *cont, S
 FunctionGeneratorFirmware::~FunctionGeneratorFirmware()
 {
   std::cerr << "~FunctionGeneratorFirmware()" << std::endl;
-  // if (container) {
-  //   for (auto &fg: fgs) {
-  //     container->remove_object(fg.second->getObjectPath());
-  //   }
-  //   container->remove_object(mfg->getObjectPath());
 
-  // }
   clear();
 }
 
 void FunctionGeneratorFirmware::clear()
 {
-  if (container) {
-    for (auto &fg: fgs) {
-      container->remove_object(fg.second->getObjectPath());
+  try {
+    if (container) {
+      for (auto &fg: fgs) {
+        container->remove_object(fg.second->getObjectPath());
+      }
+      if (mfg) container->remove_object(mfg->getObjectPath());
     }
-    if (mfg) container->remove_object(mfg->getObjectPath());
+    fgs.clear();
+    mfg.reset();
+    addon_objects.clear();
+  } catch (...) { // catch exceptions that occur when the object was removed before
+    // nothing.
   }
-  fgs.clear();
-  mfg.reset();
-  addon_objects.clear();
 }
 
 std::string FunctionGeneratorFirmware::getObjectPath() 
@@ -161,14 +159,17 @@ bool FunctionGeneratorFirmware::nothing_runs()
     }
   }
 
-  // for (auto mfgs: master_fgs_owned) {
-  //   auto mfg = std::dynamic_pointer_cast<MasterFunctionGenerator>(mfgs.second);
-  //   for (auto running: mfg->ReadRunning()) {
-  //     if (running) {
-  //       return false;
-  //     }
-  //   }
-  // }
+
+
+  if (mfg) {
+    std::vector<int> running = mfg->ReadRunning();
+    for (auto runs: running) {
+      if (runs) {
+        return false;
+      }
+    }
+
+  }
 
   return true;
 }
@@ -297,22 +298,16 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
     std::string mfg_path = mfg_spath.str();
 
 
-    mfg = std::move(std::unique_ptr<MasterFunctionGenerator>(new MasterFunctionGenerator(container, mfg_path, functionGeneratorImplementations)));
+    mfg = std::make_shared<MasterFunctionGenerator>(container, mfg_path, functionGeneratorImplementations);
 
     if (container) {
-      mfg->Own();
       std::unique_ptr<MasterFunctionGenerator_Service> service(new MasterFunctionGenerator_Service(mfg.get()));
       container->create_object(mfg_path, std::move(service));
     }
 
     result.insert(std::make_pair(name, mfg_path));
 
-    // MasterFunctionGenerator::ConstructorType mfg_args = { mfg_path, tr, functionGeneratorImplementations};
-    // std::shared_ptr<MasterFunctionGenerator> mfg = MasterFunctionGenerator::create(mfg_args);
-
-    // master_fgs_owned["masterfg"] = mfg;
-    // result.insert(std::make_pair("masterfg", mfg_path));
-
+ 
   }
   addon_objects["MasterFunctionGenerator"] = result;
 
@@ -409,14 +404,14 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
       name << "fg-" << (int)fg_impl->getSCUbusSlot() 
            << "-"   << (int)fg_impl->getDeviceNumber();
 
-      std::unique_ptr<FunctionGenerator> fg(new FunctionGenerator(container, name.str(), path, fg_impl));
+      std::shared_ptr<FunctionGenerator> fg = std::make_shared<FunctionGenerator>(container, name.str(), path, fg_impl);
 
       if (container) {
         fg->Own();
         std::unique_ptr<FunctionGenerator_Service> service(new FunctionGenerator_Service(fg.get()));
         container->create_object(path, std::move(service));
       }
-      fgs[name.str()] = std::move(fg);
+      fgs[name.str()] = fg;
 
       result.insert(std::make_pair(name.str(), path));
     }

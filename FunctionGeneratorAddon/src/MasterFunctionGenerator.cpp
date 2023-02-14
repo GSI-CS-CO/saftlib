@@ -52,10 +52,10 @@ MasterFunctionGenerator::MasterFunctionGenerator(saftbus::Container *container,
                             const std::string &object_path, 
                             std::vector<std::shared_ptr<FunctionGeneratorImpl> > functionGenerators)
   : Owned(container)
+  , objectPath(object_path)
   , allFunctionGenerators(functionGenerators) 
   , activeFunctionGenerators(functionGenerators)
   , generateIndividualSignals(false)
-  , objectPath(object_path)
 {
   for (auto fg : allFunctionGenerators)
   {
@@ -70,6 +70,7 @@ MasterFunctionGenerator::MasterFunctionGenerator(saftbus::Container *container,
 
 MasterFunctionGenerator::~MasterFunctionGenerator()
 {
+  std::cerr << "~MasterFunctionGenerator()" << std::endl;
   for (auto fg : allFunctionGenerators) {
     fg->signal_running.clear();
     fg->signal_armed.clear();
