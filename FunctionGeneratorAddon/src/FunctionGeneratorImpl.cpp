@@ -22,6 +22,8 @@
 #include <memory>
 #include <functional>
 #include <assert.h>
+#include <iostream>
+#include <sstream>
 
 #include <saftbus/error.hpp>
 

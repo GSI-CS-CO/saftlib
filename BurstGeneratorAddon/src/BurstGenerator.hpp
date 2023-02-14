@@ -4,6 +4,7 @@
 
 #include "Owned.hpp"
 #include <TimingReceiver.hpp>
+#include <TimingReceiverAddon.hpp>
 #include <Mailbox.hpp>
 
 #include <saftbus/service.hpp> // for saftbus::Container
