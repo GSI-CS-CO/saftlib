@@ -1,7 +1,9 @@
-src/*.o
-src/*.lo
-src/.*
-m4/*.m4
+*.o
+*.lo
+*.a
+*.la
+.*
+*.m4
 .libs/
 saftbus-ctl
 saftbusd
@@ -25,7 +27,6 @@ ltmain.sh
 doc/
 saftbus-gen
 saftbus.pc
-*.la
 *_Proxy.*pp
 *_Service.*pp
 *_Proxy.*o

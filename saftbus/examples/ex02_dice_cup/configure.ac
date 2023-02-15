@@ -1,4 +1,4 @@
-AC_INIT([saftbus-ex01-plugin], [0.0])
+AC_INIT([saftbus-ex02-plugin], [0.0])
 LT_INIT
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])
@@ -8,7 +8,8 @@ AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
 
 PKG_CHECK_MODULES([SAFTBUS], [saftbus])
-PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0])
+AC_CHECK_PROG( SAFTBUSGEN_CHECK,saftbus-gen,yes)
+AS_IF([test x"$SAFTBUSGEN_CHECK" != x"yes"], [AC_MSG_ERROR([saftbus-gen not found])])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
