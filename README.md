@@ -1,10 +1,12 @@
-# Saftlib - Simplified API for Timing
+# Saftlib v3 - Simplified API for Timing
 
 GSI timing receivers include a large collection of slave devices. Saftlib
 provides a user-friendly software interface for controlling these slaves.
 The interfaces provide high level functionality. 
 
-### Version 3 changes
+
+## Version 3 changes
+
 #### Rewrite of the inter process communication system ([saftbus](saftbus/README.md)) 
   - better stability and performance
   - use fewer file descriptors
@@ -32,3 +34,20 @@ The interfaces provide high level functionality.
   - **saftbusd libsaftd-servcie.so tr0:dev/wbm0 libfg-firmware-service.so tr0** if the function generator is needed on a SCU
   - **saftbusd libsaftd-service.so tr0:dev/wbm0 libburst-generator-service.so tr0** if the burst generator is needed on a TimingReceiver
 
+#### Installation
+To get something like saftlib v2, the following steps are needed:
+  - compile and install saftbus
+    - cd saftbus
+    - ./autogen.sh
+    - ./configure [--prefix=/install/directory]
+    - make install
+  - compile and install saftbus-gen
+    - cd saftbus-gen
+    - ./autogen.sh
+    - ./configure [--prefix=/install/directory]
+    - make install
+  - compile and install saftlib-plugin
+    - cd saftlib-plugin
+    - ./autogen.sh
+    - ./configure [--prefix=/install/directory]
+    - make install
