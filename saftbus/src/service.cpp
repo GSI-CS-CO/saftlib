@@ -628,6 +628,9 @@ namespace saftbus {
 			client_info.signal_fds = client.signal_fds;
 			result.client_infos.push_back(client_info);
 		}
+		for (auto &name_loader: d->plugins) {
+			result.active_plugins.push_back(name_loader.first);
+		}
 
 		return result;
 	}

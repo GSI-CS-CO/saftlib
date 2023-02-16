@@ -15,23 +15,23 @@ dist_bin_SCRIPTS = src/saftd
 
 
 .PHONY: version.h # causes build.cpp to be rebuilt every run
-BUILT_SOURCES = version.h \
-	src/Owned_Service.cpp              \
-	src/SAFTd_Service.cpp                \
-	src/Condition_Service.cpp              \
-	src/ActionSink_Service.cpp               \
-	src/SoftwareCondition_Service.cpp          \
-	src/SoftwareActionSink_Service.cpp           \
-	src/SCUbusCondition_Service.cpp                \
-	src/SCUbusActionSink_Service.cpp                 \
-	src/EmbeddedCPUCondition_Service.cpp               \
-	src/EmbeddedCPUActionSink_Service.cpp                \
-	src/WbmCondition_Service.cpp                           \
-	src/WbmActionSink_Service.cpp                            \
-	src/Output_Service.cpp                                       \
-	src/OutputCondition_Service.cpp                              \
-	src/Input_Service.cpp                                        \
-	src/ECA_Event.cpp                                            \
+BUILT_SOURCES = version.h          \
+	src/Owned_Service.cpp           \
+	src/SAFTd_Service.cpp            \
+	src/Condition_Service.cpp         \
+	src/ActionSink_Service.cpp         \
+	src/SoftwareCondition_Service.cpp   \
+	src/SoftwareActionSink_Service.cpp   \
+	src/SCUbusCondition_Service.cpp       \
+	src/SCUbusActionSink_Service.cpp       \
+	src/EmbeddedCPUCondition_Service.cpp    \
+	src/EmbeddedCPUActionSink_Service.cpp    \
+	src/WbmCondition_Service.cpp              \
+	src/WbmActionSink_Service.cpp              \
+	src/Output_Service.cpp                      \
+	src/OutputCondition_Service.cpp              \
+	src/Input_Service.cpp                         \
+	src/ECA_Event.cpp                              \
 	src/TimingReceiver_Service.cpp                               
 
 
@@ -73,67 +73,67 @@ lib@PACKAGE@_service_la_SOURCES =\
 	src/WbmActionSink_Service.cpp                            \
 	src/SdbDevice.cpp                                        \
 	src/MsiDevice.cpp                                        \
-	src/OpenDevice.cpp                                        \
-	src/WhiteRabbit.cpp                                         \
-	src/Mailbox.cpp                                              \
-	src/Watchdog.cpp                                             \
-	src/SerdesClockGen.cpp                                       \
-	src/Io.cpp                                                   \
-	src/IoControl.cpp                                            \
-	src/Output.cpp                                               \
-	src/Output_Service.cpp                                       \
-	src/OutputCondition.cpp                                      \
-	src/OutputCondition_Service.cpp                              \
-	src/EventSource.cpp                                          \
-	src/Input.cpp                                                \
-	src/Input_Service.cpp                                        \
-	src/ECA.cpp                                                  \
-	src/ECA_TLU.cpp                                              \
-	src/ECA_Event.cpp                                            \
-	src/BuildIdRom.cpp                                           \
-	src/TempSensor.cpp                                           \
-	src/Reset.cpp                                                \
-	src/LM32Cluster.cpp                                          \
-	src/TimingReceiver.cpp                                       \
-	src/TimingReceiver_Service.cpp                               \
-	src/TimingReceiverAddon.cpp                                  \
-	src/CommonFunctions.cpp                                      \
+	src/OpenDevice.cpp                                       \
+	src/WhiteRabbit.cpp                                      \
+	src/Mailbox.cpp                                          \
+	src/Watchdog.cpp                                         \
+	src/SerdesClockGen.cpp                                   \
+	src/Io.cpp                                               \
+	src/IoControl.cpp                                        \
+	src/Output.cpp                                           \
+	src/Output_Service.cpp                                   \
+	src/OutputCondition.cpp                                  \
+	src/OutputCondition_Service.cpp                          \
+	src/EventSource.cpp                                      \
+	src/Input.cpp                                            \
+	src/Input_Service.cpp                                    \
+	src/ECA.cpp                                              \
+	src/ECA_TLU.cpp                                          \
+	src/ECA_Event.cpp                                        \
+	src/BuildIdRom.cpp                                       \
+	src/TempSensor.cpp                                       \
+	src/Reset.cpp                                            \
+	src/LM32Cluster.cpp                                      \
+	src/TimingReceiver.cpp                                   \
+	src/TimingReceiver_Service.cpp                           \
+	src/TimingReceiverAddon.cpp                              \
+	src/CommonFunctions.cpp                                  \
 	src/create_service.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/saftlib
 lib@PACKAGE@_service_include_HEADERS =\
-	version.h                      \
-	src/ats_regs.h                 \
-	src/bg_regs.h                  \
-	src/eca_ac_wbm_regs.h          \
-	src/eca_queue_regs.h           \
-	src/eca_regs.h                 \
-	src/eca_flags.h                \
-	src/eca_tlu_regs.h             \
-	src/fg_regs.h                  \
-	src/io_control_regs.h          \
-	src/wr_mil_gw_regs.h           \
-	src/build.hpp                      \
-	src/Time.hpp                        \
-	src/eb-source.hpp                    \
-	src/eb-forward.hpp                    \
-	src/Owned.hpp                          \
-	src/SAFTd.hpp                           \
-	src/Condition.hpp                        \
-	src/ActionSink.hpp                        \
-	src/SoftwareCondition.hpp                  \
-	src/SoftwareActionSink.hpp                  \
-	src/SCUbusCondition.hpp                      \
-	src/SCUbusActionSink.hpp                      \
-	src/EmbeddedCPUCondition.hpp                   \
-	src/EmbeddedCPUActionSink.hpp                   \
-	src/WbmCondition.hpp                             \
-	src/WbmActionSink.hpp                             \
-	src/SdbDevice.hpp                                 \
-	src/MsiDevice.hpp                                 \
-	src/OpenDevice.hpp                                 \
-	src/WhiteRabbit.hpp                                 \
-	src/Mailbox.hpp                                      \
+	version.h                          \
+	src/ats_regs.h                      \
+	src/bg_regs.h                        \
+	src/eca_ac_wbm_regs.h                 \
+	src/eca_queue_regs.h                   \
+	src/eca_regs.h                          \
+	src/eca_flags.h                          \
+	src/eca_tlu_regs.h                        \
+	src/fg_regs.h                              \
+	src/io_control_regs.h                       \
+	src/wr_mil_gw_regs.h                         \
+	src/build.hpp                                 \
+	src/Time.hpp                                   \
+	src/eb-source.hpp                               \
+	src/eb-forward.hpp                               \
+	src/Owned.hpp                                     \
+	src/SAFTd.hpp                                      \
+	src/Condition.hpp                                   \
+	src/ActionSink.hpp                                   \
+	src/SoftwareCondition.hpp                             \
+	src/SoftwareActionSink.hpp                            \
+	src/SCUbusCondition.hpp                               \
+	src/SCUbusActionSink.hpp                              \
+	src/EmbeddedCPUCondition.hpp                          \
+	src/EmbeddedCPUActionSink.hpp                         \
+	src/WbmCondition.hpp                                  \
+	src/WbmActionSink.hpp                                 \
+	src/SdbDevice.hpp                                     \
+	src/MsiDevice.hpp                                     \
+	src/OpenDevice.hpp                                    \
+	src/WhiteRabbit.hpp                                   \
+	src/Mailbox.hpp                                       \
 	src/Watchdog.hpp                                      \
 	src/SerdesClockGen.hpp                                \
 	src/Io.hpp                                            \
@@ -198,7 +198,7 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/TempSensor_Proxy.cpp                              \
 	src/Reset_Proxy.cpp                                    \
 	src/LM32Cluster_Proxy.cpp                               \
-	src/TimingReceiver_Proxy.cpp                              \
+	src/TimingReceiver_Proxy.cpp                             \
 	src/CommonFunctions.cpp                               
 
 
@@ -230,44 +230,44 @@ lib@PACKAGE@_proxy_include_HEADERS = \
 	src/TempSensor_Proxy.hpp                                 \
 	src/Reset_Proxy.hpp                                       \
 	src/LM32Cluster_Proxy.hpp                                  \
-	src/TimingReceiver_Proxy.hpp                                 \
-	src/CommonFunctions.hpp                                      \
-	src/interfaces/saftlib.h                                     \
-	src/interfaces/SAFTd.h                                       \
-	src/interfaces/iDevice.h                                     \
-	src/interfaces/iOwned.h                                      \
-	src/interfaces/CommonFunctions.h                             \
-	src/interfaces/SCUbusActionSink.h                            \
-	src/interfaces/iEmbeddedCPUActionSink.h                      \
-	src/interfaces/iSAFTd.h                                      \
-	src/interfaces/EmbeddedCPUActionSink.h                       \
-	src/interfaces/SCUbusCondition.h                             \
-	src/interfaces/iEmbeddedCPUCondition.h                       \
-	src/interfaces/iSCUbusActionSink.h                           \
-	src/interfaces/EmbeddedCPUCondition.h                        \
-	src/interfaces/SoftwareActionSink.h                          \
-	src/interfaces/iEventSource.h                                \
-	src/interfaces/iSCUbusCondition.h                            \
-	src/interfaces/SoftwareCondition.h                           \
-	src/interfaces/iSoftwareActionSink.h                         \
-	src/interfaces/TimingReceiver.h                              \
-	src/interfaces/iSoftwareCondition.h                          \
-	src/interfaces/Input.h                                       \
-	src/interfaces/WbmActionSink.h                               \
-	src/interfaces/iInputEventSource.h                           \
-	src/interfaces/iTimingReceiver.h                             \
-	src/interfaces/MILbusActionSink.h                            \
-	src/interfaces/WbmCondition.h                                \
-	src/interfaces/iMILbusActionSink.h                           \
-	src/interfaces/iWbmActionSink.h                              \
-	src/interfaces/MILbusCondition.h                             \
-	src/interfaces/iMILbusCondition.h                            \
-	src/interfaces/iWbmCondition.h                               \
-	src/interfaces/iActionSink.h                                 \
-	src/interfaces/Output.h                                      \
-	src/interfaces/iOutputActionSink.h                           \
-	src/interfaces/OutputCondition.h                             \
-	src/interfaces/iCondition.h                                  \
+	src/TimingReceiver_Proxy.hpp                                \
+	src/CommonFunctions.hpp                                     \
+	src/interfaces/saftlib.h                                    \
+	src/interfaces/SAFTd.h                                      \
+	src/interfaces/iDevice.h                                    \
+	src/interfaces/iOwned.h                                     \
+	src/interfaces/CommonFunctions.h                            \
+	src/interfaces/SCUbusActionSink.h                           \
+	src/interfaces/iEmbeddedCPUActionSink.h                     \
+	src/interfaces/iSAFTd.h                                     \
+	src/interfaces/EmbeddedCPUActionSink.h                      \
+	src/interfaces/SCUbusCondition.h                            \
+	src/interfaces/iEmbeddedCPUCondition.h                      \
+	src/interfaces/iSCUbusActionSink.h                          \
+	src/interfaces/EmbeddedCPUCondition.h                       \
+	src/interfaces/SoftwareActionSink.h                         \
+	src/interfaces/iEventSource.h                               \
+	src/interfaces/iSCUbusCondition.h                           \
+	src/interfaces/SoftwareCondition.h                          \
+	src/interfaces/iSoftwareActionSink.h                        \
+	src/interfaces/TimingReceiver.h                             \
+	src/interfaces/iSoftwareCondition.h                         \
+	src/interfaces/Input.h                                      \
+	src/interfaces/WbmActionSink.h                              \
+	src/interfaces/iInputEventSource.h                          \
+	src/interfaces/iTimingReceiver.h                            \
+	src/interfaces/MILbusActionSink.h                           \
+	src/interfaces/WbmCondition.h                               \
+	src/interfaces/iMILbusActionSink.h                          \
+	src/interfaces/iWbmActionSink.h                             \
+	src/interfaces/MILbusCondition.h                            \
+	src/interfaces/iMILbusCondition.h                           \
+	src/interfaces/iWbmCondition.h                              \
+	src/interfaces/iActionSink.h                                \
+	src/interfaces/Output.h                                     \
+	src/interfaces/iOutputActionSink.h                          \
+	src/interfaces/OutputCondition.h                            \
+	src/interfaces/iCondition.h                                 \
 	src/interfaces/iOutputCondition.h
 
 

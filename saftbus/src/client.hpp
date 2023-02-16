@@ -142,6 +142,7 @@ namespace saftbus {
 			}
 		};
 		std::vector<ClientInfo> client_infos;
+		std::vector<std::string> active_plugins;
 		void serialize(Serializer &ser) const {
 			ser.put(object_infos.size());
 			for (auto &object: object_infos) {
@@ -151,6 +152,7 @@ namespace saftbus {
 			for (auto &client: client_infos) {
 				ser.put(client);
 			}
+			ser.put(active_plugins);
 		}
 		void deserialize(const Deserializer &des) {
 			size_t size;
@@ -164,6 +166,7 @@ namespace saftbus {
 			for (unsigned i = 0; i < size; ++i) {
 				des.get(client_infos[i]);
 			}
+			des.get(active_plugins);
 		}
 	};
 

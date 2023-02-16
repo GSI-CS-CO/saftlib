@@ -29,9 +29,12 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 	for (auto &object: saftbus_info.object_infos) {
 		max_object_path_length = std::max(max_object_path_length, object.object_path.size());
 	}
-
+	std::cout << "objects:" << std::endl;
+	std::cout << "  " << std::setw(max_object_path_length) << std::left << "object-path" 
+	          << " ID [owner] sig-fd/use-count interface-names" << std::endl;
 	for (auto &object: saftbus_info.object_infos) {
-		std::cout << std::setw(max_object_path_length) << std::left 
+		std::cout << "  " 
+		          << std::setw(max_object_path_length) << std::left 
 		          << object.object_path 
 		          << " " 
 		          << object.object_id
@@ -50,8 +53,16 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 	}
 
 	std::cout << std::endl;
+	std::cout << "active plugins: " << std::endl;
+	for (auto &plugin: saftbus_info.active_plugins) {
+		std::cout << "  " << plugin << std::endl;
+	}
+
+
+	std::cout << std::endl;
+	std::cout << "connected client processes:" << std::endl;
 	for (auto &client: saftbus_info.client_infos) {
-		std::cout << client.client_fd << " (pid=" << client.process_id << ")" << std::endl;
+		std::cout << "  " << client.client_fd << " (pid=" << client.process_id << ")" << std::endl;
 	}
 
 }
