@@ -25,7 +25,6 @@ libsaftbus.la
 libtool
 ltmain.sh
 doc/
-saftbus-gen
 saftbus.pc
 *_Proxy.*pp
 *_Service.*pp

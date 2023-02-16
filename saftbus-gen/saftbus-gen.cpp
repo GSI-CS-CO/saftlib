@@ -1477,11 +1477,8 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 	move_file_if_not_identical(tmp_filename, cpp_filename);
 }
 
-
-int main(int argc, char **argv) 
-{
-	if (argc == 1) {
-		std::cout << "usage: " << argv[0] << " [-o <output-prefix>] [-I <include-path>] [-v]" << std::endl;
+void usage(char *argv0) {
+		std::cout << "usage: " << argv0 << " [-o <output-prefix>] [-I <include-path>] [-v] [-h|--help]" << std::endl;
 		std::cout << std::endl;
 		std::cout << "  <output-prefix> is the prefix of all generated source files," << std::endl; 
 		std::cout << "                  it is empty by default." << std::endl;
@@ -1492,8 +1489,19 @@ int main(int argc, char **argv)
 		std::cout << std::endl;
 		std::cout << "  -v              more verbose" << std::endl;
 		std::cout << std::endl;
+		std::cout << "  -h | --help     print help and exit" << std::endl;
+		std::cout << std::endl;
+
+}
+
+int main(int argc, char **argv) 
+{
+	if (argc == 1) {
+		usage(argv[0]);
+		return 0;
 	}
 
+	try {
 
 	std::vector<std::string> include_paths;
 	std::vector<std::string> source_files;
@@ -1525,19 +1533,35 @@ int main(int argc, char **argv)
 		} else if (argvi == "-o") {
 			if (++i < argc) {
 				output_directory = argv[i];
+			} else {
+				std::cout << "Error: directory name expected after \"-o\"" << std::endl;
+				std::cout << std::endl;
+				return 1;
 			}
 		} else if (argvi == "--only") {
 			if (++i < argc) {
 				output_only_this_file = argv[i];
+			} else {
+				std::cout << "Error: file name expected after \"--only\"" << std::endl;
+				std::cout << std::endl;
+				return 1;
 			}
 		} else if (argvi == "-v") {
 			verbose = true;
+		} else if (argvi == "-h" || argvi == "--help") {
+			usage(argv[0]);
+			return 0;
 		} else {
+			if (argvi[0] == '-') {
+				std::cout << "Error: unknown argument " << argvi << std::endl;
+				std::cout << std::endl;
+				usage(argv[0]);
+				return 1;
+			}
 			source_files.push_back(argvi);
 		}
 	}
 
-	// return 0;
 	for (auto &source_file: source_files) {
 		std::map<std::string, std::string> defines;
 		std::vector<ClassDefinition> classes;
@@ -1561,10 +1585,11 @@ int main(int argc, char **argv)
 			}
 
 		}
+	}
 
-
-
-
+	} catch(std::runtime_error &e) {
+		std::cout << "Error: " << e.what() << std::endl;
+		return 1;
 	}
 
 	return 0;
