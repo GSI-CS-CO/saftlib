@@ -39,7 +39,7 @@ lib_LTLIBRARIES = \
 	lib@PACKAGE@-service.la  \
 	lib@PACKAGE@-proxy.la    
 # @PACKAGE@ is substituded with the string given to AC_INIT([...])
-lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic 
+lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
 lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) $(SIGCPP_CFLAGS)
 lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)  -ldl #-lltdl
 lib@PACKAGE@_service_la_SOURCES =\
@@ -169,6 +169,7 @@ lib@PACKAGE@_service_include_HEADERS =\
  	src/Input_Service.hpp                                 \
  	src/TimingReceiver_Service.hpp                           
 
+lib@PACKAGE@_proxy_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
 lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
 lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/Time.cpp                   \
