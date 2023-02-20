@@ -17,7 +17,7 @@ namespace ex02 {
 		static std::shared_ptr<Dice12> create(const std::string &object_path);
 
 		/// @brief throw dice once and return the result.
-		/// @return one of 1,2,3,4,5,6
+		/// @return one of 1,2,3,4,5,6,7,8,9,10,11,12
 		// @saftbus-export
 		int throwOnce();
 	};
