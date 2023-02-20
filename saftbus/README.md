@@ -63,32 +63,32 @@ Typcial use of saftbus is, to run saftbusd and load a custom plugin to provide c
 
 ### A very simple example plugin (examples/ex00)
 The driver class encapsulates has random number generator for integers in the range [1..6]. It is called "Dice". Dice_Proxies can create a random number using the method "Throw". The result is communicated using the signal "Result". All Dice_Proxies with a connected callback function will be notified when a new number was generated.
-
-    #ifndef EX00_DICE_HPP
-    #define EX00_DICE_HPP
-    #include <sigc++/sigc++.h>
-    namespace ex00 {
-      class Dice {
-      public:
-        // @saftbus-export
-        void Throw();
-        // @saftbus-export
-        sigc::signal<void, int> Result;
-      };
-    }
-    #endif
-
+```C++
+#ifndef EX00_DICE_HPP
+#define EX00_DICE_HPP
+#include <sigc++/sigc++.h>
+namespace ex00 {
+  class Dice {
+  public:
+    // @saftbus-export
+    void Throw();
+    // @saftbus-export
+    sigc::signal<void, int> Result;
+  };
+}
+#endif
+```
 The definition of the Throw method is in Dice.cpp:
-
-    #include "Dice.hpp"
-    #include <cstdlib>
-    namespace ex00 {
-      void Dice::Throw() {
-        int number = rand()%6+1;
-        Result(number);
-      }
-    }
-
+```C++
+#include "Dice.hpp"
+#include <cstdlib>
+namespace ex00 {
+  void Dice::Throw() {
+    int number = rand()%6+1;
+    Result(number);
+  }
+}
+```
 Four source files (Dice_Service.hpp, Dice_Service.cpp, Dice_Proxy.hpp, Dice_Proxy.cpp) will be generated with the following call to the saftbus-gen tool:
 
     saftbus-gen -o Dice.hpp
@@ -96,60 +96,61 @@ Four source files (Dice_Service.hpp, Dice_Service.cpp, Dice_Proxy.hpp, Dice_Prox
 The method Dice::Throw and the signal Result will be identified by saftbus-gen and added to the Dice_Proxy interface. 
 The file create_services.cpp contains the create_services function, which is called when the plugin is loaded by saftbusd.
 In this case, one argument is expected which specifies the object path of the created Dice_Service instance.
+```C++
+#include "Dice.hpp"
+#include "Dice_Service.hpp"
+#include <vector>
+#include <string>
 
-    #include "Dice.hpp"
-    #include "Dice_Service.hpp"
-    #include <vector>
-    #include <string>
-    
-    std::unique_ptr<ex00::Dice> dice;
-    
-    extern "C" 
-    void create_services(saftbus::Container *container, const std::vector<std::string> &args) {
-      if (args.size() == 1 && !dice) {
-        dice = std::unique_ptr<ex00::Dice>(new ex00::Dice());
-        container->create_object(args[0], 
-          std::unique_ptr<ex00::Dice_Service>(new ex00::Dice_Service(dice.get()))
-        );
-      } else {
-        std::cerr << "need object path as argument" << std::endl;
-      }
-    }   
+std::unique_ptr<ex00::Dice> dice;
 
+extern "C" 
+void create_services(saftbus::Container *container, const std::vector<std::string> &args) {
+  if (args.size() == 1 && !dice) {
+    dice = std::unique_ptr<ex00::Dice>(new ex00::Dice());
+    container->create_object(args[0], 
+      std::unique_ptr<ex00::Dice_Service>(new ex00::Dice_Service(dice.get()))
+    );
+  } else {
+    std::cerr << "need object path as argument" << std::endl;
+  }
+}   
+```
 All Service classes and the create_services function are compiled into a share libraray (the plugin that will be loaded by saftbusd)
 All Proxy classes are compiled into another library that other programs can use to create Proxy objects to utilize the Service objects in saftbusd. 
 Programs instanciate a Dice_Proxy object and use it in the very same way as an instance of the Dice driver class would be used.
 A program which can be used for both, listen to Result as well as initiate a Throw, could look like this:
+```C++
+#include "Dice_Proxy.hpp"
+#include <saftbus/client.hpp>
+#include <sigc++/sigc++.h>
+#include <string>
 
-    #include "Dice_Proxy.hpp"
-    #include <saftbus/client.hpp>
-    #include <sigc++/sigc++.h>
-    #include <string>
-    
-    std::string cmd, object_path;
-    void print_result(int result) {
-      std::cout << "dice " << object_path << " was thrown. Result = " << result << std::endl;
-    }
-    int main(int argc, char *argv[]) {
-      if (argc != 3) {
-        std::cout << "usage: " << argv[0] << " <object-path> throw|listen" << std::endl;
-        return 1;
-      }
-      object_path = argv[1];
-      cmd         = argv[2];
-    
-      auto dice = ex00::Dice_Proxy::create(object_path);
-    
-      dice->Result.connect(sigc::ptr_fun(print_result));
-      if (cmd == "throw") {
-        dice->Throw();
-      }
-      for (;;) {
-        saftbus::SignalGroup::get_global().wait_for_signal();
-        if (cmd != "listen") break;
-      }
-      return 0;
-    }
+std::string cmd, object_path;
+void print_result(int result) {
+  std::cout << "dice " << object_path << " was thrown. Result = " << result << std::endl;
+}
+int main(int argc, char *argv[]) {
+  if (argc != 3) {
+    std::cout << "usage: " << argv[0] << " <object-path> throw|listen" << std::endl;
+    return 1;
+  }
+  object_path = argv[1];
+  cmd         = argv[2];
+
+  auto dice = ex00::Dice_Proxy::create(object_path);
+
+  dice->Result.connect(sigc::ptr_fun(print_result));
+  if (cmd == "throw") {
+    dice->Throw();
+  }
+  for (;;) {
+    saftbus::SignalGroup::get_global().wait_for_signal();
+    if (cmd != "listen") break;
+  }
+  return 0;
+}
+```
 
 After launching the saftbusd with the newly created library as argument arguments of the ceate_services function must appear directly behind the shared object filename
 
