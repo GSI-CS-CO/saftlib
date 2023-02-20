@@ -17,7 +17,7 @@ Or the driver classes can also be used directly for lower latency (standalone, w
 
 #### Using saflib Proxy objects with saftbusd
 Create a file "saft-snoop-saftbus.cpp":
-
+```
     #include <SAFTd_Proxy.hpp>
     #include <TimingReceiver_Proxy.hpp>
     #include <SoftwareActionSink_Proxy.hpp>
@@ -77,7 +77,7 @@ Create a file "saft-snoop-saftbus.cpp":
     
       return 0;
     }
-
+```
 Compile with: 
 
     g++ -o saft-snoop-saftbus saft-snoop-saftbus.cpp `pkg-config saftlib --cflags --libs`
