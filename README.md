@@ -17,7 +17,7 @@ The interfaces provide high level functionality.
   - provide a plugin mechanism to install/remove services at runtime for more flexible customization of TimingReceiver hardware, e.g. LM32 firmware and saftlib driver
 
 #### Major rearrangement of the ECA/IO/MSI driver code ([saftlib](saftlib/README.md)) 
-  - is saftbus plugin for saftbus daemon, i.e. it can be loaded into a running saftbus-daemon and funcionality can be extended with other plugins
+  - plugin for saftbus daemon, i.e. it can be loaded into a running saftbus-daemon and funcionality can be extended with other plugins
   - better performance of the eb-source
   - removal of msi-source
   - all major SDB devices on hardware hava a C++ class representation 
@@ -28,11 +28,6 @@ The interfaces provide high level functionality.
     - The clock generator driver remembers the setting of any IO that was configured.
     - ...  (?)
   - The documentation of the user facing API is generated with doxygen and can be found in saftlib/html/index.html after running doxygen inside of the saftlib directory
-
-#### Startup of the daemon has changed 
-  - **saftbusd libsaftd-service.so tr0:dev/wbm0**  (instead of **saftd tr0:dev/wbm0** in saftlib version 2)
-  - **saftbusd libsaftd-servcie.so tr0:dev/wbm0 libfg-firmware-service.so tr0** if the function generator is needed on a SCU
-  - **saftbusd libsaftd-service.so tr0:dev/wbm0 libburst-generator-service.so tr0** if the burst generator is needed on a TimingReceiver
 
 #### Installation
 To get something like saftlib v2, the following steps are needed:
@@ -51,3 +46,8 @@ To get something like saftlib v2, the following steps are needed:
     - ./autogen.sh
     - ./configure [--prefix=/install/directory]
     - make install
+
+#### Startup of the daemon
+  - **saftbusd libsaftd-service.so tr0:dev/wbm0**  (instead of **saftd tr0:dev/wbm0** in saftlib version 2)
+  - **saftbusd libsaftd-servcie.so tr0:dev/wbm0 libfg-firmware-service.so tr0** if the function generator is needed on a SCU
+  - **saftbusd libsaftd-service.so tr0:dev/wbm0 libburst-generator-service.so tr0** if the burst generator is needed on a TimingReceiver
