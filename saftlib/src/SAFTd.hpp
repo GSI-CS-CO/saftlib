@@ -35,9 +35,25 @@
 
 namespace saftlib {
 
+	/// @brief An encapsulated etherbone::Socket with some extra features
+	///
+	/// In order to receive message passing interrupts (MSIs) from the Hardware, an instance of SAFTd driver is needed. 
+	/// The name "SAFTd" is kept for backwards compatibility with older saftlib versions, in order to keep the user facing API stable.
+	/// A better name would be saftlib::EbSocket, because it encapsulates an etherbone::Socket together with some additional functions.
+	/// SAFTd provides:
+	///  - An instance of an etherbone::Socket with a software eb_slave device connected to it that can receive MSIs
+	///    When an MSI arrives a connected write function will be called with address and data parameters.
+	///    The SAFTd class itself is derived from etherbone::Handler and can thus attatch itself to the etherbone::Socket.
+	///  - Management of registered callbacks and redistribution of incoming MSIs to registered callback functions.
+	///    There is a convenient high-level interface to register callbacks from saftlib::MsiDevice instances,
+	///    which represent wischbone masters on the MSI interconnects on the hardware.
+	///  - A container of TimingReceiver objects (std::vector<std::unique_ptr<TimingReceiver> >) and the possibility to add
+	///    an remove TimingReceiver objects at runtime.
 	class SAFTd : public etherbone::Handler {
 		// @saftbus-default-object-path /de/gsi/saftlib
 	public:
+		/// @brief create a new SAFTd instance
+		/// @param container if not nullptr, this will be used to register Service objects whenever AttachDevice is called.
 		SAFTd(saftbus::Container *container = nullptr);
 		~SAFTd();
 

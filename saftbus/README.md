@@ -11,14 +11,14 @@
 
 ![saftbus architecture overview](saftbus.png)
 
-A server process named provides an inter process communication (IPC) channel (a UNIX domain socket).
+A server process provides an inter process communication (IPC) channel (a UNIX domain socket) over which client processes can connect.
 At startup or at runtime, shared objects can be loaded by the server (plugins). 
-These plugins contain C++ classes (driver classes) that are supposed to be shared resources, an should be accessible by several client processes.
-The plugins also contain automatically generated Service and Proxy classes which contain boilerplate code for the IPC data transfer.
+These plugins contain C++ classes (driver classes) that are supposed to be shared resources, an should be accessible by all connected client processes.
+The plugins also contain automatically generated Service and Proxy classes with boilerplate code for the IPC data transfer.
 Instances of the Service classes are managed by the server. Client programs use instances of Proxy classes to access methods, properties, and signals provided by the driver classes. 
 
-It is easy to develop a server using saftbus library components. 
-The program saftbusd is a simple implementation of such a server and is installed together with the saftbus library.
+The program [saftbusd](src/saftbusd.cpp) is a simple implementation of such a server and is installed together with the saftbus library.
+It is also possible to develop a different server by using saftbus library components. 
 The program saftbus-gen can be used to generate the Proxy and Service classes from a given driver class declaration. 
 Driver classes are ordinary C++ classes. see [saftbus-gen](../saftbus-gen/README.md)
 

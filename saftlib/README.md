@@ -167,18 +167,7 @@ int main(int argc, char *argv[]) {
 Compile with:
 
     g++ -o saft-snoop-standalone saft-snoop-standalone.cpp `pkg-config saftlib --cflags --libs`
-#### TimingReceiver
-Each SDB device on the hardware is represented by one C++ class. 
-The TimingReceiver class combines many such classes by using multiple inheritance.
 
-#### SAFTd
-In order to receive message passing interrupts (MSIs) from the Hardware, an instance of SAFTd driver is needed. 
-The name "SAFTd" is kept for backwards compatibility with older saftlib versions, in order to keep the user facing API stable.
-A better name would be EtherboneSocket, because it encapsulates an etherbone::Socket together with some additional functions.
-SAFTd provides:
- - An instance of an etherbone::Socket with an eb_slave device connected to it in order to receive MSIs
- - Redistribution of incoming MSIs to callback functions
- - A container of TimingReceiver objects (std::vector<std::unique_ptr<TimingReceiver> >). 
 
 
 
