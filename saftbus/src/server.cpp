@@ -101,16 +101,14 @@ namespace saftbus {
 		void release_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			--count;
-			// std::cout << "Client::release_signal_fd(" << fd << ") count=" << count << std::endl;
-			assert(count >= 0);
-			if (count == 0) {
-				// std::cout << "Client::release_signal_fd close(" << fd << ")" << std::endl;
-				// don't close it because the client might create other proxies later
-				// if fd would be closed here, client must be able to detect this in the proxy constructor and 
-				// send a new socket-pair-fd so that the connection can be re-established
-				// close(fd);
-				// signal_fd_use_count.erase(fd);
+			if (count < 0) {
+				std::cerr << "fatal error: " << __FILE__ << ":" << __LINE__ << " signal use count < 0 must not happen" << std::endl;
+				assert(false);
 			}
+			// don't close even if use count reaches 0, because the client might create other proxies later
+			// if fd would be closed here, client must be able to detect this in the proxy constructor and 
+			// send a new socket-pair-fd so that the connection can be re-established
+			// All signal file descriptors are closed when the client disconnects
 		}
 	};
 	bool operator==(const std::unique_ptr<Client> &lhs, int rhs) {
