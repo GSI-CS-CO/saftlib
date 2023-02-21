@@ -1,10 +1,11 @@
 # Saftlib Simplified API for Timing
 
 Saflib is a library and a set of tools to use and control the FAIR Timing Receiver hardware.
-Saftlib provides the following
-  - A C++ class library to access Fair Timing Receiver Hardware. It can be used to configure the ECA channels, create conditions and receive software Interrupts from timing events. 
-  - This library can be used in stand-alone mode, or it can be dynamically loaded as a plugin into a running [saftbus](../saftbus/README.md) daemon.
-  - Various command line tools to control and interact with attached hardware devices.
+Saftlib provides
+  - A C++ class library to access FAIR Timing Receiver Hardware. It can be used to configure the ECA channels, create conditions and receive software Interrupts from timing events. 
+  - A library that can be directly by stand alone programs.
+  - A library that can be used to share hardware resources by access through [saftbus](../saftbus/README.md) via IPC (interprocess communication).
+  - A set of command line tools to control and interact with attached hardware devices.
 
 ## User guide
 

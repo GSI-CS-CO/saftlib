@@ -45,8 +45,8 @@ namespace saftbus {
 	class Serializer;
 	class Deserializer;
 
-	// custom types can be sent over saftbus if they derive from 
-	// this class and implement serialize and deserializ methods
+	/// @brief custom types can be sent over saftbus if they derive from 
+	/// this class and implement serialize and deserializ methods
 	struct SerDesAble {
 		virtual ~SerDesAble() = default;
 		virtual void serialize(Serializer &ser) const = 0;

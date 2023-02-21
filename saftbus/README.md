@@ -1,13 +1,36 @@
 # Saftbus: an interprocess communication library
 
+## Features
+  - A program "saftbusd" that can be run in the background (daemon) and provides services which can be accessed through a UNIX domain socket by Proxy objects.
+  - New services can be added by loading plugins at startup or during runtime of the daemon
+  - A code generator that facilitates developments of plugins for the daemon
+  - A command line tool (saftbus-ctl) to control the daemon, e.g. load/unload new plugins or remove service objects
+  - A deterministic memory allocator for real time applications
+
+## Architecture overview
+
+![saftbus architecture overview](saftbus.png)
+
+A server process named provides an inter process communication (IPC) channel (a UNIX domain socket).
+At startup or at runtime, shared objects can be loaded by the server (plugins). 
+These plugins contain C++ classes (driver classes) that are supposed to be shared resources, an should be accessible by several client processes.
+The plugins also contain automatically generated Service and Proxy classes which contain boilerplate code for the IPC data transfer.
+Instances of the Service classes are managed by the server. Client programs use instances of Proxy classes to access methods, properties, and signals provided by the driver classes. 
+
+It is easy to develop a server using saftbus library components. 
+The program saftbusd is a simple implementation of such a server and is installed together with the saftbus library.
+The program saftbus-gen can be used to generate the Proxy and Service classes from a given driver class declaration. 
+Driver classes are ordinary C++ classes. see [saftbus-gen](../saftbus-gen/README.md)
+
+
 ## History
 
-[saftlib](../saftlib/README.md) was originally written with D-Bus for inter process communication.
+[saftlib](../saftlib/README.md) was originally written with [D-Bus](https://www.freedesktop.org/wiki/Software/dbus/) for inter process communication.
 D-Bus was later replaced with a more real-time friendly system called saftbus.
-Initially, the saftbus API was identical to the D-Bus API (Gio::Dbus) to avoid code changes in the rest of saftlib.
-Then saftbus was re-written from scratch with a new API and the rest of saftlib was changed to work with the new API.
-The current saftbus version still shares some properties with D-Bus:
-  - A deamon running in the background maintains a list of available services.
+Initially, the saftbus API was identical to the D-Bus API ([Gio::Dbus](https://developer-old.gnome.org/glibmm/stable/namespaceGio_1_1DBus.html)) to avoid code changes in the rest of saftlib.
+Now, saftbus is re-written from scratch with a new API, and the rest of saftlib was changed to work with the new API.
+The re-written version of saftbus still shares some properties with D-Bus:
+  - A daemon running in the background maintains a list of available services.
   - Services offer an interface which consists of functions, properties (setter/getter functions), and signals.
   - Multiple processes can share services and use the provided interface.
 
@@ -15,26 +38,19 @@ Many aspects are different from D-Bus. The most important being:
   - Services cannot be added by processes connecting to the daemon but have to be added by dynamically loading a plugin (shared library) into the daemon.
   - Services are only usable if the signature of the interface is known. Introspection is not possible.
 
-## Features
-  - A program "saftbusd" that can be run in the background (daemon) and provides services which can be accessed through a UNIX domain socket by Proxy objects.
-  - New services can be added by loading plugins at startup or during runtime of the daemon
-  - A code generator that facilitates developments of plugins for the daemon
-  - A command line tool (saftbus-ctl) to control the daemon, e.g. load/unload new plugins or remove service objects
-  - A deterministic memory allocator for realtime applications
 
-## Environment varialbles 
+## Environment variables 
   - **SAFTBUS_SOCKET_PATH** : determines the location of the UNIX domain socket in the file system. Default ist **/var/run/saftbus/saftbus**
 
 ## Startup 
-  Run the saftbusd executable.
-  In case of an error such as "cannot create socket directory: /var/run/saftbus", try to run with root privileges or set the SAFTBUS_SOCKET_PATH environment variable to a location where the socket can be created (e.g. /tmp/saftbus)
-  If saftbusd was run without arguments, there will be no services apart from the saftbus::Container.
-  Additional services can be added by loading saftbus-plugins, e.g "saftbus-ctl -l libsaftd-service.so tr0:dev/wbm0".
-  Alternatively, plugins can be loaded at startup by passing them as command line arguments to the saftbusd executable (e.g. saftbusd libsaftd-service.so tr0:dev/wbm0).
-
+Run the saftbusd executable.
+In case of an error such as "cannot create socket directory: /var/run/saftbus", try to run with root privileges or set the SAFTBUS_SOCKET_PATH environment variable to a location where the socket can be created (e.g. /tmp/saftbus)
+If saftbusd was run without arguments, there will be no services apart from the saftbus::Container.
+Additional services can be added by loading saftbus-plugins, e.g "saftbus-ctl -l libsaftd-service.so tr0:dev/wbm0".
+Alternatively, plugins can be loaded at startup by passing them as command line arguments to the saftbusd executable (e.g. saftbusd libsaftd-service.so tr0:dev/wbm0).
 
 ## Saftbus plugins
-Typcial use of saftbus is, to run saftbusd and load a custom plugin to provide custrom services, and use custom programs that communicate with the services provided by the plugin using proxy classes. 
+Typical use case is to run saftbusd and load a custom plugin to provide custom services, and use custom programs that communicate with the services provided by the plugin using proxy classes. See below for a simple example. 
 ### Services
   - A saftbus service encapsulates an instance of a driver class.
   - It handles the inter process communication data and translates it into function calls that are redirected to the driver instance. The result is sent back to the calling process.
@@ -44,8 +60,8 @@ Typcial use of saftbus is, to run saftbusd and load a custom plugin to provide c
   - An instance of a service class needs to be constructed with a pointer to an instance of the corresponding driver class from which it was generated. 
 ### Driver classes
   - Are normal C++ classes, there are no restrictions on how a driver class can be written. 
-  - Must not be defined in the globel scope (saftbus-gen doesn't support this yet). 
-  - Inheritance is explicitely allowed. 
+  - Must not be defined in the global scope (saftbus-gen doesn't support this yet). 
+  - Inheritance is explicitly allowed. 
   - Methods and signals of the driver class which are supposed to be usable from different processes (through a Proxy object) need to be annotated with the **// @saftbus-export** comment. 
 ### Proxy classes
   - Are generated from the definition of the Driver class, just like Service classes.
@@ -62,8 +78,8 @@ Typcial use of saftbus is, to run saftbusd and load a custom plugin to provide c
   - A destruction callback can be registered with the service object, which gets called if the service is removed from the saftbus::Container
 
 ### A very simple example plugin (examples/ex00)
-#### Driver classes
-The driver class encapsulates has random number generator for integers in the range [1..6]. It is called "Dice". Dice_Proxies can create a random number using the method "Throw". The result is communicated using the signal "Result". All Dice_Proxies with a connected callback function will be notified when a new number was generated.
+#### Driver class
+The driver class has a random number generator for integers in the range [1..6]. It is called "Dice". Dice_Proxies can create a random number using the method "Throw". The result is communicated using the signal "Result". All Dice_Proxies with a connected callback function will be notified when a new number was generated.
 ```C++
 #ifndef EX00_DICE_HPP
 #define EX00_DICE_HPP
@@ -118,10 +134,10 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
   }
 }   
 ```
-All Service classes and the create_services function are compiled into a share libraray (the plugin that will be loaded by saftbusd)
+All Service classes and the create_services function are compiled into a share library (the plugin that will be loaded by saftbusd)
 All Proxy classes are compiled into another library that other programs can use to create Proxy objects to utilize the Service objects in saftbusd. 
 #### Utilize the Driver_Proxy
-Programs instanciate a Dice_Proxy object and use it in the very same way as an instance of the Dice driver class would be used.
+Programs instantiate a Dice_Proxy object and use it in the very same way as an instance of the Dice driver class would be used.
 A program which can be used for both, listen to Result as well as initiate a Throw, could look like this:
 ```C++
 #include "Dice_Proxy.hpp"
@@ -161,37 +177,41 @@ After launching the saftbusd with the newly created library as argument argument
 
 A call to "saftbus-ctl -s" should show the newly created Dice under the "/my/dice" object path, next to the Container interface under "/saftbus":
 All plugin shared object files and all connected client processes are listed as well:
+```bash
+$ saftbus-ctl -s
+objects:
+  object-path ID [owner] sig-fd/use-count interface-names
+  /saftbus 1 [-1]  6/1 Container 
+  /my/dice 2 [-1]  Dice 
 
-    $ saftbus-ctl -s
-    objects:
-      object-path ID [owner] sig-fd/use-count interface-names
-      /saftbus 1 [-1]  6/1 Container 
-      /my/dice 2 [-1]  Dice 
-    
-    active plugins: 
-      libsaftbus-ex00-service.so
-    
-    connected client processes:
-      5 (pid=284490)
+active plugins: 
+  libsaftbus-ex00-service.so
 
+connected client processes:
+  5 (pid=284490)
+$
+```
 A dice throw can be initiated by calling 
+```bash
+$ ex00-ctl /my/dice throw
+dice /my/dice was thrown. Result = 5
+$ ex00-ctl /my/dice throw
+dice /my/dice was thrown. Result = 4
+$ ex00-ctl /my/dice throw
+dice /my/dice was thrown. Result = 1
+$
+```
+If other instances of ex00-ctl were launched before with the "/my/dice listen" arguments, they all would show the following:
+```bash
+$ ex00-ctl /my/dice listen
+dice /my/dice was thrown. Result = 5
+dice /my/dice was thrown. Result = 4
+dice /my/dice was thrown. Result = 1
+```
+### Further information
+A More complex examples which make use of inheritance and creation of nested services can be found under 
+  - examples/ex01_dice.
+  - examples/ex02_dice_cup.
+  - the saftlib plugin [saftlib](../saftlib/README.md)
 
-    $ ex00-ctl /my/dice throw
-    dice /my/dice was thrown. Result = 5
-    $ ex00-ctl /my/dice throw
-    dice /my/dice was thrown. Result = 4
-    $ ex00-ctl /my/dice throw
-    dice /my/dice was thrown. Result = 1
-
-If other instances of ex00-ctl were launched before with the "listen" argument, they all would show the following:
-
-    $ ex00-ctl /my/dice listen
-    dice /my/dice was thrown. Result = 5
-    dice /my/dice was thrown. Result = 4
-    dice /my/dice was thrown. Result = 1
-
-### More complex examples
-
-A More complex examples which make use of inheritance and creation of nested services can be found under examples/ex02_dice_cup.
-
-The most complex example available is the saftlib-plugin.
+More detailed documentation on how to write saftbus plugins can be found in the Doxygen Main Page (you may have to build it first by running doxygen)  

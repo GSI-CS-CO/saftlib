@@ -33,6 +33,7 @@
 namespace saftbus {
 
 	class Loop;
+	/// @brief Base class of all event sources in a saftbus::Loop
 	class Source {
 		// struct Impl; std::unique_ptr<Impl> d;
 	friend class Loop;
@@ -55,7 +56,7 @@ namespace saftbus {
 		long id; 
 		bool valid;
 	};
-
+	/// @brief unique identifier for an event source in a saftbus::Loop
 	class SourceHandle {
 		friend class Loop;
 		long source_id;
@@ -67,6 +68,14 @@ namespace saftbus {
 		bool connected()     const {return loop_id!=0;}
 	};
 
+	/// @brief an event loop, driven by Sources
+	/// 
+	/// One loop iteration goes like this:
+	///   * find earliest timeout from all sources by calling the Source::prepare function
+	///   * collect all source file descriptors that need to be polled
+	///   * in case there are any file descriptors, do the poll system call
+	///   * in case there are no file descriptors, wait until the earliest timeout
+	///   * call Source::dispatch for all sources where Source::check returns true.
 	class Loop {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
@@ -91,9 +100,13 @@ namespace saftbus {
 	// Define two useful Source types
     /////////////////////////////////////
 
-    // call <slot> whenever <interval> amount of time has passed.
-    // fist execution starts at <inteval>+<offset>
-    // source is destroyed if <slot> returns false
+    /// @brief An event source that is active after a given amount of time has passed
+    /// 
+    /// The source is removed whenever the connected function returns false.
+    /// @param slot the function that is called periodically. If it returns true,
+    /// Source stays active. Otherwise the source is removed from the event loop.
+    /// @param interval fist execution starts at interval+offset
+    /// @param interval fist execution starts at interval+offset
 	class TimeoutSource : public Source {
 		// struct Impl; std::unique_ptr<Impl> d;
 	public:
@@ -109,11 +122,15 @@ namespace saftbus {
 		std::chrono::time_point<std::chrono::steady_clock> dispatch_time;		
 	};
 
-	// call <slot> whenever <fd> fulfills <condition> (usually POLLIN or POLLOUT)
-	// source is destroyed if POLLHP is seen on <fd>
+	/// @brief An event source that is ready whenever a certain condition on a given file descriptor is met (usually POLLIN or POLLOUT)
+
+	/// The source is removed from the loop whenever the callback function returns false or if the file descriptor reports hung-up.
+    /// @param slot the function that is called whenever the file descriptor fulfills the given condition. 
+    /// If it returns true, Source stays active. Otherwise the source is removed from the event loop.
+    /// @param fd the file descriptor that is observed by the source
+    /// @param condition the condition that is used to activate the source (usually POLLIN or POLLOUT)
 	class IoSource : public Source {
 		friend class Loop;
-		// struct Impl; std::unique_ptr<Impl> d;
 	public:
 		IoSource(std::function<bool(int, int)> slot, int fd, int condition);
 		~IoSource();
@@ -125,8 +142,6 @@ namespace saftbus {
 	private:
 		std::function<bool(int, int)> slot;
 		pollfd pfd;
-		// int id;
-		// static int id_source;		
 	};
 
 }

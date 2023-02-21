@@ -44,6 +44,7 @@ namespace saftbus {
 	/// Each entry in the vector is a filename of a plugin (i.e. a shared object file) and a list of 
 	/// initialization arguments for that plugin. Plugins cann also be loaded later at runtime using 
 	/// the command line tool saftubs-ctl -l <plugin-name> <arg1> <arg2> ... <argn>
+	/// @param socket_name is the name of the UNIX domain socket which will be opened by the ServerConnection
 	class ServerConnection {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:

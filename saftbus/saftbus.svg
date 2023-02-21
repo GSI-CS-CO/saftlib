@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="149.339mm"
+   height="50.319mm"
+   viewBox="-1 -1 149.33901 50.319"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="saftbus.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.829812"
+     inkscape:cx="323.25725"
+     inkscape:cy="130.06801"
+     inkscape:window-width="2052"
+     inkscape:window-height="1431"
+     inkscape:window-x="1223"
+     inkscape:window-y="527"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="marker4205"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path4203" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <rect
+       x="181.2314"
+       y="179.35635"
+       width="60.801464"
+       height="54.773808"
+       id="rect2411" />
+    <marker
+       style="overflow:visible"
+       id="TriangleStart-3"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4205-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path4203-0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart-32"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4205-6"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path4203-1" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart-32-8"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-0-6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4205-6-8"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path4203-1-8" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="TriangleStart-32-8-9"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-0-6-2" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4205-6-8-0"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="TriangleStart"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path4203-1-8-6" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-9.5594166,-27.49073)">
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#dde251;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="33.436565"
+       y="45.938183"
+       id="text2353"><tspan
+         sodipodi:role="line"
+         id="tspan2351"
+         style="stroke-width:1"
+         x="33.436565"
+         y="45.938183"></tspan></text>
+    <rect
+       style="fill:#dde251;fill-opacity:1;stroke:#000000;stroke-width:0.177445;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111"
+       width="31.926596"
+       height="20.426329"
+       x="74.30632"
+       y="43.185211" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="73.995476"
+       y="41.539463"
+       id="text2357"><tspan
+         sodipodi:role="line"
+         id="tspan2355"
+         style="fill:#030301;fill-opacity:1;stroke:none;stroke-width:1"
+         x="73.995476"
+         y="41.539463">server</tspan></text>
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text2409"
+       style="white-space:pre;shape-inside:url(#rect2411);display:inline;fill:#dde251;fill-opacity:1;stroke:#000000;stroke-width:3.77953;stroke-dasharray:none;stroke-opacity:1" />
+    <g
+       id="g3369"
+       transform="translate(32.542469,-29.927319)">
+      <g
+         id="g3191"
+         transform="translate(-2.6077313,2.9197166)">
+        <rect
+           style="fill:#8be251;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+           id="rect111-0"
+           width="26.254293"
+           height="4.3553934"
+           x="46.741688"
+           y="72.337143" />
+        <text
+           xml:space="preserve"
+           style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+           x="48.272465"
+           y="75.449013"
+           id="text3186"><tspan
+             sodipodi:role="line"
+             id="tspan3184"
+             style="stroke-width:0.4"
+             x="48.272465"
+             y="75.449013">Driver1_Service</tspan></text>
+      </g>
+      <g
+         id="g3191-9"
+         transform="translate(-2.6077313,8.8667376)">
+        <rect
+           style="fill:#8be251;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+           id="rect111-0-3"
+           width="26.254293"
+           height="4.3553934"
+           x="46.741688"
+           y="72.337143" />
+        <text
+           xml:space="preserve"
+           style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+           x="48.272465"
+           y="75.449013"
+           id="text3186-6"><tspan
+             sodipodi:role="line"
+             id="tspan3184-0"
+             style="stroke-width:0.4"
+             x="48.272465"
+             y="75.449013">Driver2_Service</tspan></text>
+      </g>
+      <g
+         id="g3191-6"
+         transform="translate(-2.6077313,14.813759)">
+        <rect
+           style="fill:#8be251;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+           id="rect111-0-2"
+           width="26.254293"
+           height="4.3553934"
+           x="46.741688"
+           y="72.337143" />
+        <text
+           xml:space="preserve"
+           style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+           x="48.272465"
+           y="75.449013"
+           id="text3186-61"><tspan
+             sodipodi:role="line"
+             id="tspan3184-8"
+             style="stroke-width:0.4"
+             x="48.272465"
+             y="75.449013">Driver3_Service</tspan></text>
+      </g>
+    </g>
+    <rect
+       style="fill:#dde251;fill-opacity:1;stroke:#000000;stroke-width:0.149521;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111-3"
+       width="31.954519"
+       height="14.490571"
+       x="124.85898"
+       y="31.501429" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="124.65345"
+       y="29.90373"
+       id="text2357-1"><tspan
+         sodipodi:role="line"
+         id="tspan2355-2"
+         style="fill:#030301;fill-opacity:1;stroke:none;stroke-width:1"
+         x="124.65345"
+         y="29.90373">client1</tspan></text>
+    <rect
+       style="fill:#d89393;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111-0-0"
+       width="26.254293"
+       height="4.3553934"
+       x="126.75846"
+       y="33.388683" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+       x="128.28923"
+       y="36.500553"
+       id="text3186-2"><tspan
+         sodipodi:role="line"
+         id="tspan3184-3"
+         style="stroke-width:0.4"
+         x="128.28923"
+         y="36.500553">Driver1_Proxy</tspan></text>
+    <g
+       id="g5433"
+       transform="translate(-12.764705,7.8644459)">
+      <g
+         id="g5337"
+         transform="translate(-8.2474643,-18.995594)">
+        <text
+           xml:space="preserve"
+           style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+           x="30.473667"
+           y="48.008656"
+           id="text2357-7"><tspan
+             sodipodi:role="line"
+             id="tspan2355-4"
+             style="fill:#030301;fill-opacity:1;stroke:none;stroke-width:1"
+             x="30.473667"
+             y="48.008656">driver1and2.so</tspan></text>
+        <rect
+           style="fill:#1c4bac;fill-opacity:1;stroke:#000000;stroke-width:0.177037;stroke-dasharray:none;stroke-opacity:1"
+           id="rect111-3-5"
+           width="43.015594"
+           height="15.090901"
+           x="30.660105"
+           y="49.207573" />
+        <rect
+           style="fill:#46b1d6;fill-opacity:1;stroke:#000000;stroke-width:0.242458;stroke-dasharray:none;stroke-opacity:1"
+           id="rect111-0-0-4"
+           width="38.964272"
+           height="4.3129358"
+           x="32.360973"
+           y="50.898357" />
+        <text
+           xml:space="preserve"
+           style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+           x="33.870514"
+           y="53.988998"
+           id="text3186-2-7"><tspan
+             sodipodi:role="line"
+             id="tspan3184-3-6"
+             style="stroke-width:0.4"
+             x="33.870514"
+             y="53.988998">Driver1 implementation</tspan></text>
+        <rect
+           style="fill:#46b1d6;fill-opacity:1;stroke:#000000;stroke-width:0.242458;stroke-dasharray:none;stroke-opacity:1"
+           id="rect111-0-0-4-6"
+           width="38.964272"
+           height="4.3129358"
+           x="32.360973"
+           y="57.511894" />
+        <text
+           xml:space="preserve"
+           style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+           x="33.870514"
+           y="60.602535"
+           id="text3186-2-7-9"><tspan
+             sodipodi:role="line"
+             id="tspan3184-3-6-3"
+             style="stroke-width:0.4"
+             x="33.870514"
+             y="60.602535">Driver2 implementation</tspan></text>
+      </g>
+    </g>
+    <g
+       id="g5421"
+       transform="translate(-12.663856,5.7477791)">
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+         x="22.125353"
+         y="51.652622"
+         id="text2357-7-2"><tspan
+           sodipodi:role="line"
+           id="tspan2355-4-5"
+           style="fill:#030301;fill-opacity:1;stroke:none;stroke-width:1"
+           x="22.125353"
+           y="51.652622">driver3.so</tspan></text>
+      <rect
+         style="fill:#1c4bac;fill-opacity:1;stroke:#000000;stroke-width:0.12968;stroke-dasharray:none;stroke-opacity:1"
+         id="rect111-3-5-4"
+         width="43.06295"
+         height="8.0882263"
+         x="22.288113"
+         y="52.827862" />
+      <rect
+         style="fill:#46b1d6;fill-opacity:1;stroke:#000000;stroke-width:0.242458;stroke-dasharray:none;stroke-opacity:1"
+         id="rect111-0-0-4-7"
+         width="38.964272"
+         height="4.3129358"
+         x="24.012659"
+         y="54.542324" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+         x="25.5222"
+         y="57.632965"
+         id="text3186-2-7-4"><tspan
+           sodipodi:role="line"
+           id="tspan3184-3-6-4"
+           style="stroke-width:0.4"
+           x="25.5222"
+           y="57.632965">Driver3 implementation</tspan></text>
+    </g>
+    <rect
+       style="fill:#d89393;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111-0-3-5"
+       width="26.254293"
+       height="4.3553934"
+       x="126.75846"
+       y="39.335705" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+       x="128.28923"
+       y="42.447575"
+       id="text3186-6-9"><tspan
+         sodipodi:role="line"
+         id="tspan3184-0-2"
+         style="stroke-width:0.4"
+         x="128.28923"
+         y="42.447575">Driver3_Proxy</tspan></text>
+    <rect
+       style="fill:#dde251;fill-opacity:1;stroke:#000000;stroke-width:0.114789;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111-3-6"
+       width="31.98925"
+       height="8.531229"
+       x="124.85213"
+       y="52.716988" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="124.60959"
+       y="51.265728"
+       id="text2357-1-9"><tspan
+         sodipodi:role="line"
+         id="tspan2355-2-3"
+         style="fill:#030301;fill-opacity:1;stroke:none;stroke-width:1"
+         x="124.60959"
+         y="51.265728">client2</tspan></text>
+    <rect
+       style="fill:#d89393;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111-0-2-8"
+       width="26.254293"
+       height="4.3553934"
+       x="127.14508"
+       y="54.8363" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+       x="128.67586"
+       y="57.94817"
+       id="text3186-61-9"><tspan
+         sodipodi:role="line"
+         id="tspan3184-8-7"
+         style="stroke-width:0.4"
+         x="128.67586"
+         y="57.94817">Driver2_Proxy</tspan></text>
+    <rect
+       style="fill:#dde251;fill-opacity:1;stroke:#000000;stroke-width:0.114789;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111-3-6-9"
+       width="31.98925"
+       height="8.531229"
+       x="124.85213"
+       y="66.831276" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#030301;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="124.60959"
+       y="65.38002"
+       id="text2357-1-9-4"><tspan
+         sodipodi:role="line"
+         id="tspan2355-2-3-7"
+         style="fill:#030301;fill-opacity:1;stroke:none;stroke-width:1"
+         x="124.60959"
+         y="65.38002">client3</tspan></text>
+    <rect
+       style="fill:#d89393;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-opacity:1"
+       id="rect111-0-2-8-4"
+       width="26.254293"
+       height="4.3553934"
+       x="127.14508"
+       y="68.950592" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.4;stroke-dasharray:none;stroke-opacity:1"
+       x="128.67586"
+       y="72.062462"
+       id="text3186-61-9-5"><tspan
+         sodipodi:role="line"
+         id="tspan3184-8-7-0"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.4"
+         x="128.67586"
+         y="72.062462">Driver1_Proxy</tspan></text>
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#TriangleStart);marker-end:url(#marker4205)"
+       d="m 108.7766,47.326685 7.2022,0.0056 0.20234,-8.369226 6.4236,0.04086"
+       id="path3758"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#TriangleStart-32);marker-end:url(#marker4205-6)"
+       d="m 108.79407,53.948129 7.2022,0.0056 0.0358,2.068962 6.42359,0.04086"
+       id="path3758-5"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#TriangleStart-32-8);marker-end:url(#marker4205-6-8)"
+       d="m 55.162922,46.080605 10.236168,0.0056 0.0358,2.068962 6.42359,0.04086"
+       id="path3758-5-4"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#TriangleStart-32-8-9);marker-end:url(#marker4205-6-8-0)"
+       d="m 55.190518,62.340884 10.236168,-0.0056 0.0358,-2.068962 6.42359,-0.04086"
+       id="path3758-5-4-8"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#TriangleStart-3);marker-end:url(#marker4205-1)"
+       d="m 108.75905,60.067673 7.20219,-0.0056 0.0357,10.687337 6.4236,-0.04086"
+       id="path3758-6"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1"
+       x="108.41351"
+       y="71.809334"
+       id="text4511"><tspan
+         sodipodi:role="line"
+         id="tspan4509"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.7"
+         x="108.41351"
+         y="71.809334">IPC</tspan><tspan
+         sodipodi:role="line"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.7"
+         x="108.41351"
+         y="75.778084"
+         id="tspan5759">channel</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1"
+       x="54.425995"
+       y="53.769402"
+       id="text4511-3"><tspan
+         sodipodi:role="line"
+         id="tspan4509-1"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.7"
+         x="54.425995"
+         y="53.769402">dynamically</tspan><tspan
+         sodipodi:role="line"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.7"
+         x="54.425995"
+         y="57.738152"
+         id="tspan4513-4">loaded</tspan></text>
+  </g>
+</svg>
