@@ -1,5 +1,7 @@
 # Saftlib Simplified API for Timing
 
+## Overview
+
 Saflib is a library and a set of tools to use and control the FAIR Timing Receiver hardware.
 Saftlib provides
   - A C++ class library to access FAIR Timing Receiver Hardware. It can be used to configure the ECA channels, create conditions and receive software Interrupts from timing events. 
@@ -7,15 +9,17 @@ Saftlib provides
   - A library that can be used to share hardware resources by access through [saftbus](../saftbus/README.md) via IPC (interprocess communication).
   - A set of command line tools to control and interact with attached hardware devices.
 
-## User guide
+## Usage of saftlib
+
+There are two fundamentally different ways of writing code that uses saftlib:
+  - The classes from saftlib can be used remotely through Proxy objects, this is shown in the first code example. In this case many processes can share the hardware resources at the same time. A saftbusd server has to be available with the saftd-service plugin loaded and a TimingReceiver hardware attached. This is probably the most common use case.
+  - Alternatively, the driver classes can also be used directly for lower latency (standalone, without running saftbusd). In this case the program connects directly to the hardware and no saftbusd server can run connect to the same hardware at the same time. But the program can be written in a way to provide the same functionality as saftbusd. This option might be useful when extra low latency in the hardware communication is needed.
+
+Both ways are shown in the following example
 
 ### A simple example
 
 A simple program that can be used to monitor timing events.
-The driver classes can either be used through Proxy objects. In this case many processes can share the hardware resources at the same time.
-
-Alternatively, the driver classes can also be used directly for lower latency (standalone, without running saftbusd). In this case, no saftbusd with the saftd-service can run at the same time. But the program can be written in a way to provide the same functionality, if needed. 
-
 The program configures the ECA to effectively call the function "on_action" whenever an event matches the specified event id.
 
 The configuration of the ECA always follows these steps:
