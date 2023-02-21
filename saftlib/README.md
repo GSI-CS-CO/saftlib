@@ -10,10 +10,19 @@ Saftlib provides the following
 
 ### A simple example
 
-A simple tool that can be used to monitor timing events.
-The driver classes can either be used throug Proxy objects. In this case many processes can share the hardware resources at the same time.
+A simple program that can be used to monitor timing events.
+The driver classes can either be used through Proxy objects. In this case many processes can share the hardware resources at the same time.
 
-Or the driver classes can also be used directly for lower latency (standalone, without running saftbusd). In this case, saftbusd funkctionality can be baked into the program to still allow sharing of hardware resources. 
+Alternatively, the driver classes can also be used directly for lower latency (standalone, without running saftbusd). In this case, no saftbusd with the saftd-service can run at the same time. But the program can be written in a way to provide the same functionality, if needed. 
+
+The program configures the ECA to effectively call the function "on_action" whenever an event matches the specified event id.
+
+The configuration of the ECA always follows these steps:
+  - Create a Proxy of the desired ECA output channel (aka action sink). In this case it is the SoftwareActionSink_Proxy. (Best Practice: Proxy objects should be stored by program their service is frequently used, e.g. when new ECA conditions are frequently defined. This avoids unnecessary overhead for creating and destroying the Proxy every time a condition is configured.)
+  - Create a new Condition on the SoftwareActionSink, the return value of the function is the object path of the newly created condition.
+  - Create a SoftwareCondition_Proxy object for the newly created condition.
+  - Connect the callback function to the "SigAction" signal of the SoftwareCondition_Proxy.
+  - Enter a loop and wait for signals.
 
 #### Using saflib Proxy objects with saftbusd
 Create a file "saft-snoop-saftbus.cpp":
@@ -162,7 +171,7 @@ Each SDB device on the hardware is represented by one C++ class.
 The TimingReceiver class combines many such classes by using multiple inheritance.
 
 #### SAFTd
-In order to receive message passing interrups (MSIs) from the Hardware, an instance of SAFTd driver is needed. 
+In order to receive message passing interrupts (MSIs) from the Hardware, an instance of SAFTd driver is needed. 
 The name "SAFTd" is kept for backwards compatibility with older saftlib versions, in order to keep the user facing API stable.
 A better name would be EtherboneSocket, because it encapsulates an etherbone::Socket together with some additional functions.
 SAFTd provides:

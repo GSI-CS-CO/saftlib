@@ -62,6 +62,7 @@ Typcial use of saftbus is, to run saftbusd and load a custom plugin to provide c
   - A destruction callback can be registered with the service object, which gets called if the service is removed from the saftbus::Container
 
 ### A very simple example plugin (examples/ex00)
+#### Driver classes
 The driver class encapsulates has random number generator for integers in the range [1..6]. It is called "Dice". Dice_Proxies can create a random number using the method "Throw". The result is communicated using the signal "Result". All Dice_Proxies with a connected callback function will be notified when a new number was generated.
 ```C++
 #ifndef EX00_DICE_HPP
@@ -94,6 +95,7 @@ Four source files (Dice_Service.hpp, Dice_Service.cpp, Dice_Proxy.hpp, Dice_Prox
     saftbus-gen -o Dice.hpp
 
 The method Dice::Throw and the signal Result will be identified by saftbus-gen and added to the Dice_Proxy interface. 
+#### Entry point for the plugin
 The file create_services.cpp contains the create_services function, which is called when the plugin is loaded by saftbusd.
 In this case, one argument is expected which specifies the object path of the created Dice_Service instance.
 ```C++
@@ -118,6 +120,7 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 ```
 All Service classes and the create_services function are compiled into a share libraray (the plugin that will be loaded by saftbusd)
 All Proxy classes are compiled into another library that other programs can use to create Proxy objects to utilize the Service objects in saftbusd. 
+#### Utilize the Driver_Proxy
 Programs instanciate a Dice_Proxy object and use it in the very same way as an instance of the Dice driver class would be used.
 A program which can be used for both, listen to Result as well as initiate a Throw, could look like this:
 ```C++
