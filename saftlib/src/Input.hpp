@@ -29,6 +29,7 @@
 
 namespace saftlib {
 
+/// @brief Interface to a TimingReceiver input (such as button or Lemo-IO)
 class Input : public EventSource
 {
 	public:

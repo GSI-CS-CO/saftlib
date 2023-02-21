@@ -28,6 +28,8 @@ namespace saftlib {
 
 class TimingReceiver;
 
+/// @brief Interface of ECA event sources 
+/// currently only implemented by saftlib::Input
 class EventSource : public Owned {
     std::string object_path;
     std::string object_name;

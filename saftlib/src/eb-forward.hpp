@@ -26,6 +26,13 @@
 
 namespace saftlib {
 
+    /// @brief Maintains a pseudo-terminal device that mimics a serial etherbone device.
+    ///
+    /// All data from the created pseudo terminal (e.g. /dev/pts/14) is read, split-up into complete 
+    /// etherbone packages and redirected to the real hardware. When the real hardware responds to the
+    /// etherbone request, the response is written back to the pseudo-terminal device.
+    /// This effectively allows using eb-tools, such as eb-ls on serial devices, even when the device is
+    /// occupied the TimingReceiver object.
 	class EB_Forward {
 	public:
 		EB_Forward(const std::string& eb_name); 
@@ -33,6 +40,8 @@ namespace saftlib {
 
 		bool accept_connection(int condition);
 
+        /// @brief return the name of the pseudo-terminal device
+        /// @return the name of the created pseudo-terminal
 		std::string eb_forward_path();
 
 	private:

@@ -40,6 +40,7 @@ namespace saftlib {
 
 class Input;
 
+/// @brief Interface to the ECA_TLU SdbInterface
 class ECA_TLU : public SdbDevice {
 	saftbus::Container *container;
 	std::vector<std::unique_ptr<Input> > inputs;

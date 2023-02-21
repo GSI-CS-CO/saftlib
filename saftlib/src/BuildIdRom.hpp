@@ -36,6 +36,8 @@
 
 namespace saftlib {
 
+/// @brief Representation of the SDB device with build id information.
+/// It can be used to obtain strings with gateware info and version numbers.
 class BuildIdRom : public SdbDevice {
 	std::map<std::string, std::string> gateware_info;
 	void setupGatewareInfo(uint32_t address);

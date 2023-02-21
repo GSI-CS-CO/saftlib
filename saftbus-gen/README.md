@@ -1,5 +1,6 @@
 # saftbus-gen code generator for saftbus Service and Proxy classes
 
+saftbus-gen is a companion tool for [saftbus](../saftbus/README.md)
 saftbus-gen takes as input a C++ source file with class declarations. 
 It follows #include directives when the filename is written in double quotes.
 ```C++
@@ -36,4 +37,3 @@ To summarize: // @saftbus-export annotations can appear
   - before member variable declarations of type sigc::signal or std::function
   - before #include directives
 
-  

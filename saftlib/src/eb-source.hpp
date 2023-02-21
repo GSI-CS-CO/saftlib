@@ -16,7 +16,7 @@
 #include <saftbus/loop.hpp>
 
 namespace saftlib {
-
+	/// @brief an etherbone event source for the saftbus::Loop
 	class EB_Source : public saftbus::Source
 	{
 	public:
