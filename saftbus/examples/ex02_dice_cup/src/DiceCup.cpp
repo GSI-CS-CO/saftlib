@@ -81,7 +81,13 @@ namespace ex02 {
 		if (name == object_path) {
 			return this;
 		}
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such dice");
+		std::ostringstream msg;
+		msg << "no dice with name " << name << " found" << std::endl;
+		msg << "available dices: " << std::endl;
+		for (auto &dice: dices) {
+			msg << "  " << dice.first << std::endl;
+		}
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
 	}
 
 
