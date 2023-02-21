@@ -49,12 +49,8 @@ namespace saftbus {
 		pid_t process_id; // store the clients pid as additional useful information
 		std::map<int,int> signal_fd_use_count;
 		saftbus::SourceHandle check_timeout;
-		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  {
-			// connect a timeout callback that checks once per second that all fds are still in the fds-set of the Main Loop.
-			// TODO: remove this before release
-			check_timeout = Loop::get_default().connect<TimeoutSource>(
-				std::bind(&Client::check, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000));
-		}
+		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  
+		{}
 		~Client() {
 			Loop::get_default().remove(check_timeout);
 			if (signal_fd_use_count.size() > 0) {
@@ -67,31 +63,6 @@ namespace saftbus {
 				// std::cout << "close signal fd " << fd_use_count.first << " with " << fd_use_count.second << " users " << std::endl;
 				close(fd_use_count.first);
 			}
-		}
-		bool check() {
-			// std::cout << "check Client " << socket_fd;
-			pollfd pfd;
-			pfd.fd = socket_fd;
-			pfd.events = POLLIN | POLLHUP | POLLERR;
-			int poll_result = poll(&pfd, 1, 0);
-			if (poll_result == -1) { // timeout
-				//===std::cerr << " error: " << strerror(errno) << std::endl;
-			}
-			// if (poll_result == 0) {
-			// 	std::cout << " nothing";
-			// }
-			// if (pfd.revents & POLLHUP) {
-			// 	std::cout << " POLLHUP";
-			// }
-			// if (pfd.revents & POLLIN) {
-			// 	std::cout << " POLLIN";
-			// }
-			// if (pfd.revents & POLLERR) {
-			// 	std::cout << " POLLERR";
-			// }
-			// std::cout << std::endl;
-			if (saftbus::IoSource::all_fds.find(socket_fd) == saftbus::IoSource::all_fds.end()) assert(false);
-			return true;
 		}
 		void use_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];

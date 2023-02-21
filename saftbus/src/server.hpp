@@ -34,11 +34,16 @@ namespace saftbus {
 
 	/// @brief provide a single named UNIX domain socket in the file system and handle client request on that socket
 	/// 
-	/// In its constructor, the ServerConnection creates a UNIX domain socket in the file system and 
+	/// During construction the ServerConnection creates a UNIX domain socket in the file system and 
 	/// listens for incoming connections. If a client connects to that socket, it is expected to send 
 	/// one file descriptor which must be one of the returned elements of the socketpair system call.
 	/// The ServerConnection maintains this this descriptor until it detects that the client hung up.
 	/// Since file descriptors are unique integer numbers, they are used to uniquely identify a client.
+	///
+	/// @param plugins_and_args Plugins can be directly loaded at startup of the ServerConnection. 
+	/// Each entry in the vector is a filename of a plugin (i.e. a shared object file) and a list of 
+	/// initialization arguments for that plugin. Plugins cann also be loaded later at runtime using 
+	/// the command line tool saftubs-ctl -l <plugin-name> <arg1> <arg2> ... <argn>
 	class ServerConnection {
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
@@ -46,11 +51,20 @@ namespace saftbus {
 			             const std::string &socket_name = "/var/run/saftbus/saftbus");
 		~ServerConnection();
 
+		/// @brief Whenever a client sends a signal file descriptor, it should be registered with 
+		/// the Server connection using this function in order to keep track of the use count of 
+		/// signal file descriptors.
 		void register_signal_id_for_client(int client_id, int signal_id);
+		/// @brief Whenever a proxy is unregistered, it should be de-registered with the Server 
+		/// connection using this function in order to keep track of the use count of signal file 
+		/// descriptors.
 		void unregister_signal_id_for_client(int client_id, int signal_id);
 
+		/// @brief return the client id of the currently active client
 		int get_calling_client_id();
 
+		/// @brief access the saftbus::Container that stores all services.
+		/// The container is owned by the ServerConnection object.
 		Container* get_container();
 
 		struct ClientInfo {

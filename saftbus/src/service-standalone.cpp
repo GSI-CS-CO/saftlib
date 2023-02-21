@@ -130,13 +130,13 @@ namespace saftbus {
 		assert(false);
 		return 0;
 	}
-	void Container::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
+	void Container::unregister_proxy(unsigned saftbus_object_id, int client_fd, int signal_group_fd)
 	{
 		assert(false);
 	}
 
 
-	bool Container::call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send) {
+	bool Container::call_service(unsigned saftbus_object_id, int client_fd, Deserializer &received, Serializer &send) {
 		assert(false);
 		return false;
 	}
