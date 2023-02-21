@@ -187,12 +187,12 @@ namespace saftbus {
 				// std::cout << "remove client IoSource " << fd << std::endl;
 				return false;
 			}
-			unsigned saftlib_object_id;
-			received.get(saftlib_object_id);
-			// //===std::cerr << "got saftlib_object_id: " << saftlib_object_id << std::endl;
-			// //===std::cerr << "found saftlib_object_id " << saftlib_object_id << std::endl;
+			unsigned saftbus_object_id;
+			received.get(saftbus_object_id);
+			// //===std::cerr << "got saftbus_object_id: " << saftbus_object_id << std::endl;
+			// //===std::cerr << "found saftbus_object_id " << saftbus_object_id << std::endl;
 			// //===std::cerr << "trying to call a function" << std::endl;
-			if (!container_of_services.call_service(saftlib_object_id, fd, received, send)) { 
+			if (!container_of_services.call_service(saftbus_object_id, fd, received, send)) { 
 				// call_service returns false if the service object was not found
 				// in this case an exception is sent to the Proxy 
 				send.put(saftbus::FunctionResult::EXCEPTION);

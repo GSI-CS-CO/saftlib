@@ -55,10 +55,10 @@ namespace saftbus {
 
 	struct Container::Impl {
 		std::vector<std::pair<std::string, std::unique_ptr<LibraryLoader> > > plugins;
-		unsigned generate_saftlib_object_id();
+		unsigned generate_saftbus_object_id();
 		ServerConnection *connection;
 		std::map<unsigned, std::unique_ptr<Service> > objects; // Container owns the Service objects
-		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftlib_object_id
+		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftbus_object_id
 		Service *active_service; // this is set only during the call_service function
 		void erase_children_first(const std::string &object_path) {
 			bool found_child = false;
@@ -225,21 +225,21 @@ namespace saftbus {
 						// //===std::cerr << "reuse " << signal_fd << std::endl;
 					}
 					std::map<std::string, int> interface_name2no_map;
-					unsigned saftlib_object_id = d->register_proxy(object_path, interface_names, interface_name2no_map, client_fd, signal_fd);
-					//===std::cerr << "registered proxy for saftlib_object_id " << saftlib_object_id << std::endl;
-					send.put(saftlib_object_id);
+					unsigned saftbus_object_id = d->register_proxy(object_path, interface_names, interface_name2no_map, client_fd, signal_fd);
+					//===std::cerr << "registered proxy for saftbus_object_id " << saftbus_object_id << std::endl;
+					send.put(saftbus_object_id);
 					send.put(client_fd); // fd and signal_fd are used in the proxy de-registration process
 					send.put(signal_fd); // send the integer value of the signal_fd back to the proxy. This nuber can be used by other Proxies to reuse the signal pipe.
 					send.put(interface_name2no_map);
 				} return;
 				case 1: { // Container::unregister_proxy (Hand-written. It will be called by Proxy base class destructor)
 					//===std::cerr << "unregister_proxy called" << std::endl;
-					unsigned saftlib_object_id;
+					unsigned saftbus_object_id;
 					int received_client_fd, received_signal_group_fd;
-					received.get(saftlib_object_id);
+					received.get(saftbus_object_id);
 					received.get(received_client_fd);
 					received.get(received_signal_group_fd);
-					d->unregister_proxy(saftlib_object_id, received_client_fd, received_signal_group_fd);
+					d->unregister_proxy(saftbus_object_id, received_client_fd, received_signal_group_fd);
 				} return;
 				case 2: { // Container::load_plugin
 					std::string  so_filename;
@@ -291,13 +291,13 @@ namespace saftbus {
 
 
 	// generate a unique object_id != 0
-	unsigned Container::Impl::generate_saftlib_object_id() {
-		static unsigned saftlib_object_id_generator = 1;
-		while ((objects.find(saftlib_object_id_generator) != objects.end()) ||
-		        saftlib_object_id_generator == 0) {
-			++saftlib_object_id_generator;
+	unsigned Container::Impl::generate_saftbus_object_id() {
+		static unsigned saftbus_object_id_generator = 1;
+		while ((objects.find(saftbus_object_id_generator) != objects.end()) ||
+		        saftbus_object_id_generator == 0) {
+			++saftbus_object_id_generator;
 		}
-		return saftlib_object_id_generator++;
+		return saftbus_object_id_generator++;
 	}
 
 	Container::Container(ServerConnection *connection) 
@@ -324,16 +324,16 @@ namespace saftbus {
 			//===std::cerr << "object path " << object_path << " already in use by object_id " << d->object_path_lookup_table[object_path] << ". cannot register another object under the same path" << std::endl;
 			return 0;
 		}
-		unsigned saftlib_object_id = d->generate_saftlib_object_id();
-		service->d->object_id = saftlib_object_id;
-		auto insertion_result = d->objects.insert(std::make_pair(saftlib_object_id, std::move(service)));
+		unsigned saftbus_object_id = d->generate_saftbus_object_id();
+		service->d->object_id = saftbus_object_id;
+		auto insertion_result = d->objects.insert(std::make_pair(saftbus_object_id, std::move(service)));
 		auto  insertion_took_place  = insertion_result.second;
 		auto &inserted_object       = insertion_result.first->second; 
 		if (insertion_took_place) {
 			inserted_object->d->object_path = object_path; // set the object_path of the Service object
-			d->object_path_lookup_table[object_path] = saftlib_object_id;
-			//===std::cerr << "inserted object under object_path " << object_path << " with object_id " << saftlib_object_id << std::endl;
-			return saftlib_object_id;
+			d->object_path_lookup_table[object_path] = saftbus_object_id;
+			//===std::cerr << "inserted object under object_path " << object_path << " with object_id " << saftbus_object_id << std::endl;
+			return saftbus_object_id;
 		}
 		return 0;
 	}
@@ -417,27 +417,27 @@ namespace saftbus {
 	{
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result != d->object_path_lookup_table.end()) {
-			unsigned saftlib_object_id = find_result->second;
-			auto find_result = d->objects.find(saftlib_object_id);
+			unsigned saftbus_object_id = find_result->second;
+			auto find_result = d->objects.find(saftbus_object_id);
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto &service    = find_result->second;
 			if (service->get_interface_name2no_map(interface_names, interface_name2no_map)) { //returns false if not all requested interfaces are implemented
 				service->d->signal_fds_use_count[signal_group_fd]++;
 				//===std::cerr << "register_proxy for object path " << object_path << " . object use count = " << service->d->signal_fds_use_count[signal_group_fd] << std::endl;
 				d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
-				return saftlib_object_id;
+				return saftbus_object_id;
 			}
 			// not all requested interfaces are implmented => return -1
 			return -1;
 		}
 		return 0;
 	}
-	void Container::unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd)
+	void Container::unregister_proxy(unsigned saftbus_object_id, int client_fd, int signal_group_fd)
 	{
-		//===std::cerr << "Container::unregister_proxy(" << saftlib_object_id << ")" << std::endl;
-		auto find_result = d->objects.find(saftlib_object_id);
+		//===std::cerr << "Container::unregister_proxy(" << saftbus_object_id << ")" << std::endl;
+		auto find_result = d->objects.find(saftbus_object_id);
 		if (find_result == d->objects.end()) {
-			//===std::cerr << "object " << saftlib_object_id << " already gone" << std::endl;
+			//===std::cerr << "object " << saftbus_object_id << " already gone" << std::endl;
 			return;
 		}
 		auto    &service    = find_result->second;
@@ -450,8 +450,8 @@ namespace saftbus {
 	}
 
 
-	bool Container::call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send) {
-		auto find_result = d->objects.find(saftlib_object_id);
+	bool Container::call_service(unsigned saftbus_object_id, int client_fd, Deserializer &received, Serializer &send) {
+		auto find_result = d->objects.find(saftbus_object_id);
 		if (find_result == d->objects.end()) {
 			return false;
 		}

@@ -38,14 +38,15 @@ namespace saftbus {
 	/// @brief base class of all saftbus Services
 	///
 	/// Any Service object maintained by saftbus Container must be derived from saftbus::Service.
-	/// In theory, it is possible to write funcitonal Service classes (i.e. derived from this class)
-	/// By hand, but there are a number of constraints to fullfill for derived functions to work 
+	/// In theory, it is possible to write functional Service classes (i.e. derived from this class)
+	/// By hand, but there are a number of constraints to fulfill for derived functions to work 
 	/// properly in a saftbus::Container. Therefore, derived classes are usually generated from a 
 	/// "driver class" using the tool saftbus-gen, which is part of this software package.
 	///
 	/// For example, if a class named "DriverX" is declared in file driverX.hpp and has 
-	/// at least one saftbus tag on one of its functions or signals, 
+	/// at least one saftbus tag (// @saftbus-export) on one of its functions or signals, 
 	/// a class DriverX_Service can be generated in file driverX_Service.hpp/.cpp by calling
+	///
 	///     saftbus-gen driverX.hpp
 	///
 	class Service {
@@ -100,7 +101,7 @@ namespace saftbus {
 		/// 
 		/// @param interface_no identifies the interface name. The implementation of call must ensure that the inteface numbers are 
 		///                     consistent with the interface_name2no_map lookup table that is generated in get_interface_name2no_map.
-		/// @param function_no indentifies the function name. 
+		/// @param function_no identifies the function name. 
 		/// @param client_fd the file descriptor (i.e. the unique ID) of the client that initiated the remote function call.
 		/// @param received serialized data containing the arguments of the function call.
 		/// @param send a serializer that takes the return values from the function call. 
@@ -151,7 +152,7 @@ namespace saftbus {
 		/// @param connection The Connection object that owns the Container
 		Container(ServerConnection *connection);
 		~Container();
-		/// @brief Insert a Service object and return the saftlib_object_id for this object
+		/// @brief Insert a Service object and return the saftbus_object_id for this object
 		/// @param object_path the object path under which the Service object is available to Proxy objects.
 		/// @param service A Service object
 		/// @return 0 in case the object_path is already used by another Service object. 
@@ -161,16 +162,21 @@ namespace saftbus {
 		Service* get_object(const std::string &object_path);
 
 
-		// call a Service identified by the saftlib_object_id
-		// return false if the saftlib_object_id is unknown
-		bool call_service(unsigned saftlib_object_id, int client_fd, Deserializer &received, Serializer &send);
+		/// @brief call a Service identified by the saftbus_object_id
+		/// @param saftbus_object_id identifies the service object
+		/// @param client_fd the file descriptor to the calling client
+		/// @param received data that came from the client and is deserialized into function arguments
+		/// @param send     serialized return values that will be sent back to the client
+		/// @return false if the saftbus_object_id is unknown
+		bool call_service(unsigned saftbus_object_id, int client_fd, Deserializer &received, Serializer &send);
 		void remove_signal_fd(int fd);
 
-		// iterate all owend services and remove the ones previously owned by client with this fd
+		/// @brief iterate all owned services and remove the ones previously owned by client with this fd
+		/// @param fd the file descriptor that signaled a hung-up condition
 		void client_hung_up(int fd);
 
 
-		// these can be called whenever a client request ist handled
+		/// @brief some functions for ownership management. They can only be called whenever a client request is handled.
 		int get_calling_client_id() const;
 		void set_owner(Service *);
 		void active_service_set_owner();
@@ -181,15 +187,19 @@ namespace saftbus {
 		void active_service_remove();
 
 
+		/// @brief erase all objects in a safe manner
+		///
+		/// Children are erased before parents and younger objects are erased before older ones.
+		/// Children and parents are identified by the object path: e.g. /grandparent/parent/child
 		void clear();
 
-		// return saftlib_object_id if the object_path was found and all requested interfaces are implemented
+		// return saftbus_object_id if the object_path was found and all requested interfaces are implemented
 		// return 0 if object_path was not found
-		// return -1 if object_path was found but not all requested interfaces are implmented by the object
+		// return -1 if object_path was found but not all requested interfaces are implemented by the object
 		// @saftbus-export 
 		int register_proxy(const std::string &object_path, const std::vector<std::string> interface_names, std::map<std::string,int> &interface_name2no_map, int client_fd, int signal_group_fd);
 		// @saftbus-export
-		void unregister_proxy(unsigned saftlib_object_id, int client_fd, int signal_group_fd);
+		void unregister_proxy(unsigned saftbus_object_id, int client_fd, int signal_group_fd);
 		// @saftbus-export
 		bool load_plugin(const std::string &so_filename, const std::vector<std::string> &args = std::vector<std::string>());
 		// @saftbus-export
@@ -206,7 +216,7 @@ namespace saftbus {
 		SaftbusInfo get_status();
 	};
 
-	// created by saftbus-gen from class Container and copied here
+	/// @brief created by saftbus-gen from class Container and copied here
 	class Container_Service : public saftbus::Service {
 		Container* d;
 		static std::vector<std::string> gen_interface_names();
@@ -217,18 +227,6 @@ namespace saftbus {
 		~Container_Service();
 		void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);
 	};
-
-
-	// class ServerConnection;
-	// // A Service to access the Container of Services
-	// // mainly Proxy (de-)registration 
-	// class Container_Service : public Service {
-	// 	struct Impl; std::unique_ptr<Impl> d;
-	// public:
-	// 	Container_Service(Container *container);
-	// 	~Container_Service();
-	// 	void call(unsigned interface_no, unsigned function_no, int client_fd, Deserializer &received, Serializer &send);
-	// };
 
 }
 
