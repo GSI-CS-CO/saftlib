@@ -340,7 +340,7 @@ namespace saftbus {
 
 	Service* Container::get_object(const std::string &object_path)
 	{
-		std::cerr << "get_object " << object_path << std::endl;
+		//std::cerr << "get_object " << object_path << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
 			std::string msg = "cannot get object \"";
@@ -359,7 +359,7 @@ namespace saftbus {
 		if (object_path == "/saftbus") {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "cannot remove /saftbus");
 		}
-		std::cerr << "remove_object " << object_path << " now" << std::endl;
+		//std::cerr << "remove_object " << object_path << " now" << std::endl;
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
 			std::string msg = "cannot remove object \"";
@@ -495,13 +495,13 @@ namespace saftbus {
 			if (iter == d->objects.rend()) {
 				break;
 			}
-			std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
+			//std::cerr << "remove object " << iter->second->get_object_path() << std::endl;
 			if (iter->second->d->destruction_callback && iter->second->d->destroy_if_owner_quits) {
-				std::cerr << "object has destruction_callback" << std::endl;
+				//std::cerr << "object has destruction_callback" << std::endl;
 				// only remove those objects with a destruction_callback
 				remove_object(iter->second->get_object_path());
 			} else {
-				std::cerr << "object has no destruction_callback" << std::endl;
+				//std::cerr << "object has no destruction_callback" << std::endl;
 				// if there is no destruction_callback, release object from clients ownership (because the client hung up)
 				iter->second->d->owner = -1;
 			}
@@ -510,7 +510,6 @@ namespace saftbus {
 
 
 	bool Container::load_plugin(const std::string &so_filename, const std::vector<std::string> &args) {
-		//===std::cerr << "loading " << so_filename << std::endl;
 		bool plugin_available = false;
 		LibraryLoader *plugin = nullptr;
 		for (auto &name_plugin: d->plugins) {
@@ -520,11 +519,6 @@ namespace saftbus {
 				break;
 			}
 		}
-		//auto plugin = d->plugins.find(so_filename);
-		// if (plugin != d->plugins.end()) {
-		// 	//===std::cerr << "plugin found" << std::endl;
-		// 	plugin_available = true;
-		// } else {
 		if (!plugin_available) {			
 			d->plugins.push_back(std::make_pair(so_filename, std::move(std::unique_ptr<LibraryLoader>(new LibraryLoader(so_filename)))));
 			plugin = d->plugins.back().second.get();
@@ -583,7 +577,6 @@ namespace saftbus {
 	}
 	void Container::active_service_owner_only() const {
 		if (d->active_service) {
-			// std::cout << "owner: " << d->active_service->d->owner << "            caller: " << get_calling_client_id() << std::endl;
 			if (d->active_service->d->owner != -1 && d->active_service->d->owner != get_calling_client_id()) { 
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
 			}

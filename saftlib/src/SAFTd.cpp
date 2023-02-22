@@ -65,7 +65,7 @@ namespace saftlib {
 
 	SAFTd::~SAFTd() 
 	{
-		std::cerr << "~SAFTd()" << std::endl;
+		// std::cerr << "~SAFTd()" << std::endl;
 		//saftbus::Loop::get_default().remove(eb_source);
 		Quit();
 		if (container) {
@@ -97,10 +97,10 @@ namespace saftlib {
 	}
 
 	eb_status_t SAFTd::write(eb_address_t address, eb_width_t width, eb_data_t data) {
-		std::cerr << "write callback " << std::hex << std::setw(8) << std::setfill('0') << address 
-		          <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
-		          << std::dec 
-		          << std::endl;
+		// std::cerr << "write callback " << std::hex << std::setw(8) << std::setfill('0') << address 
+		//           <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
+		//           << std::dec 
+		//           << std::endl;
 	    
 		std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
 		if (it != irqs.end()) {
@@ -210,7 +210,7 @@ namespace saftlib {
 		auto it = irqs.find(irq);
 		if (it == irqs.end()) {
 			// the requested address is still free
-			std::cerr << "attach irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
+			// std::cerr << "attach irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
 			irqs[irq] = slot;
 			return true;
 		}
@@ -255,7 +255,7 @@ namespace saftlib {
 		for (;;) {
 			eb_address_t irq_adr = ((rand() & mask) + first) & (~0x3);
 			if (request_irq(irq_adr, slot)) {
-				std::cerr << "msi.msi_device.msi_first = " << std::hex << std::setw(8) << std::setfill('0') << msi.msi_device.msi_first << std::dec << std::endl;
+				// std::cerr << "msi.msi_device.msi_first = " << std::hex << std::setw(8) << std::setfill('0') << msi.msi_device.msi_first << std::dec << std::endl;
 				return msi.msi_device.msi_first + irq_adr; // return the adress that triggers the msi
 			}
 		}		
