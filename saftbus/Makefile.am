@@ -6,19 +6,18 @@ pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftbus.pc
 EXTRA_DIST = saftbus.pc.in
 
-lib_LTLIBRARIES = libsaftbus.la libsaftbus-standalone.la libsaftbus-server.la
-# libmini_saftlib_la_LDFLAGS = -version-info 0:0:0 
-
 saftbus_includedir    = $(includedir)/saftbus
+
+lib_LTLIBRARIES = libsaftbus.la libsaftbus-server.la
+
+libsaftbus_la_LDFLAGS        = -version-info @SAFTBUS_SO_VERSION@ 
 libsaftbus_la_SOURCES = \
 	src/loop.cpp         \
 	src/saftbus.cpp       \
 	src/error.cpp          \
 	src/client.cpp    
 
-libsaftbus_standalone_la_SOURCES = \
-	src/service-standalone.cpp
-
+libsaftbus_server_la_LDFLAGS = -version-info @SAFTBUS_SO_VERSION@ 
 libsaftbus_server_la_SOURCES = \
 	src/service.cpp             \
 	src/plugins.cpp              \
@@ -34,8 +33,6 @@ saftbus_include_HEADERS = \
 	src/global_allocator.hpp     \
 	src/chunck_allocator_rt.hpp   \
 	src/server.hpp
-
-
 
 bin_PROGRAMS = \
 	saftbusd    \
