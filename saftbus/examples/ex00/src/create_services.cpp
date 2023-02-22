@@ -4,13 +4,18 @@
 #include <vector>
 #include <string>
 
-ex00::Dice dice;
+std::unique_ptr<ex00::Dice> dice;
+
+void destroy_callback() {
+	dice.reset();
+}
 
 extern "C" 
 void create_services(saftbus::Container *container, const std::vector<std::string> &args) {
-	if (args.size() == 1) {
+	if (args.size() == 1 && !dice) {
+		dice = std::unique_ptr<ex00::Dice>(new ex00::Dice);
 		container->create_object(args[0], 
-			std::unique_ptr<ex00::Dice_Service>(new ex00::Dice_Service(&dice))
+			std::unique_ptr<ex00::Dice_Service>(new ex00::Dice_Service(dice.get(), destroy_callback))
 		);
 	} else {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "need object path as argument");

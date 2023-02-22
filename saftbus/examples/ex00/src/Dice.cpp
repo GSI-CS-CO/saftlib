@@ -3,6 +3,7 @@
 namespace ex00 {
 	void Dice::Throw() {
 		int number = rand()%6+1;
-		Result(number);
+		SigResult.emit(number);
+		FunResult(number);
 	}
 }

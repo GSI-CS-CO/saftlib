@@ -1,11 +1,15 @@
 #include "Dice_Proxy.hpp"
 #include <saftbus/client.hpp>
-#include <sigc++/sigc++.h>
+#include <sigc++/sigc++.h> 
+#include <functional> 
 #include <string>
 
 std::string cmd, object_path;
-void print_result(int result) {
-	std::cout << "dice " << object_path << " was thrown. Result = " << result << std::endl;
+void print_result_sig(int result) {
+	std::cout << "dice " << object_path << " was thrown. SigResult = " << result << std::endl;
+}
+void print_result_fun(int result) {
+	std::cout << "dice " << object_path << " was thrown. FunResult = " << result << std::endl;
 }
 int main(int argc, char *argv[]) {
 	if (argc != 3) {
@@ -17,7 +21,8 @@ int main(int argc, char *argv[]) {
 
 	auto dice = ex00::Dice_Proxy::create(object_path);
 
-	dice->Result.connect(sigc::ptr_fun(print_result));
+	dice->SigResult.connect(sigc::ptr_fun(print_result_sig));
+	dice->FunResult = &print_result_fun;
 	if (cmd == "throw") {
 		dice->Throw();
 	}
