@@ -64,8 +64,34 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 	for (auto &client: saftbus_info.client_infos) {
 		std::cout << "  " << client.client_fd << " (pid=" << client.process_id << ")" << std::endl;
 	}
+}
+
+void usage(char *argv0) {
+		std::cout << "saftbus-ctl version " << VERSION << std::endl;
+		std::cout << std::endl;
+		std::cout << "usage: " << argv0 << " [-s] [-r <object-path>] [-l <plugin.so> {plugin-args}] [-u <plugin.so>] [-h|--help]" << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -s           print saftbus status, i.e. all available services," << std::endl; 
+		std::cout << "               loaded plugins and connected clients." << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -r           remove the service with <object-path> from saftbus" << std::endl; 
+		std::cout << std::endl;
+		std::cout << "  -l           load a share object file as plugin and execute the create_services" << std::endl;
+		std::cout << "               function of the plugin. If the plugin was loaded before, the" << std::endl;
+		std::cout << "               create_services function is called again. plugin-args are " << std::endl;
+		std::cout << "               passed as arguments to the create_services function." << std::endl;
+		std::cout << "               The meaning of plugin-args depends on the plugin (see plugin documentation)." << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -u           unload plugin. This should only be done when no services" << std::endl;
+		std::cout << "               that were created from code within that plugin are active." << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -q           cause saftbusd to quit" << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -h | --help  print help and exit" << std::endl;
+		std::cout << std::endl;
 
 }
+
 
 int main(int argc, char **argv)
 {
@@ -77,15 +103,19 @@ int main(int argc, char **argv)
 			for (int i = 1; i < argc; ++i) {
 				std::string argvi(argv[i]);
 				if (argvi == "-q") {
-					//===std::cerr << "call proxy->quit()" << std::endl;
 					container_proxy->quit();
 					return 0;
-					//===std::cerr << "quit done" << std::endl;
-				} if (argvi == "-s") {
+				} 
+				if (argvi == "-h" || argvi == "--help") {
+					usage(argv[0]);
+					return 0;
+				} 
+				if (argvi == "-s") {
 					saftbus::SaftbusInfo saftbus_info = container_proxy->get_status();
 					print_status(saftbus_info);
 					return 0;
-				} else if (argvi == "-l") {
+				}
+				if (argvi == "-l") {
 					if ((++i) < argc) {
 						std::string so_filename = argv[i];
 						std::vector<std::string> plugin_args;
@@ -124,10 +154,8 @@ int main(int argc, char **argv)
 				}
 			}
 		} else {
-			
-			for (int i=0; i<10; ++i) {
-				saftbus::SignalGroup::get_global().wait_for_signal();
-			}
+			usage(argv[0]);
+			return 0;
 		}
 
 	} catch (std::runtime_error &e) {
