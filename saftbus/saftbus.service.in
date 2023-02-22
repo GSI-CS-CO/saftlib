@@ -1,0 +1,11 @@
+[Unit]
+Description= IPC server to access FAIR Timing Receiver Hardware
+
+[Service]
+Type=simple 
+Restart=always
+RestartSec=10
+ExecStart=@prefix@/bin/saftbusd
+
+[Install]
+WantedBy=multi-user.target

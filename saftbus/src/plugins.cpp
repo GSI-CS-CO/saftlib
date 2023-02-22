@@ -76,8 +76,6 @@ namespace saftbus {
 
 	LibraryLoader::~LibraryLoader()
 	{
-		std::cerr << "~LibraryLoader()" << std::endl;
-
 		if (d->handle != nullptr) {
 			// lt_dlclose(d->handle);
 			dlclose(d->handle);

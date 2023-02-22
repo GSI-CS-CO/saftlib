@@ -118,13 +118,13 @@ namespace saftbus {
 		result = read_all(fd, (char*)&size, sizeof(size));
 		// std::cerr << "read_from " << fd << " so many bytes: " << size << std::endl;
 		if (result < (int)sizeof(size)) {
-			std::cerr << "read_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
+			//std::cerr << "read_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
 		_data.resize(size);
 		result = read_all(fd, (char*)&_data[0], size);
 		if (result < size) {
-			std::cerr << "read_all returned " << result << ". Expected result " << size << ". errno: " << strerror(errno) << std::endl;
+			//std::cerr << "read_all returned " << result << ". Expected result " << size << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
 		get_init();

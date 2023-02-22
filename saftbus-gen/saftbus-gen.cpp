@@ -1478,6 +1478,8 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 }
 
 void usage(char *argv0) {
+		std::cout << "saftbus-gen version " << VERSION << std::endl;
+		std::cout << std::endl;
 		std::cout << "usage: " << argv0 << " [-o <output-prefix>] [-I <include-path>] [-v] [-h|--help]" << std::endl;
 		std::cout << std::endl;
 		std::cout << "  <output-prefix> is the prefix of all generated source files," << std::endl; 
