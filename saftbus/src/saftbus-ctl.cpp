@@ -56,27 +56,34 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 	for (auto &object: saftbus_info.object_infos) {
 		max_object_path_length = std::max(max_object_path_length, object.object_path.size());
 	}
-	std::cout << "objects:" << std::endl;
+	std::cout << "services:" << std::endl;
 	std::cout << "  " << std::setw(max_object_path_length) << std::left << "object-path" 
 	          << " ID [owner] sig-fd/use-count interface-names" << std::endl;
+	std::vector<std::string> services;	          
 	for (auto &object: saftbus_info.object_infos) {
-		std::cout << "  " 
-		          << std::setw(max_object_path_length) << std::left 
-		          << object.object_path 
-		          << " " 
-		          << object.object_id
-		          << " [" << object.owner << "]";
-		     if (object.has_destruction_callback &&  object.destroy_if_owner_quits) std::cout << "D ";
-		else if (object.has_destruction_callback && !object.destroy_if_owner_quits) std::cout << "d ";
-		else std::cout << "  ";
+		std::ostringstream line;
+		line << "  " 
+		     << std::setw(max_object_path_length) << std::left 
+		     << object.object_path 
+		     << " " 
+		     << object.object_id
+		     << " [" << object.owner << "]";
+		     if (object.has_destruction_callback &&  object.destroy_if_owner_quits) line << "D ";
+		else if (object.has_destruction_callback && !object.destroy_if_owner_quits) line << "d ";
+		else line << "  ";
 
 		for (auto &user: object.signal_fds_use_count) {
-			std::cout << user.first << "/" << user.second << " ";
+			line << user.first << "/" << user.second << " ";
 		}
 		for (auto &interface: object.interface_names) {
-			std::cout << interface << " ";
+			line << interface << " ";
 		}		          
-        std::cout << std::endl;
+		services.push_back(line.str());
+	}
+
+	std::sort(services.begin(), services.end());
+	for (auto &service: services) {
+		std::cout << service << std::endl;
 	}
 
 	std::cout << std::endl;
