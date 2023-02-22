@@ -23,6 +23,24 @@
 #include "client.hpp"
 #include "global_allocator.hpp"
 
+void usage(char *argv0) {
+		std::cout << "saftbusd version " << VERSION << std::endl;
+		std::cout << std::endl;
+		std::cout << "usage: " << argv0 << " [-h] { <plugin.so> { <plugin-arg> } }" << std::endl;
+		std::cout << std::endl;
+		std::cout << "  <plugin.so>     is the name of a shared object files, it must have" << std::endl; 
+		std::cout << "                  contain a function with name \"create_services\"." << std::endl;
+		std::cout << std::endl;
+		std::cout << "  <plugin-arg>    one or more strings can be passed as arguments" << std::endl;
+		std::cout << "                  to each plugin. They are arguments of the " << std::endl;
+		std::cout << "                  \"create_services\" function in the shared library." << std::endl;
+		std::cout << std::endl;
+		std::cout << " -h | --help      print this help and exit." << std::endl;
+		std::cout << std::endl;
+		
+}
+
+
 static bool saftd_already_running() 
 {
   // if ClientConnection can be established, saftbus is already running
@@ -39,17 +57,18 @@ int main(int argc, char *argv[]) {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > > plugins_and_args;
 	for (int i = 1; i < argc; ++i) {
-		// std::cerr << argv[i] << std::endl;
 		std::string argvi(argv[i]);
-		bool argvi_is_plugin = //(argvi.find(".la") == argvi.size()-3) || 
-		                       (argvi.find(".so") == argvi.size()-3);
+		if (argvi == "-h" || argvi == "--help") {
+			usage(argv[0]);
+			return 0;
+		}
+		bool argvi_is_plugin = (argvi.find(".so") == argvi.size()-3);
 		if (argvi_is_plugin) {
-			// std::cerr << argvi << "is plugin name" << std::endl;
 			plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
 		} else {
 			// std::cerr << argvi << "is argument" << std::endl;
 			if (plugins_and_args.empty()) {
-				// std::cerr << "no plugin specified (these are files ending with .la or .so)" << std::endl;
+				std::cerr << "Error: no plugin specified (these are files ending with .so) before argument " << argvi << std::endl;
 				return 1;
 			} else {
 				plugins_and_args.back().second.push_back(argvi);
@@ -65,6 +84,5 @@ int main(int argc, char *argv[]) {
 	saftbus::ServerConnection server_connection(plugins_and_args);
 	saftbus::Loop::get_default().run();
 
-	//===std::cerr << "===================== saftbusd quit ============================" << std::endl;
 	return 0;
 }
