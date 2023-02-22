@@ -24,6 +24,33 @@
 #include <algorithm>
 #include <thread>
 
+
+void usage(char *argv0) {
+		std::cout << "saftbus-ctl version " << VERSION << std::endl;
+		std::cout << std::endl;
+		std::cout << "usage: " << argv0 << " [-s] [-r <object-path>] [-l <plugin.so> {plugin-args}] [-u <plugin.so>] [-h|--help]" << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -s           print saftbus status, i.e. all available services," << std::endl; 
+		std::cout << "               loaded plugins and connected clients." << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -r           remove the service with <object-path> from saftbus" << std::endl; 
+		std::cout << std::endl;
+		std::cout << "  -l           load a share object file as plugin and execute the create_services" << std::endl;
+		std::cout << "               function of the plugin. If the plugin was loaded before, the" << std::endl;
+		std::cout << "               create_services function is called again. plugin-args are " << std::endl;
+		std::cout << "               passed as arguments to the create_services function." << std::endl;
+		std::cout << "               The meaning of plugin-args depends on the plugin (see plugin documentation)." << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -u           unload plugin. This should only be done when no services" << std::endl;
+		std::cout << "               that were created from code within that plugin are active." << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -q           cause saftbusd to quit" << std::endl;
+		std::cout << std::endl;
+		std::cout << "  -h | --help  print help and exit" << std::endl;
+		std::cout << std::endl;
+}
+
+
 void print_status(saftbus::SaftbusInfo &saftbus_info) {
 	auto max_object_path_length = std::string().size();
 	for (auto &object: saftbus_info.object_infos) {
@@ -66,32 +93,6 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 	}
 }
 
-void usage(char *argv0) {
-		std::cout << "saftbus-ctl version " << VERSION << std::endl;
-		std::cout << std::endl;
-		std::cout << "usage: " << argv0 << " [-s] [-r <object-path>] [-l <plugin.so> {plugin-args}] [-u <plugin.so>] [-h|--help]" << std::endl;
-		std::cout << std::endl;
-		std::cout << "  -s           print saftbus status, i.e. all available services," << std::endl; 
-		std::cout << "               loaded plugins and connected clients." << std::endl;
-		std::cout << std::endl;
-		std::cout << "  -r           remove the service with <object-path> from saftbus" << std::endl; 
-		std::cout << std::endl;
-		std::cout << "  -l           load a share object file as plugin and execute the create_services" << std::endl;
-		std::cout << "               function of the plugin. If the plugin was loaded before, the" << std::endl;
-		std::cout << "               create_services function is called again. plugin-args are " << std::endl;
-		std::cout << "               passed as arguments to the create_services function." << std::endl;
-		std::cout << "               The meaning of plugin-args depends on the plugin (see plugin documentation)." << std::endl;
-		std::cout << std::endl;
-		std::cout << "  -u           unload plugin. This should only be done when no services" << std::endl;
-		std::cout << "               that were created from code within that plugin are active." << std::endl;
-		std::cout << std::endl;
-		std::cout << "  -q           cause saftbusd to quit" << std::endl;
-		std::cout << std::endl;
-		std::cout << "  -h | --help  print help and exit" << std::endl;
-		std::cout << std::endl;
-
-}
-
 
 int main(int argc, char **argv)
 {
@@ -103,7 +104,17 @@ int main(int argc, char **argv)
 			for (int i = 1; i < argc; ++i) {
 				std::string argvi(argv[i]);
 				if (argvi == "-q") {
-					container_proxy->quit();
+					std::string answer;
+					std::cout << std::endl;
+					std::cout << "are you sure you want to quit saftbusd [YES/no]? ";
+					std::cout << std::endl;
+					std::cin >> answer;
+					if (answer == "YES") {
+						container_proxy->quit();
+						std::cout << "shutdown saftbusd " << std::endl;
+					} else {
+						std::cout << "did not shoutdown saftbusd" << std::endl;
+					}
 					return 0;
 				} 
 				if (argvi == "-h" || argvi == "--help") {
@@ -120,7 +131,6 @@ int main(int argc, char **argv)
 						std::string so_filename = argv[i];
 						std::vector<std::string> plugin_args;
 						for (++i; i < argc; ++i) {
-							std::cerr << "add arg : " << argv[i] << std::endl;
 							plugin_args.push_back(argv[i]);
 						}
 						container_proxy->load_plugin(so_filename, plugin_args);
@@ -133,7 +143,6 @@ int main(int argc, char **argv)
 						std::string so_filename = argv[i];
 						std::vector<std::string> plugin_args;
 						for (++i; i < argc; ++i) {
-							std::cerr << "add arg : " << argv[i] << std::endl;
 							plugin_args.push_back(argv[i]);
 						}
 						container_proxy->unload_plugin(so_filename, plugin_args);
