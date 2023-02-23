@@ -105,12 +105,11 @@ int main(int argc, char **argv)
 {
 	try {
 
-		auto container_proxy = saftbus::Container_Proxy::create();
-
 		if (argc > 1) {
 			for (int i = 1; i < argc; ++i) {
 				std::string argvi(argv[i]);
 				if (argvi == "-q") {
+					auto container_proxy = saftbus::Container_Proxy::create();
 					std::string answer;
 					std::cout << std::endl;
 					std::cout << "are you sure you want to quit saftbusd [YES/no]? ";
@@ -129,7 +128,7 @@ int main(int argc, char **argv)
 					return 0;
 				} 
 				if (argvi == "-s") {
-					saftbus::SaftbusInfo saftbus_info = container_proxy->get_status();
+					saftbus::SaftbusInfo saftbus_info = saftbus::Container_Proxy::create()->get_status();
 					print_status(saftbus_info);
 					return 0;
 				}
@@ -140,7 +139,7 @@ int main(int argc, char **argv)
 						for (++i; i < argc; ++i) {
 							plugin_args.push_back(argv[i]);
 						}
-						container_proxy->load_plugin(so_filename, plugin_args);
+						saftbus::Container_Proxy::create()->load_plugin(so_filename, plugin_args);
 						return 1;
 					} else {
 						throw std::runtime_error("expect so-filename after -l");
@@ -152,14 +151,14 @@ int main(int argc, char **argv)
 						for (++i; i < argc; ++i) {
 							plugin_args.push_back(argv[i]);
 						}
-						container_proxy->unload_plugin(so_filename, plugin_args);
+						saftbus::Container_Proxy::create()->unload_plugin(so_filename, plugin_args);
 						return 1;
 					} else {
 						throw std::runtime_error("expect so-filename after -u");
 					}
 				} else if (argvi == "-r") {
 					if ((i+=1) < argc) {
-						container_proxy->remove_object(argv[i]);
+						saftbus::Container_Proxy::create()->remove_object(argv[i]);
 					} else {
 						throw std::runtime_error("expect object_path -r");
 					}
