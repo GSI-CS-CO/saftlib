@@ -6,6 +6,5 @@ includedir=@includedir@
 Name: saftbus
 Description: Realtime interprocess communication
 Version: @VERSION@
-Requires: sigc++-2.0 >= 0.27.1
 Libs: -L${libdir} -lsaftbus
 Cflags: -I${includedir}
