@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -I $(top_srcdir)/src/interfaces -I $(top_builddir)/src/interfaces -DDATADIR='"$(datadir)/@PACKAGE@"'
+AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) $(SIGCPP_CFLAGS) $(EB_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -I $(top_srcdir)/src/interfaces -I $(top_builddir)/src/interfaces -DDATADIR='"$(datadir)/@PACKAGE@"'
 
 pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftlib.pc
@@ -40,8 +40,7 @@ lib_LTLIBRARIES = \
 	lib@PACKAGE@-proxy.la    
 # @PACKAGE@ is substituded with the string given to AC_INIT([...])
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
-lib@PACKAGE@_service_la_CPPADD  = $(EB_CFLAGS) $(SIGCPP_CFLAGS)
-lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS)  -ldl #-lltdl
+lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS) -ldl #-lltdl
 lib@PACKAGE@_service_la_SOURCES =\
 	src/build.cpp                 \
 	src/Time.cpp                   \
