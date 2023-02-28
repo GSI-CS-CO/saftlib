@@ -16,7 +16,7 @@ The interfaces provide high level functionality.
   - allow to write driver code that can be used with and without inter process communication
   - provide a plugin mechanism to install/remove services at runtime for more flexible customization of TimingReceiver hardware, e.g. LM32 firmware and saftlib driver
 
-#### Major rearrangement of the ECA/IO/MSI driver code ([saftlib](saftlib/README.md)) 
+#### Refactoring of the driver code (ECA, IOs, MSI) ([saftlib](saftlib/README.md)) 
   - plugin for saftbus daemon, i.e. it can be loaded into a running saftbus-daemon and funcionality can be extended with other plugins
   - better performance of the eb-source
   - removal of msi-source
@@ -26,8 +26,8 @@ The interfaces provide high level functionality.
   - executables can be linked against the driver library in the normal way, using proxy objects, or in standalone fashion for exclusive lower latency access to the hardware
   - **user facing API is compatible to saftlib major version 2** with the following additions:
     - The clock generator driver remembers the setting of any IO that was configured.
-    - ...  (?)
-  - The documentation of the user facing API is generated with doxygen and can be found in saftlib/html/index.html after running doxygen inside of the saftlib directory
+    - At startup, a wild card character is allowed for the device name and etherbone-path: `saftbusd libsaftd-service.so tr*:dev/wbm*` will attach all matching devices.
+  - The documentation of the user facing API is generated with doxygen and can be found in [saftlib/html/index.html](saftlib/html/index.html) after running doxygen inside of the saftlib directory
 
 #### Installation
 To get something like saftlib v2, the following steps are needed:

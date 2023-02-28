@@ -18,6 +18,6 @@
  *******************************************************************************
  */
 
-#include "configurable_chunck_allocator_rt.hpp"
-// #include "global_allocator.hpp"
+// #include "configurable_chunck_allocator_rt.hpp"
+#include "global_allocator.hpp"
 #include "saftbusd-norta.cpp"

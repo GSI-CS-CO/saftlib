@@ -31,14 +31,26 @@ saftbus_include_HEADERS = \
 	src/chunck_allocator_rt.hpp   \
 	src/server.hpp
 
-bin_PROGRAMS = \
-	saftbusd    \
+bin_PROGRAMS =   \
+	saftbusd      \
+	saftbusd-srta  \
+	saftbusd-norta \
 	saftbus-ctl
 
 saftbusd_LDFLAGS = -Wl,--export-dynamic 
 saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
 saftbusd_SOURCES = \
-	src/saftbusd.cpp 
+	src/saftbusd.cpp src/configurable_chunck_allocator_rt.cpp
+
+saftbusd_srta_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_srta_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
+saftbusd_srta_SOURCES = \
+	src/saftbusd-srta.cpp 
+
+saftbusd_norta_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_norta_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
+saftbusd_norta_SOURCES = \
+	src/saftbusd-norta.cpp 
 
 saftbus_ctl_LDADD   = $(SIGC_LIBS) libsaftbus.la 
 saftbus_ctl_SOURCES = src/saftbus-ctl.cpp
