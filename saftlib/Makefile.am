@@ -32,12 +32,24 @@ BUILT_SOURCES = version.h          \
 	src/OutputCondition_Service.cpp              \
 	src/Input_Service.cpp                         \
 	src/ECA_Event.cpp                              \
-	src/TimingReceiver_Service.cpp                               
+	src/TimingReceiver_Service.cpp                  \
+	src/CommonFunctions_Service.hpp                  \
+	src/FunctionGenerator_Service.hpp                 \
+ 	src/MasterFunctionGenerator_Service.hpp           \
+ 	src/FunctionGeneratorFirmware_Service.hpp         \
+ 	src/FunctionGeneratorImpl_Service.hpp             \
+	src/BurstGenerator_Service.cpp                    \
+	src/BurstGenerator_Service.hpp             
 
 
 lib_LTLIBRARIES = \
 	lib@PACKAGE@-service.la  \
-	lib@PACKAGE@-proxy.la    
+	lib@PACKAGE@-proxy.la     \
+	libfg-firmware-service.la  \
+	libfg-firmware-proxy.la	    \
+	libbg-firmware-service.la    \
+	libbg-firmware-proxy.la   
+
 # @PACKAGE@ is substituded with the string given to AC_INIT([...])
 lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
 lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS) -ldl #-lltdl
@@ -281,8 +293,70 @@ debian:
 endif
 
 
+libfg_firmware_service_la_LDFLAGS = -Wl,--export-dynamic 
+libfg_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
+libfg_firmware_service_la_LIBADD = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la  -ldl
+libfg_firmware_service_la_SOURCES =        \
+	src/FunctionGenerator.cpp             \
+	src/FunctionGenerator_Service.cpp      \
+	src/MasterFunctionGenerator.cpp         \
+	src/MasterFunctionGenerator_Service.cpp  \
+	src/FunctionGeneratorImpl.cpp             \
+	src/FunctionGeneratorFirmware.cpp          \
+	src/FunctionGeneratorFirmware_Service.cpp   \
+	src/fg_firmware_create_service.cpp
 
-bin_PROGRAMS = software-tr soft-tr wait-msi saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd saft-standalone-mbox saft-roundtrip-latency saft-standalone-roundtrip-latency
+libfg_firmware_service_includedir = $(includedir)/fg-firmware
+libfg_firmware_service_include_HEADERS =   \
+	src/FunctionGenerator.hpp             \
+	src/FunctionGenerator_Service.hpp      \
+	src/MasterFunctionGenerator.hpp         \
+	src/MasterFunctionGenerator_Service.hpp  \
+	src/FunctionGeneratorImpl.hpp             \
+	src/FunctionGeneratorFirmware.hpp          \
+	src/FunctionGeneratorFirmware_Service.hpp
+
+libfg_firmware_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
+libfg_firmware_proxy_la_SOURCES =             \
+	src/FunctionGenerator_Proxy.cpp          \
+	src/MasterFunctionGenerator_Proxy.cpp     \
+	src/FunctionGeneratorFirmware_Proxy.cpp   
+
+libfg_firmware_proxy_includedir = $(includedir)/fg-firmware
+libfg_firmware_proxy_include_HEADERS =        \
+	src/FunctionGenerator_Proxy.hpp          \
+	src/MasterFunctionGenerator_Proxy.hpp     \
+	src/FunctionGeneratorFirmware_Proxy.hpp   
+
+
+
+libbg_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
+libbg_firmware_service_la_LIBADD = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la -ldl
+libbg_firmware_service_la_SOURCES = \
+	src/BurstGenerator.cpp                   \
+	src/BurstGenerator_Service.cpp            \
+	src/bg_firmware_create_service.cpp
+
+libbg_firmware_service_includedir = $(includedir)/bg-firmware
+libbg_firmware_service_include_HEADERS = \
+	src/BurstGenerator.hpp                        \
+	src/BurstGenerator_Service.hpp                 
+
+libbg_firmware_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
+libbg_firmware_proxy_la_SOURCES =   \
+	src/BurstGenerator_Proxy.cpp                   
+
+libbg_firmware_proxy_includedir = $(includedir)/bg
+libbg_firmware_proxy_include_HEADERS = \
+	src/BurstGenerator_Proxy.hpp                
+
+
+
+
+
+
+bin_PROGRAMS = software-tr soft-tr wait-msi saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd saft-standalone-mbox saft-roundtrip-latency saft-standalone-roundtrip-latency saft-burst-ctl saft-fg-ctl saft-mfg-ctl
+
 
 # software timing receiver program
 software_tr_sdb_DATA = src/software-tr.sdb
@@ -343,6 +417,18 @@ saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
 
 saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la 
 saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latency.cpp
+
+
+saft_burst_ctl_LDADD   = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libbg-firmware-proxy.la
+saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp 
+
+
+saft_fg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la
+saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp 
+
+saft_mfg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la -lpthread
+saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp 
+
 
 # autogenerated files
 %_Service.cpp %_Service.hpp %_Proxy.cpp %_Proxy.hpp: %.hpp
