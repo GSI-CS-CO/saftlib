@@ -28,6 +28,11 @@
 #include <string>
 #include <sstream>
 
+#include <saftbus/error.hpp>
+
+#include <dirent.h>
+
+
 std::unique_ptr<saftlib::SAFTd> saftd;
 int ref_count = 0;
                                                                                     
@@ -41,6 +46,51 @@ void destroy_service() {
 		saftd.reset(); // destructor + release memory
 	}
 }
+
+
+void handle_wildcards_and_attach_device(saftlib::SAFTd *saftd, const std::string name, const std::string etherbone_path, int poll_interval_ms) {
+	if (name.size() && name.back() == '*') {
+		if (etherbone_path.size() && etherbone_path.back() != '*') {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "if name has * wildcard as last char, etherbone_path also needs wildcard as last char");
+		}
+		std::string path("/");
+		path.append(etherbone_path.substr(0,etherbone_path.find_last_of('/')));
+
+		bool found_one = false;
+		DIR *dir;
+		struct dirent *ent;
+		if ((dir = opendir(path.c_str())) != nullptr) {
+			while ((ent = readdir(dir)) != nullptr) {
+				std::string entry(path);
+				entry.append("/");
+				entry.append(ent->d_name);
+				if (entry.substr(1,etherbone_path.size()-1) == etherbone_path.substr(0,etherbone_path.size()-1)) {						
+					std::string number = entry.substr(etherbone_path.size());
+					std::string new_name = name.substr(0,name.size()-1);
+					new_name.append(number);
+					std::string new_path = etherbone_path.substr(0,etherbone_path.size()-1);
+					new_path.append(number);
+
+					std::cerr << "found name device pair "  << new_name << ":" << new_path << std::endl;
+					found_one = true;
+					saftd->AttachDevice(new_name, new_path, poll_interval_ms);
+				}
+			}
+			closedir(dir);
+			if (!found_one) {
+				std::cerr << "no device matches " << etherbone_path << std::endl;
+			}
+		} else {
+			std::ostringstream msg;
+			msg << "cannot open dirctory " << path;
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
+		}
+	} else {
+		saftd->AttachDevice(name, etherbone_path, poll_interval_ms);
+	}
+}
+
+
 
 extern "C" 
 void create_services(saftbus::Container *container, const std::vector<std::string> &args) {
@@ -80,7 +130,7 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 			}
 			path = path.substr(0,pos2);
 		}
-		saftd->AttachDevice(name, path, poll_interval_ms);
+		handle_wildcards_and_attach_device(saftd.get(), name, path, poll_interval_ms);
 	}
 }
 
