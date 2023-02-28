@@ -47,7 +47,14 @@ void destroy_service() {
 	}
 }
 
-
+/// @brief if the name and etherbone_path have '*' as last charater, the etherbone_path is scanned for matching device files. All matching devices will be attached.
+///
+/// If no match is found, nothing is attached.
+/// If no '*' is found, the device is attached directly.
+/// @param saftd a pointer to a SAFTd
+/// @param name logical saftlib name. For example tr0, tr1 or tr*
+/// @param etherbone_path etherbone path. If name has a '*' as last character, etherbone_path needs '*' as last character, too.
+/// @param poll_interval_ms this is directly passed to AttachDevice function
 void handle_wildcards_and_attach_device(saftlib::SAFTd *saftd, const std::string name, const std::string etherbone_path, int poll_interval_ms) {
 	if (name.size() && name.back() == '*') {
 		if (etherbone_path.size() && etherbone_path.back() != '*') {
@@ -60,25 +67,29 @@ void handle_wildcards_and_attach_device(saftlib::SAFTd *saftd, const std::string
 		DIR *dir;
 		struct dirent *ent;
 		if ((dir = opendir(path.c_str())) != nullptr) {
-			while ((ent = readdir(dir)) != nullptr) {
-				std::string entry(path);
-				entry.append("/");
-				entry.append(ent->d_name);
-				if (entry.substr(1,etherbone_path.size()-1) == etherbone_path.substr(0,etherbone_path.size()-1)) {						
-					std::string number = entry.substr(etherbone_path.size());
-					std::string new_name = name.substr(0,name.size()-1);
-					new_name.append(number);
-					std::string new_path = etherbone_path.substr(0,etherbone_path.size()-1);
-					new_path.append(number);
+			try {
+				while ((ent = readdir(dir)) != nullptr) {
+					std::string entry(path);
+					entry.append("/");
+					entry.append(ent->d_name);
+					if (entry.substr(1,etherbone_path.size()-1) == etherbone_path.substr(0,etherbone_path.size()-1)) {						
+						std::string number = entry.substr(etherbone_path.size());
+						std::string new_name = name.substr(0,name.size()-1);
+						new_name.append(number);
+						std::string new_path = etherbone_path.substr(0,etherbone_path.size()-1);
+						new_path.append(number);
 
-					std::cerr << "found name device pair "  << new_name << ":" << new_path << std::endl;
-					found_one = true;
-					saftd->AttachDevice(new_name, new_path, poll_interval_ms);
+						std::cerr << "found name device pair "  << new_name << ":" << new_path << std::endl;
+						found_one = true;
+						saftd->AttachDevice(new_name, new_path, poll_interval_ms);
+					}
 				}
-			}
-			closedir(dir);
-			if (!found_one) {
-				std::cerr << "no device matches " << etherbone_path << std::endl;
+				if (!found_one) {
+					std::cerr << "no device matches " << etherbone_path << std::endl;
+				}
+			} catch (...) {
+				closedir(dir);
+				throw;
 			}
 		} else {
 			std::ostringstream msg;
