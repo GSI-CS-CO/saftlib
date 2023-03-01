@@ -76,7 +76,7 @@ namespace saftlib {
 			}
 		}
 		attached_devices.clear();
-		saftbus::Loop::get_default().remove(eb_source);
+		// saftbus::Loop::get_default().remove(eb_source);
 		try {
 			socket.close();
 		} catch (etherbone::exception_t &e) {

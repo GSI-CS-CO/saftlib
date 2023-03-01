@@ -42,6 +42,7 @@ namespace saftbus
 
 		Error();
 		Error(Type type, const std::string &msg);
+		Error(const std::string &msg);
 		Error(const Error& error);
 
 		Type type() const;

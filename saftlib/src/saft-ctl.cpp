@@ -430,7 +430,7 @@ int main(int argc, char** argv)
         return 1;
       } // name
       devicePath = argv[optind+2];
-      std::cout << devicePath << std::endl;
+      // std::cout << devicePath << std::endl;
       if (strlen(devicePath) == 0) {
         std::cerr << program << ": invalid path -- " << argv[optind+2] << std::endl;
         return 1;
@@ -446,7 +446,6 @@ int main(int argc, char** argv)
 
     else if (strcasecmp(command, "remove") == 0) {
       deviceRemove = true;
-      std::cout << deviceName << std::endl;
       if (strlen(deviceName) == 0) {
         std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
         return 1;
@@ -512,7 +511,11 @@ int main(int argc, char** argv)
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
     } else {
       if (devices.find(deviceName) == devices.end()) {
-        std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
+        if (deviceRemove) {
+          std::cerr << "Device '" << deviceName << "' was removed" << std::endl;
+        } else {
+          std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
+        }
         return -1;
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);

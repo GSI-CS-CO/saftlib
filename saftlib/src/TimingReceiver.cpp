@@ -124,6 +124,7 @@ TimingReceiver::~TimingReceiver()
 
 	// remove the service objects for all addons
 	if (container != nullptr) {
+		std::vector<std::string> remove_these_object_paths;
 		for (auto &name_addon: addons) {
 			// const std::string& name = name_addon.first;
 			TimingReceiverAddon *addon = name_addon.second.get();
@@ -132,13 +133,15 @@ TimingReceiver::~TimingReceiver()
 				// const std::string &interface = interface_objects.first;
 				std::map<std::string, std::string> &objects = interface_objects.second; // name and object_path
 				for (auto &object: objects) {
-					try {
-						container->remove_object(object.second);
-						// container->remove_object(actionSink->getObjectPath());
-					} catch (saftbus::Error &e) {
-						// std::cerr << "removal attempt failed: " << e.what() << std::endl;
-					}
+					remove_these_object_paths.push_back(object.second);
 				}
+			}
+		}
+		for (auto &obj_path: remove_these_object_paths) {
+			try {
+				container->remove_object(obj_path);
+			} catch (saftbus::Error &e) {
+				// nothing
 			}
 		}
 	}

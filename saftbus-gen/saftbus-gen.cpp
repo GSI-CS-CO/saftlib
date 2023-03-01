@@ -1344,6 +1344,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 
 	cpp_out << "#include \"" << class_definition.name << "_Proxy.hpp\"" << std::endl;
 	cpp_out << "#include <saftbus/saftbus.hpp>" << std::endl;
+	cpp_out << "#include <saftbus/error.hpp>" << std::endl;
 	cpp_out << "#include <cassert>" << std::endl;
 	cpp_out << std::endl;
 	// cpp_out << "namespace " << class_definition.scope.substr(0, class_definition.scope.size()-class_definition.name.size()-2) << " {" << std::endl;
@@ -1451,7 +1452,8 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 		cpp_out << "\t\t" << "if (function_result_ == saftbus::FunctionResult::EXCEPTION) {" << std::endl;
 		cpp_out << "\t\t\t" << "std::string what;" << std::endl;
 		cpp_out << "\t\t\t" << "get_received().get(what);" << std::endl;
-		cpp_out << "\t\t\t" << "throw std::runtime_error(what);" << std::endl;
+		//cpp_out << "\t\t\t" << "throw std::runtime_error(what);" << std::endl;
+		cpp_out << "\t\t\t" << "throw saftbus::Error(what);" << std::endl;
 		cpp_out << "\t\t" << "}" << std::endl;
 		cpp_out << "\t\t" << "assert(function_result_ == saftbus::FunctionResult::RETURN);" << std::endl;
 		for (unsigned i = 0; i < function.argument_list.size(); ++i) {

@@ -44,10 +44,16 @@ int main(int argc, char *argv[])
 			return 1;
 		}
     	std::shared_ptr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
-    	std::cout << saftd->EbForward(std::string(argv[1])) << std::endl;
+    	std::string path = saftd->EbForward(std::string(argv[1]));
+    	if (path.size()) {
+	    	std::cout << path << std::endl;
+    	} else {
+    		std::cerr << "Device \'" << argv[1] << "\' does not exist" << std::endl;
+    		return 2;
+    	}
 	} catch (saftbus::Error &e) {
 		std::cerr << e.what() << std::endl;
-		return 2;
+		return 3;
 	}
 	return 0;
 }

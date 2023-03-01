@@ -59,16 +59,16 @@ namespace saftbus {
 		}
 		if (socketname.size() == 0) {
 			msg << "invalid socket name (name is empty)";
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		if (socketname[0] != '/') {
 			msg << "saftbus socketname " << socketname << " is not an absolute pathname";
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		int base_socket_fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
 		if (base_socket_fd <= 0) {
 			msg << " cannot create socket: " << strerror(errno);
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		struct sockaddr_un call_sockaddr_un = {.sun_family = AF_LOCAL};
 		strcpy(call_sockaddr_un.sun_path, socketname.c_str());
@@ -76,17 +76,17 @@ namespace saftbus {
 		int connect_result = connect(base_socket_fd, (struct sockaddr *)&call_sockaddr_un , sizeof(call_sockaddr_un));
 		if (connect_result != 0) {
 			msg << "cannot connect to socket: " << socketname << ". Possible reasons: server not running, wrong socket path (set SAFTBUS_SOCKET_PATH evironment variable), or wrong permissions";
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 
 		int fd_pair[2];
 		if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, fd_pair) != 0) {
 			msg << "cannot create socket pair: " << strerror(errno);
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		if (sendfd(base_socket_fd, fd_pair[0]) == -1) {
 			msg << "cannot send socket pair: " << strerror(errno);
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		close(fd_pair[0]);
 		d->pfd.fd = fd_pair[1];
@@ -95,12 +95,12 @@ namespace saftbus {
 		pid_t pid = getpid();
 		if (write(d->pfd.fd, &pid, sizeof(pid)) != sizeof(pid)) {
 			msg << "cannot read client pid" << strerror(errno) << std::endl;
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 
 		if (read(d->pfd.fd, &d->client_id, sizeof(d->client_id)) != sizeof(d->client_id)) {
 			msg << "cannot read client id" << strerror(errno) << std::endl;
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		// std::cerr << "got client id " << d->client_id << std::endl;
 	}
@@ -172,7 +172,7 @@ namespace saftbus {
 		std::ostringstream msg;
 		if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, d->fd_pair) != 0) {
 			// msg << "cannot create socket pair: " << strerror(errno);
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		// keep the other socket end in order to listen for events
 		d->pfd.fd = d->fd_pair[1];
@@ -326,12 +326,12 @@ namespace saftbus {
 			int send_result    = get_connection().send(d->send);
 			if (send_result <= 0) {
 
-				throw std::runtime_error("Proxy cannot send data to server");
+				throw saftbus::Error("Proxy cannot send data to server");
 			}
 			signal_group.register_proxy(this);
 			int receive_result = get_connection().receive(d->received);
 			if (receive_result <= 0) {
-				throw std::runtime_error("Proxy cannot receive data from server");
+				throw saftbus::Error("Proxy cannot receive data from server");
 			}
 		}
 		// the response is just the object_id
@@ -343,7 +343,7 @@ namespace saftbus {
 		if (d->saftbus_object_id == 0) {
 			std::ostringstream msg;
 			// msg << "object path \"" << object_path << "\" not found" << std::endl;
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		// if we get saftbus_object_id=-1, the object path was found found bu one of the requested interfaces is not implemented
 		if (d->saftbus_object_id == -1) { 
@@ -354,7 +354,7 @@ namespace saftbus {
 					msg << "\""<< interface_name << "\"" << std::endl;
 				}
 			}
-			throw std::runtime_error(msg.str());
+			throw saftbus::Error(msg.str());
 		}
 		if (signal_group.d->signal_group_id == -1) {
 			// std::cerr << "set signal_group_id " << d->signal_group_id << std::endl;
@@ -463,7 +463,7 @@ namespace saftbus {
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
 			std::string what;
 			get_received().get(what);
-			throw std::runtime_error(what);
+			throw saftbus::Error(what);
 		}
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
 		bool return_value_result_;
@@ -486,7 +486,7 @@ namespace saftbus {
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
 			std::string what;
 			get_received().get(what);
-			throw std::runtime_error(what);
+			throw saftbus::Error(what);
 		}
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
 		bool return_value_result_;
@@ -508,7 +508,7 @@ namespace saftbus {
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
 			std::string what;
 			get_received().get(what);
-			throw std::runtime_error(what);
+			throw saftbus::Error(what);
 		}
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
 		bool return_value_result_;
@@ -529,7 +529,7 @@ namespace saftbus {
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
 			std::string what;
 			get_received().get(what);
-			throw std::runtime_error(what);
+			throw saftbus::Error(what);
 		}
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
 	}
@@ -547,7 +547,7 @@ namespace saftbus {
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
 			std::string what;
 			get_received().get(what);
-			throw std::runtime_error(what);
+			throw saftbus::Error(what);
 		}
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
 		SaftbusInfo return_value_result_;

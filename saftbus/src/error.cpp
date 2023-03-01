@@ -36,6 +36,12 @@ namespace saftbus
 	{
 	}
 
+	Error::Error(const std::string &msg)
+		: std::runtime_error(msg)
+		, type_(Type::INVALID_ARGS)
+	{
+	}
+
 	Error::Error(const Error& error)
 		: std::runtime_error(error)
 		, type_(error.type_)

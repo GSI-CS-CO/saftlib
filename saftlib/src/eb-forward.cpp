@@ -51,6 +51,7 @@ namespace saftlib {
 
 	EB_Forward::EB_Forward(const std::string& eb_name)
 	{	
+		_pts_fd = 0;
 		if (eb_name.size()) {
 			if (eb_name[0] == '/') {
 				_eb_device_fd = open(eb_name.c_str(), O_RDWR);
@@ -69,7 +70,10 @@ namespace saftlib {
 	EB_Forward::~EB_Forward()
 	{
 		saftbus::Loop::get_default().remove(io_source);
-		close(_eb_device_fd);		
+		close(_eb_device_fd);
+		if (_pts_fd) {
+			close(_pts_fd);
+		}		
 	}
 
 	bool EB_Forward::accept_connection(int condition)
