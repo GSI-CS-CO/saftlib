@@ -138,7 +138,6 @@ namespace saftbus {
 		bool check() override;
 		bool dispatch() override;
 		std::string type() override;
-		// static std::set<int> all_fds;
 	private:
 		std::function<bool(int, int)> slot;
 		pollfd pfd;
