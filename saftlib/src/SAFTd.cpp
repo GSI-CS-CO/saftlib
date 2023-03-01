@@ -65,14 +65,14 @@ namespace saftlib {
 
 	SAFTd::~SAFTd() 
 	{
-		Quit();
 		if (container) {
-			for (auto &device: attached_devices) {
-				try {
+			try {
+				for (auto &device: attached_devices) {
 					container->remove_object(device.second->getObjectPath());
-				} catch(...) {
-					// nothing
 				}
+				container->remove_object(object_path);
+			} catch(...) {
+				// nothing
 			}
 		}
 		attached_devices.clear();

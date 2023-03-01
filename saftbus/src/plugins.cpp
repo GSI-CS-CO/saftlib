@@ -57,9 +57,7 @@ namespace saftbus {
 			std::ostringstream msg;
 			msg << "cannot load plugin: fail to open file " << so_filename;
 			throw std::runtime_error(msg.str());
-		} else {
-			// //===std::cerr << "successfully opened " << so_filename << std::endl;
-		}
+		} 
 
 		// load the function pointers
 		// d->create_services = (create_services_function)lt_dlsym(d->handle,"create_services");
@@ -72,18 +70,11 @@ namespace saftbus {
 	}
 
 	void LibraryLoader::create_services(Container *container, const std::vector<std::string> &args) {
-		// try {
-			d->create_services(container, args);
-		// } catch(std::runtime_error &e) {
-		// 	std::cerr << "Error loading plugin: " << e.what() << std::endl;
-		// } catch(...) {
-		// 	std::cerr << "Error loading plugin: " << std::endl;
-		// }
+		d->create_services(container, args);
 	}
 
 	LibraryLoader::~LibraryLoader()
 	{
-		// std::cerr << "~LibraryLoader" << std::endl;
 		// assert(false);
 		if (d->handle != nullptr) {
 			// lt_dlclose(d->handle);
@@ -91,7 +82,6 @@ namespace saftbus {
 		}		
 		int result = 0;//lt_dlexit();
 		assert(result == 0);
-		//===std::cerr << "lt_dlexit was successful" << std::endl;
 	}
 
 }

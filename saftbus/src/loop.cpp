@@ -168,7 +168,7 @@ namespace saftbus {
 
 			if (source->check()) { // if check returns true, dispatch is called
 				if (!source->dispatch()) { // if dispatch returns false, the source is removed
-					source.release();
+					source.reset();
 				}
 			}
 		}
@@ -246,11 +246,11 @@ namespace saftbus {
 		if (s.loop_id == d->id) { // make sure s was connected to this loop
 			auto source = d->sources.begin();
 			if ((source=std::find(source, d->sources.end(), s)) != d->sources.end()) {
-				source->release();
+				source->reset();
 			}
 			source = d->added_sources.begin();
 			if ((source=std::find(source, d->added_sources.end(), s)) != d->added_sources.end()) {
-				source->release();
+				source->reset();
 			}
 		}
 	}

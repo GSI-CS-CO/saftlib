@@ -188,6 +188,8 @@ namespace saftlib {
 
 		std::map<eb_address_t, std::function<void(eb_data_t)> > irqs;
 
+		bool quit;
+
 	};
 
 

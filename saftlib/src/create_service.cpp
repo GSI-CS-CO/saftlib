@@ -34,17 +34,10 @@
 
 
 std::unique_ptr<saftlib::SAFTd> saftd;
-int ref_count = 0;
                                                                                     
 extern "C" 
 void destroy_service() {
-	--ref_count;
-	std::cerr << "destroy_service was called " << ref_count << std::endl;
-	// this is a hint, that the Service object will no longer be needed an we can (if we want to) savely destroy the SAFTd object
-	if (ref_count == 0) {
-		std::cerr << " destroying service" << std::endl;
-		saftd.reset(); // destructor + release memory
-	}
+	saftd.reset(); // destructor + release memory
 }
 
 /// @brief if the name and etherbone_path have '*' as last charater, the etherbone_path is scanned for matching device files. All matching devices will be attached.
@@ -108,11 +101,10 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 	if (!saftd) {
 		// There can only be one saftd.
 		// Always return the same instance of saftd.
-		saftd         = std::move(std::unique_ptr<saftlib::SAFTd>(new saftlib::SAFTd(container)));
+		saftd = std::move(std::unique_ptr<saftlib::SAFTd>(new saftlib::SAFTd(container)));
 	}
 
 	// create a new Service and return it. Maintain a reference count
-	++ref_count;
 	container->create_object(saftd->getObjectPath(), std::move(std::unique_ptr<saftlib::SAFTd_Service>(new saftlib::SAFTd_Service(saftd.get(), std::bind(&destroy_service), false ))));
 
 	// attach devices as specified in args
