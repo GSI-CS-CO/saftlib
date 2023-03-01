@@ -112,7 +112,7 @@ namespace saftbus
 			}
 		}
 		++heap_allocations;
-		std::cerr << "heap allocation" << n << std::endl;
+		// std::cerr << "heap allocation " << n << std::endl;
 		return reinterpret_cast<char*>(::malloc(n));
 	}
 	std::string Allocator::fillstate() {

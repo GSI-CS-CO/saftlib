@@ -45,35 +45,14 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(saftbus::Container *cont, S
  , tr(timing_receiver)
  , mbox(static_cast<Mailbox*>(timing_receiver))
  , device(tr->OpenDevice::get_device())
-   // sdb_msi_base(args.sdb_msi_base),
-   // mailbox(args.mailbox),
-   // fgs_owned(args.fgs_owned),
-   // master_fgs_owned(args.master_fgs_owned),
-   // have_fg_firmware(false)
 {
     etherbone::Cycle cycle;
     
     // Probe for LM32 block memories
     fgb = 0;
-    // std::vector<sdb_device> fgs, rom;
-    // device.sdb_find_by_identity(LM32_RAM_USER_VENDOR,    LM32_RAM_USER_PRODUCT,    fgs);
-    // device.sdb_find_by_identity(LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT, rom);
-    
-    
-    // if (rom.size() != 1)
-    //   throw saftbus::Error(saftbus::Error::INVALID_ARGS, "SCU is missing LM32 cluster ROM");
-    
-    // eb_address_t rom_address = rom[0].sdb_component.addr_first;
-    // eb_data_t cpus, eps_per;
-    // cycle.open(device);
-    // cycle.read(rom_address + 0x0, EB_DATA32, &cpus);
-    // cycle.read(rom_address + 0x4, EB_DATA32, &eps_per);
-    // cycle.close();
-    
-    // if (cpus != fgs.size())
-    //   throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Number of LM32 RAMs does not equal ROM cpu_count");
-    
+
     // Check them all for the function generator microcontroller
+    have_fg_firmware = false;
     for (unsigned i = 0; i < tr->LM32Cluster::getCpuCount(); ++i) {
       fgb = timing_receiver->LM32Cluster::dpram_lm32_adr_first[i];
       
@@ -96,6 +75,10 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(saftbus::Container *cont, S
               //  that's why this is in a try catch block
     } catch (saftbus::Error &e) {
       std::cerr << "Scan FG-channels timeout" << std::endl;
+    } catch (etherbone::exception_t &e) {
+      throw saftbus::Error(saftbus::Error::FAILED, "etherbone exception");
+    } catch (...) {
+      throw saftbus::Error(saftbus::Error::FAILED, "unknown exception");
     }
 }
 
@@ -139,11 +122,6 @@ std::map< std::string , std::map<std::string, std::string> > FunctionGeneratorFi
 }
 
 
-// std::shared_ptr<FunctionGeneratorFirmware> FunctionGeneratorFirmware::create(const ConstructorType& args)
-// {
-//   return RegisteredObject<FunctionGeneratorFirmware>::create(args.objectPath, args);
-// }
-
 uint32_t FunctionGeneratorFirmware::getVersion() const
 {
   // DRIVER_LOG("",-1,-1);
@@ -178,8 +156,8 @@ bool FunctionGeneratorFirmware::nothing_runs()
 std::map<std::string, std::string> FunctionGeneratorFirmware::Scan()
 {
   // DRIVER_LOG("",-1,-1);
-  // return ScanMasterFg();
-  return ScanFgChannels();
+  return ScanMasterFg();
+  // return ScanFgChannels();
 }
 
 void FunctionGeneratorFirmware::firmware_rescan(int host_to_lm32_mailbox_slot_idx)
