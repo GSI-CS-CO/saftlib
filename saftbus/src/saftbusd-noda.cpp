@@ -56,42 +56,49 @@ static bool saftd_already_running()
 }
 
 int main(int argc, char *argv[]) {
+	try {
 
-	std::vector<std::pair<std::string, std::vector<std::string> > > plugins_and_args;
-	for (int i = 1; i < argc; ++i) {
-		std::string argvi(argv[i]);
-		if (argvi == "-h" || argvi == "--help") {
-			usage(argv[0]);
-			return 0;
-		}
-		bool argvi_is_plugin = (argvi.find(".so") == argvi.size()-3);
-		if (argvi_is_plugin) {
-			plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
-		} else {
-			// std::cerr << argvi << "is argument" << std::endl;
-			if (plugins_and_args.empty()) {
-				std::cerr << "Error: no plugin specified (these are files ending with .so) before argument " << argvi << std::endl;
-				return 1;
+		std::vector<std::pair<std::string, std::vector<std::string> > > plugins_and_args;
+		for (int i = 1; i < argc; ++i) {
+			std::string argvi(argv[i]);
+			if (argvi == "-h" || argvi == "--help") {
+				usage(argv[0]);
+				return 0;
+			}
+			bool argvi_is_plugin = (argvi.find(".so") == argvi.size()-3);
+			if (argvi_is_plugin) {
+				plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
 			} else {
-				plugins_and_args.back().second.push_back(argvi);
+				// std::cerr << argvi << "is argument" << std::endl;
+				if (plugins_and_args.empty()) {
+					std::cerr << "Error: no plugin specified (these are files ending with .so) before argument " << argvi << std::endl;
+					return 1;
+				} else {
+					plugins_and_args.back().second.push_back(argvi);
+				}
 			}
 		}
-	}
 
-	if (saftd_already_running()) {
-		std::cerr << "Cannot start: saftbusd already running" << std::endl;
+		if (saftd_already_running()) {
+			std::cerr << "Cannot start: saftbusd already running" << std::endl;
+			return 1;
+		}
+
+		saftbus::ServerConnection server_connection(plugins_and_args);
+
+		// add allocator fillstate as additional info to be reported by Container::get_status()
+		if (print_fillstate().size()) server_connection.get_container()->add_additional_info_callback("allocator", &print_fillstate);
+
+		saftbus::Loop::get_default().run();
+
+		// // delete all remaining source from Loop before the plugins are unloaded 
+		saftbus::Loop::get_default().clear();
+
+	} catch (std::runtime_error &e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+		saftbus::Loop::get_default().clear();
 		return 1;
 	}
-
-	saftbus::ServerConnection server_connection(plugins_and_args);
-
-	// add allocator fillstate as additional info to be reported by Container::get_status()
-	if (print_fillstate().size()) server_connection.get_container()->add_additional_info_callback("allocator", &print_fillstate);
-
-	saftbus::Loop::get_default().run();
-
-	// delete all remaining source from Loop before the plugins are unloaded 
-	saftbus::Loop::get_default().clear();
 
 	return 0;
 }

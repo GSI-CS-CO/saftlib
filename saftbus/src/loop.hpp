@@ -54,7 +54,7 @@ namespace saftbus {
 		std::vector<pollfd*> pfds;
 		static long id_counter;
 		long id; 
-		bool valid;
+		// bool valid;
 	};
 	/// @brief unique identifier for an event source in a saftbus::Loop
 	class SourceHandle {
@@ -138,7 +138,7 @@ namespace saftbus {
 		bool check() override;
 		bool dispatch() override;
 		std::string type() override;
-		static std::set<int> all_fds;
+		// static std::set<int> all_fds;
 	private:
 		std::function<bool(int, int)> slot;
 		pollfd pfd;

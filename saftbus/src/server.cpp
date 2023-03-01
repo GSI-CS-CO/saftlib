@@ -47,12 +47,12 @@ namespace saftbus {
 	struct Client {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
 		pid_t process_id; // store the clients pid as additional useful information
+		SourceHandle io_source; // use this to disconnect the source in the destructor
 		std::map<int,int> signal_fd_use_count;
-		saftbus::SourceHandle check_timeout;
-		Client(int fd, pid_t pid) : socket_fd(fd), process_id(pid)  
+		Client(int fd, pid_t pid, SourceHandle h) : socket_fd(fd), process_id(pid), io_source(h)
 		{}
 		~Client() {
-			Loop::get_default().remove(check_timeout);
+			Loop::get_default().remove(io_source);
 			if (signal_fd_use_count.size() > 0) {
 				//===std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
 			}
@@ -117,15 +117,15 @@ namespace saftbus {
 			int client_socket_fd = recvfd(fd);
 			// std::cout << "got (open) " << client_socket_fd << std::endl;
 			if (client_socket_fd == -1) {
-				std::cout << "cannot receive socket fd" << std::endl;
+				std::cerr << "cannot receive socket fd" << std::endl;
 				assert(false);
 			}
 			// read process_id from client
 			pid_t pid;
 			read(client_socket_fd, &pid, sizeof(pid));
-			Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), client_socket_fd, POLLIN | POLLHUP | POLLERR);
+			auto handle = Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), client_socket_fd, POLLIN | POLLHUP | POLLERR);
 			// register the client
-			clients.push_back(std::move(std::unique_ptr<Client>(new Client(client_socket_fd, pid))));
+			clients.push_back(std::move(std::unique_ptr<Client>(new Client(client_socket_fd, pid, handle))));
 			// send the ID back to client (the file descriptor integer number is used as ID)
 			write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
 		}

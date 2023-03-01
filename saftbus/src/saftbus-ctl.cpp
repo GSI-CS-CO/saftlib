@@ -136,6 +136,11 @@ int main(int argc, char **argv)
 					}
 					return 0;
 				} 
+				if (argvi == "--quit") {
+					saftbus::Container_Proxy::create()->quit();
+					std::cout << "shutdown saftbusd " << std::endl;
+					return 0;
+				} 
 				if (argvi == "-h" || argvi == "--help") {
 					usage(argv[0]);
 					return 0;

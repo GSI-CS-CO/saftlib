@@ -40,7 +40,7 @@ namespace saftbus {
 		if (id_counter == -1) ++id_counter; // prevent id_counter to produce an id of 0 (no source should have id 0)
 		id = ++id_counter;
 		id |= ((long)rand()%0xffffffff)<<32;
-		valid = true;
+		// valid = true;
 	}
 	Source::~Source() {
 		//===std::cerr << "Source::~Source()" << std::endl;
@@ -126,7 +126,8 @@ namespace saftbus {
 		// (find the earliest timeout)
 		//////////////////
 		for(auto &source: d->sources) {
-			if (!source->valid) continue; 
+			// if (!source->valid) continue; 
+			if (!source) continue; 
 
 			auto timeout_from_source = no_timeout;
 			source->prepare(timeout_from_source); // source may leave timeout_from_source unchanged 
@@ -191,12 +192,14 @@ namespace saftbus {
 		// dispatching
 		//////////////////
 		for (auto &source: d->sources) {
-			if (!source->valid) continue;
+			// if (!source->valid) continue;
+			if (!source) continue;
 
 			if (source->check()) { // if check returns true, dispatch is called
 				// //===std::cerr << "Loop::iteration dispatching to " << source->type() << std::endl;
 				if (!source->dispatch()) { // if dispatch returns false, the source is removed
-					source->valid = false;
+					// source->valid = false;
+					source.release();
 				}
 			}
 		}
@@ -208,14 +211,15 @@ namespace saftbus {
 		//////////////////////////////////////////////////////
 		// bool changes = false;
 		if (d->running_depth == 1) {
-			// //===std::cerr << "cleaning up sources" << std::endl;
-			d->sources.erase(std::remove_if(d->sources.begin(), d->sources.end(), [](std::unique_ptr<Source> &s){return !s->valid;}), 
+			// std::cerr << "cleaning up sources" << d->sources.size() << std::endl;
+			d->sources.erase(std::remove_if(d->sources.begin(), d->sources.end(), [](std::unique_ptr<Source> &s){return !s;}), 
 				          d->sources.end());
 
 			// adding new sources
 			for (auto &added_source: d->added_sources) {
 				// //===std::cerr << "adding a source" << std::endl;
-				if (added_source->valid) {
+				// if (added_source->valid) {
+				if (added_source) {
 					d->sources.push_back(std::move(added_source));
 					// changes = true;
 				}
@@ -259,7 +263,7 @@ namespace saftbus {
 
 
 	SourceHandle Loop::connect(std::unique_ptr<Source> source) {
-		// //===std::cerr << "Loop::connect" << std::endl;
+		// std::cerr << "Loop::connect " << source->type() << "   size= " << d->sources.size() << std::endl;
 		source->loop = this;
 		SourceHandle result;
 		result.loop_id   = d->id;
@@ -277,6 +281,7 @@ namespace saftbus {
 	}
 
 	bool operator==(const std::unique_ptr<Source> &lhs, const SourceHandle &rhs) {
+		if (!lhs) return false;
 		return lhs->get_id() == rhs.get_source_id();
 	}
 	/// @brief public version of remove which works with a SourceHandle
@@ -286,18 +291,22 @@ namespace saftbus {
 			auto source = d->sources.begin();
 			if ((source=std::find(source, d->sources.end(), s)) != d->sources.end()) {
 				//===std::cerr << "Loop::remove found in sources" << std::endl;
-				(*source)->valid = false;
+				// std::cerr << "loop::remove " << (*source)->type() << std::endl;
+				// (*source)->valid = false;
+				source->release();
 			}
 			source = d->added_sources.begin();
 			if ((source=std::find(source, d->added_sources.end(), s)) != d->added_sources.end()) {
 				//===std::cerr << "Loop::remove found in added sources" << std::endl;
-				(*source)->valid = false;
+				// std::cerr << "loop::remove " << (*source)->type() << std::endl;
+				// (*source)->valid = false;
+				source->release();
 			}
 		}
 	}
 
 	void Loop::clear() {
-		//===std::cerr << "************ Loop::clear()" << std::endl;
+		// std::cerr << "************ Loop::clear()" << std::endl;
 		d->sources.clear();
 		d->added_sources.clear();
 	}
@@ -366,18 +375,20 @@ namespace saftbus {
 	IoSource::IoSource(std::function<bool(int, int)> s, int f, int c) 
 		: slot(s)
 	{
+		// std::cerr << "IoSource " << f << std::endl;
 		pfd.fd            = f;
 		pfd.events        = c;
 		pfd.revents       = 0;
 		add_poll(&pfd);
-		if (all_fds.find(f) != all_fds.end()) assert(false);
-		all_fds.insert(f);
+		// if (all_fds.find(f) != all_fds.end()) assert(false);
+		// all_fds.insert(f);
 	}
 	IoSource::~IoSource() 
 	{
+		// std::cerr << "~IoSource " << pfd.fd << std::endl;
 		remove_poll(&pfd);
-		if (all_fds.find(pfd.fd) == all_fds.end()) assert(false);
-		all_fds.erase(pfd.fd);
+		// if (all_fds.find(pfd.fd) == all_fds.end()) assert(false);
+		// all_fds.erase(pfd.fd);
 	}
 
 	bool IoSource::prepare(std::chrono::milliseconds &timeout_ms) {
@@ -413,6 +424,6 @@ namespace saftbus {
 	}
 
 
-	std::set<int> IoSource::all_fds;
+	// std::set<int> IoSource::all_fds;
 
 }

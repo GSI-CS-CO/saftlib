@@ -39,6 +39,7 @@ namespace saftbus {
 		void *handle;
 		saftbus::Container *cont;
 		create_services_function create_services;
+		Impl() : handle(nullptr), cont(nullptr), create_services(nullptr) {}
 	};
 
 	LibraryLoader::LibraryLoader(const std::string &so_filename) 
@@ -71,11 +72,19 @@ namespace saftbus {
 	}
 
 	void LibraryLoader::create_services(Container *container, const std::vector<std::string> &args) {
-		d->create_services(container, args);
+		// try {
+			d->create_services(container, args);
+		// } catch(std::runtime_error &e) {
+		// 	std::cerr << "Error loading plugin: " << e.what() << std::endl;
+		// } catch(...) {
+		// 	std::cerr << "Error loading plugin: " << std::endl;
+		// }
 	}
 
 	LibraryLoader::~LibraryLoader()
 	{
+		// std::cerr << "~LibraryLoader" << std::endl;
+		// assert(false);
 		if (d->handle != nullptr) {
 			// lt_dlclose(d->handle);
 			dlclose(d->handle);

@@ -321,10 +321,6 @@ namespace saftbus {
 
 	Container::~Container() 
 	{
-		while(d->plugins.size() ) {
-			d->plugins.pop_back();
-		}
-		//===std::cerr << "~Container" << std::endl;
 	}
 
 	unsigned Container::create_object(const std::string &object_path, std::unique_ptr<Service> service)

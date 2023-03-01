@@ -14,11 +14,11 @@
 
 extern "C" 
 void create_services(saftbus::Container *container, const std::vector<std::string> &args) {
-	std::cerr << "create_services args : ";
-	for(auto &arg: args) {
-		std::cerr << arg << " ";
-	}
-	std::cerr << std::endl;
+	// std::cerr << "create_services args : ";
+	// for(auto &arg: args) {
+	// 	std::cerr << arg << " ";
+	// }
+	// std::cerr << std::endl;
 	std::string object_path = "/de/gsi/saftlib";
 	saftlib::SAFTd_Service *saftd_service = dynamic_cast<saftlib::SAFTd_Service*>(container->get_object(object_path));
 	saftlib::SAFTd *saftd = saftd_service->d;
