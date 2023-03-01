@@ -33,8 +33,8 @@ saftbus_include_HEADERS = \
 
 bin_PROGRAMS =   \
 	saftbusd      \
-	saftbusd-srta  \
-	saftbusd-norta \
+	saftbusd-sda  \
+	saftbusd-noda \
 	saftbus-ctl
 
 saftbusd_LDFLAGS = -Wl,--export-dynamic 
@@ -42,14 +42,14 @@ saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
 saftbusd_SOURCES = \
 	src/saftbusd.cpp src/configurable_chunck_allocator_rt.cpp
 
-saftbusd_srta_LDFLAGS = -Wl,--export-dynamic 
-saftbusd_srta_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
-saftbusd_srta_SOURCES = \
+saftbusd_sda_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_sda_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
+saftbusd_sda_SOURCES = \
 	src/saftbusd-sda.cpp src/print_allocator_fillstate.cpp
 
-saftbusd_norta_LDFLAGS = -Wl,--export-dynamic 
-saftbusd_norta_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
-saftbusd_norta_SOURCES = \
+saftbusd_noda_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_noda_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
+saftbusd_noda_SOURCES = \
 	src/saftbusd-noda.cpp src/print_allocator_fillstate.cpp
 
 saftbus_ctl_LDADD   = $(SIGC_LIBS) libsaftbus.la 

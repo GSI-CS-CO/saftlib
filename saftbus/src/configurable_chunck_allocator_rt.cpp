@@ -19,7 +19,7 @@ namespace saftbus
 		}
 	}
 	ChunckAllocatorRT::~ChunckAllocatorRT() {
-		print_size();
+		// print_size();
 		::free(indices);
 		::free(backindices);
 		::free(chuncks);

@@ -79,14 +79,19 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (saftd_already_running()) {
-		std::cerr << "saftbusd already running" << std::endl;
+		std::cerr << "Cannot start: saftbusd already running" << std::endl;
 		return 1;
 	}
 
 	saftbus::ServerConnection server_connection(plugins_and_args);
+
 	// add allocator fillstate as additional info to be reported by Container::get_status()
 	if (print_fillstate().size()) server_connection.get_container()->add_additional_info_callback("allocator", &print_fillstate);
+
 	saftbus::Loop::get_default().run();
+
+	// delete all remaining source from Loop before the plugins are unloaded 
+	saftbus::Loop::get_default().clear();
 
 	return 0;
 }

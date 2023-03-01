@@ -48,7 +48,7 @@ public:
 		} else if (allocator_3->fits(n) && !allocator_3->full()) {
 			return allocator_3->malloc(n);
 		} else {
-			std::cerr << "HEAP!!!!!!!!!!!!!!!!!!! " << n << std::endl;
+			// std::cerr << "HEAP!!!!!!!!!!!!!!!!!!! " << n << std::endl;
 			return reinterpret_cast<char*>(::malloc(n));
 		}
 	}

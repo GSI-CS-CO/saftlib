@@ -45,9 +45,7 @@ namespace saftbus {
 		bool active_service_remove; // initialized to false, only set to true by Container::active_service_remove() to allow services to remove themselves safely
 		void remove_signal_fd(int fd);
 		~Impl()  {
-			//===std::cerr << "Service::~Impl(" << object_path << ")" << std::endl;
 			if (destruction_callback) {
-				//===std::cerr << "Service::~Impl() -> destruction_callback" << std::endl;
 				destruction_callback();
 			}
 		}
@@ -61,49 +59,60 @@ namespace saftbus {
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftbus_object_id
 		Service *active_service; // this is set only during the call_service function
 		std::map<std::string, std::function<std::string(void)> > additional_info_callbacks; // allow plugins to add additional info to be shown by "saftbus-ctl -s"
-		void erase_children_first(const std::string &object_path) {
+		void reset_children_first(const std::string &object_path) {
+			if (object_path == "/saftbus") return;
 			bool found_child = false;
 			for (auto &obj: objects) {
-				if (obj.second->d->object_path.find(object_path) == 0 && 
+				if (obj.second &&
+					obj.second->d->object_path.find(object_path) == 0 && 
 					obj.second->d->object_path.size() > object_path.size() && 
 					obj.second->d->object_path[object_path.size()] == '/') {
 					found_child = true;
-					erase_children_first(obj.second->d->object_path);
+					reset_children_first(obj.second->d->object_path);
 				}
 			}
 			if (!found_child) {
 				auto id = object_path_lookup_table[object_path];
 				object_path_lookup_table.erase(object_path);
-				objects.erase(id);
+				objects[id].release();
 			}
+
 		}
 		void clear() {
 			// Make sure that service objects are destroyed in the opposite order (youngest object first).
 			// The std::map "objects" is sorted after object id, which is increasing for all created objects.
 			// starting with the last object in the map, the correct destruction order is assured.
-			while(objects.size()) {
+			while(objects.size()>1) {
 				auto last = objects.end();
 				--last;
-				erase_children_first(last->second->d->object_path);
+				reset_children_first(last->second->d->object_path);
+				// erase all reset-ed entries
+				for (;;) {
+					bool found = false;
+					unsigned id;
+					for (auto &obj: objects) {
+						if (!obj.second) {
+							id = obj.first;
+							found = true;
+							break;
+						}
+					}
+					if (found) {
+						objects.erase(id);
+					} else {
+						break;
+					}
+				}
 			}
 			object_path_lookup_table.clear();
 
 		}
 		Impl() {}
 		~Impl()  {
-			//===std::cerr << "Container::~Impl()" << std::endl;
 			clear();
 		}
 	};
 
-	// struct Container_Service::Impl {
-	// 	Container *container;
-	// 	Serializer serialized_signal;
-	// 	static std::vector<std::string> gen_interface_names();
-	// 	~Impl()  {
-	// 		//===std::cerr << "Container_Service::~Impl()" << std::endl;
-	// 	}
-	// };
 
 
 	Service::Service(const std::vector<std::string> &interface_names, std::function<void()> destruction_callback, bool destroy_if_owner_quits)
@@ -305,7 +314,7 @@ namespace saftbus {
 		: d(new Impl)
 	{
 		unsigned object_id = create_object("/saftbus", std::move(std::unique_ptr<Container_Service>(new Container_Service(this))));
-		assert(object_id == 1); // the entier system relies on having CoreService at object_id 1	
+		assert(object_id == 1); // the entier system relies on having Container_Service at object_id 1	
 		d->connection = connection;
 		d->active_service = nullptr;
 	}
@@ -460,7 +469,7 @@ namespace saftbus {
 		d->active_service = service.get();
 		service->call(client_fd, received, send);
 
-		if (d->active_service->d->active_service_remove) { // if the service marked itself as removed by calling Container::active_service_remove()
+		if (service && d->active_service->d->active_service_remove) { // if the service marked itself as removed by calling Container::active_service_remove()
 			//===std::cerr << "active_service_remove true for " << d->active_service->d->object_path << std::endl;
 			remove_object(d->active_service->d->object_path);
 		}

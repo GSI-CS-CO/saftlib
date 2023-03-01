@@ -65,12 +65,9 @@ namespace saftlib {
 
 	SAFTd::~SAFTd() 
 	{
-		// std::cerr << "~SAFTd()" << std::endl;
-		//saftbus::Loop::get_default().remove(eb_source);
 		Quit();
 		if (container) {
 			for (auto &device: attached_devices) {
-				// std::cerr << "  remove " << device.second->getObjectPath() << std::endl;
 				try {
 					container->remove_object(device.second->getObjectPath());
 				} catch(...) {
@@ -78,17 +75,12 @@ namespace saftlib {
 				}
 			}
 		}
-		// std::cerr << "attached_devices.clear()" << std::endl;
 		attached_devices.clear();
-		// std::cerr << "saftbus::Loop::get_default().remove(eb_source);" << std::endl;
+		saftbus::Loop::get_default().remove(eb_source);
 		try {
-			// std::cerr << "socket.close()" << std::endl;
 			socket.close();
-			// std::cerr << "~SAftd done" << std::endl;
 		} catch (etherbone::exception_t &e) {
-			// std::cerr << "~SAftd exception: " << e << std::endl;
 		}
-		std::cerr << "~SAFTd() done" << std::endl;		
 	}
 
 	eb_status_t SAFTd::read(eb_address_t address, eb_width_t width, eb_data_t* data) {
