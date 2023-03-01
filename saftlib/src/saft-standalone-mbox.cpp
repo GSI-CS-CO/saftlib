@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 		LM32testbench testbench(saftd, argv[1]);
 		// testbench.triggerMSI();
 
-		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(std::bind(&LM32testbench::triggerMSI,&testbench), std::chrono::milliseconds(1000));
+		saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(std::bind(&LM32testbench::triggerMSI,&testbench), std::chrono::milliseconds(1000), std::chrono::milliseconds(0));
 
 		saftbus::Loop::get_default().run();
 	} catch (std::runtime_error &e ) {

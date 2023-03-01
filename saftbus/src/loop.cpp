@@ -324,6 +324,13 @@ namespace saftbus {
 			interval = std::chrono::milliseconds(1);
 		}
 	}
+	TimeoutSource::TimeoutSource(std::function<bool(void)> s, std::chrono::milliseconds i) 
+		: slot(s), interval(i), dispatch_time(std::chrono::steady_clock::now()+i)
+	{
+		if (interval <= std::chrono::milliseconds(0)) {
+			interval = std::chrono::milliseconds(1);
+		}
+	}
 
 	TimeoutSource::~TimeoutSource() {
 		//===std::cerr << "TimeoutSource::~TimeoutSource()" << std::endl;

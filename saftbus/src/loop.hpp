@@ -54,7 +54,6 @@ namespace saftbus {
 		std::vector<pollfd*> pfds;
 		static long id_counter;
 		long id; 
-		// bool valid;
 	};
 	/// @brief unique identifier for an event source in a saftbus::Loop
 	class SourceHandle {
@@ -100,17 +99,18 @@ namespace saftbus {
 	// Define two useful Source types
     /////////////////////////////////////
 
-    /// @brief An event source that is active after a given amount of time has passed
-    /// 
-    /// The source is removed whenever the connected function returns false.
-    /// @param slot the function that is called periodically. If it returns true,
-    /// Source stays active. Otherwise the source is removed from the event loop.
-    /// @param interval fist execution starts at interval+offset
-    /// @param interval fist execution starts at interval+offset
+	/// @brief An event source that is active after a given amount of time has passed
+	/// 
+	/// The source is removed whenever the connected function returns false.
 	class TimeoutSource : public Source {
-		// struct Impl; std::unique_ptr<Impl> d;
 	public:
-		TimeoutSource(std::function<bool(void)> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset = std::chrono::milliseconds(0));
+		/// @param slot the function that is called periodically. 
+		/// @param interval duration between calls to slot. If interval is smaller than 1 ms, it is set to 1 ms.
+		/// @param offset   fist execution starts after waiting for offset amount of time.
+		TimeoutSource(std::function<bool(void)> slot, std::chrono::milliseconds interval, std::chrono::milliseconds offset);
+		/// @param slot the function that is called periodically. If interval is smaller than 1 ms, it is set to 1 ms.
+		/// @param interval duration between calls to slot, fist execution starts at after waiting one interval worth of time.
+		TimeoutSource(std::function<bool(void)> slot, std::chrono::milliseconds interval);
 		~TimeoutSource();
 		bool prepare(std::chrono::milliseconds &timeout_ms) override;
 		bool check() override;
