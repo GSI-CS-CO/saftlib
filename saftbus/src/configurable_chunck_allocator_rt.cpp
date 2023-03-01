@@ -80,7 +80,7 @@ namespace saftbus
 		std::cerr << "configurable chunck allocator" << std::endl;
 		const char *allocator_config_string = getenv("SAFTD_ALLOCATOR_CONFIG");
 		if (allocator_config_string == NULL) {
-			allocator_config_string = "16384.128 128.1024 64.16384";
+			allocator_config_string = "16384.128 1024.1024 64.16384";
 		}
 		heap_allocations = 0;
 		num_allocators = 0;
@@ -117,10 +117,11 @@ namespace saftbus
 	}
 	std::string Allocator::fillstate() {
 		std::ostringstream msg;
+		msg << "chunksize   used/available" << std::endl;
 		for (size_t i = 0; i < num_allocators; ++i) {
-			msg << allocators[i]->CHUNCKSIZE << " : " << allocators[i]->allocated_chuncks << "/" << allocators[i]->MAX_CHUNCKS << std::endl;
+			msg << std::setw(9) << allocators[i]->CHUNCKSIZE << "   " << allocators[i]->allocated_chuncks << "/" << allocators[i]->MAX_CHUNCKS << std::endl;
 		}
-		msg << "heap : " << heap_allocations << std::endl;
+		msg << std::setw(9) << "heap" << "   " << heap_allocations << "/-" << std::endl;
 		return msg.str();
 	}
 
@@ -149,6 +150,10 @@ Allocator *get_allocator() {
 
 }
 
+
+std::string print_fillstate() {
+	return saftbus::get_allocator()->fillstate();
+}
 
 void *operator new(std::size_t n) {
   return saftbus::get_allocator()->malloc(n);

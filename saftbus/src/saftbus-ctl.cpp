@@ -21,6 +21,7 @@
 #include "client.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <thread>
 
@@ -92,12 +93,24 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 		std::cout << "  " << plugin << std::endl;
 	}
 
-
 	std::cout << std::endl;
 	std::cout << "connected client processes:" << std::endl;
 	for (auto &client: saftbus_info.client_infos) {
 		std::cout << "  " << client.client_fd << " (pid=" << client.process_id << ")" << std::endl;
 	}
+
+	for (auto &additional: saftbus_info.additional_info) {
+		std::cout << std::endl;
+		std::cout << additional.first << ":" << std::endl;
+		std::istringstream info(additional.second);
+		for (;;) {
+			std::string line;
+			std::getline(info, line);
+			if (!info) break;
+			std::cout << "  " << line << std::endl;
+		}
+	}
+
 }
 
 

@@ -41,7 +41,7 @@ Many aspects are different from D-Bus. The most important being:
 
 ## Environment variables 
   - `SAFTBUS_SOCKET_PATH` : determines the location of the UNIX domain socket in the file system. Default ist `/var/run/saftbus/saftbus`
-  - `SAFTD_ALLOCATOR_CONFIG` : set the configuration of the deterministic memory allocator. Default value is "16384.128 128.1024 64.16384" (see below for the meaning of the numbers)
+  - `SAFTD_ALLOCATOR_CONFIG` : set the configuration of the deterministic memory allocator. Default value is "16384.128 1024.1024 64.16384" (see below for the meaning of the numbers)
 
 ## Startup 
 Run the saftbusd executable.
@@ -53,9 +53,9 @@ Alternatively, plugins can be loaded at startup by passing them as command line 
 ### Deterministic memory allocator
 
 Three versions of the saftbusd binary are distributed:
-  - `saftbusd` contains a configurable deterministic global memory allocator. It manages memory chunks of a given size and given number. The number of chunks and their size can be configured using the SAFTD_ALLOCATOR_CONFIG environment variable. The default configuration is "16384.128 128.1024 64.16384" which means
+  - `saftbusd` contains a configurable deterministic global memory allocator. It manages memory chunks of a given size and given number. The number of chunks and their size can be configured using the SAFTD_ALLOCATOR_CONFIG environment variable. The default configuration is "16384.128 1024.1024 64.16384" which means
     - 16384 chunks of size 128 bytes
-    - 128 chunks of size 1024 bytes
+    - 1024 chunks of size 1024 bytes
     - 64 chunks of size 16384 bytes
   Allocations larger than the larges chunk size fall back to the default heap allocator.
   Number of chunks must strictly decrease. Chunk size must strictly increase.

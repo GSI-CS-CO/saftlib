@@ -152,6 +152,12 @@ namespace saftbus {
 		/// @param connection The Connection object that owns the Container
 		Container(ServerConnection *connection);
 		~Container();
+
+		/// @brief add callback that returns a string which is shown up as additional information in get_status()
+		void add_additional_info_callback(const std::string &name, std::function<std::string(void)> callback);
+		/// @brief remove info callback. Plugins should clean up their callbacks when being unloaded
+		void remove_additional_info_callback(const std::string &name);
+
 		/// @brief Insert a Service object and return the saftbus_object_id for this object
 		/// @param object_path the object path under which the Service object is available to Proxy objects.
 		/// @param service A Service object

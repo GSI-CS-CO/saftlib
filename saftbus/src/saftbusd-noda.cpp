@@ -21,6 +21,9 @@
 #include "loop.hpp"
 #include "server.hpp"
 #include "client.hpp"
+#include "service.hpp"
+
+std::string print_fillstate();
 
 void usage(char *argv0) {
 		std::cout << "saftbusd version " << VERSION << std::endl;
@@ -81,6 +84,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	saftbus::ServerConnection server_connection(plugins_and_args);
+	// add allocator fillstate as additional info to be reported by Container::get_status()
+	if (print_fillstate().size()) server_connection.get_container()->add_additional_info_callback("allocator", &print_fillstate);
 	saftbus::Loop::get_default().run();
 
 	return 0;

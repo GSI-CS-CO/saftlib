@@ -60,6 +60,7 @@ namespace saftbus {
 		std::map<unsigned, std::unique_ptr<Service> > objects; // Container owns the Service objects
 		std::map<std::string, unsigned> object_path_lookup_table; // maps object_path to saftbus_object_id
 		Service *active_service; // this is set only during the call_service function
+		std::map<std::string, std::function<std::string(void)> > additional_info_callbacks; // allow plugins to add additional info to be shown by "saftbus-ctl -s"
 		void erase_children_first(const std::string &object_path) {
 			bool found_child = false;
 			for (auto &obj: objects) {
@@ -601,6 +602,14 @@ namespace saftbus {
 	}
 
 
+	void Container::add_additional_info_callback(const std::string &name, std::function<std::string(void)> callback) {
+		d->additional_info_callbacks[name] = callback;
+	}
+	void Container::remove_additional_info_callback(const std::string &name) {
+		d->additional_info_callbacks.erase(name);
+	}
+
+
 	SaftbusInfo Container::get_status() {
 		SaftbusInfo result;
 		for (auto &obj: d->objects) {
@@ -623,6 +632,9 @@ namespace saftbus {
 		}
 		for (auto &name_loader: d->plugins) {
 			result.active_plugins.push_back(name_loader.first);
+		}
+		for (auto &additional: d->additional_info_callbacks) {
+			result.additional_info[additional.first] = additional.second();
 		}
 
 		return result;

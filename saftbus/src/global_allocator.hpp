@@ -21,6 +21,8 @@
 #define SAFTBUS_GLOBAL_ALLOCATOR_HPP_
 
 #include "chunck_allocator_rt.hpp"
+#include <iostream>
+#include <sstream>
 
 class Allocator {
 public:
