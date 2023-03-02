@@ -57,7 +57,7 @@ FunctionGenerator::~FunctionGenerator()
 // to reduce traffic only generate signals if we have an owner
 void FunctionGenerator::on_fg_running(bool b)
 {
-  std::cerr << "on_fg_running (" << getOwner() << ")" << std::endl;
+  // std::cerr << "on_fg_running (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
     SigRunning(b);
@@ -66,7 +66,7 @@ void FunctionGenerator::on_fg_running(bool b)
 
 void FunctionGenerator::on_fg_armed(bool b)
 {
-  std::cerr << "on_fg_armed (" << getOwner() << ")" << std::endl;
+  // std::cerr << "on_fg_armed (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {  
  	  SigArmed(b);
@@ -75,7 +75,7 @@ void FunctionGenerator::on_fg_armed(bool b)
 
 void FunctionGenerator::on_fg_enabled(bool b)
 {
-  std::cerr << "on_fg_enabled (" << getOwner() << ")" << std::endl;
+  // std::cerr << "on_fg_enabled (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
   	SigEnabled(b);
@@ -84,7 +84,7 @@ void FunctionGenerator::on_fg_enabled(bool b)
 
 void FunctionGenerator::on_fg_refill()
 {
-  std::cerr << "on_fg_refill (" << getOwner() << ")" << std::endl;
+  // std::cerr << "on_fg_refill (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
 	  Refill();
@@ -94,7 +94,7 @@ void FunctionGenerator::on_fg_refill()
 
 void FunctionGenerator::on_fg_started(uint64_t time)
 {
-  std::cerr << "on_fg_started (" << getOwner() << ")" << std::endl;
+  // std::cerr << "on_fg_started (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
     SigStarted(saftlib::makeTimeTAI(time));
@@ -103,7 +103,7 @@ void FunctionGenerator::on_fg_started(uint64_t time)
 
 void FunctionGenerator::on_fg_stopped(uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
-  std::cerr << "on_fg_stopped (" << getOwner() << ")" << std::endl;
+  // std::cerr << "on_fg_stopped (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
     SigStopped(saftlib::makeTimeTAI(time), abort, hardwareUnderflow, microcontrollerUnderflow);
