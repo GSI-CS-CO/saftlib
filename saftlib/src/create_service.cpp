@@ -34,7 +34,7 @@
 
 
 std::unique_ptr<saftlib::SAFTd> saftd;
-                                                                                    
+              
 extern "C" 
 void destroy_service() {
 	saftd.reset(); // destructor + release memory
@@ -98,12 +98,12 @@ void handle_wildcards_and_attach_device(saftlib::SAFTd *saftd, const std::string
 
 extern "C" 
 void create_services(saftbus::Container *container, const std::vector<std::string> &args) {
-	if (!saftd) {
-		// There can only be one saftd.
-		// Always return the same instance of saftd.
-		saftd = std::move(std::unique_ptr<saftlib::SAFTd>(new saftlib::SAFTd(container)));
+	// There can only be one saftd.
+	if (saftd) {
+		throw std::runtime_error("service alreayd exists");
 	}
 
+	saftd = std::unique_ptr<saftlib::SAFTd>(new saftlib::SAFTd(container));
 	// create a new Service and return it. Maintain a reference count
 	container->create_object(saftd->getObjectPath(), std::move(std::unique_ptr<saftlib::SAFTd_Service>(new saftlib::SAFTd_Service(saftd.get(), std::bind(&destroy_service), false ))));
 
@@ -120,7 +120,7 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 		}
 		std::string name = arg.substr(0, pos);
 		std::string path = arg.substr(pos+1);
-		int poll_interval_ms;
+		int poll_interval_ms = 1;
 		size_t pos2 = path.find(':'); // the position of the second colon ':'
 		if (pos2 != path.npos) {
 			if (pos2+1 == path.size()) { // 2nd colon is there, but poll inteval is missing
@@ -129,7 +129,9 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 			std::istringstream poll_interval(path.substr(pos2+1));
 			poll_interval >> poll_interval_ms;
 			if (!poll_interval || poll_interval_ms <= 0) {
-				throw std::runtime_error("cannot read poll interval. must be a positive integer");
+				std::ostringstream msg;
+				msg << "cannot read poll interval from \'" << path.substr(pos2+1) << "\' after " << name << ":" << path << ":";
+				throw std::runtime_error(msg.str());
 			}
 			path = path.substr(0,pos2);
 		}

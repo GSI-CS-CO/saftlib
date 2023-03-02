@@ -333,9 +333,9 @@ namespace saftbus {
 	{
 		auto find_result = d->object_path_lookup_table.find(object_path);
 		if (find_result == d->object_path_lookup_table.end()) {
-			std::string msg = "cannot get object \"";
+			std::string msg = "cannot get object because its object_path \"";
 			msg.append(object_path);
-			msg.append("\" because its object_path was not found");
+			msg.append("\" was not found");
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg);
 		}
 		auto object_id = find_result->second;
