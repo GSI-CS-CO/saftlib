@@ -52,5 +52,5 @@ saftbusd_noda_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
 saftbusd_noda_SOURCES = \
 	src/saftbusd-noda.cpp src/print_allocator_fillstate.cpp
 
-saftbus_ctl_LDADD   = $(SIGC_LIBS) libsaftbus.la 
+saftbus_ctl_LDADD   = $(SIGC_LIBS) libsaftbus.la  -ldl #-lltdl
 saftbus_ctl_SOURCES = src/saftbus-ctl.cpp

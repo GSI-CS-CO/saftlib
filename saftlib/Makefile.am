@@ -181,7 +181,7 @@ lib@PACKAGE@_service_include_HEADERS =\
  	src/TimingReceiver_Service.hpp                           
 
 lib@PACKAGE@_proxy_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
-lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
+lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) 
 lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/Time.cpp                   \
 	src/Owned_Proxy.cpp             \
@@ -373,60 +373,60 @@ wait_msi_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-servi
 wait_msi_SOURCES  = src/wait-msi.cpp 
 
 
-saft_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -lpthread 
+saft_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -lpthread -ldl #-lltdl
 saft_ctl_SOURCES = src/saft-ctl.cpp
 
-saft_io_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_io_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp
 
-saft_pps_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_pps_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_pps_gen_SOURCES = src/saft-pps-gen.cpp
 
-saft_scu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_scu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp
 
-saft_ecpu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_ecpu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp
 
-saft_wbm_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_wbm_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_wbm_ctl_SOURCES = src/saft-wbm-ctl.cpp
 
-saft_clk_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_clk_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_clk_gen_SOURCES = src/saft-clk-gen.cpp
 
-saft_dm_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_dm_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_dm_SOURCES = src/saft-dm.cpp
 
-saft_eb_fwd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_eb_fwd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_eb_fwd_SOURCES = src/saft-eb-fwd.cpp
 
-saft_gmt_check_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_gmt_check_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_gmt_check_SOURCES = src/saft-gmt-check.cpp
 
-saft_uni_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_uni_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_uni_SOURCES = src/saft-uni.cpp
 
-saft_lcd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_lcd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_lcd_SOURCES = src/saft-lcd.cpp
 
-saft_standalone_mbox_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la 
+saft_standalone_mbox_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la  -ldl #-lltdl
 saft_standalone_mbox_SOURCES = src/saft-standalone-mbox.cpp
 
-saft_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la
+saft_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
 saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
 
-saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la 
+saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la  -ldl #-lltdl
 saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latency.cpp
 
 
-saft_burst_ctl_LDADD   = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libbg-firmware-proxy.la
+saft_burst_ctl_LDADD   = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libbg-firmware-proxy.la -ldl #-lltdl
 saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp 
 
 
-saft_fg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la
+saft_fg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la -ldl #-lltdl
 saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp 
 
-saft_mfg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la -lpthread
+saft_mfg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la -lpthread -ldl #-lltdl
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp 
 
 
