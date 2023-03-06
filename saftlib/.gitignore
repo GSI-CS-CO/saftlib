@@ -1,4 +1,0 @@
-src/*.o
-src/*.lo
-version.h
-saft-*

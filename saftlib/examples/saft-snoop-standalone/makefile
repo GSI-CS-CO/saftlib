@@ -1,8 +1,0 @@
-PREFIX=${HOME}/.local
-LDFLAGS=`PKG_CONFIG_PATH=$(PREFIX)/lib/pkgconfig pkg-config  sigc++-2.0 saftbus saftlib --libs --define-variable=prefix=$(PREFIX)` `pkg-config sigc++-2.0 --libs`
-CXXFLAGS=`PKG_CONFIG_PATH=$(PREFIX)/lib/pkgconfig pkg-config sigc++-2.0 saftbus saftlib --cflags --define-variable=prefix=$(PREFIX)` -lsaftd-service -lsaftbus -lltdl `pkg-config sigc++-2.0 --cflags`
-
-all: saft-snoop-standalone saft-snoop-saftbus
-
-clean:
-	rm saft-snoop-standalone saft-snoop-saftbus

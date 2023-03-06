@@ -1,15 +1,17 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) $(SIGCPP_CFLAGS) $(EB_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -I $(top_srcdir)/src/interfaces -I $(top_builddir)/src/interfaces -DDATADIR='"$(datadir)/@PACKAGE@"'
+AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) $(SIGCPP_CFLAGS) $(EB_CFLAGS) -I $(top_srcdir)/saftbus -I $(top_srcdir)/src -I $(top_builddir)/src -I $(top_srcdir)/src/interfaces -I $(top_builddir)/src/interfaces -DDATADIR='"$(datadir)/saftlib"'
 
 pkgdir = @libdir@/pkgconfig
-pkg_DATA = saftlib.pc
-EXTRA_DIST = saftlib.pc.in 
+pkg_DATA = saftlib.pc saftbus.pc
+EXTRA_DIST = saftlib.pc.in saftbus.pc.in
 #the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
-leapseconddir = $(datadir)/@PACKAGE@
+leapseconddir = $(datadir)/saftlib
 leapsecond_DATA = leap-seconds.list
 EXTRA_DIST += leap-seconds.list 
 EXTRA_DIST += src/software-tr.sdb
+EXTRA_DIST += saftbus/configurable_chunck_allocator_rt.cpp
+EXTRA_DIST += saftbus/configurable_chunck_allocator_rt.hpp 
 
 dist_bin_SCRIPTS = src/saftd
 
@@ -43,17 +45,46 @@ BUILT_SOURCES = version.h          \
 
 
 lib_LTLIBRARIES = \
-	lib@PACKAGE@-service.la  \
-	lib@PACKAGE@-proxy.la     \
+	libsaftbus.la         \
+	libsaft-service.la  \
+	libsaft-proxy.la     \
 	libfg-firmware-service.la  \
 	libfg-firmware-proxy.la	    \
 	libbg-firmware-service.la    \
 	libbg-firmware-proxy.la   
 
-# @PACKAGE@ is substituded with the string given to AC_INIT([...])
-lib@PACKAGE@_service_la_LDFLAGS = -Wl,--export-dynamic -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
-lib@PACKAGE@_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS) -ldl #-lltdl
-lib@PACKAGE@_service_la_SOURCES =\
+
+
+
+saftbus_includedir = $(includedir)/saftbus
+
+libsaftbus_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
+libsaftbus_la_SOURCES = \
+	saftbus/loop.cpp         \
+	saftbus/saftbus.cpp       \
+	saftbus/error.cpp          \
+	saftbus/client.cpp          \
+	saftbus/service.cpp          \
+	saftbus/plugins.cpp           \
+	saftbus/server.cpp             
+
+saftbus_include_HEADERS = \
+	saftbus/loop.hpp           \
+	saftbus/error.hpp           \
+	saftbus/saftbus.hpp          \
+	saftbus/client.hpp            \
+	saftbus/service.hpp            \
+	saftbus/plugins.hpp             \
+	saftbus/global_allocator.hpp     \
+	saftbus/chunck_allocator_rt.hpp   \
+	saftbus/server.hpp                 
+
+
+
+# saftlib is substituded with the string given to AC_INIT([...])
+libsaft_service_la_LDFLAGS = -Wl,--export-dynamic -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
+libsaft_service_la_LIBADD  = $(EB_LIBS)   $(SIGCPP_LIBS) -ldl #-lltdl
+libsaft_service_la_SOURCES =\
 	src/build.cpp                 \
 	src/Time.cpp                   \
 	src/eb-source.cpp               \
@@ -111,11 +142,13 @@ lib@PACKAGE@_service_la_SOURCES =\
 	src/CommonFunctions.cpp                                  \
 	src/create_service.cpp
 
-lib@PACKAGE@_service_includedir = $(includedir)/saftlib
-lib@PACKAGE@_service_include_HEADERS =\
-	version.h                          \
-	src/ats_regs.h                      \
-	src/bg_regs.h                        \
+libsaft_service_includedir = $(includedir)/saftlib
+libsaft_service_include_HEADERS =   \
+	version.h                        \
+	src/ats_regs.h                    \
+	src/bg_regs.h                      \
+	src/common-defs.h                   \
+	src/burstgen_shared_mmap.h           \
 	src/eca_ac_wbm_regs.h                 \
 	src/eca_queue_regs.h                   \
 	src/eca_regs.h                          \
@@ -180,9 +213,9 @@ lib@PACKAGE@_service_include_HEADERS =\
  	src/Input_Service.hpp                                 \
  	src/TimingReceiver_Service.hpp                           
 
-lib@PACKAGE@_proxy_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
-lib@PACKAGE@_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) 
-lib@PACKAGE@_proxy_la_SOURCES =   \
+libsaft_proxy_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
+libsaft_proxy_la_LIBADD  =  $(SIGCPP_LIBS) -lsaftbus 
+libsaft_proxy_la_SOURCES =   \
 	src/Time.cpp                   \
 	src/Owned_Proxy.cpp             \
 	src/SAFTd_Proxy.cpp              \
@@ -213,8 +246,8 @@ lib@PACKAGE@_proxy_la_SOURCES =   \
 	src/CommonFunctions.cpp                               
 
 
-lib@PACKAGE@_proxy_includedir = $(includedir)/saftlib
-lib@PACKAGE@_proxy_include_HEADERS = \
+libsaft_proxy_includedir = $(includedir)/saftlib
+libsaft_proxy_include_HEADERS = \
 	src/Time.hpp                      \
 	src/Owned_Proxy.hpp                \
 	src/SAFTd_Proxy.hpp                 \
@@ -295,7 +328,7 @@ endif
 
 libfg_firmware_service_la_LDFLAGS = -Wl,--export-dynamic 
 libfg_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
-libfg_firmware_service_la_LIBADD = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la  -ldl
+libfg_firmware_service_la_LIBADD =  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl
 libfg_firmware_service_la_SOURCES =        \
 	src/FunctionGenerator.cpp             \
 	src/FunctionGenerator_Service.cpp      \
@@ -316,7 +349,7 @@ libfg_firmware_service_include_HEADERS =   \
 	src/FunctionGeneratorFirmware.hpp          \
 	src/FunctionGeneratorFirmware_Service.hpp
 
-libfg_firmware_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
+libfg_firmware_proxy_la_LIBADD  =  $(SIGCPP_LIBS) -lsaftbus
 libfg_firmware_proxy_la_SOURCES =             \
 	src/FunctionGenerator_Proxy.cpp          \
 	src/MasterFunctionGenerator_Proxy.cpp     \
@@ -331,7 +364,7 @@ libfg_firmware_proxy_include_HEADERS =        \
 
 
 libbg_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
-libbg_firmware_service_la_LIBADD = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la -ldl
+libbg_firmware_service_la_LIBADD =  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la -ldl
 libbg_firmware_service_la_SOURCES = \
 	src/BurstGenerator.cpp                   \
 	src/BurstGenerator_Service.cpp            \
@@ -342,7 +375,7 @@ libbg_firmware_service_include_HEADERS = \
 	src/BurstGenerator.hpp                        \
 	src/BurstGenerator_Service.hpp                 
 
-libbg_firmware_proxy_la_LIBADD  = $(SAFTBUS_LIBS) $(SIGCPP_LIBS)
+libbg_firmware_proxy_la_LIBADD  =  $(SIGCPP_LIBS) -lsaftbus
 libbg_firmware_proxy_la_SOURCES =   \
 	src/BurstGenerator_Proxy.cpp                   
 
@@ -355,78 +388,105 @@ libbg_firmware_proxy_include_HEADERS = \
 
 
 
-bin_PROGRAMS = software-tr soft-tr wait-msi saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd saft-standalone-mbox saft-roundtrip-latency saft-standalone-roundtrip-latency saft-burst-ctl saft-fg-ctl saft-mfg-ctl
+
+
+bin_PROGRAMS = 	\
+	saftbusd saftbusd-sda saftbusd-noda	saftbus-ctl \
+	software-tr soft-tr wait-msi \
+	saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd saft-standalone-mbox saft-roundtrip-latency saft-standalone-roundtrip-latency \
+	saft-burst-ctl saft-fg-ctl saft-mfg-ctl
+
+
+# saftbus programs 
+saftbusd_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
+saftbusd_SOURCES = \
+	saftbus/saftbusd.cpp saftbus/configurable_chunck_allocator_rt.cpp
+
+saftbusd_sda_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_sda_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
+saftbusd_sda_SOURCES = \
+	saftbus/saftbusd-sda.cpp saftbus/print_allocator_fillstate.cpp
+
+saftbusd_noda_LDFLAGS = -Wl,--export-dynamic 
+saftbusd_noda_LDADD   = $(SIGC_LIBS) libsaftbus.la -ldl #-lltdl
+saftbusd_noda_SOURCES = \
+	saftbus/saftbusd-noda.cpp saftbus/print_allocator_fillstate.cpp
+
+saftbus_ctl_LDADD   = $(SIGC_LIBS) libsaftbus.la  -ldl #-lltdl
+saftbus_ctl_SOURCES = saftbus/saftbus-ctl.cpp
+
 
 
 # software timing receiver program
 software_tr_sdb_DATA = src/software-tr.sdb
-software_tr_sdbdir   = $(datadir)/@PACKAGE@
+software_tr_sdbdir   = $(datadir)/saftlib
 software_tr_LDADD    = $(EB_LIBS) -lpthread
 software_tr_SOURCES  = src/software-tr.cpp 
 
 # another software timing receiver program
-soft_tr_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la 
+soft_tr_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la 
 soft_tr_SOURCES  = src/soft-tr.cpp 
 
 # simple program to find out how to receive MSIs from soft-tr
-wait_msi_LDADD    = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la 
+wait_msi_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la 
 wait_msi_SOURCES  = src/wait-msi.cpp 
 
 
-saft_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -lpthread -ldl #-lltdl
+saft_ctl_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -lpthread -ldl #-lltdl
 saft_ctl_SOURCES = src/saft-ctl.cpp
 
-saft_io_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_io_ctl_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_io_ctl_SOURCES = src/saft-io-ctl.cpp
 
-saft_pps_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_pps_gen_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_pps_gen_SOURCES = src/saft-pps-gen.cpp
 
-saft_scu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_scu_ctl_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_scu_ctl_SOURCES = src/saft-scu-ctl.cpp
 
-saft_ecpu_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_ecpu_ctl_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_ecpu_ctl_SOURCES = src/saft-ecpu-ctl.cpp
 
-saft_wbm_ctl_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_wbm_ctl_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_wbm_ctl_SOURCES = src/saft-wbm-ctl.cpp
 
-saft_clk_gen_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_clk_gen_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_clk_gen_SOURCES = src/saft-clk-gen.cpp
 
-saft_dm_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_dm_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_dm_SOURCES = src/saft-dm.cpp
 
-saft_eb_fwd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_eb_fwd_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_eb_fwd_SOURCES = src/saft-eb-fwd.cpp
 
-saft_gmt_check_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_gmt_check_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_gmt_check_SOURCES = src/saft-gmt-check.cpp
 
-saft_uni_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_uni_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_uni_SOURCES = src/saft-uni.cpp
 
-saft_lcd_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_lcd_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_lcd_SOURCES = src/saft-lcd.cpp
 
-saft_standalone_mbox_LDADD   = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la  -ldl #-lltdl
+saft_standalone_mbox_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl #-lltdl
 saft_standalone_mbox_SOURCES = src/saft-standalone-mbox.cpp
 
-saft_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la -ldl #-lltdl
+saft_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -ldl #-lltdl
 saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
 
-saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS) $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-service.la  -ldl #-lltdl
+saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl #-lltdl
 saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latency.cpp
 
 
-saft_burst_ctl_LDADD   = $(SAFTBUS_LIBS) $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libbg-firmware-proxy.la -ldl #-lltdl
+saft_burst_ctl_LDADD   =  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la libbg-firmware-proxy.la -ldl #-lltdl
 saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp 
 
 
-saft_fg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la -ldl #-lltdl
+saft_fg_ctl_LDADD   =   $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la libfg-firmware-proxy.la -ldl #-lltdl
 saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp 
 
-saft_mfg_ctl_LDADD   = $(SAFTBUS_LIBS)  $(SIGCPP_LIBS) lib@PACKAGE@-proxy.la libfg-firmware-proxy.la -lpthread -ldl #-lltdl
+saft_mfg_ctl_LDADD   =   $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la libfg-firmware-proxy.la -lpthread -ldl #-lltdl
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp 
 
 

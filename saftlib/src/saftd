@@ -1,2 +1,0 @@
-#!/bin/bash
-saftbusd libsaftd-service.la $@

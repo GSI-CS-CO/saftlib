@@ -16,7 +16,6 @@ AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
 
 PKG_CHECK_MODULES([EB],      [etherbone >= 2.1.0], [AC_DEFINE([HAVE_EB], [1], [Use EB])] , [AC_DEFINE([NO_EB], [1], [No etherbone was found, compiling without etherbone support])] )
 PKG_CHECK_MODULES([SIGCPP],  [sigc++-2.0])
-PKG_CHECK_MODULES([SAFTBUS], [saftbus])
 AC_CHECK_PROG( SAFTBUSGEN_CHECK,saftbus-gen,yes)
 AS_IF([test x"$SAFTBUSGEN_CHECK" != x"yes"], [AC_MSG_ERROR([saftbus-gen not found])])
 
@@ -28,7 +27,7 @@ AC_DEFINE_UNQUOTED([OPERATING_SYSTEM], ["$ac_cv_OS"], [The operating system of t
 AC_DEFINE_UNQUOTED([HOSTNAME], ["${HOSTNAME:-unknown}"], [The hostname of the build system])
 AC_DEFINE_UNQUOTED([USERNAME], ["${USERNAME:-${LOGNAME:-${USER:-unknown}}}"], [The username of the person compiling saftlib])
 AC_PATH_PROGS([GIT], [git])
-AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e ../.git])
+AM_CONDITIONAL([GIT_TREE], [test x$GIT != x -a -e .git])
 #####################################
 # end of build info stuff
 #####################################
@@ -40,5 +39,5 @@ AC_SUBST([SAFTD_REVISION], REVISION)
 AC_SUBST([SAFTD_API], [$((SONAME+MINOR))]) dnl API incremented on every change
 AC_SUBST([SAFTD_SONAME], SONAME)
 
-AC_CONFIG_FILES([Makefile saftlib.pc])
+AC_CONFIG_FILES([Makefile saftlib.pc saftbus.pc saftbus.service])
 AC_OUTPUT
