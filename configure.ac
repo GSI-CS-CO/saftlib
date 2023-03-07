@@ -5,7 +5,7 @@ m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR c
 m4_define(SONAME,10)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 
-AC_INIT([SAFTd], [MAJOR.MINOR.REVISION])
+AC_INIT([saftlib], [MAJOR.MINOR.REVISION])
 LT_INIT
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])
