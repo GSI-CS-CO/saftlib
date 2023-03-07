@@ -11,35 +11,27 @@ The interfaces provide high level functionality.
   - better stability and performance
   - use fewer file descriptors
   - give up compatibility with Gio::Dbus-API for simpler code 
-  - give up xslt-based code generator, a code generator in C++ is provided (saftbus-gen subdirectory)
+  - give up xslt-based code generator, a code generator in C++ is provided ([saftbus-gen](saftbus-gen/README.md))
   - give up on xml interface definition files, exported functions are now annotated with a special comment to be exported
   - allow to write driver code that can be used with and without inter process communication
   - provide a plugin mechanism to install/remove services at runtime for more flexible customization of TimingReceiver hardware, e.g. LM32 firmware and saftlib driver
 
 #### Refactoring of the driver code (ECA, IOs, MSI)
-  - plugin for saftbus daemon, i.e. it can be loaded into a running saftbus-daemon and funcionality can be extended with other plugins
+  - plugin for saftbus daemon, i.e. it can be loaded into a running saftbus-daemon and functionality can be extended with other plugins
   - better performance of the eb-source
   - removal of msi-source
   - all major SDB devices on hardware hava a C++ class representation 
   - much simpler registration of MSI callbacks
   - much simpler use of the Mailbox device
-  - executables can be linked against the driver library in the normal way, using proxy objects, or in standalone fashion for exclusive lower latency access to the hardware
+  - programs can link against the driver library in the normal way, using proxy objects, or in standalone fashion for exclusive lower latency access to the hardware
   - **user facing API is compatible to saftlib major version 2** with the following additions:
     - The clock generator driver remembers the setting of any IO that was configured.
     - At startup, a wild card character is allowed for the device name and etherbone-path: `saftbusd libsaft-service.so tr*:dev/wbm*` will attach all matching devices.
   - The documentation of the user facing API is generated with doxygen and can be found in [html/index.html](html/index.html) after running doxygen inside of the saftlib directory
 
 #### Installation
-To get something like saftlib v2, the following steps are needed:
-  - compile and install saftbus-gen
-    - cd saftbus-gen
     - ./autogen.sh
-    - ./configure [--prefix=/install/directory]
-    - make install
-  - compile and install saftbus
-    - cd saftbus
-    - ./autogen.sh
-    - ./configure [--prefix=/install/directory]
+    - ./configure 
     - make install
 
 #### Startup of the daemon
@@ -54,7 +46,7 @@ To get something like saftlib v2, the following steps are needed:
 Saflib is a library and a set of tools to use and control the FAIR Timing Receiver hardware.
 Saftlib provides
   - A C++ class library to access FAIR Timing Receiver Hardware. It can be used to configure the ECA channels, create conditions and receive software Interrupts from timing events. 
-  - A library of proxy classes that can be used to share hardware resources by access through [saftbus](../saftbus/README.md) via IPC (interprocess communication).
+  - A library of proxy classes that can be used to share hardware resources by access through [saftbus](saftbus/README.md) via IPC (inter process communication).
   - A library that can be directly by stand alone programs.
   - A set of command line tools to control and interact with attached hardware devices.
 
@@ -95,7 +87,7 @@ connected client processes:
 
 ### Best practices 
 In order to get the best performance out of saftlib, users should follow some basic rules:
-  - If a Proxy objects is used frequently int the program it should be stored instead of recreated if it is needed. For example, when new ECA conditions are frequently defined, the corresponding ActionSink Proxy should be stored instad of calling ActionSink::create() whenever an ActionSink_Proxy is needed. Reason: Creating a Proxy object has some overhead, it loads the program as well as the saftbusd server. 
+  - If a Proxy objects is used frequently int the program it should be stored instead of recreated if it is needed. For example, when new ECA conditions are frequently defined, the corresponding ActionSink Proxy should be stored instead of calling ActionSink::create() whenever an ActionSink_Proxy is needed. Reason: Creating a Proxy object has some overhead, it loads the program as well as the saftbusd server. 
 
 ### Limitations
 There are some limitations that users should be aware of.
