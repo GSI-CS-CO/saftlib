@@ -30,6 +30,7 @@
 #include <etherbone.h>
 
 #include <vector>
+#include <string>
 #include <map>
 #include <memory>
 // #include <ltdl.h>
@@ -67,7 +68,9 @@ public:
 	///
 	/// To avoid halting the cpu inside a whishbone cycle, the ram is filled with jump instructions that jump to the same location.
 	// @saftbus-export
-	void safeHaltCpu(unsigned cpu_idx);
+	void SafeHaltCpu(unsigned cpu_idx);
+
+	void WriteFirmware(unsigned cpu_idx, const std::string &filename);
 };
 
 }

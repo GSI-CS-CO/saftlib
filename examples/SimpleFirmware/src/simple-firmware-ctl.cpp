@@ -8,11 +8,6 @@
 #include <saftbus/loop.hpp>
 #include <saftlib.h>
 
-
-// #include <ltdl.h> // need libltdl for this
-// #include <dlfcn.h>
-
-
 void on_MSI(uint32_t value) {
 	std::cerr << "got MSI " << value << std::endl;
 }

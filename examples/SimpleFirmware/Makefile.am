@@ -1,6 +1,10 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) $(SAFTLIB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src 
+AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) $(SAFTLIB_CFLAGS) $(SIGCPP_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src -DDATADIR='"$(datadir)/SimpleFirmware"'
+
+firmwaredir = $(datadir)
+firmware_DATA = firmware/firmware.bin
+EXTRA_DIST = firmware/firmware.bin
 
 BUILT_SOURCES = \
 	src/SimpleFirmware_Service.cpp            \

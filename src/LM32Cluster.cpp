@@ -26,6 +26,7 @@
 #include <iostream>
 #include <cassert>
 #include <sstream>
+#include <fstream>
 
 #define LM32_RAM_USER_VENDOR      0x0651             // vendor ID
 #define LM32_RAM_USER_PRODUCT     0x54111351         // product ID
@@ -77,10 +78,14 @@ unsigned LM32Cluster::getCpuCount()
 	return dpram_lm32_adr_first.size();
 }
 
-void LM32Cluster::safeHaltCpu(unsigned cpu_idx)
+void LM32Cluster::SafeHaltCpu(unsigned cpu_idx)
 {
+	if (cpu_idx >= num_cores) {
+		std::ostringstream msg;
+		msg << "there is no user cpu core with index " << cpu_idx;
+		throw std::runtime_error(msg.str());	
+	}
 	std::cerr << "safeHaltCpu " << cpu_idx << std::endl;
-	tr->CpuHalt(cpu_idx);
 	// overwrite the RAM with trap instructions (a trap instruction is a jump to the address of the flummi instruction)
 	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
 	eb_address_t last = dpram_lm32_adr_last[cpu_idx];
@@ -96,10 +101,49 @@ void LM32Cluster::safeHaltCpu(unsigned cpu_idx)
 		}
 		cycle.close();
 	}
-	
-	tr->CpuReset(cpu_idx);
 	tr->CpuHalt(cpu_idx);
 }
 
+void LM32Cluster::WriteFirmware(unsigned cpu_idx, const std::string &filename)
+{
+	if (cpu_idx >= num_cores) {
+		std::ostringstream msg;
+		msg << "there is no user cpu core with index " << cpu_idx;
+		throw std::runtime_error(msg.str());	
+	}
+	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
+	eb_address_t last = dpram_lm32_adr_last[cpu_idx];
+	std::ifstream firmware_bin(filename.c_str());
+	if (!firmware_bin) {
+		std::ostringstream msg;
+		msg << "cannot open firmware binary file " << filename;
+		throw std::runtime_error(msg.str());
+	}
+
+	bool end_of_file = false;
+	while (adr < last) {
+		std::cerr << adr << std::endl;
+		etherbone::Cycle cycle;
+		cycle.open(device);
+		for (int i = 0; i < 32 && adr < last; ++i) {
+			uint32_t instr, cpu_instr = 0;
+			firmware_bin.read((char*)&instr, sizeof(instr));
+			if (!firmware_bin) {
+				end_of_file = true;
+				break;
+			}
+			cpu_instr |= instr >> 24;
+			cpu_instr |= (0xff0000 & instr) >> 8;
+			cpu_instr |= (0x00ff00 & instr) << 8;
+			cpu_instr |= instr << 24;
+			cycle.write(adr, EB_DATA32, (eb_data_t)cpu_instr);
+			adr += 4;
+		}
+		cycle.close();
+		if (end_of_file) {
+			break;
+		}
+	}
+}
 
 } // namespace

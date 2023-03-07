@@ -50,7 +50,7 @@ Saftlib provides
   - A library that can be directly by stand alone programs.
   - A set of command line tools to control and interact with attached hardware devices.
 
-## Running saftlib-service.so
+### Start saftbusd and load the saftlib-service.so plugin
 
 The most common use case for saftlib, is to be used over saftbus. A running saftbusd with the libsaft-servcie.so plugin is needed and a TimingReceiver_Service has to be attached to SAFTd. This can be achieve by launching saftbusd like this (assuming that a FAIR Timing Receiver is attached to the system under /dev/wmb0):
 
@@ -83,25 +83,25 @@ connected client processes:
 ```
 
 
-## Developing with saftlib
+### Developing software using saftlib Driver or Proxy classes
 
-### Best practices 
+#### Best practices 
 In order to get the best performance out of saftlib, users should follow some basic rules:
   - If a Proxy objects is used frequently int the program it should be stored instead of recreated if it is needed. For example, when new ECA conditions are frequently defined, the corresponding ActionSink Proxy should be stored instead of calling ActionSink::create() whenever an ActionSink_Proxy is needed. Reason: Creating a Proxy object has some overhead, it loads the program as well as the saftbusd server. 
 
-### Limitations
+#### Limitations
 There are some limitations that users should be aware of.
   - It is not possible to create or destroy Proxy objects on a saftbus::SignalGroup inside a Signal callback function from the same saftbus::SignalGroup.
 
 
-### Shared access or exclusive access  
+#### Shared access or exclusive access  
 There are two fundamentally different ways of writing code that uses saftlib:
   - The classes from saftlib can be used remotely through Proxy objects, this is shown in the first code example. In this case many processes can share the hardware resources at the same time. A saftbusd server has to be available with the saftd-service plugin loaded and a TimingReceiver hardware attached. This is probably the most common use case.
   - Alternatively, the driver classes can also be used directly for lower latency (standalone, without running saftbusd). In this case the program connects directly to the hardware and no saftbusd server can run connect to the same hardware at the same time. But the program can be written in a way to provide the same functionality as saftbusd. This option might be useful when extra low latency in the hardware communication is needed.
 
 Both ways are shown in the following example, a simple event snoop tool. It is is first written using the Proxy objects, then it is shown how to get the same functionality using the driver classes directly.
 
-### A simple event snoop tool
+#### A simple event snoop tool
 
 A simple program that can be used to monitor timing events.
 The program configures the ECA to effectively call the function "on_action" whenever an event matches the specified event id.
@@ -119,7 +119,7 @@ The relevant classes for this example are (you may need to run doxygen for the l
   - [saftlib::softwareActionSink](html/classsaftlib_1_1SoftwareActionSink.html)
   - [saftlib::softwareCondition](html/classsaftlib_1_1SoftwareCondition.html)
 
-#### Using saflib Proxy objects with saftbusd
+##### Using saflib Proxy objects (requires a running saftbusd with the libsaft-service.so plugin attached)
 Create a file "saft-snoop-saftbus.cpp":
 ```C++
 #include <SAFTd_Proxy.hpp>
@@ -186,7 +186,7 @@ Compile with:
 
     g++ -o saft-snoop-saftbus saft-snoop-saftbus.cpp `pkg-config saftlib --cflags --libs`
 
-#### Using saftlib Driver classes directly (standalone mode)
+##### Using saftlib Driver classes directly (standalone mode)
 Create a file "saft-snoop-standalone.cpp"
 ```C++
 #include <SAFTd.hpp>
@@ -261,5 +261,14 @@ int main(int argc, char *argv[]) {
 Compile with:
 
     g++ -o saft-snoop-standalone saft-snoop-standalone.cpp `pkg-config saftlib --cflags --libs`
+
+### Developing TimingRecierver addons as plugins
+
+TimingReceiver hardware provides LM32 soft-core CPUs. These can be programmed with use case specific firmware.
+Saftlib3 allows to extend the functionality of the TimingReceiver driver with plugins.
+
+### A simple LM32 firmware driver
+
+See [examples/SimpleFirmware](examples/SimpleFirmware/README.md) for an instructive example.
 
 
