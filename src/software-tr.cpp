@@ -669,7 +669,10 @@ void EBslave::send_output_buffer()
 			}
 		}
 		if (write_buffer.size() ) {
-			write(pfds[0].fd, (void*)&write_buffer[0], write_buffer.size());
+			int result = write(pfds[0].fd, (void*)&write_buffer[0], write_buffer.size());
+			if (result != (int)write_buffer.size()) {
+				std::cerr << "Error in SEBslave::send_output_buffer: read unexpected number of bytes" << std::endl;
+			}
 		}
 	}
 	if (word_count == 0 && poll_msis == false) {
@@ -700,7 +703,10 @@ void EBslave::send_output_buffer()
 			msi_buffer.push_back(dat>>8);
 			msi_buffer.push_back(dat>>0);		
 
-			write(pfds[0].fd, (void*)&msi_buffer[0], msi_buffer.size());
+			int result = write(pfds[0].fd, (void*)&msi_buffer[0], msi_buffer.size());
+			if (result != (int)msi_buffer.size()) {
+				std::cerr << "Error in SEBslave::send_output_buffer: write unexpected number of bytes" << std::endl;
+			}
 		}
 		msi_queue.clear();
 	}

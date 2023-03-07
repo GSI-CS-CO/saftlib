@@ -122,12 +122,18 @@ namespace saftbus {
 			}
 			// read process_id from client
 			pid_t pid;
-			read(client_socket_fd, &pid, sizeof(pid));
+			int result = read(client_socket_fd, &pid, sizeof(pid));
+			if (result != sizeof(pid)) {
+				std::cerr << "Error in ServerConnection::Impl::accept_client: read unexpected number of bytes" << std::endl;
+			}
 			auto handle = Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), client_socket_fd, POLLIN | POLLHUP | POLLERR);
 			// register the client
 			clients.push_back(std::move(std::unique_ptr<Client>(new Client(client_socket_fd, pid, handle))));
 			// send the ID back to client (the file descriptor integer number is used as ID)
-			write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
+			result = write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
+			if (result != sizeof(client_socket_fd)) {
+				std::cerr << "Error in ServerConnection::Impl::accept_client: write returns unexpected number of bytes" << std::endl;
+			}
 		}
 		return true;
 	}
