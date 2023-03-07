@@ -26,7 +26,7 @@ namespace saftlib {
 		~SimpleFirmware();
 	    std::string getObjectPath();
 
-		std::map< std::string, std::string > getObjects();
+		std::map< std::string , std::map< std::string, std::string > > getObjects();
 
 
 	    // @saftbus-export

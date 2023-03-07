@@ -58,10 +58,10 @@ std::string SimpleFirmware::getObjectPath() {
 	return object_path;
 }
 
-std::map< std::string, std::string> SimpleFirmware::getObjects()
+std::map< std::string, std::map< std::string, std::string> > SimpleFirmware::getObjects()
 {
-	std::map< std::string, std::string> result;
-	result["simple-fw"] = object_path;
+	std::map< std::string, std::map< std::string, std::string> > result;
+	result["SimpleFirmware"]["simple-fw"] = object_path;
 	return result;
 }
 
