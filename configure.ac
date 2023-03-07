@@ -17,7 +17,7 @@ AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
 PKG_CHECK_MODULES([EB],      [etherbone >= 2.1.0], [AC_DEFINE([HAVE_EB], [1], [Use EB])] , [AC_DEFINE([NO_EB], [1], [No etherbone was found, compiling without etherbone support])] )
 PKG_CHECK_MODULES([SIGCPP],  [sigc++-2.0])
 AC_CHECK_PROG( SAFTBUSGEN_CHECK,saftbus-gen,yes)
-AS_IF([test x"$SAFTBUSGEN_CHECK" != x"yes"], [AC_MSG_ERROR([saftbus-gen not found])])
+AM_CONDITIONAL([NO_SAFTBUSGEN], [test x"$SAFTBUSGEN_CHECK" != x"yes"])
 
 #####################################
 # the following is needed to extract build info (relevant for src/build.cpp src/build.hpp version.h)
