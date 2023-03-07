@@ -215,7 +215,7 @@ libsaft_service_include_HEADERS =   \
  	src/TimingReceiver_Service.hpp                           
 
 libsaft_proxy_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
-libsaft_proxy_la_LIBADD  =  $(SIGCPP_LIBS) -lsaftbus 
+libsaft_proxy_la_LIBADD  =  $(SIGCPP_LIBS) 
 libsaft_proxy_la_SOURCES =   \
 	src/Time.cpp                   \
 	src/Owned_Proxy.cpp             \
