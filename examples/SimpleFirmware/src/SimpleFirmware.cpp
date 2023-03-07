@@ -6,6 +6,12 @@ SimpleFirmware::SimpleFirmware(saftlib::SAFTd *sd, saftlib::TimingReceiver *timi
 	: saftd(sd)
 	, tr(timing_receiver)
 {
+	// stop the cpu, write firmware and reset cpu
+	tr->SafeHaltCpu(0);
+	std::string firmware_bin(DATADIR "/firmware.bin");
+	tr->WriteFirmware(0, firmware_bin);
+	tr->CpuReset(0);
+
 	// make up an object path, since we are a child of a TimingReceiver our object_path should 
 	// start with its object_path, appended by a fitting name for our driver
 	object_path = tr->getObjectPath();

@@ -85,14 +85,11 @@ void LM32Cluster::SafeHaltCpu(unsigned cpu_idx)
 		msg << "there is no user cpu core with index " << cpu_idx;
 		throw std::runtime_error(msg.str());	
 	}
-	std::cerr << "safeHaltCpu " << cpu_idx << std::endl;
 	// overwrite the RAM with trap instructions (a trap instruction is a jump to the address of the flummi instruction)
 	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
 	eb_address_t last = dpram_lm32_adr_last[cpu_idx];
 	eb_data_t jump_instruction = 0xe0000000;
-	std::cerr << std::hex << adr << " " << last << std::endl;
 	while (adr < last) {
-		std::cerr << ".";
 		etherbone::Cycle cycle;
 		cycle.open(device);
 		for (int i = 0; i < 32 && adr < last; ++i) {
@@ -122,7 +119,6 @@ void LM32Cluster::WriteFirmware(unsigned cpu_idx, const std::string &filename)
 
 	bool end_of_file = false;
 	while (adr < last) {
-		std::cerr << adr << std::endl;
 		etherbone::Cycle cycle;
 		cycle.open(device);
 		for (int i = 0; i < 32 && adr < last; ++i) {

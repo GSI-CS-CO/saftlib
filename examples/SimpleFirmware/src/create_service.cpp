@@ -33,11 +33,6 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 		saftlib::TimingReceiver_Service *tr_service = dynamic_cast<saftlib::TimingReceiver_Service*>(container->get_object(device_object_path));
 		saftlib::TimingReceiver *tr = tr_service->d;
 
-		tr->SafeHaltCpu(0);
-		std::string firmware_bin(DATADIR "/firmware.bin");
-		tr->WriteFirmware(0, firmware_bin);
-		tr->CpuReset(0);
-
 		std::unique_ptr<saftlib::SimpleFirmware> simple_fw(new saftlib::SimpleFirmware(saftd, tr));
 		saftlib::SimpleFirmware *simple_fw_ptr = simple_fw.get();
 
