@@ -99,176 +99,20 @@ There are two fundamentally different ways of writing code that uses saftlib:
   - The classes from saftlib can be used remotely through Proxy objects, this is shown in the first code example. In this case many processes can share the hardware resources at the same time. A saftbusd server has to be available with the saftd-service plugin loaded and a TimingReceiver hardware attached. This is probably the most common use case.
   - Alternatively, the driver classes can also be used directly for lower latency (standalone, without running saftbusd). In this case the program connects directly to the hardware and no saftbusd server can run connect to the same hardware at the same time. But the program can be written in a way to provide the same functionality as saftbusd. This option might be useful when extra low latency in the hardware communication is needed.
 
-Both ways are shown in the following example, a simple event snoop tool. It is is first written using the Proxy objects, then it is shown how to get the same functionality using the driver classes directly.
+#### Examples 
 
-#### A simple event snoop tool
+##### Example 1: [A simple event snoop tool](examples/EventSnoopTool/README.md)
 
 A simple program that can be used to monitor timing events.
 The program configures the ECA to effectively call the function "on_action" whenever an event matches the specified event id.
+There are two versions of this example, showing both, shared and exclusive access to the hardware.
 
-The configuration of the ECA always follows these steps:
-  - Create a Proxy of the desired ECA output channel (aka action sink). In this case it is the SoftwareActionSink_Proxy. 
-  - Create a new Condition on the SoftwareActionSink, the return value of the function is the object path of the newly created condition.
-  - Create a SoftwareCondition_Proxy object for the newly created condition.
-  - Connect the callback function to the "SigAction" signal of the SoftwareCondition_Proxy.
-  - Enter a loop and wait for signals.
-
-The relevant classes for this example are (you may need to run doxygen for the links to work)
-  - [saftlib::SAFTd](html/classsaftlib_1_1SAFTd.html)
-  - [saftlib::TimingReceiver](html/classsaftlib_1_1TimingReceiver.html)
-  - [saftlib::softwareActionSink](html/classsaftlib_1_1SoftwareActionSink.html)
-  - [saftlib::softwareCondition](html/classsaftlib_1_1SoftwareCondition.html)
-
-##### Using saflib Proxy objects (requires a running saftbusd with the libsaft-service.so plugin attached)
-Create a file "saft-snoop-saftbus.cpp":
-```C++
-#include <SAFTd_Proxy.hpp>
-#include <TimingReceiver_Proxy.hpp>
-#include <SoftwareActionSink_Proxy.hpp>
-#include <SoftwareCondition_Proxy.hpp>
-
-#include <saftbus/client.hpp>
-
-#include <memory>
-#include <iostream>
-
-void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
-  std::cout << "event " << event << " " 
-            << "param " << param << " " 
-            << "deadline " << deadline.getTAI() << " "
-            << "executed " << executed.getTAI() << " " 
-            << "flags " << flags << " "
-            << std::endl;
-}
-
-int main(int argc, char *argv[]) {
-  if (argc != 5) {
-    std::cerr << "usage: " << argv[0] << " <saftlib-device> <id> <mask> <param>" << std::endl;
-    return 0;
-  }
-
-  uint64_t snoop_args[3]; 
-  uint64_t &id    = snoop_args[0];
-  uint64_t &mask  = snoop_args[1];
-  uint64_t &param = snoop_args[2];
-  for (int i = 2; i < 5; ++i) {
-    std::istringstream argin(argv[i]);
-    argin >> snoop_args[i-2];
-    if (!argin) {
-      std::cerr << "cannot read snoop argument from " << argv[i] << std::endl;
-      return 1;
-    }
-  }
-
-  auto saftd = saftlib::SAFTd_Proxy::create();
-  auto tr = saftlib::TimingReceiver_Proxy::create(saftd->getDevices()[argv[1]]);
-  auto softwareActionSink_obj_path = tr->NewSoftwareActionSink("");
-  auto softwareActionSink          = saftlib::SoftwareActionSink_Proxy::create(softwareActionSink_obj_path);
-  auto condition_obj_path          = softwareActionSink->NewCondition(true, id, mask, param);
-  auto sw_condition                = saftlib::SoftwareCondition_Proxy::create(condition_obj_path);
-
-  sw_condition->setAcceptEarly(true);
-  sw_condition->setAcceptLate(true);
-  sw_condition->setAcceptDelayed(true);
-  sw_condition->setAcceptConflict(true);
-
-  sw_condition->SigAction.connect(sigc::ptr_fun(&on_action));
-
-  for (;;) {
-    //saftbus::Loop::get_default().iteration(true); 
-    saftbus::SignalGroup::get_global().wait_for_signal();
-  }
-
-  return 0;
-}
-```
-Compile with: 
-
-    g++ -o saft-snoop-saftbus saft-snoop-saftbus.cpp `pkg-config saftlib --cflags --libs`
-
-##### Using saftlib Driver classes directly (standalone mode)
-Create a file "saft-snoop-standalone.cpp"
-```C++
-#include <SAFTd.hpp>
-#include <SAFTd_Service.hpp>
-#include <TimingReceiver.hpp>
-#include <SoftwareActionSink.hpp>
-#include <SoftwareCondition.hpp>
-
-#include <saftbus/client.hpp>
-#include <saftbus/server.hpp>
-
-#include <memory>
-#include <iostream>
-
-void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
-  std::cout << "event " << event << " " 
-            << "param " << param << " " 
-            << "deadline " << deadline.getTAI() << " "
-            << "executed " << executed.getTAI() << " " 
-            << "flags " << flags << " "
-            << std::endl;
-}
-
-int main(int argc, char *argv[]) {
-  if (argc != 5) {
-    std::cerr << "usage: " << argv[0] << " <etherbone-path> <id> <mask> <param>" << std::endl;
-    return 0;
-  }
-
-  uint64_t snoop_args[3]; 
-  uint64_t &id    = snoop_args[0];
-  uint64_t &mask  = snoop_args[1];
-  uint64_t &param = snoop_args[2];
-  for (int i = 2; i < 5; ++i) {
-    std::istringstream argin(argv[i]);
-    argin >> snoop_args[i-2];
-    if (!argin) {
-      std::cerr << "cannot read snoop argument from " << argv[i] << std::endl;
-      return 1;
-    }
-  }
-
-  // the next lines makes a fully functional saftd out of the program 
-  saftbus::ServerConnection server_connection;
-  saftbus::Container *container = server_connection.get_container();
-  saftlib::SAFTd saftd(container); 
-  std::unique_ptr<saftlib::SAFTd_Service> saftd_service(new saftlib::SAFTd_Service(&saftd));
-  container->create_object("/de/gsi/saftlib", std::move(saftd_service));
-  // end of saftd part
-
-  auto tr_obj_path                 = saftd.AttachDevice("tr0", argv[1], 100);                  
-  saftlib::TimingReceiver* tr      = saftd.getTimingReceiver(tr_obj_path);                     
-  auto softwareActionSink_obj_path = tr->NewSoftwareActionSink("");                            
-  auto softwareActionSink          = tr->getSoftwareActionSink(softwareActionSink_obj_path);   
-  auto condition_obj_path          = softwareActionSink->NewCondition(true, id, mask, param);  
-  auto sw_condition                = softwareActionSink->getCondition(condition_obj_path);     
-
-  sw_condition->setAcceptEarly(true);
-  sw_condition->setAcceptLate(true);
-  sw_condition->setAcceptDelayed(true);
-  sw_condition->setAcceptConflict(true);
-
-  sw_condition->SigAction.connect(sigc::ptr_fun(&on_action));
-
-  for (;;) {
-    saftbus::Loop::get_default().iteration(true); 
-  }
-
-  return 0;
-}
-```
-Compile with:
-
-    g++ -o saft-snoop-standalone saft-snoop-standalone.cpp `pkg-config saftlib --cflags --libs`
-
-### Developing TimingRecierver addons as plugins
+##### Example 2: [A simple LM32 firmware driver](examples/SimpleFirmware/README.md)
 
 TimingReceiver hardware provides LM32 soft-core CPUs. These can be programmed with use case specific firmware.
 Saftlib3 allows to extend the functionality of the TimingReceiver driver with plugins.
 
-### A simple LM32 firmware driver
 
-See [examples/SimpleFirmware](examples/SimpleFirmware/README.md) for an instructive example.
+
 
 

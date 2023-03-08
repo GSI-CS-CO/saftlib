@@ -5,6 +5,7 @@ includedir=@includedir@/saftlib
 
 Name: saftlib
 Description: Simplified API for Timing
+Requires: sigc++-2.0 saftbus
 Version: @VERSION@
 Libs: -L${libdir} -lsaft-proxy -lsaft-service -lz
 Cflags: -I${includedir}

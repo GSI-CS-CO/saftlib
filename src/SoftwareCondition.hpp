@@ -70,9 +70,10 @@ public:
 	/// specified that the respective error should be accepted.
 	/// 
 	// @saftbus-export
-	std::function< void(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) > Action;
-	// @saftbus-export
 	sigc::signal<void, uint64_t, uint64_t, saftlib::Time, saftlib::Time, uint16_t > SigAction;
+
+	// // @saftbus-export
+	// std::function< void(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) > Action;
 
 	typedef SoftwareCondition_Service ServiceType;
 };
