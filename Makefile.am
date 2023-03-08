@@ -422,15 +422,15 @@ saftbus_ctl_SOURCES = saftbus/saftbus-ctl.cpp
 # software timing receiver program
 software_tr_sdb_DATA = src/software-tr.sdb
 software_tr_sdbdir   = $(datadir)/saftlib
-software_tr_LDADD    = $(EB_LIBS) -lpthread
+software_tr_LDADD    = $(EB_LIBS) -lpthread  -ldl #-lltdl
 software_tr_SOURCES  = src/software-tr.cpp 
 
 # another software timing receiver program
-soft_tr_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la 
+soft_tr_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl #-lltdl
 soft_tr_SOURCES  = src/soft-tr.cpp 
 
 # simple program to find out how to receive MSIs from soft-tr
-wait_msi_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la 
+wait_msi_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl #-lltdl
 wait_msi_SOURCES  = src/wait-msi.cpp 
 
 
