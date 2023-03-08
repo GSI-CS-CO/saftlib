@@ -22,7 +22,7 @@ lib@PACKAGE@_service_la_LIBADD = $(SAFTBUS_LIBS) $(SAFTLIB_LIBS) $(SIGCPP_LIBS) 
 lib@PACKAGE@_service_la_SOURCES = \
 	src/SimpleFirmware.cpp                   \
 	src/SimpleFirmware_Service.cpp            \
-	src/create_service.cpp
+	src/create_services.cpp
 
 lib@PACKAGE@_service_includedir = $(includedir)/@PACKAGE@/service
 lib@PACKAGE@_service_include_HEADERS = \
