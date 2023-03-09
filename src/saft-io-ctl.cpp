@@ -55,10 +55,10 @@
 #include "eca_flags.h"
 #include "io_control_regs.h"
 
-/* Hanle SIGINT */
+/* Handle SIGINT */
 /* ==================================================================================================== */
-/* This program creates a lot of conditions an if it suddenly quits                                     */
-/* All conditions will be cleaned-up by the saftd at once. This can take a while                        */
+/* This program creates a lot of conditions and if it suddenly quits                                    */
+/* all conditions will be cleaned-up by the saftd at once. This can take a while                        */
 /* and causes the saftd to be unresponsive until all conditions are removed                             */
 /* this can be avoided by removing them one by one in the handler.                                      */
 #include <csignal>
