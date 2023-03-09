@@ -107,7 +107,13 @@ A simple program that can be used to monitor timing events.
 The program configures the ECA to effectively call the function "on_action" whenever an event matches the specified event id.
 There are two versions of this example, showing both, shared and exclusive access to the hardware.
 
-##### Example 2: [A simple LM32 firmware driver](examples/SimpleFirmware/README.md)
+##### Example 2: [A serial transceiver using an IO of a TimingReceiver](examples/SerialTransceiver/README.md)
+
+An example with multiple threads using different `saftbus::SignalGroups` TimingReceiver IOs.
+
+### Develop plugins to add new services
+
+##### Example 1: [A simple LM32 firmware driver](examples/SimpleFirmware/README.md)
 
 TimingReceiver hardware provides LM32 soft-core CPUs. These can be programmed with use case specific firmware.
 Saftlib3 allows to extend the functionality of the TimingReceiver driver with plugins.

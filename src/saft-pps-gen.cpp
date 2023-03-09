@@ -38,6 +38,31 @@
 using namespace saftlib;
 using namespace std;
 
+/* Hanle SIGINT */
+/* ==================================================================================================== */
+/* This program creates a lot of conditions an if it suddenly quits                                     */
+/* All conditions will be cleaned-up by the saftd at once. This can take a while                        */
+/* and causes the saftd to be unresponsive until all conditions are removed                             */
+/* this can be avoided by removing them one by one in the handler.                                      */
+#include <csignal>
+#include <cstdlib>
+std::vector<std::shared_ptr<saftlib::OutputCondition_Proxy> > all_output_conditions;
+std::vector<std::shared_ptr<saftlib::SoftwareCondition_Proxy> > all_software_conditions;
+std::vector<std::shared_ptr<saftlib::SCUbusCondition_Proxy> > all_scubus_conditions;
+void INThandler(int s) {
+  std::cerr << "removing all  conditions" << std::endl;
+  for (auto& condition: all_output_conditions) {
+    condition->Destroy();
+  }
+  for (auto& condition: all_software_conditions) {
+    condition->Destroy();
+  }
+  for (auto& condition: all_scubus_conditions) {
+    condition->Destroy();
+  }
+  exit(1); 
+}
+
 /* Global */
 /* ==================================================================================================== */
 static const char *program    = NULL;  /* Name of the application */
@@ -124,6 +149,12 @@ static void pps_help (void)
 /* ==================================================================================================== */
 int main (int argc, char** argv)
 {
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = INThandler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, NULL);
+
   /* Helpers */
   int  opt              = 0;     /* Number of given options */
   int  total_ios        = 0;     /* Number of configured IOs */
@@ -250,8 +281,8 @@ int main (int argc, char** argv)
           }
           
           /* Setup conditions */
-          std::shared_ptr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
-          std::shared_ptr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
+          std::shared_ptr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
+          std::shared_ptr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
           
           /* Accept all kinds of events */
           condition_high->setAcceptConflict(true);
@@ -262,6 +293,11 @@ int main (int argc, char** argv)
           condition_low->setAcceptDelayed(true);
           condition_low->setAcceptEarly(true);
           condition_low->setAcceptLate(true);
+
+          all_output_conditions.push_back(condition_low);
+          all_output_conditions.push_back(condition_high);
+
+          output_proxy->ToggleActive();
         }
       }
       
@@ -282,13 +318,17 @@ int main (int argc, char** argv)
        /* Get connection */
        std::shared_ptr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
        std::shared_ptr<SCUbusCondition_Proxy> scubus_condition;
-       scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
+       scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
         
        /* Accept every kind of event */
        scubus_condition->setAcceptConflict(true);
        scubus_condition->setAcceptDelayed(true);
        scubus_condition->setAcceptEarly(true);
        scubus_condition->setAcceptLate(true);
+
+       all_scubus_conditions.push_back(scubus_condition);
+
+       e_scubus->ToggleActive();
        std::cout << "ECA configuration done for SCU bus!" << std::endl;
       }
       
@@ -331,7 +371,7 @@ int main (int argc, char** argv)
         /* Setup SoftwareActionSink */
         std::cout << "Waiting for timing events..." << std::endl;
         std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
+        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
         condition->SigAction.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Accept all kinds of events */
@@ -339,6 +379,10 @@ int main (int argc, char** argv)
         condition->setAcceptDelayed(true);
         condition->setAcceptEarly(true);
         condition->setAcceptLate(true);
+
+        all_software_conditions.push_back(condition);
+
+        sink->ToggleActive();
         
         /* Attach to counter signals */
         sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
