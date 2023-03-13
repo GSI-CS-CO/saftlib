@@ -493,6 +493,7 @@ bool ActionSink::updateDelayed() const
 
 void ActionSink::removeCondition(Condition *condition)
 {
+	condition->Owned::release_service();
 	// std::cerr << "ActionSink::removeCondition(" << (uint64_t)condition << ")" << std::endl;
 	// Convert naked pointer into unique_ptr 
 	auto found = conditions.find(condition->getNumber());

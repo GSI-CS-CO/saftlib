@@ -488,7 +488,8 @@ class ActionSink : public Owned
 			std::string path = condition->getObjectPath();
 			if (container) {
 				std::unique_ptr<typename ConditionType::ServiceType> service(new typename ConditionType::ServiceType(condition.get(), std::bind(&ActionSink::removeCondition, this, condition.get())));
-				container->set_owner(service.get());
+				service->set_owner(container->get_calling_client_id());
+				condition->set_service(service.get());
 				container->create_object(path, std::move(service));
 			}
 			conditions.insert(std::make_pair(number, std::move(condition)));

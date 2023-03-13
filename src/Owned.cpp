@@ -21,13 +21,16 @@
 
 #include "Owned.hpp"
 
+#include <saftbus/error.hpp>
+
 #include <sstream>
 
 
 namespace saftlib {
 
-	Owned::Owned(saftbus::Container *container, int initial_owner) : cont(container), owner(initial_owner)
-	{ }
+	Owned::Owned(saftbus::Container *container) : cont(container), service(nullptr)
+	{ 
+	}
 
 	Owned::~Owned() {
 		// if (Destroyed) {
@@ -35,29 +38,38 @@ namespace saftlib {
 		// }
 	}
 
+	void Owned::set_service(saftbus::Service *serv) {
+		service = serv;
+	}
+	void Owned::release_service() {
+		service = nullptr;
+	}
+
 	void Owned::Disown() {
-		if (cont) {
-			cont->active_service_release_owner();
-			owner = cont->active_service_get_owner();
+		if (cont && service) {
+			if (service->is_owned() && cont->get_calling_client_id() != service->get_owner()) {
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
+			}
+			service->release_owner();
 		}
 	}
 	void Owned::Own() {
-		if (cont) {
-			cont->active_service_set_owner();
-			owner = cont->active_service_get_owner();
-		}
+		ownerOnly();
+		service->set_owner(cont->get_calling_client_id());
 	}
 	void Owned::ownerOnly() const {
-		if (cont) {
-			cont->active_service_owner_only();
+		if (cont && service) {
+			if (service->is_owned() && cont->get_calling_client_id() != service->get_owner()) {
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
+			}
 		}
 	}
 
 	std::string Owned::getOwner() const {
-		if (cont) {
-			if (owner != -1) {
+		if (cont && service) {
+			if (service->get_owner() != -1) {
 				std::ostringstream owner_str;
-				owner_str << owner;
+				owner_str << service->get_owner();
 				return owner_str.str();
 			}
 		}
@@ -65,17 +77,17 @@ namespace saftlib {
 	}
 
 	bool Owned::getDestructible() const {
-		if (cont) {
-			return cont->active_service_has_destruction_callback();
+		if (cont && service) {
+			return service->has_destruction_callback();
 		}
 		return false;
 	}
 
 	void Owned::Destroy() {
 		ownerOnly();
-		if (cont) {
-			cont->active_service_remove();
-		}
+		// if (cont) {
+		// 	cont->active_service_remove();
+		// }
 		// if (Destroyed) {
 		// 	Destroyed();
 		// }

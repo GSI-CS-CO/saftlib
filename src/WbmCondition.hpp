@@ -40,7 +40,7 @@ class WbmCondition_Service;
 /// WbmConditions are created by WbmActionSinks to select which
 /// events should generate callbacks. This interface always implies
 /// that the object also implements the general Condition interface.
-class WbmCondition : public Owned, public Condition {
+class WbmCondition : public Condition {
 public:
 	WbmCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr);
 

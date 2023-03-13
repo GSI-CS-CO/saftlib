@@ -36,7 +36,7 @@ namespace saftlib {
 
 class OutputCondition_Service;
 
-class OutputCondition : public Owned, public Condition 
+class OutputCondition : public Condition 
 {
 public:
 	OutputCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container);

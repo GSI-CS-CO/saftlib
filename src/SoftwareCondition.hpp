@@ -46,7 +46,7 @@ class SoftwareCondition_Service;
 /// SoftwareConditions are created by SoftwareActionSinks to select which
 /// events should generate callbacks. This interface always implies
 /// that the object also implements the general Condition interface.
-class SoftwareCondition : public Owned, public Condition
+class SoftwareCondition : public Condition
 {
 public:
 	SoftwareCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, saftbus::Container *container);

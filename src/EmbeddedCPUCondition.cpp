@@ -24,7 +24,7 @@
 namespace saftlib {
 
 EmbeddedCPUCondition::EmbeddedCPUCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container)
- : Owned(container), Condition(sink, number, active, id, mask, offset, tag)
+ : Condition(sink, number, active, id, mask, offset, tag, container)
 {
   std::cerr << "EmbeddedCPUCondition::EmbeddedCPUCondition()" << std::endl;
 }

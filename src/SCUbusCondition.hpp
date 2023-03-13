@@ -40,7 +40,7 @@ class SCUbusCondition_Service;
 /// SCUbusConditions are created by SCUbusActionSinks to select which
 /// events should generate callbacks. This interface always implies
 /// that the object also implements the general Condition interface.
-class SCUbusCondition : public Owned, public Condition {
+class SCUbusCondition : public Condition {
 public:
 	SCUbusCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr);
 

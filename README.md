@@ -88,6 +88,7 @@ connected client processes:
 #### Best practices 
 In order to get the best performance out of saftlib, users should follow some basic rules:
   - If a Proxy objects is used frequently int the program it should be stored instead of recreated if it is needed. For example, when new ECA conditions are frequently defined, the corresponding ActionSink Proxy should be stored instead of calling ActionSink::create() whenever an ActionSink_Proxy is needed. Reason: Creating a Proxy object has some overhead, it loads the program as well as the saftbusd server. 
+  - Configuring the ECA takes relatively long. If many conditions should be changed, the fastest way is to create a complete new set of conditions in an inactive state, then call ToggleActive which will deactivate all active conditions and activate all inactive conditions. Then remove all inactive conditions. This results in only one reconfiguration of the ECA hardware.
 
 #### Limitations
 There are some limitations that users should be aware of.

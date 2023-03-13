@@ -34,8 +34,9 @@
 
 namespace saftlib {
 
-Condition::Condition(ActionSink *sink_, unsigned number_, bool active_, uint64_t id_, uint64_t mask_, int64_t offset_, uint32_t tag_)
- : objectPath(sink_->getObjectPath()), sink(sink_), number(number_),
+Condition::Condition(ActionSink *sink_, unsigned number_, bool active_, uint64_t id_, uint64_t mask_, int64_t offset_, uint32_t tag_, saftbus::Container *container)
+ : Owned(container), 
+   objectPath(sink_->getObjectPath()), sink(sink_), number(number_),
    id(id_), mask(mask_), offset(offset_), tag(tag_),
    acceptLate(false), acceptEarly(false), acceptConflict(false), acceptDelayed(true),
    active(active_)

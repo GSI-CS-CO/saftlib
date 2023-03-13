@@ -25,7 +25,7 @@
 namespace saftlib {
 
 OutputCondition::OutputCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr)
- : Owned(container), Condition(sink, number, active, id, mask, offset, tag)
+ : Condition(sink, number, active, id, mask, offset, tag, container)
 {
 }
 

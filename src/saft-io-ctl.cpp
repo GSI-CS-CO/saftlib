@@ -55,26 +55,6 @@
 #include "eca_flags.h"
 #include "io_control_regs.h"
 
-/* Handle SIGINT */
-/* ==================================================================================================== */
-/* This program creates a lot of conditions and if it suddenly quits                                    */
-/* all conditions will be cleaned-up by the saftd at once. This can take a while                        */
-/* and causes the saftd to be unresponsive until all conditions are removed                             */
-/* this can be avoided by removing them one by one in the handler.                                      */
-#include <csignal>
-#include <cstdlib>
-std::vector<std::shared_ptr<saftlib::OutputCondition_Proxy> > all_output_conditions;
-std::vector<std::shared_ptr<saftlib::SoftwareCondition_Proxy> > all_software_conditions;
-void INThandler(int s) {
-  std::cerr << "removing all conditions" << std::endl;
-  for (auto& condition: all_output_conditions) {
-    condition->Destroy();
-  }
-  for (auto& condition: all_software_conditions) {
-    condition->Destroy();
-  }
-  exit(1); 
-}
 
 /* Namespace */
 /* ==================================================================================================== */
@@ -178,7 +158,6 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
     condition->setAcceptDelayed(io_AcceptDelayed);
     condition->setAcceptEarly(io_AcceptEarly);
     condition->setAcceptLate(io_AcceptLate);
-    all_output_conditions.push_back(condition);
 
     output_proxy->ToggleActive();
 
@@ -614,7 +593,6 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
             proxies.back()->setAcceptDelayed(true);
             proxies.back()->setAcceptEarly(true);
             proxies.back()->setAcceptLate(true);
-            all_software_conditions.push_back(proxies.back());
           }
 
           /* Setup the event */
@@ -1114,12 +1092,6 @@ static int io_print_table(bool verbose_mode)
 /* ==================================================================================================== */
 int main (int argc, char** argv)
 {
-  struct sigaction sigIntHandler;
-  sigIntHandler.sa_handler = INThandler;
-  sigemptyset(&sigIntHandler.sa_mask);
-  sigIntHandler.sa_flags = 0;
-  sigaction(SIGINT, &sigIntHandler, NULL);
-
   /* Helpers to deal with endless arguments */
   char * pEnd         = NULL;  /* Arguments parsing */
   int  opt            = 0;     /* Number of given options */

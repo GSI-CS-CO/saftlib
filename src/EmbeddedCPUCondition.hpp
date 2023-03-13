@@ -40,7 +40,7 @@ class EmbeddedCPUCondition_Service;
 /// EmbeddedCPUConditions are created by EmbeddedCPUActionSinks to select which
 /// events should generate callbacks. This interface always implies
 /// that the object also implements the general Condition interface.
-class EmbeddedCPUCondition : public Owned, public Condition {
+class EmbeddedCPUCondition : public Condition {
 public:
 	EmbeddedCPUCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr);
 

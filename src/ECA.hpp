@@ -171,6 +171,15 @@ public:
 	///
 	SoftwareActionSink *getSoftwareActionSink(const std::string & sas_obj_path);
 
+	/// @brief activate all inactive owned conditions and deactivate all owned active conditions
+	// @saftbus-export
+	void ToggleActive();
+
+	/// @brief deactivate all owned conditions
+	// @saftbus-export
+	void DecativateOwnedConditions();
+
+
 	/// @brief A list of all the high/low outputs on the receiver.
 	/// @return A list of all the high/low outputs on the receiver.
 	///

@@ -36,8 +36,18 @@ namespace saftlib {
 	class Owned
 	{
 	public:
-		Owned(saftbus::Container *container, int initial_owner = -1);
+		Owned(saftbus::Container *container);
 		virtual ~Owned();
+
+		/// @brief This class only works if it has access to a service object. 
+		/// Service object are created after Driver class object. In order to create 
+		/// a functional Owned object, the service object pointer must be passed to 
+		/// using this function;
+		void set_service(saftbus::Service *service);
+
+		/// @brief if a service of an Owned object is destroyed, this method should be 
+		/// passed as destruction callback (or should be called in the destruction callback)
+		void release_service();
 
 		/// @brief Release ownership of the object.
 		///
@@ -87,15 +97,17 @@ namespace saftlib {
 		void Destroy();
 
 		/// @brief The object was destroyed.
-		// // @saftbus-signal
-		// std::function<void()> Destroyed;
+		// @saftbus-signal
+		std::function<void()> Destroyed;
 
 	protected:
 		/// @brief Throw an exception if the caller is not the owner
 		void ownerOnly() const;
 	private:
 		saftbus::Container *cont;
-		int owner;
+		saftbus::Service *service;
+		// int owner;
+
 	};
 
 }

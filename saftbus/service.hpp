@@ -90,6 +90,14 @@ namespace saftbus {
 		///        It will be send back to the client that initiated the remote function call.
 		void call(int client_fd, Deserializer &received, Serializer &send);
 		virtual ~Service();
+
+
+		int get_owner();
+		bool is_owned();
+		void set_owner(int owner);
+		void release_owner();
+		bool has_destruction_callback();
+
 	protected:
 		/// @brief execute one of the functions in one of the interfaces of the derived class.
 		///
@@ -167,6 +175,8 @@ namespace saftbus {
 
 		Service* get_object(const std::string &object_path);
 
+		void destroy_service(Service *service);
+
 
 		/// @brief call a Service identified by the saftbus_object_id
 		/// @param saftbus_object_id identifies the service object
@@ -183,15 +193,8 @@ namespace saftbus {
 
 
 		/// @brief some functions for ownership management. They can only be called whenever a client request is handled.
+		/// @return -1 if no client is calling, the client id if a client call is in progress
 		int get_calling_client_id() const;
-		void set_owner(Service *);
-		void active_service_set_owner();
-		int  active_service_get_owner() const;
-		void active_service_release_owner();
-		void active_service_owner_only() const;
-		bool active_service_has_destruction_callback() const;
-		void active_service_remove();
-
 
 		/// @brief erase all objects in a safe manner
 		///

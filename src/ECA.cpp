@@ -337,6 +337,79 @@ struct WalkEntry {
 	offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
 };
 
+void ECA::ToggleActive()
+{
+	std::string caller;
+	if (container) {
+		std::ostringstream out;
+		out << container->get_calling_client_id();
+		caller = out.str();
+	}
+	for (auto &channel: ECAchannels) {
+		for (auto &actionSink: channel) {
+			if (!actionSink) {
+				continue;
+			}
+			for (auto &number_condition: actionSink->getConditions()) {
+				auto &condition = number_condition.second;
+				if (caller.empty() || condition->getOwner() == caller) {
+					condition->setRawActive(!condition->getActive());
+				}
+			}
+		}
+	}
+	try {
+		compile();
+	} catch (...) {
+		// failed => undo flips
+		for (auto &channel: ECAchannels) {
+			for (auto &actionSink: channel) {
+				if (!actionSink) {
+					continue;
+				}
+				for (auto &number_condition: actionSink->getConditions()) {
+					auto &condition = number_condition.second;
+					if (caller.empty() || condition->getOwner() == caller) {
+						condition->setRawActive(!condition->getActive());
+					}
+				}
+			}
+		}
+	}
+}
+
+void ECA::DecativateOwnedConditions() {
+	std::string caller;
+	if (container) {
+		std::ostringstream out;
+		out << container->get_calling_client_id();
+		caller = out.str();
+	}
+	std::vector<Condition*> deactivated;
+	for (auto &channel: ECAchannels) {
+		for (auto &actionSink: channel) {
+			if (!actionSink) {
+				continue;
+			}
+			for (auto &number_condition: actionSink->getConditions()) {
+				auto &condition = number_condition.second;
+				if (caller.empty() || condition->getOwner() == caller) {
+					if (condition->getActive()) deactivated.push_back(condition.get());
+					condition->setRawActive(false);
+				}
+			}
+		}
+	}
+	try {
+		compile();
+	} catch(...) {
+		// undo the changes
+		for (auto &cond: deactivated) {
+			cond->setRawActive(true);
+		}
+	}
+}
+
 
 
 void ECA::compile()
@@ -667,7 +740,8 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	std::string sink_object_path = software_action_sink->getObjectPath();
 	if (container) {
 		std::unique_ptr<SoftwareActionSink_Service> service(new SoftwareActionSink_Service(software_action_sink.get(), std::bind(&ECA::removeSowftwareActionSink,this, software_action_sink.get())));
-		container->set_owner(service.get());
+		service->set_owner(container->get_calling_client_id());
+		software_action_sink->set_service(service.get());
 		container->create_object(sink_object_path, std::move(service));
 	}
 	(*ECA_LINUX_channel)[num] = std::move(software_action_sink);
@@ -680,7 +754,7 @@ bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
 }
 void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	ActionSink *as = sas;
-	// std::cout << "========= removeSowftwareActionSink ======== " << as->getNum() << std::endl;
+	sas->Owned::release_service();
 	(*ECA_LINUX_channel)[as->getNum()].reset();
 	compile();
 }

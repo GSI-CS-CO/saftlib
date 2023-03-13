@@ -22,6 +22,10 @@
 #ifndef CONDITION_H
 #define CONDITION_H
 
+#include "Owned.hpp"
+
+#include <saftbus/service.hpp>
+
 #include <cstdint>
 #include <string>
 
@@ -35,11 +39,11 @@ class ActionSink;
 /// Conditions are created for ActionSinks to select which events the
 /// sink should respond to. Different ActionSinks return handles to 
 /// different Conditions. This interface is the common denominator.
-class Condition  
+class Condition  : public Owned
 {
   public:
     // if the created with active=true, you must manually run compile() on TimingReceiver
-    Condition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
+    Condition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr);
     virtual ~Condition() = default; 
     
 

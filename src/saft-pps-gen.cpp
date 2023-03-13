@@ -38,31 +38,6 @@
 using namespace saftlib;
 using namespace std;
 
-/* Handle SIGINT */
-/* ==================================================================================================== */
-/* This program creates a lot of conditions and if it suddenly quits                                    */
-/* all conditions will be cleaned-up by the saftd at once. This can take a while                        */
-/* and causes the saftd to be unresponsive until all conditions are removed                             */
-/* this can be avoided by removing them one by one in the handler.                                      */
-#include <csignal>
-#include <cstdlib>
-std::vector<std::shared_ptr<saftlib::OutputCondition_Proxy> > all_output_conditions;
-std::vector<std::shared_ptr<saftlib::SoftwareCondition_Proxy> > all_software_conditions;
-std::vector<std::shared_ptr<saftlib::SCUbusCondition_Proxy> > all_scubus_conditions;
-void INThandler(int s) {
-  std::cerr << "removing all  conditions" << std::endl;
-  for (auto& condition: all_output_conditions) {
-    condition->Destroy();
-  }
-  for (auto& condition: all_software_conditions) {
-    condition->Destroy();
-  }
-  for (auto& condition: all_scubus_conditions) {
-    condition->Destroy();
-  }
-  exit(1); 
-}
-
 /* Global */
 /* ==================================================================================================== */
 static const char *program    = NULL;  /* Name of the application */
@@ -75,6 +50,25 @@ uint64_t late_counter          = 0;
 uint64_t early_counter         = 0;
 uint64_t conflict_counter      = 0;
 uint64_t delayed_counter       = 0;
+
+std::shared_ptr<TimingReceiver_Proxy> receiver; /* must be global for the INThandler */
+
+/* Handle SIGINT */
+/* ==================================================================================================== */
+/* This program creates a lot of conditions and if it suddenly quits                                    */
+/* all conditions will be cleaned-up by the saftd at once. This can take a                              */
+/* while and causes the saftd to be unresponsive until all conditions are                               */
+/* removed. This can be avoided by removing them one by one in the handler.                             */
+#include <csignal>
+#include <cstdlib>
+void INThandler(int s) {
+  std::cerr << "handler" << std::endl;
+  if (receiver) {
+    receiver->DecativateOwnedConditions();
+    std::cerr << "deactivated" << std::endl;
+  }
+  exit(0); 
+}
 
 /* Prototypes */
 /* ==================================================================================================== */
@@ -218,8 +212,8 @@ int main (int argc, char** argv)
         std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
         return (-1);
       }
-      std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-      
+      receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+
       /* Check if timing receiver is locked */
       wrLocked = receiver->getLocked();
       if (wrLocked)
@@ -293,11 +287,6 @@ int main (int argc, char** argv)
           condition_low->setAcceptDelayed(true);
           condition_low->setAcceptEarly(true);
           condition_low->setAcceptLate(true);
-
-          all_output_conditions.push_back(condition_low);
-          all_output_conditions.push_back(condition_high);
-
-          output_proxy->ToggleActive();
         }
       }
       
@@ -326,15 +315,13 @@ int main (int argc, char** argv)
        scubus_condition->setAcceptEarly(true);
        scubus_condition->setAcceptLate(true);
 
-       all_scubus_conditions.push_back(scubus_condition);
-
-       e_scubus->ToggleActive();
        std::cout << "ECA configuration done for SCU bus!" << std::endl;
       }
       
       /* Trigger ECA continuously? */ 
       if (!external_trigger)
       {
+        receiver->ToggleActive();
         while(1)
         {
           /* Get time and align next PPS */
@@ -379,10 +366,6 @@ int main (int argc, char** argv)
         condition->setAcceptDelayed(true);
         condition->setAcceptEarly(true);
         condition->setAcceptLate(true);
-
-        all_software_conditions.push_back(condition);
-
-        sink->ToggleActive();
         
         /* Attach to counter signals */
         sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
@@ -392,6 +375,7 @@ int main (int argc, char** argv)
         sink->ConflictCount.connect(sigc::ptr_fun(&onConflictCount));
         sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
         
+        receiver->ToggleActive();
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
         while (true) {
           saftlib::wait_for_signal();
