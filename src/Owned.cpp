@@ -33,9 +33,9 @@ namespace saftlib {
 	}
 
 	Owned::~Owned() {
-		// if (Destroyed) {
-		// 	Destroyed();
-		// }
+		if (Destroyed) {
+			Destroyed();
+		}
 	}
 
 	void Owned::set_service(saftbus::Service *serv) {
@@ -85,12 +85,9 @@ namespace saftlib {
 
 	void Owned::Destroy() {
 		ownerOnly();
-		// if (cont) {
-		// 	cont->active_service_remove();
-		// }
-		// if (Destroyed) {
-		// 	Destroyed();
-		// }
+		if (cont && service) {
+			cont->destroy_service(service);
+		}
 	}
  
 
