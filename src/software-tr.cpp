@@ -1803,6 +1803,44 @@ private:
 	std::vector<uint32_t> _slots;
 };
 
+
+class LM32ClusterInfoRom : public Device {
+public:
+	enum {
+		vendor_id = 0x651,
+		product_id = 0x10040086,
+	};
+	LM32ClusterInfoRom(uint32_t adr_first, uint32_t instance) 
+		: _adr_first(adr_first) 
+	{
+		if (verbosity >= 1) {
+			std::cout << "LM32ClusterInfoRom " << std::hex << _adr_first << std::endl;
+		}
+	}
+	bool contains(uint32_t adr) {
+		return adr >= _adr_first && adr <= _adr_first + 4;
+	}
+	bool write_access(uint32_t adr, int sel, uint32_t dat) {
+		if (verbosity >= 1) {
+			std::cout << "LM32ClusterInfoRom write access: " << std::hex << adr << " " << dat << std::endl;
+		}
+		return false;
+	}
+	bool read_access(uint32_t adr, int sel, uint32_t *dat_out) {
+		if (verbosity >= 1) {
+			std::cout << "LM32ClusterInfoRom read access: " << std::hex << adr << " " << *dat_out << std::endl;
+		}
+		*dat_out = 1;
+		return true;
+	}
+
+
+private:
+	uint32_t _adr_first;
+};
+
+
+
 ///////////////////////////////////////////////////////
 // Implement reading SDB-records from hardware
 ///////////////////////////////////////////////////////
@@ -1963,15 +2001,16 @@ int main(int argc, char *argv[]) {
 		// read the sdb-rom from file
 		auto sdb = std::make_shared<SDBrecords>(sdb_filename);
 		devices.push_back(sdb);
-		for(auto &device: sdb->create_devices<WatchdogMutex>() ) devices.push_back(device);
-		for(auto &device: sdb->create_devices<BuildIdRom>()    ) devices.push_back(device);
-		for(auto &device: sdb->create_devices<WrPpsGenerator>()) devices.push_back(device);
-		for(auto &device: sdb->create_devices<EcaUnitControl>()) devices.push_back(device);
-		for(auto &device: sdb->create_devices<IoControl>()     ) devices.push_back(device);
-		for(auto &device: sdb->create_devices<EcaQueue>()      ) devices.push_back(device);
-		for(auto &device: sdb->create_devices<FpgaReset>()     ) devices.push_back(device);
-		for(auto &device: sdb->create_devices<EcaEventsIn>()   ) devices.push_back(device);
-		for(auto &device: sdb->create_devices<MsiMailbox>()    ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<WatchdogMutex>()     ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<BuildIdRom>()        ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<WrPpsGenerator>()    ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<EcaUnitControl>()    ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<IoControl>()         ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<EcaQueue>()          ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<FpgaReset>()         ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<EcaEventsIn>()       ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<MsiMailbox>()        ) devices.push_back(device);
+		for(auto &device: sdb->create_devices<LM32ClusterInfoRom>()) devices.push_back(device);
 
 		// create the etherbone slave.
 		// It appears as pseudo-terminal device as /dev/pts/<n>
