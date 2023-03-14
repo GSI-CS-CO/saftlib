@@ -2018,8 +2018,8 @@ int main(int argc, char *argv[]) {
 		bool stop_until_connected = true;
 		eb_slave = new EBslave(stop_until_connected, 
 		                       sdb->start_adr(), 
-		                       0x20000, 
-		                       0x2ffff);
+		                       0x0000, 
+		                       0xffff);
 
 		// Endless loop to service wb-requests from the etherbone slave (= wb master)
 		// (The code looks a bit strange because it was initially developed with the 
