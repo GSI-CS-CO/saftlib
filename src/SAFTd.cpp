@@ -170,11 +170,7 @@ namespace saftlib {
 
 	void SAFTd::Quit() {
 		if (container) {
-			try {
-				container->remove_object(object_path);
-			} catch (...) {
-				// nothing
-			}
+			container->remove_object(object_path);
 		}
 	}
 

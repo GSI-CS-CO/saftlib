@@ -33,7 +33,9 @@ namespace saftlib {
 	}
 
 	Owned::~Owned() {
-		Destroyed();
+		if (service && service->has_destruction_callback()) {
+			Destroyed();
+		}
 	}
 
 	void Owned::set_service(saftbus::Service *serv) {

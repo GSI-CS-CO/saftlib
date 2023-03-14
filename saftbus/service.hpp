@@ -136,10 +136,6 @@ namespace saftbus {
 		// @brief get all interface names implemented by this Service object
 		// @return all interface names implemented by this Service object
 		std::vector<std::string> &get_interface_names();
-
-		// @brief get a pointer to the saftbus::Container in which this Service object was inserted
-		// @return a pointer to the saftbus::Container in which this Service object was inserted
-		Container *get_container();
 	};
 
 

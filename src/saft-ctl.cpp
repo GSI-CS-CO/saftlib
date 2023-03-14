@@ -499,9 +499,9 @@ int main(int argc, char** argv)
       // exit the program in a second thread, because the main
       // thread will be stuck waiting for the response from saftd
       // which will never be sent after calling the quit() method
-      std::thread t( [](){usleep(100000);exit(0);} );
+      // std::thread t( [](){usleep(100000);exit(0);} );
       saftd->Quit();
-      t.join();
+      // t.join();
     }
 
     // get a specific device
@@ -595,7 +595,12 @@ int main(int argc, char** argv)
     } // eventSnoop (without UNILAC option)
 
   } catch (const saftbus::Error& error) {
-    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    std::string msg(error.what());
+    if (saftdQuit && msg.empty()) {
+      std::cerr << "Quit SAFTd service" << std::endl;
+    } else {
+      std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    }
   }
 
   return 0;
