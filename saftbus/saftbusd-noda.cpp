@@ -65,11 +65,12 @@ int main(int argc, char *argv[]) {
 				usage(argv[0]);
 				return 0;
 			}
-			bool argvi_is_plugin = (argvi.find(".so") == argvi.size()-3);
+			bool argvi_is_plugin = (argvi.size()>3 && argvi.find(".so") == (argvi.size()-3));
 			if (argvi_is_plugin) {
+				std::cerr << argvi << " is plugin" << std::endl;
 				plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
 			} else {
-				// std::cerr << argvi << "is argument" << std::endl;
+				std::cerr << argvi << " is argument" << std::endl;
 				if (plugins_and_args.empty()) {
 					std::cerr << "Error: no plugin specified (these are files ending with .so) before argument " << argvi << std::endl;
 					return 1;
