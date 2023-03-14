@@ -24,6 +24,8 @@
 
 #include <saftbus/service.hpp>
 
+#include <sigc++/sigc++.h>
+
 namespace saftlib {
 	/// de.gsi.saftlib.Owned:
 	/// @brief An object which can grant exclusive access if used in a saftbus::Container
@@ -98,7 +100,8 @@ namespace saftlib {
 
 		/// @brief The object was destroyed.
 		// @saftbus-signal
-		std::function<void()> Destroyed;
+		sigc::signal<void> Destroyed;
+		// std::function<void()> Destroyed;
 
 	protected:
 		/// @brief Throw an exception if the caller is not the owner

@@ -51,24 +51,6 @@ uint64_t early_counter         = 0;
 uint64_t conflict_counter      = 0;
 uint64_t delayed_counter       = 0;
 
-std::shared_ptr<TimingReceiver_Proxy> receiver; /* must be global for the INThandler */
-
-/* Handle SIGINT */
-/* ==================================================================================================== */
-/* This program creates a lot of conditions and if it suddenly quits                                    */
-/* all conditions will be cleaned-up by the saftd at once. This can take a                              */
-/* while and causes the saftd to be unresponsive until all conditions are                               */
-/* removed. This can be avoided by removing them one by one in the handler.                             */
-#include <csignal>
-#include <cstdlib>
-void INThandler(int s) {
-  std::cerr << "handler" << std::endl;
-  if (receiver) {
-    receiver->DecativateOwnedConditions();
-    std::cerr << "deactivated" << std::endl;
-  }
-  exit(0); 
-}
 
 /* Prototypes */
 /* ==================================================================================================== */
@@ -143,12 +125,6 @@ static void pps_help (void)
 /* ==================================================================================================== */
 int main (int argc, char** argv)
 {
-  struct sigaction sigIntHandler;
-  sigIntHandler.sa_handler = INThandler;
-  sigemptyset(&sigIntHandler.sa_mask);
-  sigIntHandler.sa_flags = 0;
-  sigaction(SIGINT, &sigIntHandler, NULL);
-
   /* Helpers */
   int  opt              = 0;     /* Number of given options */
   int  total_ios        = 0;     /* Number of configured IOs */
@@ -212,7 +188,7 @@ int main (int argc, char** argv)
         std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
         return (-1);
       }
-      receiver = TimingReceiver_Proxy::create(devices[deviceName]);
+      std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
       /* Check if timing receiver is locked */
       wrLocked = receiver->getLocked();

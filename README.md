@@ -26,6 +26,7 @@ The interfaces provide high level functionality.
   - programs can link against the driver library in the normal way, using proxy objects, or in standalone fashion for exclusive lower latency access to the hardware
   - **user facing API is compatible to saftlib major version 2** with the following additions:
     - The clock generator driver remembers the setting of any IO that was configured.
+    - ToggleActive, Activate, Deactivate were added to the TimingReceiver interface. These functions modify all owned conditions on all ActionSinks.
     - At startup, a wild card character is allowed for the device name and etherbone-path: `saftbusd libsaft-service.so tr*:dev/wbm*` will attach all matching devices.
   - The documentation of the user facing API is generated with doxygen and can be found in [html/index.html](html/index.html) after running doxygen inside of the saftlib directory
 
