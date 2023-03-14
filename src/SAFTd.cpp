@@ -225,7 +225,7 @@ namespace saftlib {
 	// for a host connected with PCIe, this might be msi_first=0x10000 and msi_last=0x1ffff
 	// for a host connected with USB (same hardware) msi_first=0x20000 and msi_last=0x2ffff
 
-	// the first and last values obtained from from enable_msi(&first, &last) refers to the address range 
+	// the first and last values obtained from from enable_msi(&first, &last) refer to the address range 
 	// available to an etherbone master on a host connected to the pcie-wishbone bridge driver
 	// for example, if two processes are connected to dev/wbm0, 
 	// the first gets:  first = 0x00000 and last = 0x00fff
@@ -242,11 +242,13 @@ namespace saftlib {
 	eb_address_t SAFTd::request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
 		eb_address_t first, last, mask;
 		msi.device.enable_msi(&first, &last);
+		// std::cerr << std::hex << "first, last = " << first << " " << last << std::endl;
 		mask = last - first;
 		for (;;) {
 			eb_address_t irq_adr = ((rand() & mask) + first) & (~0x3);
 			if (request_irq(irq_adr, slot)) {
 				// std::cerr << "msi.msi_device.msi_first = " << std::hex << std::setw(8) << std::setfill('0') << msi.msi_device.msi_first << std::dec << std::endl;
+				// std::cerr << "request_irq returns " << std::hex << msi.msi_device.msi_first + irq_adr << std::endl;
 				return msi.msi_device.msi_first + irq_adr; // return the adress that triggers the msi
 			}
 		}		

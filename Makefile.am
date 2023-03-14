@@ -364,6 +364,10 @@ libfg_firmware_proxy_include_HEADERS =        \
 
 
 
+bgfirmwaredir = $(datadir)/saftlib/firmware
+bgfirmware_DATA = firmware-bin/burstgen.bin
+EXTRA_DIST += firmware-bin/burstgen.bin
+
 libbg_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
 libbg_firmware_service_la_LIBADD =  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la -ldl
 libbg_firmware_service_la_SOURCES = \

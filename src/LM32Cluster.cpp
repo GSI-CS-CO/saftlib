@@ -74,7 +74,6 @@ LM32Cluster::~LM32Cluster() {
 
 unsigned LM32Cluster::getCpuCount()
 {
-	std::cerr << "getCpuCount" << std::endl;
 	return dpram_lm32_adr_first.size();
 }
 

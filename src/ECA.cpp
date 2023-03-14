@@ -378,7 +378,7 @@ void ECA::ToggleActive()
 	}
 }
 
-void ECA::DecativateOwnedConditions() {
+void ECA::InactivateAll() {
 	std::string caller;
 	if (container) {
 		std::ostringstream out;
@@ -409,8 +409,6 @@ void ECA::DecativateOwnedConditions() {
 		}
 	}
 }
-
-
 
 void ECA::compile()
 {
