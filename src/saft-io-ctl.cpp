@@ -40,6 +40,7 @@
 #include <inttypes.h>
 #include <string>
 #include <unistd.h>
+#include <poll.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -630,7 +631,23 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
         std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
         while(true) {
-          saftlib::wait_for_signal();
+          /* The following code snippet allows to end the program by pressing Ctrl-D (EOF on stdin).  */
+          /* This allows for a simultaneous deactivation of all conditions such that the ECA has to   */
+          /* be reprogrammed only once.                                                               */
+          /* If the program is instead stopped with Ctrl-C (by sending SIGINT to it), the saftd will  */
+          /* remove all active condition one by one, each time reprogramming the ECA.                 */
+          struct pollfd pfd;
+          pfd.fd = 0; // stdin is always 0
+          pfd.events = POLLIN;
+          if (poll(&pfd,1,0)==1) {
+            char ch;
+            if (read(0,&ch,1)==0) {
+              receiver->InactivateAll(); /* inactivate all owned conditions */
+              return(0);
+            }
+          }
+
+          saftlib::wait_for_signal(20);
         }
       }
     }
