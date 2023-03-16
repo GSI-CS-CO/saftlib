@@ -45,7 +45,7 @@ namespace saftlib {
 
 class TimingReceiver;
 
-class LM32Cluster : SdbDevice {
+class LM32Cluster : public SdbDevice {
 
 	unsigned num_cores;
 	unsigned ram_per_core;
