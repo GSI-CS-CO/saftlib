@@ -139,6 +139,11 @@ namespace saftbus {
 		/// @param interface_no refers to the interface (the mapping can be obtained by interface_no_from_name).
 		/// @param signal_no    refers to the signal of a given interface. Signals are numbered by their appearance in the source code.
 		virtual bool signal_dispatch(int interface_no, int signal_no, Deserializer &signal_content) = 0;
+
+		/// @brief The signal group to which this proxy belongs.
+		/// 
+		/// @return a reference to a SignalGroup object
+		SignalGroup& get_signal_group();
 	protected:
 		Proxy(const std::string &object_path, SignalGroup &signal_group, const std::vector<std::string> &interface_names);
 		/// @brief Get the client connection. Open the connection if that didn't happen before.

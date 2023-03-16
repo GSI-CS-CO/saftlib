@@ -33,8 +33,8 @@ namespace saftlib {
 	}
 
 	Owned::~Owned() {
-		if (service && service->has_destruction_callback()) {
-			Destroyed();
+		if (service) {
+			Destroyed.emit();
 		}
 	}
 
@@ -42,6 +42,7 @@ namespace saftlib {
 		service = serv;
 	}
 	void Owned::release_service() {
+		Destroyed.emit();
 		service = nullptr;
 	}
 

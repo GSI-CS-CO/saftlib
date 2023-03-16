@@ -134,6 +134,7 @@ SoftwareCondition * SoftwareActionSink::getCondition(const std::string object_pa
 
 std::string SoftwareActionSink::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset)
 {
+	ownerOnly();
 	return NewConditionHelper<SoftwareCondition>(active, id, mask, offset, container);
 }
 

@@ -392,6 +392,10 @@ namespace saftbus {
 	{
 		return false;
 	}
+	SignalGroup& Proxy::get_signal_group()
+	{
+		return *d->signal_group;
+	}
 
 	ClientConnection& Proxy::get_connection() {
 		if (!Proxy::Impl::connection) {

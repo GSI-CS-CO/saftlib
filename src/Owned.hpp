@@ -47,8 +47,8 @@ namespace saftlib {
 		/// using this function;
 		void set_service(saftbus::Service *service);
 
-		/// @brief if a service of an Owned object is destroyed, this method should be 
-		/// passed as destruction callback (or should be called in the destruction callback)
+		/// @brief if a service of an Owned object is destroyed, this method must be 
+		/// passed as destruction callback (or must be called in the destruction callback)
 		void release_service();
 
 		/// @brief Release ownership of the object.
@@ -101,7 +101,6 @@ namespace saftlib {
 		/// @brief The object was destroyed.
 		// @saftbus-signal
 		sigc::signal<void> Destroyed;
-		// std::function<void()> Destroyed;
 
 	protected:
 		/// @brief Throw an exception if the caller is not the owner

@@ -618,7 +618,9 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         }
       }
     }
-    sink->ToggleActive();
+    if (sink) {
+      sink->ToggleActive();
+    }
 
     /* Disabled? */
     if (mode) { return (__IO_RETURN_SUCCESS); }
