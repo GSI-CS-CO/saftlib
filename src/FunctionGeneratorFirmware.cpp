@@ -280,6 +280,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
 
     if (container) {
       std::unique_ptr<MasterFunctionGenerator_Service> service(new MasterFunctionGenerator_Service(mfg.get()));
+      mfg->set_service(service.get());
       container->create_object(mfg_path, std::move(service));
     }
 
@@ -385,8 +386,9 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
       std::shared_ptr<FunctionGenerator> fg = std::make_shared<FunctionGenerator>(container, name.str(), path, fg_impl);
 
       if (container) {
-        fg->Own();
         std::unique_ptr<FunctionGenerator_Service> service(new FunctionGenerator_Service(fg.get()));
+        fg->set_service(service.get());
+        fg->Own();
         container->create_object(path, std::move(service));
       }
       fgs[name.str()] = fg;

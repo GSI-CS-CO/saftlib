@@ -52,17 +52,25 @@ namespace saftlib {
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
 			}
 			service->release_owner();
+		} else {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Owner service pointer not set");
 		}
 	}
 	void Owned::Own() {
 		ownerOnly();
-		service->set_owner(cont->get_calling_client_id());
+		if (cont && service) {
+			service->set_owner(cont->get_calling_client_id());
+		} else {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Owner service pointer not set");
+		}
 	}
 	void Owned::ownerOnly() const {
 		if (cont && service) {
 			if (service->is_owned() && cont->get_calling_client_id() != service->get_owner()) {
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "You are not my Owner");
 			}
+		} else {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Owner service pointer not set");
 		}
 	}
 
@@ -73,6 +81,8 @@ namespace saftlib {
 				owner_str << service->get_owner();
 				return owner_str.str();
 			}
+		} else {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Owner service pointer not set");
 		}
 		return "";
 	}
@@ -80,6 +90,8 @@ namespace saftlib {
 	bool Owned::getDestructible() const {
 		if (cont && service) {
 			return service->has_destruction_callback();
+		} else {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Owner service pointer not set");
 		}
 		return false;
 	}
@@ -88,6 +100,8 @@ namespace saftlib {
 		ownerOnly();
 		if (cont && service) {
 			cont->destroy_service(service);
+		} else {
+			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Owner service pointer not set");
 		}
 	}
  

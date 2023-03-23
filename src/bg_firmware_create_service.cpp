@@ -65,12 +65,13 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 		}
 
 
-		std::unique_ptr<saftlib::BurstGenerator> simple_fw(new saftlib::BurstGenerator(container, saftd, tr));
-		saftlib::BurstGenerator *simple_fw_ptr = simple_fw.get();
-
 		std::string addon_name = "BurstGenerator";
-		tr->installAddon(addon_name, std::move(simple_fw));
-		container->create_object(simple_fw_ptr->getObjectPath(), std::move(std::unique_ptr<saftlib::BurstGenerator_Service>(new saftlib::BurstGenerator_Service(simple_fw_ptr, std::bind(&saftlib::TimingReceiver::removeAddon, tr, addon_name) ))));
+		std::unique_ptr<saftlib::BurstGenerator> burstgenerator_fw(new saftlib::BurstGenerator(container, saftd, tr));
+		std::unique_ptr<saftlib::BurstGenerator_Service> service(new saftlib::BurstGenerator_Service(burstgenerator_fw.get(), std::bind(&saftlib::TimingReceiver::removeAddon, tr, addon_name)));
+		burstgenerator_fw->set_service(service.get());
+		std::string object_path = burstgenerator_fw->getObjectPath();
+		tr->installAddon(addon_name, std::move(burstgenerator_fw));
+		container->create_object(object_path, std::move(service));
 	}
 
 }

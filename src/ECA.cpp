@@ -201,6 +201,7 @@ void ECA::prepareChannels()
 					std::unique_ptr<WbmActionSink> wbm_sink(new WbmActionSink( device, *this, path, "acwbm", channel_idx, (eb_address_t)acwbm[0].sdb_component.addr_first, container  ));
 					if (container) {
 						std::unique_ptr<WbmActionSink_Service> service(new WbmActionSink_Service(wbm_sink.get()));
+						wbm_sink->set_service(service.get()); // for Owned interface
 						container->create_object(path, std::move(service));
 					}
 					ECAchannels[channel_idx].push_back(std::move(wbm_sink));
@@ -217,6 +218,7 @@ void ECA::prepareChannels()
 					std::unique_ptr<SCUbusActionSink> scubus_sink(new SCUbusActionSink( device, *this, path, "scubus", channel_idx, (eb_address_t)scubus[0].sdb_component.addr_first, container  ));
 					if (container) {
 						std::unique_ptr<SCUbusActionSink_Service> service(new SCUbusActionSink_Service(scubus_sink.get()));
+						scubus_sink->set_service(service.get()); // for Owned interface
 						container->create_object(path, std::move(service));
 					}
 					ECAchannels[channel_idx].push_back(std::move(scubus_sink));
@@ -239,6 +241,7 @@ void ECA::prepareChannels()
 						std::unique_ptr<EmbeddedCPUActionSink> ecpu_sink(new EmbeddedCPUActionSink(*this, path, "embedded_cpu", channel_idx, container));
 						if (container) {
 							std::unique_ptr<EmbeddedCPUActionSink_Service> service(new EmbeddedCPUActionSink_Service(ecpu_sink.get()));
+							ecpu_sink->set_service(service.get()); // for Owned interface
 							container->create_object(path, std::move(service));
 						}
 						ECAchannels[channel_idx].push_back(std::move(ecpu_sink));
@@ -650,7 +653,6 @@ SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 	}
 	throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such SoftwareActionSink");
 }
-
 
 Output *ECA::getOutput(const std::string &output_obj_path)
 {
