@@ -40,9 +40,10 @@ namespace saftbus {
 	struct ClientConnection::Impl {
 		struct pollfd pfd; // file descriptor used to talk to the server
 		int client_id; // the unique id of this client connection on the server
-		std::mutex m_base_socket;
+		static std::mutex m_base_socket;
 		std::mutex m_client_socket;
 	};
+	std::mutex ClientConnection::Impl::m_base_socket;
 
 
 	ClientConnection::ClientConnection(const std::string &socket_name) 
@@ -155,6 +156,7 @@ namespace saftbus {
 
 	struct Proxy::Impl {
 		static std::shared_ptr<ClientConnection> connection;
+		static std::mutex m_connection;
 		int saftbus_object_id;
 		int client_id, signal_group_id; // is determined at registration time and needs to be saved for de-registration
 		Serializer   send;
@@ -164,6 +166,7 @@ namespace saftbus {
 		std::map<std::string, int> interface_name2no_map;
 	};
 	std::shared_ptr<ClientConnection> Proxy::Impl::connection;
+	std::mutex                        Proxy::Impl::m_connection;
 
 	SignalGroup::SignalGroup() 
 		: d(new Impl)
@@ -398,6 +401,7 @@ namespace saftbus {
 	}
 
 	ClientConnection& Proxy::get_connection() {
+		std::lock_guard<std::mutex> lock(Proxy::Impl::m_connection);
 		if (!Proxy::Impl::connection) {
 			Proxy::Impl::connection = std::make_shared<ClientConnection>();
 		}
