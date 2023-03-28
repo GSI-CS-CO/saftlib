@@ -81,7 +81,11 @@ void tx_thread(const std::string &DeviceName, uint32_t bps, const std::string &I
       std::istringstream lin(line);
       for (auto ch: line) {
         tx_send(tr, ch, time_of_one_bit_ns);
-        usleep(time_of_one_bit_ns/1000*20);
+        // depsite the hardware being capable of pretty high baut rates
+        // the total symbol rate on the receiving side is limited by 
+        // how fast MSIs are processed by the host. 
+        // Errors are prevented by waiting some time between sending symbols.
+        usleep(10000+time_of_one_bit_ns/1000*20);
       }
       tx_send(tr, '\n', time_of_one_bit_ns);
     }
@@ -118,6 +122,8 @@ struct io_catcher {
     }
     level = (event & 0x1)?1:0;
     if (bit_idx == 9) {
+      std::mutex m;
+      std::lock_guard<std::mutex> l(m);
       std::cout << data << std::flush;
     }
   }
@@ -183,7 +189,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   const int min_bps = 10;
-  const int max_bps = 1000000;
+  const int max_bps = 10000000;
   if (bps < min_bps) {
     std::cerr << "minimum bps is " << min_bps << std::endl;
     return 1;

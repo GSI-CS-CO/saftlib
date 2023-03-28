@@ -23,6 +23,22 @@
 #include "client.hpp"
 #include "service.hpp"
 
+#include <cerrno>
+#include <cstring>
+
+#include <sched.h>
+
+// int sched_setscheduler(pid_t pid, int policy,
+//                        const struct sched_param *param);
+
+// int sched_getscheduler(pid_t pid);
+
+// struct sched_param {
+//     ...
+//     int sched_priority;
+//     ...
+// };
+
 std::string print_fillstate();
 
 void usage(char *argv0) {
@@ -38,6 +54,12 @@ void usage(char *argv0) {
 		std::cout << "                  \"create_services\" function in the shared library." << std::endl;
 		std::cout << std::endl;
 		std::cout << " -h | --help      print this help and exit." << std::endl;
+		std::cout << std::endl;
+		std::cout << " -r <priority>    set scheduling policy to round robin with given priority." << std::endl;
+		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_RR) << " .. " << sched_get_priority_max(SCHED_RR) << "]" << std::endl;
+		std::cout << std::endl;
+		std::cout << " -f <priority>    set scheduling policy to fifo with given priority." << std::endl;
+		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_FIFO) << " .. " << sched_get_priority_max(SCHED_FIFO) << "]" << std::endl;
 		std::cout << std::endl;
 		
 }
@@ -55,6 +77,28 @@ static bool saftd_already_running()
   return false;
 }
 
+static bool set_realtime_scheduling(std::string argvi, char *prio) {
+	std::istringstream in(prio);
+	sched_param sp;
+	in >> sp.sched_priority;
+	if (!in) {
+		std::cerr << "Error: cannot read priority from argument " << prio << std::endl;
+		return false;
+	}
+	int policy = SCHED_RR;
+	if (argvi == "-f") policy = SCHED_FIFO;
+	if (sp.sched_priority < sched_get_priority_min(policy) && sp.sched_priority > sched_get_priority_max(policy)) {
+		std::cerr << "Error: priority " << sp.sched_priority << " not supported " << std::endl;
+		return false;
+	} 
+	if (sched_setscheduler(0, policy, &sp) < 0) {
+		std::cerr << "Error: failed to set scheduling policy: " << strerror(errno) << std::endl;
+		return false;
+	}
+	return true;
+}
+
+
 int main(int argc, char *argv[]) {
 	try {
 
@@ -64,6 +108,14 @@ int main(int argc, char *argv[]) {
 			if (argvi == "-h" || argvi == "--help") {
 				usage(argv[0]);
 				return 0;
+			} else if (argvi == "-r" || argvi == "-f") {
+				if (++i < argc) {
+					if (!set_realtime_scheduling(argvi, argv[i])) return 1;
+				} else {
+					std::cerr << "Error: expect priority after " << argvi << std::endl;
+					return 1;
+				}
+				continue;
 			}
 			bool argvi_is_plugin = (argvi.size()>3 && argvi.find(".so") == (argvi.size()-3));
 			if (argvi_is_plugin) {

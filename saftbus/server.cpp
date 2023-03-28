@@ -225,7 +225,7 @@ namespace saftbus {
 		}
 		int base_socket_fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
 		if (base_socket_fd <= 0) {
-			msg << " cannot create socket: " << strerror(errno);
+			msg << "cannot create socket: " << strerror(errno);
 			throw std::runtime_error(msg.str());
 		}
 		std::string dirname = socketname.substr(0,socketname.find_last_of('/'));
