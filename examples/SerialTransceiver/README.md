@@ -18,3 +18,9 @@ The selected input is configured to produce an event for every detected edge on 
 A software condition is configured to react on this event. 
 The callback function analyses the evens and reconstructs the byte from the edge times.
 
+## Threads
+
+RX and TX functionality both run in separate threads. 
+This allows the application to send and receive data streams on independent IOs. 
+The client side API of is safe to use from different threads. All Proxy objects within a process share one ProxyConnection and this shared resource is internally mutex protected.
+In this application, each thread creates its own SignalGroup. A SignalGroup is the entity that receives signals from saftbus services and dispatches them to all Proxy objects that were created with this signal group. 

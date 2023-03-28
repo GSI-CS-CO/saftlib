@@ -20,15 +20,18 @@ void *memcpy(void *dest, const void *src, int n)
 }
 
 
-volatile char *uart_out;
+volatile int *uart_out;
+void uart_write_byte(const char c) {
+	*(uart_out+4) = (int)c;
+}
 int puts(const char *str) {
-	while(*str) {
-		*uart_out = *str++;
+	const char *ptr = str;
+	while(*ptr) {
+		while((*(uart_out+0)) & 0x1);
+		uart_write_byte(*ptr);
+		++ptr;
 	}
 	return 1;
-}
-void uart_write_byte(const char c) {
-	*uart_out = c;
 }
 
 void irq_handler() { 
@@ -56,7 +59,9 @@ void discover() {
   pCpuMsiBox   = 0;
   pMyMsi       = 0; 
 
-  uart_out = (volatile char*) find_device_adr(GSI, SDB_UART_SIM);
+  // uart_out = (volatile char*) find_device_adr(GSI, SDB_UART_SIM);
+  uart_out = (volatile int*) (find_device_adr(CERN, WR_UART));
+
   find_device_multi(&found_sdb[0], &idx, 1, GSI, MSI_MSG_BOX);   
   if(idx) {
     pCpuMsiBox    = (uint32_t*)getSdbAdr(&found_sdb[0]); 
@@ -67,15 +72,17 @@ void discover() {
 }
 
 int main() {
+	int i, j;
 	discover();
-	init_irq_table();
-	puts("start loop\n");
-	mprintf("pCpuMsiBox = 0x%x\n", pCpuMsiBox);
-	mprintf("pMyMsi     = 0x%x\n", pMyMsi);
+	// init_irq_table();
+	// mprintf("pCpuMsiBox = 0x%x\n", pCpuMsiBox);
+	// mprintf("pMyMsi     = 0x%x\n", pMyMsi);
 	for(;;) {
-		irq_disable();
-		irq_enable();
+		puts("loop");
+		for(i=0;i<1000000;++i) j+=i;
+		// irq_disable();
+		// irq_enable();
 	}
-	irq_disable();
+	// irq_disable();
 	return 0;
 }

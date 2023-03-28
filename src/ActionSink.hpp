@@ -146,6 +146,10 @@ class ActionSink : public Owned
 		/// ActionSink.  The new active conditions will be applied such that on
 		/// one nanosecond, the old set is active and on the next nanosecond the
 		/// new set is active.
+		/// Be aware that this function can be used by different applications 
+		/// and it can therefore influence other applications that did not 
+		/// explicitely Own() the ActionSink. To avoid this, always own the 
+		/// ActionSink before using it.
 		///
 		// @saftbus-export
 		void ToggleActive();
