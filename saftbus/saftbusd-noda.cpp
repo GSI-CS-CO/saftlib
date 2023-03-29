@@ -28,23 +28,12 @@
 
 #include <sched.h>
 
-// int sched_setscheduler(pid_t pid, int policy,
-//                        const struct sched_param *param);
-
-// int sched_getscheduler(pid_t pid);
-
-// struct sched_param {
-//     ...
-//     int sched_priority;
-//     ...
-// };
-
 std::string print_fillstate();
 
 void usage(char *argv0) {
 		std::cout << "saftbusd version " << VERSION << std::endl;
 		std::cout << std::endl;
-		std::cout << "usage: " << argv0 << " [-h] { <plugin.so> { <plugin-arg> } }" << std::endl;
+		std::cout << "usage: " << argv0 << " [OPTIONS] { <plugin.so> { <plugin-arg> } }" << std::endl;
 		std::cout << std::endl;
 		std::cout << "  <plugin.so>     is the name of a shared object files, it must have" << std::endl; 
 		std::cout << "                  contain a function with name \"create_services\"." << std::endl;
@@ -52,6 +41,8 @@ void usage(char *argv0) {
 		std::cout << "  <plugin-arg>    one or more strings can be passed as arguments" << std::endl;
 		std::cout << "                  to each plugin. They are arguments of the " << std::endl;
 		std::cout << "                  \"create_services\" function in the shared library." << std::endl;
+		std::cout << std::endl;
+		std::cout << "options: " << std::endl;
 		std::cout << std::endl;
 		std::cout << " -h | --help      print this help and exit." << std::endl;
 		std::cout << std::endl;
@@ -144,7 +135,7 @@ int main(int argc, char *argv[]) {
 
 		saftbus::Loop::get_default().run();
 
-		// // delete all remaining source from Loop before the plugins are unloaded 
+		// delete all remaining source from Loop before the plugins are unloaded 
 		saftbus::Loop::get_default().clear();
 
 	} catch (std::runtime_error &e) {

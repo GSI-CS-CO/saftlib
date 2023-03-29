@@ -174,7 +174,7 @@ namespace saftbus {
 		// std::cerr << "SignalGroup constructor" << std::endl;
 		std::ostringstream msg;
 		if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, d->fd_pair) != 0) {
-			// msg << "cannot create socket pair: " << strerror(errno);
+			msg << "cannot create socket pair: " << strerror(errno);
 			throw saftbus::Error(msg.str());
 		}
 		// keep the other socket end in order to listen for events
@@ -345,13 +345,13 @@ namespace saftbus {
 		// if we get saftbus_object_id=0, the object path was not found
 		if (d->saftbus_object_id == 0) {
 			std::ostringstream msg;
-			// msg << "object path \"" << object_path << "\" not found" << std::endl;
+			msg << "object path \"" << object_path << "\" not found" << std::endl;
 			throw saftbus::Error(msg.str());
 		}
 		// if we get saftbus_object_id=-1, the object path was found found bu one of the requested interfaces is not implemented
 		if (d->saftbus_object_id == -1) { 
 			std::ostringstream msg;
-			// msg << "object \"" << object_path << "\" does not implement requested interfaces: ";
+			msg << "object \"" << object_path << "\" does not implement requested interfaces: ";
 			for (auto &interface_name: interface_names) {
 				if (d->interface_name2no_map.find(interface_name) == d->interface_name2no_map.end()) {
 					msg << "\""<< interface_name << "\"" << std::endl;
