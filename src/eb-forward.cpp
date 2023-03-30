@@ -33,6 +33,10 @@
 #include <iomanip>
 #include <functional>
 
+#define WR_PPS_VENDOR_ID        0xce42
+#define WR_PPS_DEVICE_ID        0xde0d8ced
+#define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
+
 namespace saftlib {
 
 	void EB_Forward::open_pts() 
@@ -44,12 +48,12 @@ namespace saftlib {
 			                    S_IRGRP | S_IWGRP | 
 			                    S_IROTH | S_IWOTH );
 
-		std::cerr << "eb-forward " << eb_forward_path() << std::endl;
-		//Slib::signal_io().connect(sigc::mem_fun(*this, &EB_Forward::accept_connection), _pts_fd, Slib::IO_IN | Slib::IO_HUP, Slib::PRIORITY_LOW);
+		// std::cerr << "eb-forward " << eb_forward_path() << std::endl;
 		io_source = saftbus::Loop::get_default().connect<saftbus::IoSource>(std::bind(&EB_Forward::accept_connection, this, std::placeholders::_1), _pts_fd, POLLIN);
 	}
 
-	EB_Forward::EB_Forward(const std::string& eb_name)
+	EB_Forward::EB_Forward(const std::string& eb_name, etherbone::Device &device)
+		: SdbDevice(device, WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID)
 	{	
 		_pts_fd = 0;
 		if (eb_name.size()) {
@@ -79,8 +83,8 @@ namespace saftlib {
 	bool EB_Forward::accept_connection(int condition)
 	{
 		// std::cerr << "EB_Forward::accept_connection" << std::endl;
-		static std::vector<uint8_t> request;  // data from eb-tool
-		static std::vector<uint8_t> response; // data from device
+		// static std::vector<uint8_t> request;  // data from eb-tool
+		// static std::vector<uint8_t> response; // data from device
 		request.clear();
 		response.clear();
 
@@ -143,7 +147,19 @@ namespace saftlib {
 				//  read the response from the device and write the 
 				//   response back to the eb-tool
 				if (request_size && request_size == request.size()) {
+					// std::cerr << _eb_device_fd << " " << _pts_fd << " request_size = " << request.size() << std::endl;
 					// all cycle bytes read
+
+					// visu.clear();
+					// for (int i = 0; i < (int)request.size()/4; ++i) {
+					// 	std::ostringstream req_out;
+					// 	for (int j = 0; j < 4; ++j) {
+					// 		req_out << std::hex << std::setw(2) << std::setfill('0') << (int)request[i*4+j];
+					// 	}
+					// 	visu.push_back(std::make_pair(req_out.str(),""));
+					// }
+
+
 					write_all(_eb_device_fd, (char*)&request[0], request.size());
 					response.clear();
 					response.resize(request.size());
@@ -154,7 +170,28 @@ namespace saftlib {
 						return false;
 					}
 					read_all(_eb_device_fd, (char*)&response[0], response.size());
+
+					// for (int i = 0; i < (int)response.size()/4; ++i) {
+					// 	std::ostringstream resp_out;
+					// 	for (int j = 0; j < 4; ++j) {
+					// 		resp_out << std::hex << std::setw(2) << std::setfill('0') << (int)response[i*4+j];
+					// 	}
+					// 	visu[i].second = resp_out.str();
+					// }
+
+					// std::cout << "---" << std::endl;
+					// for(auto &line: visu) {
+					// 	std::cout << line.first << "   " << line.second << std::endl;
+					// }
+
+
 					write_all(_pts_fd, (char*)&response[0], response.size());
+
+					// just read once after the forwarding procedure ... maybe this fixes the occasional wrong read
+					eb_data_t data;
+					device.read(adr_first + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+
+
 					return true;
 				}
 
@@ -171,11 +208,14 @@ namespace saftlib {
 				size -= result;
 				ptr += result;
 			} else {
+				std::cerr << "EB_Forward::write_all failed" << std::endl;
 				// error... very bad... dont know how to handle this 
 				// this probably means that the device is not connected anymore
 				return;
 			}
 		}
+		// std::cerr << "EB_Forward::write_all done " << size << std::endl;
+
 	}
 	void EB_Forward::read_all(int fd, char *ptr, int size) 
 	{
@@ -185,11 +225,13 @@ namespace saftlib {
 				size -= result;
 				ptr += result;
 			} else {
+				std::cerr << "EB_Forward::read_all failed" << std::endl;
 				// error... very bad... dont know how to handle this 
 				// this probably means that the device is not connected anymore
 				return;
 			}
 		}
+		// std::cerr << "EB_Forward::read_all done " << size << std::endl;
 	}
 
 	std::string EB_Forward::eb_forward_path()

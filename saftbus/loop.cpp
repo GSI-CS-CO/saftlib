@@ -140,7 +140,7 @@ namespace saftbus {
 		// polling / waiting
 		//////////////////
 		if (pfds.size() > 0) {
-			// //===std::cerr << "polling timeout_ms = " << timeout.count() << std::endl;
+			// std::cerr << "polling timeout_ms = " << timeout.count() << std::endl;
 			int poll_result = 0;
 			if ((poll_result = poll(&pfds[0], pfds.size(), timeout.count())) > 0) {
 				// copy the results back to the owners of the pfds
@@ -331,7 +331,7 @@ namespace saftbus {
 		: slot(s)
 	{
 		pfd.fd            = f;
-		pfd.events        = c;
+		pfd.events        = c  | POLLHUP | POLLERR;
 		pfd.revents       = 0;
 		add_poll(&pfd);
 	}
@@ -351,14 +351,16 @@ namespace saftbus {
 		// if (pfd.revents & POLLIN)  { std::cout << "POLLIN " ; }
 		// if (pfd.revents & POLLHUP) { std::cout << "POLLHUP "; }
 		// if (pfd.revents & POLLERR) { std::cout << "POLLERR "; }
-		if (pfd.revents & pfd.events) {
+		if (pfd.revents & pfd.events)  {
 			return true;
 		}
 		return false;
 	}
 
 	bool IoSource::dispatch() {
+		// std::cerr << "IoSource " << pfd.fd << std::endl;
 		auto result = slot(pfd.fd, pfd.revents);
+		if (pfd.revents == POLLHUP || pfd.revents == POLLERR) result = false;
 		pfd.revents = 0; // clear the events after  the dispatching
 		return result;
 	}

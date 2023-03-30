@@ -22,7 +22,12 @@
 #define SAFTLIB_EB_FORWARD_H
 
 #include <string>
+#include <vector>
+#include <map>
+
 #include <saftbus/loop.hpp>
+
+#include "SdbDevice.hpp"
 
 namespace saftlib {
 
@@ -33,9 +38,9 @@ namespace saftlib {
     /// etherbone request, the response is written back to the pseudo-terminal device.
     /// This effectively allows using eb-tools, such as eb-ls on serial devices, even when the device is
     /// occupied the TimingReceiver object.
-	class EB_Forward {
+	class EB_Forward : public SdbDevice {
 	public:
-		EB_Forward(const std::string& eb_name); 
+		EB_Forward(const std::string& eb_name, etherbone::Device &device); 
 		~EB_Forward();
 
 		bool accept_connection(int condition);
@@ -50,6 +55,12 @@ namespace saftlib {
 		void open_pts();
 		int     _eb_device_fd, _pts_fd; 
         saftbus::SourceHandle io_source;
+
+        std::vector<std::pair<std::string, std::string> > visu;
+
+        std::vector<uint8_t> request;  // data from eb-tool
+        std::vector<uint8_t> response; // data from device
+
 	};
 
 

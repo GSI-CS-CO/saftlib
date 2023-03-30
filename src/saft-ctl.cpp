@@ -596,10 +596,10 @@ int main(int argc, char** argv)
 
   } catch (const saftbus::Error& error) {
     std::string msg(error.what());
-    if (saftdQuit && msg.empty()) {
+    if (saftdQuit && msg == "object path \"/de/gsi/saftlib\" not found") {
       std::cerr << "Quit SAFTd service" << std::endl;
     } else {
-      std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+      std::cerr << "Failed to invoke method: \'" << error.what() << "\'" << std::endl;
     }
   }
 

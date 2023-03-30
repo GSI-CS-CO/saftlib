@@ -44,6 +44,7 @@ namespace saftlib {
 
 	int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
 	{
+		// std::cerr << "EB_Source::add_fd " << fd << std::endl;
 		EB_Source* self = (EB_Source*)data;
 
 		self->fds.push_back(pollfd());
@@ -92,6 +93,7 @@ namespace saftlib {
 
 	bool EB_Source::prepare(std::chrono::milliseconds &timeout_ms)
 	{
+		// std::cerr << "EB_Source::prepare " << timeout_ms.count() << std::endl;
 		// Retrieve cached current time
 		auto now    = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
 		auto epoch  = now.time_since_epoch();
@@ -120,11 +122,14 @@ namespace saftlib {
 
 	bool EB_Source::check()
 	{
+		// std::cerr << "EB_Source::check " ;
+
 		bool ready = false;
 
 		// Descriptors ready?
 		for (std::vector<pollfd>::iterator i = fds.begin(); i != fds.end(); ++i) {
 			if ((i->revents & i->events) != 0) {
+				// std::cerr << " pollfd " << true << std::endl;
 				return true;
 			}
 		}
@@ -135,11 +140,15 @@ namespace saftlib {
 		auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
 		ready |= socket.timeout() <= now_ms/1000; // why >= ???
 
+		// std::cerr << " timeout " << ready << std::endl;
+
 		return ready;
 	}
 
 	bool EB_Source::dispatch()
 	{
+		// std::cerr << "EB_Source::dispatch " << std::endl;
+
 		auto now    = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
 		auto epoch  = now.time_since_epoch();
 		auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();

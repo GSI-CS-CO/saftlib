@@ -20,10 +20,14 @@
  */
 
 #include "WhiteRabbit.hpp"
+#include "Owned.hpp"
 
 #include <saftbus/error.hpp>
 
 #include <iostream>
+#include <iomanip>
+
+#include <unistd.h>
 
 namespace saftlib {
 
@@ -48,15 +52,27 @@ WhiteRabbit::WhiteRabbit(etherbone::Device &device)
 
 bool WhiteRabbit::getLocked() const
 {
+    // std::cerr << "getLocked" << std::endl;
+    // static bool first = true;
 	eb_data_t data;
 	device.read(adr_first + WR_PPS_GEN_ESCR, EB_DATA32, &data);
 	bool newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
+
+    // if (first) {
+    //     first = false;
+    // }
 
 	/* Update signal */
 	if (newLocked != locked) {
 		locked = newLocked;
 		Locked(locked);
 	}
+
+    // if (!newLocked) {
+    //     std::cerr << "not locked anymore 0x" << std::hex << std::setw(8) << std::setfill('0') << (uint32_t)data << std::endl;
+    //     Owned::inhibit_signals = true;
+    //     exit(1);
+    // } 
 
 	return newLocked;
 }

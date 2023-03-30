@@ -30,6 +30,7 @@
 #include "eb-source.hpp"
 
 #include "SAFTd.hpp"
+#include "Owned.hpp"
 
 #include "build.hpp"
 
@@ -44,6 +45,7 @@ namespace saftlib {
 		: container(cont)
 		, object_path("/de/gsi/saftlib")
 	{
+		Owned::inhibit_signals = false;
 		socket.open();
 
 		eb_slave_sdb.abi_class     = 0;
@@ -169,6 +171,7 @@ namespace saftlib {
 
 
 	void SAFTd::Quit() {
+		Owned::inhibit_signals = true;
 		if (container) {
 			container->remove_object(object_path);
 		}

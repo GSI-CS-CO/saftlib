@@ -345,7 +345,7 @@ namespace saftbus {
 		// if we get saftbus_object_id=0, the object path was not found
 		if (d->saftbus_object_id == 0) {
 			std::ostringstream msg;
-			msg << "object path \"" << object_path << "\" not found" << std::endl;
+			msg << "object path \"" << object_path << "\" not found";
 			throw saftbus::Error(msg.str());
 		}
 		// if we get saftbus_object_id=-1, the object path was found found bu one of the requested interfaces is not implemented

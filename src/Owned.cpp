@@ -34,7 +34,9 @@ namespace saftlib {
 
 	Owned::~Owned() {
 		if (service) {
-			Destroyed.emit();
+			if (!inhibit_signals) {
+				Destroyed.emit();
+			}
 		}
 	}
 
@@ -42,8 +44,11 @@ namespace saftlib {
 		service = serv;
 	}
 	void Owned::release_service() {
-		Destroyed.emit();
+		if (!inhibit_signals) {
+			Destroyed.emit();
+		}
 		service = nullptr;
+		cont = nullptr;
 	}
 
 	void Owned::Disown() {
@@ -105,5 +110,6 @@ namespace saftlib {
 		}
 	}
  
+	bool Owned::inhibit_signals = false;
 
 }

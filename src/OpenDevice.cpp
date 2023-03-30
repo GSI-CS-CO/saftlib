@@ -121,7 +121,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 		// assume that only the /dev/ttyUSB<n> devices and /dev/pts/<n> devices need eb-forwarding
 		if (eb_path.find("/ttyUSB") != eb_path.npos || eb_path.find("/pts/") != eb_path.npos ) {
 			// std::cerr << "create forwarding device" << std::endl;
-			eb_forward = std::unique_ptr<EB_Forward>(new EB_Forward(eb_path));
+			eb_forward = std::unique_ptr<EB_Forward>(new EB_Forward(eb_path, device));
 			eb_forward_path = eb_forward->eb_forward_path();
 		} 
 
