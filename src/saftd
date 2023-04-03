@@ -1,2 +1,2 @@
 #!/bin/bash
-saftbusd libsaftlib-service.la $@
+saftbusd libsaft-service.so $@
