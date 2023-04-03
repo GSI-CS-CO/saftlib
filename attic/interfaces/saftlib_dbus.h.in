@@ -1,5 +1,0 @@
-/* Use DBus for inter-process communication */
-#define IPC_METHOD Gio::DBus
-
-/* DBus does not distinguish Connection and ProxyConnection */
-#define ProxyConnection Connection

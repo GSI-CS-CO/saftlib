@@ -1,8 +1,0 @@
-# Interfaces
-*.cpp
-*.h
-*.pdf
-*.doc-xml
-# Temporary build files
-h.xsl
-docfoo-*
