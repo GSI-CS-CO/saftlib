@@ -13,60 +13,10 @@
 #include <cerrno>
 #include <cstring>
 
-#include <sched.h>
-
+#include <saftbus/process.hpp>
 
 std::chrono::time_point<std::chrono::steady_clock> start, stop;
 std::vector<int> histogram(10000);
-
-
-static bool set_realtime_scheduling(std::string argvi, char *prio) {
-	std::istringstream in(prio);
-	sched_param sp;
-	in >> sp.sched_priority;
-	if (!in) {
-		std::cerr << "Error: cannot read priority from argument " << prio << std::endl;
-		return false;
-	}
-	int policy = SCHED_RR;
-	if (argvi == "-f") policy = SCHED_FIFO;
-	if (sp.sched_priority < sched_get_priority_min(policy) && sp.sched_priority > sched_get_priority_max(policy)) {
-		std::cerr << "Error: priority " << sp.sched_priority << " not supported " << std::endl;
-		return false;
-	} 
-	if (sched_setscheduler(0, policy, &sp) < 0) {
-		std::cerr << "Error: failed to set scheduling policy: " << strerror(errno) << std::endl;
-		return false;
-	}
-	return true;
-}
-
-static bool set_cpu_affinity(std::string argvi, char *affinity) {
-	// affinity should be a comma-separated list such as "1,4,5,9"
-	cpu_set_t set;
-	CPU_ZERO(&set);
-	std::string affinity_list = affinity;
-	for(auto &ch: affinity_list) if (ch==',') ch=' ';
-	std::istringstream in(affinity_list);
-	int count = 0;
-	for (;;) {
-		int CPU;
-		in >> CPU;
-		if (!in) break;
-		CPU_SET(CPU, &set);
-		++count;
-	}
-	if (!count) {
-		std::cerr << "Error: cannot read cpus from argument " << affinity << std::endl;
-		return false;
-	}
-	if (sched_setaffinity(0, sizeof(cpu_set_t), &set) < 0) {
-		std::cerr << "Error: failed to set scheduling policy: " << strerror(errno) << std::endl;
-		return false;
-	}
-	return true;
-}
-
 
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
@@ -92,6 +42,12 @@ int main(int argc, char *argv[]) {
 		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_FIFO) << " .. " << sched_get_priority_max(SCHED_FIFO) << "]" << std::endl;
 		std::cout << std::endl;
 		std::cout << " -a <cpu>         set affinity of this process to cpu." << std::endl;
+		std::cout << std::endl;
+		std::cout << " -io <class>,<data>  set io priority class and data of this process." << std::endl;
+		std::cout << "                     class=0 : none" << std::endl;
+		std::cout << "                     class=1 : real time (highest prio), data in range [0 (highest) .. 7 (lowest)]" << std::endl;
+		std::cout << "                     class=2 : best effort, data in range [0 (highest) .. 7 (lowest)]" << std::endl;
+		std::cout << "                     class=3 : idle (lowest prio)" << std::endl;
 		std::cout << std::endl;
 		std::cerr << "   example: " << argv[0] << " tr0 1000 histogram.dat" << std::endl;
 		return 1;
@@ -120,11 +76,14 @@ int main(int argc, char *argv[]) {
 
 		for (int i = 4; i < argc; ++i) {
 			std::string argvi(argv[i]);
-			if (argvi == "-r" || argvi == "-f" || argvi == "-a") {
+			if (argvi == "-r" || argvi == "-f" || argvi == "-a" || argvi == "-io") {
 				if (++i < argc) {
 					if (argvi == "-a") {
 						if (!set_cpu_affinity(argvi, argv[i])) return 1;
-					} else {
+					} else if (argvi == "-io") {
+						if (!set_ioprio(argv[i])) return 1;
+					}
+					else {
 						if (!set_realtime_scheduling(argvi, argv[i])) return 1;
 					}
 				} else {

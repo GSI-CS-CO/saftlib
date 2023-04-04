@@ -61,15 +61,17 @@ saftbus_includedir = $(includedir)/saftbus
 
 libsaftbus_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
 libsaftbus_la_SOURCES = \
-	saftbus/loop.cpp         \
-	saftbus/saftbus.cpp       \
-	saftbus/error.cpp          \
-	saftbus/client.cpp          \
-	saftbus/service.cpp          \
-	saftbus/plugins.cpp           \
+	saftbus/process.cpp  \
+	saftbus/loop.cpp      \
+	saftbus/saftbus.cpp    \
+	saftbus/error.cpp       \
+	saftbus/client.cpp       \
+	saftbus/service.cpp       \
+	saftbus/plugins.cpp        \
 	saftbus/server.cpp             
 
-saftbus_include_HEADERS = \
+saftbus_include_HEADERS =    \
+	saftbus/process.hpp       \
 	saftbus/loop.hpp           \
 	saftbus/error.hpp           \
 	saftbus/saftbus.hpp          \

@@ -22,14 +22,12 @@
 #include "server.hpp"
 #include "client.hpp"
 #include "service.hpp"
+#include "process.hpp"
 
 #include <cerrno>
 #include <cstring>
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <sched.h>
+
 
 std::string print_fillstate();
 
@@ -38,24 +36,30 @@ void usage(char *argv0) {
 		std::cout << std::endl;
 		std::cout << "usage: " << argv0 << " [OPTIONS] { <plugin.so> { <plugin-arg> } }" << std::endl;
 		std::cout << std::endl;
-		std::cout << "  <plugin.so>     is the name of a shared object files, it must have" << std::endl; 
-		std::cout << "                  contain a function with name \"create_services\"." << std::endl;
+		std::cout << "  <plugin.so>        is the name of a shared object files, it must have" << std::endl; 
+		std::cout << "                     contain a function with name \"create_services\"." << std::endl;
 		std::cout << std::endl;
-		std::cout << "  <plugin-arg>    one or more strings can be passed as arguments" << std::endl;
-		std::cout << "                  to each plugin. They are arguments of the " << std::endl;
-		std::cout << "                  \"create_services\" function in the shared library." << std::endl;
+		std::cout << "  <plugin-arg>       one or more strings can be passed as arguments" << std::endl;
+		std::cout << "                     to each plugin. They are arguments of the " << std::endl;
+		std::cout << "                     \"create_services\" function in the shared library." << std::endl;
 		std::cout << std::endl;
 		std::cout << "options: " << std::endl;
 		std::cout << std::endl;
-		std::cout << " -h | --help      print this help and exit." << std::endl;
+		std::cout << " -h | --help         print this help and exit." << std::endl;
 		std::cout << std::endl;
-		std::cout << " -r <priority>    set scheduling policy to round robin with given priority." << std::endl;
-		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_RR) << " .. " << sched_get_priority_max(SCHED_RR) << "]" << std::endl;
+		std::cout << " -r <priority>       set scheduling policy to round robin with given priority." << std::endl;
+		std::cout << "                     priority must be in the range [" << sched_get_priority_min(SCHED_RR) << " (lowest) .. " << sched_get_priority_max(SCHED_RR) << " (highest)]" << std::endl;
 		std::cout << std::endl;
-		std::cout << " -f <priority>    set scheduling policy to fifo with given priority." << std::endl;
-		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_FIFO) << " .. " << sched_get_priority_max(SCHED_FIFO) << "]" << std::endl;
+		std::cout << " -f <priority>       set scheduling policy to fifo with given priority." << std::endl;
+		std::cout << "                     priority must be in the range [" << sched_get_priority_min(SCHED_FIFO) << " (lowest) .. " << sched_get_priority_max(SCHED_FIFO) << " (highest)]" << std::endl;
 		std::cout << std::endl;
-		std::cout << " -a <cpu>{,<cpu>} set affinity of this process to given cpus." << std::endl;
+		std::cout << " -a <cpu>{,<cpu>}    set affinity of this process to given cpus." << std::endl;
+		std::cout << std::endl;
+		std::cout << " -io <class>,<data>  set io priority class and data of this process." << std::endl;
+		std::cout << "                     class=0 : none" << std::endl;
+		std::cout << "                     class=1 : real time (highest prio), data in range [0 (highest) .. 7 (lowest)]" << std::endl;
+		std::cout << "                     class=2 : best effort, data in range [0 (highest) .. 7 (lowest)]" << std::endl;
+		std::cout << "                     class=3 : idle (lowest prio)" << std::endl;
 		std::cout << std::endl;
 		
 }
@@ -73,54 +77,6 @@ static bool saftd_already_running()
   return false;
 }
 
-static bool set_realtime_scheduling(std::string argvi, char *prio) {
-	std::istringstream in(prio);
-	sched_param sp;
-	in >> sp.sched_priority;
-	if (!in) {
-		std::cerr << "Error: cannot read priority from argument " << prio << std::endl;
-		return false;
-	}
-	int policy = SCHED_RR;
-	if (argvi == "-f") policy = SCHED_FIFO;
-	if (sp.sched_priority < sched_get_priority_min(policy) && sp.sched_priority > sched_get_priority_max(policy)) {
-		std::cerr << "Error: priority " << sp.sched_priority << " not supported " << std::endl;
-		return false;
-	} 
-	if (sched_setscheduler(0, policy, &sp) < 0) {
-		std::cerr << "Error: failed to set scheduling policy: " << strerror(errno) << std::endl;
-		return false;
-	}
-	return true;
-}
-
-static bool set_cpu_affinity(std::string argvi, char *affinity) {
-	// affinity should be a comma-separated list such as "1,4,5,9"
-	cpu_set_t set;
-	CPU_ZERO(&set);
-	std::string affinity_list = affinity;
-	for(auto &ch: affinity_list) if (ch==',') ch=' ';
-	std::istringstream in(affinity_list);
-	int count = 0;
-	for (;;) {
-		int CPU;
-		in >> CPU;
-		if (!in) break;
-		CPU_SET(CPU, &set);
-		++count;
-	}
-	if (!count) {
-		std::cerr << "Error: cannot read cpus from argument " << affinity << std::endl;
-		return false;
-	}
-	if (sched_setaffinity(0, sizeof(cpu_set_t), &set) < 0) {
-		std::cerr << "Error: failed to set scheduling policy: " << strerror(errno) << std::endl;
-		return false;
-	}
-	return true;
-}
-
-
 int main(int argc, char *argv[]) {
 	try {
 
@@ -130,11 +86,14 @@ int main(int argc, char *argv[]) {
 			if (argvi == "-h" || argvi == "--help") {
 				usage(argv[0]);
 				return 0;
-			} else if (argvi == "-r" || argvi == "-f" || argvi == "-a") {
+			} else if (argvi == "-r" || argvi == "-f" || argvi == "-a" || argvi == "-io") {
 				if (++i < argc) {
 					if (argvi == "-a") {
 						if (!set_cpu_affinity(argvi, argv[i])) return 1;
-					} else {
+					} else if (argvi == "-io") {
+						if (!set_ioprio(argv[i])) return 1;
+					}
+					else {
 						if (!set_realtime_scheduling(argvi, argv[i])) return 1;
 					}
 				} else {
