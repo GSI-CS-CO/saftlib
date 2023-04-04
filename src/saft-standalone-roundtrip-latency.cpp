@@ -41,7 +41,31 @@ static bool set_realtime_scheduling(std::string argvi, char *prio) {
 	return true;
 }
 
-
+static bool set_cpu_affinity(std::string argvi, char *affinity) {
+	// affinity should be a comma-separated list such as "1,4,5,9"
+	cpu_set_t set;
+	CPU_ZERO(&set);
+	std::string affinity_list = affinity;
+	for(auto &ch: affinity_list) if (ch==',') ch=' ';
+	std::istringstream in(affinity_list);
+	int count = 0;
+	for (;;) {
+		int CPU;
+		in >> CPU;
+		if (!in) break;
+		CPU_SET(CPU, &set);
+		++count;
+	}
+	if (!count) {
+		std::cerr << "Error: cannot read cpus from argument " << affinity << std::endl;
+		return false;
+	}
+	if (sched_setaffinity(0, sizeof(cpu_set_t), &set) < 0) {
+		std::cerr << "Error: failed to set scheduling policy: " << strerror(errno) << std::endl;
+		return false;
+	}
+	return true;
+}
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
 	stop = std::chrono::steady_clock::now();
@@ -64,6 +88,8 @@ int main(int argc, char *argv[]) {
 		std::cout << std::endl;
 		std::cout << " -f <priority>    set scheduling policy to fifo with given priority." << std::endl;
 		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_FIFO) << " .. " << sched_get_priority_max(SCHED_FIFO) << "]" << std::endl;
+		std::cout << std::endl;
+		std::cout << " -a <cpu>         set affinity of this process to cpu." << std::endl;
 		std::cout << std::endl;
 		std::cerr << "   example: " << argv[0] << " dev/wbm0 1000 histogram.dat" << std::endl;
 		return 1;
@@ -92,9 +118,13 @@ int main(int argc, char *argv[]) {
 
 		for (int i = 4; i < argc; ++i) {
 			std::string argvi(argv[i]);
-			if (argvi == "-r" || argvi == "-f") {
+			if (argvi == "-r" || argvi == "-f" || argvi == "-a") {
 				if (++i < argc) {
-					if (!set_realtime_scheduling(argvi, argv[i])) return 1;
+					if (argvi == "-a") {
+						if (!set_cpu_affinity(argvi, argv[i])) return 1;
+					} else {
+						if (!set_realtime_scheduling(argvi, argv[i])) return 1;
+					}
 				} else {
 					std::cerr << "Error: expect priority after " << argvi << std::endl;
 					return 1;

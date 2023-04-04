@@ -20,9 +20,16 @@ The callback function analyses the evens and reconstructs the byte from the edge
 ## Threads
 
 RX and TX functionality both run in separate threads.
-This allows the application to send and receive data streams on independent IOs. 
-The client side API of saftlib is safe to use from different threads. When signal callbacks are used with multiple threads the resources used in the callback function (`std::cout` in this example) needs mutex protection. A callback function is always called by the thread that runs the `wait_for_signal` function.
-In this application, each thread creates its own SignalGroup. A SignalGroup is the entity that receives signals from services and dispatches them to all Proxy objects that were created with this signal group.
+This allows the application to send and receive data streams on independent IOs.
+The client side API of saftlib is safe to use from different threads.
+Proxies protect shared resources with a mutex.
+A saftlib signal callback function is always called from within the `wait_for_signal` function.
+Resources used in signal callback functions might need manual mutex protection.
+Signal groups allow to isolate the saftlib signal processing of different threads.
+It is not possible to create new proxy objects with a signal group, while a signal callback is in progress on that same signal group.
+
+In this application, each thread creates its own SignalGroup.
+A SignalGroup is the entity that provides the `wait_for_signal` function, which receives from services and dispatches them to all Proxy objects that were created with this signal group.
 ```C++
 void rx_thread(const std::string &DeviceName, uint32_t bps, const std::string &IoName) {
   uint64_t prefix = 0xffffe00000000000;
@@ -30,5 +37,6 @@ void rx_thread(const std::string &DeviceName, uint32_t bps, const std::string &I
   auto saftd = saftlib::SAFTd_Proxy::create("/de/gsi/saftlib", rx_group);
   // ...
 ```
-By using signal groups and proxy objects that are created and used in one thread only, the thread logic can be completely isolated from other threads. This is not really needed in the serial transceiver example application, but it is in general advisable to decouple different parts of a program as much as possible.
+
+proxy objects that are created and used in one thread only, the thread logic can be completely isolated from other threads. This is not really needed in the serial transceiver example application, but it is in general advisable to decouple different parts of a program as much as possible.
 

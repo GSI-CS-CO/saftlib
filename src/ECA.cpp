@@ -639,15 +639,11 @@ uint64_t ECA::ReadRawCurrentTime() const
 
 SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 {
-	std::cerr << "getSoftwareActionSink " << ECA_LINUX_channel->size() << std::endl;
 	for (auto &softwareActionSink: *ECA_LINUX_channel) {
 		if (!softwareActionSink) {
-			std::cerr << "." << std::endl;
 			continue;
 		}
-		std::cerr << "+" << std::endl;
 		if (softwareActionSink->getObjectPath() == sas_obj_path) {
-			std::cerr << "return " << softwareActionSink->getObjectPath() << std::endl;
 			return dynamic_cast<SoftwareActionSink*>(softwareActionSink.get());
 		}
 	}
@@ -657,7 +653,6 @@ SoftwareActionSink *ECA::getSoftwareActionSink(const std::string & sas_obj_path)
 Output *ECA::getOutput(const std::string &output_obj_path)
 {
 	for (auto &output: ECAchannels[0]) { // outputs are always on channel 0
-		std::cerr << "getOutput " << output->getObjectPath() << " " << output_obj_path << std::endl;
 		if (output->getObjectPath() == output_obj_path) {
 			return dynamic_cast<Output*>(output.get());
 		}
