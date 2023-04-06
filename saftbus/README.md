@@ -53,15 +53,17 @@ Alternatively, plugins can be loaded at startup by passing them as command line 
 ### Deterministic memory allocator
 
 Three versions of the saftbusd binary are distributed:
-  - `saftbusd` contains a configurable deterministic global memory allocator. It manages memory chunks of a given size and given number. The number of chunks and their size can be configured using the SAFTD_ALLOCATOR_CONFIG environment variable. The default configuration is "16384.128 1024.1024 64.16384" which means
-    - 16384 chunks of size 128 bytes
-    - 1024 chunks of size 1024 bytes
-    - 64 chunks of size 16384 bytes
-  Allocations larger than the larges chunk size fall back to the default heap allocator.
-  Number of chunks must strictly decrease. Chunk size must strictly increase.
+  - `saftbusd` contains a configurable deterministic global memory allocator. It manages memory blocks of a given size and given number. The number of blocks and their size can be configured using the SAFTD_ALLOCATOR_CONFIG environment variable. The default configuration is "16384.128 1024.1024 64.16384" which means
+    - 16384 blocks of size 128 bytes
+    - 1024 blocks of size 1024 bytes
+    - 64 blocks of size 16384 bytes
+  Allocations larger than the larges block size fall back to the default heap allocator.
+  Number of blocks must strictly decrease. block size must strictly increase.
   This is intended for real time critical applications.
-  - `saftbusd-srta` contains a simpler non-configurable deterministic memory allocator with hard coded chunk sizes.
+  - `saftbusd-srta` contains a simpler non-configurable deterministic memory allocator with hard coded block sizes.
   - `saftbusd-norta` uses standard heap allocations
+
+Details on the allocator implementation are described [here](#allocator-implementation)
 
 ## Saftbus plugins
 Typical use case is to run saftbusd and load a custom plugin to provide custom services, and use custom programs that communicate with the services provided by the plugin using proxy classes. See below for a simple example. 
@@ -241,10 +243,25 @@ dice /my/dice was thrown. Result = 5
 dice /my/dice was thrown. Result = 4
 dice /my/dice was thrown. Result = 1
 ```
+
+
 ### Further information
 A More complex examples which make use of inheritance and creation of nested services can be found under 
   - examples/ex01_dice.
   - examples/ex02_dice_cup.
-  - the saftlib plugin [saftlib](../saftlib/README.md)
+  - the saftlib plugin [saftlib](../README.md)
 
 More detailed documentation on how to write saftbus plugins can be found in the Doxygen Main Page (you may have to build it first by running doxygen)  
+
+
+
+### Allocator implementation
+Each allocator manages a fixed number of fixed size memory blocks and a stack.
+Each stack position refers to a block and each block refers back to that stack position.
+Allocations return the block where the last free stack position points to (runtime is O(1)).
+A free operation can happen on any block, therefore pointers have to be swapped in order to remove the gaps in the stack (runtime is still O(1): always four indirections and two swap operations)
+The following picture explains how it works (green is free, red is allocated).
+
+![saftbus architecture overview](allocator.png)
+
+

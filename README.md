@@ -54,11 +54,11 @@ Saftlib provides
 
 The most common use case for saftlib, is to be used over saftbus. A running saftbusd with the libsaft-servcie.so plugin is needed and a TimingReceiver_Service has to be attached to SAFTd. This can be achieve by launching saftbusd like this (assuming that a FAIR Timing Receiver is attached to the system under /dev/wmb0):
 
-    saftbusd libsaft-service.so tr0:dev/wbm0
+    saftbusd libsaft-service.so tr0:dev/wbm0 tr1:dev/wbm1 tr2:dev/ttyUSB0
 
 Alternatively, saftbusd can be launched without any plugins and libsaft-service.so can be loaded later using saftbus-ctl
 
-    saftbus-ctl -l libsaft-service.so tr0:dev/wbm0
+    saftbus-ctl -l libsaft-service.so tr0:dev/wbm0 tr1:dev/wbm1 tr2:dev/ttyUSB0
 
 In order to see, which plugins are loaded, which services are available on saftbusd, and which processes are connected to saftbus,  saftbus-ctl can be used:
 ```bash
@@ -137,7 +137,8 @@ There are two versions of this example, showing both, shared and exclusive acces
 
 ##### Example 2: [A serial transceiver using an IO of a TimingReceiver](examples/SerialTransceiver/README.md)
 
-An example with multiple threads using different `saftbus::SignalGroups` TimingReceiver IOs.
+An example with multiple threads and different `saftbus::SignalGroups`.
+It shows how to reuse existing conditions and react on the Destroy signal.
 
 ### Develop plugins to add new services
 
