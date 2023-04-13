@@ -243,17 +243,14 @@ dice /my/dice was thrown. Result = 5
 dice /my/dice was thrown. Result = 4
 dice /my/dice was thrown. Result = 1
 ```
-
+### General rules for drivers and services
+  - if a driver class `Parent` is used as a saftbus service and manges other driver classes of type `Child` that are also used as saftbus services, the destructor of Parent must destroy the Child objects before removing the Child services. This is important because destructors of child objects may send signals to clients and that is only possible if the service object still exists.
 
 ### Further information
 A More complex examples which make use of inheritance and creation of nested services can be found under 
   - examples/ex01_dice.
   - examples/ex02_dice_cup.
   - the saftlib plugin [saftlib](../README.md)
-
-More detailed documentation on how to write saftbus plugins can be found in the Doxygen Main Page (you may have to build it first by running doxygen)  
-
-
 
 ### Allocator implementation
 Each allocator manages a fixed number of fixed size memory blocks and a stack.
