@@ -68,39 +68,28 @@ FunctionGeneratorFirmware::FunctionGeneratorFirmware(saftbus::Container *cont, S
     }
 
     if (!have_fg_firmware) throw saftbus::Error(saftbus::Error::FAILED, "no FunctionGeneratorFirmware found");
-
-    try {
-      Scan(); // do the initial scan. If there's a timeout here, the 
-              //  FunctionGeneratorFirmware driver should still be loaded 
-              //  that's why this is in a try catch block
-    } catch (saftbus::Error &e) {
-      std::cerr << "Scan FG-channels timeout" << std::endl;
-    } catch (etherbone::exception_t &e) {
-      throw saftbus::Error(saftbus::Error::FAILED, "etherbone exception");
-    } catch (...) {
-      throw saftbus::Error(saftbus::Error::FAILED, "unknown exception");
-    }
 }
 
 FunctionGeneratorFirmware::~FunctionGeneratorFirmware()
 {
-  std::cerr << "~FunctionGeneratorFirmware()" << std::endl;
+  // std::cerr << "~FunctionGeneratorFirmware()" << std::endl;
 
   clear();
 }
 
 void FunctionGeneratorFirmware::clear()
 {
+  // std::cerr << "FunctionGeneratorFirmware::clear()" << std::endl;
   try {
+    fgs.clear();
+    mfg.reset();
+    addon_objects.clear();
     if (container) {
       for (auto &fg: fgs) {
         container->remove_object(fg.second->getObjectPath());
       }
       if (mfg) container->remove_object(mfg->getObjectPath());
     }
-    fgs.clear();
-    mfg.reset();
-    addon_objects.clear();
   } catch (...) { // catch exceptions that occur when the object was removed before
     // nothing.
   }
@@ -279,7 +268,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
     mfg = std::make_shared<MasterFunctionGenerator>(container, mfg_path, functionGeneratorImplementations);
 
     if (container) {
-      std::unique_ptr<MasterFunctionGenerator_Service> service(new MasterFunctionGenerator_Service(mfg.get()));
+      std::unique_ptr<MasterFunctionGenerator_Service> service(new MasterFunctionGenerator_Service(mfg.get(), std::bind(&FunctionGeneratorFirmware::clear, this) ));
       mfg->set_service(service.get());
       container->create_object(mfg_path, std::move(service));
     }

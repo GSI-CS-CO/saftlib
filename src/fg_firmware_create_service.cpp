@@ -5,6 +5,7 @@
 #include <TimingReceiver_Service.hpp>
 
 #include <saftbus/service.hpp>
+#include <saftbus/error.hpp>
 
 #include <memory>
 #include <vector>
@@ -42,9 +43,25 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 			auto service = std::unique_ptr<saftlib::FunctionGeneratorFirmware_Service>(
 						new saftlib::FunctionGeneratorFirmware_Service(
 							fw_ptr, std::bind(&saftlib::TimingReceiver::removeAddon, tr, addon_name), false));
-			fw_ptr->set_service(service.get());			
+			std::cerr << "setting fw_ptr service to " << service.get() << std::endl;
+			fw_ptr->set_service(service.get());
 			container->create_object(fw_ptr->getObjectPath(), std::move(service));
 		}
+
+
+		try {
+			fw_ptr->Scan(); // do the initial scan. If there's a exception here, the 
+			                //  FunctionGeneratorFirmware driver should still be loaded 
+			                //  that's why this is in a try catch block
+		} catch (saftbus::Error &e) {
+			std::cerr << "FunctionGeneratorFirmware::Scan failed because " << e.what() << std::endl;
+		} catch (etherbone::exception_t &e) {
+			throw saftbus::Error(saftbus::Error::FAILED, "etherbone exception");
+		} catch (...) {
+			throw saftbus::Error(saftbus::Error::FAILED, "unknown exception");
+		}
+
+
 	}
 
 }
