@@ -118,7 +118,7 @@ It will redistribute the signal parameters to all connected callback functions.
 ## Using saftlib driver classes directly (standalone mode)
 The program [saft-snoop-standalone.cpp](saft-snoop-standalone.cpp) will be described in the following. 
 It is very similar to the program with proxy objects, and only differs in object creation. 
-In this case the driver classes are used directly, by because proxy classes have an identical interface, the usage of proxy and driver objects is identical.
+In this case the driver classes are used directly, but because proxy classes have an identical interface, the usage of proxy and driver objects is identical.
 ### Saftlib driver header files
 The header files of the driver classes need to be included.
 ```C++
