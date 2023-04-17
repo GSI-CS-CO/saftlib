@@ -42,16 +42,22 @@ BUILT_SOURCES = version.h          \
  	src/FunctionGeneratorFirmware_Service.hpp         \
  	src/FunctionGeneratorImpl_Service.hpp             \
 	src/BurstGenerator_Service.cpp                    \
-	src/BurstGenerator_Service.hpp             
+	src/BurstGenerator_Service.hpp              \
+	src/AnalyzeJitterMSI_Service.cpp            \
+	src/AnalyzeJitterMSI_Service.hpp            \
+	src/AnalyzeJitterMSI_Proxy.cpp              \
+	src/AnalyzeJitterMSI_Proxy.hpp    
 
-lib_LTLIBRARIES = \
-	libsaftbus.la         \
-	libsaft-service.la  \
-	libsaft-proxy.la     \
+lib_LTLIBRARIES =          \
+	libsaftbus.la           \
+	libsaft-service.la       \
+	libsaft-proxy.la          \
 	libfg-firmware-service.la  \
 	libfg-firmware-proxy.la	    \
 	libbg-firmware-service.la    \
-	libbg-firmware-proxy.la   
+	libbg-firmware-proxy.la       \
+	libmj-firmware-service.la      \
+	libmj-firmware-proxy.la 
 
 
 
@@ -389,6 +395,30 @@ libbg_firmware_proxy_include_HEADERS = \
 
 
 
+mjfirmwaredir = $(datadir)/saftlib/firmware
+mjfirmware_DATA = firmware-bin/mj-firmware.bin
+EXTRA_DIST += firmware-bin/mj-firmware.bin
+
+libmj_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
+libmj_firmware_service_la_LIBADD = $(SIGCPP_LIBS) -lsaftbus libsaft-service.la -ldl
+libmj_firmware_service_la_SOURCES = \
+	src/AnalyzeJitterMSI.cpp         \
+	src/AnalyzeJitterMSI_Service.cpp  \
+	src/mj_create_services.cpp
+
+libmj_firmware_service_includedir = $(includedir)/mj-firmware
+libmj_firmware_service_include_HEADERS = \
+	src/AnalyzeJitterMSI.hpp              \
+	src/AnalyzeJitterMSI_Service.hpp                 
+
+libmj_firmware_proxy_la_LIBADD  = $(SIGCPP_LIBS) -lsaftbus 
+libmj_firmware_proxy_la_SOURCES = \
+	src/AnalyzeJitterMSI_Proxy.cpp                   
+
+libmj_firmware_proxy_includedir = $(includedir)/mj-firmware
+libmj_firmware_proxy_include_HEADERS = \
+	src/AnalyzeJitterMSI_Proxy.hpp                
+
 
 
 
@@ -399,8 +429,8 @@ bin_PROGRAMS = 	\
 	saftbusd saftbusd-sda saftbusd-noda	saftbus-ctl \
 	saft-testbench saft-software-tr \
 	saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd saft-standalone-mbox saft-roundtrip-latency saft-standalone-roundtrip-latency \
-	saft-burst-ctl saft-fg-ctl saft-mfg-ctl
-
+	saft-burst-ctl saft-fg-ctl saft-mfg-ctl \
+	analyze-jitter-msi-standalone
 
 # saftbus programs 
 saftbusd_LDFLAGS = -Wl,--export-dynamic 
@@ -496,6 +526,9 @@ saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp
 saft_mfg_ctl_LDADD   =   $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libfg-firmware-proxy.la -lpthread -ldl #-lltdl
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp 
 
+
+analyze_jitter_msi_standalone_LDADD   = $(SIGCPP_LIBS) -lsaftbus libsaft-service.la libmj-firmware-service.la -ldl
+analyze_jitter_msi_standalone_SOURCES = src/analyze-jitter-msi-standalone.cpp 
 
 
 if NO_SAFTBUSGEN
