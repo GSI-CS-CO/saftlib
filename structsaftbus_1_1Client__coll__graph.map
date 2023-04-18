@@ -1,0 +1,4 @@
+<map id="saftbus::Client" name="saftbus::Client">
+<area shape="rect" id="node1" title=" " alt="" coords="30,93,134,119"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1SourceHandle.html" title="unique identifier for an event source in a saftbus::Loop" alt="" coords="5,5,159,31"/>
+</map>

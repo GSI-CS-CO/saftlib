@@ -1,0 +1,5 @@
+<map id="saftlib::SCUbusActionSink" name="saftlib::SCUbusActionSink">
+<area shape="rect" id="node1" title="An output through which SCUbus actions flow." alt="" coords="5,152,180,177"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1ActionSink.html" title="An output through which actions flow." alt="" coords="29,79,156,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="41,5,145,31"/>
+</map>

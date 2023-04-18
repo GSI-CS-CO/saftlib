@@ -1,0 +1,5 @@
+<map id="saftlib::BurstGenerator" name="saftlib::BurstGenerator">
+<area shape="rect" id="node1" title="Burst generation service." alt="" coords="67,79,218,104"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="5,5,109,31"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1TimingReceiverAddon.html" title=" " alt="" coords="134,5,325,31"/>
+</map>

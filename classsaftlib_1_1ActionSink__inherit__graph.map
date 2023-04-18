@@ -1,0 +1,9 @@
+<map id="saftlib::ActionSink" name="saftlib::ActionSink">
+<area shape="rect" id="node1" title="An output through which actions flow." alt="" coords="157,104,284,129"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1EmbeddedCPUActionSink.html" title="An output through which EmbeddedCPU actions flow." alt="" coords="332,5,547,31"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1Output.html" title="An output through which on/off actions flow." alt="" coords="388,55,491,80"/>
+<area shape="rect" id="node5" href="$classsaftlib_1_1SCUbusActionSink.html" title="An output through which SCUbus actions flow." alt="" coords="352,104,527,129"/>
+<area shape="rect" id="node6" href="$classsaftlib_1_1SoftwareActionSink.html" title="An output through which software actions flow." alt="" coords="350,153,529,179"/>
+<area shape="rect" id="node7" href="$classsaftlib_1_1WbmActionSink.html" title="An output through which Wbm actions flow." alt="" coords="361,203,517,228"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="5,104,109,129"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="saftbus::Container::create_object" name="saftbus::Container::create_object">
+<area shape="rect" id="node1" title="Insert a Service object and return the saftbus_object_id for this object." alt="" coords="241,55,368,95"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1SAFTd.html#ad799cd918a321d32a177ad77e78f3b0c" title="Instruct saftd to control a new device." alt="" coords="5,5,193,31"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1Container.html#a7f4c2a1433b2d7f339cb4bc024f1b19e" title="create a Container for saftbus::Service objects" alt="" coords="36,55,163,95"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1ECA.html#a628debd46c879b6361c9da70abc12542" title="Create a new SoftwareActionSink." alt="" coords="12,119,187,159"/>
+</map>

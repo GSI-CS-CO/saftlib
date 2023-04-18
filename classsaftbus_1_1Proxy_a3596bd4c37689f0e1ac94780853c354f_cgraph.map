@@ -1,0 +1,4 @@
+<map id="saftbus::Proxy::get_client_socket_mutex" name="saftbus::Proxy::get_client_socket_mutex">
+<area shape="rect" id="node1" title="the client socket is a shared resource, it should be locked before using it" alt="" coords="5,5,153,45"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Proxy.html#a362a07286ab1a718bb3c997faac17bf8" title="Get the client connection. Open the connection if that didn&#39;t happen before." alt="" coords="201,5,328,45"/>
+</map>

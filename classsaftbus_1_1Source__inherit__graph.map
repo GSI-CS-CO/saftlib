@@ -1,0 +1,6 @@
+<map id="saftbus::Source" name="saftbus::Source">
+<area shape="rect" id="node1" title="Base class of all event sources in a saftbus::Loop." alt="" coords="176,5,288,31"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1IoSource.html" title="An event source that is ready whenever a certain condition on a given file descriptor is met (usually..." alt="" coords="5,79,128,104"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1TimeoutSource.html" title="An event source that is active after a given amount of time has passed." alt="" coords="153,79,311,104"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1EB__Source.html" title="an etherbone event source for the saftbus::Loop" alt="" coords="336,79,464,104"/>
+</map>

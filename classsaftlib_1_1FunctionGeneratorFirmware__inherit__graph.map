@@ -1,0 +1,5 @@
+<map id="saftlib::FunctionGeneratorFirmware" name="saftlib::FunctionGeneratorFirmware">
+<area shape="rect" id="node1" title="Representation of the FunctionGenerator Firmware." alt="" coords="57,79,228,119"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="5,5,109,31"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1TimingReceiverAddon.html" title=" " alt="" coords="134,5,325,31"/>
+</map>

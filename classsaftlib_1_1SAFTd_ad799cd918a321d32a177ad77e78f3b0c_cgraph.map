@@ -1,0 +1,4 @@
+<map id="saftlib::SAFTd::AttachDevice" name="saftlib::SAFTd::AttachDevice">
+<area shape="rect" id="node1" title="Instruct saftd to control a new device." alt="" coords="5,13,193,38"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container.html#ade4a52a55f8bed8bff2398da268a7106" title="Insert a Service object and return the saftbus_object_id for this object." alt="" coords="241,5,368,45"/>
+</map>

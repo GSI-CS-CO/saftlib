@@ -1,0 +1,6 @@
+<map id="saftlib::ECA::NewSoftwareActionSink" name="saftlib::ECA::NewSoftwareActionSink">
+<area shape="rect" id="node1" title="Create a new SoftwareActionSink." alt="" coords="5,69,180,109"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container.html#ade4a52a55f8bed8bff2398da268a7106" title="Insert a Service object and return the saftbus_object_id for this object." alt="" coords="247,5,374,45"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1Container.html#a2ab229f9d1130bcdd7970f6e7ef5954f" title="some functions for ownership management. They can only be called whenever a client request is handled..." alt="" coords="238,69,383,109"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1ECA.html#acb1d4a4bf1450e5f907060e94271c0cf" title="A list of all current SoftwareActionSinks." alt="" coords="228,133,393,173"/>
+</map>

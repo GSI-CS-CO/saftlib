@@ -1,0 +1,4 @@
+<map id="saftlib::MasterFunctionGenerator::setStartTag" name="saftlib::MasterFunctionGenerator::setStartTag">
+<area shape="rect" id="node1" title="The SCUbus tag which causes function generation to begin." alt="" coords="5,5,216,45"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1Owned.html#aed5da441e1295bf94b4b327e8a9445c2" title="Throw an exception if the caller is not the owner." alt="" coords="264,13,435,38"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="saftlib::MasterFunctionGenerator" name="saftlib::MasterFunctionGenerator">
+<area shape="rect" id="node1" title="Interface to multiple Function Generators." alt="" coords="5,79,216,104"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="59,5,163,31"/>
+</map>

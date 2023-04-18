@@ -1,0 +1,5 @@
+<map id="saftlib::Output" name="saftlib::Output">
+<area shape="rect" id="node1" title="An output through which on/off actions flow." alt="" coords="17,152,120,177"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1ActionSink.html" title="An output through which actions flow." alt="" coords="5,79,132,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="17,5,121,31"/>
+</map>

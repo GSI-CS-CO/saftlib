@@ -1,0 +1,4 @@
+<map id="saftbus::Container::Container" name="saftbus::Container::Container">
+<area shape="rect" id="node1" title="create a Container for saftbus::Service objects" alt="" coords="5,5,132,45"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container.html#ade4a52a55f8bed8bff2398da268a7106" title="Insert a Service object and return the saftbus_object_id for this object." alt="" coords="180,5,307,45"/>
+</map>

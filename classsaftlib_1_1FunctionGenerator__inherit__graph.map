@@ -1,0 +1,4 @@
+<map id="saftlib::FunctionGenerator" name="saftlib::FunctionGenerator">
+<area shape="rect" id="node1" title="Function Generator for creating timing triggered waveforms." alt="" coords="5,79,176,104"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="39,5,143,31"/>
+</map>

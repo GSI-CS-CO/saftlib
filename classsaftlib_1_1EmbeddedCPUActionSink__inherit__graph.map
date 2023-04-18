@@ -1,0 +1,5 @@
+<map id="saftlib::EmbeddedCPUActionSink" name="saftlib::EmbeddedCPUActionSink">
+<area shape="rect" id="node1" title="An output through which EmbeddedCPU actions flow." alt="" coords="5,152,220,177"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1ActionSink.html" title="An output through which actions flow." alt="" coords="49,79,176,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="61,5,165,31"/>
+</map>

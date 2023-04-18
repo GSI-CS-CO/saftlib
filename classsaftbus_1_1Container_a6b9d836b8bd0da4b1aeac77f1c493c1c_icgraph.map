@@ -1,0 +1,8 @@
+<map id="saftbus::Container::remove_object" name="saftbus::Container::remove_object">
+<area shape="rect" id="node1" title="remove an object" alt="" coords="252,133,379,173"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container__Service.html#abe051ea633140c83cebcae13840635cd" title="execute one of the functions in one of the interfaces of the derived class." alt="" coords="41,5,168,45"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1Container.html#a8bf612dfd5d92baca9f62b91942876de" title="call a Service identified by the saftbus_object_id" alt="" coords="41,69,168,109"/>
+<area shape="rect" id="node4" href="$classsaftbus_1_1Container.html#a44117258193c3e6ccbb8d32540d0e943" title="iterate all owned services and remove the ones previously owned by client with this fd" alt="" coords="41,133,168,173"/>
+<area shape="rect" id="node5" href="$classsaftlib_1_1SAFTd.html#abb0e4c7d6d1ddf3c8a3d660d08f95656" title="Instructs the saftlib daemon to quit." alt="" coords="37,198,172,223"/>
+<area shape="rect" id="node6" href="$classsaftlib_1_1SAFTd.html#aed75f0acfad23741464f2f4464fb0973" title="Remove the device from saftlib management." alt="" coords="5,247,204,273"/>
+</map>

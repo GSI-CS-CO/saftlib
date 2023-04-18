@@ -1,0 +1,6 @@
+<map id="saftbus::Proxy::Impl" name="saftbus::Proxy::Impl">
+<area shape="rect" id="node1" title=" " alt="" coords="156,93,291,119"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Serializer.html" title=" " alt="" coords="5,5,129,31"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1Deserializer.html" title=" " alt="" coords="154,5,293,31"/>
+<area shape="rect" id="node4" href="$classsaftbus_1_1SignalGroup.html" title="Manage incoming saftbus signals and distribute them to the connected Proxy objects." alt="" coords="317,5,460,31"/>
+</map>

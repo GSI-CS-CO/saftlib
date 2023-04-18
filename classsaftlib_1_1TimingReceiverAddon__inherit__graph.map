@@ -1,0 +1,5 @@
+<map id="saftlib::TimingReceiverAddon" name="saftlib::TimingReceiverAddon">
+<area shape="rect" id="node1" title=" " alt="" coords="77,5,268,31"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1BurstGenerator.html" title="Burst generation service." alt="" coords="5,86,156,111"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1FunctionGeneratorFirmware.html" title="Representation of the FunctionGenerator Firmware." alt="" coords="181,79,351,119"/>
+</map>

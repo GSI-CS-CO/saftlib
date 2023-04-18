@@ -1,0 +1,5 @@
+<map id="saftlib::SCUbusCondition" name="saftlib::SCUbusCondition">
+<area shape="rect" id="node1" title=": Matched against incoming events on a SCUbusActionSink." alt="" coords="5,152,172,177"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1Condition.html" title="A rule matched against incoming events." alt="" coords="30,79,147,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="37,5,141,31"/>
+</map>

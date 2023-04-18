@@ -1,0 +1,16 @@
+<map id="saftlib::TimingReceiver" name="saftlib::TimingReceiver">
+<area shape="rect" id="node1" title="A timing receiver." alt="" coords="548,252,701,277"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1OpenDevice.html" title="Holds etherbone::Device that is opened on construction and closed on destruction." alt="" coords="365,5,500,31"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1Watchdog.html" title=" " alt="" coords="372,55,493,80"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1SdbDevice.html" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers." alt="" coords="5,304,132,329"/>
+<area shape="rect" id="node5" href="$classsaftlib_1_1WhiteRabbit.html" title=" " alt="" coords="366,104,499,129"/>
+<area shape="rect" id="node7" href="$classsaftlib_1_1MsiDevice.html" title=" " alt="" coords="187,203,311,228"/>
+<area shape="rect" id="node8" href="$classsaftlib_1_1ECA__TLU.html" title="Interface to the ECA_TLU SdbInterface." alt="" coords="371,252,494,277"/>
+<area shape="rect" id="node9" href="$classsaftlib_1_1ECA__Event.html" title="ECA_Event (Event Injection interface of ECA) ECA_Event provides a method to inject events into ECA." alt="" coords="184,304,313,329"/>
+<area shape="rect" id="node10" href="$classsaftlib_1_1BuildIdRom.html" title="Representation of the SDB device with build id information. It can be used to obtain strings with gat..." alt="" coords="183,353,314,379"/>
+<area shape="rect" id="node11" href="$classsaftlib_1_1TempSensor.html" title=" " alt="" coords="180,403,317,428"/>
+<area shape="rect" id="node12" href="$classsaftlib_1_1Reset.html" title=" " alt="" coords="200,453,297,479"/>
+<area shape="rect" id="node14" href="$classsaftlib_1_1LM32Cluster.html" title=" " alt="" coords="180,504,317,529"/>
+<area shape="rect" id="node6" href="$classsaftlib_1_1ECA.html" title="ECA (Event Condition Action) ECA is a hardwar unit cabable of executing actions at a given time (1 ns..." alt="" coords="388,153,477,179"/>
+<area shape="rect" id="node13" href="$classsaftlib_1_1Mailbox.html" title=" " alt="" coords="379,203,486,228"/>
+</map>

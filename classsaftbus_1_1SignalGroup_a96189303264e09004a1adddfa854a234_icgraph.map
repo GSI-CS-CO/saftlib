@@ -1,0 +1,4 @@
+<map id="saftbus::SignalGroup::wait_for_signal" name="saftbus::SignalGroup::wait_for_signal">
+<area shape="rect" id="node1" title="Wait for signal to arrive and return either on timeout, or when a number of signals was dispatcht and..." alt="" coords="204,5,347,45"/>
+<area shape="rect" id="node2" href="$namespacesaftlib.html#a11d8a59c8ea18315d9c227386709650e" title="wait for a signal from anay Proxy connected to saftbus::SignalGroup::get_global()" alt="" coords="5,13,156,38"/>
+</map>

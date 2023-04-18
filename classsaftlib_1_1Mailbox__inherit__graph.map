@@ -1,0 +1,6 @@
+<map id="saftlib::Mailbox" name="saftlib::Mailbox">
+<area shape="rect" id="node1" title=" " alt="" coords="29,152,135,177"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1TimingReceiver.html" title="A timing receiver." alt="" coords="5,225,159,251"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1MsiDevice.html" title=" " alt="" coords="20,79,144,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1SdbDevice.html" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers." alt="" coords="19,5,145,31"/>
+</map>

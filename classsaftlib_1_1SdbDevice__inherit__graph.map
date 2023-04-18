@@ -1,0 +1,18 @@
+<map id="saftlib::SdbDevice" name="saftlib::SdbDevice">
+<area shape="rect" id="node1" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers." alt="" coords="5,275,132,301"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1BuildIdRom.html" title="Representation of the SDB device with build id information. It can be used to obtain strings with gat..." alt="" coords="393,25,523,50"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1EB__Forward.html" title="Maintains a pseudo&#45;terminal device that mimics a serial etherbone device." alt="" coords="193,47,328,73"/>
+<area shape="rect" id="node5" href="$classsaftlib_1_1ECA__Event.html" title="ECA_Event (Event Injection interface of ECA) ECA_Event provides a method to inject events into ECA." alt="" coords="393,102,523,127"/>
+<area shape="rect" id="node6" href="$classsaftlib_1_1ECA__TLU.html" title="Interface to the ECA_TLU SdbInterface." alt="" coords="397,154,519,179"/>
+<area shape="rect" id="node7" href="$classsaftlib_1_1IoControl.html" title=" " alt="" coords="203,199,318,225"/>
+<area shape="rect" id="node8" href="$classsaftlib_1_1LM32Cluster.html" title=" " alt="" coords="389,207,527,233"/>
+<area shape="rect" id="node9" href="$classsaftlib_1_1MsiDevice.html" title=" " alt="" coords="199,301,323,326"/>
+<area shape="rect" id="node12" href="$classsaftlib_1_1Reset.html" title=" " alt="" coords="409,355,507,381"/>
+<area shape="rect" id="node13" href="$classsaftlib_1_1SerdesClockGen.html" title=" " alt="" coords="180,402,341,427"/>
+<area shape="rect" id="node14" href="$classsaftlib_1_1TempSensor.html" title=" " alt="" coords="192,451,329,477"/>
+<area shape="rect" id="node15" href="$classsaftlib_1_1Watchdog.html" title=" " alt="" coords="200,501,321,526"/>
+<area shape="rect" id="node16" href="$classsaftlib_1_1WhiteRabbit.html" title=" " alt="" coords="194,550,327,575"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1TimingReceiver.html" title="A timing receiver." alt="" coords="575,282,728,307"/>
+<area shape="rect" id="node10" href="$classsaftlib_1_1ECA.html" title="ECA (Event Condition Action) ECA is a hardwar unit cabable of executing actions at a given time (1 ns..." alt="" coords="413,257,503,282"/>
+<area shape="rect" id="node11" href="$classsaftlib_1_1Mailbox.html" title=" " alt="" coords="405,306,511,331"/>
+</map>

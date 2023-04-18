@@ -1,0 +1,4 @@
+<map id="saftlib::SAFTd::RemoveDevice" name="saftlib::SAFTd::RemoveDevice">
+<area shape="rect" id="node1" title="Remove the device from saftlib management." alt="" coords="5,13,204,38"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c" title="remove an object" alt="" coords="252,5,379,45"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="saftlib::ECA_Event" name="saftlib::ECA_Event">
+<area shape="rect" id="node1" title="ECA_Event (Event Injection interface of ECA) ECA_Event provides a method to inject events into ECA." alt="" coords="17,79,147,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1TimingReceiver.html" title="A timing receiver." alt="" coords="5,152,159,177"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1SdbDevice.html" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers." alt="" coords="19,5,145,31"/>
+</map>

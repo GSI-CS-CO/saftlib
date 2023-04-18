@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$structsaftbus_1_1SerDesAble.html" title="custom types can be sent over saftbus if they derive from this class and implement serialize and dese..." alt="" coords="5,63,145,88"/>
+<area shape="rect" id="node2" href="$structsaftbus_1_1SaftbusInfo.html" title="contains all information about the status of a saftbus server." alt="" coords="193,5,332,31"/>
+<area shape="rect" id="node3" href="$structsaftbus_1_1SaftbusInfo_1_1ClientInfo.html" title="contains all information about a saftbus client connected to a saftbus server" alt="" coords="193,55,332,95"/>
+<area shape="rect" id="node4" href="$structsaftbus_1_1SaftbusInfo_1_1ObjectInfo.html" title="contains all information about a service object" alt="" coords="193,119,332,159"/>
+</map>

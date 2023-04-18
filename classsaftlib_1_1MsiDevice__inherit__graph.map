@@ -1,0 +1,7 @@
+<map id="saftlib::MsiDevice" name="saftlib::MsiDevice">
+<area shape="rect" id="node1" title=" " alt="" coords="49,79,173,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1ECA.html" title="ECA (Event Condition Action) ECA is a hardwar unit cabable of executing actions at a given time (1 ns..." alt="" coords="5,152,95,177"/>
+<area shape="rect" id="node5" href="$classsaftlib_1_1Mailbox.html" title=" " alt="" coords="119,152,226,177"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1SdbDevice.html" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers." alt="" coords="48,5,175,31"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1TimingReceiver.html" title="A timing receiver." alt="" coords="35,225,188,251"/>
+</map>

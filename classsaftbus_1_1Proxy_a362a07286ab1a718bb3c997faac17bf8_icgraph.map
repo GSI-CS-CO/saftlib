@@ -1,0 +1,5 @@
+<map id="saftbus::Proxy::get_connection" name="saftbus::Proxy::get_connection">
+<area shape="rect" id="node1" title="Get the client connection. Open the connection if that didn&#39;t happen before." alt="" coords="201,37,328,77"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Proxy.html#a3596bd4c37689f0e1ac94780853c354f" title="the client socket is a shared resource, it should be locked before using it" alt="" coords="5,5,153,45"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1SignalGroup.html#a10ff4f857dd878a4738e6c1cf950a163" title="used in the Constructor of Proxy objects to connect themselves to this SignalGroup." alt="" coords="8,69,151,109"/>
+</map>

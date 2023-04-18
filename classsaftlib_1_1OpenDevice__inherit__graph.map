@@ -1,0 +1,4 @@
+<map id="saftlib::OpenDevice" name="saftlib::OpenDevice">
+<area shape="rect" id="node1" title="Holds etherbone::Device that is opened on construction and closed on destruction." alt="" coords="15,5,149,31"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1TimingReceiver.html" title="A timing receiver." alt="" coords="5,79,159,104"/>
+</map>

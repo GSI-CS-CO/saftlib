@@ -1,0 +1,5 @@
+<map id="saftlib::LM32Cluster" name="saftlib::LM32Cluster">
+<area shape="rect" id="node1" title=" " alt="" coords="13,79,151,104"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1TimingReceiver.html" title="A timing receiver." alt="" coords="5,152,159,177"/>
+<area shape="rect" id="node2" href="$classsaftlib_1_1SdbDevice.html" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers." alt="" coords="19,5,145,31"/>
+</map>
