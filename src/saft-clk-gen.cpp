@@ -54,8 +54,8 @@ static int clk_show_table (void)
     outs = receiver->getOutputs();
     
     /* Print table header */
-    std::cout << "Name           Logic Level" << std::endl;
-    std::cout << "--------------------------" << std::endl;
+    std::cout << "Name           Logic Level        Status (high,low,offset)" << std::endl;
+    std::cout << "----------------------------------------------------------" << std::endl;
     
     /* Print Outputs */
     for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it)
@@ -66,9 +66,17 @@ static int clk_show_table (void)
         output_proxy = Output_Proxy::create(it->second);
         if (output_proxy->getTypeOut() == "1ns (LVDS)")
         {
+          double high,low;
+          uint64_t offset;
+          bool on = output_proxy->ClockStatus(high,low,offset);
           std::cout << std::left;
           std::cout << std::setw(12+2) << it->first << " ";
-          std::cout << output_proxy->getLogicLevelOut();
+          std::cout << std::setw(18)   << output_proxy->getLogicLevelOut() << " ";
+          if (on) {
+            std::cout << "on     (" << high << "," << low << "," << offset << ")";
+          } else {
+            std::cout << "off";
+          }
           std::cout << std::endl;
         }
       }

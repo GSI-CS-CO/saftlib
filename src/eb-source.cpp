@@ -1,6 +1,6 @@
-/** Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
- *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
+ *  @author Michael Reese <m.reese@gsi.de>
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -17,177 +17,149 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#define ETHERBONE_THROWS 1
 
-#define __STDC_FORMAT_MACROS
-#define __STDC_CONSTANT_MACROS
+#include "eb-source.hpp"
 
+#include <chrono>
+#include <algorithm>
+#include <array>
+#include <thread>
 #include <iostream>
-#include <cstdint>
-#include <memory>
-#include <sigc++/sigc++.h>
-#include <etherbone.h>
-#include "eb-source.h"
-#include "Source.h"
-#include "PollFD.h"
+#include <cstring>
+#include <cassert>
 
-class EB_Source : public Slib::Source
-{
-  public:
-    static std::shared_ptr<EB_Source> create(etherbone::Socket socket);
-    sigc::connection connect(const sigc::slot<bool>& slot);
-    
-    virtual ~EB_Source();
-  protected:
-    explicit EB_Source(etherbone::Socket socket_);
-    
-    static int add_fd(eb_user_data_t, eb_descriptor_t, uint8_t mode);
-    static int get_fd(eb_user_data_t, eb_descriptor_t, uint8_t mode);
-  
-    virtual bool prepare(int& timeout);
-    virtual bool check();
-    virtual bool dispatch(sigc::slot_base* slot);
-    
-  private:
-    etherbone::Socket socket;
-    
-    typedef std::map<int, Slib::PollFD> fd_map;
-    fd_map fds;
-};
+namespace saftlib {
 
-std::shared_ptr<EB_Source> EB_Source::create(etherbone::Socket socket)
-{
-  return std::shared_ptr<EB_Source>(new EB_Source(socket));
-}
 
-sigc::connection EB_Source::connect(const sigc::slot<bool>& slot)
-{
-  return connect_generic(slot);
-}
+	EB_Source::EB_Source(etherbone::Socket socket_)
+	 : Source(), socket(socket_)
+	{
+		fds.reserve(8);
+		fds_it_valid = false;
+	}
 
-EB_Source::EB_Source(etherbone::Socket socket_)
- : socket(socket_)
-{
-}
+	EB_Source::~EB_Source()
+	{
+	}
 
-EB_Source::~EB_Source()
-{
-  // This is not needed (and emits warnings) because all polls already removed by glib
-  // for (fd_map::iterator i = fds.begin(); i != fds.end(); ++i)
-  //   remove_poll(i->second);
-}
+	int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
+	{
+		// std::cerr << "EB_Source::add_fd " << fd << std::endl;
+		EB_Source* self = (EB_Source*)data;
 
-int EB_Source::add_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
-{
-  //std::cerr << "EB_Source::add_fd(" << fd << ")" << std::endl;
-  EB_Source* self = (EB_Source*)data;
-  
-  std::pair<fd_map::iterator, bool> res = 
-    self->fds.insert(fd_map::value_type(fd, Slib::PollFD(fd, Slib::IO_ERR)));
-  
-  if (res.second) // new element; add to poll
-    self->add_poll(res.first->second);
-  
-  Slib::IOCondition flags = Slib::IO_ERR | Slib::IO_HUP;
-  if ((mode & EB_DESCRIPTOR_IN)  != 0) flags |= Slib::IO_IN;
-  if ((mode & EB_DESCRIPTOR_OUT) != 0) flags |= Slib::IO_OUT;
-  
-  res.first->second.set_events(flags | res.first->second.get_events());
-  return 0;
-}
+		self->fds.push_back(pollfd());
+		pollfd &pfd = self->fds.back();
+		pfd.fd = fd;
+		pfd.events = POLLERR | POLLHUP;
+		pfd.revents = 0;
 
-int EB_Source::get_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
-{
-  EB_Source* self = (EB_Source*)data;
-  
-  fd_map::iterator i = self->fds.find(fd);
-  if (i == self->fds.end()) return 0;
-  
-  Slib::IOCondition flags = i->second.get_revents();
-  
-  return 
-    ((mode & EB_DESCRIPTOR_IN)  != 0 && (flags & (Slib::IO_IN  | Slib::IO_ERR | Slib::IO_HUP)) != 0) ||
-    ((mode & EB_DESCRIPTOR_OUT) != 0 && (flags & (Slib::IO_OUT | Slib::IO_ERR | Slib::IO_HUP)) != 0);
-}
+		if ((mode & EB_DESCRIPTOR_IN)  != 0) pfd.events |= POLLIN;
+		if ((mode & EB_DESCRIPTOR_OUT) != 0) pfd.events |= POLLOUT;
 
-static int no_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
-{
-  return 0;
-}
+		self->add_poll(&pfd);
 
-bool EB_Source::prepare(int& timeout_ms)
-{
-  //std::cerr << "EB_Source::prepare" << std::endl;
-  // Retrieve cached current time
-  int64_t now_ms = get_time();
-  
-  // Work-around for no TX flow control: flush data now
-  socket.check(now_ms/1000, 0, &no_fd);
-  
-  // Clear the old requested FD status
-  for (fd_map::iterator i = fds.begin(); i != fds.end(); ++i)
-    i->second.set_events(Slib::IO_ERR);
-  
-  // Find descriptors we need to watch
-  socket.descriptors(this, &EB_Source::add_fd);
-  
-  // Eliminate any descriptors no one cares about any more
-  fd_map::iterator i = fds.begin();
-  while (i != fds.end()) {
-    fd_map::iterator j = i;
-    ++j;
-    if ((i->second.get_events() & Slib::IO_HUP) == 0) {
-      remove_poll(i->second);
-      fds.erase(i);
-    }
-    i = j;
-  }
-  
-  // Determine timeout
-  uint32_t timeout = socket.timeout();
-  if (timeout) {
-    timeout_ms = static_cast<int64_t>(timeout)*1000 - now_ms;
-    if (timeout_ms < 0) timeout_ms = 0;
-  } else {
-    timeout_ms = -1;
-  }
-  
-  return (timeout_ms == 0); // true means immediately ready
-}
+		return 0;
+	}
 
-bool EB_Source::check()
-{
-  //std::cerr << "EB_Source::check" << std::endl;
-  bool ready = false;
-  
-  // Descriptors ready?
-  for (fd_map::const_iterator i = fds.begin(); i != fds.end(); ++i)
-    ready |= (i->second.get_revents() & i->second.get_events()) != 0;
-  
-  // Timeout ready?
-  ready |= socket.timeout() >= get_time()/1000;
-  
-  return ready;
-}
+	int EB_Source::get_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
+	{
+		EB_Source* self = (EB_Source*)data;
 
-bool EB_Source::dispatch(sigc::slot_base* slot)
-{
- // std::cerr << "EB_Source::dispatch" << std::endl;
-  // Process any pending packets
-  socket.check(get_time()/1000, this, &EB_Source::get_fd);
-  
-  // Run the no-op signal
-  return (*static_cast<sigc::slot<bool>*>(slot))();
-}
+		// check if iterator is valid and (by chance or clever prediction) points to the correct element in the vector<pollfd> fds
+		if (!self->fds_it_valid || self->fds_it->fd != fd) {
+			for (self->fds_it = self->fds.begin(); self->fds_it != self->fds.end(); ++self->fds_it) {
+				if (self->fds_it->fd == fd) {
+					break;
+				}
+			}
+			self->fds_it_valid = true; // even if no fd matches, the iterator is valid after the search procedure
+		}
 
-static bool my_noop()
-{
-  return true; // Keep running the loop
-}
+		if (self->fds_it == self->fds.end()) {
+			return 0;
+		}
 
-sigc::connection eb_attach_source(const std::shared_ptr<Slib::MainLoop>& loop, etherbone::Socket socket) {
-  std::shared_ptr<EB_Source> source = EB_Source::create(socket);
-  sigc::connection out = source->connect(sigc::ptr_fun(&my_noop));
-  source->attach(loop->get_context(),source);
-  return out;
+		int flags = self->fds_it->revents;
+		++self->fds_it; // expect the next call to this function will be with the fd of the proceeding element in vector<pollfd> fds
+		return 
+			((mode & EB_DESCRIPTOR_IN)  != 0 && (flags & (POLLIN  | POLLERR | POLLHUP)) != 0) ||
+			((mode & EB_DESCRIPTOR_OUT) != 0 && (flags & (POLLOUT | POLLERR | POLLHUP)) != 0);
+	}
+
+	static int no_fd(eb_user_data_t data, eb_descriptor_t fd, uint8_t mode)
+	{
+		return 0;
+	}
+
+	bool EB_Source::prepare(std::chrono::milliseconds &timeout_ms)
+	{
+		// std::cerr << "EB_Source::prepare " << timeout_ms.count() << std::endl;
+		// Retrieve cached current time
+		auto now    = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
+		auto epoch  = now.time_since_epoch();
+		auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
+
+		// Work-around for no TX flow control: flush data now
+		socket.check(now_ms, 0, &no_fd);
+
+		// remove all filedecriptors from list
+		clear_poll(); 
+		fds.clear();
+		// Find descriptors we need to watch and add them to the list
+		socket.descriptors(this, &EB_Source::add_fd); 
+		fds_it = fds.begin(); // position the iterator at the beginnin of the vector
+		fds_it_valid = true;
+
+		// Determine timeout
+		uint32_t timeout = socket.timeout();
+		if (timeout) {
+			int64_t ms = static_cast<int64_t>(timeout)*1000 - now_ms;
+			timeout_ms = (ms < 0) ? std::chrono::milliseconds(0) : std::chrono::milliseconds(ms);
+			return (timeout_ms.count() == 0); // true means immediately ready
+		} 
+		return false;
+	}
+
+	bool EB_Source::check()
+	{
+		// std::cerr << "EB_Source::check " ;
+
+		bool ready = false;
+
+		// Descriptors ready?
+		for (std::vector<pollfd>::iterator i = fds.begin(); i != fds.end(); ++i) {
+			if ((i->revents & i->events) != 0) {
+				// std::cerr << " pollfd " << true << std::endl;
+				return true;
+			}
+		}
+
+		// Timeout ready?
+		auto now    = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
+		auto epoch  = now.time_since_epoch();
+		auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
+		ready |= socket.timeout() <= now_ms/1000; // why >= ???
+
+		// std::cerr << " timeout " << ready << std::endl;
+
+		return ready;
+	}
+
+	bool EB_Source::dispatch()
+	{
+		// std::cerr << "EB_Source::dispatch " << std::endl;
+
+		auto now    = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
+		auto epoch  = now.time_since_epoch();
+		auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
+
+		// Process any pending packets
+		socket.check(now_ms/1000, this, &EB_Source::get_fd);
+
+		return true;
+	}
+
+	std::string EB_Source::type() {
+		return "EB_Source";
+	}
 }

@@ -35,6 +35,7 @@
 /* Includes */
 /* ==================================================================================================== */
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <time.h>
 #include <sys/time.h>
@@ -47,23 +48,23 @@
 #include <cstring>
 #include <cctype> // isspace, isalpha
 
-#include "interfaces/SAFTd.h"
-#include "interfaces/TimingReceiver.h"
-#include "interfaces/SoftwareActionSink.h"
-#include "interfaces/SoftwareCondition.h"
-#include "interfaces/iDevice.h"
-#include "interfaces/Output.h"
-#include "interfaces/Input.h"
-#include "interfaces/OutputCondition.h"
-#include "interfaces/EmbeddedCPUActionSink.h"
-#include "interfaces/EmbeddedCPUCondition.h"
-#include "interfaces/BurstGenerator.h"
+#include "SAFTd.h"
+#include "TimingReceiver.h"
+#include "SoftwareActionSink.h"
+#include "SoftwareCondition.h"
+#include "iDevice.h"
+#include "Output.h"
+#include "Input.h"
+#include "OutputCondition.h"
+#include "EmbeddedCPUActionSink.h"
+#include "EmbeddedCPUCondition.h"
+#include "BurstGenerator_Proxy.hpp"
 
 #include "CommonFunctions.h"
 
-#include "drivers/eca_flags.h"
-#include "drivers/io_control_regs.h"
-#include "drivers/bg_regs.h"
+#include "eca_flags.h"
+#include "io_control_regs.h"
+#include "bg_regs.h"
 
 /* Namespace */
 /* ==================================================================================================== */

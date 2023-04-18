@@ -29,13 +29,17 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "interfaces/SAFTd.h"
-#include "interfaces/TimingReceiver.h"
-#include "interfaces/SCUbusActionSink.h"
-#include "interfaces/SCUbusCondition.h"
-#include "interfaces/FunctionGenerator.h" 
-#include "interfaces/MasterFunctionGenerator.h" 
-#include "CommonFunctions.h"
+#include <SAFTd_Proxy.hpp>
+#include <TimingReceiver_Proxy.hpp>
+#include <SCUbusActionSink_Proxy.hpp>
+#include <SCUbusCondition_Proxy.hpp>
+#include <FunctionGenerator_Proxy.hpp>
+#include <MasterFunctionGenerator_Proxy.hpp>
+#include <CommonFunctions.hpp>
+
+#include <saftbus/client.hpp>
+#include <saftbus/error.hpp>
+
 
 using namespace saftlib;
 using namespace std;

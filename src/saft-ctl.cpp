@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <thread>
 
 #include <time.h>
 #include <sys/time.h>
@@ -88,9 +89,10 @@ static void help(void) {
   std::cout << "  snoop   <eventID> <mask> <offset> [<seconds>] snoop events from DM, offset is in ns, " << std::endl;
   std::cout << "                                   snoop for <seconds> or use CTRL+C to exit (try 'snoop 0x0 0x0 0' for ALL)" << std::endl;
   std::cout << std::endl;
-  std::cout << "  attach <path>                    instruct saftd to control a new device (admin only)" << std::endl;
-  std::cout << "  remove                           remove the device from saftlib management (admin only)" << std::endl;
-  std::cout << "  quit                             instructs the saftlib daemon to quit (admin only)" << std::endl << std::endl;
+  std::cout << "  attach <path> [<poll-iv>]        instruct saftd to control a new device. " << std::endl;
+  std::cout << "                                   <poll-iv> is the polling interval for MSI on USB devices (default is 1 ms)." << std::endl;
+  std::cout << "  remove                           remove the device from saftlib management " << std::endl;
+  std::cout << "  quit                             instructs the saftlib daemon to quit " << std::endl << std::endl;
   std::cout << std::endl;
   std::cout << "This tool displays Timing Receiver and related saftlib status. It can also be used to list the ECA status for" << std::endl;
   std::cout << "software actions. Furthermore, one can do simple things with a Timing Receiver (snoop for events, inject messages)." <<std::endl;
@@ -164,16 +166,9 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
         if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
         else           {std::cout << std::hex; width = 16; fmt = "0x";}
-        // assemble accept flags config string
-        char acceptFlagsConfigStr[] = "....";
-        if (condition->getAcceptDelayed())  acceptFlagsConfigStr[0] = 'd';
-        if (condition->getAcceptConflict()) acceptFlagsConfigStr[1] = 'c';
-        if (condition->getAcceptEarly())    acceptFlagsConfigStr[2] = 'e';
-        if (condition->getAcceptLate())     acceptFlagsConfigStr[3] = 'l';
         std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "   << fmt << std::setw(width) << std::setfill('0') << condition->getID()
                   << ", mask: "         << fmt << std::setw(width) << std::setfill('0') << condition->getMask()
                   << ", offset: "       << fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
-                  << ", accept: "       << acceptFlagsConfigStr
                   << ", active: "       << std::dec << condition->getActive()
                   << ", destructible: " << condition->getDestructible()
                   << ", owner: "        << condition->getOwner()
@@ -225,6 +220,15 @@ static void displayInfoHW(std::shared_ptr<SAFTd_Proxy> saftd) {
     for (j = gatewareInfo.begin(); j != gatewareInfo.end(); j++) {
       std::cout << "  ---- " << j->second << std::endl;
     } // for j
+    if (pmode & PMODE_VERBOSE) {
+      std::map<std::string, std::map<std::string, std::string> > interfaces = aDevice->getInterfaces();
+      for (auto &interface: interfaces) {
+        std::cout << "Interface: " << interface.first << std::endl;
+        for (auto &name_objpath: interface.second) {
+          std::cout << "   " << std::setw(20) << name_objpath.first << " " << name_objpath.second << std::endl;
+        }
+      }
+    }
     std::cout <<std::endl;
   } //for i
 } // displayInfoHW
@@ -278,6 +282,7 @@ int main(int argc, char** argv)
   // variables attach, remove
   char    *deviceName = NULL;
   char    *devicePath = NULL;
+  int      devicePollIv = 1; // MSI polling interval in ms. only relevant if MSIs needs to be polled
 
   const char *command;
 
@@ -415,8 +420,8 @@ int main(int argc, char** argv)
     } // "snoop"
 
     else if (strcasecmp(command, "attach") == 0) {
-      if (optind+3  != argc) {
-        std::cerr << program << ": expecting exactly one argument: attach <path>" << std::endl;
+      if (optind+3 != argc && optind+4 != argc) {
+        std::cerr << program << ": expecting one or two arguments: attach <path> [<poll-iv>]" << std::endl;
         return 1;
       }
       deviceAttach = true;
@@ -425,16 +430,22 @@ int main(int argc, char** argv)
         return 1;
       } // name
       devicePath = argv[optind+2];
-      std::cout << devicePath << std::endl;
+      // std::cout << devicePath << std::endl;
       if (strlen(devicePath) == 0) {
         std::cerr << program << ": invalid path -- " << argv[optind+2] << std::endl;
         return 1;
       } // path
+      if (optind+4 == argc) {
+        devicePollIv = atoi(argv[optind+3]);
+        if (devicePollIv <= 0) {
+          std::cerr << program << ": invalid MSI polling interval -- " << argv[optind+3] << std::endl;
+          return 1;
+        }
+      }
     } // "attach"
 
     else if (strcasecmp(command, "remove") == 0) {
       deviceRemove = true;
-      std::cout << deviceName << std::endl;
       if (strlen(deviceName) == 0) {
         std::cerr << program << ": invalid name  -- " << argv[optind+2] << std::endl;
         return 1;
@@ -475,7 +486,7 @@ int main(int argc, char** argv)
     // do commands for saftd management first
     // attach device
     if (deviceAttach) {
-      saftd->AttachDevice(deviceName, devicePath);
+      saftd->AttachDevice(deviceName, devicePath, devicePollIv);
     } // attach device
 
     // remove device
@@ -488,9 +499,9 @@ int main(int argc, char** argv)
       // exit the program in a second thread, because the main
       // thread will be stuck waiting for the response from saftd
       // which will never be sent after calling the quit() method
-      std::thread t( [](){usleep(100000);exit(0);} );
+      // std::thread t( [](){usleep(100000);exit(0);} );
       saftd->Quit();
-      t.join();
+      // t.join();
     }
 
     // get a specific device
@@ -500,7 +511,11 @@ int main(int argc, char** argv)
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
     } else {
       if (devices.find(deviceName) == devices.end()) {
-        std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
+        if (deviceRemove) {
+          std::cerr << "Device '" << deviceName << "' was removed" << std::endl;
+        } else {
+          std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
+        }
         return -1;
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
@@ -580,7 +595,12 @@ int main(int argc, char** argv)
     } // eventSnoop (without UNILAC option)
 
   } catch (const saftbus::Error& error) {
-    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+    std::string msg(error.what());
+    if (saftdQuit && msg == "object path \"/de/gsi/saftlib\" not found") {
+      std::cerr << "Quit SAFTd service" << std::endl;
+    } else {
+      std::cerr << "Failed to invoke method: \'" << error.what() << "\'" << std::endl;
+    }
   }
 
   return 0;

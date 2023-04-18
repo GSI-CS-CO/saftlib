@@ -27,14 +27,17 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "interfaces/SAFTd.h"
-#include "interfaces/TimingReceiver.h"
-#include "interfaces/SCUbusActionSink.h"
-#include "interfaces/SCUbusCondition.h"
-#include "interfaces/FunctionGenerator.h" 
-#include "interfaces/MasterFunctionGenerator.h" 
-#include "interfaces/FunctionGeneratorFirmware.h" 
-#include "CommonFunctions.h"
+#include <saftbus/error.hpp>
+
+#include <SAFTd_Proxy.hpp>
+#include <TimingReceiver_Proxy.hpp>
+#include <SCUbusActionSink_Proxy.hpp>
+#include <SCUbusCondition_Proxy.hpp>
+#include <CommonFunctions.hpp>
+
+#include <FunctionGenerator_Proxy.hpp>
+// #include <MasterFunctionGenerator.hpp>
+#include <FunctionGeneratorFirmware_Proxy.hpp>
 
 using namespace saftlib;
 using namespace std;
@@ -134,7 +137,7 @@ static bool nothing_owned(std::shared_ptr<TimingReceiver_Proxy> receiver)
     map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];
     if (!fgs.empty())
       for (auto itr = fgs.begin(); itr != fgs.end(); ++itr) {
-        std::cerr << "trying to own fg " << itr->first << " " << itr->second << std::endl;
+        // std::cerr << "trying to own fg " << itr->first << " " << itr->second << std::endl;
         auto fg = FunctionGenerator_Proxy::create(itr->second);
         fg->Own();
         fg->Disown();
@@ -145,14 +148,14 @@ static bool nothing_owned(std::shared_ptr<TimingReceiver_Proxy> receiver)
   }
   try {
     // Get a list of master function generators on the receiver
-    map<std::string, std::string> mfgs = receiver->getInterfaces()["MasterFunctionGenerator"];
-    if (!mfgs.empty())
-      for (auto itr = mfgs.begin(); itr != mfgs.end(); ++itr) {
-        auto mfg = MasterFunctionGenerator_Proxy::create(itr->second);
-        std::cerr << "trying to own mfg " << itr->first << " " << itr->second << std::endl;
-        mfg->Own();
-        mfg->Disown();
-      }
+    // map<std::string, std::string> mfgs = receiver->getInterfaces()["MasterFunctionGenerator"];
+    // if (!mfgs.empty())
+    //   for (auto itr = mfgs.begin(); itr != mfgs.end(); ++itr) {
+    //     auto mfg = MasterFunctionGenerator_Proxy::create(itr->second);
+    //     std::cerr << "trying to own mfg " << itr->first << " " << itr->second << std::endl;
+    //     mfg->Own();
+    //     mfg->Disown();
+    //   }
   } catch (saftbus::Error &e) {
     std::cerr << "masterfg: " << e.what() << std::endl;
     return false;
@@ -369,7 +372,7 @@ int main(int argc, char** argv)
     
     // Claim the function generator for ourselves
     gen->Own();
-    
+
     // Stop whatever the function generator was doing
     gen->Abort();
     

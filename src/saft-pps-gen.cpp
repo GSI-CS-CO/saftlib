@@ -19,6 +19,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include "CommonFunctions.h"
 
@@ -50,6 +51,7 @@ uint64_t late_counter          = 0;
 uint64_t early_counter         = 0;
 uint64_t conflict_counter      = 0;
 uint64_t delayed_counter       = 0;
+
 
 /* Prototypes */
 /* ==================================================================================================== */
@@ -85,12 +87,12 @@ void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::T
 
 /* Generic counter functions */
 /* ==================================================================================================== */
-void onActionCount(uint64_t count)   { action_counter++; }
-void onOverflowCount(uint64_t count) { overflow_counter++; }
-void onLateCount(uint64_t count)     { late_counter++; }
-void onEarlyCount(uint64_t count)    { early_counter++; }
-void onConflictCount(uint64_t count) { conflict_counter++; }
-void onDelayedCount(uint64_t count)  { delayed_counter++; }
+void onActionCount(uint64_t count)   { action_counter=count; } 
+void onOverflowCount(uint64_t count) { overflow_counter=count; }
+void onLateCount(uint64_t count)     { late_counter=count; }
+void onEarlyCount(uint64_t count)    { early_counter=count; }
+void onConflictCount(uint64_t count) { conflict_counter=count; }
+void onDelayedCount(uint64_t count)  { delayed_counter=count; }
 
 /* Function pps_help() */
 /* ==================================================================================================== */
@@ -188,7 +190,7 @@ int main (int argc, char** argv)
         return (-1);
       }
       std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-      
+
       /* Check if timing receiver is locked */
       wrLocked = receiver->getLocked();
       if (wrLocked)
@@ -250,8 +252,8 @@ int main (int argc, char** argv)
           }
           
           /* Setup conditions */
-          std::shared_ptr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
-          std::shared_ptr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
+          std::shared_ptr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
+          std::shared_ptr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
           
           /* Accept all kinds of events */
           condition_high->setAcceptConflict(true);
@@ -282,19 +284,21 @@ int main (int argc, char** argv)
        /* Get connection */
        std::shared_ptr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
        std::shared_ptr<SCUbusCondition_Proxy> scubus_condition;
-       scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
+       scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
         
        /* Accept every kind of event */
        scubus_condition->setAcceptConflict(true);
        scubus_condition->setAcceptDelayed(true);
        scubus_condition->setAcceptEarly(true);
        scubus_condition->setAcceptLate(true);
+
        std::cout << "ECA configuration done for SCU bus!" << std::endl;
       }
       
       /* Trigger ECA continuously? */ 
       if (!external_trigger)
       {
+        receiver->ToggleActive();
         while(1)
         {
           /* Get time and align next PPS */
@@ -313,6 +317,22 @@ int main (int argc, char** argv)
           /* Wait for the next pulse */
           while(wrNext>receiver->CurrentTime())
           { 
+            /* The following code snippet allows to end the program by pressing Ctrl-D (EOF on stdin).  */
+            /* This allows for a simultaneous deactivation of all conditions such that the ECA has to   */
+            /* be reprogrammed only once.                                                               */
+            /* If the program is instead stopped with Ctrl-C (by sending SIGINT to it), the saftd will  */
+            /* remove all active condition one by one, each time reprogramming the ECA.                 */
+            struct pollfd pfd;
+            pfd.fd = 0; // stdin is always 0
+            pfd.events = POLLIN;
+            if (poll(&pfd,1,0)==1) {
+              char ch;
+              if (read(0,&ch,1)==0) {
+                receiver->InactivateAll(); /* inactivate all owned conditions */
+                return(0);
+              }
+            }
+
             /* Sleep 100ms to prevent too much Etherbone traffic */
             usleep(100000);
             
@@ -331,7 +351,7 @@ int main (int argc, char** argv)
         /* Setup SoftwareActionSink */
         std::cout << "Waiting for timing events..." << std::endl;
         std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(true, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
+        std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
         condition->SigAction.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
         
         /* Accept all kinds of events */
@@ -348,6 +368,7 @@ int main (int argc, char** argv)
         sink->ConflictCount.connect(sigc::ptr_fun(&onConflictCount));
         sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
         
+        receiver->ToggleActive();
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
         while (true) {
           saftlib::wait_for_signal();

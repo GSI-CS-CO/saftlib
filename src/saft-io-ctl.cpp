@@ -40,6 +40,7 @@
 #include <inttypes.h>
 #include <string>
 #include <unistd.h>
+#include <poll.h>
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -52,8 +53,9 @@
 
 #include "CommonFunctions.h"
 
-#include "drivers/eca_flags.h"
-#include "drivers/io_control_regs.h"
+#include "eca_flags.h"
+#include "io_control_regs.h"
+
 
 /* Namespace */
 /* ==================================================================================================== */
@@ -151,12 +153,14 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
 
     /* Setup condition */
     std::shared_ptr<OutputCondition_Proxy> condition;
-    if (translate_mask) { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, tr_mask(eventMask), io_offset, io_edge)); }
-    else                { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, eventMask, io_offset, io_edge)); }
+    if (translate_mask) { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(false, eventID, tr_mask(eventMask), io_offset, io_edge)); }
+    else                { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(false, eventID, eventMask, io_offset, io_edge)); }
     condition->setAcceptConflict(io_AcceptConflict);
     condition->setAcceptDelayed(io_AcceptDelayed);
     condition->setAcceptEarly(io_AcceptEarly);
     condition->setAcceptLate(io_AcceptLate);
+
+    output_proxy->ToggleActive();
 
     /* Disown and quit or keep waiting */
     if (disown) { condition->Disown(); }
@@ -559,7 +563,7 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
 {
   /* Helpers (connect proxies in a vector) */
   std::vector <std::shared_ptr<SoftwareCondition_Proxy> > proxies;
-  std::vector <std::shared_ptr<SoftwareActionSink_Proxy> > sinks;
+  std::shared_ptr<SoftwareActionSink_Proxy>  sink;
 
   /* Get inputs and snoop */
   try
@@ -583,8 +587,8 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         {
           if (!setup_only)
           {
-            sinks.push_back( SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink("")));
-            proxies.push_back( SoftwareCondition_Proxy::create(sinks.back()->NewCondition(true, prefix, -2, IO_CONDITION_OFFSET)));
+            if (!sink) sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+            proxies.push_back( SoftwareCondition_Proxy::create(sink->NewCondition(false, prefix, -2, IO_CONDITION_OFFSET)));
             proxies.back()->SigAction.connect(sigc::ptr_fun(&io_catch_input));
             proxies.back()->setAcceptConflict(true);
             proxies.back()->setAcceptDelayed(true);
@@ -614,6 +618,9 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         }
       }
     }
+    if (sink) {
+      sink->ToggleActive();
+    }
 
     /* Disabled? */
     if (mode) { return (__IO_RETURN_SUCCESS); }
@@ -626,7 +633,23 @@ static int io_snoop(bool mode, bool setup_only, bool disable_source, uint64_t pr
         std::cout << "IO             Edge     Flags       ID                  Timestamp           Formatted Date               " << std::endl;
         std::cout << "---------------------------------------------------------------------------------------------------------" << std::endl;
         while(true) {
-          saftlib::wait_for_signal();
+          /* The following code snippet allows to end the program by pressing Ctrl-D (EOF on stdin).  */
+          /* This allows for a simultaneous deactivation of all conditions such that the ECA has to   */
+          /* be reprogrammed only once.                                                               */
+          /* If the program is instead stopped with Ctrl-C (by sending SIGINT to it), the saftd will  */
+          /* remove all active condition one by one, each time reprogramming the ECA.                 */
+          struct pollfd pfd;
+          pfd.fd = 0; // stdin is always 0
+          pfd.events = POLLIN;
+          if (poll(&pfd,1,0)==1) {
+            char ch;
+            if (read(0,&ch,1)==0) {
+              receiver->InactivateAll(); /* inactivate all owned conditions */
+              return(0);
+            }
+          }
+
+          saftlib::wait_for_signal(20);
         }
       }
     }
@@ -752,14 +775,14 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Output enable is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
 
         /* Check if OE option is available */
         if (!(output_proxy->getOutputEnableAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Output enable does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -770,13 +793,13 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Input termination is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
         /* Check if TERM option is available */
         if (!(input_proxy->getInputTerminationAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Input termination option does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -786,13 +809,13 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       {
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Special purpose out is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
         /* Check if SPEC OUT option is available */
         if (!(output_proxy->getSpecialPurposeOutAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Special purpose out does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -802,13 +825,13 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       {
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Special purpose in is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
         /* Check if SPEC OUT option is available */
         if (!(input_proxy->getSpecialPurposeInAvailable()))
         {
-          std::cout << "Error: This option does not exist for this IO!" << std::endl;
+          std::cout << "Error: Special purpose in does not exist for this IO!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -828,7 +851,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
       {
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Gate is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -839,7 +862,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Mux is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -850,7 +873,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: PPS is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -861,7 +884,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_INPUT)
         {
-          std::cout << "Error: This option is not available for inputs!" << std::endl;
+          std::cout << "Error: Setting drive value is not available for inputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
@@ -872,7 +895,7 @@ static int io_setup (int io_oe, int io_term, int io_spec_out, int io_spec_in, in
         /* Plausibility check */
         if (io_type == IO_CFG_FIELD_DIR_OUTPUT)
         {
-          std::cout << "Error: This option is not available for outputs!" << std::endl;
+          std::cout << "Error: Setting stable time is not available for outputs!" << std::endl;
           return (__IO_RETURN_FAILURE);
         }
       }
