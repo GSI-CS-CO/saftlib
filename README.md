@@ -6,6 +6,9 @@ In a typcal use case, one process (saftbusd) shares access to these hardware res
 Clients connect to saftbusd using a C++ library of proxy objects which represent the shared resources.
 The user API of for shared resources hides device register access and provides high-level functionality.
 
+#### API documentation
+Generated with doxygen from the master branch: [https://gsi-cs-co.github.io/saftlib](https://gsi-cs-co.github.io/saftlib)
+
 #### Compile and install
     ./autogen.sh
     ./configure 
