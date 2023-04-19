@@ -399,8 +399,9 @@ libbg_firmware_proxy_include_HEADERS = \
 
 
 bin_PROGRAMS = 	\
+	soft-tr wait-msi \
 	saftbusd saftbusd-sda saftbusd-noda	saftbus-ctl \
-	software-tr soft-tr wait-msi \
+	saft-testbench saft-software-tr \
 	saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd saft-standalone-mbox saft-roundtrip-latency saft-standalone-roundtrip-latency \
 	saft-burst-ctl saft-fg-ctl saft-mfg-ctl
 
@@ -427,10 +428,10 @@ saftbus_ctl_SOURCES = saftbus/saftbus-ctl.cpp
 
 
 # software timing receiver program
-software_tr_sdb_DATA = src/software-tr.sdb
-software_tr_sdbdir   = $(datadir)/saftlib
-software_tr_LDADD    = $(EB_LIBS) -lpthread  -ldl #-lltdl
-software_tr_SOURCES  = src/software-tr.cpp 
+saft_software_tr_sdb_DATA = src/software-tr.sdb
+saft_software_tr_sdbdir   = $(datadir)/saftlib
+saft_software_tr_LDADD    = $(EB_LIBS) -lpthread  -ldl #-lltdl
+saft_software_tr_SOURCES  = src/saft-software-tr.cpp 
 
 # another software timing receiver program
 soft_tr_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl #-lltdl
@@ -440,6 +441,8 @@ soft_tr_SOURCES  = src/soft-tr.cpp
 wait_msi_LDADD    = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl #-lltdl
 wait_msi_SOURCES  = src/wait-msi.cpp 
 
+saft_testbench_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -lpthread -ldl #-lltdl
+saft_testbench_SOURCES = src/saft-testbench.cpp
 
 saft_ctl_LDADD   = $(EB_LIBS)  $(SIGCPP_LIBS) -lsaftbus libsaft-proxy.la -lpthread -ldl #-lltdl
 saft_ctl_SOURCES = src/saft-ctl.cpp
