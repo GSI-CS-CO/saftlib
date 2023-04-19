@@ -11,6 +11,6 @@ var searchData=
   ['instruct_8',['instruct',['../classsaftlib_1_1BurstGenerator.html#a577314993bada482c2920ff172063248',1,'saftlib::BurstGenerator']]],
   ['interface_5fno_5ffrom_5fname_9',['interface_no_from_name',['../classsaftbus_1_1Proxy.html#a8eb5f927316e33d4dd4ab84267adf073',1,'saftbus::Proxy']]],
   ['io_10',['Io',['../classsaftlib_1_1Io.html',1,'saftlib']]],
-  ['iocontrol_11',['IoControl',['../classsaftlib_1_1IoControl.html',1,'saftlib']]],
+  ['iocontrol_11',['IoControl',['../classIoControl.html',1,'IoControl'],['../classsaftlib_1_1IoControl.html',1,'saftlib::IoControl']]],
   ['iosource_12',['IoSource',['../classsaftbus_1_1IoSource.html',1,'saftbus']]]
 ];

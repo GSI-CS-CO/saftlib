@@ -4,5 +4,6 @@ var searchData=
   ['deserializer_1',['Deserializer',['../classsaftbus_1_1Deserializer.html',1,'saftbus']]],
   ['destroy_2',['Destroy',['../classsaftlib_1_1Owned.html#a2b11219ef81bac010e4453c9193873a7',1,'saftlib::Owned']]],
   ['destroyed_3',['Destroyed',['../classsaftlib_1_1Owned.html#af862c85d43711cfae99d864a6a77e07d',1,'saftlib::Owned']]],
-  ['disown_4',['Disown',['../classsaftlib_1_1Owned.html#ae3b02c4fb8d41c6ed6d31d3298458a3a',1,'saftlib::Owned']]]
+  ['device_4',['Device',['../classDevice.html',1,'']]],
+  ['disown_5',['Disown',['../classsaftlib_1_1Owned.html#ae3b02c4fb8d41c6ed6d31d3298458a3a',1,'saftlib::Owned']]]
 ];

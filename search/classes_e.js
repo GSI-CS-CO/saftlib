@@ -1,8 +1,11 @@
 var searchData=
 [
   ['walkentry_0',['WalkEntry',['../structsaftlib_1_1WalkEntry.html',1,'saftlib']]],
-  ['watchdog_1',['Watchdog',['../classsaftlib_1_1Watchdog.html',1,'saftlib']]],
-  ['wbmactionsink_2',['WbmActionSink',['../classsaftlib_1_1WbmActionSink.html',1,'saftlib']]],
-  ['wbmcondition_3',['WbmCondition',['../classsaftlib_1_1WbmCondition.html',1,'saftlib']]],
-  ['whiterabbit_4',['WhiteRabbit',['../classsaftlib_1_1WhiteRabbit.html',1,'saftlib']]]
+  ['walker_1',['Walker',['../structSoftwareECA_1_1Walker.html',1,'SoftwareECA']]],
+  ['watchdog_2',['Watchdog',['../classsaftlib_1_1Watchdog.html',1,'saftlib']]],
+  ['watchdogmutex_3',['WatchdogMutex',['../classWatchdogMutex.html',1,'']]],
+  ['wbmactionsink_4',['WbmActionSink',['../classsaftlib_1_1WbmActionSink.html',1,'saftlib']]],
+  ['wbmcondition_5',['WbmCondition',['../classsaftlib_1_1WbmCondition.html',1,'saftlib']]],
+  ['whiterabbit_6',['WhiteRabbit',['../classsaftlib_1_1WhiteRabbit.html',1,'saftlib']]],
+  ['wrppsgenerator_7',['WrPpsGenerator',['../classWrPpsGenerator.html',1,'']]]
 ];
