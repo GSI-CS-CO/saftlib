@@ -19,6 +19,21 @@ int count = 0;
 void on_MSI(uint32_t value) {
 	static auto last = std::chrono::steady_clock::now();
 	       auto now  = std::chrono::steady_clock::now();
+
+	// make sure that no MSI got lost
+	static bool first = true;
+	static int last_value = 0;
+	if (first) {
+		first = false;
+	} else {
+		int diff = value-last_value;
+		if (diff != 1) {
+			std::cerr << "unexpected value diff: " << diff << ". Did we miss an MSI?" << std::endl;
+		}
+	}
+	last_value = value;
+
+
 	if (count) {
 		auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now-last).count();
 		// std::cout << diff << std::endl;
