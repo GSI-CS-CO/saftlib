@@ -35,7 +35,7 @@ Version 3 of saftlib has major internal changes compared to version 2, but aims 
     - Provide a plugin mechanism to install/remove services at runtime for more flexible customization of TimingReceiver hardware, e.g. LM32 firmware and saftlib driver.
   - Startup of the daemon
     - A wild card character is allowed for the device name and etherbone-path: `saftbusd libsaft-service.so tr*:dev/wbm*` will attach all matching devices.
-    - `saftbusd libsaft-service.so tr0:dev/wbm0`  (instead of `saftd tr0:dev/wbm0` in saftlib version 2).
+    - Command to start the services is `saftbusd libsaft-service.so tr0:dev/wbm0`  (a `saftd` script that wraps the call to saftbusd is provided, so `saftd tr0:dev/wbm0` like in version 2 is still possible).
     - Drivers for LM32 firmware (like burst-generator and function-generator) are not loaded by default. They need to be added explicitly when starting saftbusd (see [Firmware Drivers](#firmware-drivers)).
       - `saftbusd libsaft-servcie.so tr0:dev/wbm0 libfg-firmware-service.so tr0` if the function generator is needed on a SCU.
       - `saftbusd libsaft-service.so tr0:dev/wbm0 libbg-firmware-service.so tr0` if the burst generator is needed on a TimingReceiver.
