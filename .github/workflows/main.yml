@@ -55,7 +55,7 @@ jobs:
       run: |
         ./autogen.sh
         ./configure
-        make -j$(nproc)
+        make
         sudo make install
         sudo ldconfig
         
