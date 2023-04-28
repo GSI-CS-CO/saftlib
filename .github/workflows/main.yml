@@ -2,11 +2,12 @@ name: CI Basic Build
 
 on:
   push:
-    branches: [ "master", "github_actions_development" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "master", "github_actions_development" ]
+    branches: [ "master" ]
 
 jobs:
+
   doxygen:
 
     runs-on: ubuntu-latest
@@ -27,7 +28,11 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
 
     steps:
     - uses: actions/checkout@v3
@@ -50,7 +55,7 @@ jobs:
         make etherbone
         sudo make etherbone-install
         cd ..
-      
+
     - name: Configure and compile saftlib
       run: |
         ./autogen.sh
@@ -58,8 +63,12 @@ jobs:
         make
         sudo make install
         sudo ldconfig
-        
-    - name: Run test cases
+
+    - name: Clean saftlib
+      run: make clean
+
+    - name: Test parallel compilation
       run: |
-        cd tests/saft-testbench
-        make
+        make saftlib -j$(nproc)
+        sudo make install
+        sudo ldconfig
