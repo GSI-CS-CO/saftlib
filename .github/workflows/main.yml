@@ -69,6 +69,6 @@ jobs:
 
     - name: Test parallel compilation
       run: |
-        make saftlib -j$(nproc)
+        make -j$(nproc)
         sudo make install
         sudo ldconfig
