@@ -22,7 +22,6 @@
 #include "server.hpp"
 #include "client.hpp"
 #include "service.hpp"
-#include "process.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -47,21 +46,6 @@ void usage(char *argv0) {
 		std::cout << std::endl;
 		std::cout << " -h | --help         print this help and exit." << std::endl;
 		std::cout << std::endl;
-		std::cout << " -r <priority>       set scheduling policy to round robin with given priority." << std::endl;
-		std::cout << "                     priority must be in the range [" << sched_get_priority_min(SCHED_RR) << " (lowest) .. " << sched_get_priority_max(SCHED_RR) << " (highest)]" << std::endl;
-		std::cout << std::endl;
-		std::cout << " -f <priority>       set scheduling policy to fifo with given priority." << std::endl;
-		std::cout << "                     priority must be in the range [" << sched_get_priority_min(SCHED_FIFO) << " (lowest) .. " << sched_get_priority_max(SCHED_FIFO) << " (highest)]" << std::endl;
-		std::cout << std::endl;
-		std::cout << " -a <cpu>{,<cpu>}    set affinity of this process to given cpus." << std::endl;
-		std::cout << std::endl;
-		std::cout << " -io <class>,<data>  set io priority class and data of this process." << std::endl;
-		std::cout << "                     class=0 : none" << std::endl;
-		std::cout << "                     class=1 : real time (highest prio), data in range [0 (highest) .. 7 (lowest)]" << std::endl;
-		std::cout << "                     class=2 : best effort, data in range [0 (highest) .. 7 (lowest)]" << std::endl;
-		std::cout << "                     class=3 : idle (lowest prio)" << std::endl;
-		std::cout << std::endl;
-		
 }
 
 
@@ -86,21 +70,6 @@ int main(int argc, char *argv[]) {
 			if (argvi == "-h" || argvi == "--help") {
 				usage(argv[0]);
 				return 0;
-			} else if (argvi == "-r" || argvi == "-f" || argvi == "-a" || argvi == "-io") {
-				if (++i < argc) {
-					if (argvi == "-a") {
-						if (!set_cpu_affinity(argvi, argv[i])) return 1;
-					} else if (argvi == "-io") {
-						if (!set_ioprio(argv[i])) return 1;
-					}
-					else {
-						if (!set_realtime_scheduling(argvi, argv[i])) return 1;
-					}
-				} else {
-					std::cerr << "Error: expect priority after " << argvi << std::endl;
-					return 1;
-				}
-				continue;
 			}
 			bool argvi_is_plugin = (argvi.size()>3 && argvi.find(".so") == (argvi.size()-3));
 			if (argvi_is_plugin) {

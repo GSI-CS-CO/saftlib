@@ -60,8 +60,7 @@ lib_LTLIBRARIES = \
 saftbus_includedir = $(includedir)/saftbus
 
 libsaftbus_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
-libsaftbus_la_SOURCES = \
-	saftbus/process.cpp  \
+libsaftbus_la_SOURCES =  \
 	saftbus/loop.cpp      \
 	saftbus/saftbus.cpp    \
 	saftbus/error.cpp       \
@@ -70,8 +69,7 @@ libsaftbus_la_SOURCES = \
 	saftbus/plugins.cpp        \
 	saftbus/server.cpp             
 
-saftbus_include_HEADERS =    \
-	saftbus/process.hpp       \
+saftbus_include_HEADERS =     \
 	saftbus/loop.hpp           \
 	saftbus/error.hpp           \
 	saftbus/saftbus.hpp          \
@@ -332,7 +330,7 @@ endif
 
 libfg_firmware_service_la_LDFLAGS = -Wl,--export-dynamic 
 libfg_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
-libfg_firmware_service_la_LIBADD =  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la  -ldl
+libfg_firmware_service_la_LIBADD =  $(SIGCPP_LIBS) libsaftbus.la libsaft-service.la  -ldl
 libfg_firmware_service_la_SOURCES =        \
 	src/FunctionGenerator.cpp             \
 	src/FunctionGenerator_Service.cpp      \
@@ -353,7 +351,7 @@ libfg_firmware_service_include_HEADERS =   \
 	src/FunctionGeneratorFirmware.hpp          \
 	src/FunctionGeneratorFirmware_Service.hpp
 
-libfg_firmware_proxy_la_LIBADD  =  $(SIGCPP_LIBS) -lsaftbus
+libfg_firmware_proxy_la_LIBADD  =  $(SIGCPP_LIBS) libsaftbus.la
 libfg_firmware_proxy_la_SOURCES =             \
 	src/FunctionGenerator_Proxy.cpp          \
 	src/MasterFunctionGenerator_Proxy.cpp     \
@@ -372,7 +370,7 @@ bgfirmware_DATA = firmware-bin/burstgen.bin
 EXTRA_DIST += firmware-bin/burstgen.bin
 
 libbg_firmware_service_la_CPPADD = $(SIGCPP_CFLAGS)
-libbg_firmware_service_la_LIBADD =  $(SIGCPP_LIBS) -lsaftbus libsaft-service.la -ldl
+libbg_firmware_service_la_LIBADD =  $(SIGCPP_LIBS) libsaftbus.la libsaft-service.la -ldl
 libbg_firmware_service_la_SOURCES = \
 	src/BurstGenerator.cpp                   \
 	src/BurstGenerator_Service.cpp            \
@@ -383,7 +381,7 @@ libbg_firmware_service_include_HEADERS = \
 	src/BurstGenerator.hpp                        \
 	src/BurstGenerator_Service.hpp                 
 
-libbg_firmware_proxy_la_LIBADD  =  $(SIGCPP_LIBS) -lsaftbus
+libbg_firmware_proxy_la_LIBADD  =  $(SIGCPP_LIBS) libsaftbus.la
 libbg_firmware_proxy_la_SOURCES =   \
 	src/BurstGenerator_Proxy.cpp                   
 

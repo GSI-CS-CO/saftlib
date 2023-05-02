@@ -13,8 +13,6 @@
 #include <cerrno>
 #include <cstring>
 
-#include <saftbus/process.hpp>
-
 std::chrono::time_point<std::chrono::steady_clock> start, stop;
 std::vector<int> histogram(10000);
 
@@ -29,25 +27,10 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 } 
 
 int main(int argc, char *argv[]) {
-	if (argc < 4) {
+	if (argc != 4) {
 		std::cerr << "Measure several times the duration from InjectEvent until callback" << std::endl;
 		std::cerr << "function and create a histogram of the measurment results" << std::endl;
-		std::cerr << "usage: " << argv[0] << " <eb-device> <number-of-measurements> <histogram-filename> [OPTIONS] " << std::endl;
-		std::cout << "options: " << std::endl;
-		std::cout << std::endl;
-		std::cout << " -r <priority>    set scheduling policy to round robin with given priority." << std::endl;
-		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_RR) << " .. " << sched_get_priority_max(SCHED_RR) << "]" << std::endl;
-		std::cout << std::endl;
-		std::cout << " -f <priority>    set scheduling policy to fifo with given priority." << std::endl;
-		std::cout << "                  priority must be in the range [" << sched_get_priority_min(SCHED_FIFO) << " .. " << sched_get_priority_max(SCHED_FIFO) << "]" << std::endl;
-		std::cout << std::endl;
-		std::cout << " -a <cpu>         set affinity of this process to cpu." << std::endl;
-		std::cout << std::endl;
-		std::cout << " -io <class>,<data>  set io priority class and data of this process." << std::endl;
-		std::cout << "                     class=0 : none" << std::endl;
-		std::cout << "                     class=1 : real time (highest prio), data in range [0 (highest) .. 7 (lowest)]" << std::endl;
-		std::cout << "                     class=2 : best effort, data in range [0 (highest) .. 7 (lowest)]" << std::endl;
-		std::cout << "                     class=3 : idle (lowest prio)" << std::endl;
+		std::cerr << "usage: " << argv[0] << " <eb-device> <number-of-measurements> <histogram-filename>" << std::endl;
 		std::cout << std::endl;
 		std::cerr << "   example: " << argv[0] << " dev/wbm0 1000 histogram.dat" << std::endl;
 		return 1;
@@ -72,25 +55,6 @@ int main(int argc, char *argv[]) {
 		if (!Nin) {
 			std::cerr << "cannot read number-of-measurements from " << argv[2] << std::endl;
 			return 1;
-		}
-
-		for (int i = 4; i < argc; ++i) {
-			std::string argvi(argv[i]);
-			if (argvi == "-r" || argvi == "-f" || argvi == "-a" || argvi == "-io") {
-				if (++i < argc) {
-					if (argvi == "-a") {
-						if (!set_cpu_affinity(argvi, argv[i])) return 1;
-					} else if (argvi == "-io") {
-						if (!set_ioprio(argv[i])) return 1;
-					}
-					else {
-						if (!set_realtime_scheduling(argvi, argv[i])) return 1;
-					}
-				} else {
-					std::cerr << "Error: expect priority after " << argvi << std::endl;
-					return 1;
-				}
-			}
 		}
 
 		for (int i = 0; i < N; ++i) {
