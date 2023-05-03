@@ -33,20 +33,20 @@ namespace saftlib {
 	}
 
 	Owned::~Owned() {
-		if (service) {
-			if (!inhibit_signals) {
-				Destroyed.emit();
-			}
-		}
+		// if (service) {
+		// 	if (!inhibit_signals) {
+		// 		Destroyed.emit();
+		// 	}
+		// }
 	}
 
 	void Owned::set_service(saftbus::Service *serv) {
 		service = serv;
 	}
 	void Owned::release_service() {
-		if (!inhibit_signals) {
-			Destroyed.emit();
-		}
+		// if (!inhibit_signals) {
+		// 	Destroyed.emit();
+		// }
 		service = nullptr;
 		cont = nullptr;
 	}
@@ -110,6 +110,6 @@ namespace saftlib {
 		}
 	}
  
-	bool Owned::inhibit_signals = false;
+	// bool Owned::inhibit_signals = false;
 
 }
