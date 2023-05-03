@@ -169,6 +169,9 @@ namespace saftlib {
       // send the instruction code to LM32
       device.write(ram_base + SHM_CMD, EB_DATA32, code);
 
+      // reset response (it must be updated with non-zero value by msi_handler)
+      response = 0;
+
       std::cerr << "BurstGenerator: method call instruct(0x" << std::hex << code << std::dec << ") succeeded." << std::endl;
       return EB_OK;
     }

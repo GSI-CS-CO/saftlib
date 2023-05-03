@@ -612,9 +612,15 @@ static int  bg_invoke_async(std::shared_ptr<BurstGenerator_Proxy> bg, uint32_t i
     return -1;
   }
 
-  saftlib::wait_for_signal(3000);         // wait for response or time-out (burst generator checks its mailbox every second)
+  uint32_t response = 0;
+  int n_timeout = 3;
 
-  uint32_t response = bg->getResponse();  // check response
+  while (!response && n_timeout) {
+    if (saftlib::wait_for_signal(1000) == 0)  // wait for response or time-out (burst generator checks its mailbox every second)
+      --n_timeout;                            // count time-out
+    response = bg->getResponse();             // check response
+  }
+
   uint32_t ret_code = response & 0xFFFF;
   if (ret_code != inst_code)
   {
