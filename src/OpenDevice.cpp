@@ -56,7 +56,7 @@ bool OpenDevice::poll_msi(bool only_once) {
 		cycle.read_config(0x48, EB_DATA32, &msi_cnt);
 		cycle.close();
 		if (msi_cnt & 1) {
-			msi_adr = msi_adr & mask;
+			msi_adr = first + (msi_adr & mask);
 			needs_polling = true; // this value is 
 			found_msi = true;
 			saftd->write(msi_adr, EB_DATA32, msi_dat); // this functon is normally called by etherbone::Socket when it receives an MSI
