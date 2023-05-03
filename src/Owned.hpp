@@ -102,7 +102,7 @@ namespace saftlib {
 		// @saftbus-signal
 		sigc::signal<void> Destroyed;
 
-		static bool inhibit_signals;
+		// static bool inhibit_signals;
 
 	protected:
 		/// @brief Throw an exception if the caller is not the owner
