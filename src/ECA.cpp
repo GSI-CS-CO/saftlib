@@ -596,6 +596,7 @@ ECA::~ECA()
 		for (auto &channel: ECAchannels) {
 			for (auto &actionSink: channel) {
 				if (actionSink) {
+					actionSink->Owned::release_service();
 					// std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
 					try {
 						container->remove_object(actionSink->getObjectPath());
