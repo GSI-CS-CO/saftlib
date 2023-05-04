@@ -43,11 +43,6 @@ namespace saftbus {
 		std::function<void()> destruction_callback; // a funtion can be attatched here that is called whenever the service is destroyed
 		bool destroy_if_owner_quits; 
 		void remove_signal_fd(int fd);
-		~Impl()  {
-			if (destruction_callback) {
-				destruction_callback();
-			}
-		}
 	};
 
 	struct Container::Impl {
@@ -124,6 +119,9 @@ namespace saftbus {
 		d->destroy_if_owner_quits = destroy_if_owner_quits;
 	}
 	Service::~Service() {
+		if (d->destruction_callback) {
+			d->destruction_callback();
+		}
 	}
 
 	int Service::get_owner() {
