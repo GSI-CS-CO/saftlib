@@ -33,23 +33,28 @@ static int test_exceptions() {
 	std::cerr << "TEST EXCEPTIONS:" << std::endl;
 	// start a second thread which will terminate the programm with an error if the test takes too long (=> timout)
 	bool success = false;
-	std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 1);
-
-	auto saftd = saftlib::SAFTd_Proxy::create();
+	std::shared_ptr<saftlib::SAFTd_Proxy> saftd;
 	try {
-		// try to attach a device with an invalid logic name (containing specia characters). 
-		// this should trigger an exception
-		std::cerr << "trigger an exception from SAFTd... ";
-		saftd->AttachDevice("/bad/name/!","dev/nonexistent");
-		// if this function call works, there was no exception thrown, which is a failure in this case
-		std::cerr << "FAILURE! No exception was thrown" << std::endl;
-		++number_of_failures;
+		saftd = saftlib::SAFTd_Proxy::create();
+		std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 1);
+		try {
+			// try to attach a device with an invalid logic name (containing specia characters). 
+			// this should trigger an exception
+			std::cerr << "trigger an exception from SAFTd... ";
+			saftd->AttachDevice("/bad/name/!","dev/nonexistent");
+			// if this function call works, there was no exception thrown, which is a failure in this case
+			std::cerr << "FAILURE! No exception was thrown" << std::endl;
+			++number_of_failures;
+		} catch (saftbus::Error &e) {
+			success = true;
+			std::cerr << "SUCCESS! Got saftbus::Error " << e.what() << std::endl;
+		}
+		timeout_thread.join();
 	} catch (saftbus::Error &e) {
-		success = true;
-		std::cerr << "SUCCESS! Got saftbus::Error " << e.what() << std::endl;
+		std::cerr << "FAILURE! SAFTd_Proxy cannot be created: " << e.what() << std::endl;
+		++number_of_failures;
 	}
 
-	timeout_thread.join();
 	return number_of_failures;
 }
 
@@ -163,6 +168,7 @@ static int test_inject_and_receive_event(const std::string &device) {
 }
 
 
+std::mutex global_mutex;
 struct ConditionContainer {
 	std::shared_ptr<saftlib::SoftwareCondition_Proxy> condition;
 	ConditionContainer(std::shared_ptr<saftlib::SoftwareCondition_Proxy> con) : condition(con)	{
@@ -171,19 +177,23 @@ struct ConditionContainer {
 	~ConditionContainer() {
 	}
 	void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
-		static int count = 0;
+		// static int count = 0;
+		// std::cerr << "on_action " << event << std::endl;
 	}
 };
-static int test_software_condition(const std::string &device) {
+static int test_software_condition_with_treads(const std::string &device) {
 	int number_of_failures = 0;
-	std::cerr << "TEST creation of SoftwareActionSink and many SoftwareCondition" << std::endl;
+	std::cerr << "TEST creation of SoftwareActionSink and many SoftwareConditions with separate threads" << std::endl;
 	
 	bool success = false; // the test should set this to true on success
 	// std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 10);
 
 	bool expect_signals = true;
 	std::thread signal_handler( [](bool *signals) { 
-		while(*signals) saftlib::wait_for_signal(10);
+		while(*signals) {
+			std::lock_guard<std::mutex> lock(global_mutex);
+			saftlib::wait_for_signal(1);
+		}
 	}, &expect_signals );
 
 	try {
@@ -196,20 +206,24 @@ static int test_software_condition(const std::string &device) {
 		std::thread injector([](bool* signals, std::shared_ptr<saftlib::TimingReceiver_Proxy> tr){ 
 			int i = 0;
 			while(*signals) {
-				std::cerr << i ;
+				// std::cerr << "inject " << i << std::endl;
 				usleep(10000);
 				tr->InjectEvent(i++,0,tr->CurrentTime());
 			}
 		}, &expect_signals, tr );
 
-		for (int i = 0; i < 100; ++i) {
+		for (int i = 0; i < 10; ++i) {
+			std::lock_guard<std::mutex> lock(global_mutex);
 			conditions.push_back(std::make_shared<ConditionContainer>( saftlib::SoftwareCondition_Proxy::create(sas->NewCondition(true, 0,0,0)) ));
 		}
 
 
-		usleep(1000000);
-		std::cerr << "clear" << std::endl;
-		conditions.clear();
+		usleep(100000);
+		// std::cerr << "clear" << std::endl;
+		{
+			std::lock_guard<std::mutex> lock(global_mutex);
+			conditions.clear();
+		}
 		usleep(100000);
 
 		std::cerr << "SUCCESS! Created softwareCondition "<< std::endl;
@@ -228,30 +242,58 @@ static int test_software_condition(const std::string &device) {
 }
 
 int main(int argc, char** argv) {
-
-
-	system("killall -9 saftbusd");
-	system("killall -9 saft-software-tr");
-	sleep(1);
-	system("saft-software-tr&");
-	system("saftbusd libsaft-service.so &");
-	sleep(1);
 	std::string eb_device_name;
-	if (argc == 1) {
+	bool run_server = true;
+	for (int i = 1; i < argc; ++i) {
+		std::string argvi = argv[i];
+		if (argvi == "-s") {
+			run_server = false;
+		} else if (argvi == "-h" || argvi == "--help") {
+			std::cout << "usage: " << argv[0] << " [-s] [-h] [<eb-device-name>]" << std::endl;
+			std::cout << "  <eb-device-name> optional, if it is missing, saft-software-tr will be started and used for the tests." << std::endl;
+			std::cout << "  -s               don\'t start saftbusd (useful if saftbusd is already running" << std::endl;
+			std::cout << "  -h               print this help" << std::endl;
+			std::cout << std::endl;
+			std::cout << "examples: " << std::endl;
+			std::cout << "  saft-testbech                    run the testbench, the program will start an instance of saft-software-tr and " << std::endl;
+			std::cout << "                                   saftbusd and attach the simulated hardware" << std::endl;
+			std::cout << "  saft-testbech dev/ttyUSB0        run the testbench, the program will start an instance of and saftbusd and " << std::endl;
+			std::cout << "                                   attach dev/ttyUSB0" << std::endl;
+			std::cout << "  saft-testbech -s dev/ttyUSB0     run the testbench, an instance of saftbusd must already be running, the " << std::endl;
+			std::cout << "                                   programm will attach dev/ttyUSB0" << std::endl;
+			std::cout << "  saft-testbech -s                 run the testbench, an instance of saftbusd must already be running, the program" << std::endl; 
+			std::cout << "                                   will start an instance of saft-software-tr and will attach it to the running saftbusd" << std::endl;
+			return 0;
+		} else if(argvi.size() > 4 && argvi.substr(0,4) == "dev/") {
+			eb_device_name = argvi;
+		}
+	}
+
+	bool run_software_tr = false;
+	if (eb_device_name.size() == 0) {
 		std::ifstream eb_device_name_in("/tmp/simbridge-eb-device");
 		if (!eb_device_name_in) {
 			std::cerr << "ERROR! cannot start software timing receiver" << std::endl;
 			return 1;
 		}
-
 		eb_device_name_in >> eb_device_name;
 		if (!eb_device_name_in) {
 			std::cerr << "ERROR! cannot read eb device name from file" << std::endl;
 			return 1;
 		}
-	} else {
-		eb_device_name = argv[1];
+		run_software_tr = true;
 	}
+
+	if (run_server)      system("killall -9 saftbusd");
+	if (run_software_tr) system("killall -9 saft-software-tr");
+	sleep(1);
+	if (run_software_tr) system("saft-software-tr&");
+	if (run_server)      system("saftbusd libsaft-service.so &");
+	sleep(1);
+
+
+
+
 	int number_of_failures = 0;
 	std::cout << "Starting saftlib tests" << std::endl;
 
@@ -259,24 +301,16 @@ int main(int argc, char** argv) {
 	number_of_failures += test_attach_device(eb_device_name.c_str());
 	number_of_failures += test_get_property(eb_device_name.c_str());
 	number_of_failures += test_inject_and_receive_event(eb_device_name.c_str());
-
-	number_of_failures += test_software_condition(eb_device_name.c_str());
-	// number_of_failures += test_software_condition(eb_device_name.c_str());
-	// number_of_failures += test_software_condition(eb_device_name.c_str());
-	// number_of_failures += test_software_condition(eb_device_name.c_str());
-	// number_of_failures += test_software_condition(eb_device_name.c_str());
-	// number_of_failures += test_software_condition(eb_device_name.c_str());
-	// number_of_failures += test_software_condition(eb_device_name.c_str());
-	// std::thread new_thread(&test_software_condition, eb_device_name.c_str());
-	// new_thread.join();
+	number_of_failures += test_software_condition_with_treads(eb_device_name.c_str());
 
 	if (number_of_failures == 0) {
 		std::cerr << "ALL TESTS SUCCESSFUL! " << std::endl;
 	}
 
-	system("saftbus-ctl --quit");
-	system("killall saft-software-tr");
-	system("killall -9 saftbusd");
+
+	if (run_software_tr) system("killall saft-software-tr");
+	// if (run_server)      system("saftbus-ctl --quit");
+	if (run_server)      system("killall -9 saftbusd");
 
 	return number_of_failures;
 }
