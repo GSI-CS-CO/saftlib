@@ -33,22 +33,16 @@ namespace saftlib {
 	}
 
 	Owned::~Owned() {
-		// if (service) {
-		// 	if (!inhibit_signals) {
-		// 		Destroyed.emit();
-		// 	}
-		// }
+		if (service || !cont) { // this signal should only be sent if either a service is registered, or the object is uesed without a container
+			Destroyed.emit();
+		}
 	}
 
 	void Owned::set_service(saftbus::Service *serv) {
 		service = serv;
 	}
 	void Owned::release_service() {
-		// if (!inhibit_signals) {
-		// 	Destroyed.emit();
-		// }
 		service = nullptr;
-		cont = nullptr;
 	}
 
 	void Owned::Disown() {
@@ -110,6 +104,4 @@ namespace saftlib {
 		}
 	}
  
-	// bool Owned::inhibit_signals = false;
-
 }
