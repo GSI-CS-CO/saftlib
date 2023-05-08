@@ -149,6 +149,7 @@ static int test_inject_and_receive_event(const std::string &device) {
 		uint64_t par = rand();
 		auto con = saftlib::SoftwareCondition_Proxy::create(sas->NewCondition(true, id, 0xffffffffffffffff, 0));
 		con->SigAction.connect(sigc::ptr_fun(&on_action));
+		con->setAcceptLate(true);
 		// std::cerr << "inject event and wait for response" << std::endl;
 		tr->InjectEvent(id, par, tr->CurrentTime());
 		while (!action_received) {
@@ -168,16 +169,18 @@ static int test_inject_and_receive_event(const std::string &device) {
 }
 
 
-std::mutex global_mutex;
+int action_count = 0;
+int signal_count = 0;
 struct ConditionContainer {
 	std::shared_ptr<saftlib::SoftwareCondition_Proxy> condition;
 	ConditionContainer(std::shared_ptr<saftlib::SoftwareCondition_Proxy> con) : condition(con)	{
 		condition->SigAction.connect(sigc::mem_fun(this, &ConditionContainer::on_action));
+		condition->setAcceptLate(true);
 	}
 	~ConditionContainer() {
 	}
 	void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
-		// static int count = 0;
+		++action_count;
 		// std::cerr << "on_action " << event << std::endl;
 	}
 };
@@ -186,57 +189,67 @@ static int test_software_condition_with_treads(const std::string &device) {
 	std::cerr << "TEST creation of SoftwareActionSink and many SoftwareConditions with separate threads" << std::endl;
 	
 	bool success = false; // the test should set this to true on success
-	// std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 10);
 
+	// this thread terminates the test after 30 seconds (if the success variable is not set to true at the end of the test)
+	std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 30);
+
+	std::mutex signal_mutex;
 	bool expect_signals = true;
-	std::thread signal_handler( [](bool *signals) { 
+
+	// start a thread that continually waits for signals until the *signals viable is set to false somewhere outside (to indicate the end of the test)
+	std::thread signal_handler( [](bool *signals, std::mutex *m) { 
 		while(*signals) {
-			std::lock_guard<std::mutex> lock(global_mutex);
+			std::lock_guard<std::mutex> lock(*m);
 			saftlib::wait_for_signal(1);
 		}
-	}, &expect_signals );
+	}, &expect_signals, &signal_mutex );
 
 	try {
 		auto saftd = saftlib::SAFTd_Proxy::create();
 		auto tr  = saftlib::TimingReceiver_Proxy::create(saftd->getDevices()["tr0"]);
 		auto sas = saftlib::SoftwareActionSink_Proxy::create(tr->NewSoftwareActionSink(""));
-		// auto con = saftlib::SoftwareCondition_Proxy::create(sas->NewCondition(true, 0, 0, 0));
-		//con->SigAction.connect(sigc::ptr_fun(&on_action));
 		std::vector<std::shared_ptr<ConditionContainer> > conditions;
+
+		// start a thread that injects events with 100 Hz (1 event every 10 ms)
 		std::thread injector([](bool* signals, std::shared_ptr<saftlib::TimingReceiver_Proxy> tr){ 
 			int i = 0;
 			while(*signals) {
-				// std::cerr << "inject " << i << std::endl;
 				usleep(10000);
 				tr->InjectEvent(i++,0,tr->CurrentTime());
+				++signal_count;
 			}
 		}, &expect_signals, tr );
 
-		for (int i = 0; i < 10; ++i) {
-			std::lock_guard<std::mutex> lock(global_mutex);
+		// create some conditions while events are injected
+		int N_conditions = 10;
+		for (int i = 0; i < N_conditions; ++i) {
+			std::lock_guard<std::mutex> lock(signal_mutex);
 			conditions.push_back(std::make_shared<ConditionContainer>( saftlib::SoftwareCondition_Proxy::create(sas->NewCondition(true, 0,0,0)) ));
 		}
 
-
+		// wait a little bit (0.1 s) to capture some on_action callbacks ...
 		usleep(100000);
-		// std::cerr << "clear" << std::endl;
+		// ... then destroy all conditions
 		{
-			std::lock_guard<std::mutex> lock(global_mutex);
+			std::lock_guard<std::mutex> lock(signal_mutex);
 			conditions.clear();
 		}
-		usleep(100000);
-
-		std::cerr << "SUCCESS! Created softwareCondition "<< std::endl;
-		success = true;
 		expect_signals = false;
+		success = true;
 		injector.join();
 
+		if (action_count == 0) {
+			std::cerr << "ERROR! on_action callback function was never called (" << signal_count << "signals were sent, " << N_conditions << " were created)" << std::endl;
+			++number_of_failures;
+		} else {
+			std::cerr << "SUCCESS! received " << action_count << " actions (" << signal_count << " signals were sent, " << N_conditions << " were created) " << std::endl;
+		}
 	} catch (saftbus::Error &e) {
-		std::cerr << "ERRROR! cannot create SoftwareCondition: " << e.what() << std::endl;
+		std::cerr << "ERRROR! multithread test failed: " << e.what() << std::endl;
 		++number_of_failures;
 	}
 	signal_handler.join();
-	// timeout_thread.join();
+	timeout_thread.join();
 
 	return number_of_failures;
 }
@@ -271,6 +284,10 @@ int main(int argc, char** argv) {
 
 	bool run_software_tr = false;
 	if (eb_device_name.size() == 0) {
+		run_software_tr = true;
+		if (run_software_tr) system("killall -9 saft-software-tr");
+		if (run_software_tr) system("saft-software-tr&");
+		usleep(10000);
 		std::ifstream eb_device_name_in("/tmp/simbridge-eb-device");
 		if (!eb_device_name_in) {
 			std::cerr << "ERROR! cannot start software timing receiver" << std::endl;
@@ -281,15 +298,11 @@ int main(int argc, char** argv) {
 			std::cerr << "ERROR! cannot read eb device name from file" << std::endl;
 			return 1;
 		}
-		run_software_tr = true;
 	}
 
 	if (run_server)      system("killall -9 saftbusd");
-	if (run_software_tr) system("killall -9 saft-software-tr");
-	sleep(1);
-	if (run_software_tr) system("saft-software-tr&");
 	if (run_server)      system("saftbusd libsaft-service.so &");
-	sleep(1);
+	usleep(10000);
 
 
 
