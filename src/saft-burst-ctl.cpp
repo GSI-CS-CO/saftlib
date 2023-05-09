@@ -150,7 +150,7 @@ int            bg_disen        = 0;     /* Disable or enable option argument val
 vector<string> bg_instr_args;           /* Arguments of instruct option */
 int            bg_id           = 0x00;  /* Burst ID */
 bool           bg_fw_id        = false; /* Get and print the firmware id of the burst generator */
-bool           bg_state        = false; /* Get and print the actual state of the burst generator */
+bool           bg_state        = false; /* Print the actual state of the burst generator firmware */
 bool           bg_instr        = false; /* Demo option to test the instruct method call */
 bool           bg_cfg_io       = false; /* Set the ECA conditions for IO actions */
 bool           bg_clr_all      = false; /* Clear all unowned conditions for the IO and eCPU actions */
@@ -175,7 +175,7 @@ static void io_catch_input (uint64_t event, uint64_t param, saftlib::Time deadli
 static int  io_snoop       (bool mode, bool setup_only, bool disable_source, uint64_t prefix_custom);
 
 static int  bg_get_fw_id        (void);
-static int  bg_get_state        (void);
+static int  bg_print_state      (void);
 static int  bg_instruct         (std::vector<std::string> instr);
 static int  bg_config_io        (uint32_t t_high, uint32_t t_period, int64_t t_burst, uint64_t b_delay, uint32_t b_flag, bool verbose_mode);
 static int  bg_get_io_name      (int burst_id, std::string &name);
@@ -248,7 +248,7 @@ static int bg_do_configuration(void)
   int return_code = 0;
 
   if      (bg_fw_id)       { return_code = bg_get_fw_id(); }
-  else if (bg_state)       { return_code = bg_get_state(); }
+  else if (bg_state)       { return_code = bg_print_state(); }
   else if (bg_instr)       { return_code = bg_instruct(bg_instr_args); }
   else if (bg_cfg_io)      { return_code = bg_config_io(bg_t_high, bg_t_p, bg_t_b, bg_b_delay, bg_b_flag, verbose_mode); }
   else if (bg_clr_all)     { return_code = bg_clear_all(verbose_mode); }
@@ -684,27 +684,18 @@ static int bg_get_fw_id(void)
   return 0;
 }
 
-/* Get and print the actual state of the burst generator */
+/* Print the actual state of the burst generator firmware */
 /* ==================================================================================================== */
-static int bg_get_state(void)
+static int bg_print_state(void)
 {
   try
   {
-    uint32_t state = COMMON_STATE_UNKNOWN;
+    uint32_t state = bg->readState();
 
-    state = bg->readState();
-    if (state != COMMON_STATE_UNKNOWN)
-    {
-      if (verbose_mode)
-        cout << "Got firmware state: 0x" << hex << state << endl;
-      else
-        cout << hex << state << endl;
-    }
+    if (verbose_mode)
+      cout << "Got firmware state: 0x" << hex << state << endl;
     else
-    {
-      cerr << "Could not get the actual state." << endl;
-      return -1;
-    }
+      cout << hex << state << endl;
   }
   catch (const saftbus::Error& error)
   {
@@ -1979,7 +1970,7 @@ static void io_help (void)
   std::cout << "Usage: " << program << " <unique device name> [OPTIONS]" << std::endl;
   std::cout << std::endl;
   std::cout << "Options:" << std::endl;
-  std::cout << "  -S:                                 Get the actual state of the burst generator" << std::endl;
+  std::cout << "  -S:                                 Print the actual state of the burst generator" << std::endl;
   std::cout << "                                        States: 1=initial, 2=idle, 3=configure, 4=opready" << std::endl;
   std::cout << "  -i <instr>:                         Send an user instruction to the burst generator, allowed instructions are listed below:" << std::endl;
   std::cout << "      instr                             User instruction. Valid codes:" << std::endl;

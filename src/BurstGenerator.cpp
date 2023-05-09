@@ -268,7 +268,7 @@ namespace saftlib {
   uint32_t BurstGenerator::readState()
   {
     if (ram_base == 0)
-      return COMMON_STATE_UNKNOWN;
+      return ((uint32_t)-1);
 
     try
     {
