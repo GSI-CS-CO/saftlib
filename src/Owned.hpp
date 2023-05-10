@@ -99,6 +99,13 @@ namespace saftlib {
 		void Destroy();
 
 		/// @brief The object was destroyed.
+		/// 
+		/// This signal is only emitted when the function Destroy() is called
+		/// explicitely. And only if either set_service was called before, or 
+		/// the container in the constructor was set to nullptr. 
+		/// 
+		/// This signal is not automatically emitted when the Owned destructor
+		/// is executed.
 		// @saftbus-signal
 		sigc::signal<void> Destroyed;
 
@@ -108,7 +115,6 @@ namespace saftlib {
 	private:
 		saftbus::Container *cont;
 		saftbus::Service *service;
-		// int owner;
 
 	};
 

@@ -60,6 +60,14 @@ namespace saftbus {
 		/// @param timeout return after so many milliseconds even if the data could not be sent.
 		/// @return 0 in case of timeout, >0 in case of success, -1 in case of error
 		int receive(Deserializer &deserializer, int timeout_ms = -1);
+
+		/// @brief call send and receiver atomically
+		///
+		/// @param serializer should contain serialized data
+		/// @param deserializer that contains the received buffer after the function returns
+		/// @param timeout return after so many milliseconds even if the data could not be sent.
+		/// @return 0 in case of timeout, >0 in case of success, -1 in case of error
+		int atomic_send_and_receive(Serializer &serializer, Deserializer &deserializer, int timeout_ms = -1);
 	};
 
 
@@ -161,6 +169,8 @@ namespace saftbus {
 		/// @brief the client socket is a shared resource, it should be locked before using it
 		/// @return the socket to lock before using the client socket
 		std::mutex&              get_client_socket_mutex();
+
+		std::mutex&              get_proxy_mutex();
 
 
 		/// @brief needs to be called by derived classes in order to determine which interface_no they refer to.
