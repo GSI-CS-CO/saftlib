@@ -101,6 +101,7 @@ namespace saftlib {
 
       bool                       found_bg_fw;
       eb_address_t               ram_base;      // start of lm32 user ram
+      std::vector<eb_address_t>  shm_buffer;    // app specific buffers in shared memory (for embedded lm32 communication)
 
   };
 

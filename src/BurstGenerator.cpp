@@ -84,13 +84,42 @@ namespace saftlib {
       bg_slot = data;
       cpu_idx = i;
 
+      // get the common buffer addresses
+      unsigned offset = SHM_COMMON_BEGIN;
+      for (unsigned j = 0; j < SHM_BUF_IDX::CMD_ARGS; ++j) {
+        device.read(ram_base + offset, EB_DATA32, &data);
+        shm_buffer.push_back(data);
+        offset += 4;
+      }
+
+      shm_buffer.push_back(ram_base + SHM_CMD_ARGS);
+
+      // check the section borders in shared memory (common-lib vs. app)
+      // notice: if common-lib section overlaps with app-specific section, then control will not reach here!
+      if (shm_buffer.at(SHM_BUF_IDX::COMMON_END) > (ram_base + SHM_BASE)) {
+        std::cerr << "BurstGenerator: failure in shared memory layout (common-lib overlaps app-spec section): " <<
+          std::hex << shm_buffer.at(SHM_BUF_IDX::COMMON_END) << " > " <<
+          std::hex << (ram_base + SHM_BASE) << std::endl;
+        shm_buffer.clear();
+        continue;
+      }
+
       std::cerr << "BurstGenerator: LM32 ram base = 0x" << std::hex << ram_base <<
         ", my mailbox slot = " << my_slot->getIndex() <<
         " is stored at 0x" << std::hex << (uint32_t)(ram_base + SHM_MB_SLOT_HOST) << " in the shared memory for LM32."  << std::endl;
 
+      std::cerr << "BurstGenerator: LM32 COMMON_BEGIN = 0x" << std::hex << shm_buffer.at(SHM_BUF_IDX::COMMON_BEGIN) <<
+        ", COMMON_END = 0x" << std::hex << shm_buffer.at(SHM_BUF_IDX::COMMON_END) <<
+        ", COMMON_CMD = 0x" << std::hex << shm_buffer.at(SHM_BUF_IDX::COMMON_CMD) <<
+        ", COMMON_STATE = 0x" << std::hex << shm_buffer.at(SHM_BUF_IDX::COMMON_STATE) <<
+        ", CMD_ARGS at 0x" << std::hex << shm_buffer.at(SHM_BUF_IDX::CMD_ARGS) << std::endl;
+
       std::cerr << "BurstGenerator: firmware is running." << std::endl;
       break;
     }
+
+    if (shm_buffer.empty())
+      std::cerr << "BurstGenerator: firmware is not found or communication failed!" << std::endl;
 
     std::cerr << "BurstGenerator: the burst generator id: " << bg_id << std::endl;
     std::cerr << "BurstGenerator: bg mailbox addr = " << bg_slot << ", lm32 cpu index = " << cpu_idx <<
@@ -131,13 +160,13 @@ namespace saftlib {
     int timeout = 10;
     eb_data_t data = 0;
 
-    device.write(ram_base + SHM_INPUT, EB_DATA32, data);
-    device.write(ram_base + SHM_CMD, EB_DATA32, CMD_LS_FW_ID);
+    device.write(shm_buffer.at(SHM_BUF_IDX::CMD_ARGS), EB_DATA32, data);
+    device.write(shm_buffer.at(SHM_BUF_IDX::COMMON_CMD), EB_DATA32, CMD_LS_FW_ID);
 
     while (( data == 0) || (timeout != 0)) {
       usleep(10000);
       --timeout;
-      device.read(ram_base + SHM_INPUT, EB_DATA32, &data);
+      device.read(shm_buffer.at(SHM_BUF_IDX::CMD_ARGS), EB_DATA32, &data);
     }
 
     return (id == (uint32_t)data);
@@ -159,15 +188,15 @@ namespace saftlib {
       etherbone::Cycle cycle;
       cycle.open(device);
 
-      cycle.write(ram_base + SHM_CMD, EB_DATA32, 0); // clear cmd register
+      cycle.write(shm_buffer.at(SHM_BUF_IDX::COMMON_CMD), EB_DATA32, 0); // clear cmd register
 
       for (uint32_t i = 0; i < args.size(); ++i)
-        cycle.write(ram_base + SHM_INPUT + (i << 2), EB_DATA32, args.at(i));
+        cycle.write(shm_buffer.at(SHM_BUF_IDX::CMD_ARGS) + (i << 2), EB_DATA32, args.at(i));
 
       cycle.close();
 
       // send the instruction code to LM32
-      device.write(ram_base + SHM_CMD, EB_DATA32, code);
+      device.write(shm_buffer.at(SHM_BUF_IDX::COMMON_CMD), EB_DATA32, code);
 
       // reset response (it must be updated with non-zero value by msi_handler)
       response = 0;
@@ -201,7 +230,7 @@ namespace saftlib {
 
       for (int i = 0; i < N_BURST_INFO; ++i)
       {
-        cycle.read(ram_base + SHM_INPUT + (i << 2), EB_DATA32, &data);
+        cycle.read(ram_base + SHM_CMD_ARGS + (i << 2), EB_DATA32, &data);
         std::cerr << ' ' << static_cast<uint32_t>(data) << std::endl;
         info.push_back(static_cast<uint32_t>(data));
       }
@@ -212,16 +241,16 @@ namespace saftlib {
 
       if (id == 0)
       {
-        device.read(ram_base + SHM_INPUT, EB_DATA32, &data); // created bursts
+        device.read(shm_buffer.at(SHM_BUF_IDX::CMD_ARGS), EB_DATA32, &data); // created bursts
         info.push_back(static_cast<uint32_t>(data));
-        device.read(ram_base + SHM_INPUT + 4, EB_DATA32, &data); // cycled bursts
+        device.read(shm_buffer.at(SHM_BUF_IDX::CMD_ARGS) + 4, EB_DATA32, &data); // cycled bursts
         info.push_back(static_cast<uint32_t>(data));
       }
       else if (id <= N_BURSTS)
       {
         for (int i = 0; i < N_BURST_INFO; ++i)
         {
-          device.read(ram_base + SHM_INPUT + (i << 2), EB_DATA32, &data);
+          device.read(shm_buffer.at(SHM_BUF_IDX::CMD_ARGS) + (i << 2), EB_DATA32, &data);
           info.push_back(static_cast<uint32_t>(data));
         }
       }
@@ -250,7 +279,7 @@ namespace saftlib {
       // read the shared memory
       for (unsigned int i = 0; i < size; ++i)
       {
-        device.read(ram_base + SHM_INPUT + (i << 2), EB_DATA32, &data);
+        device.read(shm_buffer.at(SHM_BUF_IDX::CMD_ARGS) + (i << 2), EB_DATA32, &data);
         content.push_back(static_cast<uint32_t>(data));
       }
 
@@ -275,7 +304,7 @@ namespace saftlib {
       eb_data_t data;
 
       // read the FSM state location in the shared memory
-      device.read(ram_base + SHM_STATE, EB_DATA32, &data);
+      device.read(shm_buffer.at(SHM_BUF_IDX::COMMON_STATE), EB_DATA32, &data);
 
       std::cerr << "BurstGenerator: method call readState() succeeded: " << static_cast<uint32_t>(data) << std::endl;
 

@@ -20,7 +20,6 @@
 #ifndef BG_REGS_H
 #define BG_REGS_H
 
-#include "common-defs.h"
 #include "burstgen_shared_mmap.h"
 
 // Locate shared memory of processors
@@ -41,14 +40,27 @@
 #define BG_FW_ID                  0xb2b2b2b2
 
 // definitions of buffers in shared memory
-#define SHM_CMD                   SHARED_OFFS + COMMON_SHARED_CMD
-#define SHM_STATE                 SHARED_OFFS + COMMON_SHARED_STATE
-#define SHM_BASE                  SHARED_OFFS + COMMON_SHARED_END
+#define SHARED_COMMON_SIZE        2048               // reserved size for common-lib registers
+#define SHM_BASE                  SHARED_OFFS + SHARED_COMMON_SIZE
 
-#define SHM_FW_ID                 SHM_BASE
-#define SHM_MB_SLOT               SHM_BASE + 0x04UL
-#define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL
-#define SHM_INPUT                 SHM_BASE + 0x20UL
+#define SHM_FW_ID                 SHM_BASE           // offset to app specific section in shared memory
+#define SHM_MB_SLOT               SHM_BASE + 0x04UL  // offset to the mailbox slof for lm32
+#define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL  // offset to the mailbox slot for host
+#define SHM_COMMON_BEGIN          SHM_BASE + 0x10UL  // start address of the common-lib section
+#define SHM_COMMON_END            SHM_BASE + 0x14UL  // end address of the common-lib section
+#define SHM_COMMON_CMD            SHM_BASE + 0x18UL  // address of the command buffer (common-lib)
+#define SHM_COMMON_STATE          SHM_BASE + 0x1CUL  // address of the firmware state buffer (common-lib)
+#define SHM_CMD_ARGS              SHM_BASE + 0x20UL  // offset to the command argument buffer
+
+// index of the buffers in shared memory
+enum SHM_BUF_IDX {
+  COMMON_BEGIN = 0,
+  COMMON_END,
+  COMMON_CMD,
+  COMMON_STATE,
+  CMD_ARGS,
+  N_SHM_IDX
+};
 
 #define EVT_ID_IO_H32             0x0000fca0UL  // event id of timing message for IO actions (hi32)
 #define EVT_ID_IO_L32             0x00000000UL  // event id of timing message for IO actions (lo32)
