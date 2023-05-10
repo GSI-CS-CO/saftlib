@@ -1427,6 +1427,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 			}
 		}
 		cpp_out << "\t) {" << std::endl;
+		cpp_out << "\t\t" << "std::lock_guard<std::mutex> lock(get_proxy_mutex());" << std::endl;
 		cpp_out << "\t\t" << "get_send().put(get_saftbus_object_id());" << std::endl;
 		cpp_out << "\t\t" << "get_send().put(interface_no);" << std::endl;
 		cpp_out << "\t\t" << "get_send().put(" << function_no  << "); // function_no" << std::endl;
@@ -1441,11 +1442,12 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 				++num_outputs;
 			}
 		}
-		cpp_out << "\t\t{" << std::endl;
-		cpp_out << "\t\t\t" << "std::lock_guard<std::mutex> lock(get_client_socket_mutex());" << std::endl;
-		cpp_out << "\t\t\t" << "get_connection().send(get_send());" << std::endl;
-		cpp_out << "\t\t\t" << "get_connection().receive(get_received());" << std::endl;
-		cpp_out << "\t\t}" << std::endl;
+		// cpp_out << "\t\t{" << std::endl;
+		// cpp_out << "\t\t\t" << "std::lock_guard<std::mutex> lock(get_client_socket_mutex());" << std::endl;
+		// cpp_out << "\t\t\t" << "get_connection().send(get_send());" << std::endl;
+		// cpp_out << "\t\t\t" << "get_connection().receive(get_received());" << std::endl;
+		// cpp_out << "\t\t}" << std::endl;
+		cpp_out << "\t\t" << "get_connection().atomic_send_and_receive(get_send(), get_received());" << std::endl;
 
 		cpp_out << "\t\t" << "saftbus::FunctionResult function_result_;" << std::endl;
 		cpp_out << "\t\t" << "get_received().get(function_result_);" << std::endl;

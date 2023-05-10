@@ -185,11 +185,20 @@ namespace saftbus {
 		for (auto &fd_use_count: d->signal_fds_use_count) {
 			if (fd_use_count.second > 0) { // only send data if use count is > 0
 				int fd = fd_use_count.first;
-				send.write_to_no_init(fd); // The same data is written multiple times. Therefore the
-				                          // put_init function must not be called automatically after write
-			}                            //
-		}                               // but manually after the for loop 
-		send.put_init();               // <- here
+				struct pollfd pfd;
+				pfd.fd = fd;
+				pfd.events = POLLOUT;
+				if (poll(&pfd, 1, 10) == 0) { // fd is not ready - skip it and try to send later (not implemented yet)
+					// std::cerr << "dropping signal for fd " << fd << std::endl;
+					// if (pfd.revents&POLLHUP ) { std::cerr << " POLLHUP" << std::endl;}
+					// if (pfd.revents&POLLERR ) { std::cerr << " POLLERR" << std::endl;}
+					// if (pfd.revents&POLLNVAL) { std::cerr << " POLLNVAL" << std::endl;}
+				} else {
+					send.write_to_no_init(fd); // The same data is written multiple times. Therefore the
+				}                             // put_init function must not be called automatically after write
+			}                                //
+		}                                   // but manually after the for loop 
+		send.put_init();                   // <- here
 	}
 
 	int Service::get_object_id() 

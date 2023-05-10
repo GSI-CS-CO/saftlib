@@ -33,9 +33,6 @@ namespace saftlib {
 	}
 
 	Owned::~Owned() {
-		if (service || !cont) { // this signal should only be sent if either a service is registered, or the object is uesed without a container
-			Destroyed.emit();
-		}
 	}
 
 	void Owned::set_service(saftbus::Service *serv) {
@@ -97,6 +94,9 @@ namespace saftlib {
 
 	void Owned::Destroy() {
 		ownerOnly();
+		if (service || !cont) {
+			Destroyed.emit();
+		}
 		if (cont && service) {
 			cont->destroy_service(service);
 		} else {
