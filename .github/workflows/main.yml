@@ -67,8 +67,10 @@ jobs:
     - name: Clean saftlib
       run: make clean
 
-    - name: Test parallel compilation
+    - name: Test parallel compilation and run saft-testbench
       run: |
         make -j$(nproc)
         sudo make install
         sudo ldconfig
+        saft-testbench
+        saft-testbench -p
