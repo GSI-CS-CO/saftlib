@@ -365,21 +365,26 @@ static int test_threads_2() {
 
 	success = true;
 	timeout_thread.join();
+	std::cerr << "SUCCESS!" << std::endl;
 	return 0;
 }
 
 int main(int argc, char** argv) {
 	std::string eb_device_name;
 	bool run_server = true;
+	bool msi_polling = false;
 	for (int i = 1; i < argc; ++i) {
 		std::string argvi = argv[i];
-		if (argvi == "-s") {
+		if (argvi == "-p") {
+			msi_polling = true;
+		} else if (argvi == "-s") {
 			run_server = false;
 			std::cerr << "run_server = " << run_server << std::endl;
 		} else if (argvi == "-h" || argvi == "--help") {
 			std::cout << "usage: " << argv[0] << " [-s] [-h] [<eb-device-name>]" << std::endl;
 			std::cout << "  <eb-device-name> optional, if it is missing, saft-software-tr will be started and used for the tests." << std::endl;
 			std::cout << "  -s               don\'t start saftbusd (useful if saftbusd is already running" << std::endl;
+			std::cout << "  -p               simulated device has polled MSIs (has no effect when used with -s)" << std::endl;
 			std::cout << "  -h               print this help" << std::endl;
 			std::cout << std::endl;
 			std::cout << "examples: " << std::endl;
@@ -401,7 +406,10 @@ int main(int argc, char** argv) {
 	if (eb_device_name.size() == 0) {
 		run_software_tr = true;
 		if (run_software_tr) system("killall -9 saft-software-tr");
-		if (run_software_tr) system("saft-software-tr&");
+		if (run_software_tr) {
+			if (msi_polling) system("saft-software-tr -p &");
+			else             system("saft-software-tr    &");
+		}
 		usleep(10000);
 		std::ifstream eb_device_name_in("/tmp/simbridge-eb-device");
 		if (!eb_device_name_in) {
@@ -432,6 +440,9 @@ int main(int argc, char** argv) {
 	number_of_failures += test_software_condition_with_treads(eb_device_name.c_str());
 	number_of_failures += test_threads_2();
 	number_of_failures += test_remove_device();
+
+
+	std::cerr << "-------------------------------------------------------------------------------------" << std::endl;
 
 	if (number_of_failures > 0) {
 		std::cerr << "    _________    ______       _________    ______       _________    ______ " << std::endl;
