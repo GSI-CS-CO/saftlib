@@ -56,13 +56,15 @@ jobs:
         sudo make etherbone-install
         cd ..
 
-    - name: Configure and compile saftlib
+    - name: Configure and compile saftlib and run saft-testbench
       run: |
         ./autogen.sh
         ./configure
         make
         sudo make install
         sudo ldconfig
+        sudo saft-testbench
+        sudo saft-testbench -p
 
     - name: Clean saftlib
       run: make clean
@@ -72,5 +74,5 @@ jobs:
         make -j$(nproc)
         sudo make install
         sudo ldconfig
-        saft-testbench
-        saft-testbench -p
+        sudo saft-testbench
+        sudo saft-testbench -p
