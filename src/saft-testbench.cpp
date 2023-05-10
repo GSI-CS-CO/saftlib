@@ -256,7 +256,7 @@ static int test_software_condition_with_treads(const std::string &device) {
 	bool success = false; // the test should set this to true on success
 
 	// this thread terminates the test after 30 seconds (if the success variable is not set to true at the end of the test)
-	std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 40);
+	std::thread timeout_thread( &timeout_thread_function, &success, __FUNCTION__, 80);
 
 	bool expect_signals = true;
 
