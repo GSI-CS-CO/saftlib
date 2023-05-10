@@ -103,6 +103,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a097736a715399a8110c5fb4f6e673b17"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1ClientConnection.html#a097736a715399a8110c5fb4f6e673b17">receive</a> (<a class="el" href="classsaftbus_1_1Deserializer.html">Deserializer</a> &amp;deserializer, int timeout_ms=-1)</td></tr>
 <tr class="memdesc:a097736a715399a8110c5fb4f6e673b17"><td class="mdescLeft">&#160;</td><td class="mdescRight">wait for data to arrive from the server  <a href="classsaftbus_1_1ClientConnection.html#a097736a715399a8110c5fb4f6e673b17">More...</a><br /></td></tr>
 <tr class="separator:a097736a715399a8110c5fb4f6e673b17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30ffc57accd1615a926c8e1e6e5577e6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1ClientConnection.html#a30ffc57accd1615a926c8e1e6e5577e6">atomic_send_and_receive</a> (<a class="el" href="classsaftbus_1_1Serializer.html">Serializer</a> &amp;serializer, <a class="el" href="classsaftbus_1_1Deserializer.html">Deserializer</a> &amp;deserializer, int timeout_ms=-1)</td></tr>
+<tr class="memdesc:a30ffc57accd1615a926c8e1e6e5577e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">call send and receiver atomically  <a href="classsaftbus_1_1ClientConnection.html#a30ffc57accd1615a926c8e1e6e5577e6">More...</a><br /></td></tr>
+<tr class="separator:a30ffc57accd1615a926c8e1e6e5577e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
@@ -122,6 +125,61 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Proxy</b></td></tr>
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a30ffc57accd1615a926c8e1e6e5577e6" name="a30ffc57accd1615a926c8e1e6e5577e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30ffc57accd1615a926c8e1e6e5577e6">&#9670;&#160;</a></span>atomic_send_and_receive()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int saftbus::ClientConnection::atomic_send_and_receive </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsaftbus_1_1Serializer.html">Serializer</a> &amp;&#160;</td>
+          <td class="paramname"><em>serializer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classsaftbus_1_1Deserializer.html">Deserializer</a> &amp;&#160;</td>
+          <td class="paramname"><em>deserializer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>timeout_ms</em> = <code>-1</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>call send and receiver atomically </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">serializer</td><td>should contain serialized data </td></tr>
+    <tr><td class="paramname">deserializer</td><td>that contains the received buffer after the function returns </td></tr>
+    <tr><td class="paramname">timeout</td><td>return after so many milliseconds even if the data could not be sent. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>0 in case of timeout, &gt;0 in case of success, -1 in case of error </dd></dl>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftbus_1_1ClientConnection_a30ffc57accd1615a926c8e1e6e5577e6_cgraph.png" border="0" usemap="#aclasssaftbus_1_1ClientConnection_a30ffc57accd1615a926c8e1e6e5577e6_cgraph" alt=""/></div>
+<map name="aclasssaftbus_1_1ClientConnection_a30ffc57accd1615a926c8e1e6e5577e6_cgraph" id="aclasssaftbus_1_1ClientConnection_a30ffc57accd1615a926c8e1e6e5577e6_cgraph">
+<area shape="rect" title="call send and receiver atomically" alt="" coords="5,37,184,77"/>
+<area shape="rect" href="classsaftbus_1_1ClientConnection.html#a097736a715399a8110c5fb4f6e673b17" title="wait for data to arrive from the server" alt="" coords="232,5,401,45"/>
+<area shape="rect" href="classsaftbus_1_1ClientConnection.html#aa184e260e67e6ce017da60ea2c6fb7a7" title="send whatever data is in serial buffer to the server" alt="" coords="232,69,401,109"/>
+</map>
+</div>
+
+</div>
+</div>
 <a id="a097736a715399a8110c5fb4f6e673b17" name="a097736a715399a8110c5fb4f6e673b17"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a097736a715399a8110c5fb4f6e673b17">&#9670;&#160;</a></span>receive()</h2>
 
@@ -157,6 +215,15 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Proxy</b></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>0 in case of timeout, &gt;0 in case of success, -1 in case of error </dd></dl>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftbus_1_1ClientConnection_a097736a715399a8110c5fb4f6e673b17_icgraph.png" border="0" usemap="#aclasssaftbus_1_1ClientConnection_a097736a715399a8110c5fb4f6e673b17_icgraph" alt=""/></div>
+<map name="aclasssaftbus_1_1ClientConnection_a097736a715399a8110c5fb4f6e673b17_icgraph" id="aclasssaftbus_1_1ClientConnection_a097736a715399a8110c5fb4f6e673b17_icgraph">
+<area shape="rect" title="wait for data to arrive from the server" alt="" coords="232,5,401,45"/>
+<area shape="rect" href="classsaftbus_1_1ClientConnection.html#a30ffc57accd1615a926c8e1e6e5577e6" title="call send and receiver atomically" alt="" coords="5,5,184,45"/>
+</map>
+</div>
 
 </div>
 </div>
@@ -195,6 +262,15 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Proxy</b></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>0 in case of timeout, &gt;0 in case of success, -1 in case of error </dd></dl>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftbus_1_1ClientConnection_aa184e260e67e6ce017da60ea2c6fb7a7_icgraph.png" border="0" usemap="#aclasssaftbus_1_1ClientConnection_aa184e260e67e6ce017da60ea2c6fb7a7_icgraph" alt=""/></div>
+<map name="aclasssaftbus_1_1ClientConnection_aa184e260e67e6ce017da60ea2c6fb7a7_icgraph" id="aclasssaftbus_1_1ClientConnection_aa184e260e67e6ce017da60ea2c6fb7a7_icgraph">
+<area shape="rect" title="send whatever data is in serial buffer to the server" alt="" coords="232,5,401,45"/>
+<area shape="rect" href="classsaftbus_1_1ClientConnection.html#a30ffc57accd1615a926c8e1e6e5577e6" title="call send and receiver atomically" alt="" coords="5,5,184,45"/>
+</map>
+</div>
 
 </div>
 </div>

@@ -8,7 +8,8 @@ var searchData=
   ['clientconnection_5',['ClientConnection',['../classsaftbus_1_1ClientConnection.html',1,'saftbus']]],
   ['clientinfo_6',['ClientInfo',['../structsaftbus_1_1SaftbusInfo_1_1ClientInfo.html',1,'saftbus::SaftbusInfo::ClientInfo'],['../structsaftbus_1_1ServerConnection_1_1ClientInfo.html',1,'saftbus::ServerConnection::ClientInfo']]],
   ['condition_7',['Condition',['../classsaftlib_1_1Condition.html',1,'saftlib']]],
-  ['container_8',['Container',['../classsaftbus_1_1Container.html',1,'saftbus']]],
-  ['container_5fproxy_9',['Container_Proxy',['../classsaftbus_1_1Container__Proxy.html',1,'saftbus']]],
-  ['container_5fservice_10',['Container_Service',['../classsaftbus_1_1Container__Service.html',1,'saftbus']]]
+  ['conditioncontainer_8',['ConditionContainer',['../structConditionContainer.html',1,'']]],
+  ['container_9',['Container',['../classsaftbus_1_1Container.html',1,'saftbus']]],
+  ['container_5fproxy_10',['Container_Proxy',['../classsaftbus_1_1Container__Proxy.html',1,'saftbus']]],
+  ['container_5fservice_11',['Container_Service',['../classsaftbus_1_1Container__Service.html',1,'saftbus']]]
 ];

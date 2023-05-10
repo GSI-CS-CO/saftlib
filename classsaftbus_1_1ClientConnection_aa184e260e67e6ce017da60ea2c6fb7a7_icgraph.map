@@ -1,0 +1,4 @@
+<map id="saftbus::ClientConnection::send" name="saftbus::ClientConnection::send">
+<area shape="rect" id="node1" title="send whatever data is in serial buffer to the server" alt="" coords="232,5,401,45"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1ClientConnection.html#a30ffc57accd1615a926c8e1e6e5577e6" title="call send and receiver atomically" alt="" coords="5,5,184,45"/>
+</map>
