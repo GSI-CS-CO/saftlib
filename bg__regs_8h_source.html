@@ -80,82 +80,94 @@ $(function() {
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#ifndef BG_REGS_H</span></div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#define BG_REGS_H</span></div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#include &quot;common-defs.h&quot;</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="preprocessor">#include &quot;burstgen_shared_mmap.h&quot;</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment">// Locate shared memory of processors</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">#define LM32_RAM_USER_VENDOR      0x651       </span><span class="comment">//vendor ID</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">#define LM32_RAM_USER_PRODUCT     0x54111351  </span><span class="comment">//product ID</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="preprocessor">#define LM32_RAM_USER_VMAJOR      1           </span><span class="comment">//major revision</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">#define LM32_RAM_USER_VMINOR      1           </span><span class="comment">//minor revision</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#define LM32_CLUSTER_ROM_VENDOR   0x651</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#define LM32_CLUSTER_ROM_PRODUCT  0x10040086</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#define MSI_MAILBOX_VENDOR        0x651</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#define MSI_MAILBOX_PRODUCT       0xfab0bdd8</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#define MB_SLOT_RANGE             128          </span><span class="comment">// 0 .. 127</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#define MB_SLOT_CFG_FREE          0xffffffffUL</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment">// defines</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#define BG_FW_ID                  0xb2b2b2b2</span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="comment">// definitions of buffers in shared memory</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#define SHM_CMD                   SHARED_OFFS + COMMON_SHARED_CMD</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="preprocessor">#define SHM_STATE                 SHARED_OFFS + COMMON_SHARED_STATE</span></div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#define SHM_BASE                  SHARED_OFFS + COMMON_SHARED_END</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="preprocessor">#define SHM_FW_ID                 SHM_BASE</span></div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="preprocessor">#define SHM_MB_SLOT               SHM_BASE + 0x04UL</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="preprocessor">#define SHM_INPUT                 SHM_BASE + 0x20UL</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="preprocessor">#define EVT_ID_IO_H32             0x0000fca0UL  </span><span class="comment">// event id of timing message for IO actions (hi32)</span></div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="preprocessor">#define EVT_ID_IO_L32             0x00000000UL  </span><span class="comment">// event id of timing message for IO actions (lo32)</span></div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="preprocessor">#define EVT_MASK_IO               0xffffffffffffffffULL</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="comment">// user commands for the burst generator</span></div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="preprocessor">#define CMD_SHOW_ALL              0x21UL         </span><span class="comment">// show pulse parameters, pulse cycles</span></div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="preprocessor">#define CMD_GET_PARAM             0x22UL         </span><span class="comment">// get pulse parameters</span></div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="preprocessor">#define CMD_GET_CYCLE             0x23UL         </span><span class="comment">// get pulse cycles</span></div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="preprocessor">#define CMD_LS_BURST              0x24UL         </span><span class="comment">// list burst (burst ids or burst info)</span></div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="preprocessor">#define CMD_MK_BURST              0x25UL         </span><span class="comment">// declare new burst</span></div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="preprocessor">#define CMD_RM_BURST              0x26UL         </span><span class="comment">// remove burst</span></div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="preprocessor">#define CMD_DE_BURST              0x27UL         </span><span class="comment">// dis/enable burst</span></div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="preprocessor">#define CMD_RD_MSI_ECPU           0x30UL        </span><span class="comment">// read and show the content of ECA MSI registers (MSI enable, MSI destination address)</span></div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="preprocessor">#define CMD_RD_ECPU_CHAN          0x31UL        </span><span class="comment">// read and show the content of ECA counters for the eCPU action channel</span></div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="preprocessor">#define CMD_RD_ECPU_QUEUE         0x32UL        </span><span class="comment">// read and show the content of ECA queue connected to the eCPU action channel</span></div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="preprocessor">#define CMD_LS_FW_ID              0x33UL        </span><span class="comment">// list the firmware id (the value is written to the shared input buffer)</span></div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="preprocessor">#define CTL_DIS                   0x0000UL</span></div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="preprocessor">#define CTL_EN                    0x0001UL</span></div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="preprocessor">#define CTL_VALID                 0x8000UL</span></div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="preprocessor">#define N_BURSTS                  16            </span><span class="comment">// maximum number of bursts</span></div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="keyword">enum</span> BURST_INFO {                               <span class="comment">// burst info fields</span></div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  INFO_ID,</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  INFO_IO_TYPE,</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  INFO_IO_IDX,</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>  INFO_START_EVT_H32,</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  INFO_START_EVT_L32,</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>  INFO_STOP_EVT_H32,</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  INFO_STOP_EVT_L32,</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>  INFO_LOOPS_H32,</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>  INFO_LOOPS_L32,</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>  INFO_ACTIONS_H32,</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  INFO_ACTIONS_L32,</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>  INFO_FLAG,</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  N_BURST_INFO</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>};</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="preprocessor">#define INTERVAL_200US            200000ULL</span></div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="preprocessor">#define __BG_RETURN_SUCCESS       0</span></div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="preprocessor">#define __BG_RETURN_FAILURE       0xffffffff</span></div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#define __BG_RETURN_OPTION_INVAL  0xfffffffe</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#include &quot;burstgen_shared_mmap.h&quot;</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment">// Locate shared memory of processors</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#define LM32_RAM_USER_VENDOR      0x651       </span><span class="comment">//vendor ID</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">#define LM32_RAM_USER_PRODUCT     0x54111351  </span><span class="comment">//product ID</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">#define LM32_RAM_USER_VMAJOR      1           </span><span class="comment">//major revision</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="preprocessor">#define LM32_RAM_USER_VMINOR      1           </span><span class="comment">//minor revision</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">#define LM32_CLUSTER_ROM_VENDOR   0x651</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#define LM32_CLUSTER_ROM_PRODUCT  0x10040086</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">#define MSI_MAILBOX_VENDOR        0x651</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#define MSI_MAILBOX_PRODUCT       0xfab0bdd8</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#define MB_SLOT_RANGE             128          </span><span class="comment">// 0 .. 127</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#define MB_SLOT_CFG_FREE          0xffffffffUL</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment">// defines</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#define BG_FW_ID                  0xb2b2b2b2</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="comment">// definitions of buffers in shared memory</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#define SHARED_COMMON_SIZE        2048               </span><span class="comment">// reserved size for common-lib registers</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#define SHM_BASE                  SHARED_OFFS + SHARED_COMMON_SIZE</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#define SHM_FW_ID                 SHM_BASE           </span><span class="comment">// offset to app specific section in shared memory</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="preprocessor">#define SHM_MB_SLOT               SHM_BASE + 0x04UL  </span><span class="comment">// offset to the mailbox slof for lm32</span></div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="preprocessor">#define SHM_MB_SLOT_HOST          SHM_BASE + 0x0CUL  </span><span class="comment">// offset to the mailbox slot for host</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="preprocessor">#define SHM_COMMON_BEGIN          SHM_BASE + 0x10UL  </span><span class="comment">// start address of the common-lib section</span></div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#define SHM_COMMON_END            SHM_BASE + 0x14UL  </span><span class="comment">// end address of the common-lib section</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="preprocessor">#define SHM_COMMON_CMD            SHM_BASE + 0x18UL  </span><span class="comment">// address of the command buffer (common-lib)</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="preprocessor">#define SHM_COMMON_STATE          SHM_BASE + 0x1CUL  </span><span class="comment">// address of the firmware state buffer (common-lib)</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="preprocessor">#define SHM_CMD_ARGS              SHM_BASE + 0x20UL  </span><span class="comment">// offset to the command argument buffer</span></div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="comment">// index of the buffers in shared memory</span></div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="keyword">enum</span> SHM_BUF_IDX {</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  COMMON_BEGIN = 0,</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  COMMON_END,</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  COMMON_CMD,</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>  COMMON_STATE,</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  CMD_ARGS,</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  N_SHM_IDX</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>};</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="preprocessor">#define EVT_ID_IO_H32             0x0000fca0UL  </span><span class="comment">// event id of timing message for IO actions (hi32)</span></div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="preprocessor">#define EVT_ID_IO_L32             0x00000000UL  </span><span class="comment">// event id of timing message for IO actions (lo32)</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="preprocessor">#define EVT_MASK_IO               0xffffffffffffffffULL</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment">// user commands for the burst generator</span></div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="preprocessor">#define CMD_SHOW_ALL              0x21UL         </span><span class="comment">// show pulse parameters, pulse cycles</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="preprocessor">#define CMD_GET_PARAM             0x22UL         </span><span class="comment">// get pulse parameters</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="preprocessor">#define CMD_GET_CYCLE             0x23UL         </span><span class="comment">// get pulse cycles</span></div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="preprocessor">#define CMD_LS_BURST              0x24UL         </span><span class="comment">// list burst (burst ids or burst info)</span></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="preprocessor">#define CMD_MK_BURST              0x25UL         </span><span class="comment">// declare new burst</span></div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="preprocessor">#define CMD_RM_BURST              0x26UL         </span><span class="comment">// remove burst</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">#define CMD_DE_BURST              0x27UL         </span><span class="comment">// dis/enable burst</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="preprocessor">#define CMD_RD_MSI_ECPU           0x30UL        </span><span class="comment">// read and show the content of ECA MSI registers (MSI enable, MSI destination address)</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="preprocessor">#define CMD_RD_ECPU_CHAN          0x31UL        </span><span class="comment">// read and show the content of ECA counters for the eCPU action channel</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="preprocessor">#define CMD_RD_ECPU_QUEUE         0x32UL        </span><span class="comment">// read and show the content of ECA queue connected to the eCPU action channel</span></div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="preprocessor">#define CMD_LS_FW_ID              0x33UL        </span><span class="comment">// list the firmware id (the value is written to the shared input buffer)</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="preprocessor">#define CTL_DIS                   0x0000UL</span></div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="preprocessor">#define CTL_EN                    0x0001UL</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="preprocessor">#define CTL_VALID                 0x8000UL</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="preprocessor">#define N_BURSTS                  16            </span><span class="comment">// maximum number of bursts</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="keyword">enum</span> BURST_INFO {                               <span class="comment">// burst info fields</span></div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  INFO_ID,</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>  INFO_IO_TYPE,</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>  INFO_IO_IDX,</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>  INFO_START_EVT_H32,</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>  INFO_START_EVT_L32,</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>  INFO_STOP_EVT_H32,</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  INFO_STOP_EVT_L32,</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  INFO_LOOPS_H32,</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  INFO_LOOPS_L32,</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  INFO_ACTIONS_H32,</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  INFO_ACTIONS_L32,</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  INFO_FLAG,</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  N_BURST_INFO</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>};</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="preprocessor">#define INTERVAL_200US            200000ULL</span></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="preprocessor">#define __BG_RETURN_SUCCESS       0</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="preprocessor">#define __BG_RETURN_FAILURE       0xffffffff</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="preprocessor">#define __BG_RETURN_OPTION_INVAL  0xfffffffe</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

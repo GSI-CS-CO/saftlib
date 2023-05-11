@@ -76,6 +76,7 @@ $(function() {
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classsaftlib_1_1Owned-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">saftlib::Owned Class Reference</div></div>
@@ -144,9 +145,16 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>release_service</b> (
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:af862c85d43711cfae99d864a6a77e07d"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Owned.html#af862c85d43711cfae99d864a6a77e07d">Destroyed</a></td></tr>
-<tr class="memdesc:af862c85d43711cfae99d864a6a77e07d"><td class="mdescLeft">&#160;</td><td class="mdescRight">The object was destroyed.  <a href="classsaftlib_1_1Owned.html#af862c85d43711cfae99d864a6a77e07d">More...</a><br /></td></tr>
+<tr class="memitem:af862c85d43711cfae99d864a6a77e07d"><td class="memItemLeft" align="right" valign="top"><a id="af862c85d43711cfae99d864a6a77e07d" name="af862c85d43711cfae99d864a6a77e07d"></a>
+sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Destroyed</b></td></tr>
+<tr class="memdesc:af862c85d43711cfae99d864a6a77e07d"><td class="mdescLeft">&#160;</td><td class="mdescRight">The object was destroyed. <br /></td></tr>
 <tr class="separator:af862c85d43711cfae99d864a6a77e07d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:ac20d50c474214dfa447a34bd213fb2c2"><td class="memItemLeft" align="right" valign="top"><a id="ac20d50c474214dfa447a34bd213fb2c2" name="ac20d50c474214dfa447a34bd213fb2c2"></a>
+static bool&#160;</td><td class="memItemRight" valign="bottom"><b>inhibit_signals</b> = false</td></tr>
+<tr class="separator:ac20d50c474214dfa447a34bd213fb2c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -260,25 +268,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ownerOnly</b> () cons
 
 <p>Claim ownership of the object. </p>
 <p >This method may only be invoked if the object is unowned. </p>
-
-</div>
-</div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="af862c85d43711cfae99d864a6a77e07d" name="af862c85d43711cfae99d864a6a77e07d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af862c85d43711cfae99d864a6a77e07d">&#9670;&#160;</a></span>Destroyed</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">sigc::signal&lt;void&gt; saftlib::Owned::Destroyed</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>The object was destroyed. </p>
-<p >This signal is only emitted when the function <a class="el" href="classsaftlib_1_1Owned.html#a2b11219ef81bac010e4453c9193873a7" title="Destroy this object.">Destroy()</a> is called explicitely. And only if either set_service was called before, or the container in the constructor was set to nullptr.</p>
-<p >This signal is not automatically emitted when the <a class="el" href="classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container.">Owned</a> destructor is executed. </p>
 
 </div>
 </div>

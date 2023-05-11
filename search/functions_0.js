@@ -8,6 +8,5 @@ var searchData=
   ['appendparameterset_5',['AppendParameterSet',['../classsaftlib_1_1FunctionGenerator.html#a812f77e1e72fa8addc305fd4c8106c4d',1,'saftlib::FunctionGenerator']]],
   ['appendparametersets_6',['AppendParameterSets',['../classsaftlib_1_1MasterFunctionGenerator.html#ac35553a648ea4fc761f14adb4747c82a',1,'saftlib::MasterFunctionGenerator']]],
   ['arm_7',['Arm',['../classsaftlib_1_1FunctionGenerator.html#a09cee766d1f4beb8890ada1a7069b194',1,'saftlib::FunctionGenerator::Arm()'],['../classsaftlib_1_1MasterFunctionGenerator.html#aba6689cc5104413f0bc9ef07a43872a8',1,'saftlib::MasterFunctionGenerator::Arm()']]],
-  ['atomic_5fsend_5fand_5freceive_8',['atomic_send_and_receive',['../classsaftbus_1_1ClientConnection.html#a30ffc57accd1615a926c8e1e6e5577e6',1,'saftbus::ClientConnection']]],
-  ['attachdevice_9',['AttachDevice',['../classsaftlib_1_1SAFTd.html#ad799cd918a321d32a177ad77e78f3b0c',1,'saftlib::SAFTd']]]
+  ['attachdevice_8',['AttachDevice',['../classsaftlib_1_1SAFTd.html#ad799cd918a321d32a177ad77e78f3b0c',1,'saftlib::SAFTd']]]
 ];
