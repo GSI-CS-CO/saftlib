@@ -210,6 +210,8 @@ namespace saftbus {
 		// @saftbus-export
 		bool unload_plugin(const std::string &so_filename, const std::vector<std::string> &args = std::vector<std::string>());
 
+		Service* removal_helper(const std::string &object_path);
+
 		/// @brief remove an object
 		/// @param object_path the object path of the service object to be removed
 		// @saftbus-export
@@ -227,7 +229,7 @@ namespace saftbus {
 		static std::vector<std::string> gen_interface_names();
 	public:
 		typedef Container DriverType;
-		Container_Service(Container* instance, std::function<void()> destruction_callback = std::function<void()>() );
+		Container_Service(Container* instance, std::function<void()> destruction_callback = nullptr );
 		Container_Service();
 		~Container_Service();
 		void call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send);

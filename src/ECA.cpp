@@ -596,6 +596,7 @@ ECA::~ECA()
 		for (auto &channel: ECAchannels) {
 			for (auto &actionSink: channel) {
 				if (actionSink) {
+					actionSink->Owned::Destroyed.emit();
 					actionSink->Owned::release_service();
 					// std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
 					try {
@@ -750,6 +751,7 @@ bool operator==(const std::unique_ptr<ActionSink> &up, const ActionSink * p) {
 }
 void ECA::removeSowftwareActionSink(SoftwareActionSink *sas) {
 	ActionSink *as = sas;
+	sas->Owned::Destroyed.emit();
 	sas->Owned::release_service();
 	(*ECA_LINUX_channel)[as->getNum()].reset();
 	compile();

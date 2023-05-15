@@ -38,6 +38,8 @@
 #include "TimingReceiver_Service.hpp"
 
 
+extern "C" void destroy_service();
+
 namespace saftlib {
 
 
@@ -159,10 +161,9 @@ namespace saftlib {
 		}
 		// std::cerr << "SAFTd::RemoveDevice(" << name << ") was found" << std::endl;
 		if (container) {
-			container->remove_object(device->second->getObjectPath()); // the destruction_callback will call RemoveObject
-		} else {
-			RemoveObject(name); // if we are not living inside of a saftbus::Container, we call RemoveObject ourselfs
-		}
+			container->remove_object(device->second->getObjectPath()); 
+		} 
+		RemoveObject(name); 
 	}
 	void SAFTd::RemoveObject(const std::string& name) {
 		std::map< std::string, std::unique_ptr<TimingReceiver> >::iterator device_driver = attached_devices.find(name);
@@ -171,10 +172,12 @@ namespace saftlib {
 
 
 	void SAFTd::Quit() {
+		destroy_service();
 		// Owned::inhibit_signals = true;
-		if (container) {
-			container->remove_object(object_path);
-		}
+		// attached_devices.clear();
+		// if (container) {
+		// 	container->remove_object(object_path);
+		// }
 	}
 
 
