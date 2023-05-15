@@ -992,6 +992,9 @@ void generate_service_header(const std::string &outputdirectory, ClassDefinition
 				}
 			}
 			header_out << ");" << std::endl;
+			if (signal.sigc_signal) {
+				header_out << "\t\t" << "sigc::connection " << signal.name << "_connection;" << std::endl;
+			} 
 		}
 	}
 
@@ -1048,7 +1051,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 	for (auto& class_def: class_and_all_base_classes) {
 		for (auto &signal: class_def->exportedsignals) {
 			if (signal.sigc_signal) {
-				out << "\t\t" << "d->" << signal.name << ".connect(sigc::mem_fun(this, &" << class_definition.name << "_Service::" << signal.name << "_dispatch_function));" << std::endl;
+				out << "\t\t" << signal.name << "_connection = d->" << signal.name << ".connect(sigc::mem_fun(this, &" << class_definition.name << "_Service::" << signal.name << "_dispatch_function));" << std::endl;
 			} else {
 				out << "\t\t" << "d->" << signal.name << " = std::bind(&" << class_definition.name << "_Service::" << signal.name << "_dispatch_function, this";
 				for (unsigned i = 0; i < signal.argument_list.size(); ++i) {
@@ -1063,6 +1066,15 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 
 	out << "\t" << class_definition.name << "_Service::~" << class_definition.name << "_Service() " << std::endl;
 	out << "\t" << "{" << std::endl;
+	for (auto& class_def: class_and_all_base_classes) {
+		for (auto &signal: class_def->exportedsignals) {
+			if (signal.sigc_signal) {
+				out << "\t\t" << signal.name << "_connection.disconnect();" << std::endl;
+			} else {
+				out << "\t\t" << "d->" << signal.name << " = nullptr;" << std::endl;
+			}
+		}
+	}
 	out << "\t" << "}" << std::endl;
 
 	out << "\t" << "void " << class_definition.name << "_Service::call(unsigned interface_no, unsigned function_no, int client_fd, saftbus::Deserializer &received, saftbus::Serializer &send) {" << std::endl;

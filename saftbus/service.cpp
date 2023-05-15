@@ -67,8 +67,8 @@ namespace saftbus {
 			}
 			if (!found_child) {
 				auto id = object_path_lookup_table[object_path];
-				object_path_lookup_table.erase(object_path);
 				objects[id].reset();
+				object_path_lookup_table.erase(object_path);
 			}
 
 		}
@@ -80,6 +80,9 @@ namespace saftbus {
 			while(objects.size()>1) {
 				auto last = objects.end();
 				--last;
+				if (last->second->d->destruction_callback) {
+					last->second->d->destruction_callback();
+				}
 				reset_children_first(last->second->d->object_path);
 				// erase all reset-ed entries
 				for (;;) {
@@ -119,9 +122,6 @@ namespace saftbus {
 		d->destroy_if_owner_quits = destroy_if_owner_quits;
 	}
 	Service::~Service() {
-		if (d->destruction_callback) {
-			d->destruction_callback();
-		}
 	}
 
 	int Service::get_owner() {
@@ -283,10 +283,17 @@ namespace saftbus {
 					send.put(saftbus::FunctionResult::RETURN);
 					send.put(function_call_result);
 				} return;
-				case 4: { // Container::remove_object
+				case 4: { // Container::remove_object  // this is largely hand written, because we have to make sure that the destruction callback is correctly executed
 					std::string  object_path;
 					received.get(object_path);
-					bool function_call_result = d->remove_object(object_path);
+					bool function_call_result = true;
+					Service* service = d->removal_helper(object_path);
+					if (service->d->destruction_callback) {
+						service->d->destruction_callback();
+					}
+					if (d->d->object_path_lookup_table.find(object_path) != d->d->object_path_lookup_table.end()) { // it may be that destruction callback already removed the object
+						d->remove_object(object_path);
+					}
 					send.put(saftbus::FunctionResult::RETURN);
 					send.put(function_call_result);
 				} return;
@@ -378,7 +385,7 @@ namespace saftbus {
 		}
 	}
 
-	bool Container::remove_object(const std::string &object_path)
+	Service* Container::removal_helper(const std::string &object_path)
 	{
 		if (object_path == "/saftbus") {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "cannot remove /saftbus");
@@ -395,7 +402,7 @@ namespace saftbus {
 		if (service->d->owner != -1) { // the service is owned
 			if (service->d->owner != d->connection->get_calling_client_id()) {
 				std::ostringstream msg;
-				msg << "cannot remove object \"" << object_path << "\" because it owned by other client" << service->d->owner;
+				msg << "cannot remove object \"" << object_path << "\" because it owned by other client " << service->d->owner;
 				throw saftbus::Error(saftbus::Error::INVALID_ARGS, msg.str());
 			}
 		}
@@ -424,7 +431,13 @@ namespace saftbus {
 				}
 			}
 		}
+		return d->objects[d->object_path_lookup_table[object_path]].get();
+	}
 
+	bool Container::remove_object(const std::string &object_path)
+	{
+		removal_helper(object_path);
+		auto object_id = d->object_path_lookup_table[object_path];
 		d->object_path_lookup_table.erase(object_path);
 		d->objects.erase(object_id);
 		return false;
@@ -474,6 +487,9 @@ namespace saftbus {
 		service->call(client_fd, received, send);
 
 		for (auto &s: d->removed_services) {
+			if (s->d->destruction_callback) {
+				s->d->destruction_callback();
+			}
 			remove_object(s->d->object_path);
 		}
 		d->removed_services.clear();
@@ -506,8 +522,10 @@ namespace saftbus {
 			if (iter == d->objects.rend()) {
 				break;
 			}
+			if (iter->second->d->destruction_callback) {
+				iter->second->d->destruction_callback();
+			}
 			if (iter->second->d->destruction_callback && iter->second->d->destroy_if_owner_quits) {
-				// only remove those objects with a destruction_callback
 				remove_object(iter->second->get_object_path());
 			} else {
 				// if there is no destruction_callback, release object from clients ownership (because the client hung up)

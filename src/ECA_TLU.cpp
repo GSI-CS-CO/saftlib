@@ -42,6 +42,7 @@ ECA_TLU::~ECA_TLU() {
 	if (container) {
 		for (auto &input: inputs) {
 			if (input) {
+				input->Owned::Destroyed.emit();
 				input->Owned::release_service();
 				// std::cerr << "   remove " << input->getObjectPath() << std::endl;
 				try {
