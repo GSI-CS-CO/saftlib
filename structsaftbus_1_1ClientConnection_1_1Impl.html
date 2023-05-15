@@ -89,15 +89,18 @@ struct pollfd&#160;</td><td class="memItemRight" valign="bottom"><b>pfd</b></td>
 <tr class="memitem:aa1aac7ee391c073b1b8a0eb4b1ddf922"><td class="memItemLeft" align="right" valign="top"><a id="aa1aac7ee391c073b1b8a0eb4b1ddf922" name="aa1aac7ee391c073b1b8a0eb4b1ddf922"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>client_id</b></td></tr>
 <tr class="separator:aa1aac7ee391c073b1b8a0eb4b1ddf922"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3859f2d095113e9e5bf32b2c62feec61"><td class="memItemLeft" align="right" valign="top"><a id="a3859f2d095113e9e5bf32b2c62feec61" name="a3859f2d095113e9e5bf32b2c62feec61"></a>
-std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>m_client_socket</b></td></tr>
-<tr class="separator:a3859f2d095113e9e5bf32b2c62feec61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcc8aa6fab04cc7b1a017de4fcad8522"><td class="memItemLeft" align="right" valign="top"><a id="adcc8aa6fab04cc7b1a017de4fcad8522" name="adcc8aa6fab04cc7b1a017de4fcad8522"></a>
+std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>fd_mutex</b></td></tr>
+<tr class="separator:adcc8aa6fab04cc7b1a017de4fcad8522"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80fa9713d74b60c4c3c5553de45cc2e5"><td class="memItemLeft" align="right" valign="top"><a id="a80fa9713d74b60c4c3c5553de45cc2e5" name="a80fa9713d74b60c4c3c5553de45cc2e5"></a>
+std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>connection_mutex</b></td></tr>
+<tr class="separator:a80fa9713d74b60c4c3c5553de45cc2e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:af9d0ea35eab15594d00bb0c90adaaff5"><td class="memItemLeft" align="right" valign="top"><a id="af9d0ea35eab15594d00bb0c90adaaff5" name="af9d0ea35eab15594d00bb0c90adaaff5"></a>
-static std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>m_base_socket</b></td></tr>
-<tr class="separator:af9d0ea35eab15594d00bb0c90adaaff5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59661b58677792b2d0f7bd6c2b27333c"><td class="memItemLeft" align="right" valign="top"><a id="a59661b58677792b2d0f7bd6c2b27333c" name="a59661b58677792b2d0f7bd6c2b27333c"></a>
+static std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>base_socket_mutex</b></td></tr>
+<tr class="separator:a59661b58677792b2d0f7bd6c2b27333c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>saftbus/client.cpp</li>

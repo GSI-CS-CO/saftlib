@@ -1,4 +1,0 @@
-<map id="saftlib::SAFTd::Quit" name="saftlib::SAFTd::Quit">
-<area shape="rect" id="node1" title="Instructs the saftlib daemon to quit." alt="" coords="5,13,140,38"/>
-<area shape="rect" id="node2" href="$classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c" title="remove an object" alt="" coords="188,5,315,45"/>
-</map>
