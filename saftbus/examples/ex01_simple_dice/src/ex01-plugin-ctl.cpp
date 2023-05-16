@@ -11,6 +11,10 @@ void dice_thrown_callback_sigc(int result) {
 	std::cout << "SIGC: +++++++ Dice was thrown, result was " << result << std::endl;
 }
 
+void dice_service_destroyed(bool *run_loop) {
+	*run_loop = false;
+}
+
 int main(int argc, char *argv[]) {
 
 	auto dice = ex01::Dice_Proxy::create("/ex01/Dice");
@@ -51,7 +55,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	while(true) {
+	bool run_loop = true;
+	dice->was_destroyed.connect(sigc::bind(sigc::ptr_fun(&dice_service_destroyed), &run_loop));
+	while(run_loop) {
 		saftbus::SignalGroup().get_global().wait_for_signal();
 	}
 	return 0;

@@ -167,9 +167,11 @@ namespace saftbus {
 		/// @return the saftbus object id.
 		int                      get_saftbus_object_id();
 		/// @brief the client socket is a shared resource, it should be locked before using it
-		/// @return the socket to lock before using the client socket
+		/// @return the mutex to lock before using the client socket
 		std::mutex&              get_client_socket_mutex();
 
+		/// @brief each Proxy is a shared resource (mainly the serialization and deserialization buffers) and must be locked before being used
+		/// @return the mutex to lock before using any Proxy resources
 		std::mutex&              get_proxy_mutex();
 
 
