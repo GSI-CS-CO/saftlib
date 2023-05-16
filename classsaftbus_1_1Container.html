@@ -111,8 +111,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>remove_additional_inf
 <tr class="memitem:a7609ead9f3b92dd47fc3e75ee0b315bd"><td class="memItemLeft" align="right" valign="top"><a id="a7609ead9f3b92dd47fc3e75ee0b315bd" name="a7609ead9f3b92dd47fc3e75ee0b315bd"></a>
 <a class="el" href="classsaftbus_1_1Service.html">Service</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>get_object</b> (const std::string &amp;object_path)</td></tr>
 <tr class="separator:a7609ead9f3b92dd47fc3e75ee0b315bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14fb28cb09cf2028d7852bf0875e20b3"><td class="memItemLeft" align="right" valign="top"><a id="a14fb28cb09cf2028d7852bf0875e20b3" name="a14fb28cb09cf2028d7852bf0875e20b3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>destroy_service</b> (<a class="el" href="classsaftbus_1_1Service.html">Service</a> *service)</td></tr>
+<tr class="memitem:a14fb28cb09cf2028d7852bf0875e20b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Container.html#a14fb28cb09cf2028d7852bf0875e20b3">destroy_service</a> (<a class="el" href="classsaftbus_1_1Service.html">Service</a> *service)</td></tr>
+<tr class="memdesc:a14fb28cb09cf2028d7852bf0875e20b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">this function can be used by a <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> to destroy itself  <a href="classsaftbus_1_1Container.html#a14fb28cb09cf2028d7852bf0875e20b3">More...</a><br /></td></tr>
 <tr class="separator:a14fb28cb09cf2028d7852bf0875e20b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8bf612dfd5d92baca9f62b91942876de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Container.html#a8bf612dfd5d92baca9f62b91942876de">call_service</a> (unsigned saftbus_object_id, int client_fd, <a class="el" href="classsaftbus_1_1Deserializer.html">Deserializer</a> &amp;received, <a class="el" href="classsaftbus_1_1Serializer.html">Serializer</a> &amp;send)</td></tr>
 <tr class="memdesc:a8bf612dfd5d92baca9f62b91942876de"><td class="mdescLeft">&#160;</td><td class="mdescRight">call a <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> identified by the saftbus_object_id  <a href="classsaftbus_1_1Container.html#a8bf612dfd5d92baca9f62b91942876de">More...</a><br /></td></tr>
@@ -129,6 +129,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>remove_signal_fd</b> 
 <tr class="memitem:a74bd642d19c8785a50bac1fa9fc82241"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Container.html#a74bd642d19c8785a50bac1fa9fc82241">clear</a> ()</td></tr>
 <tr class="memdesc:a74bd642d19c8785a50bac1fa9fc82241"><td class="mdescLeft">&#160;</td><td class="mdescRight">erase all objects in a safe manner  <a href="classsaftbus_1_1Container.html#a74bd642d19c8785a50bac1fa9fc82241">More...</a><br /></td></tr>
 <tr class="separator:a74bd642d19c8785a50bac1fa9fc82241"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0eeeb7c164d95a953ba206a7975f186"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsaftbus_1_1Service.html">Service</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186">removal_helper</a> (const std::string &amp;object_path)</td></tr>
+<tr class="memdesc:af0eeeb7c164d95a953ba206a7975f186"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks if object_path exists and if the object itself or any of its children are owned  <a href="classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186">More...</a><br /></td></tr>
+<tr class="separator:af0eeeb7c164d95a953ba206a7975f186"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2dde089897f2b19f1507460fcd8512ce"><td class="memItemLeft" align="right" valign="top"><a id="a2dde089897f2b19f1507460fcd8512ce" name="a2dde089897f2b19f1507460fcd8512ce"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>register_proxy</b> (const std::string &amp;object_path, const std::vector&lt; std::string &gt; interface_names, std::map&lt; std::string, int &gt; &amp;interface_name2no_map, int client_fd, int signal_group_fd)</td></tr>
 <tr class="separator:a2dde089897f2b19f1507460fcd8512ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,9 +144,6 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>load_plugin</b> (cons
 <tr class="memitem:a0a2213a21a61068e5716b6bed9276a11"><td class="memItemLeft" align="right" valign="top"><a id="a0a2213a21a61068e5716b6bed9276a11" name="a0a2213a21a61068e5716b6bed9276a11"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>unload_plugin</b> (const std::string &amp;so_filename, const std::vector&lt; std::string &gt; &amp;args=std::vector&lt; std::string &gt;())</td></tr>
 <tr class="separator:a0a2213a21a61068e5716b6bed9276a11"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0eeeb7c164d95a953ba206a7975f186"><td class="memItemLeft" align="right" valign="top"><a id="af0eeeb7c164d95a953ba206a7975f186" name="af0eeeb7c164d95a953ba206a7975f186"></a>
-<a class="el" href="classsaftbus_1_1Service.html">Service</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>removal_helper</b> (const std::string &amp;object_path)</td></tr>
-<tr class="separator:af0eeeb7c164d95a953ba206a7975f186"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b9d836b8bd0da4b1aeac77f1c493c1c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c">remove_object</a> (const std::string &amp;object_path)</td></tr>
 <tr class="memdesc:a6b9d836b8bd0da4b1aeac77f1c493c1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">remove an object  <a href="classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c">More...</a><br /></td></tr>
 <tr class="separator:a6b9d836b8bd0da4b1aeac77f1c493c1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -256,6 +256,7 @@ Here is the call graph for this function:</div>
 <map name="aclasssaftbus_1_1Container_a8bf612dfd5d92baca9f62b91942876de_cgraph" id="aclasssaftbus_1_1Container_a8bf612dfd5d92baca9f62b91942876de_cgraph">
 <area shape="rect" title="call a Service identified by the saftbus_object_id" alt="" coords="5,5,132,45"/>
 <area shape="rect" href="classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c" title="remove an object" alt="" coords="180,5,307,45"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186" title="checks if object_path exists and if the object itself or any of its children are owned" alt="" coords="355,5,481,45"/>
 </map>
 </div>
 
@@ -311,6 +312,7 @@ Here is the call graph for this function:</div>
 <map name="aclasssaftbus_1_1Container_a44117258193c3e6ccbb8d32540d0e943_cgraph" id="aclasssaftbus_1_1Container_a44117258193c3e6ccbb8d32540d0e943_cgraph">
 <area shape="rect" title="iterate all owned services and remove the ones previously owned by client with this fd" alt="" coords="5,5,132,45"/>
 <area shape="rect" href="classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c" title="remove an object" alt="" coords="180,5,307,45"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186" title="checks if object_path exists and if the object itself or any of its children are owned" alt="" coords="355,5,481,45"/>
 </map>
 </div>
 
@@ -365,6 +367,38 @@ Here is the caller graph for this function:</div>
 
 </div>
 </div>
+<a id="a14fb28cb09cf2028d7852bf0875e20b3" name="a14fb28cb09cf2028d7852bf0875e20b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14fb28cb09cf2028d7852bf0875e20b3">&#9670;&#160;</a></span>destroy_service()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void saftbus::Container::destroy_service </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsaftbus_1_1Service.html">Service</a> *&#160;</td>
+          <td class="paramname"><em>service</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>this function can be used by a <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> to destroy itself </p>
+<p >If this function is called during a remote function execution the destruction is delayed until the remote function call is completed. This is necessary because the <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> is needed to complete the remote function call. </p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftbus_1_1Container_a14fb28cb09cf2028d7852bf0875e20b3_cgraph.png" border="0" usemap="#aclasssaftbus_1_1Container_a14fb28cb09cf2028d7852bf0875e20b3_cgraph" alt=""/></div>
+<map name="aclasssaftbus_1_1Container_a14fb28cb09cf2028d7852bf0875e20b3_cgraph" id="aclasssaftbus_1_1Container_a14fb28cb09cf2028d7852bf0875e20b3_cgraph">
+<area shape="rect" title="this function can be used by a Service to destroy itself" alt="" coords="5,37,132,77"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a2ab229f9d1130bcdd7970f6e7ef5954f" title="some functions for ownership management. They can only be called whenever a client request is handled..." alt="" coords="180,5,325,45"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c" title="remove an object" alt="" coords="189,69,316,109"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186" title="checks if object_path exists and if the object itself or any of its children are owned" alt="" coords="373,69,500,109"/>
+</map>
+</div>
+
+</div>
+</div>
 <a id="a2ab229f9d1130bcdd7970f6e7ef5954f" name="a2ab229f9d1130bcdd7970f6e7ef5954f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2ab229f9d1130bcdd7970f6e7ef5954f">&#9670;&#160;</a></span>get_calling_client_id()</h2>
 
@@ -387,10 +421,52 @@ Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="classsaftbus_1_1Container_a2ab229f9d1130bcdd7970f6e7ef5954f_icgraph.png" border="0" usemap="#aclasssaftbus_1_1Container_a2ab229f9d1130bcdd7970f6e7ef5954f_icgraph" alt=""/></div>
 <map name="aclasssaftbus_1_1Container_a2ab229f9d1130bcdd7970f6e7ef5954f_icgraph" id="aclasssaftbus_1_1Container_a2ab229f9d1130bcdd7970f6e7ef5954f_icgraph">
-<area shape="rect" title="some functions for ownership management. They can only be called whenever a client request is handled..." alt="" coords="228,55,373,95"/>
-<area shape="rect" href="classsaftlib_1_1ECA.html#a45fa0d7658e85f015117e0d761174f1f" title="deactivate all owned conditions" alt="" coords="9,5,176,31"/>
-<area shape="rect" href="classsaftlib_1_1ECA.html#a628debd46c879b6361c9da70abc12542" title="Create a new SoftwareActionSink." alt="" coords="5,55,180,95"/>
-<area shape="rect" href="classsaftlib_1_1ECA.html#a2a9679fc47934de5cb9a0b3aa4171c4d" title="activate all inactive owned conditions and inactivate all active owned conditions" alt="" coords="7,120,178,145"/>
+<area shape="rect" title="some functions for ownership management. They can only be called whenever a client request is handled..." alt="" coords="228,92,373,132"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a14fb28cb09cf2028d7852bf0875e20b3" title="this function can be used by a Service to destroy itself" alt="" coords="29,5,156,45"/>
+<area shape="rect" href="classsaftlib_1_1ECA.html#a45fa0d7658e85f015117e0d761174f1f" title="deactivate all owned conditions" alt="" coords="9,70,176,95"/>
+<area shape="rect" href="classsaftlib_1_1ECA.html#a628debd46c879b6361c9da70abc12542" title="Create a new SoftwareActionSink." alt="" coords="5,120,180,160"/>
+<area shape="rect" href="classsaftlib_1_1ECA.html#a2a9679fc47934de5cb9a0b3aa4171c4d" title="activate all inactive owned conditions and inactivate all active owned conditions" alt="" coords="7,185,178,210"/>
+</map>
+</div>
+
+</div>
+</div>
+<a id="af0eeeb7c164d95a953ba206a7975f186" name="af0eeeb7c164d95a953ba206a7975f186"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0eeeb7c164d95a953ba206a7975f186">&#9670;&#160;</a></span>removal_helper()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsaftbus_1_1Service.html">Service</a> * saftbus::Container::removal_helper </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>object_path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>checks if object_path exists and if the object itself or any of its children are owned </p>
+<p >If the object does not exist or it or any of its children are owned, an exception is thrown. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">object_path</td><td>the object path of the service to be removed </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the service object under object_path. </dd></dl>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftbus_1_1Container_af0eeeb7c164d95a953ba206a7975f186_icgraph.png" border="0" usemap="#aclasssaftbus_1_1Container_af0eeeb7c164d95a953ba206a7975f186_icgraph" alt=""/></div>
+<map name="aclasssaftbus_1_1Container_af0eeeb7c164d95a953ba206a7975f186_icgraph" id="aclasssaftbus_1_1Container_af0eeeb7c164d95a953ba206a7975f186_icgraph">
+<area shape="rect" title="checks if object_path exists and if the object itself or any of its children are owned" alt="" coords="427,73,553,113"/>
+<area shape="rect" href="classsaftbus_1_1Container__Service.html#abe051ea633140c83cebcae13840635cd" title="execute one of the functions in one of the interfaces of the derived class." alt="" coords="41,5,168,45"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c" title="remove an object" alt="" coords="252,101,379,141"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a8bf612dfd5d92baca9f62b91942876de" title="call a Service identified by the saftbus_object_id" alt="" coords="41,69,168,109"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a44117258193c3e6ccbb8d32540d0e943" title="iterate all owned services and remove the ones previously owned by client with this fd" alt="" coords="41,133,168,173"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a14fb28cb09cf2028d7852bf0875e20b3" title="this function can be used by a Service to destroy itself" alt="" coords="41,197,168,237"/>
+<area shape="rect" href="classsaftlib_1_1SAFTd.html#aed75f0acfad23741464f2f4464fb0973" title="Remove the device from saftlib management." alt="" coords="5,262,204,287"/>
 </map>
 </div>
 
@@ -420,15 +496,25 @@ Here is the caller graph for this function:</div>
   </dd>
 </dl>
 <div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_cgraph.png" border="0" usemap="#aclasssaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_cgraph" alt=""/></div>
+<map name="aclasssaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_cgraph" id="aclasssaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_cgraph">
+<area shape="rect" title="remove an object" alt="" coords="5,5,132,45"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186" title="checks if object_path exists and if the object itself or any of its children are owned" alt="" coords="180,5,307,45"/>
+</map>
+</div>
+<div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="classsaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_icgraph.png" border="0" usemap="#aclasssaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_icgraph" alt=""/></div>
 <map name="aclasssaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_icgraph" id="aclasssaftbus_1_1Container_a6b9d836b8bd0da4b1aeac77f1c493c1c_icgraph">
-<area shape="rect" title="remove an object" alt="" coords="252,101,379,141"/>
+<area shape="rect" title="remove an object" alt="" coords="252,133,379,173"/>
 <area shape="rect" href="classsaftbus_1_1Container__Service.html#abe051ea633140c83cebcae13840635cd" title="execute one of the functions in one of the interfaces of the derived class." alt="" coords="41,5,168,45"/>
 <area shape="rect" href="classsaftbus_1_1Container.html#a8bf612dfd5d92baca9f62b91942876de" title="call a Service identified by the saftbus_object_id" alt="" coords="41,69,168,109"/>
 <area shape="rect" href="classsaftbus_1_1Container.html#a44117258193c3e6ccbb8d32540d0e943" title="iterate all owned services and remove the ones previously owned by client with this fd" alt="" coords="41,133,168,173"/>
-<area shape="rect" href="classsaftlib_1_1SAFTd.html#aed75f0acfad23741464f2f4464fb0973" title="Remove the device from saftlib management." alt="" coords="5,198,204,223"/>
+<area shape="rect" href="classsaftbus_1_1Container.html#a14fb28cb09cf2028d7852bf0875e20b3" title="this function can be used by a Service to destroy itself" alt="" coords="41,197,168,237"/>
+<area shape="rect" href="classsaftlib_1_1SAFTd.html#aed75f0acfad23741464f2f4464fb0973" title="Remove the device from saftlib management." alt="" coords="5,262,204,287"/>
 </map>
 </div>
 

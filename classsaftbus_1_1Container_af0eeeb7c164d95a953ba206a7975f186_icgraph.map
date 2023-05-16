@@ -1,0 +1,9 @@
+<map id="saftbus::Container::removal_helper" name="saftbus::Container::removal_helper">
+<area shape="rect" id="node1" title="checks if object_path exists and if the object itself or any of its children are owned" alt="" coords="427,73,553,113"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container__Service.html#abe051ea633140c83cebcae13840635cd" title="execute one of the functions in one of the interfaces of the derived class." alt="" coords="41,5,168,45"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c" title="remove an object" alt="" coords="252,101,379,141"/>
+<area shape="rect" id="node4" href="$classsaftbus_1_1Container.html#a8bf612dfd5d92baca9f62b91942876de" title="call a Service identified by the saftbus_object_id" alt="" coords="41,69,168,109"/>
+<area shape="rect" id="node5" href="$classsaftbus_1_1Container.html#a44117258193c3e6ccbb8d32540d0e943" title="iterate all owned services and remove the ones previously owned by client with this fd" alt="" coords="41,133,168,173"/>
+<area shape="rect" id="node6" href="$classsaftbus_1_1Container.html#a14fb28cb09cf2028d7852bf0875e20b3" title="this function can be used by a Service to destroy itself" alt="" coords="41,197,168,237"/>
+<area shape="rect" id="node7" href="$classsaftlib_1_1SAFTd.html#aed75f0acfad23741464f2f4464fb0973" title="Remove the device from saftlib management." alt="" coords="5,262,204,287"/>
+</map>

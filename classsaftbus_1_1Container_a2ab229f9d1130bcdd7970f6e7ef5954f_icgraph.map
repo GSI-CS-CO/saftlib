@@ -1,6 +1,7 @@
 <map id="saftbus::Container::get_calling_client_id" name="saftbus::Container::get_calling_client_id">
-<area shape="rect" id="node1" title="some functions for ownership management. They can only be called whenever a client request is handled..." alt="" coords="228,55,373,95"/>
-<area shape="rect" id="node2" href="$classsaftlib_1_1ECA.html#a45fa0d7658e85f015117e0d761174f1f" title="deactivate all owned conditions" alt="" coords="9,5,176,31"/>
-<area shape="rect" id="node3" href="$classsaftlib_1_1ECA.html#a628debd46c879b6361c9da70abc12542" title="Create a new SoftwareActionSink." alt="" coords="5,55,180,95"/>
-<area shape="rect" id="node4" href="$classsaftlib_1_1ECA.html#a2a9679fc47934de5cb9a0b3aa4171c4d" title="activate all inactive owned conditions and inactivate all active owned conditions" alt="" coords="7,120,178,145"/>
+<area shape="rect" id="node1" title="some functions for ownership management. They can only be called whenever a client request is handled..." alt="" coords="228,92,373,132"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container.html#a14fb28cb09cf2028d7852bf0875e20b3" title="this function can be used by a Service to destroy itself" alt="" coords="29,5,156,45"/>
+<area shape="rect" id="node3" href="$classsaftlib_1_1ECA.html#a45fa0d7658e85f015117e0d761174f1f" title="deactivate all owned conditions" alt="" coords="9,70,176,95"/>
+<area shape="rect" id="node4" href="$classsaftlib_1_1ECA.html#a628debd46c879b6361c9da70abc12542" title="Create a new SoftwareActionSink." alt="" coords="5,120,180,160"/>
+<area shape="rect" id="node5" href="$classsaftlib_1_1ECA.html#a2a9679fc47934de5cb9a0b3aa4171c4d" title="activate all inactive owned conditions and inactivate all active owned conditions" alt="" coords="7,185,178,210"/>
 </map>

@@ -24,13 +24,14 @@ var searchData=
   ['register_5fsignal_5fid_5ffor_5fclient_21',['register_signal_id_for_client',['../classsaftbus_1_1ServerConnection.html#af8ab650323809e17033457f1725874b9',1,'saftbus::ServerConnection']]],
   ['release_5firq_22',['release_irq',['../classsaftlib_1_1SAFTd.html#a1d22e3becfb98182a6cb1592d752e914',1,'saftlib::SAFTd']]],
   ['release_5fservice_23',['release_service',['../classsaftlib_1_1Owned.html#aa5b4aa95a92f5d76345ba45b6d7c8830',1,'saftlib::Owned']]],
-  ['remove_24',['remove',['../classsaftbus_1_1Loop.html#a358bd3a3d66d2ef970ed9c9e2e581e5b',1,'saftbus::Loop']]],
-  ['remove_25',['Remove',['../classsaftlib_1_1TimingReceiver.html#a52f3e1a63b500feec586914f5776740a',1,'saftlib::TimingReceiver']]],
-  ['remove_5fadditional_5finfo_5fcallback_26',['remove_additional_info_callback',['../classsaftbus_1_1Container.html#a47a9723bc361582876e6ee316305cc42',1,'saftbus::Container']]],
-  ['remove_5fobject_27',['remove_object',['../classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c',1,'saftbus::Container']]],
-  ['removedevice_28',['RemoveDevice',['../classsaftlib_1_1SAFTd.html#aed75f0acfad23741464f2f4464fb0973',1,'saftlib::SAFTd']]],
-  ['request_5firq_29',['request_irq',['../classsaftlib_1_1SAFTd.html#afd186dfc8762b7d6505ea0743fea9e89',1,'saftlib::SAFTd']]],
-  ['reset_30',['Reset',['../classsaftlib_1_1Reset.html',1,'saftlib']]],
-  ['resetactivefunctiongenerators_31',['ResetActiveFunctionGenerators',['../classsaftlib_1_1MasterFunctionGenerator.html#a63db1509cf5dbb5d7b187a4be233193b',1,'saftlib::MasterFunctionGenerator']]],
-  ['running_32',['Running',['../classsaftlib_1_1MasterFunctionGenerator.html#adb934d301681c382bb3844b240c02254',1,'saftlib::MasterFunctionGenerator']]]
+  ['removal_5fhelper_24',['removal_helper',['../classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186',1,'saftbus::Container']]],
+  ['remove_25',['remove',['../classsaftbus_1_1Loop.html#a358bd3a3d66d2ef970ed9c9e2e581e5b',1,'saftbus::Loop']]],
+  ['remove_26',['Remove',['../classsaftlib_1_1TimingReceiver.html#a52f3e1a63b500feec586914f5776740a',1,'saftlib::TimingReceiver']]],
+  ['remove_5fadditional_5finfo_5fcallback_27',['remove_additional_info_callback',['../classsaftbus_1_1Container.html#a47a9723bc361582876e6ee316305cc42',1,'saftbus::Container']]],
+  ['remove_5fobject_28',['remove_object',['../classsaftbus_1_1Container.html#a6b9d836b8bd0da4b1aeac77f1c493c1c',1,'saftbus::Container']]],
+  ['removedevice_29',['RemoveDevice',['../classsaftlib_1_1SAFTd.html#aed75f0acfad23741464f2f4464fb0973',1,'saftlib::SAFTd']]],
+  ['request_5firq_30',['request_irq',['../classsaftlib_1_1SAFTd.html#afd186dfc8762b7d6505ea0743fea9e89',1,'saftlib::SAFTd']]],
+  ['reset_31',['Reset',['../classsaftlib_1_1Reset.html',1,'saftlib']]],
+  ['resetactivefunctiongenerators_32',['ResetActiveFunctionGenerators',['../classsaftlib_1_1MasterFunctionGenerator.html#a63db1509cf5dbb5d7b187a4be233193b',1,'saftlib::MasterFunctionGenerator']]],
+  ['running_33',['Running',['../classsaftlib_1_1MasterFunctionGenerator.html#adb934d301681c382bb3844b240c02254',1,'saftlib::MasterFunctionGenerator']]]
 ];

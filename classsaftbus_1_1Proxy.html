@@ -129,8 +129,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a3596bd4c37689f0e1ac94780853c354f"><td class="memItemLeft" align="right" valign="top">std::mutex &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#a3596bd4c37689f0e1ac94780853c354f">get_client_socket_mutex</a> ()</td></tr>
 <tr class="memdesc:a3596bd4c37689f0e1ac94780853c354f"><td class="mdescLeft">&#160;</td><td class="mdescRight">the client socket is a shared resource, it should be locked before using it  <a href="classsaftbus_1_1Proxy.html#a3596bd4c37689f0e1ac94780853c354f">More...</a><br /></td></tr>
 <tr class="separator:a3596bd4c37689f0e1ac94780853c354f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a157e2b8529f867256385be2f0e0de2c4"><td class="memItemLeft" align="right" valign="top"><a id="a157e2b8529f867256385be2f0e0de2c4" name="a157e2b8529f867256385be2f0e0de2c4"></a>
-std::mutex &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>get_proxy_mutex</b> ()</td></tr>
+<tr class="memitem:a157e2b8529f867256385be2f0e0de2c4"><td class="memItemLeft" align="right" valign="top">std::mutex &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#a157e2b8529f867256385be2f0e0de2c4">get_proxy_mutex</a> ()</td></tr>
+<tr class="memdesc:a157e2b8529f867256385be2f0e0de2c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">each <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> is a shared resource (mainly the serialization and deserialization buffers) and must be locked before being used  <a href="classsaftbus_1_1Proxy.html#a157e2b8529f867256385be2f0e0de2c4">More...</a><br /></td></tr>
 <tr class="separator:a157e2b8529f867256385be2f0e0de2c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8eb5f927316e33d4dd4ab84267adf073"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#a8eb5f927316e33d4dd4ab84267adf073">interface_no_from_name</a> (const std::string &amp;interface_name)</td></tr>
 <tr class="memdesc:a8eb5f927316e33d4dd4ab84267adf073"><td class="mdescLeft">&#160;</td><td class="mdescRight">needs to be called by derived classes in order to determine which interface_no they refer to.  <a href="classsaftbus_1_1Proxy.html#a8eb5f927316e33d4dd4ab84267adf073">More...</a><br /></td></tr>
@@ -186,7 +186,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>SignalGroup</b></td>
 </div><div class="memdoc">
 
 <p>the client socket is a shared resource, it should be locked before using it </p>
-<dl class="section return"><dt>Returns</dt><dd>the socket to lock before using the client socket </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the mutex to lock before using the client socket </dd></dl>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
@@ -234,6 +234,34 @@ Here is the caller graph for this function:</div>
 <area shape="rect" href="classsaftbus_1_1SignalGroup.html#a10ff4f857dd878a4738e6c1cf950a163" title="used in the Constructor of Proxy objects to connect themselves to this SignalGroup." alt="" coords="8,69,151,109"/>
 </map>
 </div>
+
+</div>
+</div>
+<a id="a157e2b8529f867256385be2f0e0de2c4" name="a157e2b8529f867256385be2f0e0de2c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a157e2b8529f867256385be2f0e0de2c4">&#9670;&#160;</a></span>get_proxy_mutex()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::mutex &amp; saftbus::Proxy::get_proxy_mutex </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>each <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> is a shared resource (mainly the serialization and deserialization buffers) and must be locked before being used </p>
+<dl class="section return"><dt>Returns</dt><dd>the mutex to lock before using any <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> resources </dd></dl>
 
 </div>
 </div>

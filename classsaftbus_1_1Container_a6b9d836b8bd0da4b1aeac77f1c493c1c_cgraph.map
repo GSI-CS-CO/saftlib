@@ -1,0 +1,4 @@
+<map id="saftbus::Container::remove_object" name="saftbus::Container::remove_object">
+<area shape="rect" id="node1" title="remove an object" alt="" coords="5,5,132,45"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container.html#af0eeeb7c164d95a953ba206a7975f186" title="checks if object_path exists and if the object itself or any of its children are owned" alt="" coords="180,5,307,45"/>
+</map>
