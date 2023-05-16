@@ -1070,9 +1070,7 @@ void generate_service_implementation(const std::string &outputdirectory, ClassDe
 		for (auto &signal: class_def->exportedsignals) {
 			if (signal.sigc_signal) {
 				out << "\t\t" << signal.name << "_connection.disconnect();" << std::endl;
-			} else {
-				out << "\t\t" << "d->" << signal.name << " = nullptr;" << std::endl;
-			}
+			} 
 		}
 	}
 	out << "\t" << "}" << std::endl;

@@ -188,11 +188,8 @@ namespace saftbus {
 				struct pollfd pfd;
 				pfd.fd = fd;
 				pfd.events = POLLOUT;
-				if (poll(&pfd, 1, 10) == 0) { // fd is not ready - skip it and try to send later (not implemented yet)
-					// std::cerr << "dropping signal for fd " << fd << std::endl;
-					// if (pfd.revents&POLLHUP ) { std::cerr << " POLLHUP" << std::endl;}
-					// if (pfd.revents&POLLERR ) { std::cerr << " POLLERR" << std::endl;}
-					// if (pfd.revents&POLLNVAL) { std::cerr << " POLLNVAL" << std::endl;}
+				if (poll(&pfd, 1, 10) <= 0) { // fd is not ready after 10 ms drop the signal (write to stderr?)
+					// std::cerr << "Service " << get_object_path() << "Service::emit() drop signal for fd " << fd << std::endl;
 				} else {
 					send.write_to_no_init(fd); // The same data is written multiple times. Therefore the
 				}                             // put_init function must not be called automatically after write

@@ -461,11 +461,7 @@ namespace saftbus {
 		get_send().put(2); // function_no
 		get_send().put(so_filename);
 		get_send().put(plugin_args);
-		{
-			std::lock_guard<std::mutex> lock(get_client_socket_mutex());
-			get_connection().send(get_send());
-			get_connection().receive(get_received());
-		}
+		get_connection().atomic_send_and_receive(get_send(), get_received());
 		saftbus::FunctionResult function_result_;
 		get_received().get(function_result_);
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
@@ -485,11 +481,7 @@ namespace saftbus {
 		get_send().put(3); // function_no
 		get_send().put(so_filename);
 		get_send().put(plugin_args);
-		{
-			std::lock_guard<std::mutex> lock(get_client_socket_mutex());
-			get_connection().send(get_send());
-			get_connection().receive(get_received());
-		}
+		get_connection().atomic_send_and_receive(get_send(), get_received());
 		saftbus::FunctionResult function_result_;
 		get_received().get(function_result_);
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
@@ -508,11 +500,7 @@ namespace saftbus {
 		get_send().put(interface_no);
 		get_send().put(4); // function_no
 		get_send().put(object_path);
-		{
-			std::lock_guard<std::mutex> lock(get_client_socket_mutex());
-			get_connection().send(get_send());
-			get_connection().receive(get_received());
-		}
+		get_connection().atomic_send_and_receive(get_send(), get_received());
 		saftbus::FunctionResult function_result_;
 		get_received().get(function_result_);
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
@@ -530,11 +518,7 @@ namespace saftbus {
 		get_send().put(get_saftbus_object_id());
 		get_send().put(interface_no);
 		get_send().put(5); // function_no
-		{
-			std::lock_guard<std::mutex> lock(get_client_socket_mutex());
-			get_connection().send(get_send());
-			get_connection().receive(get_received());
-		}
+		get_connection().atomic_send_and_receive(get_send(), get_received());
 		saftbus::FunctionResult function_result_;
 		get_received().get(function_result_);
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {
@@ -549,11 +533,7 @@ namespace saftbus {
 		get_send().put(get_saftbus_object_id());
 		get_send().put(interface_no);
 		get_send().put(6); // function_no
-		{
-			std::lock_guard<std::mutex> lock(get_client_socket_mutex());
-			get_connection().send(get_send());
-			get_connection().receive(get_received());
-		}
+		get_connection().atomic_send_and_receive(get_send(), get_received());
 		saftbus::FunctionResult function_result_;
 		get_received().get(function_result_);
 		if (function_result_ == saftbus::FunctionResult::EXCEPTION) {

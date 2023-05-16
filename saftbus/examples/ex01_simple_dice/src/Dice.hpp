@@ -47,6 +47,9 @@ namespace ex01 {
 
 		// @saftbus-export
 		sigc::signal<void, int> was_thrown_sigc;
+
+		// @saftbus-export
+		sigc::signal<void> was_destroyed;
 	};
 
 

@@ -171,6 +171,11 @@ namespace saftbus {
 
 		Service* get_object(const std::string &object_path);
 
+		/// @brief this function can be used by a Service to destroy itself
+		/// 
+		/// If this function is called during a remote function execution the destruction is 
+		/// delayed until the remote function call is completed. This is necessary because the 
+		/// Service is needed to complete the remote function call.
 		void destroy_service(Service *service);
 
 
@@ -198,6 +203,14 @@ namespace saftbus {
 		/// Children and parents are identified by the object path: e.g. /grandparent/parent/child
 		void clear();
 
+		/// @brief checks if object_path exists and if the object itself or any of its children are owned
+		///
+		/// If the object does not exist or it or any of its children are owned, an exception is thrown.
+		/// @param object_path the object path of the service to be removed
+		/// @return A pointer to the service object under object_path.
+		Service* removal_helper(const std::string &object_path);
+
+
 		// return saftbus_object_id if the object_path was found and all requested interfaces are implemented
 		// return 0 if object_path was not found
 		// return -1 if object_path was found but not all requested interfaces are implemented by the object
@@ -210,7 +223,6 @@ namespace saftbus {
 		// @saftbus-export
 		bool unload_plugin(const std::string &so_filename, const std::vector<std::string> &args = std::vector<std::string>());
 
-		Service* removal_helper(const std::string &object_path);
 
 		/// @brief remove an object
 		/// @param object_path the object path of the service object to be removed
