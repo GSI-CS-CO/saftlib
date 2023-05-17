@@ -82,9 +82,6 @@ namespace saftbus {
 			// All signal file descriptors are closed when the client disconnects
 		}
 	};
-	bool operator==(const std::unique_ptr<Client> &lhs, int rhs) {
-		return lhs->socket_fd == rhs;
-	}
 
 	struct ServerConnection::Impl {
 		Container container_of_services;
@@ -94,7 +91,6 @@ namespace saftbus {
 		int calling_client_id; // this is equal to the client id as long as a client request is handled
 		Impl(ServerConnection *connection) : container_of_services(connection), calling_client_id(-1) {}
 		~Impl() {
-			//===std::cerr << "ServerConnection::~Impl()" << std::endl;
 		}
 		bool accept_client(int fd, int condition);
 		bool handle_client_request(int fd, int condition);
@@ -115,7 +111,6 @@ namespace saftbus {
 	bool ServerConnection::Impl::accept_client(int fd, int condition) {
 		if (condition & POLLIN) {
 			int client_socket_fd = recvfd(fd);
-			// std::cout << "got (open) " << client_socket_fd << std::endl;
 			if (client_socket_fd == -1) {
 				std::cerr << "cannot receive socket fd" << std::endl;
 				assert(false);
@@ -147,26 +142,17 @@ namespace saftbus {
 			~ClientID() { ref = -1; }
 		} ccid(calling_client_id, fd); 
 
-		// if (condition & POLLIN)  { std::cout << "POLLIN" << std::endl; }
-		// if (condition & POLLHUP) { std::cout << "POLLHUP" << std::endl; }
-		// if (condition & POLLERR) { std::cout << "POLLERR" << std::endl; }
-
 		if (condition & (POLLIN|POLLHUP) ) {
 			// if POLLHUP is received, there may still be data inside the pipe
 			// we have to loop and read until all data is read and all remaining actions 
 			// are executed. But not more then 100 times. 
 			bool read_result = received.read_from(fd);
 			if (!read_result) {
-				// //===std::cerr << "failed to read data from fd " << fd << std::endl;
 				client_hung_up(fd);
-				// std::cout << "remove client IoSource " << fd << std::endl;
 				return false;
 			}
 			unsigned saftbus_object_id;
 			received.get(saftbus_object_id);
-			// //===std::cerr << "got saftbus_object_id: " << saftbus_object_id << std::endl;
-			// //===std::cerr << "found saftbus_object_id " << saftbus_object_id << std::endl;
-			// //===std::cerr << "trying to call a function" << std::endl;
 			if (!container_of_services.call_service(saftbus_object_id, fd, received, send)) { 
 				// call_service returns false if the service object was not found
 				// in this case an exception is sent to the Proxy 
@@ -181,9 +167,12 @@ namespace saftbus {
 		return true;
 	}
 
+	// operator is used to std::find a client based on the file descriptor
+	bool operator==(const std::unique_ptr<Client> &lhs, int rhs) {
+		return lhs->socket_fd == rhs;
+	}
 	void ServerConnection::Impl::client_hung_up(int client_fd) 
 	{
-		// //===std::cerr << "clients.size() " << clients.size() << std::endl;
 		auto removed_client = std::find(clients.begin(), clients.end(), client_fd);
 		if (removed_client == clients.end()) { 
 			calling_client_id = -1;
@@ -193,7 +182,6 @@ namespace saftbus {
 			for(auto &sigfd_usecount: (*removed_client)->signal_fd_use_count) {
 				int sigfd = sigfd_usecount.first;
 				// int count = sigfd_usecount.second;
-				// //===std::cerr << "remove client signal fd " << sigfd << std::endl;
 				container_of_services.remove_signal_fd(sigfd);
 			}
 			clients.erase(std::remove(clients.begin(), clients.end(), client_fd), clients.end());
@@ -201,7 +189,6 @@ namespace saftbus {
 		// tell the container that a client hung up
 		// the container hast to remove all services previously owned by this client
 		container_of_services.client_hung_up(client_fd);
-		// //===std::cerr << "clients.size() " << clients.size() << std::endl;
 	}
 
 
@@ -269,12 +256,10 @@ namespace saftbus {
 
 	ServerConnection::~ServerConnection() 
 	{
-		//===std::cerr << "~ServerConnection" << std::endl;
 	}
 
 	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		//===std::cerr << "register signal fd " << signal_fd << " for client " << client_fd << std::endl;
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
 		if (client == d->clients.end()) {
 			assert(false);
@@ -285,8 +270,6 @@ namespace saftbus {
 
 	void ServerConnection::unregister_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		//===std::cerr << "unregister signal fd " << signal_fd << " for client " << client_fd << std::endl;
-
 		// auto client = d->clients.find(client_fd);
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
 		if (client == d->clients.end()) {

@@ -36,9 +36,13 @@ namespace saftlib {
 
 class SerdesClockGen;
 
-/// @brief representaion of on IO on a TimingReceiver
+/// @brief representaion of a single IO on a TimingReceiver
 ///
-/// This class configures the IO_CONTROL device on the hardware
+/// On the hardware all IOs are controlled IO_CONTROL sdb device which is represented by IoControl class in saftlib.
+/// This Io class is used by the IoControl class to represent an individual IO. 
+/// It encapsulates the register accesses to setup the hardware parameters for the represented IO.
+/// 
+/// This class is also used by the Input and Output classes, which are both part of the user facing API.
 class Io {
 	etherbone::Device &device;
 	std::string io_name;

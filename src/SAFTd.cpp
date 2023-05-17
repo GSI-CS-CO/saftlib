@@ -231,12 +231,14 @@ namespace saftlib {
 		eb_address_t first, last, mask;
 		msi.device.enable_msi(&first, &last);
 		mask = last - first;
-		for (;;) {
+		for (int i = 0; i < 2000; ++i) {
 			eb_address_t irq_adr = ((rand() & mask) + first) & (~0x3);
 			if (request_irq(irq_adr, slot)) {
 				return msi.msi_device.msi_first + irq_adr; // return the adress that triggers the msi
 			}
-		}		
+		}
+		std::cerr << "cannot find a free irq address" << std::endl;
+		return 0x0;
 	}
 
 	std::string SAFTd::getObjectPath() {
