@@ -144,11 +144,7 @@ namespace saftbus {
 	{
 		_iter = _data.begin();
 	}
-	//  Sends given file descriptior via given socket
-	//   @param socket to be used for fd sending
-	//   @param fd to be sent
-	//   @return sendmsg result
-	//   @note socket should be (PF_UNIX, SOCK_DGRAM)
+
 	int sendfd(int socket, int fd) {
 		char dummy = '$';
 		struct msghdr msg;
@@ -183,12 +179,7 @@ namespace saftbus {
 		return ret;
 	}
 
-	//   Receives file descriptor using given socket
-	//  
-	//   @param socket to be used for fd recepion
-	//   @return received file descriptor; -1 if failed
-	//  
-	//   @note socket should be (PF_UNIX, SOCK_DGRAM)
+
 	int recvfd(int socket) {
 		int len;
 		int fd;

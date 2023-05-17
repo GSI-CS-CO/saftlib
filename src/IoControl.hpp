@@ -35,6 +35,7 @@
 
 namespace saftlib {
 
+/// 
 class IoControl : public SdbDevice {
 	SerdesClockGen clkgen;
 

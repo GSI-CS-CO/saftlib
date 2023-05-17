@@ -39,6 +39,10 @@
 /// The code can be used directly by linking the driver library, or by loading the driver library 
 /// as a plugin into a running saftbusd access them with the saftbus inter process communication library
 /// through the driver proxy classes.
+///
+/// In general, SDB devices on the hardware are represented by a class derived from SdbDevice class.
+/// All hardware devices, that are MSI masters are represented by a class derived from MsiDevice class.
+/// An instance of an MsiDevice class can be used to register MSI callback functions at the SAFTd instance.
 namespace saftlib {
 
 	/// @brief An encapsulated etherbone::Socket with some extra features
@@ -142,7 +146,9 @@ namespace saftlib {
 		/// @param irq the address to be released
 		void release_irq(eb_address_t irq);
 
-		/// @brief try to attach a callback to an irq address
+		/// @brief register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a master 
+		///        on the MSI crossbar) from the hardware. The wishbone address to trigger the callack is returned from the 
+		///        function. The wishbone data is passed as argument to the callback function.
 		///
 		/// @param object of type MsiDevice or derived from MsiDevice. MsiDevices are masters on the MSI-crossbar interconnect
 		/// @param slot function object that is called when an MSI with the correct address (return value of this fuction) arrives

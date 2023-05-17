@@ -502,7 +502,7 @@ namespace saftbus {
 	}
 
 
-	// define this operator to find a Service based on owner 
+	// operator is used to std::find a Service based on owner, where the owner is identified by file descriptor (fd) of the client socket
 	bool operator==(std::pair<const unsigned int, std::unique_ptr<saftbus::Service> > &p, const int fd) {
 		return p.second->d->owner == fd;
 	}

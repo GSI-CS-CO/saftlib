@@ -18,37 +18,7 @@
  *******************************************************************************
  */
 
-// Software emulation of a TimingReceiver ECA
-//
-// The first part of this program consists of an Etherbone slave implementation that was 
-// originally developed to connect GHDL simulations to real host programs. It behaves like 
-// a usb serial device and is implemented as a pseudo-terminal in /dev/pts/<n>, where <n> 
-// is an integer thas is determined by the OS. After startup, the full devicename ist written
-// into the temporary file "/tmp/simbridge-eb-device", such that eb-tools can be used like
-// this: "eb-ls $(cat /tmp/simbridge-eb-device)"
-//
-// The second part of this program consists of an emulation of some hardware registers 
-// in a TimingReceiver and partially of its behavior. Register layout is based on a SDB record file 
-// from a real TimingReceiver. This Program can also be used to extract such an SDB record file
-// from existing hardware (use the --extract-sdb <devicename> option and redirect the 
-// output into a file).
-// Currently, the program implements enough TimingReceiver functionality that saftlib can connect 
-// to it (using the pseudo-terminal device).
-// Saftlib clients can create software action sinks and inject events into the simulated hardware.
-// The timing events are redistributed to the correct SoftwarActionSinks just as they would be 
-// if saftlib would work on real hardware. The functionality is limited in that flags such as 
-// LATE,CONFLICT,DELAYED,EARLY are not supported. Late events are alywas delivered immediately. 
-// The execution time comes from the system time and is not synchronized to a WhiteRabbit network.
-//
-// Besides parts of the ECA, not much of the hardware behavior is currently implemented. 
 
-// global variable that controls the amout of output created by all parts of the program
-// verbosity = -1: output only error messages
-// verbosity =  0: output program status information
-// verbosity =  1: output register access
-int verbosity = 0;
-bool poll_msis = false; // If this is true, MSIS are provided in registers of  etherbone config space.
-                        // Otherwise MSIs are directly sent to the EB-master (no polling needed)
 
 #include <errno.h>
 #include <string.h>
@@ -66,6 +36,42 @@ bool poll_msis = false; // If this is true, MSIS are provided in registers of  e
 #include <iomanip>
 #include <fstream>
 #include <deque>
+
+// global variable that controls the amout of output created by all parts of the program
+// verbosity = -1: output only error messages
+// verbosity =  0: output program status information
+// verbosity =  1: output register access
+int verbosity = 0;
+bool poll_msis = false; // If this is true, MSIS are provided in registers of  etherbone config space.
+                        // Otherwise MSIs are directly sent to the EB-master (no polling needed)
+
+/// @brief Software emulation of a TimingReceiver 
+///
+/// The purpose of this program is to run saftlib software test programs without attaching 
+/// actual hardware devices to the system.
+///
+/// The first part of this program consists of an etherbone slave implementation that was 
+/// originally developed to connect GHDL simulations to real host programs. It behaves like 
+/// a USB serial device and is implemented as a pseudo-terminal in /dev/pts/<n>, where <n> 
+/// is an integer that is determined by the OS. After startup, the full device name is written
+/// into the temporary file "/tmp/simbridge-eb-device", such that eb-tools can be used like
+/// this: "eb-ls $(cat /tmp/simbridge-eb-device)"
+///
+/// The second part of this program consists of an emulation of some hardware registers 
+/// in a TimingReceiver and partially of its behavior. Register layout is based on a SDB record file 
+/// from a real TimingReceiver. This Program can also be used to extract such an SDB record file
+/// from existing hardware (use the --extract-sdb <device name> option and redirect the 
+/// output into a file).
+/// Currently, the program implements enough TimingReceiver functionality that saftlib can connect 
+/// to it (using the pseudo-terminal device).
+/// Saftlib clients can create software action sinks and inject events into the simulated hardware.
+/// The timing events are redistributed to the correct SoftwarActionSinks just as they would be 
+/// if saftlib would work on real hardware. The functionality is limited in that flags such as 
+/// LATE,CONFLICT,DELAYED,EARLY are not supported. Late events are always delivered immediately. 
+/// The execution time comes from the system time and is not synchronized to a WhiteRabbit network.
+///
+/// Besides parts of the ECA, not much of the hardware behavior is currently implemented. 
+namespace software_tr {
 
 // std_logic values
 typedef enum { 
@@ -774,7 +780,7 @@ void EBslave::msi_slave_in(std_logic_t cyc, std_logic_t stb, std_logic_t we, int
 	} 
 }
 
-
+}
 
 #include <cstdint>
 
@@ -789,6 +795,8 @@ void EBslave::msi_slave_in(std_logic_t cyc, std_logic_t stb, std_logic_t we, int
 #include <algorithm>
 #include <thread>
 #include <mutex>
+
+namespace software_tr {
 
 EBslave *eb_slave = nullptr;
 uint32_t eca_msi_target_adr = 0;
@@ -984,9 +992,13 @@ bool FpgaReset::_reset_was_triggered = false;
 // Multiple classes derived from class Device mimic register access to the ECA sub components
 // just like in the real Hardware (saftlib will not know the difference)
 
+}
+
 #include "eca_flags.h"
 #include "eca_regs.h"
 #include "eca_queue_regs.h"
+
+namespace software_tr {
 
 // This class does in software (roughly) what the real ECA does in hardware.
 // Limitations: 
@@ -1839,7 +1851,7 @@ private:
 	uint32_t _adr_first;
 };
 
-
+}
 
 ///////////////////////////////////////////////////////
 // Implement reading SDB-records from hardware
@@ -1853,6 +1865,8 @@ private:
 #include <sstream>
 #include <vector>
 #include <map>
+
+namespace software_tr {
 
 std::map<uint32_t, uint32_t> sdb_memory;
 
@@ -1940,6 +1954,7 @@ static void extract_sdb(const char *devicename) {
 	}
 }
 
+}
 ///////////////////////////////////////////////////////
 // End of SDB-record reading
 ///////////////////////////////////////////////////////
@@ -1953,7 +1968,7 @@ static void extract_sdb(const char *devicename) {
 //     devices into the address space as specified by the SDB records. Then launch the Etherbone
 //     slave to wishbone bridge and redirect read and write request to the devices based on the 
 //     wishbone address. The program ends on any write to the FpgaReset device.
-
+using namespace software_tr;
 int main(int argc, char *argv[]) {
 
 	try {
