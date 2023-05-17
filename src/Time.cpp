@@ -1,4 +1,4 @@
-/** Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or

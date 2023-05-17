@@ -2,7 +2,7 @@
 // @brief Command-line interface for saftlib. This tool focuses on UNILAC specific features
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
-// Copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+//*  Copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 //
 // Have a chat with saftlib and UNILAC
 //

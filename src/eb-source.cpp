@@ -1,4 +1,4 @@
-/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Michael Reese <m.reese@gsi.de>
  *

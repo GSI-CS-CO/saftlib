@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/* *  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -33,6 +33,12 @@
 #include "eb-forward.hpp"
 #include "MsiDevice.hpp"
 
+/// @brief saftlib is collection of driver objects for FAIR Timing Receiver Hardware
+///
+/// The classes hide direct register access and provide high level access to the hardware functionality.
+/// The code can be used directly by linking the driver library, or by loading the driver library 
+/// as a plugin into a running saftbusd access them with the saftbus inter process communication library
+/// through the driver proxy classes.
 namespace saftlib {
 
 	/// @brief An encapsulated etherbone::Socket with some extra features
@@ -143,16 +149,24 @@ namespace saftlib {
 		/// @return the address that is associated with the function object connected to slot.
 		eb_address_t request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot);
 
+		/// @brief the object path of the SAFTd_Service
+		/// @return the object path
 		std::string getObjectPath();
 
+		/// @brief access the underlying ehterbone::Socket
 		etherbone::Socket &get_etherbone_socket() { return socket; }
 
+		/// @brief access any of the managed TimingReciever driver objects
+		/// @return a pointer to the TimingReceiver, thwows if object_path was not found
 		TimingReceiver* getTimingReceiver(const std::string &object_path);
 
-		// Override the virtual functions from etherbone::Handler base class
-		// to receive incoming etherbone read/write requests from the device.
-		// Only write is ever used (an incoming MSI causes a write request).
+		/// @brief Implementation of the virtual function etherbone::Handler::read
+		///
+		/// read/write virtual functions from etherbone::Handler base class are used
+		/// to receive incoming etherbone read/write requests from the device.
+		/// Only write is ever used, an incoming MSI (Message Signal Interrupt) causes a write request. 
 		eb_status_t read (eb_address_t address, eb_width_t width, eb_data_t* data);
+		/// @brief the write function is never used, i.e. Hardware never does read requests towards the host.
 		eb_status_t write(eb_address_t address, eb_width_t width, eb_data_t data);
 
 	private:

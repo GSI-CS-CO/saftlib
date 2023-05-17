@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -36,6 +36,9 @@ namespace saftlib {
 
 class SerdesClockGen;
 
+/// @brief representaion of on IO on a TimingReceiver
+///
+/// This class configures the IO_CONTROL device on the hardware
 class Io {
 	etherbone::Device &device;
 	std::string io_name;
@@ -69,8 +72,6 @@ public:
 	   , eb_address_t io_control_addr
 	   , SerdesClockGen &clkgen
 	);
-
-
 
 	const std::string &getName() const;
 	unsigned getDirection() const;

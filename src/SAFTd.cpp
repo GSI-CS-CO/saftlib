@@ -1,4 +1,4 @@
-/** Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -41,7 +41,6 @@
 extern "C" void destroy_service();
 
 namespace saftlib {
-
 
 	SAFTd::SAFTd(saftbus::Container *cont)
 		: container(cont)
@@ -97,7 +96,6 @@ namespace saftlib {
 		//           <<               " " << std::hex << std::setw(8) << std::setfill('0') << data 
 		//           << std::dec 
 		//           << std::endl;
-	    
 		std::map<eb_address_t, std::function<void(eb_data_t)> >::iterator it = irqs.find(address);
 		if (it != irqs.end()) {
 			try {
@@ -109,13 +107,11 @@ namespace saftlib {
 		} else {
 			std::cerr << "No handler for MSI 0x" << std::hex << address << std::dec << std::endl;
 		}
-
 		return EB_OK;
 	}
 
 	std::string SAFTd::AttachDevice(const std::string& name, const std::string& etherbone_path, int polling_interval_ms) 
 	{
-		// std::cerr << etherbone_path << std::endl;
 		if (attached_devices.find(name) != attached_devices.end()) {
 	        throw saftbus::Error(saftbus::Error::INVALID_ARGS, "device already exists");
 		}
@@ -152,34 +148,25 @@ namespace saftlib {
 		return std::string();
 	}
 
-
 	void SAFTd::RemoveDevice(const std::string& name) {
-		// std::cerr << "SAFTd::RemoveDevice(" << name << ")" << std::endl;
 		std::map< std::string, std::unique_ptr<TimingReceiver> >::iterator device = attached_devices.find(name);
 		if (device == attached_devices.end()) {
 			throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 		}
-		// std::cerr << "SAFTd::RemoveDevice(" << name << ") was found" << std::endl;
 		if (container) {
 			container->remove_object(device->second->getObjectPath()); 
 		} 
 		RemoveObject(name); 
 	}
+
 	void SAFTd::RemoveObject(const std::string& name) {
 		std::map< std::string, std::unique_ptr<TimingReceiver> >::iterator device_driver = attached_devices.find(name);
 		attached_devices.erase(device_driver);
 	}
 
-
 	void SAFTd::Quit() {
 		destroy_service();
-		// Owned::inhibit_signals = true;
-		// attached_devices.clear();
-		// if (container) {
-		// 	container->remove_object(object_path);
-		// }
 	}
-
 
 	std::string SAFTd::getSourceVersion() const {
 		return sourceVersion;
@@ -196,7 +183,6 @@ namespace saftlib {
 		}
 		return result;
 	}
-
 
 	bool SAFTd::request_irq(eb_address_t irq, const std::function<void(eb_data_t)>& slot) 
 	{
@@ -244,37 +230,28 @@ namespace saftlib {
 	eb_address_t SAFTd::request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
 		eb_address_t first, last, mask;
 		msi.device.enable_msi(&first, &last);
-		// std::cerr << std::hex << "first, last = " << first << " " << last << std::endl;
 		mask = last - first;
 		for (;;) {
 			eb_address_t irq_adr = ((rand() & mask) + first) & (~0x3);
 			if (request_irq(irq_adr, slot)) {
-				// std::cerr << "msi.msi_device.msi_first = " << std::hex << std::setw(8) << std::setfill('0') << msi.msi_device.msi_first << std::dec << std::endl;
-				// std::cerr << "request_irq returns " << std::hex << msi.msi_device.msi_first + irq_adr << std::endl;
 				return msi.msi_device.msi_first + irq_adr; // return the adress that triggers the msi
 			}
 		}		
 	}
 
-
 	std::string SAFTd::getObjectPath() {
 		return object_path;
 	}
 
-
 	TimingReceiver* SAFTd::getTimingReceiver(const std::string &tr_obj_path) {
 		size_t pos;
-		// std::cerr << "is " << object_path << " contained in " << tr_obj_path << "? " << std::endl;
 		if ((pos=tr_obj_path.find(object_path)) == tr_obj_path.npos) {
-			// std::cerr << "no" << std::endl;
 			const std::string &tr_name = tr_obj_path; // maybe the name of the TimingReceiver was given instead of its object_path
 			if (attached_devices.find(tr_name) != attached_devices.end()) {
 				return attached_devices[tr_name].get();
 			} 
 		} else {
-			// std::cerr << "yes" << std::endl;
 			std::string name = tr_obj_path.substr(object_path.size()+1);
-			// std::cerr << "get_timing_receiver " << name << std::endl;
 			return attached_devices[name].get();
 		}
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");

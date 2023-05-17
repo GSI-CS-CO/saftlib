@@ -3,7 +3,7 @@
 //        and display of beam production chains
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
-// Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+//*  Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 //
 // A CLI that allows to see what happens in the facility.
 //
