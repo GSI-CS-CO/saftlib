@@ -80,6 +80,11 @@ $(function() {
   <div class="headertitle"><div class="title">saftbus::LibraryLoader Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>The class is constructed with the name of a shared library file (.so). It opens the file, gets the address of the function symbol "create_services". The public member function create_services forwards all arguments to the loaded function from the shared library.  
+ <a href="classsaftbus_1_1LibraryLoader.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="plugins_8hpp_source.html">plugins.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
@@ -91,10 +96,52 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aab614e917735f47d81624a5811e8ec90"><td class="memItemLeft" align="right" valign="top"><a id="aab614e917735f47d81624a5811e8ec90" name="aab614e917735f47d81624a5811e8ec90"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>LibraryLoader</b> (const std::string &amp;so_filename)</td></tr>
 <tr class="separator:aab614e917735f47d81624a5811e8ec90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a047257f2dca1367118c7a0dd3d29c033"><td class="memItemLeft" align="right" valign="top"><a id="a047257f2dca1367118c7a0dd3d29c033" name="a047257f2dca1367118c7a0dd3d29c033"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>create_services</b> (<a class="el" href="classsaftbus_1_1Container.html">Container</a> *container, const std::vector&lt; std::string &gt; &amp;args=std::vector&lt; std::string &gt;())</td></tr>
+<tr class="memitem:a047257f2dca1367118c7a0dd3d29c033"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1LibraryLoader.html#a047257f2dca1367118c7a0dd3d29c033">create_services</a> (<a class="el" href="classsaftbus_1_1Container.html">Container</a> *container, const std::vector&lt; std::string &gt; &amp;args=std::vector&lt; std::string &gt;())</td></tr>
+<tr class="memdesc:a047257f2dca1367118c7a0dd3d29c033"><td class="mdescLeft">&#160;</td><td class="mdescRight">call the create_service function of the shared library associated with this object (the so_filename passed to the constructor).  <a href="classsaftbus_1_1LibraryLoader.html#a047257f2dca1367118c7a0dd3d29c033">More...</a><br /></td></tr>
 <tr class="separator:a047257f2dca1367118c7a0dd3d29c033"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >The class is constructed with the name of a shared library file (.so). It opens the file, gets the address of the function symbol "create_services". The public member function create_services forwards all arguments to the loaded function from the shared library. </p>
+<p >The create_services function in the shared library can use the container pointer to add <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> objects into the container. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a047257f2dca1367118c7a0dd3d29c033" name="a047257f2dca1367118c7a0dd3d29c033"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a047257f2dca1367118c7a0dd3d29c033">&#9670;&#160;</a></span>create_services()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void saftbus::LibraryLoader::create_services </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsaftbus_1_1Container.html">Container</a> *&#160;</td>
+          <td class="paramname"><em>container</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>args</em> = <code>std::vector&lt;std::string&gt;()</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>call the create_service function of the shared library associated with this object (the so_filename passed to the constructor). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">container</td><td>normally, the create_service function in the shared library will use this pointer to add <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> objects into the container. </td></tr>
+    <tr><td class="paramname">args</td><td>a vector of string arguments. The meaning of the arguments depends on the shared library. the service objects are owned by the plugin, we only get a naked pointer to it the std::string is the object path under which the respective <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> object should be mounted <br  />
+ </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>saftbus/<a class="el" href="plugins_8hpp_source.html">plugins.hpp</a></li>
 <li>saftbus/plugins.cpp</li>

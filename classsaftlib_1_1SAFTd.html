@@ -133,22 +133,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a1d22e3becfb98182a6cb1592d752e914"><td class="mdescLeft">&#160;</td><td class="mdescRight">release a callback  <a href="classsaftlib_1_1SAFTd.html#a1d22e3becfb98182a6cb1592d752e914">More...</a><br /></td></tr>
 <tr class="separator:a1d22e3becfb98182a6cb1592d752e914"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd186dfc8762b7d6505ea0743fea9e89"><td class="memItemLeft" align="right" valign="top">eb_address_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#afd186dfc8762b7d6505ea0743fea9e89">request_irq</a> (<a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a> &amp;msi, const std::function&lt; void(eb_data_t)&gt; &amp;slot)</td></tr>
-<tr class="memdesc:afd186dfc8762b7d6505ea0743fea9e89"><td class="mdescLeft">&#160;</td><td class="mdescRight">try to attach a callback to an irq address  <a href="classsaftlib_1_1SAFTd.html#afd186dfc8762b7d6505ea0743fea9e89">More...</a><br /></td></tr>
+<tr class="memdesc:afd186dfc8762b7d6505ea0743fea9e89"><td class="mdescLeft">&#160;</td><td class="mdescRight">register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a master on the MSI crossbar) from the hardware. The wishbone address to trigger the callack is returned from the function. The wishbone data is passed as argument to the callback function.  <a href="classsaftlib_1_1SAFTd.html#afd186dfc8762b7d6505ea0743fea9e89">More...</a><br /></td></tr>
 <tr class="separator:afd186dfc8762b7d6505ea0743fea9e89"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51e3f7780904d7a476eb0339373aed40"><td class="memItemLeft" align="right" valign="top"><a id="a51e3f7780904d7a476eb0339373aed40" name="a51e3f7780904d7a476eb0339373aed40"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getObjectPath</b> ()</td></tr>
+<tr class="memitem:a51e3f7780904d7a476eb0339373aed40"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#a51e3f7780904d7a476eb0339373aed40">getObjectPath</a> ()</td></tr>
+<tr class="memdesc:a51e3f7780904d7a476eb0339373aed40"><td class="mdescLeft">&#160;</td><td class="mdescRight">the object path of the SAFTd_Service  <a href="classsaftlib_1_1SAFTd.html#a51e3f7780904d7a476eb0339373aed40">More...</a><br /></td></tr>
 <tr class="separator:a51e3f7780904d7a476eb0339373aed40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a617eeb7da78ca99f9105b0ed0767753f"><td class="memItemLeft" align="right" valign="top"><a id="a617eeb7da78ca99f9105b0ed0767753f" name="a617eeb7da78ca99f9105b0ed0767753f"></a>
 etherbone::Socket &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>get_etherbone_socket</b> ()</td></tr>
+<tr class="memdesc:a617eeb7da78ca99f9105b0ed0767753f"><td class="mdescLeft">&#160;</td><td class="mdescRight">access the underlying ehterbone::Socket <br /></td></tr>
 <tr class="separator:a617eeb7da78ca99f9105b0ed0767753f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf8822d6b6d2e17ddc506bdaab14f13a"><td class="memItemLeft" align="right" valign="top"><a id="aaf8822d6b6d2e17ddc506bdaab14f13a" name="aaf8822d6b6d2e17ddc506bdaab14f13a"></a>
-<a class="el" href="classsaftlib_1_1TimingReceiver.html">TimingReceiver</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getTimingReceiver</b> (const std::string &amp;object_path)</td></tr>
+<tr class="memitem:aaf8822d6b6d2e17ddc506bdaab14f13a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsaftlib_1_1TimingReceiver.html">TimingReceiver</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#aaf8822d6b6d2e17ddc506bdaab14f13a">getTimingReceiver</a> (const std::string &amp;object_path)</td></tr>
+<tr class="memdesc:aaf8822d6b6d2e17ddc506bdaab14f13a"><td class="mdescLeft">&#160;</td><td class="mdescRight">access any of the managed TimingReciever driver objects  <a href="classsaftlib_1_1SAFTd.html#aaf8822d6b6d2e17ddc506bdaab14f13a">More...</a><br /></td></tr>
 <tr class="separator:aaf8822d6b6d2e17ddc506bdaab14f13a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab9bacacc79522ea468d21534a8aba4a4"><td class="memItemLeft" align="right" valign="top"><a id="ab9bacacc79522ea468d21534a8aba4a4" name="ab9bacacc79522ea468d21534a8aba4a4"></a>
-eb_status_t&#160;</td><td class="memItemRight" valign="bottom"><b>read</b> (eb_address_t address, eb_width_t width, eb_data_t *data)</td></tr>
+<tr class="memitem:ab9bacacc79522ea468d21534a8aba4a4"><td class="memItemLeft" align="right" valign="top">eb_status_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#ab9bacacc79522ea468d21534a8aba4a4">read</a> (eb_address_t address, eb_width_t width, eb_data_t *data)</td></tr>
+<tr class="memdesc:ab9bacacc79522ea468d21534a8aba4a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation of the virtual function etherbone::Handler::read.  <a href="classsaftlib_1_1SAFTd.html#ab9bacacc79522ea468d21534a8aba4a4">More...</a><br /></td></tr>
 <tr class="separator:ab9bacacc79522ea468d21534a8aba4a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3252804d79d7190b18d4f533b2162a3a"><td class="memItemLeft" align="right" valign="top"><a id="a3252804d79d7190b18d4f533b2162a3a" name="a3252804d79d7190b18d4f533b2162a3a"></a>
 eb_status_t&#160;</td><td class="memItemRight" valign="bottom"><b>write</b> (eb_address_t address, eb_width_t width, eb_data_t data)</td></tr>
+<tr class="memdesc:a3252804d79d7190b18d4f533b2162a3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">the write function is never used, i.e. Hardware never does read requests towards the host. <br /></td></tr>
 <tr class="separator:a3252804d79d7190b18d4f533b2162a3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -307,7 +309,27 @@ Here is the call graph for this function:</div>
 
 <p>List of all devices attached to saftd. </p>
 <dl class="section return"><dt>Returns</dt><dd>List of all devices attached to saftd.</dd></dl>
-<p>The key is the name of the device as provided to AttachDevice. The value is the dbus path to the <a class="el" href="classDevice.html">Device</a> object, NOT the etherbone path of the device. Each object is guaranteed to implement at least the <a class="el" href="classDevice.html">Device</a> interface, however, typically the objects implement the <a class="el" href="classsaftlib_1_1TimingReceiver.html" title="A timing receiver.">TimingReceiver</a> interface. </p>
+<p>The key is the name of the device as provided to AttachDevice. The value is the dbus path to the Device object, NOT the etherbone path of the device. Each object is guaranteed to implement at least the Device interface, however, typically the objects implement the <a class="el" href="classsaftlib_1_1TimingReceiver.html" title="A timing receiver.">TimingReceiver</a> interface. </p>
+
+</div>
+</div>
+<a id="a51e3f7780904d7a476eb0339373aed40" name="a51e3f7780904d7a476eb0339373aed40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51e3f7780904d7a476eb0339373aed40">&#9670;&#160;</a></span>getObjectPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string saftlib::SAFTd::getObjectPath </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>the object path of the SAFTd_Service </p>
+<dl class="section return"><dt>Returns</dt><dd>the object path </dd></dl>
 
 </div>
 </div>
@@ -332,6 +354,27 @@ Here is the call graph for this function:</div>
 
 </div>
 </div>
+<a id="aaf8822d6b6d2e17ddc506bdaab14f13a" name="aaf8822d6b6d2e17ddc506bdaab14f13a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf8822d6b6d2e17ddc506bdaab14f13a">&#9670;&#160;</a></span>getTimingReceiver()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsaftlib_1_1TimingReceiver.html">TimingReceiver</a> * saftlib::SAFTd::getTimingReceiver </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>object_path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>access any of the managed TimingReciever driver objects </p>
+<dl class="section return"><dt>Returns</dt><dd>a pointer to the <a class="el" href="classsaftlib_1_1TimingReceiver.html" title="A timing receiver.">TimingReceiver</a>, thwows if object_path was not found </dd></dl>
+
+</div>
+</div>
 <a id="abb0e4c7d6d1ddf3c8a3d660d08f95656" name="abb0e4c7d6d1ddf3c8a3d660d08f95656"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abb0e4c7d6d1ddf3c8a3d660d08f95656">&#9670;&#160;</a></span>Quit()</h2>
 
@@ -349,6 +392,44 @@ Here is the call graph for this function:</div>
 
 <p>Instructs the saftlib daemon to quit. </p>
 <p >Be absolutely certain before calling this method! All clients will have their future calls throw exceptions. </p>
+
+</div>
+</div>
+<a id="ab9bacacc79522ea468d21534a8aba4a4" name="ab9bacacc79522ea468d21534a8aba4a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9bacacc79522ea468d21534a8aba4a4">&#9670;&#160;</a></span>read()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">eb_status_t saftlib::SAFTd::read </td>
+          <td>(</td>
+          <td class="paramtype">eb_address_t&#160;</td>
+          <td class="paramname"><em>address</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">eb_width_t&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">eb_data_t *&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Implementation of the virtual function etherbone::Handler::read. </p>
+<p >read/write virtual functions from etherbone::Handler base class are used to receive incoming etherbone read/write requests from the device. Only write is ever used, an incoming MSI (Message Signal Interrupt) causes a write request. <br  />
+ </p>
 
 </div>
 </div>
@@ -441,7 +522,7 @@ Here is the call graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>try to attach a callback to an irq address </p>
+<p>register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a master on the MSI crossbar) from the hardware. The wishbone address to trigger the callack is returned from the function. The wishbone data is passed as argument to the callback function. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">object</td><td>of type <a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a> or derived from <a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a>. MsiDevices are masters on the MSI-crossbar interconnect </td></tr>
@@ -455,7 +536,7 @@ Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="classsaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph.png" border="0" usemap="#aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph" alt=""/></div>
 <map name="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph" id="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph">
-<area shape="rect" title="try to attach a callback to an irq address" alt="" coords="5,29,180,55"/>
+<area shape="rect" title="register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a mas..." alt="" coords="5,29,180,55"/>
 </map>
 </div>
 <div class="dynheader">
@@ -463,7 +544,7 @@ Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="classsaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph.png" border="0" usemap="#aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph" alt=""/></div>
 <map name="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph" id="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph">
-<area shape="rect" title="try to attach a callback to an irq address" alt="" coords="188,29,363,55"/>
+<area shape="rect" title="register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a mas..." alt="" coords="188,29,363,55"/>
 <area shape="rect" href="classsaftlib_1_1OpenDevice.html#a4e38cad1c324517bf1653e773e764c2d" title="open given etherbone_path on given socket." alt="" coords="5,22,140,62"/>
 </map>
 </div>

@@ -1,4 +1,4 @@
 <map id="saftlib::SAFTd::request_irq" name="saftlib::SAFTd::request_irq">
-<area shape="rect" id="node1" title="try to attach a callback to an irq address" alt="" coords="188,29,363,55"/>
+<area shape="rect" id="node1" title="register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a mas..." alt="" coords="188,29,363,55"/>
 <area shape="rect" id="node2" href="$classsaftlib_1_1OpenDevice.html#a4e38cad1c324517bf1653e773e764c2d" title="open given etherbone_path on given socket." alt="" coords="5,22,140,62"/>
 </map>

@@ -22,6 +22,7 @@ var searchData=
   ['cpuhaltstatus_19',['CpuHaltStatus',['../classsaftlib_1_1Reset.html#a0aebb853fa1d67c73c962e26596d043b',1,'saftlib::Reset']]],
   ['cpureset_20',['CpuReset',['../classsaftlib_1_1Reset.html#a3f3c5a66a804207d68704716a888bead',1,'saftlib::Reset']]],
   ['create_5fobject_21',['create_object',['../classsaftbus_1_1Container.html#ade4a52a55f8bed8bff2398da268a7106',1,'saftbus::Container']]],
-  ['currenttemperature_22',['CurrentTemperature',['../classsaftlib_1_1TempSensor.html#aceecee0fc7e4b060fe3b91f8405a2243',1,'saftlib::TempSensor']]],
-  ['currenttime_23',['CurrentTime',['../classsaftlib_1_1TimingReceiver.html#a161d692226fd738046921baf95a5bb6f',1,'saftlib::TimingReceiver']]]
+  ['create_5fservices_22',['create_services',['../classsaftbus_1_1LibraryLoader.html#a047257f2dca1367118c7a0dd3d29c033',1,'saftbus::LibraryLoader']]],
+  ['currenttemperature_23',['CurrentTemperature',['../classsaftlib_1_1TempSensor.html#aceecee0fc7e4b060fe3b91f8405a2243',1,'saftlib::TempSensor']]],
+  ['currenttime_24',['CurrentTime',['../classsaftlib_1_1TimingReceiver.html#a161d692226fd738046921baf95a5bb6f',1,'saftlib::TimingReceiver']]]
 ];

@@ -77,6 +77,9 @@ $(function() {
   <div class="headertitle"><div class="title">saftbus Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>classes and functions of the saftbus interprocess communication library.  
+<a href="namespacesaftbus.html#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
@@ -99,6 +102,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">created by saftbus-gen from class <a class="el" href="classsaftbus_1_1Container.html" title="A Container of Service objects.">Container</a> and copied here  <a href="classsaftbus_1_1Container__Service.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Deserializer.html">Deserializer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple deserializer.  <a href="classsaftbus_1_1Deserializer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Error.html">Error</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -106,6 +110,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An event source that is ready whenever a certain condition on a given file descriptor is met (usually POLLIN or POLLOUT)  <a href="classsaftbus_1_1IoSource.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1LibraryLoader.html">LibraryLoader</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The class is constructed with the name of a shared library file (.so). It opens the file, gets the address of the function symbol "create_services". The public member function create_services forwards all arguments to the loaded function from the shared library.  <a href="classsaftbus_1_1LibraryLoader.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Loop.html">Loop</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">an event loop, driven by Sources  <a href="classsaftbus_1_1Loop.html#details">More...</a><br /></td></tr>
@@ -120,6 +125,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">custom types can be sent over saftbus if they derive from this class and implement serialize and deserializ methods  <a href="structsaftbus_1_1SerDesAble.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Serializer.html">Serializer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple serializer.  <a href="classsaftbus_1_1Serializer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1ServerConnection.html">ServerConnection</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">provide a single named UNIX domain socket in the file system and handle client request on that socket  <a href="classsaftbus_1_1ServerConnection.html#details">More...</a><br /></td></tr>
@@ -167,11 +173,11 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>write_all</b> (int fd,
 <tr class="memitem:a6b4b18edd79c0af34a4b8b077e43cec4"><td class="memItemLeft" align="right" valign="top"><a id="a6b4b18edd79c0af34a4b8b077e43cec4" name="a6b4b18edd79c0af34a4b8b077e43cec4"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>read_all</b> (int fd, char *buffer, int size)</td></tr>
 <tr class="separator:a6b4b18edd79c0af34a4b8b077e43cec4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d9de093e6f2a05a2d35ea6206e995a9"><td class="memItemLeft" align="right" valign="top"><a id="a1d9de093e6f2a05a2d35ea6206e995a9" name="a1d9de093e6f2a05a2d35ea6206e995a9"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>sendfd</b> (int socket, int fd)</td></tr>
+<tr class="memitem:a1d9de093e6f2a05a2d35ea6206e995a9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftbus.html#a1d9de093e6f2a05a2d35ea6206e995a9">sendfd</a> (int socket, int fd)</td></tr>
+<tr class="memdesc:a1d9de093e6f2a05a2d35ea6206e995a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send given file descriptior via given socket.  <a href="namespacesaftbus.html#a1d9de093e6f2a05a2d35ea6206e995a9">More...</a><br /></td></tr>
 <tr class="separator:a1d9de093e6f2a05a2d35ea6206e995a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa393861a7e9679f886755a07c784e23d"><td class="memItemLeft" align="right" valign="top"><a id="aa393861a7e9679f886755a07c784e23d" name="aa393861a7e9679f886755a07c784e23d"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>recvfd</b> (int socket)</td></tr>
+<tr class="memitem:aa393861a7e9679f886755a07c784e23d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftbus.html#aa393861a7e9679f886755a07c784e23d">recvfd</a> (int socket)</td></tr>
+<tr class="memdesc:aa393861a7e9679f886755a07c784e23d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Receives file descriptor using given socket.  <a href="namespacesaftbus.html#aa393861a7e9679f886755a07c784e23d">More...</a><br /></td></tr>
 <tr class="separator:aa393861a7e9679f886755a07c784e23d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3c7d356c0809093004734357f14b535"><td class="memItemLeft" align="right" valign="top"><a id="ab3c7d356c0809093004734357f14b535" name="ab3c7d356c0809093004734357f14b535"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (const std::unique_ptr&lt; <a class="el" href="structsaftbus_1_1Client.html">Client</a> &gt; &amp;lhs, int rhs)</td></tr>
@@ -190,12 +196,127 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (std::
 <tr class="separator:a1037e06178c9e09982ebdb3b8b8f6cbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p >Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH</p>
+<div class="textblock"><p >classes and functions of the saftbus interprocess communication library. </p>
+<p >Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH</p>
 <dl class="section author"><dt>Author</dt><dd>Michael Reese <a href="#" onclick="location.href='mai'+'lto:'+'m.r'+'ee'+'se@'+'gs'+'i.d'+'e'; return false;">m.ree<span class="obfuscator">.nosp@m.</span>se@g<span class="obfuscator">.nosp@m.</span>si.de</a></dd></dl>
 <p>This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.</p>
 <p >This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.</p>
-<p >You should have received a copy of the GNU Lesser General Public License along with this library. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>. </p>
-</div></div><!-- contents -->
+<p >You should have received a copy of the GNU Lesser General Public License along with this library. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p>
+<p >This is a brief overview of the internal structure of the library</p><ul>
+<li><a class="el" href="structsaftbus_1_1Client.html">Client</a> side classes are in <a class="el" href="client_8hpp_source.html">client.hpp</a> and client.cpp<ul>
+<li><a class="el" href="classsaftbus_1_1ClientConnection.html" title="Establish a connection to a running saftbus::ServerConnection using a named socket (&quot;/var/run/saftbus...">ClientConnection</a> class: Opens a singel socket and waits for clients to connect. A connecting client first sends one part of a socketpair to the server over which all following communication happens. There is one connection per client process, that means that multiple threads within the client share one socket.</li>
+<li><a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> base class: All driver proxy classes must be derived by the <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> base class. It provides basic services such as the protocol to register and unregister at the Server</li>
+<li><a class="el" href="classsaftbus_1_1Container__Proxy.html" title="A Container of Service objects.">Container_Proxy</a> class: Allows remote access to the <a class="el" href="classsaftbus_1_1Container.html" title="A Container of Service objects.">Container</a> which stores all the Services</li>
+<li><a class="el" href="classsaftbus_1_1SignalGroup.html" title="Manage incoming saftbus signals and distribute them to the connected Proxy objects.">SignalGroup</a> class: Receives signals and dispatches them to the correct <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> object. Each <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> object is associated with a <a class="el" href="classsaftbus_1_1SignalGroup.html" title="Manage incoming saftbus signals and distribute them to the connected Proxy objects.">SignalGroup</a>. If not specified, the <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> is associated with a default <a class="el" href="classsaftbus_1_1SignalGroup.html" title="Manage incoming saftbus signals and distribute them to the connected Proxy objects.">SignalGroup</a>.</li>
+</ul>
+</li>
+<li>Server side classes are in <a class="el" href="server_8hpp_source.html">server.hpp</a>, server.cpp and <a class="el" href="service_8hpp_source.html">service.hpp</a>, service.cpp<ul>
+<li><a class="el" href="classsaftbus_1_1ServerConnection.html" title="provide a single named UNIX domain socket in the file system and handle client request on that socket">ServerConnection</a> class: Manages the socket connection on the server side. It handles connection requests from <a class="el" href="classsaftbus_1_1ClientConnection.html" title="Establish a connection to a running saftbus::ServerConnection using a named socket (&quot;/var/run/saftbus...">ClientConnection</a> classes. It also has a <a class="el" href="classsaftbus_1_1Container.html" title="A Container of Service objects.">Container</a> as member.</li>
+<li><a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> base class: All managed services need to derive from this class.</li>
+<li><a class="el" href="classsaftbus_1_1Container.html" title="A Container of Service objects.">Container</a> class: Manages all Services</li>
+<li><a class="el" href="classsaftbus_1_1Container__Service.html" title="created by saftbus-gen from class Container and copied here">Container_Service</a> class: Provide remote access to the <a class="el" href="classsaftbus_1_1Container.html" title="A Container of Service objects.">Container</a>. Normally, <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> classes are generated with the saftbus-gen tool. The <a class="el" href="classsaftbus_1_1Container__Service.html" title="created by saftbus-gen from class Container and copied here">Container_Service</a> class is has a few special cases and cannot be generated by saftbus-gen.</li>
+</ul>
+</li>
+<li>Data (de-)serialization happens in <a class="el" href="saftbus_8hpp_source.html">saftbus.hpp</a>, saftbus.cpp</li>
+<li><a class="el" href="classsaftbus_1_1LibraryLoader.html" title="The class is constructed with the name of a shared library file (.so). It opens the file,...">LibraryLoader</a> is in <a class="el" href="plugins_8hpp_source.html">plugins.hpp</a>, plugins.cpp<ul>
+<li><a class="el" href="classsaftbus_1_1LibraryLoader.html" title="The class is constructed with the name of a shared library file (.so). It opens the file,...">LibraryLoader</a> class: Manages shared object files and calls the create_service entry function.</li>
+</ul>
+</li>
+<li>saftbus and provides an event loop implementation and two event sources in <a class="el" href="loop_8hpp_source.html">loop.hpp</a>, loop.cpp<ul>
+<li><a class="el" href="classsaftbus_1_1Loop.html" title="an event loop, driven by Sources">Loop</a> class: Implementation of an event loop.</li>
+<li><a class="el" href="classsaftbus_1_1Source.html" title="Base class of all event sources in a saftbus::Loop.">Source</a> base class: All sources used in the <a class="el" href="classsaftbus_1_1Loop.html" title="an event loop, driven by Sources">Loop</a> class need to be derived from the <a class="el" href="classsaftbus_1_1Source.html" title="Base class of all event sources in a saftbus::Loop.">Source</a> base class.</li>
+<li><a class="el" href="classsaftbus_1_1TimeoutSource.html" title="An event source that is active after a given amount of time has passed.">TimeoutSource</a> class: Execute a function once or periodically after a certain amount of time has passed.</li>
+<li><a class="el" href="classsaftbus_1_1IoSource.html" title="An event source that is ready whenever a certain condition on a given file descriptor is met (usually...">IoSource</a> class: Execute a function if a file descriptor is ready to read/write. </li>
+</ul>
+</li>
+</ul>
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="aa393861a7e9679f886755a07c784e23d" name="aa393861a7e9679f886755a07c784e23d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa393861a7e9679f886755a07c784e23d">&#9670;&#160;</a></span>recvfd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int saftbus::recvfd </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>socket</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Receives file descriptor using given socket. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">socket</td><td>to be used for fd recepion </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>received file descriptor; -1 if failed</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>socket should be (PF_UNIX, SOCK_DGRAM) </dd></dl>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="namespacesaftbus_aa393861a7e9679f886755a07c784e23d_icgraph.png" border="0" usemap="#anamespacesaftbus_aa393861a7e9679f886755a07c784e23d_icgraph" alt=""/></div>
+<map name="anamespacesaftbus_aa393861a7e9679f886755a07c784e23d_icgraph" id="anamespacesaftbus_aa393861a7e9679f886755a07c784e23d_icgraph">
+<area shape="rect" title="Receives file descriptor using given socket." alt="" coords="180,13,287,38"/>
+<area shape="rect" href="classsaftbus_1_1Container__Service.html#abe051ea633140c83cebcae13840635cd" title="execute one of the functions in one of the interfaces of the derived class." alt="" coords="5,5,132,45"/>
+</map>
+</div>
+
+</div>
+</div>
+<a id="a1d9de093e6f2a05a2d35ea6206e995a9" name="a1d9de093e6f2a05a2d35ea6206e995a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d9de093e6f2a05a2d35ea6206e995a9">&#9670;&#160;</a></span>sendfd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int saftbus::sendfd </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>socket</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>fd</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Send given file descriptior via given socket. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">socket</td><td>to be used for fd sending </td></tr>
+    <tr><td class="paramname">fd</td><td>to be sent </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>sendmsg result </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>socket should be (PF_UNIX, SOCK_DGRAM) </dd></dl>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="namespacesaftbus_a1d9de093e6f2a05a2d35ea6206e995a9_icgraph.png" border="0" usemap="#anamespacesaftbus_a1d9de093e6f2a05a2d35ea6206e995a9_icgraph" alt=""/></div>
+<map name="anamespacesaftbus_a1d9de093e6f2a05a2d35ea6206e995a9_icgraph" id="anamespacesaftbus_a1d9de093e6f2a05a2d35ea6206e995a9_icgraph">
+<area shape="rect" title="Send given file descriptior via given socket." alt="" coords="196,13,307,38"/>
+<area shape="rect" href="classsaftbus_1_1SignalGroup.html#a10ff4f857dd878a4738e6c1cf950a163" title="used in the Constructor of Proxy objects to connect themselves to this SignalGroup." alt="" coords="5,5,148,45"/>
+</map>
+</div>
+
+</div>
+</div>
+</div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5

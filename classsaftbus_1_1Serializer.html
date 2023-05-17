@@ -79,6 +79,11 @@ $(function() {
   <div class="headertitle"><div class="title">saftbus::Serializer Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Simple serializer.  
+ <a href="classsaftbus_1_1Serializer.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="saftbus_8hpp_source.html">saftbus.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -124,7 +129,21 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>empty</b> ()</td></tr
 void&#160;</td><td class="memItemRight" valign="bottom"><b>put_init</b> ()</td></tr>
 <tr class="separator:a3c9156870050fe1e5a5438d5f53f002c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following files:<ul>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >Simple serializer. </p>
+<p >Classes for serialization and de-serialization do not store type information, i.e. de-serialization only works if the type composition is known (but this is the case in all saftbus transfers) sending data works like this:</p><ul>
+<li>serializer.put(value1);</li>
+<li>serializer.put(value2);</li>
+<li>...</li>
+<li>serializer.write_to(fd);</li>
+</ul>
+<p >receiving data works like this:</p><ul>
+<li>deserializer.read_from(fd);</li>
+<li>deserializer.get(value1);</li>
+<li>deserializer.get(value2);</li>
+<li>... </li>
+</ul>
+</div><hr/>The documentation for this class was generated from the following files:<ul>
 <li>saftbus/<a class="el" href="saftbus_8hpp_source.html">saftbus.hpp</a></li>
 <li>saftbus/saftbus.cpp</li>
 </ul>

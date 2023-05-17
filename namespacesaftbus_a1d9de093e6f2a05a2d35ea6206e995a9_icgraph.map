@@ -1,0 +1,4 @@
+<map id="saftbus::sendfd" name="saftbus::sendfd">
+<area shape="rect" id="node1" title="Send given file descriptior via given socket." alt="" coords="196,13,307,38"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1SignalGroup.html#a10ff4f857dd878a4738e6c1cf950a163" title="used in the Constructor of Proxy objects to connect themselves to this SignalGroup." alt="" coords="5,5,148,45"/>
+</map>

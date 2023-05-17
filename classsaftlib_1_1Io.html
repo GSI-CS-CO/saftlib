@@ -80,6 +80,11 @@ $(function() {
   <div class="headertitle"><div class="title">saftlib::Io Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>representaion of a single IO on a <a class="el" href="classsaftlib_1_1TimingReceiver.html" title="A timing receiver.">TimingReceiver</a>  
+ <a href="classsaftlib_1_1Io.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="Io_8hpp_source.html">Io.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -234,7 +239,11 @@ std::function&lt; void(bool) &gt;&#160;</td><td class="memItemRight" valign="bot
 std::function&lt; void(bool) &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>GateIn</b></td></tr>
 <tr class="separator:a8cca6bb1d8b0cfedb230b36c8d484e22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<hr/>The documentation for this class was generated from the following files:<ul>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >representaion of a single IO on a <a class="el" href="classsaftlib_1_1TimingReceiver.html" title="A timing receiver.">TimingReceiver</a> </p>
+<p >On the hardware all IOs are controlled IO_CONTROL sdb device which is represented by <a class="el" href="classsaftlib_1_1IoControl.html">IoControl</a> class in saftlib. This <a class="el" href="classsaftlib_1_1Io.html" title="representaion of a single IO on a TimingReceiver">Io</a> class is used by the <a class="el" href="classsaftlib_1_1IoControl.html">IoControl</a> class to represent an individual IO. It encapsulates the register accesses to setup the hardware parameters for the represented IO.</p>
+<p >This class is also used by the <a class="el" href="classsaftlib_1_1Input.html" title="Interface to a TimingReceiver input (such as button or Lemo-IO)">Input</a> and <a class="el" href="classsaftlib_1_1Output.html" title="An output through which on/off actions flow.">Output</a> classes, which are both part of the user facing API. </p>
+</div><hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/<a class="el" href="Io_8hpp_source.html">Io.hpp</a></li>
 <li>src/Io.cpp</li>
 </ul>

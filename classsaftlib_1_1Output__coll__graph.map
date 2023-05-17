@@ -7,5 +7,5 @@
 <area shape="rect" id="node6" href="$classsaftlib_1_1SdbDevice.html" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers." alt="" coords="115,5,242,31"/>
 <area shape="rect" id="node7" href="$classsaftbus_1_1SourceHandle.html" title="unique identifier for an event source in a saftbus::Loop" alt="" coords="247,155,401,180"/>
 <area shape="rect" id="node8" href="$classsaftbus_1_1Container.html" title="A Container of Service objects." alt="" coords="425,155,551,180"/>
-<area shape="rect" id="node9" href="$classsaftlib_1_1Io.html" title=" " alt="" coords="375,316,449,341"/>
+<area shape="rect" id="node9" href="$classsaftlib_1_1Io.html" title="representaion of a single IO on a TimingReceiver" alt="" coords="375,316,449,341"/>
 </map>

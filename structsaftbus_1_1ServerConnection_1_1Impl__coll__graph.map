@@ -1,6 +1,6 @@
 <map id="saftbus::ServerConnection::Impl" name="saftbus::ServerConnection::Impl">
 <area shape="rect" id="node1" title=" " alt="" coords="143,93,317,133"/>
 <area shape="rect" id="node2" href="$classsaftbus_1_1Container.html" title="A Container of Service objects." alt="" coords="5,5,132,31"/>
-<area shape="rect" id="node3" href="$classsaftbus_1_1Serializer.html" title=" " alt="" coords="168,5,292,31"/>
-<area shape="rect" id="node4" href="$classsaftbus_1_1Deserializer.html" title=" " alt="" coords="317,5,455,31"/>
+<area shape="rect" id="node3" href="$classsaftbus_1_1Serializer.html" title="Simple serializer." alt="" coords="168,5,292,31"/>
+<area shape="rect" id="node4" href="$classsaftbus_1_1Deserializer.html" title="Simple deserializer." alt="" coords="317,5,455,31"/>
 </map>

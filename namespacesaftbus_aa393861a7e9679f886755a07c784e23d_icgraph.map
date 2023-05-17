@@ -1,0 +1,4 @@
+<map id="saftbus::recvfd" name="saftbus::recvfd">
+<area shape="rect" id="node1" title="Receives file descriptor using given socket." alt="" coords="180,13,287,38"/>
+<area shape="rect" id="node2" href="$classsaftbus_1_1Container__Service.html#abe051ea633140c83cebcae13840635cd" title="execute one of the functions in one of the interfaces of the derived class." alt="" coords="5,5,132,45"/>
+</map>
