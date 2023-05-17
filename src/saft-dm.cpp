@@ -5,7 +5,7 @@
 // central data master is not available on the timing network.
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
-// Copyright (C) 2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+//*  Copyright (C) 2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 //
 // Have your personal Data Master
 //

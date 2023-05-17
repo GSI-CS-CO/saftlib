@@ -1,4 +1,4 @@
-/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
  *  @author Michael Reese <m.reese@gsi.de>
  *
@@ -27,6 +27,25 @@
 #include <string>
 #include <map>
 
+/// @brief classes and functions of the saftbus interprocess communication library.
+/// 
+/// * Client side classes are in client.hpp and client.cpp
+///   * ClientConnection class
+///   * Proxy base class
+///   * Container_Proxy class
+///   * SignalGroup class
+/// * Server side classes are in server.hpp, server.cpp and service.hpp, service.cpp
+///   * ServerConnection class
+///   * Service base class
+///   * Container class
+///   * Container_Service class
+/// * Data (de-)serialization happens in saftbus.hpp, saftbus.cpp
+/// * PluginLoader is in plugins.hpp, plugins.cpp
+/// * saftbus and provides an event loop implementation and two event sources in loop.hpp, loop.cpp
+///   * Loop class
+///   * Source base class
+///   * TimeoutSource class
+///   * IoSource class
 namespace saftbus {
 
 	enum class FunctionResult {

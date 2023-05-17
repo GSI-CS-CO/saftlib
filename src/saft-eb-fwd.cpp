@@ -1,7 +1,7 @@
 // @brief Retrieve the name of the etherbone path of a logical saftlib device (eg. tr0)
 // @author Michael Reese  <m.reese@gsi.de>
 //
-// Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
+//*  Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 //
 // Some etherbone devices support only a single connection. If saftlib
 // connects to such a device, it will open a pseudo-terminal (e.g. /dev/pts/<number>).
