@@ -28,8 +28,9 @@
 #include <cassert>
 
 bool verbose = false;
+bool quiet   = false;
 
-std::string output_only_this_file = "";
+std::vector<std::string> output_only_these_files;
 
 std::string strip(std::string line) {
 	// std::cerr << "strip \'" << line << "\'" << std::endl;
@@ -627,7 +628,9 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 			size_t pos = line.find(default_object_path_tag);
 			if (pos != line.npos) {
 				classes.back().default_object_path = strip(line.substr(pos+default_object_path_tag.size()));
-				std::cerr << "found default_object_path_tag: " << classes.back().default_object_path << std::endl;
+				if (verbose) {
+					std::cerr << "found default_object_path_tag: " << classes.back().default_object_path << std::endl;
+				}
 			}
 		}
 
@@ -891,7 +894,7 @@ static std::vector<ClassDefinition> cpp_parser(const std::string &source_name, s
 }
 
 void move_file_if_not_identical(const std::string &source_file, const std::string &dest_file) {
-	if (output_only_this_file != "" && dest_file != output_only_this_file) {
+	if (output_only_these_files.size() && std::find(output_only_these_files.begin(), output_only_these_files.end(), dest_file) == output_only_these_files.end()) {
 		if (verbose) {
 			std::cerr << "skip file " << dest_file << std::endl;
 		}
@@ -933,9 +936,9 @@ void move_file_if_not_identical(const std::string &source_file, const std::strin
 	// move the file using a syscall
 	in1.close();
 	in2.close();
-	// if (verbose) {
-		std::cerr << "   writing file " << dest_file  << std::endl;
-	// }
+	if (!quiet) {
+		std::cerr << "saftbus-gen: generate " << dest_file  << std::endl;
+	}
 	rename(source_file.c_str(), dest_file.c_str());
 }
 
@@ -1492,22 +1495,28 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 }
 
 void usage(char *argv0) {
-		std::cout << "saftbus-gen version " << VERSION << std::endl;
-		std::cout << std::endl;
-		std::cout << "usage: " << argv0 << " [-o <output-prefix>] [-I <include-path>] [-v] [-h|--help]" << std::endl;
-		std::cout << std::endl;
-		std::cout << "  <output-prefix> is the prefix of all generated source files," << std::endl; 
-		std::cout << "                  it is empty by default." << std::endl;
-		std::cout << std::endl;
-		std::cout << "  <include-path>  is added to the list of directories where" << std::endl;
-		std::cout << "                  to look for included  files, e.g. #include \"file.hpp\"" << std::endl;
-		std::cout << "                  will be searched here: <include-path>/file.hpp " << std::endl;
-		std::cout << std::endl;
-		std::cout << "  -v              more verbose" << std::endl;
-		std::cout << std::endl;
-		std::cout << "  -h | --help     print help and exit" << std::endl;
-		std::cout << std::endl;
-
+	std::cout << "saftbus-gen version " << VERSION << std::endl;
+	std::cout << std::endl;
+	std::cout << "usage: " << argv0 << " [-o <output-prefix>] [-I <include-path>] [--only \"<files>\"] [-v] [-q] [-h|--help]" << std::endl;
+	std::cout << std::endl;
+	std::cout << "  -o <output-prefix> is the prefix of all generated source files," << std::endl; 
+	std::cout << "                     it is empty by default." << std::endl;
+	std::cout << std::endl;
+	std::cout << "  -I  <include-path> is added to the list of directories where" << std::endl;
+	std::cout << "                     to look for included  files, e.g. #include \"file.hpp\"" << std::endl;
+	std::cout << "                     will be searched here: <include-path>/file.hpp " << std::endl;
+	std::cout << std::endl;
+	std::cout << "  --only <files>     is a space separated list of files that should be generated." << std::endl;
+	std::cout << "                     By default saftbus-gen will generate files for all classes with" << std::endl;
+	std::cout << "                     @saftbus-export tags. The --only option allows to restrict file" << std::endl;
+	std::cout << "                     generation to only those files in the list." << std::endl;
+	std::cout << std::endl;
+	std::cout << "  -v                 more verbose" << std::endl;
+	std::cout << std::endl;
+	std::cout << "  -q                 quiet, do output generated file names" << std::endl;
+	std::cout << std::endl;
+	std::cout << "  -h | --help        print help and exit" << std::endl;
+	std::cout << std::endl;
 }
 
 int main(int argc, char **argv) 
@@ -1556,7 +1565,14 @@ int main(int argc, char **argv)
 			}
 		} else if (argvi == "--only") {
 			if (++i < argc) {
-				output_only_this_file = argv[i];
+				std::istringstream in(argv[i]);
+				for (;;) {
+					std::string filename;
+					in >> filename;
+					if (!in) break;
+					output_only_these_files.push_back(filename);
+				}
+				// output_only_these_files = argv[i];
 			} else {
 				std::cout << "Error: file name expected after \"--only\"" << std::endl;
 				std::cout << std::endl;
@@ -1564,6 +1580,8 @@ int main(int argc, char **argv)
 			}
 		} else if (argvi == "-v") {
 			verbose = true;
+		} else if (argvi == "-q") {
+			quiet = true;
 		} else if (argvi == "-h" || argvi == "--help") {
 			usage(argv[0]);
 			return 0;
