@@ -147,7 +147,6 @@ libsaft_service_include_HEADERS =   \
 	version.h                        \
 	src/ats_regs.h                    \
 	src/bg_regs.h                      \
-	src/common-defs.h                   \
 	src/burstgen_shared_mmap.h           \
 	src/eca_ac_wbm_regs.h                 \
 	src/eca_queue_regs.h                   \
