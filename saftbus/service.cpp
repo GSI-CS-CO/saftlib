@@ -378,7 +378,11 @@ namespace saftbus {
 		if (get_calling_client_id() != -1) {
 			d->removed_services.push_back(service);
 		} else {
-			remove_object(service->d->object_path);
+			try {
+				remove_object(service->d->object_path);
+			} catch(std::runtime_error &e) {
+				std::cerr << "Exception in " << __FUNCTION__ << " : " << e.what() << std::endl;
+			}
 		}
 	}
 
@@ -487,7 +491,11 @@ namespace saftbus {
 			if (s->d->destruction_callback) {
 				s->d->destruction_callback();
 			}
-			remove_object(s->d->object_path);
+			try {
+				remove_object(s->d->object_path);
+			} catch(std::runtime_error &e) {
+				std::cerr << "Exception in " << __FUNCTION__ << " : " << e.what() << std::endl;
+			}
 		}
 		d->removed_services.clear();
 
@@ -523,7 +531,11 @@ namespace saftbus {
 				iter->second->d->destruction_callback();
 			}
 			if (iter->second->d->destruction_callback && iter->second->d->destroy_if_owner_quits) {
-				remove_object(iter->second->get_object_path());
+				try {
+					remove_object(iter->second->get_object_path());
+				} catch(std::runtime_error &e) {
+					std::cerr << "Exception in " << __FUNCTION__ << " : " << e.what() << std::endl;
+				}
 			} else {
 				// if there is no destruction_callback, release object from clients ownership (because the client hung up)
 				iter->second->d->owner = -1;
