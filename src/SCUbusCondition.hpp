@@ -35,7 +35,7 @@ class SCUbusCondition_Service;
 
 
 /// de.gsi.saftlib.SCUbusCondition:
-/// @brief: Matched against incoming events on a SCUbusActionSink.
+/// @brief Matched against incoming events on a SCUbusActionSink.
 /// 
 /// SCUbusConditions are created by SCUbusActionSinks to select which
 /// events should generate callbacks. This interface always implies

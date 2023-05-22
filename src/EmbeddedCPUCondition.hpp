@@ -35,7 +35,7 @@ class EmbeddedCPUCondition_Service;
 
 
 /// de.gsi.saftlib.EmbeddedCPUCondition:
-/// @brief: Matched against incoming events on a EmbeddedCPUActionSink.
+/// @brief Matched against incoming events on a EmbeddedCPUActionSink.
 /// 
 /// EmbeddedCPUConditions are created by EmbeddedCPUActionSinks to select which
 /// events should generate callbacks. This interface always implies

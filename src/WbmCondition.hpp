@@ -35,7 +35,7 @@ class WbmCondition_Service;
 
 
 /// de.gsi.saftlib.WbmCondition:
-/// @brief: Matched against incoming events on a WbmActionSink.
+/// @brief Matched against incoming events on a WbmActionSink.
 /// 
 /// WbmConditions are created by WbmActionSinks to select which
 /// events should generate callbacks. This interface always implies
