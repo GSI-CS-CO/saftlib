@@ -1,5 +1,5 @@
 <map id="saftlib::WbmCondition" name="saftlib::WbmCondition">
-<area shape="rect" id="node1" title=": Matched against incoming events on a WbmActionSink." alt="" coords="5,152,152,177"/>
+<area shape="rect" id="node1" title="Matched against incoming events on a WbmActionSink." alt="" coords="5,152,152,177"/>
 <area shape="rect" id="node2" href="$classsaftlib_1_1Condition.html" title="A rule matched against incoming events." alt="" coords="20,79,137,104"/>
 <area shape="rect" id="node3" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="27,5,131,31"/>
 </map>

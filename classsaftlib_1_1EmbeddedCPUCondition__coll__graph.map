@@ -1,5 +1,5 @@
 <map id="saftlib::EmbeddedCPUCondition" name="saftlib::EmbeddedCPUCondition">
-<area shape="rect" id="node1" title=": Matched against incoming events on a EmbeddedCPUActionSink." alt="" coords="5,479,212,504"/>
+<area shape="rect" id="node1" title="Matched against incoming events on a EmbeddedCPUActionSink." alt="" coords="5,479,212,504"/>
 <area shape="rect" id="node2" href="$classsaftlib_1_1Condition.html" title="A rule matched against incoming events." alt="" coords="50,404,167,429"/>
 <area shape="rect" id="node3" href="$classsaftlib_1_1Owned.html" title="An object which can grant exclusive access if used in a saftbus::Container." alt="" coords="25,155,129,180"/>
 <area shape="rect" id="node4" href="$classsaftlib_1_1ActionSink.html" title="An output through which actions flow." alt="" coords="135,316,261,341"/>
