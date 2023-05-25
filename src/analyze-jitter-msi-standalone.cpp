@@ -14,6 +14,8 @@
 
 std::map<int,int> hist;
 
+long shutdown_threshold = 0;
+bool shutdown = false;
 
 int count = 0;
 void on_MSI(uint32_t value) {
@@ -38,15 +40,25 @@ void on_MSI(uint32_t value) {
 		auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now-last).count();
 		// std::cout << diff << std::endl;
 		++hist[diff];
+
+
+		if (diff > shutdown_threshold) {
+			shutdown = true;
+			std::ofstream tracing_on("/sys/kernel/debug/tracing/tracing_on");
+			tracing_on << "0\n";
+			std::cerr << "time measurement (" << diff << " us) was larger than threshold (" << shutdown_threshold << " us ). => writing 0 into /sys/kernel/debug/tracing/tracing_on and exit" << std::endl;
+		}
+
 	}
 	last = now;
 	++count;
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 5) {
-		std::cerr << "usage: " << argv[0] << " <eb-device> <msi-period-us> <measurements> <histogram-filename>" << std::endl;
-		std::cerr << "   example: " << argv[0] << " dev/wbm0 40000 100 hist.dat" << std::endl;
+	if (argc != 5 && argc != 6) {
+		std::cerr << "usage: " << argv[0] << " <eb-device> <msi-period-us> <measurements> <histogram-filename> [ <trace-shutoff-threshold[us]> ] " << std::endl;
+		std::cerr << "   example:                         " << argv[0] << " dev/wbm0 40000 100 hist.dat" << std::endl;
+		std::cerr << "   example with shutdown threshold: " << argv[0] << " dev/wbm0 40000 100 hist.dat 1500" << std::endl;
 		return 1;
 	} 
 
@@ -74,6 +86,16 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if (argc == 6) { // read shutdown threshold
+		std::istringstream s_in(argv[5]);
+		s_in >> shutdown_threshold;
+		if (!s_in) {
+			std::cerr << "cannot read trace-shutoff-threshold from argument " << argv[5] << std::endl;
+			return 1;
+		}
+		std::cerr << "running with trace-shutoff-threshold of " << shutdown_threshold << " us" << std::endl;
+	}
+
 	try {
 
 		saftlib::SAFTd saftd; 
@@ -84,7 +106,7 @@ int main(int argc, char *argv[]) {
 		jitter_msi->MSI.connect(sigc::ptr_fun(on_MSI));
 		jitter_msi->start(msi_period);
 
-		while(count <= n_measurements) {
+		while(count <= n_measurements && !shutdown) {
 			saftbus::Loop::get_default().iteration(true);
 		}
 

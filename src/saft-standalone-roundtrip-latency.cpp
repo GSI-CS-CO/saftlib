@@ -16,6 +16,9 @@
 std::chrono::time_point<std::chrono::steady_clock> start, stop;
 std::vector<int> histogram(10000);
 
+long shutdown_threshold = 0;
+bool shutdown = false;
+
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
 	stop = std::chrono::steady_clock::now();
@@ -24,17 +27,37 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 	if (us >= 0 && us < (int)histogram.size()) {
 		histogram[us]++;
 	}
+
+	if (us > shutdown_threshold) {
+		shutdown = true;
+		std::ofstream tracing_on("/sys/kernel/debug/tracing/tracing_on");
+		tracing_on << "0\n";
+		std::cerr << "time measurement (" << us << " us) was larger than threshold (" << shutdown_threshold << " us ). => writing 0 into /sys/kernel/debug/tracing/tracing_on and exit" << std::endl;
+	}
+
 } 
 
 int main(int argc, char *argv[]) {
-	if (argc != 4) {
+	if (argc != 4 && argc != 5) {
 		std::cerr << "Measure several times the duration from InjectEvent until callback" << std::endl;
 		std::cerr << "function and create a histogram of the measurment results" << std::endl;
-		std::cerr << "usage: " << argv[0] << " <eb-device> <number-of-measurements> <histogram-filename>" << std::endl;
+		std::cerr << "usage: " << argv[0] << " <eb-device> <number-of-measurements> <histogram-filename> [ <trace-shutoff-threshold[us]> ] " << std::endl;
 		std::cout << std::endl;
-		std::cerr << "   example: " << argv[0] << " dev/wbm0 1000 histogram.dat" << std::endl;
+		std::cerr << "   example:                              " << argv[0] << " dev/wbm0 1000 histogram.dat" << std::endl;
+		std::cerr << "   example with trace-shutoff-threshold: " << argv[0] << " dev/wbm0 1000 histogram.dat 1000" << std::endl;
 		return 1;
 	}
+
+	if (argc == 5) { // read shutdown threshold
+		std::istringstream s_in(argv[4]);
+		s_in >> shutdown_threshold;
+		if (!s_in) {
+			std::cerr << "cannot read trace-shutoff-threshold from argument " << argv[5] << std::endl;
+			return 1;
+		}
+		std::cerr << "running with trace-shutoff-threshold of " << shutdown_threshold << " us" << std::endl;
+	}
+
 	try {
 		auto saftd = std::make_shared<saftlib::SAFTd>();
 		auto tr    = std::make_shared<saftlib::TimingReceiver>(*saftd, "tr0", argv[1]);
@@ -61,6 +84,7 @@ int main(int argc, char *argv[]) {
 			start = std::chrono::steady_clock::now();
 			tr->InjectEvent(0xaffe, 0x0, saftlib::makeTimeTAI(0));
 			saftbus::Loop::get_default().iteration(true);
+			if (shutdown) break;
 		}
 
 		std::ofstream hist(argv[3]);
