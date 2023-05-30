@@ -25,6 +25,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <fstream>
 
 #include <saftbus/loop.hpp>
 #include <saftbus/service.hpp>
@@ -190,9 +191,11 @@ private:
 	unsigned polling_interval_ms;
 
 
+
 	// TimingReceiver doesn't own TimingreceiverAddons
 	std::map<std::string, std::unique_ptr<TimingReceiverAddon> > addons;
 
+	std::ofstream trace_marker;
 };
 
 } // namespace

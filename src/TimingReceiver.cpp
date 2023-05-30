@@ -59,6 +59,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, io_control(OpenDevice::device)
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
+	, trace_marker("/sys/kernel/tracing/trace_marker")
 {
 	// std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
 
@@ -151,6 +152,7 @@ TimingReceiver::~TimingReceiver()
 
 bool TimingReceiver::poll()
 {
+	if (trace_marker) trace_marker << "TimingReceiver::poll()\n";
 	// std::cerr << "TimingReceiver::poll()" << std::endl;
 	WhiteRabbit::getLocked();
 	Watchdog::update(); 
