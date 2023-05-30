@@ -72,7 +72,7 @@ namespace saftbus {
 		int running_depth; 
 		long id;
 		static long id_counter;
-		std::ofstream trace_marker;
+		// std::ofstream trace_marker;
 	};
 	long Loop::Impl::id_counter = 0;
 
@@ -90,10 +90,10 @@ namespace saftbus {
 		if (d->id_counter == -1) ++d->id_counter; // prevent d->id_counter to produce an id of 0 (no source should have id 0)
 		d->id = ++d->id_counter;
 		d->id |= ((long)rand()%0xffffffff)<<32;
-		d->trace_marker.open("/sys/kernel/tracing/trace_marker");
-		if (!d->trace_marker) {
-			std::cerr << "cannot open trace_marker file" << std::endl;
-		}
+		// d->trace_marker.open("/sys/kernel/tracing/trace_marker");
+		// if (!d->trace_marker) {
+		// 	std::cerr << "cannot open trace_marker file" << std::endl;
+		// }
 	}
 	Loop::~Loop() {
 		d->sources.clear();
@@ -125,7 +125,7 @@ namespace saftbus {
 
 			auto timeout_from_source = no_timeout;
 
-			if (d->trace_marker) d->trace_marker << "MainLoop-iteration prepare source " << source->type() << std::endl;
+			// if (d->trace_marker) d->trace_marker << "MainLoop-iteration prepare source " << source->type() << std::endl;
 			source->prepare(timeout_from_source); // source may leave timeout_from_source unchanged 
 			if (timeout_from_source != no_timeout) {
 				if (timeout == no_timeout) {
@@ -150,9 +150,9 @@ namespace saftbus {
 		if (pfds.size() > 0) {
 			// std::cerr << "polling timeout_ms = " << timeout.count() << std::endl;
 			int poll_result = 0;
-			if (d->trace_marker) d->trace_marker << "MainLoop-iteration call poll with timeout " << timeout.count() << " ms" << std::endl;
+			// if (d->trace_marker) d->trace_marker << "MainLoop-iteration call poll with timeout " << timeout.count() << " ms" << std::endl;
 			if ((poll_result = poll(&pfds[0], pfds.size(), timeout.count())) > 0) {
-				if (d->trace_marker) d->trace_marker << "MainLoop-iteration poll returned with value " << poll_result << std::endl;
+				// if (d->trace_marker) d->trace_marker << "MainLoop-iteration poll returned with value " << poll_result << std::endl;
 				// copy the results back to the owners of the pfds
 				for (unsigned i = 0; i < pfds.size();++i) {
 					source_pfds[i]->revents = pfds[i].revents;
@@ -176,9 +176,9 @@ namespace saftbus {
 		for (auto &source: d->sources) {
 			if (!source) continue;
 
-			if (d->trace_marker) d->trace_marker << "MainLoop-iteration check source " << source->type() << std::endl;
+			// if (d->trace_marker) d->trace_marker << "MainLoop-iteration check source " << source->type() << std::endl;
 			if (source->check()) { // if check returns true, dispatch is called
-				if (d->trace_marker) d->trace_marker << "MainLoop-iteration execute source " << source->type() << std::endl;
+				// if (d->trace_marker) d->trace_marker << "MainLoop-iteration execute source " << source->type() << std::endl;
 				if (!source->dispatch()) { // if dispatch returns false, the source is removed
 					source.reset();
 				}
