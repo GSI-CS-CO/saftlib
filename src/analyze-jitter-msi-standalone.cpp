@@ -17,8 +17,14 @@ std::map<int,int> hist;
 long shutdown_threshold = 0;
 bool shutdown = false;
 
+std::ofstream trace_marker;
+
 int count = 0;
 void on_MSI(uint32_t value) {
+	if (shutdown_threshold) {
+		trace_marker << "analyze-jitter-msi-standalone MSI callback function executed" << std::endl;
+	}
+
 	static auto last = std::chrono::steady_clock::now();
 	       auto now  = std::chrono::steady_clock::now();
 
@@ -96,6 +102,11 @@ int main(int argc, char *argv[]) {
 		std::cerr << "running with trace-shutoff-threshold of " << shutdown_threshold << " us" << std::endl;
 	}
 
+	if (shutdown_threshold) { // open trace marker file
+		trace_marker.open("/sys/kernel/tracing/trace_marker");
+	}
+	
+
 	try {
 
 		saftlib::SAFTd saftd; 
@@ -107,6 +118,10 @@ int main(int argc, char *argv[]) {
 		jitter_msi->start(msi_period);
 
 		while(count <= n_measurements && !shutdown) {
+			if (shutdown_threshold) {
+				trace_marker << "analyze-jitter-msi-standalone iterate MainLoop" << std::endl;
+			}
+
 			saftbus::Loop::get_default().iteration(true);
 		}
 

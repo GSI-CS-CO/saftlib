@@ -19,8 +19,14 @@ std::vector<int> histogram(10000);
 long shutdown_threshold = 0;
 bool shutdown = false;
 
+std::ofstream trace_marker;
+
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
+	if (shutdown_threshold) {
+		trace_marker << "saft-standalone-roundtrip-latency MSI callback function executed" << std::endl;
+	}
+
 	stop = std::chrono::steady_clock::now();
 	std::chrono::nanoseconds duration = stop-start;
 	int us = duration.count()/1000;
@@ -58,6 +64,10 @@ int main(int argc, char *argv[]) {
 		std::cerr << "running with trace-shutoff-threshold of " << shutdown_threshold << " us" << std::endl;
 	}
 
+	if (shutdown_threshold) { // open trace marker file
+		trace_marker.open("/sys/kernel/tracing/trace_marker");
+	}
+
 	try {
 		auto saftd = std::make_shared<saftlib::SAFTd>();
 		auto tr    = std::make_shared<saftlib::TimingReceiver>(*saftd, "tr0", argv[1]);
@@ -82,7 +92,13 @@ int main(int argc, char *argv[]) {
 
 		for (int i = 0; i < N; ++i) {
 			start = std::chrono::steady_clock::now();
+			if (shutdown_threshold) {
+				trace_marker << "saft-standalone-roundtrip-latency InjectEvent" << std::endl;
+			}
 			tr->InjectEvent(0xaffe, 0x0, saftlib::makeTimeTAI(0));
+			if (shutdown_threshold) {
+				trace_marker << "saft-standalone-roundtrip-latency iterate MainLoop" << std::endl;
+			}
 			saftbus::Loop::get_default().iteration(true);
 			if (shutdown) break;
 		}
