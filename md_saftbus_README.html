@@ -75,20 +75,20 @@ $(function() {
 <div class="textblock"><h1><a class="anchor" id="autotoc_md1"></a>
 Features</h1>
 <ul>
-<li>A program <a href="src/saftbusd.cpp">saftbusd</a> that can be run in the background (daemon) and provides services which can be accessed through a UNIX domain socket by Proxy objects.</li>
+<li>A program <a href="saftbusd-noda.cpp">saftbusd</a> that can be run in the background (daemon) and provides services which can be accessed through a UNIX domain socket by Proxy objects.</li>
 <li>New services can be added by loading plugins at startup or during runtime of the daemon</li>
 <li>A code generator that facilitates developments of plugins for the daemon</li>
-<li>A command line tool <a href="src/saftbus-ctl.cpp">saftbus-ctl</a> to control the daemon, e.g. load/unload new plugins or remove service objects</li>
+<li>A command line tool <a href="saftbus-ctl.cpp">saftbus-ctl</a> to control the daemon, e.g. load/unload new plugins or remove service objects</li>
 <li>A deterministic memory allocator for real time applications</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Architecture overview</h1>
 <p ><img src="saftbus.png" alt="saftbus architecture overview" class="inline"/></p>
 <p >A server process provides an inter process communication (IPC) channel (a UNIX domain socket) over which client processes can connect. At startup or at runtime, shared objects can be loaded by the server (plugins). These plugins contain C++ classes (driver classes) that are supposed to be shared resources, an should be accessible by all connected client processes. The plugins also contain automatically generated Service and Proxy classes with boilerplate code for the IPC data transfer. Instances of the Service classes are managed by the server. Client programs use instances of Proxy classes to access methods, properties, and signals provided by the driver classes.</p>
-<p >The program <a href="src/saftbusd.cpp">saftbusd</a> is a simple implementation of such a server and is installed together with the saftbus library. It is also possible to develop a different server by using saftbus library components. The program saftbus-gen can be used to generate the Proxy and Service classes from a given driver class declaration. Driver classes are ordinary C++ classes.</p>
+<p >The program <a href="saftbusd-noda.cpp">saftbusd</a> is a simple implementation of such a server and is installed together with the saftbus library. It is also possible to develop a different server by using saftbus library components. The program saftbus-gen can be used to generate the Proxy and Service classes from a given driver class declaration. Driver classes are ordinary C++ classes.</p>
 <h1><a class="anchor" id="autotoc_md3"></a>
 History</h1>
-<p >../saftlib/README.md "saftlib" was originally written with <a href="https://www.freedesktop.org/wiki/Software/dbus/">D-Bus</a> for inter process communication. D-Bus was later replaced with a more real-time friendly system called saftbus. Initially, the saftbus API was identical to the D-Bus API (<a href="https://developer-old.gnome.org/glibmm/stable/namespaceGio_1_1DBus.html">Gio::Dbus</a>) to avoid code changes in the rest of saftlib. Now, saftbus is re-written from scratch with a new API, and the rest of saftlib was changed to work with the new API. The re-written version of saftbus still shares some properties with D-Bus:</p><ul>
+<p >saftlib was originally written with <a href="https://www.freedesktop.org/wiki/Software/dbus/">D-Bus</a> for inter process communication. D-Bus was later replaced with a more real-time friendly system called saftbus. Initially, the saftbus API was identical to the D-Bus API (<a href="https://developer-old.gnome.org/glibmm/stable/namespaceGio_1_1DBus.html">Gio::Dbus</a>) to avoid code changes in the rest of saftlib. Now, saftbus is re-written from scratch with a new API, and the rest of saftlib was changed to work with the new API. The re-written version of saftbus still shares some properties with D-Bus:</p><ul>
 <li>A daemon running in the background maintains a list of available services.</li>
 <li>Services offer an interface which consists of functions, properties (setter/getter functions), and signals.</li>
 <li>Multiple processes can share services and use the provided interface.</li>
@@ -191,11 +191,11 @@ Driver class</h3>
 <div class="line">    FunResult(number);</div>
 <div class="line">  }</div>
 <div class="line">}</div>
-</div><!-- fragment --><p> Four source files (Dice_Service.hpp, Dice_Service.cpp, Dice_Proxy.hpp, Dice_Proxy.cpp) will be generated with the following call to the <code>saftbus-gen</code> tool: </p><pre class="fragment">saftbus-gen -o Dice.hpp
-</pre><p> The method Dice::Throw and the signal Result will be identified by <code>saftbus-gen</code> and added to the Dice_Proxy interface. </p>
+</div><!-- fragment --><p> Four source files (Dice_Service.hpp, Dice_Service.cpp, Dice_Proxy.hpp, Dice_Proxy.cpp) will be generated with the following call to the <code>saftbus-gen</code> tool: </p><pre class="fragment">saftbus-gen Dice.hpp
+</pre><p> The method <code>Dice::Throw</code> and the signals <code>SigResult</code> and <code>FunResult</code> will be identified by <code>saftbus-gen</code> and are added to the Dice_Proxy interface. </p>
 <h3><a class="anchor" id="autotoc_md14"></a>
 Entry point for the plugin</h3>
-<p >The file create_services.cpp contains the create_services function, which is called when the plugin is loaded by saftbusd. In this case, one argument is expected which specifies the object path of the created Dice_Service instance. Optionally, a destruction callback can be attached to the Service. This is called whenever the service is removed, (e.g. someone calling <code>saftbus-ctl -r &lt;object-path&gt;</code>). In this case the Driver instance is destroyed by the callback function so that the plugin can be safely removed (<code>saftbus-ctl -u libsaftbus-ex00-service.lo</code>). If the plugin is removed when there are still active services created by it, the result will be a crash of saftbusd. </p><div class="fragment"><div class="line"> {C++}</div>
+<p >The file <code>create_services.cpp</code> contains the <code>create_services</code> function, which is called when the plugin is loaded by saftbusd. In this case, one argument is expected which specifies the object path of the created Dice_Service instance. Optionally, a destruction callback can be attached to the Service. This is called whenever the service is removed, (e.g. someone calling <code>saftbus-ctl -r &lt;object-path&gt;</code>). In this case the Driver instance is destroyed by the callback function so that the plugin can be safely removed (<code>saftbus-ctl -u libsaftbus-ex00-service.lo</code>). If the plugin is removed when there are still active services created by it, the result will be a crash of saftbusd. </p><div class="fragment"><div class="line"> {C++}</div>
 <div class="line">#include &quot;Dice.hpp&quot;</div>
 <div class="line">#include &quot;Dice_Service.hpp&quot;</div>
 <div class="line">#include &lt;saftbus/error.hpp&gt;</div>
