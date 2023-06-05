@@ -114,9 +114,9 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 
 	poll(); // update locked status ...
 	//    ... and repeat every 1s 
-	poll_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&TimingReceiver::poll, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000)
-		);
+	// poll_timeout_source = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+	// 		std::bind(&TimingReceiver::poll, this), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000)
+	// 	);
 }
 
 TimingReceiver::~TimingReceiver() 

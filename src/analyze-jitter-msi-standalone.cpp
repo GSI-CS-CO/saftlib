@@ -48,7 +48,7 @@ void on_MSI(uint32_t value) {
 		++hist[diff];
 
 
-		if (diff > shutdown_threshold) {
+		if (shutdown_threshold && diff > shutdown_threshold) {
 			shutdown = true;
 			std::ofstream tracing_on("/sys/kernel/debug/tracing/tracing_on");
 			tracing_on << "0\n";

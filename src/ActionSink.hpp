@@ -538,12 +538,12 @@ class ActionSink : public Owned
 		uint16_t capacity;
 		
 		// pending timeouts to refresh counters
-		saftbus::SourceHandle overflowPending;
-		saftbus::SourceHandle actionPending;
-		saftbus::SourceHandle latePending;
-		saftbus::SourceHandle earlyPending;
-		saftbus::SourceHandle conflictPending;
-		saftbus::SourceHandle delayedPending;
+		// saftbus::SourceHandle overflowPending;
+		// saftbus::SourceHandle actionPending;
+		// saftbus::SourceHandle latePending;
+		// saftbus::SourceHandle earlyPending;
+		// saftbus::SourceHandle conflictPending;
+		// saftbus::SourceHandle delayedPending;
 		
 		struct Record {
 			uint64_t event;

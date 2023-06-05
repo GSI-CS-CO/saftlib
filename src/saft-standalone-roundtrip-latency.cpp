@@ -34,7 +34,7 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 		histogram[us]++;
 	}
 
-	if (us > shutdown_threshold) {
+	if (shutdown_threshold && us > shutdown_threshold) {
 		shutdown = true;
 		std::ofstream tracing_on("/sys/kernel/debug/tracing/tracing_on");
 		tracing_on << "0\n";

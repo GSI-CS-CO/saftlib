@@ -86,12 +86,12 @@ ActionSink::~ActionSink()
 {
 	// std::cerr << "~ActionSink " << getObjectPath() << std::endl;
 	// unhook any pending updates
-	saftbus::Loop::get_default().remove(overflowPending);
-	saftbus::Loop::get_default().remove(actionPending);
-	saftbus::Loop::get_default().remove(latePending);
-	saftbus::Loop::get_default().remove(earlyPending);
-	saftbus::Loop::get_default().remove(conflictPending);
-	saftbus::Loop::get_default().remove(delayedPending);
+	// saftbus::Loop::get_default().remove(overflowPending);
+	// saftbus::Loop::get_default().remove(actionPending);
+	// saftbus::Loop::get_default().remove(latePending);
+	// saftbus::Loop::get_default().remove(earlyPending);
+	// saftbus::Loop::get_default().remove(conflictPending);
+	// saftbus::Loop::get_default().remove(delayedPending);
 
 	if (container) {
 		while (conditions.size()) {
@@ -304,58 +304,64 @@ void ActionSink::setDelayedCount(uint64_t val)
 void ActionSink::receiveMSI(uint8_t code)
 {
 	// std::cerr << "ActionSink::receiveMSI(" << code << ")" << std::endl;
-	std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
-	std::chrono::steady_clock::time_point exec; 
-	std::chrono::milliseconds interval(0);
+	// std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
+	// std::chrono::steady_clock::time_point exec; 
+	// std::chrono::milliseconds interval(0);
 
 	switch (code) {
 	case ECA_OVERFLOW:
 		//DRIVER_LOG("ECA_OVERFLOW",-1, -1);
-		saftbus::Loop::get_default().remove(overflowPending); // just to be safe
-		exec = overflowUpdate + signalRate;
-		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-		overflowPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateOverflow, this),interval,interval);
+		// saftbus::Loop::get_default().remove(overflowPending); // just to be safe
+		// exec = overflowUpdate + signalRate;
+		// if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		// overflowPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+		// 	std::bind(&ActionSink::updateOverflow, this),interval,interval);
+		updateOverflow();
 		break;
 	case ECA_VALID:
 		//DRIVER_LOG("ECA_VALID",-1, -1);
-		saftbus::Loop::get_default().remove(actionPending); // just to be safe
-		exec = actionUpdate + signalRate;
-		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-		actionPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateAction, this),interval,interval);
+		// saftbus::Loop::get_default().remove(actionPending); // just to be safe
+		// exec = actionUpdate + signalRate;
+		// if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		// actionPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+		// 	std::bind(&ActionSink::updateAction, this),interval,interval);
+		updateAction();
 		break;
 	case ECA_LATE:
 		//DRIVER_LOG("ECA_LATE",-1, -1);
-		saftbus::Loop::get_default().remove(latePending); // just to be safe
-		exec = lateUpdate + signalRate;
-		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-		latePending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateLate, this),interval,interval);
+		// saftbus::Loop::get_default().remove(latePending); // just to be safe
+		// exec = lateUpdate + signalRate;
+		// if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		// latePending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+		// 	std::bind(&ActionSink::updateLate, this),interval,interval);
+		updateLate();
 		break;
 	case ECA_EARLY:
 		//DRIVER_LOG("ECA_EARLY",-1, -1);
-		saftbus::Loop::get_default().remove(earlyPending); // just to be safe
-		exec = earlyUpdate + signalRate;
-		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-		earlyPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateEarly, this),interval,interval);
+		// saftbus::Loop::get_default().remove(earlyPending); // just to be safe
+		// exec = earlyUpdate + signalRate;
+		// if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		// earlyPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+		// 	std::bind(&ActionSink::updateEarly, this),interval,interval);
+		updateEarly();
 		break;
 	case ECA_CONFLICT:
 		//DRIVER_LOG("ECA_CONFLICT",-1, -1);
-		saftbus::Loop::get_default().remove(conflictPending); // just to be safe
-		exec = conflictUpdate + signalRate;
-		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-		conflictPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateConflict, this),interval,interval);
+		// saftbus::Loop::get_default().remove(conflictPending); // just to be safe
+		// exec = conflictUpdate + signalRate;
+		// if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		// conflictPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+		// 	std::bind(&ActionSink::updateConflict, this),interval,interval);
+		updateConflict();
 		break;
 	case ECA_DELAYED:
 		//DRIVER_LOG("ECA_DELAYED",-1, -1);
-		saftbus::Loop::get_default().remove(delayedPending); // just to be safe
-		exec = delayedUpdate + signalRate;
-		if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
-		delayedPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
-			std::bind(&ActionSink::updateDelayed, this),interval,interval);
+		// saftbus::Loop::get_default().remove(delayedPending); // just to be safe
+		// exec = delayedUpdate + signalRate;
+		// if (exec > time) interval = std::chrono::duration_cast<std::chrono::milliseconds>(exec-time);
+		// delayedPending = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
+		// 	std::bind(&ActionSink::updateDelayed, this),interval,interval);
+		updateDelayed();
 		break;
 	default:
 		//clog << kLogErr << "Asked to handle an invalid MSI condition code in ActionSink.cpp" << std::endl;
