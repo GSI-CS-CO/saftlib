@@ -27,7 +27,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <mutex>
+// #include <mutex>
 #include <algorithm>
 
 #include <unistd.h>
@@ -168,11 +168,11 @@ namespace saftbus {
 		int                      get_saftbus_object_id();
 		/// @brief the client socket is a shared resource, it should be locked before using it
 		/// @return the mutex to lock before using the client socket
-		std::mutex&              get_client_socket_mutex();
+		// std::mutex&              get_client_socket_mutex();
 
 		/// @brief each Proxy is a shared resource (mainly the serialization and deserialization buffers) and must be locked before being used
 		/// @return the mutex to lock before using any Proxy resources
-		std::mutex&              get_proxy_mutex();
+		// std::mutex&              get_proxy_mutex();
 
 
 		/// @brief needs to be called by derived classes in order to determine which interface_no they refer to.
