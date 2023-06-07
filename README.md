@@ -10,16 +10,29 @@ The user API of for shared resources hides device register access and provides h
 Generated with doxygen from the master branch: [https://gsi-cs-co.github.io/saftlib](https://gsi-cs-co.github.io/saftlib)
 
 #### Compile and install
-    ./autogen.sh
-    ./configure 
-    make install
-
+```bash
+./autogen.sh
+./configure 
+make install
+```
+Default installation directory prefix is `/usr/local`. It can be changed (for example to `$HOME/.local`), by running configure with the --prefix option like this
+```bash
+./configure --prefix=$HOME/.local
+```
 #### Quickstart
-The following command will run an instance of saftbusd, load the saft-service plugin, and connect to dev/wbm0:
-
-    saftbusd libsaft-service.so tr0:dev/wbm0
-
-However, the recommended way of running saftbusd is as a systemd unit.
+If saftbusd (or any client program) is started by non root users, the socket directory (where the socket for inter process communication is located) should be changed by setting the SAFTBUS_SOCKET_PATH environment variable. For example
+```bash
+export SAFTBUS_SOCKET_PATH=/tmp/saftbus # only for non-root user
+export LD_LIBRARY_PATH=$HOME/.local/lib # only if installation prefix was changed to $HOME/.local
+saftbusd libsaft-service.so tr0:dev/wbm0 # this blocks the terminal. Interact with saftbusd from another terminal
+```
+The following command (in a different terminal) shows all services registered on saftbusd.
+```bash
+export SAFTBUS_SOCKET_PATH=/tmp/saftbus # only for non-root user
+export LD_LIBRARY_PATH=$HOME/.local/lib # only if installation prefix was changed to $HOME/.local
+saftbus-ctl -s
+```
+Using saftbusd like this is useful for tests and development. For use in production it is recommended to do a proper installation and launch saftbusd as a systemd unit.
 
 ## Version 3 changes
 
