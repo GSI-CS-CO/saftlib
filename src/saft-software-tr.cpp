@@ -37,6 +37,8 @@
 #include <fstream>
 #include <deque>
 
+#include <cstdint>
+
 // global variable that controls the amout of output created by all parts of the program
 // verbosity = -1: output only error messages
 // verbosity =  0: output program status information
