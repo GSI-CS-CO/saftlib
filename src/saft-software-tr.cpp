@@ -30,6 +30,7 @@
 
 #include <errno.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <iostream>

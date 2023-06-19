@@ -91,6 +91,18 @@ int main(int argc, char *argv[]) {
 		}
 
 		for (int i = 0; i < N; ++i) {
+			if (i && (i%10000)==0) {
+				std::ofstream hist("hist.tmp");
+				hist << "# time[us] counts" << std::endl;
+				for (unsigned i = 0 ; i < histogram.size() ; ++i) {
+					hist << i << " " << histogram[i] << std::endl;
+				}
+				hist.close();
+				std::string cmd("mv hist.tmp ");
+				cmd.append(argv[3]);
+				system(cmd.c_str());
+				std::cerr << "write histogram " << argv[3] << " " << 10000*(i/10000) << " measurements" << std::endl;
+			}
 			start = std::chrono::steady_clock::now();
 			if (shutdown_threshold) {
 				trace_marker << "saft-standalone-roundtrip-latency InjectEvent" << std::endl;
