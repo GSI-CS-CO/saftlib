@@ -62,7 +62,6 @@ static bool saftd_already_running()
 }
 
 static bool is_int(const std::string &name) {
-	std::cerr << "is_int(" << name << ")" << std::endl;
 	std::istringstream in(name);
 	unsigned i;
 	in >> i;
@@ -74,7 +73,6 @@ static bool is_int(const std::string &name) {
 }
 
 static bool detect_version(const std::string &name) {
-	std::cerr << "detect_version(" << name << ")" << std::endl;
 	if (name.size() < 2) return false;
 	if (name[0] != '.') return false;
 	auto pos = name.substr(1).find(".");
@@ -89,7 +87,7 @@ static bool detect_so_file(const std::string &name) {
 	auto pos = name.find(so_ending);
 	if (pos == name.size()-so_ending.size()) return true;
 	if (pos == name.npos) return false;
-	auto rest = name.substr(pos+so_ending.size()); // rest must be something like ".10"
+	auto rest = name.substr(pos+so_ending.size()); // rest must be a version (dots and numbers) for example like this ".10" or ".10.0.0"
 	if (rest[0] != '.') return false;
 	return detect_version(rest);
 }
