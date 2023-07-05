@@ -61,6 +61,39 @@ static bool saftd_already_running()
   return false;
 }
 
+static bool is_int(const std::string &name) {
+	std::cerr << "is_int(" << name << ")" << std::endl;
+	std::istringstream in(name);
+	unsigned i;
+	in >> i;
+	if (!in) return false;
+	char ch;
+	in >> ch; // nothing must follow the integer
+	if (in) return false;
+	return true;
+}
+
+static bool detect_version(const std::string &name) {
+	std::cerr << "detect_version(" << name << ")" << std::endl;
+	if (name.size() < 2) return false;
+	if (name[0] != '.') return false;
+	auto pos = name.substr(1).find(".");
+	if (pos == name.npos) return is_int(name.substr(1));
+	if (!is_int(name.substr(1,pos))) return false;
+	return detect_version(name.substr(pos+1));
+}
+
+static bool detect_so_file(const std::string &name) {
+	const std::string so_ending = ".so";
+	if (name.size() < so_ending.size()) return false;
+	auto pos = name.find(so_ending);
+	if (pos == name.size()-so_ending.size()) return true;
+	if (pos == name.npos) return false;
+	auto rest = name.substr(pos+so_ending.size()); // rest must be something like ".10"
+	if (rest[0] != '.') return false;
+	return detect_version(rest);
+}
+
 int main(int argc, char *argv[]) {
 	try {
 
@@ -71,8 +104,7 @@ int main(int argc, char *argv[]) {
 				usage(argv[0]);
 				return 0;
 			}
-			bool argvi_is_plugin = (argvi.size()>3 && argvi.find(".so") == (argvi.size()-3));
-			if (argvi_is_plugin) {
+			if (detect_so_file(argvi)) {
 				std::cerr << argvi << " is plugin" << std::endl;
 				plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
 			} else {
