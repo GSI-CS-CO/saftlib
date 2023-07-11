@@ -132,9 +132,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1d22e3becfb98182a6cb1592d752e914"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#a1d22e3becfb98182a6cb1592d752e914">release_irq</a> (eb_address_t irq)</td></tr>
 <tr class="memdesc:a1d22e3becfb98182a6cb1592d752e914"><td class="mdescLeft">&#160;</td><td class="mdescRight">release a callback  <a href="classsaftlib_1_1SAFTd.html#a1d22e3becfb98182a6cb1592d752e914">More...</a><br /></td></tr>
 <tr class="separator:a1d22e3becfb98182a6cb1592d752e914"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd186dfc8762b7d6505ea0743fea9e89"><td class="memItemLeft" align="right" valign="top">eb_address_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#afd186dfc8762b7d6505ea0743fea9e89">request_irq</a> (<a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a> &amp;msi, const std::function&lt; void(eb_data_t)&gt; &amp;slot)</td></tr>
-<tr class="memdesc:afd186dfc8762b7d6505ea0743fea9e89"><td class="mdescLeft">&#160;</td><td class="mdescRight">register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a master on the MSI crossbar) from the hardware. The wishbone address to trigger the callack is returned from the function. The wishbone data is passed as argument to the callback function.  <a href="classsaftlib_1_1SAFTd.html#afd186dfc8762b7d6505ea0743fea9e89">More...</a><br /></td></tr>
-<tr class="separator:afd186dfc8762b7d6505ea0743fea9e89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab20a073a19baea868433afabed5266da"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classsaftlib_1_1IRQ.html">IRQ</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#ab20a073a19baea868433afabed5266da">request_irq</a> (<a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a> &amp;msi, const std::function&lt; void(eb_data_t)&gt; &amp;slot)</td></tr>
+<tr class="memdesc:ab20a073a19baea868433afabed5266da"><td class="mdescLeft">&#160;</td><td class="mdescRight">register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a master on the MSI crossbar) from the hardware. The wishbone address to trigger the callack is returned from the function. The wishbone data is passed as argument to the callback function.  <a href="classsaftlib_1_1SAFTd.html#ab20a073a19baea868433afabed5266da">More...</a><br /></td></tr>
+<tr class="separator:ab20a073a19baea868433afabed5266da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51e3f7780904d7a476eb0339373aed40"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1SAFTd.html#a51e3f7780904d7a476eb0339373aed40">getObjectPath</a> ()</td></tr>
 <tr class="memdesc:a51e3f7780904d7a476eb0339373aed40"><td class="mdescLeft">&#160;</td><td class="mdescRight">the object path of the SAFTd_Service  <a href="classsaftlib_1_1SAFTd.html#a51e3f7780904d7a476eb0339373aed40">More...</a><br /></td></tr>
 <tr class="separator:a51e3f7780904d7a476eb0339373aed40"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -496,14 +496,14 @@ Here is the call graph for this function:</div>
 
 </div>
 </div>
-<a id="afd186dfc8762b7d6505ea0743fea9e89" name="afd186dfc8762b7d6505ea0743fea9e89"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afd186dfc8762b7d6505ea0743fea9e89">&#9670;&#160;</a></span>request_irq()</h2>
+<a id="ab20a073a19baea868433afabed5266da" name="ab20a073a19baea868433afabed5266da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab20a073a19baea868433afabed5266da">&#9670;&#160;</a></span>request_irq()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">eb_address_t saftlib::SAFTd::request_irq </td>
+          <td class="memname">std::unique_ptr&lt; <a class="el" href="classsaftlib_1_1IRQ.html">IRQ</a> &gt; saftlib::SAFTd::request_irq </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a> &amp;&#160;</td>
           <td class="paramname"><em>msi</em>, </td>
@@ -530,20 +530,20 @@ Here is the call graph for this function:</div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the address that is associated with the function object connected to slot. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>an unique_ptr&lt;IRQ&gt; that can be used to obtain the address to trigger the slot function. The irq is released in the destructor of <a class="el" href="classsaftlib_1_1IRQ.html" title="Represents an IRQ that is managed by saftlib.">IRQ</a>, i.e. it needs to be stored as long as the interrupt is needed. </dd></dl>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="classsaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph.png" border="0" usemap="#aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph" alt=""/></div>
-<map name="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph" id="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_cgraph">
+<div class="center"><img src="classsaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_cgraph.png" border="0" usemap="#aclasssaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_cgraph" alt=""/></div>
+<map name="aclasssaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_cgraph" id="aclasssaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_cgraph">
 <area shape="rect" title="register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a mas..." alt="" coords="5,29,180,55"/>
 </map>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="classsaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph.png" border="0" usemap="#aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph" alt=""/></div>
-<map name="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph" id="aclasssaftlib_1_1SAFTd_afd186dfc8762b7d6505ea0743fea9e89_icgraph">
+<div class="center"><img src="classsaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_icgraph.png" border="0" usemap="#aclasssaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_icgraph" alt=""/></div>
+<map name="aclasssaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_icgraph" id="aclasssaftlib_1_1SAFTd_ab20a073a19baea868433afabed5266da_icgraph">
 <area shape="rect" title="register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a mas..." alt="" coords="188,29,363,55"/>
 <area shape="rect" href="classsaftlib_1_1OpenDevice.html#a4e38cad1c324517bf1653e773e764c2d" title="open given etherbone_path on given socket." alt="" coords="5,22,140,62"/>
 </map>
