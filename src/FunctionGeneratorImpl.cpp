@@ -92,7 +92,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(SAFTd *saft_daemon
     }
   }
 
-  host_slot = mbx->ConfigureSlot(irq);
+  host_slot = mbx->ConfigureSlot(irq->address());
   // eb_address_t mb_base = args.mbx.sdb_component.addr_first;
   // eb_data_t mb_value;
   // unsigned slot = 0;
@@ -120,14 +120,13 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(SAFTd *saft_daemon
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
-  // std::cerr << "~FunctionGenerator" << std::endl;
+  // std::cerr << "~FunctionGeneratorImpl release_irq " << std::hex << irq->address() << std::endl;
   // DRIVER_LOG("",-1, channel);
   // resetTimeout.disconnect(); // do not run ResetFailed
   //device.release_irq(irq);
   // device.write(mailbox_slot_address, EB_DATA32, 0xffffffff);
 
   saftbus::Loop::get_default().remove(resetTimeout);
-  saftd->release_irq(irq);
 }
 
 static unsigned wrapping_sub(unsigned a, unsigned b, unsigned buffer_size)

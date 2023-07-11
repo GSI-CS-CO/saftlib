@@ -32,7 +32,7 @@ SimpleFirmware::SimpleFirmware(saftlib::SAFTd *sd, saftlib::TimingReceiver *timi
 	cpu_msi_slot  = mbox->ConfigureSlot(CPU_MSI);
 	// configuer another Mailbox slot with the address returned by request_irq, 
 	// which is now associated with callback "receive_hw_msi"
-	host_msi_slot = mbox->ConfigureSlot(msi_adr);
+	host_msi_slot = mbox->ConfigureSlot(msi_adr->address());
 
 	// std::cerr << "cpu_msi_slot index " << cpu_msi_slot->getIndex() << std::endl;
 	// std::cerr << "host_msi_slot index " << host_msi_slot->getIndex() << std::endl;
@@ -46,8 +46,6 @@ SimpleFirmware::~SimpleFirmware()
 	for (auto &source: timeout_sources) {
 		saftbus::Loop::get_default().remove(source);
 	}
-	// Release_irq allows the MSI address to be reused by another driver.
-	saftd->release_irq(msi_adr);
 }
 
 

@@ -40,6 +40,7 @@
 namespace saftlib {
 
 class SAFTd;
+class IRQ;
 class OpenDevice;
 class ActionSink;
 class SoftwareActionSink;
@@ -74,6 +75,8 @@ class ECA : public MsiDevice {
 	std::vector<eb_address_t> queue_addresses;
 	std::vector<uint16_t> most_full;
 
+
+	std::vector<std::unique_ptr<IRQ> > channel_irqs;
 
 	std::vector<std::vector< std::unique_ptr<ActionSink> > > ECAchannels;
 	std::vector< std::unique_ptr<ActionSink> >      *ECA_LINUX_channel; // a reference to the channels of type ECA_LINUX

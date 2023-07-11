@@ -146,14 +146,17 @@ namespace saftlib {
 		/// @param irq the address to be released
 		void release_irq(eb_address_t irq);
 
+
+
 		/// @brief register a callback function that can be triggered by an MSI (i.e. a wishbone write access from a master 
 		///        on the MSI crossbar) from the hardware. The wishbone address to trigger the callack is returned from the 
 		///        function. The wishbone data is passed as argument to the callback function.
 		///
 		/// @param object of type MsiDevice or derived from MsiDevice. MsiDevices are masters on the MSI-crossbar interconnect
 		/// @param slot function object that is called when an MSI with the correct address (return value of this fuction) arrives
-		/// @return the address that is associated with the function object connected to slot.
-		eb_address_t request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot);
+		/// @return an unique_ptr<IRQ> that can be used to obtain the address to trigger the slot function. The irq is released in the 
+		///         destructor of IRQ, i.e. it needs to be stored as long as the interrupt is needed.
+		std::unique_ptr<IRQ> request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot);
 
 		/// @brief the object path of the SAFTd_Service
 		/// @return the object path
@@ -210,6 +213,25 @@ namespace saftlib {
 
 		bool quit;
 
+	};
+
+	/// @brief Represents an IRQ that is managed by saftlib
+	///
+	/// A std::unique_ptr<IRQ> is returend by SAFTd::request_irq when passing an MsiDevice to it.
+	/// The IRQ::address() function returns the wishbone address that the 
+	/// MsiDevice (on the hardware)needs to write to in order to call the attached 
+	/// callback function on the host system.
+	/// The IRQ destructor automatially releases the irq slot from SAFTd. 
+	class IRQ {
+		friend class SAFTd;
+		IRQ(SAFTd *sd, eb_address_t a, eb_address_t f);
+		SAFTd *saftd;
+		eb_address_t addr;
+		eb_address_t msi_device_first;
+	public:
+		~IRQ();
+		/// @brief address to trigger the IRQ
+		eb_address_t address();
 	};
 
 

@@ -584,8 +584,8 @@ ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saft
 	prepareChannels();
 
 	for (unsigned channel_idx = 0; channel_idx < channels; ++channel_idx) {
-		eb_address_t irq = saftd.request_irq(*this, std::bind(&ECA::msiHandler, this, std::placeholders::_1, channel_idx) );
-		setHandler(channel_idx, true, irq);
+		channel_irqs.push_back(saftd.request_irq(*this, std::bind(&ECA::msiHandler, this, std::placeholders::_1, channel_idx) ) );
+		setHandler(channel_idx, true, channel_irqs.back()->address());
 	}
 }
 

@@ -199,6 +199,7 @@ namespace saftlib {
 	void SAFTd::release_irq(eb_address_t irq) {
 		auto it = irqs.find(irq);
 		if (it != irqs.end()) {
+			// std::cerr << "release_irq " << std::hex << irq << std::endl;
 			// std::cerr << "release irq for address 0x" << std::hex << std::setw(8) << std::setfill('0') << irq << std::endl;
 			irqs.erase(it);
 		}
@@ -227,18 +228,34 @@ namespace saftlib {
 	// }
 
 
-	eb_address_t SAFTd::request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
+
+	IRQ::IRQ(SAFTd *sd, eb_address_t a, eb_address_t f) 
+		: saftd(sd)
+		, addr(a+f)
+		, msi_device_first(f) 
+	{}
+
+	IRQ::~IRQ() { 
+		saftd->release_irq(addr-msi_device_first); 
+	}
+
+	eb_address_t IRQ::address() { 
+		return addr; 
+	}
+
+	std::unique_ptr<IRQ> SAFTd::request_irq(MsiDevice &msi, const std::function<void(eb_data_t)>& slot) {
 		eb_address_t first, last, mask;
 		msi.device.enable_msi(&first, &last);
 		mask = last - first;
 		for (int i = 0; i < 2000; ++i) {
 			eb_address_t irq_adr = ((rand() & mask) + first) & (~0x3);
 			if (request_irq(irq_adr, slot)) {
-				return msi.msi_device.msi_first + irq_adr; // return the adress that triggers the msi
+				// std::cerr << "request_irq " << std::hex << irq_adr << std::endl;
+				return std::unique_ptr<IRQ>(new IRQ(this, irq_adr, msi.msi_device.msi_first)); // return the adress that triggers the msi
 			}
 		}
 		std::cerr << "cannot find a free irq address" << std::endl;
-		return 0x0;
+		return std::unique_ptr<IRQ>();
 	}
 
 	std::string SAFTd::getObjectPath() {
@@ -258,5 +275,8 @@ namespace saftlib {
 		}
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "no such device");
 	}
+
+
+
 
 }

@@ -23,16 +23,16 @@ namespace saftlib {
     , device(tr->OpenDevice::get_device())
   {
     Mailbox *mbox = static_cast<Mailbox*>(tr); 
-    my_msi_path = saftd->request_irq(*mbox, std::bind(&BurstGenerator::msi_handler,this, std::placeholders::_1));
+    my_msi = saftd->request_irq(*mbox, std::bind(&BurstGenerator::msi_handler,this, std::placeholders::_1));
     // For some reason it doesn't work if slot index is 0 (maybe slot index 0 has a special meaning in the firmware).
     // Fix it simply by reconfiguring the mailbox if the assigned slot index was 0.
     do { 
-      my_slot = mbox->ConfigureSlot(my_msi_path);
+      my_slot = mbox->ConfigureSlot(my_msi->address());
     } while (my_slot->getIndex() == 0);
 
     std::cerr << "BurstGenerator: subscribed mailbox" << std::hex <<
       " slot: " << my_slot->getIndex() << " addr: " << my_slot->getAddress() <<
-      " path: " << my_msi_path << std::endl;
+      " path: " << my_msi->address() << std::endl;
 
     std::cerr << "BurstGenerator: detecting the burst generator" << std::endl;
 
@@ -131,9 +131,6 @@ namespace saftlib {
   {
     // write the invalid slot number to a reserved location in the shared memory
     device.write(ram_base + SHM_MB_SLOT_HOST, EB_DATA32, MB_SLOT_CFG_FREE);
-
-    // release MSI handler
-    saftd->release_irq(my_msi_path);
   }
 
 

@@ -38,6 +38,7 @@
 namespace saftlib {
 
 class SAFTd;
+class IRQ;
 class Mailbox;
 class EB_Forward;
 /// @brief Holds etherbone::Device that is opened on construction and closed on destruction
@@ -98,6 +99,7 @@ private:
 
 	// following members are for testing MSI capability (real or polled MSIs)
 	void check_msi_callback(eb_data_t value);
+	std::unique_ptr<IRQ> check_irq; // IRQ to check MSI capability
 	SAFTd *saftd;         // a pointer to SAFTd is needed because in case of polled MSIs the OpenDevice needs to call SAFTds write function
 	eb_address_t first, last, mask; // range of addresses that are valid for MSI
 	eb_address_t msi_first, msi_last;         // address offset which needs to be subtracted 

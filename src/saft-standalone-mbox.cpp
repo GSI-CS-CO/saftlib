@@ -18,15 +18,16 @@
 struct LM32testbench : public saftlib::OpenDevice
                      , public saftlib::Mailbox 
 {
-	std::unique_ptr<Mailbox::Slot> msi_slot_to_this_program;
+	std::unique_ptr<saftlib::Mailbox::Slot> msi_slot_to_this_program;
+	std::unique_ptr<saftlib::IRQ> msi_irq_to_this_program;
 
 	LM32testbench(saftlib::SAFTd &saftd, const std::string &eb_path) 
 		: OpenDevice(saftd.get_etherbone_socket(), eb_path, 10, &saftd)
 		, Mailbox(OpenDevice::device)
 	{
-		eb_address_t msi_adr_to_this_program = saftd.request_irq(*this, std::bind(&LM32testbench::receiveMSI,this, std::placeholders::_1));
-		msi_slot_to_this_program = ConfigureSlot(msi_adr_to_this_program);
-		std::cerr << std::hex << "msi_adr of host: 0x" << msi_adr_to_this_program << std::dec << std::endl;
+		msi_irq_to_this_program = saftd.request_irq(*this, std::bind(&LM32testbench::receiveMSI,this, std::placeholders::_1));
+		msi_slot_to_this_program = ConfigureSlot(msi_irq_to_this_program->address());
+		std::cerr << std::hex << "msi_adr of host: 0x" << msi_irq_to_this_program->address() << std::dec << std::endl;
 		//std::cerr << "slot to host: " << msi_slot_to_this_program << std::endl;
 	}
 	bool triggerMSI() {	

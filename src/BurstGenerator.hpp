@@ -89,7 +89,7 @@ namespace saftlib {
       SAFTd                      *saftd;        // in saftlib-v3 SAFTd is needed for request_irq and release_irq
       TimingReceiver             *tr;           // TimingReceiver provides all needed SdbDevices
       etherbone::Device&         device;        // a reference to the etherbone::Device for quick access
-      eb_address_t               my_msi_path;   // my msi path (required to configure mailbox)
+      std::unique_ptr<IRQ>       my_msi;        // my msi (the address of this is used to configure mailbox)
       std::unique_ptr<Mailbox::Slot> my_slot;   // mailbox slot subscribed by me
 
       int                            bg_slot;   // mailbox slot-index subscribed by the burst generator

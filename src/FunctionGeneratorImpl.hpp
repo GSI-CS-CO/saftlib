@@ -39,6 +39,7 @@
 namespace saftlib {
 
 class SAFTd;
+class IRQ;
 class TimingReceiver;
 // class Mailbox;
 
@@ -171,7 +172,7 @@ class FunctionGeneratorImpl //: public Glib::Object
     unsigned char deviceNumber;
     unsigned char version;
     unsigned char outputWindowSize;
-    eb_address_t irq;
+    std::unique_ptr<saftlib::IRQ> irq;
     std::unique_ptr<Mailbox::Slot> host_slot; // lm32->host (owned by host, therefore we have a Mailbox::Slot object)
 
     int channel; // -1 if no channel assigned

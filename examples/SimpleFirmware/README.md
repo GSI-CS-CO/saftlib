@@ -69,9 +69,9 @@ namespace saftlib {
 		std::unique_ptr<saftlib::Mailbox::Slot> cpu_msi_slot;
 		std::unique_ptr<saftlib::Mailbox::Slot> host_msi_slot;
 
-		/// Remember the address from register_irq in the constructor so that it can be 
-		/// released in the destructor
-		eb_address_t msi_adr;
+		/// Remembers the address from request_irq in the constructor 
+		/// and releases it automatically in the destructor
+		std::unique_ptr<saftlib::IRQ> msi_adr;
 
 		/// This is just a counter that is incremented each time an MSI is sent to the LM32 firmware.
 		/// The current value of cnt is sent as part of the MSI data.
@@ -155,7 +155,7 @@ The two objects `cpu_msi_slot` and `host_msi_slot` are unique pointers and they 
 	cpu_msi_slot  = mbox->ConfigureSlot(CPU_MSI);
 	// configuer another Mailbox slot with the address returned by request_irq, 
 	// which is now associated with callback "receive_hw_msi"
-	host_msi_slot = mbox->ConfigureSlot(msi_adr);
+	host_msi_slot = mbox->ConfigureSlot(msi_adr->address());
 
 	// std::cerr << "cpu_msi_slot index " << cpu_msi_slot->getIndex() << std::endl;
 	// std::cerr << "host_msi_slot index " << host_msi_slot->getIndex() << std::endl;
@@ -171,8 +171,6 @@ SimpleFirmware::~SimpleFirmware()
 	for (auto &source: timeout_sources) {
 		saftbus::Loop::get_default().remove(source);
 	}
-	// Release_irq allows the MSI address to be reused by another driver.
-	saftd->release_irq(msi_adr);
 }
 ```
 The MSI callback function does nothing but emitting a signal.

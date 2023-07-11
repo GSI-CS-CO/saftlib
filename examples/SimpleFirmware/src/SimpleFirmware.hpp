@@ -31,9 +31,9 @@ namespace saftlib {
 		std::unique_ptr<saftlib::Mailbox::Slot> cpu_msi_slot;
 		std::unique_ptr<saftlib::Mailbox::Slot> host_msi_slot;
 
-		/// Remember the address from register_irq in the constructor so that it can be 
-		/// released in the destructor
-		eb_address_t msi_adr;
+		/// Remembers the address from register_irq in the constructor 
+		/// and automatically releases it in the destructor
+		std::unique_ptr<saftlib::IRQ> msi_adr;
 
 		/// This is just a counter that is incremented each time an MSI is sent to the LM32 firmware.
 		/// The current value of cnt is sent as part of the MSI data.
