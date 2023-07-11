@@ -120,7 +120,7 @@ FunctionGeneratorImpl::FunctionGeneratorImpl(SAFTd *saft_daemon
 
 FunctionGeneratorImpl::~FunctionGeneratorImpl()
 {
-  std::cerr << "~FunctionGenerator" << std::endl;
+  // std::cerr << "~FunctionGenerator" << std::endl;
   // DRIVER_LOG("",-1, channel);
   // resetTimeout.disconnect(); // do not run ResetFailed
   //device.release_irq(irq);

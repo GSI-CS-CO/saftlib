@@ -81,14 +81,18 @@ void FunctionGeneratorFirmware::clear()
 {
   // std::cerr << "FunctionGeneratorFirmware::clear()" << std::endl;
   try {
+    std::vector<std::string> fg_names;
+    for (auto &fg: fgs) if (fg.second) fg_names.push_back(fg.second->getObjectPath());
+    std::string mfg_name;  
+    if (mfg) mfg_name = mfg->getObjectPath();
     fgs.clear();
     mfg.reset();
     addon_objects.clear();
     if (container) {
-      for (auto &fg: fgs) {
-        container->remove_object(fg.second->getObjectPath());
+      for (auto &fg: fg_names) {
+        container->remove_object(fg);
       }
-      if (mfg) container->remove_object(mfg->getObjectPath());
+      if (mfg_name.size()) container->remove_object(mfg_name);
     }
   } catch (...) { // catch exceptions that occur when the object was removed before
     // nothing.
@@ -286,7 +290,7 @@ std::map<std::string, std::string> FunctionGeneratorFirmware::ScanMasterFg()
 std::map<std::string, std::string> FunctionGeneratorFirmware::ScanFgChannels()
 {
 
-  std::cerr << "FunctionGeneratorFirmware::ScanFgChannels() getDestructible() " << getDestructible() << std::endl;
+  // std::cerr << "FunctionGeneratorFirmware::ScanFgChannels() getDestructible() " << getDestructible() << std::endl;
   // DRIVER_LOG("",-1,-1);
   ownerOnly();
   if (!nothing_runs()) {

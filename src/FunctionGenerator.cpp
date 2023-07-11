@@ -50,6 +50,7 @@ FunctionGenerator::FunctionGenerator(saftbus::Container *container, const std::s
 
 FunctionGenerator::~FunctionGenerator()
 {
+  // std::cerr << "~FunctionGenerator()" << std::endl;
 }
 
 
