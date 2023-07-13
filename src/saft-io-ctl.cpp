@@ -153,14 +153,12 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
 
     /* Setup condition */
     std::shared_ptr<OutputCondition_Proxy> condition;
-    if (translate_mask) { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(false, eventID, tr_mask(eventMask), io_offset, io_edge)); }
-    else                { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(false, eventID, eventMask, io_offset, io_edge)); }
+    if (translate_mask) { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, tr_mask(eventMask), io_offset, io_edge)); }
+    else                { condition = OutputCondition_Proxy::create(output_proxy->NewCondition(true, eventID, eventMask, io_offset, io_edge)); }
     condition->setAcceptConflict(io_AcceptConflict);
     condition->setAcceptDelayed(io_AcceptDelayed);
     condition->setAcceptEarly(io_AcceptEarly);
     condition->setAcceptLate(io_AcceptLate);
-
-    output_proxy->ToggleActive();
 
     /* Disown and quit or keep waiting */
     if (disown) { condition->Disown(); }
