@@ -130,9 +130,9 @@ If the libsaft-service plugin is running, additional devices can be attached usi
 ```bash
 saft-ctl tr5 attach dev/wbm5
 ```
-Deviced can be removed (only if none of their child services are owned by a client process) with
+Devices can be removed (only if none of their child services are owned by a client process) with
 ```bash
-saft-ctl tr5
+saft-ctl tr5 remove
 ```
 The SAFTd service can be removed (only if none of their child services are owned by a client process) with
 ```bash
