@@ -57,3 +57,5 @@ soft-tr
 software-tr
 version.h
 wait-msi
+saft-software-tr
+saft-testbench
