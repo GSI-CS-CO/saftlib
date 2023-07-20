@@ -162,7 +162,7 @@ static int io_create (bool disown, uint64_t eventID, uint64_t eventMask, int64_t
 
     /* Disown and quit or keep waiting */
     if (disown) { condition->Disown(); }
-    else        { std::cout << "Condition created..." << std::endl; 
+    else        { std::cout << "Condition created..." << std::endl;
       while(true) {
         saftlib::wait_for_signal();
       }
@@ -551,7 +551,7 @@ static void io_catch_input(uint64_t event, uint64_t param, saftlib::Time deadlin
   std::cout << " (0x";
   std::cout << std::setw(1) << std::hex << flags << ")  ";
   std::cout << "0x" << std::hex << setw(16+1) << event << std::dec << " ";
-  std::cout << "0x" << std::hex << setw(16+1) << (UTC?time.getUTC():time.getTAI()) << std::dec << " " << tr_formatDate(time,PMODE_VERBOSE|(UTC?PMODE_UTC:PMODE_NONE));
+  std::cout << "0x" << std::hex << setw(16+1) << (UTC?time.getUTC():time.getTAI()) << std::dec << " " << tr_formatDate(time,PMODE_VERBOSE|(UTC?PMODE_UTC:PMODE_NONE),false);
   std::cout << std::endl;
 }
 
