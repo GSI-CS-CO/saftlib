@@ -148,7 +148,7 @@ std::string tr_formatActionParam(uint64_t param, uint32_t evtNo, uint32_t pmode,
     // add some code
     break;
   default :
-    full << " " << extra_mark << "Param" << extra_mark << ": " << fmt << std::setw(width) << param << extra_comma << extra_space << pmode;
+    full << " " << extra_mark << "Param" << extra_mark << ": " << fmt << std::setw(width) << param << extra_comma << extra_space;
   } // switch evtNo
 
   return full.str();
