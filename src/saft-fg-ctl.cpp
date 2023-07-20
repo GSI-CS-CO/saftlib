@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -86,14 +86,14 @@ static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, ui
 // Report when the function generator starts
 static void on_start(saftlib::Time time)
 {
-  std::cout << "Function generator started at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
+  std::cout << "Function generator started at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl;
 }
 
 // Report when the function generator stops
 static void on_stop(saftlib::Time time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow, bool *continue_main_loop)
 {
   *continue_main_loop = false;
-  std::cout << "Function generator stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
+  std::cout << "Function generator stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl;
   // was there an error?
   if (abort)
     std::cerr << "Fatal error: Abort was called!" << std::endl;
@@ -130,7 +130,7 @@ static void slow_warning(int sig)
 }
 
 // throws if any channel is already owned
-static bool nothing_owned(std::shared_ptr<TimingReceiver_Proxy> receiver)  
+static bool nothing_owned(std::shared_ptr<TimingReceiver_Proxy> receiver)
 {
   try {
     // Get a list of function generators on the receiver
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 {
   try {
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
-    
+
     // Options
     std::string device;
     std::string fg;
@@ -177,9 +177,9 @@ int main(int argc, char** argv)
     bool eventSet = false;
     bool repeat = false;
     bool generate = false;
-    bool scan = false; 
+    bool scan = false;
     char i_or_m = 0;
-    
+
     // Process command-line
     int opt, error = 0;
     while ((opt = getopt(argc, argv, "d:f:rght:e:s:U")) != -1) {
@@ -226,27 +226,27 @@ int main(int argc, char** argv)
           error = 1;
       }
     }
-    
+
     if (error) {
       help(saftd);
       return 1;
     }
-    
+
     if (optind != argc) {
       std::cerr << "Unexpected argument: " << argv[optind] << std::endl;
       help(saftd);
       return 1;
     }
-    
+
 
     // Setup a warning on too slow data
     signal(SIGALRM, &slow_warning);
     alarm(2);
-    
+
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
     // Get a list of devices from the saftlib directory
     map<std::string, std::string> devices = saftd->getDevices();
-    
+
     // Find the requested device
     std::shared_ptr<TimingReceiver_Proxy> receiver;
     if (device.empty()) {
@@ -267,7 +267,7 @@ int main(int argc, char** argv)
        receiver = TimingReceiver_Proxy::create(devices[device]);
       }
     }
-    
+
     // List available devices
     if (error) {
       std::cerr << "Available devices:" << std::endl;
@@ -275,7 +275,7 @@ int main(int argc, char** argv)
         std::cerr << "  " << i->first << std::endl;
       return 1;
     }
-    
+
     // Confirm this device is an SCU
     map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1) {
@@ -311,10 +311,10 @@ int main(int argc, char** argv)
       return 0;
     }
 
-    
+
     // Get a list of function generators on the receiver
     map<std::string, std::string> fgs = receiver->getInterfaces()["FunctionGenerator"];
-    
+
     // Find the target FunctionGenerator
     std::shared_ptr<FunctionGenerator_Proxy> gen;
     if (fg.empty()) {
@@ -335,7 +335,7 @@ int main(int argc, char** argv)
         gen = FunctionGenerator_Proxy::create(fgs[fg]);
       }
     }
-    
+
     // List available function generators
     if (error) {
       std::cerr << "Available function generators:" << std::endl;
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
         std::cerr << "  " << i->first << std::endl;
       return 1;
     }
-    
+
     // Ok! Find all the devices is now out of the way. Let's get some work done.
 
     ParamSet params;
@@ -351,7 +351,7 @@ int main(int argc, char** argv)
     while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
       // turn off warning
       if (params.coeff_a.empty()) alarm(0);
-      
+
       params.coeff_a.push_back(a);
       params.coeff_b.push_back(b);
       params.coeff_c.push_back(c);
@@ -360,45 +360,45 @@ int main(int argc, char** argv)
       params.shift_a.push_back(la);
       params.shift_b.push_back(lb);
     }
-    
+
     if (num != EOF || !feof(stdin)) {
       std::cerr << "warning: junk data at end of input file" << std::endl;
     }
-    
+
     if (params.shift_b.empty()) {
       std::cerr << "Provided data file was empty" << std::endl;
       return 1;
     }
-    
+
     // Claim the function generator for ourselves
     gen->Own();
 
     // Stop whatever the function generator was doing
     gen->Abort();
-    
+
     // Wait until not Enabled
     while (gen->getEnabled()) saftlib::wait_for_signal();
-    
+
     // Clear any old waveform data
     gen->Flush();
-    
+
     bool continue_main_loop = true;
     // Watch for events on the function generator
     gen->SigStarted.connect(sigc::ptr_fun(&on_start));
     gen->SigStopped.connect(sigc::bind(sigc::ptr_fun(&on_stop), &continue_main_loop));
-    
+
     // Load up the parameters, possibly repeating until full
     while (fill(gen, params) && repeat) { }
-    
+
     // Repeat the waveform forever?
     if (repeat) {
       // listen to refill indicator
       gen->Refill.connect(sigc::bind(sigc::ptr_fun(&on_refill), gen, params));
     }
-    
+
     // FYI, how much data is this?
     std::cout << "Loaded " << gen->ReadFillLevel() / 1000000.0 << "ms worth of waveform" << std::endl;
-    
+
     // Watch for a timing event? => generate tag on event
     if (eventSet) scu->NewCondition(true, event, ~0, 0, tag);
 
@@ -408,7 +408,7 @@ int main(int argc, char** argv)
     // Ready to execute!
     gen->setStartTag(tag);
     gen->Arm();
-    
+
     // Wait until not enabled / function generator is done
     // ... if we don't care to keep repeating the waveform, we could quit immediately;
     //     SAFTd has been properly configured to run autonomously at this point.
@@ -416,13 +416,13 @@ int main(int argc, char** argv)
     while(continue_main_loop) {
       saftlib::wait_for_signal(100);
     }
-    
+
     // Print summary
     std::cout << "Successful execution of " << gen->ReadExecutedParameterCount() << " polynomial tuples" << std::endl;
 
   } catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
-  
+
   return 0;
 }
