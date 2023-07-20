@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -80,7 +80,7 @@ timespec time_start, time_end;
 #define CLOCK_ID CLOCK_MONOTONIC
 //#define CLOCK_ID CLOCK_PROCESS_CPUTIME_ID
 //#define CLOCK_ID CLOCK_REALTIME
-	
+
 static void timer_start()
 {
 	clock_gettime(CLOCK_ID, &time_start);
@@ -110,7 +110,7 @@ struct ParamSet {
   std::vector< unsigned char > shift_b;
 };
 
-  
+
 void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, uint64_t event, bool repeat, bool generate, uint32_t tag);
 
 
@@ -133,7 +133,7 @@ static bool fill(std::shared_ptr<FunctionGenerator_Proxy> gen, const ParamSet& p
 static void on_armed(bool armed, std::shared_ptr<SCUbusActionSink_Proxy> scu, uint64_t tag)
 {
   if (armed) {
-  
+
     std::cout << "Generating StartTag in 2 seconds" << std::endl;
     sleep(2);
     scu->InjectTag(tag);
@@ -168,7 +168,7 @@ static void on_stop(uint64_t time, bool abort, bool hardwareMacroUnderflow, bool
 // Report on the individual function generators
 static void on_master_started(std::string fg_name, saftlib::Time time)
 {
-  if (loglevel>0) std::cout << fg_name << " started at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
+  if (loglevel>0) std::cout << fg_name << " started at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl;
 }
 static void on_master_armed(std::string fg_name, bool armed)
 {
@@ -188,7 +188,7 @@ static void on_master_refill(std::string fg_name)
 }
 static void on_master_stop(std::string fg_name, saftlib::Time time, bool abort, bool hardwareMacroUnderflow, bool microControllerUnderflow)
 {
-  if (loglevel>0) std::cout << fg_name << " stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
+  if (loglevel>0) std::cout << fg_name << " stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl;
   // was there an error?
   if (abort)
     std::cerr << "Fatal error: Abort was called!" << std::endl;
@@ -200,7 +200,7 @@ static void on_master_stop(std::string fg_name, saftlib::Time time, bool abort, 
 
 // report on the aggregated function generators
 static void on_all_armed()
-{    
+{
   std::cout << "All armed." << std::endl;
   {
     std::lock_guard<std::mutex> lock(fg_all_armed_mutex);
@@ -212,7 +212,7 @@ static void on_all_armed()
 
 static void on_all_stop(saftlib::Time time)
 {
-  std::cout << "All fgs stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
+  std::cout << "All fgs stopped at " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl;
   {
     std::lock_guard<std::mutex> lock(fg_all_stopped_mutex);
     fg_all_stopped=true;
@@ -221,10 +221,10 @@ static void on_all_stop(saftlib::Time time)
 }
 
 // for thread safety tests
-static void* startFg(void *arg) 
+static void* startFg(void *arg)
 {
   std::cerr << ">>>thread started" << std::endl;
-    
+
   std::ostringstream msg;
   msg << __FILE__<< "::" << __FUNCTION__ << ":"  << __LINE__ << " start loop";
   if (loglevel>1) {
@@ -267,7 +267,7 @@ int main(int argc, char** argv)
   std::cout << "******************** saft-mfg-ctl start ******************" << std::endl;
   try {
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
-    
+
     // Options
     std::string device;
     std::string fg;
@@ -276,7 +276,7 @@ int main(int argc, char** argv)
     bool eventSet = false;
     bool repeat = false;
     bool generate = false;
-    
+
     // Process command-line
     int opt, error = 0;
     while ((opt = getopt(argc, argv, "d:f:rgUht:e:")) != -1) {
@@ -315,34 +315,34 @@ int main(int argc, char** argv)
           error = 1;
       }
     }
-    
+
     if (error) {
       help(saftd);
       return 1;
     }
-    
+
     if (optind != argc) {
       std::cerr << "Unexpected argument: " << argv[optind] << std::endl;
       help(saftd);
       return 1;
     }
-    
+
     // Setup a warning on too slow data
     signal(SIGALRM, &slow_warning);
     alarm(2);
-    
+
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
     ParamSet params;
     int32_t a, la, b, lb, c, n, s, num;
     while((num = fscanf(stdin, "%d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n)) == 6) {
       // turn off warning
       if (params.coeff_a.empty()) alarm(0);
-      
+
       #define ACCU_OFFSET 40 /* don't ask */
       la += ACCU_OFFSET;
       lb += ACCU_OFFSET;
       s = 5; // 500kHz
-      
+
       params.coeff_a.push_back(a);
       params.coeff_b.push_back(b);
       params.coeff_c.push_back(c);
@@ -351,18 +351,18 @@ int main(int argc, char** argv)
       params.shift_a.push_back(la);
       params.shift_b.push_back(lb);
     }
-    
+
     if (num != EOF || !feof(stdin)) {
       std::cerr << "warning: junk data at end of input file" << std::endl;
     }
-    
+
     if (params.shift_b.empty()) {
       std::cerr << "Provided data file was empty" << std::endl;
       return 1;
     }
     // Get a list of devices from the saftlib directory
     map<std::string, std::string> devices = saftd->getDevices();
-    
+
     // Find the requested device
     std::shared_ptr<TimingReceiver_Proxy> receiver;
     if (device.empty()) {
@@ -383,7 +383,7 @@ int main(int argc, char** argv)
        receiver = TimingReceiver_Proxy::create(devices[device]);
       }
     }
-    
+
     // List available devices
     if (error) {
       std::cerr << "Available devices:" << std::endl;
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
         std::cerr << "  " << i->first << std::endl;
       return 1;
     }
-    
+
     // Confirm this device is an SCU
     map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
     if (scus.size() != 1) {
@@ -399,7 +399,7 @@ int main(int argc, char** argv)
       return 1;
     }
     std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
-    
+
 
     test_master_fg(scu, receiver, params, eventSet, event, repeat, generate, tag);
 //    test_multiple_fgs(loop, scu, receiver, params, eventSet, event, repeat, generate, tag);
@@ -420,20 +420,20 @@ int main(int argc, char** argv)
 
 void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, uint64_t event, bool repeat, bool generate, uint32_t tag)
 {
-    map<std::string, std::string> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];            
+    map<std::string, std::string> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];
     std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
     std::shared_ptr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
-   
+
     // Claim the function generator for ourselves
     master_gen->Own();
-    // select all FGs    
-    master_gen->ResetActiveFunctionGenerators(); 
+    // select all FGs
+    master_gen->ResetActiveFunctionGenerators();
 		auto names = master_gen->ReadNames();
-    
+
     for (auto name : names)
 		{
 			std::cout << name << "  ";
-		} 		  
+		}
     std::cout << endl;
 
     // signals about the individual FGs for info
@@ -452,28 +452,28 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
     // Stop whatever the function generator was doing
  		if (loglevel>0) std::cout << "Abort via Master" << std::endl;
     master_gen->Abort(false);
-    
+
     // Wait until not Enabled - test polling as alternative to Abort(true)
-    
+
     //std::shared_ptr<Glib::MainContext> context  = loop->get_context();
 
     vector<int> enabled_gens = master_gen->ReadEnabled();
-    while (std::find(enabled_gens.begin(), enabled_gens.end(), 1) != enabled_gens.end()) 
-    {      
+    while (std::find(enabled_gens.begin(), enabled_gens.end(), 1) != enabled_gens.end())
+    {
       saftlib::wait_for_signal();
       enabled_gens = master_gen->ReadEnabled();
     }
 
     // threading test: start a background thread in which to perform wait_for_signal()
     // to test File Descriptor Async Methods
-    
+
     pthread_t bg_thread;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     int ret=0;
     if ((ret = pthread_create(&bg_thread, &attr, &startFg, nullptr)) == 0) {
-      if (loglevel>1) std::cout << "Created thread for receiving signals " << std::endl;      
-    } 
+      if (loglevel>1) std::cout << "Created thread for receiving signals " << std::endl;
+    }
 
   //for (int reps=0;reps<1;reps++)
   for (; names.size()>1; names.pop_back())
@@ -484,10 +484,10 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 		if (loglevel>1) std::cout << "Flush via Master" << std::endl;
 		master_gen->Flush();
  		if (loglevel>1) std::cout << "Flushed" << std::endl;
- 		
+
  		master_gen->setStartTag(tag);
  		if (loglevel>0) std::cout << "Tag set" << std::endl;
-    
+
     // Load up the parameters
 		std::vector<std::vector<int16_t>> coeff_a;
 		std::vector<std::vector<int16_t>> coeff_b;
@@ -506,8 +506,8 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 			step.push_back(params.step);
 			freq.push_back(params.freq);
 			shift_a.push_back(params.shift_a);
-  		shift_b.push_back(params.shift_b);						
-  		
+  		shift_b.push_back(params.shift_b);
+
 		}
 
     // test arming methods
@@ -527,17 +527,17 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
       shift_b,
       true,  // arm?
       true); // arm ack?
-      if (loglevel>1) timer_stop();    
+      if (loglevel>1) timer_stop();
       if (loglevel>0)
       {
         std::cout << "Loaded:      ";
         for (auto level : master_gen->ReadFillLevels())
         {
           std::cout << (level / 1000000.0) << "ms ";
-        } 		   
+        }
         std::cout << endl;
-      
-        std::cout << "Armed" << std::endl;		
+
+        std::cout << "Armed" << std::endl;
       }
     }
     else
@@ -558,19 +558,19 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
       shift_b,
       false,  // arm?
       false); // arm ack?
-      std::cout << "parameters sent" << std::endl;      
+      std::cout << "parameters sent" << std::endl;
       master_gen->Arm();
-      std::cout << "arm sent" << std::endl;      
-      if (loglevel>1) timer_stop();    
+      std::cout << "arm sent" << std::endl;
+      if (loglevel>1) timer_stop();
       if (loglevel>0)
       {
         std::cout << "Loaded:      ";
         for (auto level : master_gen->ReadFillLevels())
         {
           std::cout << (level / 1000000.0) << "ms ";
-        } 		   
+        }
         std::cout << endl;
-      } 
+      }
       {
         std::unique_lock<std::mutex> lock(fg_all_armed_mutex);
         if (!fg_all_armed)
@@ -579,17 +579,17 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
         }
       }
     }
-    
+
     if (loglevel>0)
     {
    		std::cout << "Fill Levels: ";
 	  	for (auto level : master_gen->ReadFillLevels())
 		  {
 			  std::cout << (level / 1000000.0) << "ms ";
-  		} 		   
+  		}
       std::cout << endl;
     }
-    
+
 
     {
       std::lock_guard<std::mutex> lock(fg_all_stopped_mutex);
@@ -601,7 +601,7 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 	    if (loglevel>0) std::cout << "Generating StartTag" << std::endl;
 	    scu->InjectTag(tag);
 		}
-    else if (eventSet) 
+    else if (eventSet)
     {
       std::cout << "Waiting for event " << event << " to generate tag " << tag << std::endl;
       scu->NewCondition(true, event, ~0, 0, tag);
@@ -613,7 +613,7 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 
 
     // Wait until master function generator reports all done
-   
+
     {
       std::unique_lock<std::mutex> lock(fg_all_stopped_mutex);
       if (!fg_all_stopped)
@@ -627,9 +627,8 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 	  	for (auto count : master_gen->ReadExecutedParameterCounts())
   		{
 		  	std::cout << count << " ";
-	  	} 		   
+	  	}
    		std::cout << "Done" << std::endl;
     }
-  } 
+  }
 }
-
