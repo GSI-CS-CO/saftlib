@@ -73,21 +73,23 @@ std::string tr_formatActionEvent(uint64_t id, uint32_t pmode, bool json)
 {
   std::stringstream full;
   string            fmt = "";
-  int               width = 0;
-  int               fid=0;
   string            extra_mark = "";
   string            extra_comma = "";
-
-  if (json)
-  {
-    extra_mark = "\"";
-    extra_comma = ",";
-  }
+  int               width = 0;
+  int               fid=0;
 
   fid = ((id >> 60) & 0xf);
 
   if (pmode & PMODE_HEX) {full << std::hex << std::setfill('0'); width = 16; fmt = "0x";}
   if (pmode & PMODE_DEC) {full << std::dec << std::setfill('0'); width = 20; fmt = "0d";}
+
+  if (json)
+  {
+    extra_mark = "\"";
+    extra_comma = ",";
+    if (width == 0) { width = 20; } // default
+  }
+
   if (pmode & PMODE_VERBOSE) {
     full << " " << extra_mark << "FID"   << extra_mark << ": " << fmt << std::setw(1) << ((id >> 60) & 0xf)   << extra_comma;
     full << " " << extra_mark << "GID"   << extra_mark << ": " << fmt << std::setw(4) << ((id >> 48) & 0xfff) << extra_comma;
@@ -121,21 +123,22 @@ std::string tr_formatActionEvent(uint64_t id, uint32_t pmode, bool json)
 std::string tr_formatActionParam(uint64_t param, uint32_t evtNo, uint32_t pmode, bool json)
 {
   std::stringstream full;
-  string fmt = "";
-  int width = 0;
+  string            fmt = "";
   string            extra_mark = "";
   string            extra_comma = "";
   string            extra_space = "";
+  int               width = 0;
+
+  if (pmode & PMODE_HEX) {full << std::hex << std::setfill('0'); width = 16; fmt = "0x";}
+  if (pmode & PMODE_DEC) {full << std::dec << std::setfill('0'); width = 20; fmt = "0d";}
 
   if (json)
   {
     extra_mark = "\"";
     extra_comma = ",";
     extra_space = " ";
+    if (width == 0) { width = 20; } // default
   }
-
-  if (pmode & PMODE_HEX) {full << std::hex << std::setfill('0'); width = 16; fmt = "0x";}
-  if (pmode & PMODE_DEC) {full << std::dec << std::setfill('0'); width = 20; fmt = "0d";}
 
   switch (evtNo) {
   case 0x0 :
@@ -145,7 +148,7 @@ std::string tr_formatActionParam(uint64_t param, uint32_t evtNo, uint32_t pmode,
     // add some code
     break;
   default :
-    full << " " << extra_mark << "Param" << extra_mark << ": " << fmt << std::setw(width) << param << extra_comma << extra_space;
+    full << " " << extra_mark << "Param" << extra_mark << ": " << fmt << std::setw(width) << param << extra_comma << extra_space << pmode;
   } // switch evtNo
 
   return full.str();
@@ -163,10 +166,10 @@ std::string tr_formatActionFlags(uint16_t flags, uint64_t delay, uint32_t pmode,
     else           { full << "\"Late_ns\": " << "0, "; }
     if (flags & 2) { full << "\"Early_ns\": " << -delay  << ", "; }
     else           { full << "\"Early_ns\": " << "0, "; }
-    if (flags & 4) { full << "\"Conflict\": true, "; }
-    else           { full << "\"Conflict\": false, "; }
+    if (flags & 4) { full << "\"ConflictDelay_ns\": " << delay << ", "; }
+    else           { full << "\"ConflictDelay_ns\": 0, "; }
     if (flags & 8) { full << "\"Delayed_ns\": " << delay << ", "; }
-    else           { full << "\"Delayed_ns\": " << "0 "; }
+    else           { full << "\"Delayed_ns\": " << "0, "; }
   }
   else
   {
