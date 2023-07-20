@@ -71,6 +71,9 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 
   if (printJSON)
   {
+    std::cout << std::hex << std::setfill('0') << "\"EventRaw\": \"0x" << std::setw(16) << id << "\"" << ", ";
+    std::cout << std::hex << std::setfill('0') << "\"ParameterRaw\": \"0x" << std::setw(16) << param << "\"" << ", ";
+    std::cout << std::hex << std::setfill('0') << "\"DeadlineRaw\": \"" << std::setw(16) << tr_formatDate(deadline, PMODE_HEX, false) << "\"";
     std::cout << " }"<< std::endl;
   }
   else
