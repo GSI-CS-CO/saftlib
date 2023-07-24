@@ -48,6 +48,7 @@ using namespace std;
 
 static const char* program;
 static uint32_t pmode = PMODE_NONE;   // how data are printed (hex, dec, verbosity)
+bool printJSON      = false;          // display values in JSON format
 bool absoluteTime   = false;
 bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
@@ -55,11 +56,31 @@ bool UTCleap        = false;
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
-  std::cout << tr_formatActionEvent(id, pmode);
-  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
-  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
-  std::cout << std::endl;
+  if (printJSON)
+  {
+    std::cout << "{ ";
+    std::cout << "\"Deadline\":\"" << tr_formatDate(deadline, pmode, printJSON) << "\",";
+  }
+  else
+  {
+    std::cout << "tDeadline: " << tr_formatDate(deadline, pmode, printJSON);
+  }
+  std::cout << tr_formatActionEvent(id, pmode, printJSON);
+  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode, printJSON);
+  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode, printJSON);
+
+  if (printJSON)
+  {
+    std::cout << std::hex << std::setfill('0') << "\"EventRaw\": \"0x" << std::setw(16) << id << "\"" << ", ";
+    std::cout << std::hex << std::setfill('0') << "\"ParameterRaw\": \"0x" << std::setw(16) << param << "\"" << ", ";
+    std::cout << std::hex << std::setfill('0') << "\"DeadlineRaw\": \"" << std::setw(16) << tr_formatDate(deadline, PMODE_HEX, false) << "\"";
+    std::cout << " }"<< std::endl;
+  }
+  else
+  {
+    std::cout << std::endl;
+  }
+
 } // on_action
 
 
@@ -79,6 +100,7 @@ static void help(void) {
   std::cout << "  -p                   used with command 'inject': <time> will be added to next full second (option -p) or current time (option unused)" << std::endl;
   std::cout << "  -i                   display saftlib info" << std::endl;
   std::cout << "  -j                   list all attached devices (hardware)" << std::endl;
+  std::cout << "  -J                   display values in JSON format" << std::endl;
   std::cout << "  -k                   display gateware version (hardware)" << std::endl;
   std::cout << "  -s                   display actual status of software actions" << std::endl;
   std::cout << "  -t                   display the current temperature in Celsius (if sensor is available) " << std::endl;
@@ -125,8 +147,8 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
   wrLocked        = receiver->getLocked();
   if (wrLocked) {
     wrTime        = receiver->CurrentTime();
-    if (absoluteTime) std::cout << "WR locked, time: " << tr_formatDate(wrTime, UTC?PMODE_UTC:PMODE_NONE) <<std::endl;
-    else std::cout << "WR locked, time: " << tr_formatDate(wrTime, pmode) <<std::endl;
+    if (absoluteTime) std::cout << "WR locked, time: " << tr_formatDate(wrTime, UTC?PMODE_UTC:PMODE_NONE, printJSON) <<std::endl;
+    else std::cout << "WR locked, time: " << tr_formatDate(wrTime, pmode, printJSON) <<std::endl;
   }
   else std::cout << "no WR lock!!!" << std::endl;
 
@@ -166,7 +188,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
         if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
         else           {std::cout << std::hex; width = 16; fmt = "0x";}
-        std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode) //ID: "   << fmt << std::setw(width) << std::setfill('0') << condition->getID()
+        std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode, printJSON) //ID: "   << fmt << std::setw(width) << std::setfill('0') << condition->getID()
                   << ", mask: "         << fmt << std::setw(width) << std::setfill('0') << condition->getMask()
                   << ", offset: "       << fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
                   << ", active: "       << std::dec << condition->getActive()
@@ -290,7 +312,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxsvapijkhftUL")) != -1) {
+  while ((opt = getopt(argc, argv, "dxsvapijJkhftUL")) != -1) {
     switch (opt) {
       case 'f' :
         useFirstDev = true;
@@ -309,6 +331,9 @@ int main(int argc, char** argv)
         break;
       case 'j':
         infoDispHW = true;
+        break;
+      case 'J':
+        printJSON = true;
         break;
       case 'k':
         infoDispGW = true;
@@ -605,4 +630,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-

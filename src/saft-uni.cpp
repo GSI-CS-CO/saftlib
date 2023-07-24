@@ -2,7 +2,7 @@
 // @brief Command-line interface for saftlib. This tool focuses on UNILAC specific features
 // @author Dietrich Beck  <d.beck@gsi.de>
 //
-//*  Copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+//*  Copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
 //
 // Have a chat with saftlib and UNILAC
 //
@@ -16,7 +16,7 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
@@ -72,10 +72,10 @@ bool UTCleap        = false;
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode);
-  std::cout << tr_formatActionEvent(id, pmode);
-  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode);
-  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode);
+  std::cout << "tDeadline: " << tr_formatDate(deadline, pmode, false);
+  std::cout << tr_formatActionEvent(id, pmode, false);
+  std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode, false);
+  std::cout << tr_formatActionFlags(flags, executed - deadline, pmode, false);
   std::cout << std::endl;
 } // on_action
 
@@ -100,7 +100,7 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
   static saftlib::Time prevDeadline = deadline;
   static uint32_t      nCycle       = 0x0;
-  
+
   gid      = ((id    & 0x0fff000000000000) >> 48);
   evtNo    = ((id    & 0x0000fff000000000) >> 36);
   vacc     = ((id    & 0x00000000fff00000) >> 20);
@@ -121,14 +121,14 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
       case 1 ... 20 : // hack: throw away first cycles (as it takes a while to create the ECA conditions)
         break;
       default :       // default
-                          
+
         std::cout << std::setw(10) << nCycle << ":"
                   << std::setw( 8) << pz1
                   << std::setw( 8) << pz2
                   << std::setw( 8) << pz3
                   << std::setw( 8) << pz4
                   << std::setw( 8) << pz5
-                  << std::setw( 8) << pz6 
+                  << std::setw( 8) << pz6
                   << std::setw( 8) << pz7
                   << std::endl;
         break;
@@ -151,14 +151,14 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
       if (flagNochop)    special  = "N";
       if (flagShortchop) special += "S";
       if (flagHighC)     special += "H";
-      if (flagRigid)     special += "R"; 
-      if (flagDry)       special += "D"; 
+      if (flagRigid)     special += "R";
+      if (flagDry)       special += "D";
       sVacc = special + std::to_string(vacc);
     } // else: ion source producing real beam
   } // if NXTACC
 
   switch (gid) {
-  case QR : 
+  case QR :
     pz1 = sVacc;
     break;
   case QL :
@@ -199,7 +199,7 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   string   rf;
   int      i, j;
   double   rate;
-  
+
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
   static saftlib::Time prevDeadline = deadline;
   static uint32_t nCycle            = 0x0;
@@ -212,9 +212,9 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   static uint32_t flagRigid[NVACC];
   static uint32_t flagDry[NVACC];
 
-  if (firstTime) {                                     
-    for (j=0; j<NVACC; j++) {                          // clear execution counter and flags 
-      for (i=0; i<NPZ; i++) nExe[i][j] = 0;          
+  if (firstTime) {
+    for (j=0; j<NVACC; j++) {                          // clear execution counter and flags
+      for (i=0; i<NPZ; i++) nExe[i][j] = 0;
       flagNochop[j]    = 0;
       flagShortchop[j] = 0;
       flagHighC[j]     = 0;
@@ -247,17 +247,17 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
         } // for PZs
         if (rate > 0.0001) std::cout << std::setw(6) << fixed << setprecision(2) << rate; // printf was so easy :)
         std::cout << " ";
-        if (flagNochop[j])    std::cout << "N";  
+        if (flagNochop[j])    std::cout << "N";
         if (flagShortchop[j]) std::cout << "S";
         if (flagHighC[j])     std::cout << "H";
         if (flagRigid[j])     std::cout << "R";
         if (flagDry[j])       std::cout << "D";
         std::cout << std::endl;
       } // for vacc
-      
+
       std::cout << std::endl;
-      for (j=0; j<NVACC; j++) {                         // clear execution counter and flags 
-        for (i=0; i<NPZ; i++) nExe[i][j] = 0;          
+      for (j=0; j<NVACC; j++) {                         // clear execution counter and flags
+        for (i=0; i<NPZ; i++) nExe[i][j] = 0;
         flagNochop[j]    = 0;
         flagShortchop[j] = 0;
         flagHighC[j]     = 0;
@@ -267,7 +267,7 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
     } // if nCycle % OBSCYCLES
     else if ((nCycle % 10) == 0) std::cout << "." << std::flush; // user entertainment
 
-    prevDeadline = deadline;                           
+    prevDeadline = deadline;
     nCycle++;
   } // if deadline (new UNILAC cycle)
 
@@ -320,9 +320,9 @@ static void help(void) {
   std::cout << "Beams are defined by 'Virtual Acceleratores' (vacc):" <<std::endl;
   std::cout << "vacc 0..13 are used for standard operaton." <<std::endl;
   std::cout << "vacc 14 is used for rf-conditioning or standalone ion-source operation." <<std::endl;
-  std::cout << "vacc 15 is used for otherpurposes." <<std::endl;  
+  std::cout << "vacc 15 is used for otherpurposes." <<std::endl;
   std::cout << std::endl;
-  std::cout << "Shown are flags indicating special modes of operation: N(o chopper), S(hort chopper), R(igid beam)," << std::endl; 
+  std::cout << "Shown are flags indicating special modes of operation: N(o chopper), S(hort chopper), R(igid beam)," << std::endl;
   std::cout << "D(ry 'beam') and H(igh current beam); warming pulses are shown in brackets" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
@@ -386,7 +386,7 @@ int main(int argc, char** argv)
         return 1;
     } // switch opt
   }   // while opt
-  
+
   if (optind >= argc) {
     std::cerr << program << " expecting one non-optional argument: <device name>" << std::endl;
     help();
@@ -398,7 +398,7 @@ int main(int argc, char** argv)
   // parse for commands
   if (optind + 1< argc) {
     command = argv[optind+1];
-    
+
     if (strcasecmp(command, "snoop") == 0) {
       if (optind+3  != argc) {
         std::cerr << program << ": expecting exactly one argument: snoop <type>" << std::endl;
@@ -518,11 +518,11 @@ int main(int argc, char** argv)
           case 1:
             condition[i]->SigAction.connect(sigc::ptr_fun(&on_action_uni_cycle));
             break;
-          default : 
+          default :
             condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
             break;
         }
-        condition[i]->setActive(true);    
+        condition[i]->setActive(true);
       } // for i
 
       while(true) {
@@ -536,4 +536,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-

@@ -69,7 +69,7 @@ static void pps_help (void);
 /* ==================================================================================================== */
 void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, int rule)
 {
-  std::cout << "Got event at: 0x" << std::hex << (UTC?executed.getUTC():executed.getTAI()) << " -> " << tr_formatDate(executed, (verbose_mode?PMODE_VERBOSE:PMODE_NONE) | (UTC?PMODE_UTC:PMODE_NONE) ) << std::endl;
+  std::cout << "Got event at: 0x" << std::hex << (UTC?executed.getUTC():executed.getTAI()) << " -> " << tr_formatDate(executed, (verbose_mode?PMODE_VERBOSE:PMODE_NONE) | (UTC?PMODE_UTC:PMODE_NONE), false ) << std::endl;
   if (verbose_mode)
   {
     std::cout << "  Deadline (Diff.): 0x" << (UTC?deadline.getUTC():deadline.getTAI()) << " (0x" << (deadline-executed) << ")" << std::endl;
@@ -87,7 +87,7 @@ void onAction(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::T
 
 /* Generic counter functions */
 /* ==================================================================================================== */
-void onActionCount(uint64_t count)   { action_counter=count; } 
+void onActionCount(uint64_t count)   { action_counter=count; }
 void onOverflowCount(uint64_t count) { overflow_counter=count; }
 void onLateCount(uint64_t count)     { late_counter=count; }
 void onEarlyCount(uint64_t count)    { early_counter=count; }
@@ -141,8 +141,8 @@ int main (int argc, char** argv)
   saftlib::Time wrNext;          /* Execution time for the next PPS */
 
   /* Get the application name */
-  program = argv[0]; 
-  
+  program = argv[0];
+
   /* Parse for options */
   while ((opt = getopt(argc, argv, ":seiUvht:")) != -1)
   {
@@ -160,26 +160,26 @@ int main (int argc, char** argv)
     /* Break loop if help is needed */
     if (show_help) { break; }
   }
-  
+
   /* Get basic arguments, we need at least the device name */
   if (optind + 1 == argc)
-  { 
+  {
     deviceName = argv[optind]; /* Get the device name */
   }
-  else 
-  { 
+  else
+  {
     show_help = true;
     std::cout << "Incorrect non-optional arguments..." << std::endl;
   }
-  
+
   /* Check if help is needed, otherwise evaluate given arguments */
   if (show_help)
-  { 
+  {
     pps_help();
   }
   else
   {
-    
+
     /* Try to setup all outputs */
     try
     {
@@ -199,15 +199,15 @@ int main (int argc, char** argv)
         if (verbose_mode)
         {
           std::cout << "Timing Receiver is locked!" << std::endl;
-          std::cout << "Current time is " << tr_formatDate(wrTime, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) <<std::endl; 
+          std::cout << "Current time is " << tr_formatDate(wrTime, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) <<std::endl;
         }
-      } 
+      }
       else
-      { 
+      {
         std::cout << "Timing Receiver is NOT locked!" << std::endl;
         return (-1);
       }
-      
+
       /* Search for outputs and inoutputs */
       std::map< std::string, std::string > outs;
       std::map< std::string, std::string > ins;
@@ -215,7 +215,7 @@ int main (int argc, char** argv)
       std::string io_partner;
       outs = receiver->getOutputs();
       ins = receiver->getInputs();
-      
+
       /* Check if IO exists output */
       if (!just_inject)
       {
@@ -224,37 +224,37 @@ int main (int argc, char** argv)
           std::shared_ptr<Output_Proxy> output_proxy = Output_Proxy::create(it->second);
           if (verbose_mode) { std::cout << "Info: Found " << it->first << std::endl; }
           total_ios++;
-          
+
           /* Set output enable if available */
           if (setup_io)
           {
             if (output_proxy->getOutputEnableAvailable())
-            { 
+            {
               if (verbose_mode) { std::cout << "Turning output enable on... " << std::endl; }
               output_proxy->setOutputEnable(true);
             }
           }
-          
+
           /* Turn off input termination if available */
           io_partner = output_proxy->getInput();
-          if (io_partner != "") 
+          if (io_partner != "")
           {
             if (verbose_mode) { std::cout << "Found Partner Path: " << io_partner << std::endl; }
             if (setup_io)
             {
               std::shared_ptr<Input_Proxy> input_proxy = Input_Proxy::create(io_partner);
               if (input_proxy->getInputTerminationAvailable())
-              { 
+              {
                 if (verbose_mode) { std::cout << "Turning input termination off... " << std::endl; }
                 input_proxy->setInputTermination(false);
               }
             }
           }
-          
+
           /* Setup conditions */
           std::shared_ptr<OutputCondition_Proxy> condition_high = OutputCondition_Proxy::create(output_proxy->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0,         true));
           std::shared_ptr<OutputCondition_Proxy> condition_low  = OutputCondition_Proxy::create(output_proxy->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 100000000, false));
-          
+
           /* Accept all kinds of events */
           condition_high->setAcceptConflict(true);
           condition_high->setAcceptDelayed(true);
@@ -266,10 +266,10 @@ int main (int argc, char** argv)
           condition_low->setAcceptLate(true);
         }
       }
-      
+
       /* Output some information */
       std::cout << "ECA configuration done for " << total_ios << " IO(s)!" << std::endl;
-      
+
       /* Create condition for the SCU bus (if wanted) */
       if (setup_scu_bus)
       {
@@ -280,12 +280,12 @@ int main (int argc, char** argv)
           std::cerr << "Device '" << receiver->getName() << "' has no SCU bus!" << std::endl;
           return (-1);
        }
-       
+
        /* Get connection */
        std::shared_ptr<SCUbusActionSink_Proxy> e_scubus = SCUbusActionSink_Proxy::create(e_scubusses.begin()->second);
        std::shared_ptr<SCUbusCondition_Proxy> scubus_condition;
        scubus_condition = SCUbusCondition_Proxy::create(e_scubus->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0, scu_bus_tag));
-        
+
        /* Accept every kind of event */
        scubus_condition->setAcceptConflict(true);
        scubus_condition->setAcceptDelayed(true);
@@ -294,8 +294,8 @@ int main (int argc, char** argv)
 
        std::cout << "ECA configuration done for SCU bus!" << std::endl;
       }
-      
-      /* Trigger ECA continuously? */ 
+
+      /* Trigger ECA continuously? */
       if (!external_trigger)
       {
         receiver->ToggleActive();
@@ -303,20 +303,20 @@ int main (int argc, char** argv)
         {
           /* Get time and align next PPS */
           wrTime = receiver->CurrentTime();
-          if (verbose_mode) { std::cout << "Time (base):   0x" << std::hex << (UTC?wrTime.getUTC():wrTime.getTAI()) << std::dec << " -> " << tr_formatDate(wrTime, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl; }
-  
+          if (verbose_mode) { std::cout << "Time (base):   0x" << std::hex << (UTC?wrTime.getUTC():wrTime.getTAI()) << std::dec << " -> " << tr_formatDate(wrTime, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl; }
+
           /* Avoid late event and add one additional second */
           uint64_t nsec_fraction = wrTime.getTAI() % 1000000000;
           if (first_pps) { wrNext = (wrTime - nsec_fraction) + 2000000000; first_pps = false; }
           else           { wrNext = (wrTime - nsec_fraction) + 1000000000; }
-          
+
           /* Print next pulse and inject event */
-          std::cout << "Next pulse at: 0x" << std::hex << (UTC?wrNext.getUTC():wrNext.getTAI()) << std::dec << " -> " << tr_formatDate(wrNext, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) << std::endl;
+          std::cout << "Next pulse at: 0x" << std::hex << (UTC?wrNext.getUTC():wrNext.getTAI()) << std::dec << " -> " << tr_formatDate(wrNext, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl;
           receiver->InjectEvent(ECA_EVENT_ID, 0x00000000, wrNext);
-          
+
           /* Wait for the next pulse */
           while(wrNext>receiver->CurrentTime())
-          { 
+          {
             /* The following code snippet allows to end the program by pressing Ctrl-D (EOF on stdin).  */
             /* This allows for a simultaneous deactivation of all conditions such that the ECA has to   */
             /* be reprogrammed only once.                                                               */
@@ -335,13 +335,13 @@ int main (int argc, char** argv)
 
             /* Sleep 100ms to prevent too much Etherbone traffic */
             usleep(100000);
-            
+
             /* Print time */
-            if (verbose_mode) { 
+            if (verbose_mode) {
               saftlib::Time time = receiver->CurrentTime();
-              std::cout << "Time (wait):   0x" << std::hex << (UTC?time.getUTC():time.getTAI()) 
-                        << std::dec << " -> " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE)) 
-                        << std::endl; 
+              std::cout << "Time (wait):   0x" << std::hex << (UTC?time.getUTC():time.getTAI())
+                        << std::dec << " -> " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false)
+                        << std::endl;
             }
           }
         }
@@ -353,13 +353,13 @@ int main (int argc, char** argv)
         std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(sink->NewCondition(false, ECA_EVENT_ID, ECA_EVENT_MASK, 0));
         condition->SigAction.connect(sigc::bind(sigc::ptr_fun(&onAction), 0));
-        
+
         /* Accept all kinds of events */
         condition->setAcceptConflict(true);
         condition->setAcceptDelayed(true);
         condition->setAcceptEarly(true);
         condition->setAcceptLate(true);
-        
+
         /* Attach to counter signals */
         sink->OverflowCount.connect(sigc::ptr_fun(&onOverflowCount));
         sink->ActionCount.connect(sigc::ptr_fun(&onActionCount));
@@ -367,7 +367,7 @@ int main (int argc, char** argv)
         sink->EarlyCount.connect(sigc::ptr_fun(&onEarlyCount));
         sink->ConflictCount.connect(sigc::ptr_fun(&onConflictCount));
         sink->DelayedCount.connect(sigc::ptr_fun(&onDelayedCount));
-        
+
         receiver->ToggleActive();
         /* Run the Glib event loop, inside callbacks you can still run all the methods like we did above */
         while (true) {
@@ -375,14 +375,14 @@ int main (int argc, char** argv)
         }
       }
     }
-    catch (const saftbus::Error& error) 
+    catch (const saftbus::Error& error)
     {
       /* Catch error(s) */
       std::cerr << "Failed to invoke method: " << error.what() << std::endl;
       return (-1);
     }
   }
-  
+
   /* Done */
   return (0);
 }

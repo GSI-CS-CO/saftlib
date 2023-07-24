@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -48,24 +48,28 @@ uint64_t     tr_mask(int i                    	  // number of bits
 
 // formatting of date for output
 std::string tr_formatDate(saftlib::Time time,     // time [ns]
-                          uint32_t pmode      	  // mode for printing
+                          uint32_t pmode,         // mode for printing
+                          bool     json           // JSON output
                           );
 
 // formatting of action event ID for output
-std::string tr_formatActionEvent(uint64_t id,  	  // 64bit event ID
-                                 uint32_t pmode	  // mode for printing
+std::string tr_formatActionEvent(uint64_t id,       // 64bit event ID
+                                 uint32_t pmode,    // mode for printing
+                                 bool     json      // JSON output
                                  );
 
 // formatting of action param for output; the format depends also on evtNo, except if evtNo == 0xFFFF FFFF
 std::string tr_formatActionParam(uint64_t param,    // 64bit parameter
                                  uint32_t evtNo,    // evtNo (currently 12 bit) - part of the 64 bit event ID
-                                 uint32_t pmode     // mode for printing
+                                 uint32_t pmode,    // mode for printing
+                                 bool     json      // JSON output
                                  );
 
 // formatting of action flags for output
 std::string tr_formatActionFlags(uint16_t flags,    // 16bit flags
                                  uint64_t delay,    // used in case action was delayed
-                                 uint32_t pmode     // mode for printing
+                                 uint32_t pmode,    // mode for printing
+                                 bool     json      // JSON output
                                  );
 
 namespace saftlib {
