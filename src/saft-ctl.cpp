@@ -59,7 +59,7 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
   if (printJSON)
   {
     std::cout << "{ ";
-    std::cout << "\"Deadline\":\"" << tr_formatDate(deadline, pmode, printJSON) << "\",";
+    std::cout << "\"Deadline\": \"" << tr_formatDate(deadline, pmode, printJSON) << "\",";
   }
   else
   {
