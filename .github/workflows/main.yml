@@ -76,3 +76,21 @@ jobs:
         sudo ldconfig
         sudo saft-testbench
         sudo saft-testbench -p
+
+    - name: Test build of all examples
+      run: |
+        make -C examples/EventSnoopTool
+        make -C examples/SerialTransceiver
+        cd examples/SimpleFirmware
+        ./autogen.sh
+        ./configure
+        make 
+        cd ../../saftbus/examples/ex00
+        ./autogen.sh
+        ./configure
+        make
+        cd ../ex01_simple_dice
+        ./autogen.sh
+        ./configure
+        make 
+
