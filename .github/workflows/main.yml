@@ -100,6 +100,4 @@ jobs:
         ./configure
         make
         cd ../../..
-        make -C examples/EventSnoopTool
-        make -C examples/SerialTransceiver
 
