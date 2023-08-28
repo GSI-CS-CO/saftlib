@@ -2,6 +2,24 @@ AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -Wall -g  $(SAFTBUS_CFLAGS) -I $(top_srcdir)/src -I $(top_builddir)/src 
 
+BUILT_SOURCES =             \
+	src/Dice_Service.hpp    \
+	src/Dice6_Service.hpp   \
+	src/Dice12_Service.hpp  \
+	src/DiceCup_Service.hpp \
+	src/Dice_Service.cpp    \
+	src/Dice6_Service.cpp   \
+	src/Dice12_Service.cpp  \
+	src/DiceCup_Service.cpp \
+	src/Dice_Proxy.hpp      \
+	src/Dice6_Proxy.hpp     \
+	src/Dice12_Proxy.hpp    \
+	src/DiceCup_Proxy.hpp   \
+	src/Dice_Proxy.cpp      \
+	src/Dice6_Proxy.cpp     \
+	src/Dice12_Proxy.cpp    \
+	src/DiceCup_Proxy.cpp                     
+
 lib_LTLIBRARIES = \
 	lib@PACKAGE@-service.la  \
 	lib@PACKAGE@-proxy.la    
