@@ -78,8 +78,6 @@ jobs:
         sudo saft-testbench -p
         pkg-config saftlib --cflags
         pkg-config saftlib --libs
-        make -C examples/EventSnoopTool
-        make -C examples/SerialTransceiver
         cd examples/SimpleFirmware
         ./autogen.sh
         ./configure
@@ -97,4 +95,6 @@ jobs:
         ./configure
         make
         cd ../../..
+        make -C examples/EventSnoopTool
+        make -C examples/SerialTransceiver
 
