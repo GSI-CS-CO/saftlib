@@ -78,7 +78,12 @@ jobs:
         sudo saft-testbench -p
         pkg-config saftlib --cflags
         pkg-config saftlib --libs
-        cd examples/SimpleFirmware
+        cd saftbus-gen
+        ./autogen.sh
+        ./configure
+        make 
+        sudo make install
+        cd ../examples/SimpleFirmware
         ./autogen.sh
         ./configure
         make 
