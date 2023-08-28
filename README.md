@@ -7,7 +7,7 @@ Clients connect to saftbusd using a C++ library of proxy objects which represent
 The user API of for shared resources hides device register access and provides high-level functionality.
 
 #### API documentation
-Generated with doxygen from the master branch: [https://gsi-cs-co.github.io/saftlib](https://gsi-cs-co.github.io/saftlib)
+Generated with Doxygen from the master branch, the Saftlib Documentation is available here: [https://gsi-cs-co.github.io/saftlib](https://gsi-cs-co.github.io/saftlib).
 
 #### Compile and install
 ```bash
