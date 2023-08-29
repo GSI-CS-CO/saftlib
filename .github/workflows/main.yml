@@ -69,10 +69,35 @@ jobs:
     - name: Clean saftlib
       run: make clean
 
-    - name: Test parallel compilation and run saft-testbench
+    - name: Test parallel compilation and run saft-testbench and build all examples
       run: |
         make -j$(nproc)
         sudo make install
         sudo ldconfig
         sudo saft-testbench
         sudo saft-testbench -p
+        pkg-config saftlib --cflags
+        pkg-config saftlib --libs
+        cd saftbus-gen
+        ./autogen.sh
+        ./configure
+        make 
+        sudo make install
+        cd ../examples/SimpleFirmware
+        ./autogen.sh
+        ./configure
+        make 
+        cd ../../saftbus/examples/ex00
+        ./autogen.sh
+        ./configure
+        make
+        cd ../ex01_simple_dice
+        ./autogen.sh
+        ./configure
+        make 
+        cd ../ex02_dice_cup/
+        ./autogen.sh
+        ./configure
+        make
+        cd ../../..
+
