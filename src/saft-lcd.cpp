@@ -323,6 +323,10 @@ int main(int argc, char** argv)
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver;
     if (useFirstDev) {
+      if (devices.empty()) {
+          std::cerr << "No devices attached to saftd" << std::endl;
+          return -1;
+      }
       receiver = TimingReceiver_Proxy::create(devices.begin()->second);
     } else {
       if (devices.find(deviceName) == devices.end()) {
