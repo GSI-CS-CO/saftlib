@@ -1,4 +1,4 @@
-name: CI Basic Build
+name: Build
 
 on:
   push:
@@ -7,24 +7,6 @@ on:
     branches: [ "master" ]
 
 jobs:
-
-  doxygen:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Build documentation
-        uses: mattnotmitt/doxygen-action@v1.9.5
-        with:
-          doxyfile-path: ./Doxyfile
-
-      - name: Deploy documentation
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./html
 
   build:
 
@@ -81,12 +63,12 @@ jobs:
         cd saftbus-gen
         ./autogen.sh
         ./configure
-        make 
+        make
         sudo make install
         cd ../examples/SimpleFirmware
         ./autogen.sh
         ./configure
-        make 
+        make
         cd ../../saftbus/examples/ex00
         ./autogen.sh
         ./configure
@@ -94,10 +76,9 @@ jobs:
         cd ../ex01_simple_dice
         ./autogen.sh
         ./configure
-        make 
+        make
         cd ../ex02_dice_cup/
         ./autogen.sh
         ./configure
         make
         cd ../../..
-
