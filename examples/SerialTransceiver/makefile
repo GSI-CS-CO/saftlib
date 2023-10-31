@@ -1,5 +1,5 @@
 CXXFLAGS = --std=c++11 `pkg-config saftlib --cflags`
-LDFLAGS  = `pkg-config saftlib --libs`
+LDLIBS  = `pkg-config saftlib --libs`
 
 all: serial-txrx-saftbus serial-txrx-standalone
 serial-txrx-saftbus:    serial-txrx-saftbus.cpp
