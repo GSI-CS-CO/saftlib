@@ -7,7 +7,7 @@
 //
 // A CLI that allows to see what happens in the facility.
 //
-// version: 2020-May-02
+// version: 2023-Nov-08
 //
 //*****************************************************************************
 // This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
 //
-#define SAFT_LCD_VERSION "0.0.6"
+#define SAFT_LCD_VERSION "0.0.7"
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -51,38 +51,38 @@
 #define FID          0x1
 
 // GID, SIS, ESR, HEST
-#define GTK3MV4_TO_PLTKMH2 0x1f2
-#define SIS18_RING         0x12c
-#define GTS1MU1_TO_GTS3MU1 0x1f9
-#define GTS1MU1_TO_GTE3MU1 0x1f5
-#define GTS3MU1_TO_GHFSMU1 0x1fb
-#define GHFSMU1_TO_GTS6MU1 0x1fd
-#define GTS6MU1_TO_ESR     0x1f8
-#define ESR_RING           0x154
-#define ESR_TO_GTV2MU2     0x20c
-#define GTH4MU2_TO_GTV1MU1 0x209
-#define GHTBMU1_TO_YRT1MH2 0x213
+#define GTK7BC1L_TO_PLTKMH2__GS 0x1d0
+#define SIS18_RING              0x12c
+#define GTS1MU1_TO_GTS3MU1      0x1f9
+#define GTS1MU1_TO_GTE3MU1      0x1f5
+#define GTS3MU1_TO_GHFSMU1      0x1fb
+#define GHFSMU1_TO_GTS6MU1      0x1fd
+#define GTS6MU1_TO_ESR          0x1f8
+#define ESR_RING                0x154
+#define ESR_TO_GTV2MU2          0x20c
+#define GTH4MU2_TO_GTV1MU1      0x209
+#define GHTBMU1_TO_YRT1MH2      0x213
 
 // GID, CRYRING
-#define YRT1LQ1_TO_YRT1LC1 0xc9
-#define YRT1MH2_TO_CRYRING 0xcb
-#define CRYRING_RING       0xd2
+#define YRT1LQ1_TO_YRT1LC1      0xc9
+#define YRT1MH2_TO_CRYRING      0xcb
+#define CRYRING_RING            0xd2
 
 //GID, caves
-#define TO_HHD             0x1fa
-#define TO_HFS             0x1fc
-#define TO_HHT             0x200
-#define TO_HADES           0x203
-#define TO_HTM             0x206
-#define TO_HTC             0x20d
-#define TO_HTD             0x212
-#define TO_HTA             0x20f
-#define TO_HTP             0x211  
+#define TO_HHD                  0x1fa
+#define TO_HFS                  0x1fc
+#define TO_HHT                  0x200
+#define TO_HADES                0x203
+#define TO_HTM                  0x206
+#define TO_HTC                  0x20d
+#define TO_HTD                  0x212
+#define TO_HTA                  0x20f
+#define TO_HTP                  0x211  
 
 // EVTNO
-#define COMMAND            0xff
-#define SEQ_START          0x101
-#define UNI_TCREQ          0x15e
+#define COMMAND                 0xff
+#define SEQ_START               0x101
+#define UNI_TCREQ               0x15e
 
 #define MAXRULES     32
 
@@ -120,39 +120,39 @@ static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, sa
   // machine names
   switch (gid) {
     // SIS, ESR, HEST
-    case GTK3MV4_TO_PLTKMH2   : gName = "(from TK)";  break;
-    case SIS18_RING           : gName = "SIS18";      break;
-    case GTS1MU1_TO_GTS3MU1   : gName = "NE3";        break;
-    case GTS3MU1_TO_GHFSMU1   : gName = "NE4";        break;
-    case GTS1MU1_TO_GTE3MU1   : gName = "NE5";        break;
-    case GHFSMU1_TO_GTS6MU1   : gName = "NE5";        break;
-    case GTS6MU1_TO_ESR       : gName = "NE12";       break;
-    case ESR_RING             : gName = "ESR";        break;
-    case ESR_TO_GTV2MU2       : gName = "NE8";        break;
-    case GTH4MU2_TO_GTV1MU1   : gName = "NE8";        break;
-    case GHTBMU1_TO_YRT1MH2   : gName = "NE11";       break;  
+    case GTK7BC1L_TO_PLTKMH2__GS : gName = "(from TK)";  break;
+    case SIS18_RING              : gName = "SIS18";      break;
+    case GTS1MU1_TO_GTS3MU1      : gName = "NE3";        break;
+    case GTS3MU1_TO_GHFSMU1      : gName = "NE4";        break;
+    case GTS1MU1_TO_GTE3MU1      : gName = "NE5";        break;
+    case GHFSMU1_TO_GTS6MU1      : gName = "NE5";        break;
+    case GTS6MU1_TO_ESR          : gName = "NE12";       break;
+    case ESR_RING                : gName = "ESR";        break;
+    case ESR_TO_GTV2MU2          : gName = "NE8";        break;
+    case GTH4MU2_TO_GTV1MU1      : gName = "NE8";        break;
+    case GHTBMU1_TO_YRT1MH2      : gName = "NE11";       break;  
     // CRYRING
-    case YRT1MH2_TO_CRYRING   : gName = "NE11";       break;
-    case YRT1LQ1_TO_YRT1LC1   : gName = "YRT1";       break;
-    case CRYRING_RING         : gName = "CRYRING";    break;
+    case YRT1MH2_TO_CRYRING      : gName = "NE11";       break;
+    case YRT1LQ1_TO_YRT1LC1      : gName = "YRT1";       break;
+    case CRYRING_RING            : gName = "CRYRING";    break;
     // caves
-    case TO_HHD               : gName = "HHD";        break;
-    case TO_HFS               : gName = "HFS";        break;
-    case TO_HHT               : gName = "HHT";        break;
-    case TO_HADES             : gName = "HADES";      break;
-    case TO_HTM               : gName = "HTM";        break;
-    case TO_HTC               : gName = "HTC";        break;
-    case TO_HTD               : gName = "HTD";        break;
-    case TO_HTA               : gName = "HTA";        break;       
-    case TO_HTP               : gName = "HTP";        break;       
-    default                   : gName = "N/A";        break;
+    case TO_HHD                  : gName = "HHD";        break;
+    case TO_HFS                  : gName = "HFS";        break;
+    case TO_HHT                  : gName = "HHT";        break;
+    case TO_HADES                : gName = "HADES";      break;
+    case TO_HTM                  : gName = "HTM";        break;
+    case TO_HTC                  : gName = "HTC";        break;
+    case TO_HTD                  : gName = "HTD";        break;
+    case TO_HTA                  : gName = "HTA";        break;       
+    case TO_HTP                  : gName = "HTP";        break;       
+    default                      : gName = "N/A";        break;
   }
 
   switch (evtno) {
   case SEQ_START :
     if (gid == source) {
       // old BPC finished
-      if ((vaccAct == 0xffffffff) && (source == GTK3MV4_TO_PLTKMH2)) std::cout << " [no vAcc requested] ";
+      if ((vaccAct == 0xffffffff) && (source == GTK7BC1L_TO_PLTKMH2__GS)) std::cout << " [no vAcc requested] ";
       std::cout << std::endl;
 
       // start new BPC
@@ -176,7 +176,7 @@ static void on_action_op(uint64_t id, uint64_t param, saftlib::Time deadline, sa
     } // if gid
     break; 
   case UNI_TCREQ :
-    if ((source == GTK3MV4_TO_PLTKMH2) || (source == SIS18_RING)) {
+    if ((source == GTK7BC1L_TO_PLTKMH2__GS) || (source == SIS18_RING)) {
       vaccAct = vacc;
       std::cout << " [" << vacc;
       if (dry) std::cout << "(dry)";
@@ -291,11 +291,11 @@ int main(int argc, char** argv)
       snoop = true;
       dummy = strtoull(argv[optind+2], &value_end, 0);
       switch (dummy) {
-        case 0 : source = GTK3MV4_TO_PLTKMH2; idleSource = SIS18_RING;   std::cout << "UNILAC(TK)"       ; break;
-        case 1 : source = SIS18_RING;         idleSource = SIS18_RING;   std::cout << "SIS18"            ; break;
-        case 2 : source = ESR_RING;           idleSource = ESR_RING;     std::cout << "ESR"              ; break;
-        case 3 : source = YRT1LQ1_TO_YRT1LC1; idleSource = CRYRING_RING; std::cout << "CRYRING injector" ; break;
-        case 4 : source = YRT1MH2_TO_CRYRING; idleSource = CRYRING_RING; std::cout << "CRYRING cave"     ; break;
+        case 0 : source = GTK7BC1L_TO_PLTKMH2__GS; idleSource = SIS18_RING;   std::cout << "UNILAC(TK)"       ; break;
+        case 1 : source = SIS18_RING;              idleSource = SIS18_RING;   std::cout << "SIS18"            ; break;
+        case 2 : source = ESR_RING;                idleSource = ESR_RING;     std::cout << "ESR"              ; break;
+        case 3 : source = YRT1LQ1_TO_YRT1LC1;      idleSource = CRYRING_RING; std::cout << "CRYRING injector" ; break;
+        case 4 : source = YRT1MH2_TO_CRYRING;      idleSource = CRYRING_RING; std::cout << "CRYRING cave"     ; break;
         default: std::cerr << std::endl << program << ": invalid machine -- " << dummy << std::endl      ; return 1;
       } // switch dummy
       std::cout << std::endl << std::endl;
@@ -342,7 +342,7 @@ int main(int argc, char** argv)
       int nCon = 0;
 
       // GID, SIS, ESR, HEST     
-      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTK3MV4_TO_PLTKMH2 << 48) | ((uint64_t)SEQ_START << 36);
+      snoopID   = ((uint64_t)FID << 60) | ((uint64_t)GTK7BC1L_TO_PLTKMH2__GS << 48) | ((uint64_t)SEQ_START << 36);
       condition[nCon] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nCon++;
 
