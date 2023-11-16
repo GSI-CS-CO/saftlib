@@ -189,9 +189,16 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
         std::shared_ptr<SoftwareCondition_Proxy> condition = SoftwareCondition_Proxy::create(*j);
         if (pmode & 1) {std::cout << std::dec; width = 20; fmt = "0d";}
         else           {std::cout << std::hex; width = 16; fmt = "0x";}
+        // assemble accept flags config string
+        char acceptFlagsConfigStr[] = "....";
+        if (condition->getAcceptDelayed())  acceptFlagsConfigStr[0] = 'd';
+        if (condition->getAcceptConflict()) acceptFlagsConfigStr[1] = 'c';
+        if (condition->getAcceptEarly())    acceptFlagsConfigStr[2] = 'e';
+        if (condition->getAcceptLate())     acceptFlagsConfigStr[3] = 'l';
         std::cout << "  ---- " << tr_formatActionEvent(condition->getID(), pmode, printJSON) //ID: "   << fmt << std::setw(width) << std::setfill('0') << condition->getID()
                   << ", mask: "         << fmt << std::setw(width) << std::setfill('0') << condition->getMask()
                   << ", offset: "       << fmt << std::setw(9)     << std::setfill('0') << condition->getOffset()
+                  << ", accept: "       << acceptFlagsConfigStr
                   << ", active: "       << std::dec << condition->getActive()
                   << ", destructible: " << condition->getDestructible()
                   << ", owner: "        << condition->getOwner()
