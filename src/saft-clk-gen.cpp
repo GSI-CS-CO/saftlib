@@ -131,6 +131,11 @@ static int clk_configure(double high_phase, double low_phase, uint64_t phase_off
         else                                                                    { ioClkStatus = output_proxy->StartClock(high_phase, low_phase, phase_offset); }
         if   (ioClkStatus) { std::cout << "Clock started..." << std::endl; }
         else               { std::cout << "Clock stopped..." << std::endl; }
+        /* Check if output has been manually driven high and inform user when starting a clock */
+        if   (ioClkStatus  && output_proxy->ReadOutput())
+        {
+          std::cout << "Warning: Output " << ioName << " has been manually driven high while clock output is conceptually logically ORed!" << std::endl;
+        }
       } 
     }
   }
@@ -162,6 +167,9 @@ static void clk_gen_help (void)
   std::cout << "  -i:                                                     List all clock generator outputs" << std::endl;
   std::cout << "  -v:                                                     Switch to verbose mode" << std::endl;
   std::cout << "  -h:                                                     Print help (this message)" << std::endl;
+  std::cout << std::endl;
+  std::cout << "Note:" << std::endl;
+  std::cout << "  Clock output is logically ORed with the manually driven output level (e.g. -d switch of saft-io-ctl)" << std::endl;
   std::cout << std::endl;
   std::cout << "Example:" << std::endl;
   std::cout << program << " exploder5a_123t " << "-n IO1 " << "-p 4 4 2" << std::endl;
