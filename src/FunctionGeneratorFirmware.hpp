@@ -46,18 +46,8 @@ class FunctionGeneratorFirmware : public Owned, public TimingReceiverAddon
 
     FunctionGeneratorFirmware(saftbus::Container *container, SAFTd *saft_daemon, TimingReceiver *timing_receiver);
     ~FunctionGeneratorFirmware();
-    // typedef FunctionGeneratorFirmware_Service ServiceType;
-    // struct ConstructorType {
-    //   std::string objectPath;
-    //   TimingReceiver  *tr;
-    //   Device &device;
-    //   etherbone::sdb_msi_device  sdb_msi_base;
-    //   sdb_device                 mailbox;
-    //   std::map< std::string, std::shared_ptr<Owned> > &fgs_owned;
-    //   std::map< std::string, std::shared_ptr<Owned> > &master_fgs_owned;
-    // };
-    // static std::shared_ptr<FunctionGeneratorFirmware> create(const ConstructorType& args);
-    
+
+    // @saftbus-export
     uint32_t getVersion() const;
 
     /// @brief Scan bus for fg channels. 
