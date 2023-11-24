@@ -275,6 +275,9 @@ libsaft_proxy_include_HEADERS = \
 	src/LM32Cluster_Proxy.hpp                                  \
 	src/TimingReceiver_Proxy.hpp                                \
 	src/CommonFunctions.hpp                                     \
+	src/Error.h                                                 \
+	src/Time.h                                                  \
+	src/SignalGroup.h                                           \
 	src/interfaces/saftbus.h                                    \
 	src/interfaces/saftlib.h                                    \
 	src/interfaces/SAFTd.h                                      \
@@ -312,7 +315,15 @@ libsaft_proxy_include_HEADERS = \
 	src/interfaces/iOutputActionSink.h                          \
 	src/interfaces/OutputCondition.h                            \
 	src/interfaces/iCondition.h                                 \
-	src/interfaces/iOutputCondition.h
+	src/interfaces/iOutputCondition.h                           \
+	src/interfaces/FunctionGeneratorFirmware.h                  \
+	src/interfaces/iFunctionGeneratorFirmware.h                 \
+	src/interfaces/FunctionGenerator.h                          \
+	src/interfaces/iFunctionGenerator.h                         \
+	src/interfaces/MasterFunctionGenerator.h                    \
+	src/interfaces/iMasterFunctionGenerator.h                   \
+	src/interfaces/BurstGenerator.h                             \
+	src/interfaces/iBurstGenerator.h    
 
 
 if GIT_TREE
@@ -359,7 +370,8 @@ libfg_firmware_proxy_includedir = $(includedir)/fg-firmware
 libfg_firmware_proxy_include_HEADERS =        \
 	src/FunctionGenerator_Proxy.hpp          \
 	src/MasterFunctionGenerator_Proxy.hpp     \
-	src/FunctionGeneratorFirmware_Proxy.hpp   
+	src/FunctionGeneratorFirmware_Proxy.hpp    
+
 
 
 
@@ -383,9 +395,10 @@ libbg_firmware_proxy_la_LIBADD  =  $(SIGCPP_LIBS) libsaftbus.la
 libbg_firmware_proxy_la_SOURCES =   \
 	src/BurstGenerator_Proxy.cpp                   
 
-libbg_firmware_proxy_includedir = $(includedir)/bg
+libbg_firmware_proxy_includedir = $(includedir)/bg-firmware
 libbg_firmware_proxy_include_HEADERS = \
-	src/BurstGenerator_Proxy.hpp                
+	src/BurstGenerator_Proxy.hpp          
+
 
 
 
