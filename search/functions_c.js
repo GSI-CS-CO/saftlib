@@ -21,7 +21,7 @@ var searchData=
   ['setstabletime_18',['setStableTime',['../classsaftlib_1_1Input.html#abff1adfa855416df11a6215623c6df2a',1,'saftlib::Input']]],
   ['setstarttag_19',['setStartTag',['../classsaftlib_1_1MasterFunctionGenerator.html#ad25a6e5707f0114e7ba7b3872a7921ef',1,'saftlib::MasterFunctionGenerator']]],
   ['settag_20',['setTag',['../classsaftlib_1_1EmbeddedCPUCondition.html#a17905043aae8c56cb40c6db7c21bf8d1',1,'saftlib::EmbeddedCPUCondition::setTag()'],['../classsaftlib_1_1SCUbusCondition.html#a22861d1d5d3d5e18688f742c90dd9cea',1,'saftlib::SCUbusCondition::setTag()']]],
-  ['signal_5fdispatch_21',['signal_dispatch',['../classsaftbus_1_1Proxy.html#a05d1c06d9cd5dbe8e38dadad261e40f5',1,'saftbus::Proxy::signal_dispatch()'],['../classsaftbus_1_1Container__Proxy.html#aaa54f8d7a9dae34ea8f583a61e31a7fb',1,'saftbus::Container_Proxy::signal_dispatch()']]],
+  ['signal_5fdispatch_21',['signal_dispatch',['../classsaftbus_1_1Proxy.html#af79033a8265ff0330637cf3a7d1f5c36',1,'saftbus::Proxy::signal_dispatch()'],['../classsaftbus_1_1Container__Proxy.html#aaa54f8d7a9dae34ea8f583a61e31a7fb',1,'saftbus::Container_Proxy::signal_dispatch()']]],
   ['startclock_22',['StartClock',['../classsaftlib_1_1Output.html#a1f7295eed369728b5cbc022bfd20f111',1,'saftlib::Output']]],
   ['stopclock_23',['StopClock',['../classsaftlib_1_1Output.html#a223e9df07e1e2de6d5646ada5bdf61d9',1,'saftlib::Output']]]
 ];

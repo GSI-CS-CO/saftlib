@@ -46,7 +46,7 @@ var searchData=
   ['sigenabled_43',['SigEnabled',['../classsaftlib_1_1FunctionGenerator.html#a5199f8102c8ba588127e736161c8b5da',1,'saftlib::FunctionGenerator']]],
   ['siginstcomplete_44',['sigInstComplete',['../classsaftlib_1_1BurstGenerator.html#a7219b54fff511277b240aa4606e244c1',1,'saftlib::BurstGenerator']]],
   ['siglate_45',['SigLate',['../classsaftlib_1_1ActionSink.html#aaa92fc752cdc979fca68f12d9db69361',1,'saftlib::ActionSink']]],
-  ['signal_5fdispatch_46',['signal_dispatch',['../classsaftbus_1_1Proxy.html#a05d1c06d9cd5dbe8e38dadad261e40f5',1,'saftbus::Proxy::signal_dispatch()'],['../classsaftbus_1_1Container__Proxy.html#aaa54f8d7a9dae34ea8f583a61e31a7fb',1,'saftbus::Container_Proxy::signal_dispatch()']]],
+  ['signal_5fdispatch_46',['signal_dispatch',['../classsaftbus_1_1Proxy.html#af79033a8265ff0330637cf3a7d1f5c36',1,'saftbus::Proxy::signal_dispatch()'],['../classsaftbus_1_1Container__Proxy.html#aaa54f8d7a9dae34ea8f583a61e31a7fb',1,'saftbus::Container_Proxy::signal_dispatch()']]],
   ['signalgroup_47',['SignalGroup',['../classsaftbus_1_1SignalGroup.html',1,'saftbus']]],
   ['sigrunning_48',['SigRunning',['../classsaftlib_1_1FunctionGenerator.html#a95e51218dcba228442e56c028a58ae9a',1,'saftlib::FunctionGenerator']]],
   ['sigstarted_49',['SigStarted',['../classsaftlib_1_1FunctionGenerator.html#af54fc52c1aa650be73c467af64250d02',1,'saftlib::FunctionGenerator::SigStarted()'],['../classsaftlib_1_1MasterFunctionGenerator.html#a7b029e9b69f84090eec66edf080c4897',1,'saftlib::MasterFunctionGenerator::SigStarted()']]],
