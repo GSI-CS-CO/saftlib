@@ -49,6 +49,7 @@ static const char* program;
 static uint32_t pmode = PMODE_NONE;   // how data are printed (hex, dec, verbosity)
 bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
+bool flagReady      = false;
 
 
 // GID
@@ -63,6 +64,7 @@ bool UTCleap        = false;
 // EVTNO
 #define NXTACC   0x10                 // EVT_PREP_NEXT_ACC
 #define NXTRF    0x12                 // EVT_RF_PREP_NXT_ACC
+#define CMD      0xff                 // EVT_COMMAND
 
 #define NPZ      7                    // # of UNILAC 'Pulszentralen'
 #define NVACC    16                   // # of vACC
@@ -72,6 +74,8 @@ bool UTCleap        = false;
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
+  if (!flagReady) return;
+  
   std::cout << "tDeadline: " << tr_formatDate(deadline, pmode, false);
   std::cout << tr_formatActionEvent(id, pmode, false);
   std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode, false);
@@ -83,6 +87,8 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 // this will be called, in case we are snooping UNILAC cycles
 static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
+  if (!flagReady) return;
+
   uint32_t gid;
   uint32_t evtNo;
   uint32_t vacc;
@@ -193,6 +199,8 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
 static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
 #define OBSCYCLES      200                 // # of cycles observed before printing (a cycle takes 20ms)
+
+  if (!flagReady) return;
 
   uint32_t gid;
   uint32_t vacc;
@@ -460,7 +468,7 @@ int main(int argc, char** argv)
     if (uniSnoop) {
       snoopMask = 0xfffffff000000000;
 
-      std::shared_ptr<SoftwareCondition_Proxy> condition[NPZ * 2];
+      std::shared_ptr<SoftwareCondition_Proxy> condition[NPZ * 3];
       int nPz = 0;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTACC << 36);
@@ -469,6 +477,9 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)CMD << 36);
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTACC << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -476,6 +487,9 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)CMD << 36);
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTACC << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -483,6 +497,9 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)CMD << 36);
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -490,6 +507,9 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48) | ((uint64_t)CMD << 36);
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -497,6 +517,9 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48) | ((uint64_t)CMD << 36);
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -504,6 +527,9 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48) | ((uint64_t)CMD << 36);
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -511,11 +537,15 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-
+      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48) | ((uint64_t)CMD << 36);
+      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
+      //nPz++;
+      
       //snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
       //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       //nPz++;
 
+      printf("set condition properties ...\n");
       for (int i=0; i<nPz; i++) {
         condition[i]->setAcceptLate(true);
         condition[i]->setAcceptEarly(true);
@@ -532,8 +562,17 @@ int main(int argc, char** argv)
             condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
             break;
         }
+        //condition[i]->setActive(true);
+      } // for i
+
+      printf("activating conditions ...\n");
+
+      for (int i=0; i<nPz; i++) {
         condition[i]->setActive(true);
       } // for i
+
+      printf("starting ...\n");
+      flagReady = true;
 
       while(true) {
         saftlib::wait_for_signal();
