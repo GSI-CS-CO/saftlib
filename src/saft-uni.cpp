@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2020-Aug-19
+// version: 2024-Jul-11
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -86,7 +86,7 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
   uint32_t gid;
   uint32_t evtNo;
   uint32_t vacc;
-  uint32_t flagsSPZ;
+  // uint32_t flagsSPZ; /* deprecated */
   uint32_t flagsPZ;
   string   sVacc;
   string   special;
@@ -104,14 +104,18 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
   gid      = ((id    & 0x0fff000000000000) >> 48);
   evtNo    = ((id    & 0x0000fff000000000) >> 36);
   vacc     = ((id    & 0x00000000fff00000) >> 20);
-  flagsSPZ = ((param & 0xffffffff00000000) >> 32);
-  flagsPZ  = ( param & 0x00000000ffffffff);
+  // flagsSPZ = ((param & 0xffffffff00000000) >> 32); /* deprecated: only for WR-UNIPZ, not for ICU */
+  // flagsPZ  = ( param & 0x00000000ffffffff);        /* deprecated: only for WR-UNIPZ, not for ICU */
+  flagsPZ  = ( id    & 0x000000000000000f);
 
-  flagNochop    = ((flagsSPZ & 0x1) != 0);
-  flagShortchop = ((flagsSPZ & 0x2) != 0);
+  // flagNochop    = ((flagsSPZ & 0x1) != 0);         /* deprecated: only for WR-UNIPZ, not for ICU */
+  // flagShortchop = ((flagsSPZ & 0x2) != 0);         /* deprecated: only for WR-UNIPZ, not for ICU */
   flagRigid     = ((flagsPZ  & 0x2) != 0);
   flagDry       = ((flagsPZ  & 0x4) != 0);
   flagHighC     = ((flagsPZ  & 0x8) != 0);
+
+  flagNochop    = flagDry;
+
 
   if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
     switch (nCycle) {
@@ -192,7 +196,7 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
 
   uint32_t gid;
   uint32_t vacc;
-  uint32_t flagsSPZ;
+  // uint32_t flagsSPZ;                    /* deprecated: only for WR-UNIPZ, not for ICU */
   uint32_t flagsPZ;
 
   string   sVacc;
@@ -227,8 +231,9 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
 
   gid      = ((id & 0x0fff000000000000) >> 48);
   vacc     = ((id & 0x00000000fff00000) >> 20);
-  flagsSPZ = ((param & 0xffffffff00000000) >> 32);
-  flagsPZ  = ( param & 0x00000000ffffffff);
+  // flagsSPZ = ((param & 0xffffffff00000000) >> 32);   /* deprecated: only for WR-UNIPZ, not for ICU */
+  // flagsPZ  = ( param & 0x00000000ffffffff);          /* deprecated: only for WR-UNIPZ, not for ICU */
+  flagsPZ  = ( id & 0x000000000000000f);
 
   if ((deadline - prevDeadline) > 10000000) {           // new UNILAC cycle starts if diff > 10ms
     if (((nCycle % OBSCYCLES) == 0) && (nCycle > 0)) {  // observation period is over
@@ -275,11 +280,12 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   if ((gid < QR) || (gid > TK)) return;                // illegal gid?
 
   (nExe[gid - QR][vacc])++;                            // increase run counter
-  if ((flagsSPZ & 0x1) != 0) flagNochop[vacc]    = 1;     // set flags ...
-  if ((flagsSPZ & 0x2) != 0) flagShortchop[vacc] = 1;
+  // set flags ...
+  // if ((flagsSPZ & 0x1) != 0) flagNochop[vacc]    = 1; /* deprecated: only for WR-UNIPZ, not for ICU */
+  // if ((flagsSPZ & 0x2) != 0) flagShortchop[vacc] = 1; /* deprecated: only for WR-UNIPZ, not for ICU */
   if ((flagsPZ  & 0x2) != 0) flagRigid[vacc]     = 1;
-  if ((flagsPZ  & 0x4) != 0) flagDry[vacc]     = 1;
-  if ((flagsPZ  & 0x8) != 0) flagHighC[vacc]       = 1;
+  if ((flagsPZ  & 0x4) != 0) flagDry[vacc]       = 1;
+  if ((flagsPZ  & 0x8) != 0) flagHighC[vacc]     = 1;
 
   return;
 } // on_action_uni_vacc
