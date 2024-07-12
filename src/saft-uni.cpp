@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2024-Jul-11
+// version: 2024-Jul-12
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -49,7 +49,6 @@ static const char* program;
 static uint32_t pmode = PMODE_NONE;   // how data are printed (hex, dec, verbosity)
 bool UTC            = false;          // show UTC instead of TAI
 bool UTCleap        = false;
-bool flagReady      = false;
 
 
 // GID
@@ -74,8 +73,6 @@ bool flagReady      = false;
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-  if (!flagReady) return;
-  
   std::cout << "tDeadline: " << tr_formatDate(deadline, pmode, false);
   std::cout << tr_formatActionEvent(id, pmode, false);
   std::cout << tr_formatActionParam(param, 0xFFFFFFFF, pmode, false);
@@ -87,21 +84,16 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 // this will be called, in case we are snooping UNILAC cycles
 static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
-  if (!flagReady) return;
-
   uint32_t gid;
   uint32_t evtNo;
   uint32_t vacc;
-  // uint32_t flagsSPZ; /* deprecated */
   uint32_t flagsPZ;
   string   sVacc;
   string   special;
 
-  uint32_t      flagNochop;
-  uint32_t      flagShortchop;
   uint32_t      flagHighC;
   uint32_t      flagRigid;
-  uint32_t      flagDry;
+  uint32_t      flagNoBeam;
 
   static std::string   pz1, pz2, pz3, pz4, pz5, pz6, pz7;
   static saftlib::Time prevDeadline = deadline;
@@ -114,14 +106,9 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
   // flagsPZ  = ( param & 0x00000000ffffffff);        /* deprecated: only for WR-UNIPZ, not for ICU */
   flagsPZ  = ( id    & 0x000000000000000f);
 
-  // flagNochop    = ((flagsSPZ & 0x1) != 0);         /* deprecated: only for WR-UNIPZ, not for ICU */
-  // flagShortchop = ((flagsSPZ & 0x2) != 0);         /* deprecated: only for WR-UNIPZ, not for ICU */
   flagRigid     = ((flagsPZ  & 0x2) != 0);
-  flagDry       = ((flagsPZ  & 0x4) != 0);
+  flagNoBeam    = ((flagsPZ  & 0x4) != 0);
   flagHighC     = ((flagsPZ  & 0x8) != 0);
-
-  flagNochop    = flagDry;
-
 
   if ((deadline - prevDeadline) > 10000000) { // new UNILAC cycle starts if diff > 10ms
     switch (nCycle) {
@@ -150,22 +137,23 @@ static void on_action_uni_cycle(uint64_t id, uint64_t param, saftlib::Time deadl
 
   sVacc = "";
   // special cases
-  if (evtNo == NXTRF) sVacc = "(HFW)";
-  if (evtNo == NXTACC) {
-    if (vacc == 14) {
-      if ((gid == QR) || (gid == QL) || (gid == QN)) sVacc = "(IQ)";
-      else                                           sVacc = "(HFC)";
-    } // if vacc 14
-    else {
-      special = "";
-      if (flagNochop)    special  = "N";
-      if (flagShortchop) special += "S";
-      if (flagHighC)     special += "H";
-      if (flagRigid)     special += "R";
-      if (flagDry)       special += "D";
-      sVacc = special + std::to_string(vacc);
-    } // else: ion source producing real beam
-  } // if NXTACC
+  if ((gid == QR) || (gid == QL) || (gid == QN)) {
+    if (vacc == 14)     sVacc = "(IQ)";
+  } // if ion sources
+  else {
+    if (evtNo == NXTRF) {
+      if (vacc == 14)  sVacc = "(HFC)";
+      if (vacc == 15)  sVacc = "(HFW)";
+    } // if NXTRF
+  } // if not ion source
+
+  if (vacc < 14) {
+    special = "";
+    if (flagHighC)     special += "H";
+    if (flagRigid)     special += "R";
+    if (flagNoBeam)    special += "N";
+    sVacc = special + std::to_string(vacc);
+  } // if vacc < 14: ion source producing reral beam
 
   switch (gid) {
   case QR :
@@ -200,8 +188,6 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
 {
 #define OBSCYCLES      200                 // # of cycles observed before printing (a cycle takes 20ms)
 
-  if (!flagReady) return;
-
   uint32_t gid;
   uint32_t vacc;
   // uint32_t flagsSPZ;                    /* deprecated: only for WR-UNIPZ, not for ICU */
@@ -218,20 +204,16 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   static uint32_t firstTime         = 0x1;
   static uint32_t nExe[NPZ][NVACC];                     // # of vacc executions within OBSCYCLES
 
-  static uint32_t flagNochop[NVACC];
-  static uint32_t flagShortchop[NVACC];
   static uint32_t flagHighC[NVACC];
   static uint32_t flagRigid[NVACC];
-  static uint32_t flagDry[NVACC];
+  static uint32_t flagNoBeam[NVACC];
 
   if (firstTime) {
     for (j=0; j<NVACC; j++) {                          // clear execution counter and flags
       for (i=0; i<NPZ; i++) nExe[i][j] = 0;
-      flagNochop[j]    = 0;
-      flagShortchop[j] = 0;
       flagHighC[j]     = 0;
       flagRigid[j]     = 0;
-      flagDry[j]       = 0;
+      flagNoBeam[j]    = 0;
     } // for j
     firstTime = 0x0;
     std::cout << std::endl;
@@ -260,22 +242,18 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
         } // for PZs
         if (rate > 0.0001) std::cout << std::setw(6) << fixed << setprecision(2) << rate; // printf was so easy :)
         std::cout << " ";
-        if (flagNochop[j])    std::cout << "N";
-        if (flagShortchop[j]) std::cout << "S";
         if (flagHighC[j])     std::cout << "H";
         if (flagRigid[j])     std::cout << "R";
-        if (flagDry[j])       std::cout << "D";
+        if (flagNoBeam[j])    std::cout << "N";
         std::cout << std::endl;
       } // for vacc
 
       std::cout << std::endl;
       for (j=0; j<NVACC; j++) {                         // clear execution counter and flags
         for (i=0; i<NPZ; i++) nExe[i][j] = 0;
-        flagNochop[j]    = 0;
-        flagShortchop[j] = 0;
         flagHighC[j]     = 0;
         flagRigid[j]     = 0;
-        flagDry[j]       = 0;
+        flagNoBeam[j]    = 0;
       } // for j
     } // if nCycle % OBSCYCLES
     else if ((nCycle % 10) == 0) std::cout << "." << std::flush; // user entertainment
@@ -289,10 +267,8 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
 
   (nExe[gid - QR][vacc])++;                            // increase run counter
   // set flags ...
-  // if ((flagsSPZ & 0x1) != 0) flagNochop[vacc]    = 1; /* deprecated: only for WR-UNIPZ, not for ICU */
-  // if ((flagsSPZ & 0x2) != 0) flagShortchop[vacc] = 1; /* deprecated: only for WR-UNIPZ, not for ICU */
   if ((flagsPZ  & 0x2) != 0) flagRigid[vacc]     = 1;
-  if ((flagsPZ  & 0x4) != 0) flagDry[vacc]       = 1;
+  if ((flagsPZ  & 0x4) != 0) flagNoBeam[vacc]    = 1;
   if ((flagsPZ  & 0x8) != 0) flagHighC[vacc]     = 1;
 
   return;
@@ -322,9 +298,9 @@ static void help(void) {
   std::cout << "                       'conditioning pulses' for-rf systems '(HFC)'" << std::endl;
   std::cout << "            '2'        shows virtual accelerator executed at the seven PZs, similar to 'eOverview'" << std::endl;
   std::cout << std::endl;
-  std::cout << "This tool snoops and diplays UNILAC specific info." <<std::endl;
+  std::cout << "This tool snoops and diplays UNILAC specific info for legacy timing groups." <<std::endl;
   std::cout << std::endl;
-  std::cout << "UNILAC is operated at 50Hz cycle rate. Timing sections are named QR, QL, HSI, QN, HLI, AT and TK." <<std::endl;
+  std::cout << "UNILAC is operated at 50Hz cycle rate. Legacy timing groups are named QR, QL, QN, HLI, HSI, AT and TK." <<std::endl;
   std::cout << "There exist two injectors:" <<std::endl;
   std::cout << "1. The High Current Injector (HSI) with two ions sources (QR, QL)." <<std::endl;
   std::cout << "2. The High Charge Injector (HLI) with one ion source (QN)." <<std::endl;
@@ -334,10 +310,10 @@ static void help(void) {
   std::cout << "Beams are defined by 'Virtual Acceleratores' (vacc):" <<std::endl;
   std::cout << "vacc 0..13 are used for standard operaton." <<std::endl;
   std::cout << "vacc 14 is used for rf-conditioning or standalone ion-source operation." <<std::endl;
-  std::cout << "vacc 15 is used for otherpurposes." <<std::endl;
+  std::cout << "vacc 15 is used for other purposes." <<std::endl;
   std::cout << std::endl;
-  std::cout << "Shown are flags indicating special modes of operation: N(o chopper), S(hort chopper), R(igid beam)," << std::endl;
-  std::cout << "D(ry 'beam') and H(igh current beam); warming pulses are shown in brackets" << std::endl;
+  std::cout << "Shown are flags indicating special modes of operation: N(o beam), R(igid beam) and H(igh current beam)" << std::endl;
+  std::cout << "Warming and conditioning cycles are shown in brackets" << std::endl;
   std::cout << std::endl;
   std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cout << "Licensed under the GPL v3." << std::endl;
@@ -468,7 +444,7 @@ int main(int argc, char** argv)
     if (uniSnoop) {
       snoopMask = 0xfffffff000000000;
 
-      std::shared_ptr<SoftwareCondition_Proxy> condition[NPZ * 3];
+      std::shared_ptr<SoftwareCondition_Proxy> condition[NPZ * 2];
       int nPz = 0;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTACC << 36);
@@ -477,9 +453,6 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)QR << 48) | ((uint64_t)CMD << 36);
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTACC << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -487,9 +460,6 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)QL << 48) | ((uint64_t)CMD << 36);
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTACC << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -497,9 +467,6 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)QN << 48) | ((uint64_t)CMD << 36);
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -507,9 +474,6 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)HLI << 48) | ((uint64_t)CMD << 36);
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -517,9 +481,6 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)HSI << 48) | ((uint64_t)CMD << 36);
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -527,9 +488,6 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)AT << 48) | ((uint64_t)CMD << 36);
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
 
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
@@ -537,13 +495,6 @@ int main(int argc, char** argv)
       snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48) | ((uint64_t)NXTRF << 36);
       condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
       nPz++;
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48) | ((uint64_t)CMD << 36);
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
-      
-      //snoopID = ((uint64_t)FID << 60) | ((uint64_t)TK << 48 | ((uint64_t)NXTACC << 36));
-      //condition[nPz] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, snoopMask, 0));
-      //nPz++;
 
       printf("set condition properties ...\n");
       for (int i=0; i<nPz; i++) {
@@ -562,18 +513,20 @@ int main(int argc, char** argv)
             condition[i]->SigAction.connect(sigc::ptr_fun(&on_action));
             break;
         }
-        //condition[i]->setActive(true);
       } // for i
 
       printf("activating conditions ...\n");
-
+      // the following commented code might cause saftlib to hang in case actions are executed while conditions are activated
+      // according to the developer, 'setActive' causes some heavy processing / book keeping in saftib. Instead,
+      // it is suggested toggle the active-state of all actions in the 'sink'.
+      /*
       for (int i=0; i<nPz; i++) {
         condition[i]->setActive(true);
       } // for i
+      */
+      sink->ToggleActive();
 
       printf("starting ...\n");
-      flagReady = true;
-
       while(true) {
         saftlib::wait_for_signal();
       }
