@@ -29,6 +29,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,6 +40,38 @@ namespace saftbus {
 
 	int write_all(int fd, const char *buffer, int size)
 	{
+		// Here is some storage that is used in case "write_all" is not possible
+		// if for example the client is not reading on the other end of the socket.
+		// Remaining part of the buffer that was wasn't sent is stored and sent whenever
+		// write_all is called on the same file descriptor.
+		static std::map<int, std::vector<char> > rest_of_data;
+
+		// First check if there is remaining data for that file descriptor an send this 
+		// first.
+		if (rest_of_data[fd].size() > 0) {
+			const char *ptr = &rest_of_data[fd][0];
+			int rest_size = rest_of_data[fd].size();
+			int written_total = 0;
+			do {
+				int size_chunk = std::min(rest_size,100000);
+				int written_chunk = 0;
+				do {
+					int result = ::write(fd, ptr, size_chunk-written_chunk);
+					if (result > 0)	{
+						ptr           += result;
+						written_chunk += result;
+					}
+					else {
+						return result;
+					}
+				} while (written_chunk < size_chunk);
+				rest_size     -= size_chunk;
+				written_total += written_chunk;
+			} while(rest_size > 0);
+			rest_of_data[fd].clear();
+		}
+
+		// Only then send the data in "buffer"
 		const char *ptr = buffer;
 		int written_total = 0;
 		do {
@@ -48,6 +81,15 @@ namespace saftbus {
 			int size_chunk = std::min(size,100000); 
 			int written_chunk = 0;
 			do {
+				struct pollfd pfd;
+				pfd.fd = fd;
+				pfd.events = POLLOUT;
+				int pollresult;
+				if ((pollresult=poll(&pfd, 1, 1)) <= 0) {
+					rest_of_data[fd].insert(rest_of_data[fd].end(),ptr,ptr+size);
+					return -1;
+				}
+
 				int result = ::write(fd, ptr, size_chunk-written_chunk);
 				if (result > 0)	{
 					ptr           += result;
