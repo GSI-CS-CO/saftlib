@@ -190,7 +190,7 @@ namespace saftbus {
 			unsigned object_id;
 			std::string object_path;
 			std::vector<std::string> interface_names;
-			std::map<int, int> signal_fds_use_count;
+			std::map<int, std::pair<int, int> > signal_fds_use_count_and_dropped_signals;
 			int owner;
 			bool has_destruction_callback;
 			bool destroy_if_owner_quits;
@@ -199,7 +199,7 @@ namespace saftbus {
 				ser.put(object_id);
 				ser.put(object_path);
 				ser.put(interface_names);
-				ser.put(signal_fds_use_count);
+				ser.put(signal_fds_use_count_and_dropped_signals);
 				ser.put(owner);
 				ser.put(has_destruction_callback);
 				ser.put(destroy_if_owner_quits);
@@ -209,7 +209,7 @@ namespace saftbus {
 				des.get(object_id);
 				des.get(object_path);
 				des.get(interface_names);
-				des.get(signal_fds_use_count);
+				des.get(signal_fds_use_count_and_dropped_signals);
 				des.get(owner);
 				des.get(has_destruction_callback);
 				des.get(destroy_if_owner_quits);

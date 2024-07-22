@@ -59,7 +59,7 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 	}
 	std::cout << "services:" << std::endl;
 	std::cout << "  " << std::setw(max_object_path_length) << std::left << "object-path" 
-	          << " ID [owner] sig-fd/use-count interface-names" << std::endl;
+	          << " ID [owner] sig-fd/use-count/dropped-signals interface-names" << std::endl;
 	std::vector<std::string> services;	          
 	for (auto &object: saftbus_info.object_infos) {
 		std::ostringstream line;
@@ -73,8 +73,8 @@ void print_status(saftbus::SaftbusInfo &saftbus_info) {
 		else if (object.has_destruction_callback && !object.destroy_if_owner_quits) line << "d ";
 		else line << "  ";
 
-		for (auto &user: object.signal_fds_use_count) {
-			line << user.first << "/" << user.second << " ";
+		for (auto &fd_user_dropped: object.signal_fds_use_count_and_dropped_signals) {
+			line << fd_user_dropped.first << "/" << fd_user_dropped.second.first << "/" << fd_user_dropped.second.second << " ";
 		}
 		for (auto &interface: object.interface_names) {
 			line << interface << " ";
