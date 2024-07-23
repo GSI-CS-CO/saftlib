@@ -154,7 +154,7 @@ $(function() {
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>            <span class="keywordtype">unsigned</span> object_id;</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>            std::string object_path;</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>            std::vector&lt;std::string&gt; interface_names;</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>            std::map&lt;int, int&gt; signal_fds_use_count;</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>            std::map&lt;int, std::pair&lt;int, int&gt; &gt; signal_fds_use_count_and_dropped_signals;</div>
 <div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>            <span class="keywordtype">int</span> owner;</div>
 <div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>            <span class="keywordtype">bool</span> has_destruction_callback;</div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>            <span class="keywordtype">bool</span> destroy_if_owner_quits;</div>
@@ -162,7 +162,7 @@ $(function() {
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>                ser.put(object_id);</div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>                ser.put(object_path);</div>
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>                ser.put(interface_names);</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>                ser.put(signal_fds_use_count);</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>                ser.put(signal_fds_use_count_and_dropped_signals);</div>
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>                ser.put(owner);</div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>                ser.put(has_destruction_callback);</div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>                ser.put(destroy_if_owner_quits);</div>
@@ -171,7 +171,7 @@ $(function() {
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>                des.get(object_id);</div>
 <div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>                des.get(object_path);</div>
 <div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                des.get(interface_names);</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                des.get(signal_fds_use_count);</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                des.get(signal_fds_use_count_and_dropped_signals);</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>                des.get(owner);</div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>                des.get(has_destruction_callback);</div>
 <div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                des.get(destroy_if_owner_quits);</div>
