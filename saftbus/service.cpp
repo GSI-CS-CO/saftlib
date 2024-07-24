@@ -36,7 +36,7 @@ namespace saftbus {
 
 	struct Service::Impl {
 		int owner;
-		std::map<int, int> signal_fds_use_count;
+		std::map<int, std::pair<int, int> > signal_fds_use_count_and_dropped_signals;
 		std::vector<std::string> interface_names;
 		std::string object_path;
 		uint64_t object_id;
@@ -174,22 +174,24 @@ namespace saftbus {
 
 	void Service::Impl::remove_signal_fd(int fd)
 	{
-		auto found_use_count = signal_fds_use_count.find(fd);
-		if (found_use_count != signal_fds_use_count.end()) {
-			signal_fds_use_count.erase(fd);
+		auto found_use_count = signal_fds_use_count_and_dropped_signals.find(fd);
+		if (found_use_count != signal_fds_use_count_and_dropped_signals.end()) {
+			signal_fds_use_count_and_dropped_signals.erase(fd);
 		}
 	}
 
 	void Service::emit(Serializer &send)
 	{
-		for (auto &fd_use_count: d->signal_fds_use_count) {
-			if (fd_use_count.second > 0) { // only send data if use count is > 0
-				int fd = fd_use_count.first;
+		for (auto &fd_use_count_dropped: d->signal_fds_use_count_and_dropped_signals) {
+			auto &fd              = fd_use_count_dropped.first;
+			auto &use_count       = fd_use_count_dropped.second.first;
+			auto &dropped_signals = fd_use_count_dropped.second.second;
+			if (use_count > 0) { // only send data if use count is > 0
 				struct pollfd pfd;
 				pfd.fd = fd;
 				pfd.events = POLLOUT;
-				if (poll(&pfd, 1, 0) <= 0) { // fd is not ready immediately => drop the signal 
-					// std::cerr << "Service " << get_object_path() << "Service::emit() drop signal for fd " << fd << std::endl;
+				if (poll(&pfd, 1, 0) <= 0) { // fd is not ready immediately => drop the signal
+					++dropped_signals;      // count number of dropped signals (this number can be seen when with "saftbus-ctl -s")
 				} else {
 					send.write_to_no_init(fd); // The same data is written multiple times. Therefore the
 				}                             // put_init function must not be called automatically after write
@@ -454,7 +456,7 @@ namespace saftbus {
 			assert(find_result != d->objects.end()); // if this cannot be found, the lookup table is not correct
 			auto &service    = find_result->second;
 			if (service->get_interface_name2no_map(interface_names, interface_name2no_map)) { //returns false if not all requested interfaces are implemented
-				service->d->signal_fds_use_count[signal_group_fd]++;
+				service->d->signal_fds_use_count_and_dropped_signals[signal_group_fd].first++;
 				d->connection->register_signal_id_for_client(client_fd, signal_group_fd);
 				return saftbus_object_id;
 			}
@@ -470,11 +472,12 @@ namespace saftbus {
 			// std::cerr << "object id " << saftbus_object_id << " already gone" << std::endl;
 			return;
 		}
-		auto    &service    = find_result->second;
-		service->d->signal_fds_use_count[signal_group_fd]--;
+		auto &service    = find_result->second;
+		auto &use_count  = service->d->signal_fds_use_count_and_dropped_signals[signal_group_fd].first;
+		use_count--;
 		d->connection->unregister_signal_id_for_client(client_fd, signal_group_fd);
-		if (service->d->signal_fds_use_count[signal_group_fd] == 0) {
-			service->d->signal_fds_use_count.erase(signal_group_fd);
+		if (use_count == 0) {
+			service->d->signal_fds_use_count_and_dropped_signals.erase(signal_group_fd);
 		}
 	}
 
@@ -599,13 +602,13 @@ namespace saftbus {
 		SaftbusInfo result;
 		for (auto &obj: d->objects) {
 			SaftbusInfo::ObjectInfo object_info;
-			object_info.object_id = obj.first;
-			object_info.object_path = obj.second->d->object_path;
-			object_info.interface_names = obj.second->d->interface_names;
-			object_info.signal_fds_use_count = obj.second->d->signal_fds_use_count;
-			object_info.owner = obj.second->d->owner;
-			object_info.has_destruction_callback = obj.second->d->destruction_callback?true:false;
-			object_info.destroy_if_owner_quits = obj.second->d->destroy_if_owner_quits;
+			object_info.object_id                                = obj.first;
+			object_info.object_path                              = obj.second->d->object_path;
+			object_info.interface_names                          = obj.second->d->interface_names;
+			object_info.signal_fds_use_count_and_dropped_signals = obj.second->d->signal_fds_use_count_and_dropped_signals;
+			object_info.owner                                    = obj.second->d->owner;
+			object_info.has_destruction_callback                 = obj.second->d->destruction_callback?true:false;
+			object_info.destroy_if_owner_quits                   = obj.second->d->destroy_if_owner_quits;
 			result.object_infos.push_back(object_info);
 		}
 		for (auto &client: d->connection->get_client_info()) {
