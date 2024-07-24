@@ -128,6 +128,22 @@ static void help(void) {
   std::cout << std::endl;
 } // help
 
+// there can be multiple signal groups supplied by a service. This function puts the number of dropped signals
+// for all connected signal groups into a string, separated with a whitespace
+static std::string signals_dropped_by_saftlib(saftbus::SaftbusInfo &saftbus_info, const std::string &object_path) {
+  std::ostringstream out;
+  for(auto &object: saftbus_info.object_infos) {
+    if (object.object_path == object_path) { // object path matches
+      for (auto &fd_user_dropped: object.signal_fds_use_count_and_dropped_signals) {
+        // fd_user_dropped.first            refers to file descriptor
+        // fd_user_dropped.second.first     refers to file descriptor use count
+        // fd_user_dropped.second.second    refers to number of signals dropped on that file descriptor
+        out << fd_user_dropped.second.second << " ";
+      }
+    }
+  }
+  return out.str();
+}
 
 // display status
 static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
@@ -143,6 +159,9 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
 
   map<std::string, std::string>::iterator i;
   vector<std::string>::iterator j;
+
+  // get saftbus::Container status to obtain the "dropped signal" counters for all service objects
+  saftbus::SaftbusInfo saftbus_info = saftbus::Container_Proxy::create()->get_status();
 
   // display White Rabbit status
   wrLocked        = receiver->getLocked();
@@ -180,6 +199,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
                 << ", late: "       << aSink->getLateCount()
                 << ", early: "      << aSink->getEarlyCount()
                 << ", overflow: "   << aSink->getOverflowCount()
+                << ", dropped by saftlib: " << signals_dropped_by_saftlib(saftbus_info, i->second) 
                 << " (max signalRate: " << 1.0 / ((double)aSink->getSignalRate() / 1000000000.0) << "Hz)"
                 << std::endl;
       // get all conditions for this sink
@@ -202,6 +222,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
                   << ", active: "       << std::dec << condition->getActive()
                   << ", destructible: " << condition->getDestructible()
                   << ", owner: "        << condition->getOwner()
+                  << ", dropped by saftlib: " << signals_dropped_by_saftlib(saftbus_info, *j) 
                   << std::endl;
       } // for all conditions
     } // for all sinks
