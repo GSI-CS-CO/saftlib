@@ -1,4 +1,4 @@
-/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Michael Reese <m.reese@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -25,7 +25,7 @@
 
 #include <cerrno>
 #include <cstring>
-
+#include <sstream>
 
 
 std::string print_fillstate();
@@ -35,7 +35,7 @@ void usage(char *argv0) {
 		std::cout << std::endl;
 		std::cout << "usage: " << argv0 << " [OPTIONS] { <plugin.so> { <plugin-arg> } }" << std::endl;
 		std::cout << std::endl;
-		std::cout << "  <plugin.so>        is the name of a shared object files, it must have" << std::endl; 
+		std::cout << "  <plugin.so>        is the name of a shared object files, it must have" << std::endl;
 		std::cout << "                     contain a function with name \"create_services\"." << std::endl;
 		std::cout << std::endl;
 		std::cout << "  <plugin-arg>       one or more strings can be passed as arguments" << std::endl;
@@ -49,7 +49,7 @@ void usage(char *argv0) {
 }
 
 
-static bool saftd_already_running() 
+static bool saftd_already_running()
 {
   // if ClientConnection can be established, saftbus is already running
   try {
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 
 		saftbus::Loop::get_default().run();
 
-		// delete all remaining source from Loop before the plugins are unloaded 
+		// delete all remaining source from Loop before the plugins are unloaded
 		saftbus::Loop::get_default().clear();
 
 	} catch (std::runtime_error &e) {
