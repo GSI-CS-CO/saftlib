@@ -1,0 +1,1 @@
+Demonstrate how to use saftlib classes directly in a C++ program without the Proxy/Service-infrastructure.
