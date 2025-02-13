@@ -42,7 +42,8 @@ BUILT_SOURCES = version.h          \
  	src/FunctionGeneratorFirmware_Service.hpp         \
  	src/FunctionGeneratorImpl_Service.hpp             \
 	src/BurstGenerator_Service.cpp                    \
-	src/BurstGenerator_Service.hpp             
+	src/BurstGenerator_Service.hpp         			  \
+	src/PWM_Service.cpp   
 
 lib_LTLIBRARIES = \
 	libsaftbus.la         \
@@ -140,7 +141,9 @@ libsaft_service_la_SOURCES =\
 	src/TimingReceiver_Service.cpp                           \
 	src/TimingReceiverAddon.cpp                              \
 	src/CommonFunctions.cpp                                  \
-	src/create_service.cpp
+	src/create_service.cpp 									 \
+	src/PWM.cpp                                              \
+	src/PWM_Service.cpp
 
 libsaft_service_includedir = $(includedir)/saftlib
 libsaft_service_include_HEADERS =   \
@@ -210,7 +213,9 @@ libsaft_service_include_HEADERS =   \
  	src/Output_Service.hpp                                \
  	src/OutputCondition_Service.hpp                       \
  	src/Input_Service.hpp                                 \
- 	src/TimingReceiver_Service.hpp                           
+ 	src/TimingReceiver_Service.hpp    					  \
+ 	src/PWM.hpp                                           \
+	src/PWM_Service.hpp			                           
 
 libsaft_proxy_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
 libsaft_proxy_la_LIBADD  =  $(SIGCPP_LIBS) 
@@ -242,7 +247,8 @@ libsaft_proxy_la_SOURCES =   \
 	src/Reset_Proxy.cpp                                    \
 	src/LM32Cluster_Proxy.cpp                               \
 	src/TimingReceiver_Proxy.cpp                             \
-	src/CommonFunctions.cpp                               
+	src/PWM_Proxy.cpp 										  \
+	src/CommonFunctions.cpp                               	
 
 
 libsaft_proxy_includedir = $(includedir)/saftlib
@@ -274,7 +280,8 @@ libsaft_proxy_include_HEADERS = \
 	src/Reset_Proxy.hpp                                       \
 	src/LM32Cluster_Proxy.hpp                                  \
 	src/TimingReceiver_Proxy.hpp                                \
-	src/CommonFunctions.hpp                                     \
+	src/CommonFunctions.hpp										\
+	src/PWM_Proxy.hpp							                \
 	src/Error.h                                                 \
 	src/Time.h                                                  \
 	src/SignalGroup.h                                           \
@@ -323,7 +330,7 @@ libsaft_proxy_include_HEADERS = \
 	src/interfaces/MasterFunctionGenerator.h                    \
 	src/interfaces/iMasterFunctionGenerator.h                   \
 	src/interfaces/BurstGenerator.h                             \
-	src/interfaces/iBurstGenerator.h    
+	src/interfaces/iBurstGenerator.h
 
 
 if GIT_TREE
@@ -412,7 +419,7 @@ bin_PROGRAMS = 	\
 	saftbusd saftbusd-sda saftbusd-noda	saftbus-ctl \
 	saft-testbench saft-software-tr \
 	saft-ctl saft-io-ctl saft-pps-gen saft-scu-ctl saft-ecpu-ctl saft-wbm-ctl saft-clk-gen saft-dm saft-eb-fwd saft-gmt-check  saft-uni saft-lcd saft-standalone-mbox saft-roundtrip-latency saft-standalone-roundtrip-latency \
-	saft-burst-ctl saft-fg-ctl saft-mfg-ctl
+	saft-burst-ctl saft-fg-ctl saft-mfg-ctl saft-pwm-ctl
 
 
 # saftbus programs 
@@ -498,16 +505,17 @@ saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
 saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) libsaftbus.la libsaft-service.la  -ldl #-lltdl
 saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latency.cpp
 
-
 saft_burst_ctl_LDADD   =  $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libbg-firmware-proxy.la -ldl #-lltdl
 saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp 
-
 
 saft_fg_ctl_LDADD   =   $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libfg-firmware-proxy.la -ldl #-lltdl
 saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp 
 
 saft_mfg_ctl_LDADD   =   $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libfg-firmware-proxy.la -lpthread -ldl #-lltdl
-saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp 
+saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp
+
+saft_pwm_ctl_LDADD   =   $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libfg-firmware-proxy.la -lpthread -ldl #-lltdl
+saft_pwm_ctl_SOURCES = src/saft-pwm-ctl.cpp 
 
 
 

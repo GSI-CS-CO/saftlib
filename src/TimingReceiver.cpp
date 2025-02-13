@@ -55,6 +55,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, Reset(OpenDevice::device)
 	, Mailbox(OpenDevice::device)
 	, LM32Cluster(OpenDevice::device, this)
+	, PWM(OpenDevice::device)
 	, container(cont)
 	, io_control(OpenDevice::device)
 	, object_path(saftd.getObjectPath() + "/" + n)

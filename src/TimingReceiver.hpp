@@ -41,6 +41,7 @@
 #include "Reset.hpp"
 #include "Mailbox.hpp"
 #include "LM32Cluster.hpp"
+#include "PWM.hpp"
 
 
 // classes used by TimingReceiver
@@ -107,7 +108,8 @@ class TimingReceiver : public OpenDevice
                      , public TempSensor
                      , public Reset
                      , public Mailbox
-                     , public LM32Cluster {
+                     , public LM32Cluster
+                     , public PWM {
 public:
 	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
 		           int polling_interval_ms = 1, saftbus::Container *container = nullptr);
