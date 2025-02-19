@@ -12,12 +12,14 @@
 /* Includes */
 /* ==================================================================================================== */
 #include <stdio.h>
-#include <iostream>
+
 #include <unistd.h>
 #include <string>
+#include <stdexcept> 
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
+#include "PWM.hpp"
 
 /* Namespaces */
 /* ==================================================================================================== */
@@ -32,28 +34,33 @@ static const char *program    = NULL;   /* Name of the application */
 /* Prototypes */
 /* ==================================================================================================== */
 static void pwm_ctl_help (void);
-static int  pwm_ctl_set (uint8_t channel, uint32_t frequency, uint16_t duty_cycle);
+static int  pwm_ctl_set (int channel, int frequency, int duty_cycle);
 static int  pwm_ctl_list (void);
-static int  pwm_ctl_delete (uint8_t channel);
-static bool pwm_is_input_valid(uint8_t channel, uint32_t frequency, uint16_t duty_cycle);
+static int  pwm_ctl_delete (int channel);
+static int  pwm_ctl_test (int channel);
+static int  pwm_get_max_freq (void);
+static bool pwm_is_input_valid (int channel, int frequency, int duty_cycle);
+static int  pwm_get_param (char    *ptr_next_param);
 
 /* Function main() */
 /* ==================================================================================================== */
 int main (int argc, char** argv)
 {
   /* Helpers */
-  //char     *pEnd             = NULL;
-  int      opt               = 0;
-  int      return_code       = 0;
+  char    *pEnd             = NULL;
+  char    *ptr_next_param   = NULL;    
+  int     opt               = 0;
+  int     return_code       = 0;
 
-  uint8_t   channel          = 0;
-  uint32_t  frequency        = 0;
-  uint16_t  duty_cycle       = 0;
+  int     channel           = 0;
+  int     frequency         = 0;
+  int     duty_cycle        = 0;
 
-  bool      set_channel      = false;
-  bool      del_channel      = false;
-  bool      list_pwm         = false;
-  bool      show_help        = false;
+  bool     set_channel      = false;
+  bool     del_channel      = false;
+  bool     list_pwm         = false;
+  bool     show_help        = false;
+  bool     test_pwm         = false;
 
   /* Get the application name */
   program = argv[0]; 
@@ -62,25 +69,27 @@ int main (int argc, char** argv)
   deviceName = argv[1];
 
    /* Parse for options */
-  while ((opt = getopt(argc, argv, "c:d:lvh")) != -1)
+  while ((opt = getopt(argc, argv, "c:d:t:lvh")) != -1)
   {
     switch (opt)
     {
       /* add input validation! */
       case 'c': { set_channel      = true;
-                  if (argv[optind-1] != NULL) { channel = stoi(argv[optind-1]); }
+                  if (argv[optind-1] != NULL) { channel = pwm_get_param(argv[optind-1]); }
                   else                        { std::cerr << "Error: Missing value for channel number!" << std::endl; return (-1); }
-                  if (argv[optind-0] != NULL) { frequency = stoi(argv[optind-0]); }
+                  if (argv[optind-0] != NULL) { frequency = pwm_get_param(argv[optind-0]); }
                   else                        { std::cerr << "Error: Missing value for frequency[Hz]!" << std::endl; return (-1); }
-                  if (argv[optind+1] != NULL) { duty_cycle = stoi(argv[optind+1]); }
+                  if (argv[optind+1] != NULL) { duty_cycle = pwm_get_param(argv[optind+1]); }
                   else                        { std::cerr << "Error: Missing value for duty cycle[%]!" << std::endl; return (-1); }
                   break; }
       case 'd': { del_channel     = true;
-                  if (argv[optind-1] != NULL) { channel = stoi(argv[optind-1]); }
+                  if (argv[optind-1] != NULL) { channel = pwm_get_param(argv[optind-1]); }
                   else                        { std::cerr << "Error: Missing value for channel number!" << std::endl; return (-1); }
                   break; }
       case 'l': { list_pwm         = true; break; }
       case 'h': { show_help        = true; break; }
+      case 't': { test_pwm         = true;
+                if (argv[optind-1] != NULL) { channel = pwm_get_param(argv[optind-1]); }break; }
       default:  { std::cout << "Unknown argument..." << std::endl; break; }
     }
   }
@@ -109,10 +118,11 @@ int main (int argc, char** argv)
 
     /* Proceed with program */
     if ((set_channel)   &&   pwm_is_input_valid(channel, frequency, duty_cycle))  { return_code = pwm_ctl_set(channel, frequency, duty_cycle); }
-    else if (del_channel)    { return_code = pwm_ctl_set(channel, frequency, duty_cycle);  }
-    else if (del_channel)    { return_code = pwm_ctl_delete(channel);  }
-    else if (list_pwm)       { return_code = pwm_ctl_list();  }
-    else                     { pwm_ctl_help(); }
+    else if (del_channel)    { return_code = pwm_ctl_set(channel, frequency, duty_cycle); }
+    else if (del_channel)    { return_code = pwm_ctl_delete(channel); }
+    else if (list_pwm)       { return_code = pwm_ctl_list(); }
+    else if (test_pwm)       { return_code = pwm_ctl_test(channel); }
+    else                     { pwm_ctl_help(); return (-1);}
     
   }
   catch (const saftbus::Error& error)
@@ -127,13 +137,13 @@ int main (int argc, char** argv)
 
 /* Function pwm_is_input_valid */
 /* ==================================================================================================== */
-static bool pwm_is_input_valid(uint8_t channel, uint32_t frequency, uint16_t duty_cycle)
+static bool pwm_is_input_valid(int channel, int frequency, int duty_cycle)
 {
   bool is_valid = false;
 
-  if ((channel < 0) || (channel < 9)) { std::cerr << "Error: Channel number out of range!" << std::endl; return is_valid; }
-  else if (frequency <= 0) { std::cerr << "Error: Unsound frequency!" << std::endl; return is_valid; }
-  else if ((duty_cycle < 1) || (duty_cycle > 99)) { std::cerr << "Error: Unsound duty cycle!" << std::endl; return is_valid; }
+  if ((channel < 0) || (channel > PWM_MAX_CHANNEL)) { std::cerr << "Error: Channel number " << channel << " out of range!" << std::endl; return is_valid; }
+  else if ((frequency <= 0) || (frequency > PWM_REF_MAX_FREQ_HZ)) { std::cerr << "Error: Unsound frequency " << frequency << " !" << std::endl; return is_valid; }
+  else if ((duty_cycle < 1) || (duty_cycle > 99)) { std::cerr << "Error: Unsound duty cycle " << duty_cycle << " !" << std::endl; return is_valid; }
   else {is_valid = true;}
 
   return is_valid;
@@ -143,17 +153,16 @@ static bool pwm_is_input_valid(uint8_t channel, uint32_t frequency, uint16_t dut
 
 /* Function pwm_ctl_set */
 /* ==================================================================================================== */
-static int  pwm_ctl_set(uint8_t channel, uint32_t frequency, uint16_t duty_cycle){
+static int  pwm_ctl_set(int channel, int frequency, int duty_cycle){
 
-  /* Initialize saftlib components */
-  
   /* Try to set the PWM */
   try
   {
+
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
-    receiver->PWM_Test();
+    receiver->PWM_Set_Channel(channel, frequency, duty_cycle);
   }
   catch (const saftbus::Error& error) 
   {
@@ -171,23 +180,7 @@ static int  pwm_ctl_set(uint8_t channel, uint32_t frequency, uint16_t duty_cycle
 /* ==================================================================================================== */
 static int  pwm_ctl_list(void){
 
-  /* Initialize saftlib components */
-  
-  /* Try to set the PWM */
-  try
-  {
-    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    
-    receiver->PWM_Test();
-  }
-  catch (const saftbus::Error& error) 
-  {
-    /* Catch error(s) */
-    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
-    return (-1);
-  }
-
+  /*tbd */
   return 1;
 
 };
@@ -197,15 +190,23 @@ static int  pwm_ctl_list(void){
 /* ==================================================================================================== */
 static int  pwm_ctl_delete(uint8_t channel){
 
-  /* Initialize saftlib components */
+  /*tbd */
+  return 1;
+
+};
+
+
+/* Function pwm_ctl_test */
+/* ==================================================================================================== */
+static int  pwm_ctl_test(int channel){
   
-  /* Try to set the PWM */
+  /* Test the PWM module */
   try
   {
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     
-    receiver->PWM_Test();
+    receiver->PWM_Test(channel);
   }
   catch (const saftbus::Error& error) 
   {
@@ -218,6 +219,23 @@ static int  pwm_ctl_delete(uint8_t channel){
 
 };
 
+
+/* Function pwm_get_param */
+/* ==================================================================================================== */
+static int  pwm_get_param(char    *ptr_next_param){
+
+  try {
+    return stoi(ptr_next_param);
+  }
+  catch (const out_of_range& ia) {
+    std::cerr << "Invalid parameter: " << ia.what() << '\n';
+
+  }
+  catch (const invalid_argument& oor) {
+    std::cerr << "Parameter is out of recho $?ange error: " << oor.what() << '\n';
+  }
+  return 0;
+};
 
 
 /* Function pwm_ctl_help */
@@ -232,6 +250,7 @@ static void pwm_ctl_help(void)
   std::cout << "  -c <channel number(1-8)> <frequency[Hz]> <duty cycle[%]>: Create a new PWM on this channel" << std::endl;
   std::cout << "  -d <channel number(1-8)>:                                 Stop the output on this channel and delete the set values" << std::endl;
   std::cout << "  -l:                                                       List currently set options" << std::endl;
+  std::cout << "  -h:                                                       Test PWM outputs" << std::endl;
   std::cout << "  -h:                                                       Print help (this message)" << std::endl;
   std::cout << std::endl;
   std::cout << "Note:" << std::endl;
