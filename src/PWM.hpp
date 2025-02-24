@@ -2,7 +2,9 @@
 #define saftlib_PWM_SDB_HPP_
 
 #include <cstdint>
+#include <cstdlib>
 #include <cmath>
+#include <vector>
 
 #ifndef ETHERBONE_THROWS
 #define ETHERBONE_THROWS 1
@@ -35,7 +37,10 @@
 #define PWM_REF_MIN_PERIOD_NS	240
 #define PWM_REF_MAX_FREQ_HZ		4167000
 #define PWM_S_TO_NS 			1000000000
-#define PWM_DEFAULT_PRESCALER 	2
+         			 	//      1 000 000 000
+						//     	4 294 967 295
+#define PWM_MIN_PRESCALER 		2
+#define PWM_MAX_MOD_VALUE		0xFFFF
 //#define PWM_PERCENT 			0.001
 
 #include <etherbone.h>
@@ -55,9 +60,12 @@ public:
 	void PWM_Set_Test_PP(void);
 	void PWM_Set_Test_DC(etherbone::address_t pwm_target_reg, etherbone::data_t data_to_send);
 	void PWM_Calc_ActualFreq(int channel, int req_freq);
+	void PWM_Calc_ActualFreq(uint8_t channel, uint32_t req_freq);
 	void PWM_Calc_ActualDutyCycle(int channel, int req_dc);
-	void PWM_Calc_ModuleInputs(int channel);
+	void PWM_Calc_PeriodPrescaler(int channel);
+	void PWM_Calc_ModuleInputs(int channel, int req_dc);
 	etherbone::address_t PWM_Get_ChannelRegAdr(int channel);
+	std::vector<long> PWM_Calc_Factors(long num_to_factorise);
 	void PWM_Pack_Data(int channel);
 	void PWM_Send_Config(int channel);
 	// @saftbus-export
@@ -74,22 +82,18 @@ private:
 	/* this array is equal for all instances*/
 	struct pwm_channel_t {
 
-		bool used;
-		int pwm_freq;
-		int pwm_period;
-		int pwm_period_value;
-		int pwm_prescaler_value;
-		double pwm_actual_duty_cycle;
-		int pwm_duty_cycle_value;
+		bool 		used;
+		double 		pwm_freq_double;
+		long 		pwm_period_long;
+		double 		pwm_period_counter;
+		uint16_t 	pwm_period_value;
+		uint16_t 	pwm_prescaler_value;
+		double 		pwm_actual_duty_cycle;
+		uint16_t 	pwm_duty_cycle_value;
 
 	} pwm_channels[PWM_MAX_CHANNEL -1];
 
 	void PWM_Set_All(int channel);
-
-	uint16_t _last_period;
-	uint16_t _last_prescaler;
-	uint16_t _last_pp;
-	uint16_t _last_dutycycle;
 
 	etherbone::data_t _PP_data;
 	etherbone::data_t _DT_data;
@@ -100,3 +104,12 @@ private:
 }
 
 #endif
+
+// 400 0800
+// Filled _PP_data as 1d1948
+// Filled _DT_data as e940
+// 16 5 5 5 5 5 5 5 5
+
+// Filled _PP_data as 7d03d09
+// Filled _DT_data as 8480
+// 500000000
