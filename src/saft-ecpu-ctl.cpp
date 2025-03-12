@@ -21,6 +21,7 @@
 #include "interfaces/EmbeddedCPUCondition.h"
 
 #include "CommonFunctions.h"
+#include "saft-tools-define.hpp"
 
 /* Namespaces */
 /* ==================================================================================================== */
@@ -58,8 +59,8 @@ static void ecpu_help (void)
   std::cout << program << " exploder5a_123t " << "-c 64 58 0x2 0x4 -d"<< std::endl;
   std::cout << "  This will create a new condition and disown it" << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
-  std::cout << "Licensed under the GPLv3" << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 }
 

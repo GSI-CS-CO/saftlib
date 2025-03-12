@@ -39,6 +39,8 @@
 #include <cstdint>
 #include <unistd.h>
 
+#include "saft-tools-define.hpp"
+
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
@@ -220,8 +222,8 @@ static void help(void) {
   std::cout << "      '      '- Sequence ID"                     << std::endl;
   std::cout << "      '- Beam Production Chain ID"               << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <d.beck@gsi.de> !!!"              << std::endl;
-  std::cout << "Licensed under the GPL v3" << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 } // help
 

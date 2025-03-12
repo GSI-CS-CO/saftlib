@@ -36,6 +36,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include "saft-tools-define.hpp"
+
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
@@ -149,8 +151,8 @@ static void help(void) {
   std::cout << "   first timing receiver available in the host system and print only to screen in case of lost" << std::endl;
   std::cout << "   messages. Remark: The 'set value' is transmitted from the DM via a dedicated message." << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
-  std::cout << "Licensed under the GPL v3." << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 } // help
 

@@ -41,6 +41,8 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include "saft-tools-define.hpp"
+
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
@@ -48,6 +50,7 @@
 #include "interfaces/iDevice.h"
 #include "interfaces/iOwned.h"
 #include "CommonFunctions.h"
+
 
 using namespace std;
 
@@ -75,8 +78,8 @@ static void help(void) {
   std::cout << "at the input of the ECA. This allows for scheduling actions in hard real-time down to ns. This tool might" << std::endl;
   std::cout << "be useful when a central Data Master is not available, for rapid prototyping or tests." << std::endl << std::endl;
 
-  std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
-  std::cout << "Licensed under the GPL v3." << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 } // help
 
