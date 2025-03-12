@@ -42,6 +42,8 @@
 #include <unistd.h>
 #include <poll.h>
 
+#include "saft-tools-define.hpp"
+
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
@@ -462,8 +464,8 @@ static void io_help (void)
   std::cout << program << " exploder5a_123t " << "-n IO1 " << "-o 1 -t 0 -d 1" << std::endl;
   std::cout << "  This will enable the output and disable the input termination and drive the output high" << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
-  std::cout << "Licensed under the GPLv3" << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 }
 

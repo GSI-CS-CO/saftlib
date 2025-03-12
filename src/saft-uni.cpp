@@ -35,6 +35,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include "saft-tools-define.hpp"
+
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
@@ -315,8 +317,8 @@ static void help(void) {
   std::cout << "Shown are flags indicating special modes of operation: N(o beam), R(igid beam) and H(igh current beam)" << std::endl;
   std::cout << "Warming and conditioning cycles are shown in brackets" << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
-  std::cout << "Licensed under the GPL v3." << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 } // help
 

@@ -43,6 +43,7 @@
 #include "interfaces/iDevice.h"
 #include "interfaces/iOwned.h"
 #include "CommonFunctions.h"
+#include "saft-tools-define.hpp"
 
 using namespace std;
 
@@ -122,9 +123,9 @@ static void help(void) {
   std::cout << std::endl;
   std::cout << "Tip: For using negative values with commands such as 'snoop', consider" << std::endl;
   std::cout << "using the special argument '--' to terminate option scanning." << std::endl << std::endl;
-
-  std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
-  std::cout << "Licensed under the GPL v3." << std::endl;
+  std::cout << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 } // help
 
