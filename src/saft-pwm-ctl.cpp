@@ -1,6 +1,25 @@
+/*  Copyright (C) 2011-2016, 2021-2024 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
+
 /* Synopsis */
 /* ==================================================================================================== */
-/* SCU bus interface control application */
+/* CLI PWM Module Interface */
 
 /* Defines */
 /* ==================================================================================================== */
@@ -76,15 +95,15 @@ int main (int argc, char** argv)
       /* add input validation! */
       case 'c': { set_channel      = true;
                   if (argv[optind-1] != NULL) { channel = pwm_get_param(argv[optind-1]); }
-                  else                        { std::cerr << "Error: Missing value for channel number!" << std::endl; return (-1); }
+                  else                        { std::cerr << "Error: Missing value for channel number!" << std::endl; return (-1);}
                   if (argv[optind-0] != NULL) { frequency = pwm_get_param(argv[optind-0]); }
-                  else                        { std::cerr << "Error: Missing value for frequency[Hz]!" << std::endl; return (-1); }
+                  else                        { std::cerr << "Error: Missing value for frequency[Hz]!" << std::endl; return (-1);}
                   if (argv[optind+1] != NULL) { duty_cycle = pwm_get_param(argv[optind+1]); }
-                  else                        { std::cerr << "Error: Missing value for duty cycle[%]!" << std::endl; return (-1); }
+                  else                        { std::cerr << "Error: Missing value for duty cycle[%]!" << std::endl; return (-1);}
                   break; }
       case 'd': { del_channel     = true;
                   if (argv[optind-1] != NULL) { channel = pwm_get_param(argv[optind-1]); }
-                  else                        { std::cerr << "Error: Missing value for channel number!" << std::endl; return (-1); }
+                  else                        { std::cerr << "Error: Missing value for channel number!" << std::endl; return (-1);}
                   break; }
       case 'l': { list_pwm         = true; break; }
       case 'h': { show_help        = true; break; }
@@ -134,7 +153,6 @@ int main (int argc, char** argv)
   return (return_code);
 }
 
-
 /* Function pwm_is_input_valid */
 /* ==================================================================================================== */
 static bool pwm_is_input_valid(int channel, int frequency, int duty_cycle)
@@ -149,7 +167,6 @@ static bool pwm_is_input_valid(int channel, int frequency, int duty_cycle)
   return is_valid;
 
 }
-
 
 /* Function pwm_ctl_set */
 /* ==================================================================================================== */
@@ -222,7 +239,7 @@ static int  pwm_ctl_test(int channel){
 
 /* Function pwm_get_param */
 /* ==================================================================================================== */
-static int  pwm_get_param(char    *ptr_next_param){
+static int pwm_get_param(char    *ptr_next_param){
 
   try {
     return stoi(ptr_next_param);
@@ -232,7 +249,7 @@ static int  pwm_get_param(char    *ptr_next_param){
 
   }
   catch (const invalid_argument& oor) {
-    std::cerr << "Parameter is out of recho $?ange error: " << oor.what() << '\n';
+    std::cerr << "Out of range error: " << oor.what() << '\n';
   }
   return 0;
 };
@@ -250,7 +267,7 @@ static void pwm_ctl_help(void)
   std::cout << "  -c <channel number(1-8)> <frequency[Hz]> <duty cycle[%]>: Create a new PWM on this channel" << std::endl;
   std::cout << "  -d <channel number(1-8)>:                                 Stop the output on this channel and delete the set values" << std::endl;
   std::cout << "  -l:                                                       List currently set options" << std::endl;
-  std::cout << "  -h:                                                       Test PWM outputs" << std::endl;
+  std::cout << "  -t <channel number(1-8)>:                                 Test PWM outputs" << std::endl;
   std::cout << "  -h:                                                       Print help (this message)" << std::endl;
   std::cout << std::endl;
   std::cout << "Note:" << std::endl;

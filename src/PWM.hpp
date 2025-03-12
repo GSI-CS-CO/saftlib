@@ -1,3 +1,22 @@
+/*  Copyright (C) 2011-2016, 2021-2024 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
+
 #ifndef saftlib_PWM_SDB_HPP_
 #define saftlib_PWM_SDB_HPP_
 
@@ -37,11 +56,8 @@
 #define PWM_REF_MIN_PERIOD_NS	240
 #define PWM_REF_MAX_FREQ_HZ		4167000
 #define PWM_S_TO_NS 			1000000000
-         			 	//      1 000 000 000
-						//     	4 294 967 295
 #define PWM_MIN_PRESCALER 		2
 #define PWM_MAX_MOD_VALUE		0xFFFF
-//#define PWM_PERCENT 			0.001
 
 #include <etherbone.h>
 
@@ -104,12 +120,3 @@ private:
 }
 
 #endif
-
-// 400 0800
-// Filled _PP_data as 1d1948
-// Filled _DT_data as e940
-// 16 5 5 5 5 5 5 5 5
-
-// Filled _PP_data as 7d03d09
-// Filled _DT_data as 8480
-// 500000000

@@ -1,3 +1,22 @@
+/*  Copyright (C) 2011-2016, 2021-2024 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ *
+ *******************************************************************************
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************
+ */
+
 #include "PWM.hpp"
 
 #include <iostream>
@@ -13,8 +32,8 @@ namespace saftlib {
 
 	void PWM::PWM_Calc_ActualFreq(int channel, int req_freq)
 	{
-		/* since the PWM period needs to be a multiple of RefClk Time */
-		/* and general_cores module has min PWM period of 240 */
+		/* the PWM period needs to be a multiple of PWM_REF_CLK_TIME_NS */
+		/* and the general cores module has minimum PWM_REF_MIN_PERIOD_NS */
 
 		long actual_period_ns  = 0;
 		double req_period_ns, actual_freq = 0.0;
@@ -63,7 +82,7 @@ namespace saftlib {
     	if (num_to_factorise > 1)
         	factors.push_back(num_to_factorise);
 
-        // Printing elements of vector
+        /* remove */
     	for (auto i : factors)
         	std::cout << i << " ";
         std::cout << std::endl;
@@ -73,9 +92,9 @@ namespace saftlib {
 
 	void PWM::PWM_Calc_PeriodPrescaler(int channel)
 	{
-		/* remember that the period is a multiple of PWM_REF_CLK_TIME_NS*/
-		/* the necessary steps(period / PWM_REF_CLK_TIME_NS) need to be factorized */
-		/* into integer prescaler and period counter which each need to fit into 16 bit*/
+		/* the period must be a multiple of PWM_REF_CLK_TIME_NS */
+		/* hence the necessary steps(period / PWM_REF_CLK_TIME_NS) need to be factorized */
+		/* into integer prescaler and period counter which each need to fit into 16 bits */
 
 		long steps = pwm_channels[channel].pwm_period_long / PWM_REF_CLK_TIME_NS;
 		std::cout << "Steps needed are " << +steps << std::endl;
@@ -84,17 +103,16 @@ namespace saftlib {
 		std::vector<long> factors = {0};
 		factors = PWM_Calc_Factors(steps);
 
-		/* the used module has minimum values */
-		//uint16_t current_prescaler_value = PWM_MIN_PRESCALER;
+		/* the used module has minimum value of 2 */
+		/* since the smallest prime is 2 we can start with 1*/
 		uint16_t current_prescaler_value = 1;
 		long current_period_counter_value = steps;
-
-		/* get first value */
 
 		/* try to find fitting factors */
 		for(const long& factor : factors){
 
 			/* beware: no PWM_MIN_PRESCALER comparison */
+			/* only implicit for PWM_MIN_PRESCALER = 2 */
 			current_prescaler_value *= factor;
 
 			std::cout << "current_prescaler_value " << current_prescaler_value << std::endl;
@@ -104,6 +122,7 @@ namespace saftlib {
 
 			/* make sure it fits into 16 bit */
 			if(current_period_counter_value < PWM_MAX_MOD_VALUE) {break;}
+			/* beware: steps which are prime bigger PWM_MAX_MOD_VALUE will not be caught ! */
 		}
 		std::cout << "after loop - current_period_counter_value " << current_period_counter_value << std::endl;
 
@@ -114,37 +133,37 @@ namespace saftlib {
 		std::cout << "Final period counter value was set as " << +pwm_channels[channel].pwm_period_value << std::endl;
 		std::cout << "                               in hex " << std::hex << pwm_channels[channel].pwm_period_value << std::endl;
 
-		/* steps as a prime over PWM_MAX_MOD_VALUE will no be caught */
-		/* but this would mean a requested freq */
-
 	};
 
 	void PWM::PWM_Calc_ActualDutyCycle(int channel, int req_dc)
-	{
-		double req_dc_period_ns, remainder = 0.0;
+	{	
+		/* the period must be a multiple of PWM_REF_CLK_TIME_NS */
+		/* hence the necessary steps(period / PWM_REF_CLK_TIME_NS) need to be factorized */
+		/* into integer prescaler and period counter which each need to fit into 16 bits */
 
+		double req_dc_period_ns, remainder = 0.0;
 
 		req_dc_period_ns = (double)(pwm_channels[channel].pwm_period_long / 100.0) * (req_dc);
 		std::cout << "req_dc_period_ns " << +req_dc_period_ns  << std::endl;
 
-		double pwm_prescaler_x_clk = (double) (pwm_channels[channel].pwm_prescaler_value * PWM_REF_CLK_TIME_NS);
+		double pwm_prescaler_x_clk = (double) ((pwm_channels[channel].pwm_prescaler_value+1) * PWM_REF_CLK_TIME_NS);
 		std::cout << "pwm_prescaler_x_clk " << +pwm_prescaler_x_clk  << std::endl;
 
 		/* check if we need to round up or down */
 		remainder 	= std::fmod(pwm_prescaler_x_clk, req_dc_period_ns);
 		req_dc_period_ns = req_dc_period_ns - remainder;
 		std::cout << "remainder " << remainder  << std::endl;
-		// always round down
-		//if (remainder > (double)  PWM_REF_CLK_TIME_NS / 2.0){req_dc_period_ns += (double)  PWM_REF_CLK_TIME_NS;}
+		if (remainder > (double)  pwm_prescaler_x_clk / 2.0){req_dc_period_ns += (double)  pwm_prescaler_x_clk;}
 		std::cout << "req_dc_period_ns after fmod " << req_dc_period_ns  << std::endl;
 
-		pwm_channels[channel].pwm_actual_duty_cycle = req_dc_period_ns / (pwm_channels[channel].pwm_period_long / 100);
+		pwm_channels[channel].pwm_actual_duty_cycle = (double) req_dc_period_ns / (pwm_channels[channel].pwm_period_long / 100.0);
 		pwm_channels[channel].pwm_duty_cycle_value	= static_cast<uint16_t>(req_dc_period_ns / pwm_prescaler_x_clk);
 
 		std::cout << "Actual duty cycle will be " << +pwm_channels[channel].pwm_actual_duty_cycle  << std::endl;
-		std::cout << "Duty cycle value was calculated as " << std::hex << pwm_channels[channel].pwm_duty_cycle_value  << std::endl;
+		std::cout << "Duty cycle value was calculated as " << pwm_channels[channel].pwm_duty_cycle_value  << std::endl;
+		std::cout << "                            in hex " << std::hex << pwm_channels[channel].pwm_duty_cycle_value  << std::endl;
 
-	};
+	}; //1 000 000 000
 
 
 	void PWM::PWM_Calc_ModuleInputs(int channel, int req_dc)
@@ -182,7 +201,7 @@ namespace saftlib {
 		const uint8_t uint16_into_uin32 = 16; 
 		uint32_t data_to_send;
 
-		data_to_send = (pwm_channels[channel].pwm_prescaler_value << uint16_into_uin32 ) +  pwm_channels[channel].pwm_period_value;
+		data_to_send = ((pwm_channels[channel].pwm_prescaler_value+1) << uint16_into_uin32 ) +  (pwm_channels[channel].pwm_period_value+1);
 		 _PP_data = (etherbone::data_t) data_to_send;
 
 		data_to_send = 0 +  pwm_channels[channel].pwm_duty_cycle_value;
