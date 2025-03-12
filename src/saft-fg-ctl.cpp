@@ -27,6 +27,8 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "saft-tools-define.hpp"
+
 #include <saftbus/error.hpp>
 
 #include <SAFTd_Proxy.hpp>
@@ -122,6 +124,8 @@ static void help(std::shared_ptr<SAFTd_Proxy> saftd)
   std::cerr << "SAFTd version: " << std::flush;
   std::cerr << saftd->getSourceVersion() << "\n";
   std::cerr << saftd->getBuildInfo() << std::endl;
+  std::cerr << BugReportContact << std::endl;
+  std::cerr << ToolLicenseGPL << std::endl;
 }
 
 static void slow_warning(int sig)

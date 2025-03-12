@@ -22,6 +22,7 @@
 #include <poll.h>
 
 #include "CommonFunctions.h"
+#include "saft-tools-define.hpp"
 
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
@@ -117,8 +118,8 @@ static void pps_help (void)
   std::cout << "Expected Event ID: " << std::endl;
   std::cout << "  0x" << std::hex << ECA_EVENT_ID << std::dec << " (" << ECA_EVENT_ID << ")" << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
-  std::cout << "Licensed under the GPLv3" << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 }
 

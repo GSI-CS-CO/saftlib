@@ -61,6 +61,7 @@
 #include "BurstGenerator_Proxy.hpp"
 
 #include "CommonFunctions.h"
+#include "saft-tools-define.hpp"
 
 #include "eca_flags.h"
 #include "io_control_regs.h"
@@ -2019,8 +2020,8 @@ static void io_help (void)
   std::cout << program << " tr0" << " -r 1" << std::endl;
   std::cout << "   Remove the burst with ID 1." << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
-  std::cout << "Licensed under the GPLv3" << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 }
 

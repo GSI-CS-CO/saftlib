@@ -18,6 +18,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include "saft-tools-define.hpp"
+
 #include "interfaces/SAFTd.h"
 #include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
@@ -175,8 +177,8 @@ static void clk_gen_help (void)
   std::cout << program << " exploder5a_123t " << "-n IO1 " << "-p 4 4 2" << std::endl;
   std::cout << "  This will generate a 125MHz clock (with a 2ns phase offset)" << std::endl;
   std::cout << std::endl;
-  std::cout << "Report bugs to <csco-tg@gsi.de>" << std::endl;
-  std::cout << "Licensed under the GPLv3" << std::endl;
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
   std::cout << std::endl;
 }
 
