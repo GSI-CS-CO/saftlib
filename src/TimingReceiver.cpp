@@ -173,9 +173,9 @@ std::string TimingReceiver::getName() const
 	return name;
 }
 
-saftlib::Time TimingReceiver::CurrentTime() const
+saftlib::Time TimingReceiver::CurrentTime(bool devInject = false) const
 {
-	if (!WhiteRabbit::locked) {
+	if (!devInject && !WhiteRabbit::locked) {
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
 	}
 	return saftlib::makeTimeTAI(ReadRawCurrentTime());

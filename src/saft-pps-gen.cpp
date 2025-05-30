@@ -196,7 +196,7 @@ int main (int argc, char** argv)
       wrLocked = receiver->getLocked();
       if (wrLocked)
       {
-        wrTime  = receiver->CurrentTime();
+        wrTime  = receiver->CurrentTime(false);
         if (verbose_mode)
         {
           std::cout << "Timing Receiver is locked!" << std::endl;
@@ -303,7 +303,7 @@ int main (int argc, char** argv)
         while(1)
         {
           /* Get time and align next PPS */
-          wrTime = receiver->CurrentTime();
+          wrTime = receiver->CurrentTime(false);
           if (verbose_mode) { std::cout << "Time (base):   0x" << std::hex << (UTC?wrTime.getUTC():wrTime.getTAI()) << std::dec << " -> " << tr_formatDate(wrTime, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false) << std::endl; }
 
           /* Avoid late event and add one additional second */
@@ -316,7 +316,7 @@ int main (int argc, char** argv)
           receiver->InjectEvent(ECA_EVENT_ID, 0x00000000, wrNext);
 
           /* Wait for the next pulse */
-          while(wrNext>receiver->CurrentTime())
+          while(wrNext>receiver->CurrentTime(false))
           {
             /* The following code snippet allows to end the program by pressing Ctrl-D (EOF on stdin).  */
             /* This allows for a simultaneous deactivation of all conditions such that the ECA has to   */
@@ -339,7 +339,7 @@ int main (int argc, char** argv)
 
             /* Print time */
             if (verbose_mode) {
-              saftlib::Time time = receiver->CurrentTime();
+              saftlib::Time time = receiver->CurrentTime(false);
               std::cout << "Time (wait):   0x" << std::hex << (UTC?time.getUTC():time.getTAI())
                         << std::dec << " -> " << tr_formatDate(time, PMODE_VERBOSE | (UTC?PMODE_UTC:PMODE_NONE), false)
                         << std::endl;
