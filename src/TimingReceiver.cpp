@@ -174,8 +174,9 @@ std::string TimingReceiver::getName() const
 }
 
 saftlib::Time TimingReceiver::CurrentTime(bool devInject = false) const
-{
-	if (!devInject && !WhiteRabbit::locked) {
+{	
+	if (devInject) { std::cerr << "WARNING: Using development mode with a simulated WhiteRabbit lock. No proper timing possible!" << std::endl;}
+	else if (!WhiteRabbit::locked) {
 		throw saftbus::Error(saftbus::Error::IO_ERROR, "TimingReceiver is not Locked");
 	}
 	return saftlib::makeTimeTAI(ReadRawCurrentTime());

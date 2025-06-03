@@ -613,7 +613,7 @@ int main(int argc, char** argv)
         }
       } // ppsAlign
       else eventTime = wrTime + eventTNext;
-
+      
       receiver->InjectEvent(eventID, eventParam, eventTime);
 
       if (pmode & PMODE_HEX)
