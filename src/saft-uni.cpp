@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //*****************************************************************************
-// version: 2024-Jul-12
+// version: 2025-Jun-03
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -54,13 +54,13 @@ bool UTCleap        = false;
 
 
 // GID
-#define QR       0x1c0                // 'PZ1, Quelle Rechts'
-#define QL       0x1c1                // 'PZ2, PQuelle Links'
-#define QN       0x1c2                // 'PZ3, Quelle Hochladungsinjektor UN (HLI)'
-#define HLI      0x1c3                // 'PZ4, Hochladungsinjektor UN (HLI)'
-#define HSI      0x1c4                // 'PZ5, Hochstrominjektor UH (HSI)'
-#define AT       0x1c5                // 'PZ6, Alvarez'
-#define TK       0x1c6                // 'PZ7, Transferkanal'
+#define QR       0x250                // 'PZ1, Quelle Rechts'
+#define QL       0x251                // 'PZ2, PQuelle Links'
+#define QN       0x253                // 'PZ3, Quelle Hochladungsinjektor UN (HLI)'
+#define HLI      0x270                // 'PZ4, Hochladungsinjektor UN (HLI)'
+#define HSI      0x261                // 'PZ5, Hochstrominjektor UH (HSI)'
+#define AT       0x280                // 'PZ6, Alvarez'
+#define TK       0x290                // 'PZ7, Transferkanal'
 
 // EVTNO
 #define NXTACC   0x10                 // EVT_PREP_NEXT_ACC
