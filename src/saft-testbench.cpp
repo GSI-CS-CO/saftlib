@@ -207,7 +207,7 @@ static int test_inject_and_receive_event(const std::string &device) {
 		con->SigAction.connect(sigc::ptr_fun(&on_action));
 		con->setAcceptLate(true);
 		// std::cerr << "inject event and wait for response" << std::endl;
-		tr->InjectEvent(id, par, tr->CurrentTime());
+		tr->InjectEvent(id, par, tr->CurrentTime(false));
 		while (!action_received) {
 			saftlib::wait_for_signal(1);
 		}
@@ -279,7 +279,7 @@ static int test_software_condition_with_treads(const std::string &device) {
 			while(*signals) {
 				usleep(10000);
 				{
-					tr->InjectEvent(i++,0,tr->CurrentTime());
+					tr->InjectEvent(i++,0,tr->CurrentTime(false));
 					++signal_count;
 				}
 			}

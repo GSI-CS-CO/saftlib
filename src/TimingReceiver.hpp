@@ -136,7 +136,7 @@ public:
 	/// milliseconds behind the true time.
 	///
 	// @saftbus-export
-	saftlib::Time CurrentTime() const;
+	saftlib::Time CurrentTime(bool devInject) const;
 
 	/// @brief        Simulate the receipt of a timing event
 	/// @param event  The event identifier which is matched against Conditions

@@ -100,6 +100,7 @@ static void help(void) {
   std::cout << "  -x                   display values in hex format" << std::endl;
   std::cout << "  -v                   more verbosity, usefull with command 'snoop'" << std::endl;
   std::cout << "  -p                   used with command 'inject': <time> will be added to next full second (option -p) or current time (option unused)" << std::endl;
+  std::cout << "  -X                   used with command 'inject': use development mode to inject without requiring a WhiteRabbit lock" << std::endl;
   std::cout << "  -i                   display saftlib info" << std::endl;
   std::cout << "  -j                   list all attached devices (hardware)" << std::endl;
   std::cout << "  -J                   display values in JSON format" << std::endl;
@@ -167,7 +168,7 @@ static void displayStatus(std::shared_ptr<TimingReceiver_Proxy> receiver,
   // display White Rabbit status
   wrLocked        = receiver->getLocked();
   if (wrLocked) {
-    wrTime        = receiver->CurrentTime();
+    wrTime        = receiver->CurrentTime(false);
     if (absoluteTime) std::cout << "WR locked, time: " << tr_formatDate(wrTime, UTC?PMODE_UTC:PMODE_NONE, printJSON) <<std::endl;
     else std::cout << "WR locked, time: " << tr_formatDate(wrTime, pmode, printJSON) <<std::endl;
   }
@@ -315,6 +316,7 @@ int main(int argc, char** argv)
   bool useFirstDev    = false;
   bool saftdQuit      = false;
   bool currentTemp    = false;
+  bool devInject      = false;          // development mode to inject without WR-lock
   char *value_end;
 
   // variables snoop event
@@ -342,7 +344,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "dxsvapijJkhftUL")) != -1) {
+  while ((opt = getopt(argc, argv, "dxsvapXijJkhftUL")) != -1) {
     switch (opt) {
       case 'f' :
         useFirstDev = true;
@@ -371,6 +373,8 @@ int main(int argc, char** argv)
       case 'p':
         ppsAlign = true;
         break;
+      case 'X':
+        devInject = true;
       case 'U':
         UTC = true;
         pmode = pmode + PMODE_UTC;
@@ -597,7 +601,7 @@ int main(int argc, char** argv)
 
     // inject event
     if (eventInject) {
-      wrTime    = receiver->CurrentTime();
+      wrTime    = receiver->CurrentTime(devInject);
       if (ppsAlign) {
         ppsNext   = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;
         eventTime = (ppsNext + eventTNext); }
@@ -609,7 +613,7 @@ int main(int argc, char** argv)
         }
       } // ppsAlign
       else eventTime = wrTime + eventTNext;
-
+      
       receiver->InjectEvent(eventID, eventParam, eventTime);
 
       if (pmode & PMODE_HEX)

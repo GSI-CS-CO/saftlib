@@ -66,6 +66,7 @@ static void help(void) {
   std::cout << "  -h                   display this help and exit" << std::endl;
   std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cout << "  -p                   schedule will be added to next full second (option -p) or current time (option unused)" << std::endl;
+  std::cout << "  -X                   use development mode to inject without requiring a WhiteRabbit lock" << std::endl;
   std::cout << "  -v                   print sleep time, inject time, scheduled time for each event" << std::endl;
   std::cout << std::endl;
   std::cout << "  -n N                 N (1..) is number of iterations of the schedule. If unspecified, N is set to 1" << std::endl;
@@ -91,6 +92,7 @@ int main(int argc, char** argv)
   bool ppsAlign       = false;
   bool useFirstDev    = false;
   bool verboseMode    = false;
+  bool devInject      = false;          // development mode to inject without WR-lock
   unsigned int nIter  = 1;
 
   // variables inject event
@@ -113,7 +115,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "n:phfv")) != -1) {
+  while ((opt = getopt(argc, argv, "n:phfvX")) != -1) {
     switch (opt) {
 	case 'n' :
 	  nIter = atoi(optarg);
@@ -123,6 +125,9 @@ int main(int argc, char** argv)
       break;
     case 'p':
       ppsAlign = true;
+      break;
+    case 'X':
+      devInject = true;
       break;
     case 'v':
       verboseMode = true;
@@ -194,7 +199,7 @@ int main(int argc, char** argv)
 	std::cout << std::setfill(' ');
 	// Iterate the schedule nIter times.
 	for (i=0; i<nIter; i++) {
-	  wrTime    = receiver->CurrentTime();
+	  wrTime    = receiver->CurrentTime(devInject);
 	  if (ppsAlign) startTime = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;  //align schedule to next PPS
 	  else          startTime = wrTime;                                         //align schedule to current WR time
 	
@@ -213,13 +218,13 @@ int main(int argc, char** argv)
 		  nextTimeWR = startTime + eventTime;
 		  // sleep before injecting: keep the queue inside ECA short.
 		  // lets sleep until 100ms before event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
-		  wrTime    = receiver->CurrentTime();
+		  wrTime    = receiver->CurrentTime(devInject);
 		  if (nextTimeWR > (wrTime + 100000000)) {                       //only sleep if injected event "was" more than 100ms in the future
 			sleepTime = (int64_t)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event			
 			usleep(sleepTime);
 		  } // if next time
 		  // set current time, only used for printing in verbose mode.
-		  wrTime = receiver->CurrentTime();
+		  wrTime = receiver->CurrentTime(devInject);
 		  // inject event
 		  receiver->InjectEvent(eventID, eventParam, nextTimeWR);
 		  if (verboseMode) {
