@@ -142,9 +142,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>Remove</b> ()</td></t
 <tr class="memitem:aec4787a53d5e81fff7ac82f4fe9ef3cb"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1TimingReceiver.html#aec4787a53d5e81fff7ac82f4fe9ef3cb">getName</a> () const</td></tr>
 <tr class="memdesc:aec4787a53d5e81fff7ac82f4fe9ef3cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">The logical name with which the device was connected.  <a href="classsaftlib_1_1TimingReceiver.html#aec4787a53d5e81fff7ac82f4fe9ef3cb">More...</a><br /></td></tr>
 <tr class="separator:aec4787a53d5e81fff7ac82f4fe9ef3cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3aaae658d59da9e47688faee3c6bff7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1TimingReceiver.html#aa3aaae658d59da9e47688faee3c6bff7">CurrentTime</a> (bool devInject) const</td></tr>
-<tr class="memdesc:aa3aaae658d59da9e47688faee3c6bff7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The current time of the timingreceiver.  <a href="classsaftlib_1_1TimingReceiver.html#aa3aaae658d59da9e47688faee3c6bff7">More...</a><br /></td></tr>
-<tr class="separator:aa3aaae658d59da9e47688faee3c6bff7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a161d692226fd738046921baf95a5bb6f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1TimingReceiver.html#a161d692226fd738046921baf95a5bb6f">CurrentTime</a> () const</td></tr>
+<tr class="memdesc:a161d692226fd738046921baf95a5bb6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The current time of the timingreceiver.  <a href="classsaftlib_1_1TimingReceiver.html#a161d692226fd738046921baf95a5bb6f">More...</a><br /></td></tr>
+<tr class="separator:a161d692226fd738046921baf95a5bb6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5791ad718cac0a07f1eb0baea35258be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1TimingReceiver.html#a5791ad718cac0a07f1eb0baea35258be">InjectEvent</a> (uint64_t event, uint64_t param, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> time) const</td></tr>
 <tr class="memdesc:a5791ad718cac0a07f1eb0baea35258be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulate the receipt of a timing event.  <a href="classsaftlib_1_1TimingReceiver.html#a5791ad718cac0a07f1eb0baea35258be">More...</a><br /></td></tr>
 <tr class="separator:a5791ad718cac0a07f1eb0baea35258be"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -394,8 +394,8 @@ etherbone::sdb_msi_device&#160;</td><td class="memItemRight" valign="bottom"><b>
 <p >Timing receivers can respond to timing events from the data master. The can also respond to external timing triggers via inputs. The general idea is that a <a class="el" href="classsaftlib_1_1TimingReceiver.html" title="A timing receiver.">TimingReceiver</a> has ActionSinks to which it sends actions in response to incoming timing events. Timing events are matched with Conditions to create the Actions sent to the Sinks. EventSources are objects which create timing events, to be matched by the conditions. The data master is a global <a class="el" href="classsaftlib_1_1EventSource.html" title="Interface of ECA event sources currently only implemented by saftlib::Input.">EventSource</a> to which all TimingReceivers listen. However, external inputs can also be configured to generate timing events. Furthermore, a <a class="el" href="classsaftlib_1_1TimingReceiver.html" title="A timing receiver.">TimingReceiver</a> can simulate the receipt of a timing event by calling the InjectEvent method.</p>
 <p >Timing receivers always typically have binary outputs lines (OutputActionSinks), which are listed in the Outputs property. Similarly, they often have digital inputs (InputEventSources). Some timing receivers have special purpose interfaces. For example, an SCU has the <a class="el" href="classsaftlib_1_1SCUbusActionSink.html" title="An output through which SCUbus actions flow.">SCUbusActionSink</a> which generates 32-bit messages over the SCU backplane. These special interfaces can be found in the interfaces property. The SCU backplane would be found under the <a class="el" href="classsaftlib_1_1SCUbusActionSink.html" title="An output through which SCUbus actions flow.">SCUbusActionSink</a> key, and as there is only one, it would be the 0th. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="aa3aaae658d59da9e47688faee3c6bff7" name="aa3aaae658d59da9e47688faee3c6bff7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa3aaae658d59da9e47688faee3c6bff7">&#9670;&#160;</a></span>CurrentTime()</h2>
+<a id="a161d692226fd738046921baf95a5bb6f" name="a161d692226fd738046921baf95a5bb6f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a161d692226fd738046921baf95a5bb6f">&#9670;&#160;</a></span>CurrentTime()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -403,8 +403,7 @@ etherbone::sdb_msi_device&#160;</td><td class="memItemRight" valign="bottom"><b>
         <tr>
           <td class="memname"><a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> saftlib::TimingReceiver::CurrentTime </td>
           <td>(</td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>devInject</em> = <code>false</code></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
