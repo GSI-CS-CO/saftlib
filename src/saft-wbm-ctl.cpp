@@ -108,12 +108,13 @@ int main (int argc, char** argv)
 
   std::string acwbm  = "None";
   std::string e_sink = "Unknown";
+  std::string filename;
   
   /* Get the application name */
   program = argv[0]; 
   
   /* Parse arguments */
-  while ((opt = getopt(argc, argv, "c:r:dgxzlvh")) != -1)
+  while ((opt = getopt(argc, argv, "c:f:r:dgxzlvh")) != -1)
   {
     switch (opt)
     {
@@ -130,17 +131,26 @@ int main (int argc, char** argv)
         else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
         break;
       }
+
       case 'r': 
       { 
         record_macro = true;
-        if (argv[optind-1] != NULL) { macroIdx = strtoull(argv[optind-1], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event id!" << std::endl; return (-1); }
+        if (argv[optind-1] != NULL) { macroIdx  = strtoull(argv[optind-1], &pEnd, 0); }
+        else                        { std::cerr << "Error: Missing macro idx!" << std::endl;      return (-1); }
         if (argv[optind+0] != NULL) { macroAdr = strtoull(argv[optind+0], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event mask!" << std::endl; return (-1); }
+        else                        { std::cerr << "Error: Missing macro address!" << std::endl;  return (-1); }
         if (argv[optind+1] != NULL) { macroDat = strtoull(argv[optind+1], &pEnd, 0);}
-        else                        { std::cerr << "Error: Missing offset!" << std::endl; return (-1); }
+        else                        { std::cerr << "Error: Missing macro data!" << std::endl;     return (-1); }
         if (argv[optind+2] != NULL) { macroFlags = strtoul(argv[optind+2], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
+        else                        { std::cerr << "Error: Missing macro flags!" << std::endl;    return (-1); }
+        break;
+      }
+      case 'f': { 
+        macro_file = true;
+        if (argv[optind-1] != NULL) { macroIdx = strtoull(argv[optind-1], &pEnd, 0); }
+        else                        { std::cerr << "Error: Missing macro idx!" << std::endl; return (-1); }
+        if (argv[optind+0] != NULL) { filename = argv[optind+0]; }
+        else                        { std::cerr << "Error: Missing macro file!" << std::endl; return (-1); }
         break;
       }
       case 'd': { disown_sink     = true; break; }
@@ -159,7 +169,7 @@ int main (int argc, char** argv)
   if (negative_offset)  { offset = -offset; }
 
   /* Plausibility check for arguments */
-  if ((create_sink || disown_sink) && destroy_sink)
+  if (((create_sink || disown_sink) && destroy_sink) || (record_macro && macro_file))
   {
     show_help = true;
     std::cerr << "Incorrect arguments!" << std::endl;
@@ -246,11 +256,27 @@ int main (int argc, char** argv)
     else if (record_macro) 
     {
       acwbm->setEnable(false);
-      std::vector<std::vector<uint32_t> > commands;
-      commands.push_back(std::vector<uint32_t>(3));
-      commands[0][0] = macroAdr;
-      commands[0][1] = macroDat;
-      commands[0][2] = macroFlags;
+      std::vector<WbmActionCmd> commands;
+      if (macro_file) {
+        ReadMacroFile(filename, &commands);
+      } else {
+        commands.push_back(WbmActionCmd());
+        commands[0].adr   = macroAdr;
+        commands[0].data  = macroDat;
+        commands[0].flags = macroFlags;
+      }
+      acwbm->RecordMacro(macroIdx, commands);
+      acwbm->setEnable(true);
+    }
+    else if (macro_file) 
+    {
+      acwbm->setEnable(false);
+      std::vector<WbmActionCmd> commands;
+      
+      commands.push_back(WbmActionCmd());
+      commands[0].adr = macroAdr;
+      commands[0].data = macroDat;
+      commands[0].flags = macroFlags;
       acwbm->RecordMacro(macroIdx, commands);
       acwbm->setEnable(true);
     }
