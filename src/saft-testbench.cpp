@@ -207,7 +207,7 @@ static int test_inject_and_receive_event(const std::string &device) {
 		con->SigAction.connect(sigc::ptr_fun(&on_action));
 		con->setAcceptLate(true);
 		// std::cerr << "inject event and wait for response" << std::endl;
-		tr->InjectEvent(id, par, tr->CurrentTime(false));
+		tr->InjectEvent(id, par, tr->CurrentTime());
 		while (!action_received) {
 			saftlib::wait_for_signal(1);
 		}
@@ -279,7 +279,7 @@ static int test_software_condition_with_treads(const std::string &device) {
 			while(*signals) {
 				usleep(10000);
 				{
-					tr->InjectEvent(i++,0,tr->CurrentTime(false));
+					tr->InjectEvent(i++,0,tr->CurrentTime());
 					++signal_count;
 				}
 			}
@@ -405,7 +405,7 @@ int main(int argc, char** argv) {
 	bool run_software_tr = false;
 	if (eb_device_name.size() == 0) {
 		run_software_tr = true;
-		if (run_software_tr) system("killall -9 saft-software-tr");
+		if (run_software_tr) (void)system("killall -9 saft-software-tr");
 		if (run_software_tr) {
 			if (msi_polling) system("saft-software-tr -p &");
 			else             system("saft-software-tr    &");

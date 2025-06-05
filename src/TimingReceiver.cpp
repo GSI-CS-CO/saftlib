@@ -173,7 +173,7 @@ std::string TimingReceiver::getName() const
 	return name;
 }
 
-saftlib::Time TimingReceiver::CurrentTime(bool devInject = false) const
+saftlib::Time TimingReceiver::CurrentTime(bool devInject) const
 {	
 	if (devInject) { std::cerr << "WARNING: Using development mode with a simulated WhiteRabbit lock. No proper timing possible!" << std::endl;}
 	else if (!WhiteRabbit::locked) {
