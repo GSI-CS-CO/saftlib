@@ -90,6 +90,7 @@ int main (int argc, char** argv)
   char *pEnd           = NULL;
   bool create_sink     = false;
   bool record_macro    = false;
+  bool macro_file      = false;
   bool disown_sink     = false;
   bool destroy_sink    = false;
   bool verbose_mode    = false;
@@ -169,7 +170,7 @@ int main (int argc, char** argv)
   if (negative_offset)  { offset = -offset; }
 
   /* Plausibility check for arguments */
-  if (((create_sink || disown_sink) && destroy_sink) || (record_macro && macro_file))
+  if (((create_sink || disown_sink) && destroy_sink))
   {
     show_help = true;
     std::cerr << "Incorrect arguments!" << std::endl;
@@ -258,25 +259,10 @@ int main (int argc, char** argv)
       acwbm->setEnable(false);
       std::vector<WbmActionCmd> commands;
       if (macro_file) {
-        ReadMacroFile(filename, &commands);
+        acwbm->ReadMacroFile(filename, commands);
       } else {
-        commands.push_back(WbmActionCmd());
-        commands[0].adr   = macroAdr;
-        commands[0].data  = macroDat;
-        commands[0].flags = macroFlags;
+        commands.push_back(WbmActionCmd({macroAdr, macroDat, macroFlags}));
       }
-      acwbm->RecordMacro(macroIdx, commands);
-      acwbm->setEnable(true);
-    }
-    else if (macro_file) 
-    {
-      acwbm->setEnable(false);
-      std::vector<WbmActionCmd> commands;
-      
-      commands.push_back(WbmActionCmd());
-      commands[0].adr = macroAdr;
-      commands[0].data = macroDat;
-      commands[0].flags = macroFlags;
       acwbm->RecordMacro(macroIdx, commands);
       acwbm->setEnable(true);
     }
