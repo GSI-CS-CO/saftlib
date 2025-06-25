@@ -25,6 +25,7 @@
 //*****************************************************************************
 //
 
+#include <cstdint>
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
@@ -41,6 +42,9 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <vector>
+
+
 #include "saft-tools-define.hpp"
 
 #include "interfaces/SAFTd.h"
@@ -52,36 +56,31 @@
 #include "CommonFunctions.h"
 
 
-using namespace std;
 
-static const char* program;
-
+/* Namespace */
+/* ==================================================================================================== */
 using namespace saftlib;
 using namespace std;
 
-// display help
-static void help(void) {
-  std::cout << std::endl << "Usage: " << program << " <device name> [OPTIONS] <file name>" << std::endl;
-  std::cout << std::endl;
-  std::cout << "  -h                   display this help and exit" << std::endl;
-  std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
-  std::cout << "  -p                   schedule will be added to next full second (option -p) or current time (option unused)" << std::endl;
-  std::cout << "  -v                   print sleep time, inject time, scheduled time for each event" << std::endl;
-  std::cout << std::endl;
-  std::cout << "  -n N                 N (1..) is number of iterations of the schedule. If unspecified, N is set to 1" << std::endl;
-  std::cout << std::endl;
+/* Global */
+/* ==================================================================================================== */
+static const char* program;
 
-  std::cout << "  The file must contain exactly one message per line. Each line must have the following format:" << std::endl;
-  std::cout << "  '<eventID> <param> <time>', example: '0x1111000000000000 0x0 123000000', time [ns] and decimal." << std::endl;
-  std::cout << std::endl;
-  std::cout << "This tool provides a primitive Data Master for local operations in the FEC. Timing messages are injected" << std::endl;
-  std::cout << "at the input of the ECA. This allows for scheduling actions in hard real-time down to ns. This tool might" << std::endl;
-  std::cout << "be useful when a central Data Master is not available, for rapid prototyping or tests." << std::endl << std::endl;
+struct Injection{
+    uint64_t eventID;
+    uint64_t eventParam;
+    uint64_t eventTime;
+};
 
-  std::cout << BugReportContact << std::endl;
-  std::cout << ToolLicenseGPL << std::endl;
-  std::cout << std::endl;
-} // help
+vector<Injection> schedule;
+
+
+/* Prototypes */
+/* ==================================================================================================== */
+static void help(void);
+static void parseSchedule(const char *filename, vector<Injection>& schedule);
+static void injectSchedule(std::shared_ptr<TimingReceiver_Proxy> receiver, vector<Injection>& schedule, bool ppsAlign, bool verboseMode, int iterations);
+static void printInjection(Injection& injection, bool verboseMode, uint64_t sleepTime, uint64_t wrTime, uint64_t nextTimeWR);
 
 
 int main(int argc, char** argv)
@@ -106,10 +105,14 @@ int main(int argc, char** argv)
   char    *deviceName = NULL;
 
   //helper variables
-  string  line;
+  //string  line;
   unsigned int i;
   
   const char *filename;
+
+
+  vector<Injection> schedule;
+  //vector<Injection>& scheduleRef = schedule;
 
   // parse for options
   program = argv[0];
@@ -155,14 +158,15 @@ int main(int argc, char** argv)
     help();
     return 0;
   }
+
+  parseSchedule(filename, schedule);
   
   try {
-    // initialize required stuff
+
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
-    
-	// get a specific device
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     std::shared_ptr<TimingReceiver_Proxy> receiver;
+
     if (useFirstDev) {
       if (devices.empty()) {
           std::cerr << "No devices attached to saftd" << std::endl;
@@ -173,74 +177,133 @@ int main(int argc, char** argv)
       if (devices.find(deviceName) == devices.end()) {
         std::cerr << "Device '" << deviceName << "' does not exist" << std::endl;
         return -1;
-      } // find device
+      }
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    } //if useFirstDevice;
+    }
 
-    // print headline
-    uint8_t width = 53;
-	std::cout << std::setfill(' ')
-			<< std::setw(15) << "Event time"
-			<< std::setw(19) << "Event ID"
-			<< std::setw(19) << "Parameter";
-	if (verboseMode) {
-		std::cout << std::setfill(' ')
-				<< std::setw(15) << "Sleep time"
-				<< std::setw(20) << "Inject event"
-				<< std::setw(20) << "Scheduled time";
-		width = 108;
-	}
-	std::cout << std::endl << std::setfill('-') << std::setw(width) << "-" << std::endl;
-	std::cout << std::setfill(' ');
-	// Iterate the schedule nIter times.
-	for (i=0; i<nIter; i++) {
-	  wrTime    = receiver->CurrentTime();
-	  if (ppsAlign) startTime = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;  //align schedule to next PPS
-	  else          startTime = wrTime;                                         //align schedule to current WR time
-	
-	  ifstream myfile (filename);
-	  if (myfile.is_open()) {
-		while (getline (myfile,line)) {
-		  // get data from file
-		  std::stringstream stream(line);
-		  stream >> std::hex >> eventID;
-		  stream >> std::hex >> eventParam;
-		  stream >> std::dec >> eventTime;
-		  std::cout << std::dec << std::setfill(' ') << std::setw(15) << eventTime
-				<< std::hex << " 0x" << std::setw(16) << eventID
-				<< " 0x" << std::setfill('0') << std::setw(16) << eventParam;
-		  // scheduled time for next inject
-		  nextTimeWR = startTime + eventTime;
-		  // sleep before injecting: keep the queue inside ECA short.
-		  // lets sleep until 100ms before event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
-		  wrTime    = receiver->CurrentTime();
-		  if (nextTimeWR > (wrTime + 100000000)) {                       //only sleep if injected event "was" more than 100ms in the future
-			sleepTime = (int64_t)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event			
-			usleep(sleepTime);
-		  } // if next time
-		  // set current time, only used for printing in verbose mode.
-		  wrTime = receiver->CurrentTime();
-		  // inject event
-		  receiver->InjectEvent(eventID, eventParam, nextTimeWR);
-		  if (verboseMode) {
-			std::cout << std::dec << std::setfill(' ') << std::setw(15) << sleepTime * 1000
-				  << " " << std::setw(19) << wrTime.getTAI()
-				  << " " << std::setw(19) << nextTimeWR.getTAI();
-		  }
-		  std::cout << std::endl;
-		  sleepTime = 0;
-		} // while getline
-		myfile.close();
-	  }
-	  else std::cerr << "Unable to open file" << std::endl; 
-	} //for i
-      
+    injectSchedule(receiver, schedule, ppsAlign, verboseMode, nIter);
+
   } catch (const saftbus::Error& error) {
-    std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+      std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
   
   return 0;
 }
 
 
+/* display help text */
+static void help(void) {
+  std::cout << std::endl << "Usage: " << program << " <device name> [OPTIONS] <file name>" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  -h                   display this help and exit" << std::endl;
+  std::cout << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
+  std::cout << "  -p                   schedule will be added to next full second (option -p) or current time (option unused)" << std::endl;
+  std::cout << "  -v                   print sleep time, inject time, scheduled time for each event" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  -n N                 N (1..) is number of iterations of the schedule. If unspecified, N is set to 1" << std::endl;
+  std::cout << std::endl;
 
+  std::cout << "  The file must contain exactly one message per line. Each line must have the following format:" << std::endl;
+  std::cout << "  '<eventID> <param> <time>', example: '0x1111000000000000 0x0 123000000', time [ns] and decimal." << std::endl;
+  std::cout << std::endl;
+  std::cout << "This tool provides a primitive Data Master for local operations in the FEC. Timing messages are injected" << std::endl;
+  std::cout << "at the input of the ECA. This allows for scheduling actions in hard real-time down to ns. This tool might" << std::endl;
+  std::cout << "be useful when a central Data Master is not available, for rapid prototyping or tests." << std::endl << std::endl;
+
+  std::cout << BugReportContact << std::endl;
+  std::cout << ToolLicenseGPL << std::endl;
+  std::cout << std::endl;
+}
+
+
+/* parse provided schedule file */
+static void parseSchedule(const char *filename, vector<Injection>& schedule){
+
+  string  line;
+
+  ifstream myfile (filename);
+  if (myfile.is_open()) {
+  while (getline (myfile,line)) {
+    std::stringstream stream(line);
+    Injection currentLine;
+    stream >> std::hex >> currentLine.eventID;
+    stream >> std::hex >> currentLine.eventParam;
+    stream >> std::dec >> currentLine.eventTime;
+
+    schedule.push_back(currentLine);
+
+  }
+  myfile.close();
+  }
+
+}
+
+
+/* parse provided texts schedule */
+static void printHeadline(bool verboseMode){
+
+  uint8_t width = 53;
+  std::cout << std::setfill(' ')
+     << std::setw(15) << "Event time"
+     << std::setw(19) << "Event ID"
+     << std::setw(19) << "Parameter";
+  if (verboseMode) {
+   std::cout << std::setfill(' ')
+       << std::setw(15) << "Sleep time"
+       << std::setw(20) << "Inject event"
+       << std::setw(20) << "Scheduled time";
+   width = 108;
+  }
+}
+
+
+/* parse provided texts schedule */
+static void printInjection(Injection& injection, bool verboseMode, uint64_t sleepTime, uint64_t wrTime, uint64_t nextTimeWR){
+
+
+  std::cout << std::endl << std::dec << std::setfill(' ') << std::setw(15) << injection.eventTime
+            << std::hex << " 0x" << std::setw(16) << injection.eventID
+            << " 0x" << std::setfill('0') << std::setw(16) << injection.eventParam;
+  if (verboseMode) {
+    std::cout << std::dec << std::setfill(' ') << std::setw(15) << sleepTime * 1000
+              << " " << std::setw(19) << wrTime
+              << " " << std::setw(19) << nextTimeWR;
+  }
+  std::cout << std::endl;
+
+
+}
+
+
+/* inject parsed schedule */
+static void injectSchedule(std::shared_ptr<TimingReceiver_Proxy> receiver, vector<Injection>& schedule, bool ppsAlign, bool verboseMode, int iterations){
+
+  saftlib::Time startTime;        // time for start of schedule in PTP time
+  saftlib::Time nextTimeWR;       // time for event (in units of WR time)
+  int64_t  sleepTime   = 0x0;     // time interval for sleeping
+  saftlib::Time wrTime;           // current WR t
+
+  printHeadline(verboseMode);
+
+  for (int i = 0; i < iterations; ++i){
+    wrTime    = receiver->CurrentTime();
+    if (ppsAlign) startTime = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000; //align schedule to next PPS
+    else          startTime = wrTime; //align schedule to current WR time
+    for (Injection i : schedule){
+      // scheduled time for next inject
+      nextTimeWR = startTime + i.eventTime;
+      // sleep before injecting: keep the queue inside ECA short.
+      // lets sleep until 100ms before event is due - required to avoid overrun (when iterating) or late actions (for long schedules)
+      wrTime    = receiver->CurrentTime();
+      if (nextTimeWR > (wrTime + 100000000)) {                       //only sleep if injected event "was" more than 100ms in the future
+       sleepTime = (int64_t)((nextTimeWR - wrTime) / 1000) - 100000; //sleep 100ms less than interval to injected event      
+       usleep(sleepTime);
+      } // if next time
+      // set current time, only used for printing in verbose mode.
+      wrTime = receiver->CurrentTime();
+      receiver->InjectEvent(i.eventID, i.eventParam, nextTimeWR);
+      printInjection(i, verboseMode, sleepTime, wrTime.getTAI(), nextTimeWR.getTAI());
+    }
+  }
+
+}
