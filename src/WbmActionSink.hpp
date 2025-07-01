@@ -82,7 +82,7 @@ class WbmActionSink : public ActionSink {
 	    // @saftbus-export
 	    void ExecuteMacro(uint32_t idx);
 	    // @saftbus-export
-	    void RecordMacro(uint32_t idx, std::vector<WbmActionCmd>& commands);
+	    void RecordMacro(uint32_t idx, std::vector<WbmActionCmd> commands);
 	    // @saftbus-export
 	    void ClearMacro(uint32_t idx);
 	    // @saftbus-export

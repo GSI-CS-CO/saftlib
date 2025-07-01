@@ -83,13 +83,12 @@ void WbmActionSink::ReadMacroFile(const std::string& fn, std::vector<WbmActionCm
   
 }
 
-void WbmActionSink::RecordMacro(uint32_t idx, std::vector<WbmActionCmd>& commands) {
-    
+void WbmActionSink::RecordMacro(uint32_t idx, std::vector<WbmActionCmd> commands) {
   etherbone::Cycle cycle;
   cycle.open(device);
   cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, (eb_data_t) idx); // start recording
   
-  for(unsigned cmd_idx = 0; cmd_idx < commands.size(); ++cmd_idx) {
+  for(unsigned cmd_idx = 0; cmd_idx < commands.size(); cmd_idx++) {
     cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, (eb_data_t)commands[cmd_idx].adr);
     cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, (eb_data_t)commands[cmd_idx].data);
     cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, (eb_data_t)commands[cmd_idx].flags);

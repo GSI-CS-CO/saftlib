@@ -148,6 +148,7 @@ int main (int argc, char** argv)
       }
       case 'f': { 
         macro_file = true;
+        record_macro = true;
         if (argv[optind-1] != NULL) { macroIdx = strtoull(argv[optind-1], &pEnd, 0); }
         else                        { std::cerr << "Error: Missing macro idx!" << std::endl; return (-1); }
         if (argv[optind+0] != NULL) { filename = argv[optind+0]; }
