@@ -11,6 +11,7 @@
 /* ==================================================================================================== */
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <unistd.h>
 
 #include "interfaces/SAFTd.h"
@@ -50,7 +51,8 @@ static void wbm_help (void)
   std::cout << "  -g                             Negative offset (new condition)" << std::endl;
   std::cout << "  -x:                            Destroy all unowned conditions and delete all macros" << std::endl;
   std::cout << "  -r <idx> <adr> <data> <flags>: Record a new macro at index idx" << std::endl;
-  std::cout << "  -z                             Translate mask" << std::endl;
+  std::cout << "  -f <idx> <filename>:           Record a new macro at index idx from file fn" << std::endl;
+  std::cout << "  -z                             Translate mask, e.g. '16' -> '0xffff00000000'" << std::endl;
   std::cout << "  -l                             List conditions" << std::endl;
   std::cout << "  -h:                            Print help (this message)" << std::endl;
   std::cout << "  -v:                            Switch to verbose mode" << std::endl;
@@ -62,7 +64,21 @@ static void wbm_help (void)
   std::cout << program << " tr0 " << "-r 3 0x4060500 0 0x2f"<< std::endl;
   std::cout << "  This records a macro at index 3 where the hi-part of eventID will be written to addr 0x4060500" << std::endl;
   std::cout << std::endl;
-  std::cout << "  <flags> is an integer bitfield: cddddssss" << std::endl;
+  std::cout << program << " tr0 " << "-f 3 <macro file>"<< std::endl;
+  std::cout << "macro:" << std::endl;
+  std::cout << "(line format:  <adr> <data> <flags>\\n):" << std::endl;
+  std::cout << "  0x4060500 0 0x4f" << std::endl;
+  std::cout << "  0x4060504 0 0x5f" << std::endl;
+  std::cout << "  This records a macro at index 3 where hi- and low-word of 64b parameter are written to addr 0x4060500 onwards" << std::endl;
+  std::cout << std::endl;
+  std::cout << "macro:" << std::endl;
+  std::cout << "  0x4060500 0 0x04f" << std::endl;
+  std::cout << "  0x4060504 0 0x15f" << std::endl;
+  std::cout << "  0x0200000 0 0x02f" << std::endl;
+  std::cout << "  0x0200004 0 0x03f" << std::endl;
+  std::cout << "  This records a macro where parameter and ID are copied to 2 different bus devices. Cycle drop bit is necessary" << std::endl;
+  std::cout << std::endl;
+  std::cout << "<flags> is an integer bitfield: cddddssss" << std::endl;
   std::cout << "          c is the drop-cycle bit" << std::endl;
   std::cout << "          d is the data source:" << std::endl;
   std::cout << "                0x0 = data field from record" << std::endl;
@@ -187,9 +203,10 @@ int main (int argc, char** argv)
   /* List parameters */
   if (verbose_mode && create_sink)
   {
+    uint64_t mask = translate_mask ? tr_mask(eventMask) : eventMask;
     std::cout << "Action sink/condition parameters:" << std::endl;
     std::cout << std::hex << "EventID:   0x" << eventID   << std::dec << " (" << eventID   << ")" << std::endl;
-    std::cout << std::hex << "EventMask: 0x" << eventMask << std::dec << " (" << eventMask << ")" << std::endl;
+    std::cout << std::hex << "EventMask: 0x" << mask      << std::dec << " (" << mask      << ")" << std::endl;
     std::cout << std::hex << "Offset:    0x" << offset    << std::dec << " (" << offset    << ")" << std::endl;
     std::cout << std::hex << "Tag:       0x" << tag       << std::dec << " (" << tag       << ")" << std::endl;
   }
@@ -231,8 +248,8 @@ int main (int argc, char** argv)
     {
       /* Setup Condition */
       std::shared_ptr<WbmCondition_Proxy> condition;
-      if (translate_mask) { condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
-      else                { condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, eventMask, offset, tag)); }
+      if (translate_mask) {condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
+      else                {condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, eventMask, offset, tag)); }
       
       /* Accept every kind of event */
       condition->setAcceptConflict(true);
@@ -260,11 +277,32 @@ int main (int argc, char** argv)
       acwbm->setEnable(false);
       std::vector<WbmActionCmd> commands;
       if (macro_file) {
-        acwbm->ReadMacroFile(filename, commands);
+        std::ifstream infile(filename);
+        if (!infile.is_open()) {
+          std::cerr << "Error: Could not open file " << filename << std::endl;
+          return -1;
+        }
+
+        std::string line;
+
+        while (std::getline(infile, line)) {
+          std::istringstream iss(line);
+          uint32_t adr, data, flags;
+
+          if (!(iss >> std::ws >> std::hex >> adr >> std::hex >> data >> std::hex >> flags)) {
+              std::cerr << "Warning: Skipping malformed line: " << line << std::endl;
+              continue;
+          }
+          commands.push_back(WbmActionCmd({adr, data, flags}));
+        }
       } else {
         commands.push_back(WbmActionCmd({macroAdr, macroDat, macroFlags}));
       }
-      acwbm->RecordMacro(macroIdx, commands);
+      if(commands.size()) acwbm->RecordMacro(macroIdx, commands);
+      else {
+        std::cerr << "Error: Could not find macro commands to add" << std::endl;
+        return -1;
+      }  
       acwbm->setEnable(true);
     }
     else if (destroy_sink)

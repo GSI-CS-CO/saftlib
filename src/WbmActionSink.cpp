@@ -31,7 +31,6 @@
 
 #include <cassert>
 #include <sstream>
-#include <fstream>
 #include <memory>
 
 namespace saftlib {
@@ -59,31 +58,14 @@ void WbmActionSink::ExecuteMacro(uint32_t idx) {
   device.write(acwbm + SLAVE_EXEC_OWR, EB_DATA32, data);
 }
 
-void WbmActionSink::ReadMacroFile(const std::string& fn, std::vector<WbmActionCmd>& commands) {
-  std::ifstream infile(fn);
-  std::string line;
-
-  if (!infile.is_open()) {
-      std::cerr << "Error: Could not open file " << fn << std::endl;
-      return;
-  }
-
-  while (std::getline(infile, line)) {
-    std::istringstream iss(line);
-    uint32_t adr, data, flags;
-
-    if (!(iss >> std::ws >> std::hex >> adr >> std::hex >> data >> std::hex >> flags)) {
-        std::cerr << "Warning: Skipping malformed line: " << line << std::endl;
-        continue;
-    }
-      
-    commands.push_back(WbmActionCmd({adr, data, flags}));
-  }
-
-  
-}
-
 void WbmActionSink::RecordMacro(uint32_t idx, std::vector<WbmActionCmd> commands) {
+  
+  for(unsigned cmd_idx = 0; cmd_idx < commands.size(); cmd_idx++) {
+    std::cerr << "Adr " << std::hex << commands[cmd_idx].adr << std::endl;
+    std::cerr << "Dat " << std::hex << commands[cmd_idx].data << std::endl;
+    std::cerr << "Flg " << std::hex << commands[cmd_idx].flags << std::endl;
+  }
+
   etherbone::Cycle cycle;
   cycle.open(device);
   cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, (eb_data_t) idx); // start recording

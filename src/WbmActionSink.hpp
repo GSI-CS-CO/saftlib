@@ -103,10 +103,6 @@ class WbmActionSink : public ActionSink {
 	    // Property setters
 	    // @saftbus-export
 	    void setEnable(bool val);
-	    // @saftbus-export
-	    void ReadMacroFile(const std::string& fn, std::vector<WbmActionCmd>& commands);
-			
-		
 
 	protected:
 		etherbone::Device &device;

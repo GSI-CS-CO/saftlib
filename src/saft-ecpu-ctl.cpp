@@ -49,7 +49,7 @@ static void ecpu_help (void)
   std::cout << "  -d:                            Disown the created condition" << std::endl;
   std::cout << "  -g                             Negative offset (new condition)" << std::endl;
   std::cout << "  -x:                            Destroy all unowned conditions" << std::endl;
-  std::cout << "  -z                             Translate mask" << std::endl;
+  std::cout << "  -z                             Translate mask, e.g. '16' -> '0xffff00000000'" << std::endl;
   std::cout << "  -l                             List conditions" << std::endl;
   std::cout << "  -h:                            Print help (this message)" << std::endl;
   std::cout << "  -v:                            Switch to verbose mode" << std::endl;
@@ -138,9 +138,11 @@ int main (int argc, char** argv)
   /* List parameters */
   if (verbose_mode && create_sink)
   {
+    uint64_t mask = translate_mask ? tr_mask(eventMask) : eventMask;
+    
     std::cout << "Action sink/condition parameters:" << std::endl;
     std::cout << std::hex << "EventID:   0x" << eventID   << std::dec << " (" << eventID   << ")" << std::endl;
-    std::cout << std::hex << "EventMask: 0x" << eventMask << std::dec << " (" << eventMask << ")" << std::endl;
+    std::cout << std::hex << "EventMask: 0x" << mask      << std::dec << " (" << mask      << ")" << std::endl;
     std::cout << std::hex << "Offset:    0x" << offset    << std::dec << " (" << offset    << ")" << std::endl;
     std::cout << std::hex << "Tag:       0x" << tag       << std::dec << " (" << tag       << ")" << std::endl;
   }
