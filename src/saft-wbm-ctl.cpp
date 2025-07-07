@@ -274,7 +274,7 @@ int main (int argc, char** argv)
     }
     else if (record_macro) 
     {
-      acwbm->setEnable(false);
+
       std::vector<WbmActionCmd> commands;
       if (macro_file) {
         std::ifstream infile(filename);
@@ -284,7 +284,6 @@ int main (int argc, char** argv)
         }
 
         std::string line;
-
         while (std::getline(infile, line)) {
           std::istringstream iss(line);
           uint32_t adr, data, flags;
@@ -298,12 +297,21 @@ int main (int argc, char** argv)
       } else {
         commands.push_back(WbmActionCmd({macroAdr, macroDat, macroFlags}));
       }
-      if(commands.size()) acwbm->RecordMacro(macroIdx, commands);
-      else {
+
+      if(commands.size() > 0) {
+        if(verbose_mode) {
+            std::cout << "Adding Macro at index " << macroIdx << ":" << std::endl;
+            for(auto it : commands) {
+              std::cout << "Adr 0x" << std::hex << it.adr << " Dat 0x" << it.data << " Flg 0x" << it.flags << std::endl;
+            }
+        }
+        acwbm->setEnable(false);
+        acwbm->RecordMacro(macroIdx, commands);
+        acwbm->setEnable(true);
+      } else {
         std::cerr << "Error: Could not find macro commands to add" << std::endl;
         return -1;
       }  
-      acwbm->setEnable(true);
     }
     else if (destroy_sink)
     {
