@@ -72,6 +72,26 @@ bool UTCleap        = false;
 #define FID      0x1
 
 
+// helper function
+uint32_t gid_to_index(uint32_t gid)
+{
+  uint32_t index;
+
+  switch (gid) {
+    case QR : index = 0; break;
+    case QL : index = 1; break;
+    case QN : index = 2; break;
+    case HLI: index = 3; break;
+    case HSI: index = 4; break;
+    case AT : index = 5; break;
+    case TK : index = 6; break;
+    default : index = 0; break;
+  } // switch
+
+  return index;
+} // gid_to_index
+
+
 // this will be called, in case we are snooping for events
 static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
 {
@@ -267,7 +287,7 @@ static void on_action_uni_vacc(uint64_t id, uint64_t param, saftlib::Time deadli
   if (vacc >= NVACC)            return;                // illegal vacc?
   if ((gid < QR) || (gid > TK)) return;                // illegal gid?
 
-  (nExe[gid - QR][vacc])++;                            // increase run counter
+  (nExe[gid_to_index(gid)][vacc])++;                   // increase run counter
   // set flags ...
   if ((flagsPZ  & 0x2) != 0) flagRigid[vacc]     = 1;
   if ((flagsPZ  & 0x4) != 0) flagNoBeam[vacc]    = 1;
