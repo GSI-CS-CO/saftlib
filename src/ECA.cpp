@@ -50,23 +50,36 @@
 #include "fg_regs.h"
 #include "ats_regs.h"
 
-
+/* Namespace */
+/* ==================================================================================================== */
 namespace saftlib {
 
+
+/* Global */
+/* ==================================================================================================== */
+
+
+/* Prototypes */
+/* ==================================================================================================== */
+
+void ECA::probeConfiguration();
+void ECA::prepareChannels();
 
 uint16_t ECA::updateMostFull(unsigned channel);
 void ECA::resetMostFull(unsigned channel);
 void ECA::popMissingQueue(unsigned channel, unsigned num);
-void ECA::probeConfiguration();
-void ECA::prepareChannels();
 void ECA::msiHandler(eb_data_t msi, unsigned channel);
 void ECA::setHandler(unsigned channel, bool enable, eb_address_t address);
 void ECA::ToggleActive();
 void ECA::InactivateAll();
 void ECA::compile();
 void attach_io_control(const IoControl &io_control);
+uint16_t ECA::getMostFull(int channel);
+const std::string &ECA::get_object_path();
+static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b);
 
-
+/* Structs */
+/* ==================================================================================================== */
 struct ECA_OpenClose {
 	uint64_t  key;    // open?first:last
 	bool     open;
@@ -77,7 +90,6 @@ struct ECA_OpenClose {
 	unsigned channel;
 	unsigned num;
 };
-
 
 struct SearchEntry {
 	uint64_t event;
@@ -97,20 +109,50 @@ struct WalkEntry {
 };
 
 
-// Using this heuristic, perfect containment never duplicates walk records
-static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
+/* Function ECA() */
+/* ==================================================================================================== */
+ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saftbus::Container *cont)
+	: MsiDevice(dev, ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID)
+	, object_path(obj_path)
+	, container(cont)
+	, sas_count(0)
 {
-	if (a.key < b.key) return true;
-	if (a.key > b.key) return false;
-	if (!a.open && b.open) return true; // close first
-	if (a.open && !b.open) return false;
-	if (a.subkey > b.subkey) return true; // open largest first, close smallest first
-	if (a.subkey < b.subkey) return false;
-	// order does not matter (popping does not depend on content)
-	return false;
+	std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
+	probeConfiguration();
+	compile(); // remove old rules
+	prepareChannels();
+
+	for (unsigned channel_idx = 0; channel_idx < channels; ++channel_idx) {
+		channel_irqs.push_back(saftd.request_irq(*this, std::bind(&ECA::msiHandler, this, std::placeholders::_1, channel_idx) ) );
+		setHandler(channel_idx, true, channel_irqs.back()->address());
+	}
 }
 
+/* Function ~ECA() */
+/* ==================================================================================================== */
+ECA::~ECA() 
+{
+	// std::cerr << "ECA::~ECA()" << std::endl;
+	if (container) {
+		for (auto &channel: ECAchannels) {
+			for (auto &actionSink: channel) {
+				if (actionSink) {
+					actionSink->Owned::Destroyed.emit();
+					actionSink->Owned::release_service();
+					// std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
+					try {
+						container->remove_object(actionSink->getObjectPath());
+					} catch (saftbus::Error &e) {
+						// std::cerr << "removal attempt failed: " << e.what() << std::endl;
+					}
+				}
+			}
+		}
+	}
+}
 
+/* Functions used in initialisation */
+/* ==================================================================================================== */
 void ECA::probeConfiguration() 
 {
 	// Probe the configuration of the ECA
@@ -136,6 +178,139 @@ void ECA::probeConfiguration()
 	// Prepare local channel state
 	queue_addresses.resize(channels, 0);
 	most_full.resize(channels, 0);
+}
+
+void ECA::compile()
+{
+	// std::cerr << "ECA::compile" << std::endl;
+	// Store all active conditions into a vector for processing
+	typedef std::vector<ECA_OpenClose> ID_Space;
+	ID_Space id_space;
+
+	// Step one is to find all active conditions on all action sinks
+	for (auto &channel: ECAchannels) {
+		for (auto &actionSink: channel) {
+			if (!actionSink) {
+				continue;
+			}
+			for (auto &number_condition: actionSink->getConditions()) {
+				auto &condition = number_condition.second;
+				if (!condition->getActive()) continue;
+
+				// Memorize the condition
+				ECA_OpenClose oc;
+				oc.key     = condition->getID() &  condition->getMask();
+				oc.open    = true;
+				oc.subkey  = condition->getID() | ~condition->getMask();
+				oc.offset  = condition->getOffset();
+				oc.tag     = condition->getRawTag();
+				oc.flags   =(condition->getAcceptLate()    ?(1<<ECA_LATE)    :0) |
+										(condition->getAcceptEarly()   ?(1<<ECA_EARLY)   :0) |
+										(condition->getAcceptConflict()?(1<<ECA_CONFLICT):0) |
+										(condition->getAcceptDelayed() ?(1<<ECA_DELAYED) :0);
+				oc.channel = actionSink->getChannel();
+				oc.num     = actionSink->getNum();
+
+				// std::cerr << "compile condition on channel " << oc.channel << " num " << oc.num << std::endl;
+
+				// Push the open record
+				id_space.push_back(oc);
+
+				// Push the close record (if any)
+				if (oc.subkey != UINT64_MAX) {
+					oc.open = false;
+					std::swap(oc.key, oc.subkey);
+					++oc.key;
+					id_space.push_back(oc);
+				}
+			}
+		}
+	}
+ 
+	// Don't proceed if too many actions for the ECA
+	if (id_space.size()/2 >= max_conditions)
+		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
+	
+	// Sort it by the open/close criteria
+	std::sort(id_space.begin(), id_space.end());
+	
+	// Representation used in hardware
+	typedef std::vector<SearchEntry> Search;
+	typedef std::vector<WalkEntry> Walk;
+	Search search;
+	Walk walk;
+	int16_t next = -1;
+	uint64_t cursor = 0;
+	
+	// Special-case at zero: always push a leading record
+	if (id_space.empty() || id_space[0].key != 0)
+		search.push_back(SearchEntry(0, next));
+	
+	// Walk the remaining records and transform them to hardware!
+	unsigned i = 0;
+	while (i < id_space.size()) {
+		cursor = id_space[i].key;
+		
+		// pop the walker stack for all closes
+		while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
+			if (next == -1)
+				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
+			next = walk[next].next;
+			++i;
+		}
+		
+		// push the opens
+		while (i < id_space.size() && cursor == id_space[i].key && id_space[i].open) {
+			walk.push_back(WalkEntry(next, id_space[i]));
+			next = walk.size()-1;
+			++i;
+		}
+		
+		search.push_back(SearchEntry(cursor, next));
+	}
+	
+// #if DEBUG_COMPILE
+// 	clog << kLogDebug << "Table compilation complete!" << std::endl;
+// 	for (i = 0; i < search.size(); ++i)
+// 		clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
+// 	for (i = 0; i < walk.size(); ++i)
+// 		clog << kLogDebug << "W: " << walk[i].next << " " << walk[i].offset << " " << walk[i].tag << " " << walk[i].flags << " " << (int)walk[i].channel << " " << (int)walk[i].num << std::endl;
+// #endif
+
+	etherbone::Cycle cycle;
+	for (unsigned i = 0; i < search_size; ++i) {
+		/* Duplicate last entry to fill out the table */
+		const SearchEntry& se = (i<search.size())?search[i]:search.back();
+		
+		cycle.open(device);
+		cycle.write(adr_first + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
+		cycle.write(adr_first + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
+		cycle.write(adr_first + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
+		cycle.write(adr_first + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
+		cycle.write(adr_first + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
+		cycle.close();
+	}
+	
+	for (unsigned i = 0; i < walk.size(); ++i) {
+		const WalkEntry& we = walk[i];
+		
+		cycle.open(device);
+		cycle.write(adr_first + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
+		cycle.write(adr_first + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (uint16_t)we.next);
+		cycle.write(adr_first + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (uint64_t)we.offset >> 32); // don't sign-extend on shift
+		cycle.write(adr_first + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (uint32_t)we.offset);
+		cycle.write(adr_first + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
+		cycle.write(adr_first + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
+		cycle.write(adr_first + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
+		cycle.write(adr_first + ECA_WALKER_RW_NUM_RW,       EB_DATA32, we.num);
+		cycle.write(adr_first + ECA_WALKER_WRITE_OWR,       EB_DATA32, 1);
+		cycle.close();
+	}
+	
+	// Flip the tables
+	device.write(adr_first + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
+	
+	used_conditions = id_space.size()/2;
 }
 
 void ECA::prepareChannels()
@@ -378,138 +553,7 @@ void ECA::InactivateAll() {
 	}
 }
 
-void ECA::compile()
-{
-	// std::cerr << "ECA::compile" << std::endl;
-	// Store all active conditions into a vector for processing
-	typedef std::vector<ECA_OpenClose> ID_Space;
-	ID_Space id_space;
 
-	// Step one is to find all active conditions on all action sinks
-	for (auto &channel: ECAchannels) {
-		for (auto &actionSink: channel) {
-			if (!actionSink) {
-				continue;
-			}
-			for (auto &number_condition: actionSink->getConditions()) {
-				auto &condition = number_condition.second;
-				if (!condition->getActive()) continue;
-
-				// Memorize the condition
-				ECA_OpenClose oc;
-				oc.key     = condition->getID() &  condition->getMask();
-				oc.open    = true;
-				oc.subkey  = condition->getID() | ~condition->getMask();
-				oc.offset  = condition->getOffset();
-				oc.tag     = condition->getRawTag();
-				oc.flags   =(condition->getAcceptLate()    ?(1<<ECA_LATE)    :0) |
-										(condition->getAcceptEarly()   ?(1<<ECA_EARLY)   :0) |
-										(condition->getAcceptConflict()?(1<<ECA_CONFLICT):0) |
-										(condition->getAcceptDelayed() ?(1<<ECA_DELAYED) :0);
-				oc.channel = actionSink->getChannel();
-				oc.num     = actionSink->getNum();
-
-				// std::cerr << "compile condition on channel " << oc.channel << " num " << oc.num << std::endl;
-
-				// Push the open record
-				id_space.push_back(oc);
-
-				// Push the close record (if any)
-				if (oc.subkey != UINT64_MAX) {
-					oc.open = false;
-					std::swap(oc.key, oc.subkey);
-					++oc.key;
-					id_space.push_back(oc);
-				}
-			}
-		}
-	}
- 
-	// Don't proceed if too many actions for the ECA
-	if (id_space.size()/2 >= max_conditions)
-		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Too many active conditions for hardware");
-	
-	// Sort it by the open/close criteria
-	std::sort(id_space.begin(), id_space.end());
-	
-	// Representation used in hardware
-	typedef std::vector<SearchEntry> Search;
-	typedef std::vector<WalkEntry> Walk;
-	Search search;
-	Walk walk;
-	int16_t next = -1;
-	uint64_t cursor = 0;
-	
-	// Special-case at zero: always push a leading record
-	if (id_space.empty() || id_space[0].key != 0)
-		search.push_back(SearchEntry(0, next));
-	
-	// Walk the remaining records and transform them to hardware!
-	unsigned i = 0;
-	while (i < id_space.size()) {
-		cursor = id_space[i].key;
-		
-		// pop the walker stack for all closes
-		while (i < id_space.size() && cursor == id_space[i].key && !id_space[i].open) {
-			if (next == -1)
-				throw saftbus::Error(saftbus::Error::INVALID_ARGS, "TimingReceiver: Impossible mismatched open/close");
-			next = walk[next].next;
-			++i;
-		}
-		
-		// push the opens
-		while (i < id_space.size() && cursor == id_space[i].key && id_space[i].open) {
-			walk.push_back(WalkEntry(next, id_space[i]));
-			next = walk.size()-1;
-			++i;
-		}
-		
-		search.push_back(SearchEntry(cursor, next));
-	}
-	
-// #if DEBUG_COMPILE
-// 	clog << kLogDebug << "Table compilation complete!" << std::endl;
-// 	for (i = 0; i < search.size(); ++i)
-// 		clog << kLogDebug << "S: " << search[i].event << " " << search[i].index << std::endl;
-// 	for (i = 0; i < walk.size(); ++i)
-// 		clog << kLogDebug << "W: " << walk[i].next << " " << walk[i].offset << " " << walk[i].tag << " " << walk[i].flags << " " << (int)walk[i].channel << " " << (int)walk[i].num << std::endl;
-// #endif
-
-	etherbone::Cycle cycle;
-	for (unsigned i = 0; i < search_size; ++i) {
-		/* Duplicate last entry to fill out the table */
-		const SearchEntry& se = (i<search.size())?search[i]:search.back();
-		
-		cycle.open(device);
-		cycle.write(adr_first + ECA_SEARCH_SELECT_RW,      EB_DATA32, i);
-		cycle.write(adr_first + ECA_SEARCH_RW_FIRST_RW,    EB_DATA32, (uint16_t)se.index);
-		cycle.write(adr_first + ECA_SEARCH_RW_EVENT_HI_RW, EB_DATA32, se.event >> 32);
-		cycle.write(adr_first + ECA_SEARCH_RW_EVENT_LO_RW, EB_DATA32, (uint32_t)se.event);
-		cycle.write(adr_first + ECA_SEARCH_WRITE_OWR,      EB_DATA32, 1);
-		cycle.close();
-	}
-	
-	for (unsigned i = 0; i < walk.size(); ++i) {
-		const WalkEntry& we = walk[i];
-		
-		cycle.open(device);
-		cycle.write(adr_first + ECA_WALKER_SELECT_RW,       EB_DATA32, i);
-		cycle.write(adr_first + ECA_WALKER_RW_NEXT_RW,      EB_DATA32, (uint16_t)we.next);
-		cycle.write(adr_first + ECA_WALKER_RW_OFFSET_HI_RW, EB_DATA32, (uint64_t)we.offset >> 32); // don't sign-extend on shift
-		cycle.write(adr_first + ECA_WALKER_RW_OFFSET_LO_RW, EB_DATA32, (uint32_t)we.offset);
-		cycle.write(adr_first + ECA_WALKER_RW_TAG_RW,       EB_DATA32, we.tag);
-		cycle.write(adr_first + ECA_WALKER_RW_FLAGS_RW,     EB_DATA32, we.flags);
-		cycle.write(adr_first + ECA_WALKER_RW_CHANNEL_RW,   EB_DATA32, we.channel);
-		cycle.write(adr_first + ECA_WALKER_RW_NUM_RW,       EB_DATA32, we.num);
-		cycle.write(adr_first + ECA_WALKER_WRITE_OWR,       EB_DATA32, 1);
-		cycle.close();
-	}
-	
-	// Flip the tables
-	device.write(adr_first + ECA_FLIP_ACTIVE_OWR, EB_DATA32, 1);
-	
-	used_conditions = id_space.size()/2;
-}
 
 
 
