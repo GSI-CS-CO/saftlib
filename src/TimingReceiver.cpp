@@ -60,7 +60,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
 {
-	// std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
+	std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
 
 	if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");

@@ -54,57 +54,61 @@
 namespace saftlib {
 
 
-uint16_t ECA::updateMostFull(unsigned channel)
+uint16_t ECA::updateMostFull(unsigned channel);
+void ECA::resetMostFull(unsigned channel);
+void ECA::popMissingQueue(unsigned channel, unsigned num);
+void ECA::probeConfiguration();
+void ECA::prepareChannels();
+void ECA::msiHandler(eb_data_t msi, unsigned channel);
+void ECA::setHandler(unsigned channel, bool enable, eb_address_t address);
+void ECA::ToggleActive();
+void ECA::InactivateAll();
+void ECA::compile();
+void attach_io_control(const IoControl &io_control);
+
+
+struct ECA_OpenClose {
+	uint64_t  key;    // open?first:last
+	bool     open;
+	uint64_t  subkey; // open?last:first
+	int64_t   offset;
+	uint32_t  tag;
+	uint8_t   flags;
+	unsigned channel;
+	unsigned num;
+};
+
+
+struct SearchEntry {
+	uint64_t event;
+	int16_t  index;
+	SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
+};
+
+struct WalkEntry {
+	int16_t   next;
+	int64_t   offset;
+	uint32_t  tag;
+	uint8_t   flags;
+	unsigned channel;
+	unsigned num;
+	WalkEntry(int16_t n, const ECA_OpenClose& oc) : next(n), 
+	offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
+};
+
+
+// Using this heuristic, perfect containment never duplicates walk records
+static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
 {
-	if (channel >= most_full.size()) return 0;
-
-	etherbone::Cycle cycle;
-	eb_data_t raw;
-
-	cycle.open(device);
-	cycle.write(adr_first + ECA_CHANNEL_SELECT_RW,        EB_DATA32, channel);
-	cycle.read (adr_first + ECA_CHANNEL_MOSTFULL_ACK_GET, EB_DATA32, &raw);
-	cycle.close();
-
-	uint16_t mostFull = raw & 0xFFFF;
-	uint16_t used     = raw >> 16;
-
-	if (most_full[channel] != mostFull) {
-		most_full[channel] = mostFull;
-	}
-
-	return used;
+	if (a.key < b.key) return true;
+	if (a.key > b.key) return false;
+	if (!a.open && b.open) return true; // close first
+	if (a.open && !b.open) return false;
+	if (a.subkey > b.subkey) return true; // open largest first, close smallest first
+	if (a.subkey < b.subkey) return false;
+	// order does not matter (popping does not depend on content)
+	return false;
 }
-
-void ECA::resetMostFull(unsigned channel)
-{
-	if (channel >= most_full.size()) return;
-
-	etherbone::Cycle cycle;
-	eb_data_t null;
-
-	cycle.open(device);
-	cycle.write(adr_first + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
-	cycle.read (adr_first + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
-	cycle.close();
-}
-
-void ECA::popMissingQueue(unsigned channel, unsigned num)
-{
-	etherbone::Cycle cycle;
-	eb_data_t nill;
-
-	// First, rearm the MSI
-	cycle.open(device);
-	device.write(adr_first + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
-	device.write(adr_first + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
-	device.read (adr_first + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
-	cycle.close();
-	// Then pop the ignored record
-	device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
-}
-
-
 
 
 void ECA::probeConfiguration() 
@@ -114,8 +118,11 @@ void ECA::probeConfiguration()
 	etherbone::Cycle cycle;
 	cycle.open(device);
 	cycle.read(adr_first + ECA_CHANNELS_GET,        EB_DATA32, &raw_channels);
+	std::cerr << "ECA::probeConfiguration() raw_channels " << raw_channels << std::endl;
 	cycle.read(adr_first + ECA_SEARCH_CAPACITY_GET, EB_DATA32, &raw_search);
+	std::cerr << "ECA::probeConfiguration() raw_search " << raw_search << std::endl;
 	cycle.read(adr_first + ECA_WALKER_CAPACITY_GET, EB_DATA32, &raw_walker);
+	std::cerr << "ECA::probeConfiguration() raw_walker " << raw_walker << std::endl;
 	cycle.close();
 
 	// Initilize members
@@ -297,48 +304,6 @@ void ECA::setHandler(unsigned channel, bool enable, eb_address_t address)
 	// clog << kLogDebug << "TimingReceiver: registered irq 0x" << std::hex << address << std::endl;
 }
 
-
-
-struct ECA_OpenClose {
-	uint64_t  key;    // open?first:last
-	bool     open;
-	uint64_t  subkey; // open?last:first
-	int64_t   offset;
-	uint32_t  tag;
-	uint8_t   flags;
-	unsigned channel;
-	unsigned num;
-};
-
-// Using this heuristic, perfect containment never duplicates walk records
-static bool operator < (const ECA_OpenClose& a, const ECA_OpenClose& b)
-{
-	if (a.key < b.key) return true;
-	if (a.key > b.key) return false;
-	if (!a.open && b.open) return true; // close first
-	if (a.open && !b.open) return false;
-	if (a.subkey > b.subkey) return true; // open largest first, close smallest first
-	if (a.subkey < b.subkey) return false;
-	// order does not matter (popping does not depend on content)
-	return false;
-}
-
-struct SearchEntry {
-	uint64_t event;
-	int16_t  index;
-	SearchEntry(uint64_t e, int16_t i) : event(e), index(i) { }
-};
-
-struct WalkEntry {
-	int16_t   next;
-	int64_t   offset;
-	uint32_t  tag;
-	uint8_t   flags;
-	unsigned channel;
-	unsigned num;
-	WalkEntry(int16_t n, const ECA_OpenClose& oc) : next(n), 
-	offset(oc.offset), tag(oc.tag), flags(oc.flags), channel(oc.channel), num(oc.num) { }
-};
 
 void ECA::ToggleActive()
 {
@@ -578,7 +543,7 @@ ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saft
 	, container(cont)
 	, sas_count(0)
 {
-	// std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
+	std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
 	probeConfiguration();
 	compile(); // remove old rules
 	prepareChannels();
@@ -805,5 +770,57 @@ uint32_t ECA::getFree() const
 }
 
 
-} // namespace
 
+
+uint16_t ECA::updateMostFull(unsigned channel)
+{
+	if (channel >= most_full.size()) return 0;
+
+	etherbone::Cycle cycle;
+	eb_data_t raw;
+
+	cycle.open(device);
+	cycle.write(adr_first + ECA_CHANNEL_SELECT_RW,        EB_DATA32, channel);
+	cycle.read (adr_first + ECA_CHANNEL_MOSTFULL_ACK_GET, EB_DATA32, &raw);
+	cycle.close();
+
+	uint16_t mostFull = raw & 0xFFFF;
+	uint16_t used     = raw >> 16;
+
+	if (most_full[channel] != mostFull) {
+		most_full[channel] = mostFull;
+	}
+
+	return used;
+}
+
+void ECA::resetMostFull(unsigned channel)
+{
+	if (channel >= most_full.size()) return;
+
+	etherbone::Cycle cycle;
+	eb_data_t null;
+
+	cycle.open(device);
+	cycle.write(adr_first + ECA_CHANNEL_SELECT_RW,          EB_DATA32, channel);
+	cycle.read (adr_first + ECA_CHANNEL_MOSTFULL_CLEAR_GET, EB_DATA32, &null);
+	cycle.close();
+}
+
+void ECA::popMissingQueue(unsigned channel, unsigned num)
+{
+	etherbone::Cycle cycle;
+	eb_data_t nill;
+
+	// First, rearm the MSI
+	cycle.open(device);
+	device.write(adr_first + ECA_CHANNEL_SELECT_RW,       EB_DATA32, channel);
+	device.write(adr_first + ECA_CHANNEL_NUM_SELECT_RW,   EB_DATA32, num);
+	device.read (adr_first + ECA_CHANNEL_VALID_COUNT_GET, EB_DATA32, &nill);
+	cycle.close();
+	// Then pop the ignored record
+	device.write(queue_addresses[channel] + ECA_QUEUE_POP_OWR, EB_DATA32, 1);
+}
+
+
+} // namespace
