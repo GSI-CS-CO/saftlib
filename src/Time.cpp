@@ -144,6 +144,8 @@ namespace saftlib
 
 	int64_t leap_second_epoch(int n)
 	{
+		// Ensure initialization has occurred (either eager from server or lazy from client)
+		init();
 		if (leap_second_vector[n][0] == -1) {
 			return -1;
 		}
@@ -162,6 +164,8 @@ namespace saftlib
 	}
 	int64_t leap_second_offset(int n) 
 	{
+		// Ensure initialization has occurred (either eager from server or lazy from client)
+		init();
 		return leap_second_vector[n][1];
 	}
 
