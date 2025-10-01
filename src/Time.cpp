@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <exception>
+#include <mutex>
 
 namespace saftlib
 {
@@ -71,12 +72,10 @@ namespace saftlib
 	};
 
 	std::vector<std::array<int64_t, 2> > leap_second_vector;
+	std::once_flag leap_second_init_flag;
 
-	void init(const char* leap_second_list_filename)
+	void init_internal(const char* leap_second_list_filename)
 	{
-		if (!leap_second_vector.empty()) {
-			return;
-		}
 		if (leap_second_list_filename == nullptr) {
 			// no filename given
 			const char * default_filename = DATADIR "/leap-seconds.list";
@@ -137,12 +136,14 @@ namespace saftlib
 		}
 	}
 
+	void init(const char* leap_second_list_filename)
+	{
+		std::call_once(leap_second_init_flag, init_internal, leap_second_list_filename);
+	}
+
 
 	int64_t leap_second_epoch(int n)
 	{
-		if (leap_second_vector.empty()) {
-			init();
-		}
 		if (leap_second_vector[n][0] == -1) {
 			return -1;
 		}
@@ -161,9 +162,6 @@ namespace saftlib
 	}
 	int64_t leap_second_offset(int n) 
 	{
-		if (leap_second_vector.empty()) {
-			init();
-		}
 		return leap_second_vector[n][1];
 	}
 

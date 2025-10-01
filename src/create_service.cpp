@@ -21,6 +21,7 @@
 
 #include "SAFTd.hpp"
 #include "SAFTd_Service.hpp"
+#include "Time.hpp"
 
 #include <memory>
 #include <vector>
@@ -102,6 +103,10 @@ void create_services(saftbus::Container *container, const std::vector<std::strin
 	if (saftd) {
 		throw std::runtime_error("service alreayd exists");
 	}
+
+	// Initialize leap second list eagerly and thread-safely before any timing services are created
+	// This ensures consistent performance for time requests and catches configuration errors early
+	saftlib::init();
 
 	saftd = std::unique_ptr<saftlib::SAFTd>(new saftlib::SAFTd(container));
 	// create a new Service and return it. Maintain a reference count
