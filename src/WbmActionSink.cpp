@@ -57,23 +57,30 @@ void WbmActionSink::ExecuteMacro(uint32_t idx) {
   eb_data_t data = idx;
   device.write(acwbm + SLAVE_EXEC_OWR, EB_DATA32, data);
 }
-void WbmActionSink::RecordMacro(uint32_t idx, const std::vector< std::vector< uint32_t > >& commands) {
-  etherbone::Cycle cycle;
-  cycle.open(device);
-  for(unsigned cmd_idx = 0; cmd_idx < commands.size(); ++cmd_idx) {
-    if (commands[cmd_idx].size() != 3) {
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS, "each command must consist of exactly three words");
-    }
-    eb_data_t data = idx;
-    cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, data); // start recording
-    for (unsigned elm_idx = 0; elm_idx < 3; ++elm_idx) {
-      data = commands[cmd_idx][elm_idx];
-      cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, data);
-    }
-    cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, data); // stop recording
+
+void WbmActionSink::RecordMacro(uint32_t idx, const std::vector<WbmActionCmd>& commands) {
+  
+  try {  device.write(acwbm + SLAVE_REC_OWR, EB_DATA32, (eb_data_t) idx); /* start recording */ }
+  catch (etherbone::exception_t e)
+  { throw saftbus::Error(
+      saftbus::Error::INVALID_ARGS,
+      (std::ostringstream() << "Recording failed. Macro idx '" << idx << "' is occupied or wbm-as out of macro memory. Choose a free index or delete macro(s)").str()
+    );
   }
+
+  etherbone::Cycle cycle;
+  
+  cycle.open(device);
+  for(unsigned cmd_idx = 0; cmd_idx < commands.size(); cmd_idx++) {
+    cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, (eb_data_t)commands[cmd_idx].adr);
+    cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, (eb_data_t)commands[cmd_idx].data);
+    cycle.write(acwbm + SLAVE_REC_FIFO_OWR, EB_DATA32, (eb_data_t)commands[cmd_idx].flags);
+  }
+
+  cycle.write(acwbm + SLAVE_REC_OWR, EB_DATA32, (eb_data_t) idx); // stop recording
   cycle.close();
 }
+
 void WbmActionSink::ClearMacro(uint32_t idx) {
   eb_data_t data = idx;
   device.write(acwbm + SLAVE_CLEAR_IDX_OWR, EB_DATA32, data);

@@ -31,7 +31,13 @@
 
 #include "ActionSink.hpp"
 
+// @saftbus-export
+#include "WbmActionCmd.hpp"
+
 namespace saftlib {
+
+
+
 
 /// de.gsi.saftlib.WbmActionSink:
 /// @brief An output through which Wbm actions flow.
@@ -66,39 +72,46 @@ class WbmActionSink : public ActionSink {
 		/// to determine the timestamp when the matching condition fires its
 		/// action.  The returned object path is a SCUBUSCondition object.
 		///
+
+		
+
 		// @saftbus-export
 		std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag);
 
     
-    // @saftbus-export
-    void ExecuteMacro(uint32_t idx);
-    // @saftbus-export
-    void RecordMacro(uint32_t idx, const std::vector< std::vector< uint32_t > >& commands);
-    // @saftbus-export
-    void ClearMacro(uint32_t idx);
-    // @saftbus-export
-    void ClearAllMacros();
-    // Property getters
-    // @saftbus-export
-    unsigned char getStatus() const;
-    // @saftbus-export
-    uint32_t getMaxMacros() const;
-    // @saftbus-export
-    uint32_t getMaxSpace() const;
-    // @saftbus-export
-    bool getEnable() const;
-    // @saftbus-export
-    uint32_t getLastExecutedIdx() const;
-    // @saftbus-export
-    uint32_t getLastRecordedIdx() const;
-    // Property setters
-    // @saftbus-export
-    void setEnable(bool val);
-		
+	    // @saftbus-export
+	    void ExecuteMacro(uint32_t idx);
+	    // @saftbus-export
+	    void RecordMacro(uint32_t idx, const std::vector<WbmActionCmd>& commands);
+	    // @saftbus-export
+	    void ClearMacro(uint32_t idx);
+	    // @saftbus-export
+	    void ClearAllMacros();
+	    // Property getters
+	    // @saftbus-export
+	    unsigned char getStatus() const;
+	    // @saftbus-export
+	    uint32_t getMaxMacros() const;
+	    // @saftbus-export
+	    uint32_t getMaxSpace() const;
+	    // @saftbus-export
+	    bool getEnable() const;
+	    // @saftbus-export
+	    uint32_t getLastExecutedIdx() const;
+	    // @saftbus-export
+	    uint32_t getLastRecordedIdx() const;
+	    // Property setters
+	    // @saftbus-export
+	    void setEnable(bool val);
+
 	protected:
 		etherbone::Device &device;
 		eb_address_t acwbm;
+
+	
 };
+
+
 
 }
 

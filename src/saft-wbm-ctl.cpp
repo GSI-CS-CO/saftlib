@@ -11,6 +11,7 @@
 /* ==================================================================================================== */
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <unistd.h>
 
 #include "interfaces/SAFTd.h"
@@ -51,7 +52,8 @@ static void wbm_help (void)
   std::cout << "  -g                             Negative offset (new condition)" << std::endl;
   std::cout << "  -x:                            Destroy all unowned conditions and delete all macros" << std::endl;
   std::cout << "  -r <idx> <adr> <data> <flags>: Record a new macro at index idx" << std::endl;
-  std::cout << "  -z                             Translate mask" << std::endl;
+  std::cout << "  -f <idx> <filename>:           Record a new macro at index idx from file fn" << std::endl;
+  std::cout << "  -z                             Translate mask, e.g. '16' -> '0xffff00000000'" << std::endl;
   std::cout << "  -l                             List conditions" << std::endl;
   std::cout << "  -h:                            Print help (this message)" << std::endl;
   std::cout << "  -v:                            Switch to verbose mode" << std::endl;
@@ -63,7 +65,21 @@ static void wbm_help (void)
   std::cout << program << " tr0 " << "-r 3 0x4060500 0 0x2f"<< std::endl;
   std::cout << "  This records a macro at index 3 where the hi-part of eventID will be written to addr 0x4060500" << std::endl;
   std::cout << std::endl;
-  std::cout << "  <flags> is an integer bitfield: cddddssss" << std::endl;
+  std::cout << program << " tr0 " << "-f 3 <macro file>"<< std::endl;
+  std::cout << "macro:" << std::endl;
+  std::cout << "(line format:  <adr> <data> <flags>\\n):" << std::endl;
+  std::cout << "  0x4060500 0 0x4f" << std::endl;
+  std::cout << "  0x4060504 0 0x5f" << std::endl;
+  std::cout << "  This records a macro at index 3 where hi- and low-word of 64b parameter are written to addr 0x4060500 onwards" << std::endl;
+  std::cout << std::endl;
+  std::cout << "macro:" << std::endl;
+  std::cout << "  0x4060500 0 0x04f" << std::endl;
+  std::cout << "  0x4060504 0 0x15f" << std::endl;
+  std::cout << "  0x0200000 0 0x02f" << std::endl;
+  std::cout << "  0x0200004 0 0x03f" << std::endl;
+  std::cout << "  This records a macro where parameter and ID are copied to 2 different bus devices. Cycle drop bit is necessary" << std::endl;
+  std::cout << std::endl;
+  std::cout << "<flags> is an integer bitfield: cddddssss" << std::endl;
   std::cout << "          c is the drop-cycle bit" << std::endl;
   std::cout << "          d is the data source:" << std::endl;
   std::cout << "                0x0 = data field from record" << std::endl;
@@ -92,6 +108,7 @@ int main (int argc, char** argv)
   char *pEnd           = NULL;
   bool create_sink     = false;
   bool record_macro    = false;
+  bool macro_file      = false;
   bool disown_sink     = false;
   bool destroy_sink    = false;
   bool verbose_mode    = false;
@@ -110,12 +127,13 @@ int main (int argc, char** argv)
 
   std::string acwbm  = "None";
   std::string e_sink = "Unknown";
+  std::string filename;
   
   /* Get the application name */
   program = argv[0]; 
   
   /* Parse arguments */
-  while ((opt = getopt(argc, argv, "c:r:dgxzlvh")) != -1)
+  while ((opt = getopt(argc, argv, "c:f:r:dgxzlvh")) != -1)
   {
     switch (opt)
     {
@@ -132,17 +150,27 @@ int main (int argc, char** argv)
         else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
         break;
       }
+
       case 'r': 
       { 
         record_macro = true;
-        if (argv[optind-1] != NULL) { macroIdx = strtoull(argv[optind-1], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event id!" << std::endl; return (-1); }
+        if (argv[optind-1] != NULL) { macroIdx  = strtoull(argv[optind-1], &pEnd, 0); }
+        else                        { std::cerr << "Error: Missing macro idx!" << std::endl;      return (-1); }
         if (argv[optind+0] != NULL) { macroAdr = strtoull(argv[optind+0], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event mask!" << std::endl; return (-1); }
+        else                        { std::cerr << "Error: Missing macro address!" << std::endl;  return (-1); }
         if (argv[optind+1] != NULL) { macroDat = strtoull(argv[optind+1], &pEnd, 0);}
-        else                        { std::cerr << "Error: Missing offset!" << std::endl; return (-1); }
+        else                        { std::cerr << "Error: Missing macro data!" << std::endl;     return (-1); }
         if (argv[optind+2] != NULL) { macroFlags = strtoul(argv[optind+2], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
+        else                        { std::cerr << "Error: Missing macro flags!" << std::endl;    return (-1); }
+        break;
+      }
+      case 'f': { 
+        macro_file = true;
+        record_macro = true;
+        if (argv[optind-1] != NULL) { macroIdx = strtoull(argv[optind-1], &pEnd, 0); }
+        else                        { std::cerr << "Error: Missing macro idx!" << std::endl; return (-1); }
+        if (argv[optind+0] != NULL) { filename = argv[optind+0]; }
+        else                        { std::cerr << "Error: Missing macro file!" << std::endl; return (-1); }
         break;
       }
       case 'd': { disown_sink     = true; break; }
@@ -161,7 +189,7 @@ int main (int argc, char** argv)
   if (negative_offset)  { offset = -offset; }
 
   /* Plausibility check for arguments */
-  if ((create_sink || disown_sink) && destroy_sink)
+  if (((create_sink || disown_sink) && destroy_sink))
   {
     show_help = true;
     std::cerr << "Incorrect arguments!" << std::endl;
@@ -177,9 +205,10 @@ int main (int argc, char** argv)
   /* List parameters */
   if (verbose_mode && create_sink)
   {
+    uint64_t mask = translate_mask ? tr_mask(eventMask) : eventMask;
     std::cout << "Action sink/condition parameters:" << std::endl;
     std::cout << std::hex << "EventID:   0x" << eventID   << std::dec << " (" << eventID   << ")" << std::endl;
-    std::cout << std::hex << "EventMask: 0x" << eventMask << std::dec << " (" << eventMask << ")" << std::endl;
+    std::cout << std::hex << "EventMask: 0x" << mask      << std::dec << " (" << mask      << ")" << std::endl;
     std::cout << std::hex << "Offset:    0x" << offset    << std::dec << " (" << offset    << ")" << std::endl;
     std::cout << std::hex << "Tag:       0x" << tag       << std::dec << " (" << tag       << ")" << std::endl;
   }
@@ -221,8 +250,8 @@ int main (int argc, char** argv)
     {
       /* Setup Condition */
       std::shared_ptr<WbmCondition_Proxy> condition;
-      if (translate_mask) { condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
-      else                { condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, eventMask, offset, tag)); }
+      if (translate_mask) {condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
+      else                {condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, eventMask, offset, tag)); }
       
       /* Accept every kind of event */
       condition->setAcceptConflict(true);
@@ -247,14 +276,44 @@ int main (int argc, char** argv)
     }
     else if (record_macro) 
     {
-      acwbm->setEnable(false);
-      std::vector<std::vector<uint32_t> > commands;
-      commands.push_back(std::vector<uint32_t>(3));
-      commands[0][0] = macroAdr;
-      commands[0][1] = macroDat;
-      commands[0][2] = macroFlags;
-      acwbm->RecordMacro(macroIdx, commands);
-      acwbm->setEnable(true);
+
+      std::vector<WbmActionCmd> commands;
+      if (macro_file) {
+        std::ifstream infile(filename);
+        if (!infile.is_open()) {
+          std::cerr << "Error: Could not open file " << filename << std::endl;
+          return -1;
+        }
+
+        std::string line;
+        while (std::getline(infile, line)) {
+          std::istringstream iss(line);
+          uint32_t adr, data, flags;
+
+          if (!(iss >> std::ws >> std::hex >> adr >> std::hex >> data >> std::hex >> flags)) {
+              std::cerr << "Warning: Skipping malformed line: " << line << std::endl;
+              continue;
+          }
+          commands.push_back(WbmActionCmd({adr, data, flags}));
+        }
+      } else {
+        commands.push_back(WbmActionCmd({macroAdr, macroDat, macroFlags}));
+      }
+
+      if(commands.size() > 0) {
+        if(verbose_mode) {
+            std::cout << "Adding Macro at index " << macroIdx << ":" << std::endl;
+            for(auto it : commands) {
+              std::cout << "Adr 0x" << std::hex << it.adr << " Dat 0x" << it.data << " Flg 0x" << it.flags << std::endl;
+            }
+        }
+        acwbm->setEnable(false);
+        acwbm->RecordMacro(macroIdx, commands);
+        acwbm->setEnable(true);
+      } else {
+        std::cerr << "Error: Could not find macro commands to add" << std::endl;
+        return -1;
+      }  
     }
     else if (destroy_sink)
     {
