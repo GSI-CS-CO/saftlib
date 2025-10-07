@@ -140,6 +140,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1IRQ.html">IRQ</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents an <a class="el" href="classsaftlib_1_1IRQ.html" title="Represents an IRQ that is managed by saftlib.">IRQ</a> that is managed by saftlib.  <a href="classsaftlib_1_1IRQ.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsaftlib_1_1LeapSecond.html">LeapSecond</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1LM32Cluster.html">LM32Cluster</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Mailbox.html">Mailbox</a></td></tr>
@@ -231,9 +233,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>attach_io_control</b>
 <tr class="memitem:aa2b99c879182c530cb2b135dc7f432c3"><td class="memItemLeft" align="right" valign="top"><a id="aa2b99c879182c530cb2b135dc7f432c3" name="aa2b99c879182c530cb2b135dc7f432c3"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (const std::unique_ptr&lt; <a class="el" href="classsaftlib_1_1ActionSink.html">ActionSink</a> &gt; &amp;up, const <a class="el" href="classsaftlib_1_1ActionSink.html">ActionSink</a> *p)</td></tr>
 <tr class="separator:aa2b99c879182c530cb2b135dc7f432c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0ae07697e3eac196d2d74772c73c2c9"><td class="memItemLeft" align="right" valign="top"><a id="af0ae07697e3eac196d2d74772c73c2c9" name="af0ae07697e3eac196d2d74772c73c2c9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const char *leap_second_list_filename)</td></tr>
-<tr class="separator:af0ae07697e3eac196d2d74772c73c2c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0b1c4694c3decdb1f62cff7a411cfef"><td class="memItemLeft" align="right" valign="top"><a id="af0b1c4694c3decdb1f62cff7a411cfef" name="af0b1c4694c3decdb1f62cff7a411cfef"></a>
 int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_epoch</b> (int n)</td></tr>
 <tr class="separator:af0b1c4694c3decdb1f62cff7a411cfef"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -298,15 +297,11 @@ Variables</h2></td></tr>
 <tr class="memitem:a7a14bbb3b87b25bb2563c3a6cf878b80"><td class="memItemLeft" align="right" valign="top"><a id="a7a14bbb3b87b25bb2563c3a6cf878b80" name="a7a14bbb3b87b25bb2563c3a6cf878b80"></a>
 const eb_data_t&#160;</td><td class="memItemRight" valign="bottom"><b>MSI_TEST_VALUE</b> = 0x12345678</td></tr>
 <tr class="separator:a7a14bbb3b87b25bb2563c3a6cf878b80"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1fc8064051f92e9ed67a6cc01d5ebf2d"><td class="memItemLeft" align="right" valign="top"><a id="a1fc8064051f92e9ed67a6cc01d5ebf2d" name="a1fc8064051f92e9ed67a6cc01d5ebf2d"></a>
-const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>offset_epoch_01_01_1900</b> = 2208988800</td></tr>
-<tr class="separator:a1fc8064051f92e9ed67a6cc01d5ebf2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a114c666468980b02853cf49135a52fe7"><td class="memItemLeft" align="right" valign="top"><a id="a114c666468980b02853cf49135a52fe7" name="a114c666468980b02853cf49135a52fe7"></a>
-const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_list</b> [][2]</td></tr>
-<tr class="separator:a114c666468980b02853cf49135a52fe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2b76e60609ca67130e18c0514a4e07cf"><td class="memItemLeft" align="right" valign="top"><a id="a2b76e60609ca67130e18c0514a4e07cf" name="a2b76e60609ca67130e18c0514a4e07cf"></a>
-std::vector&lt; std::array&lt; int64_t, 2 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_vector</b></td></tr>
-<tr class="separator:a2b76e60609ca67130e18c0514a4e07cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa97f6c0d6b2717306e9bf9f61d07039d"><td class="memItemLeft" align="right" valign="top"><a id="aa97f6c0d6b2717306e9bf9f61d07039d" name="aa97f6c0d6b2717306e9bf9f61d07039d"></a>
+const uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>EPOCH_OFFSET_1900_TO_1970</b> = 2'208'988'800</td></tr>
+<tr class="separator:aa97f6c0d6b2717306e9bf9f61d07039d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f5b4dc239dc1955a891c696520ffb42"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="structsaftlib_1_1LeapSecond.html">LeapSecond</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a2f5b4dc239dc1955a891c696520ffb42">LEAP_SECONDS_TABLE</a></td></tr>
+<tr class="separator:a2f5b4dc239dc1955a891c696520ffb42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32e5fd0d4b59617bdc6700f9d28c15a9"><td class="memItemLeft" align="right" valign="top"><a id="a32e5fd0d4b59617bdc6700f9d28c15a9" name="a32e5fd0d4b59617bdc6700f9d28c15a9"></a>
 const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>sec</b> = INT64_C(1000000000)</td></tr>
 <tr class="separator:a32e5fd0d4b59617bdc6700f9d28c15a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -375,6 +370,50 @@ Here is the call graph for this function:</div>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">=</div>
 <div class="line">  <span class="stringliteral">&quot;built by &quot;</span> USERNAME <span class="stringliteral">&quot; on &quot;</span> __DATE__ <span class="stringliteral">&quot; &quot;</span> __TIME__ <span class="stringliteral">&quot; with &quot;</span> HOSTNAME <span class="stringliteral">&quot; running &quot;</span> OPERATING_SYSTEM</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a2f5b4dc239dc1955a891c696520ffb42" name="a2f5b4dc239dc1955a891c696520ffb42"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f5b4dc239dc1955a891c696520ffb42">&#9670;&#160;</a></span>LEAP_SECONDS_TABLE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="structsaftlib_1_1LeapSecond.html">LeapSecond</a>&gt; saftlib::LEAP_SECONDS_TABLE</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">{</div>
+<div class="line">        {3&#39;692&#39;217&#39;600, 37}, </div>
+<div class="line">        {3&#39;644&#39;697&#39;600, 36}, </div>
+<div class="line">        {3&#39;550&#39;089&#39;600, 35}, </div>
+<div class="line">        {3&#39;439&#39;756&#39;800, 34}, </div>
+<div class="line">        {3&#39;345&#39;062&#39;400, 33}, </div>
+<div class="line">        {3&#39;124&#39;137&#39;600, 32}, </div>
+<div class="line">        {3&#39;076&#39;704&#39;000, 31}, </div>
+<div class="line">        {3&#39;029&#39;443&#39;200, 30}, </div>
+<div class="line">        {2&#39;982&#39;009&#39;600, 29}, </div>
+<div class="line">        {2&#39;950&#39;473&#39;600, 28}, </div>
+<div class="line">        {2&#39;918&#39;937&#39;600, 27}, </div>
+<div class="line">        {2&#39;871&#39;676&#39;800, 26}, </div>
+<div class="line">        {2&#39;840&#39;140&#39;800, 25}, </div>
+<div class="line">        {2&#39;776&#39;982&#39;400, 24}, </div>
+<div class="line">        {2&#39;698&#39;012&#39;800, 23}, </div>
+<div class="line">        {2&#39;634&#39;854&#39;400, 22}, </div>
+<div class="line">        {2&#39;603&#39;318&#39;400, 21}, </div>
+<div class="line">        {2&#39;571&#39;782&#39;400, 20}, </div>
+<div class="line">        {2&#39;524&#39;521&#39;600, 19}, </div>
+<div class="line">        {2&#39;492&#39;985&#39;600, 18}, </div>
+<div class="line">        {2&#39;461&#39;449&#39;600, 17}, </div>
+<div class="line">        {2&#39;429&#39;913&#39;600, 16}, </div>
+<div class="line">        {2&#39;398&#39;291&#39;200, 15}, </div>
+<div class="line">        {2&#39;366&#39;755&#39;200, 14}, </div>
+<div class="line">        {2&#39;335&#39;219&#39;200, 13}, </div>
+<div class="line">        {2&#39;303&#39;683&#39;200, 12}, </div>
+<div class="line">        {2&#39;287&#39;785&#39;600, 11}, </div>
+<div class="line">        {2&#39;272&#39;060&#39;800, 10}, </div>
+<div class="line">    }</div>
 </div><!-- fragment -->
 </div>
 </div>
