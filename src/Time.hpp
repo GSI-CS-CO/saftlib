@@ -32,12 +32,12 @@
 
 namespace saftlib
 {
-		
+	
 	//extern const int64_t leap_second_list[][2];
 	int64_t leap_second_epoch(int n);
 	int64_t leap_second_offset(int n);
 
-	void init(const char* leap_second_list_filename = nullptr);
+	//void init(const char* leap_second_list_filename = nullptr);
 
 	//////////////////////////////////////////////////////////////////////////////
 	// convert TAI value to UTC value
