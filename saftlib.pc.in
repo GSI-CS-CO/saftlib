@@ -7,5 +7,5 @@ Name: saftlib
 Description: Simplified API for Timing
 Requires: sigc++-2.0 saftbus
 Version: @VERSION@
-Libs: -L${libdir} -lsaft-proxy -lsaft-service -lz
+Libs: -L${libdir} -lfg-firmware-proxy -lfg-firmware-service -lsaft-proxy -lsaft-service -lz
 Cflags: -I${includedir}
