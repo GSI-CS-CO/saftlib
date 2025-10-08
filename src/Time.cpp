@@ -1,4 +1,4 @@
-/*  Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -10,7 +10,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -36,12 +36,12 @@ namespace saftlib
 	const uint64_t EPOCH_OFFSET_1900_TO_1970 = 2'208'988'800;
 
 	struct LeapSecond {
-    	uint64_t timestamp;
+    	int64_t timestamp;
     	int8_t cumulative_seconds;
 	};
 
 	// Reference: IETF Leap Seconds List
-	// Source: https://www.ietf.org/timezones/data/leap-seconds.list	
+	// Source: https://www.ietf.org/timezones/data/leap-seconds.list
 	// Last updated: [Okt-2025]
 	const std::vector<LeapSecond> LEAP_SECONDS_TABLE {
 		{3'692'217'600, 37}, // 1 Jan 2017
@@ -72,6 +72,7 @@ namespace saftlib
 		{2'303'683'200, 12}, // 1 Jan 1973
 		{2'287'785'600, 11}, // 1 Jul 1972
 		{2'272'060'800, 10}, // 1 Jan 1972
+		{-1,11} // last entry. kept to guarantee compaibility to legacy functions below
 	};
 
 	int64_t leap_second_epoch(int n)
@@ -90,10 +91,10 @@ namespace saftlib
 		// remark: Under this treatment, the positive leap second would appear at the first second of the new day.
 		//         If this is the desired behavior for positive leap seconds, remove the special treatment for
 		//         positive leap seconds (remove the if statement above)
-		return LEAP_SECONDS_TABLE[n].cumulative_seconds - EPOCH_OFFSET_1900_TO_1970 + LEAP_SECONDS_TABLE[n].cumulative_seconds ; 
+		return LEAP_SECONDS_TABLE[n].cumulative_seconds - EPOCH_OFFSET_1900_TO_1970 + LEAP_SECONDS_TABLE[n].cumulative_seconds ;
 	}
 
-	int64_t leap_second_offset(int n) 
+	int64_t leap_second_offset(int n)
 	{
 		return LEAP_SECONDS_TABLE[n].cumulative_seconds;
 	}
@@ -101,11 +102,12 @@ namespace saftlib
 	int64_t UTC_offset_TAI(uint64_t TAI)
 	{
 		uint64_t TAIsec = TAI/UINT64_C(1000000000);
-		for (int i = 0; i <  LEAP_SECONDS_TABLE.size(); ++i) { 
+		for (int i = 0; ; ++i) {
 			if ((int64_t)TAIsec >= leap_second_epoch(i) || leap_second_epoch(i+1) == -1) {
 				return leap_second_offset(i)*UINT64_C(1000000000);
 			}
 		}
+		return TAIsec;
 	}
 
 	uint64_t TAI_to_UTC(uint64_t TAI)
@@ -116,7 +118,7 @@ namespace saftlib
 	int TAI_is_UTCleap(uint64_t TAI)
 	{
 		uint64_t TAIsec = TAI/UINT64_C(1000000000);
-		for (int i = 0; i <  LEAP_SECONDS_TABLE.size(); ++i) { 
+		for (int i = 0; ; ++i) {
 			if ((int64_t)TAIsec >= leap_second_epoch(i)) {
 				if ((int64_t)TAIsec == leap_second_epoch(i)) {
 					return leap_second_offset(i)-leap_second_offset(i+1);
@@ -129,15 +131,15 @@ namespace saftlib
 	int UTC_offset_UTC(uint64_t UTC, int leap, int64_t *offset)
 	{
 		uint64_t UTCsec = UTC/UINT64_C(1000000000);
-		for (int i = 0; i <  LEAP_SECONDS_TABLE.size(); ++i) {
+		for (int i = 0; ; ++i) {
 			uint64_t TAIsec = UTCsec + leap_second_offset(i);
 			if ((int64_t)TAIsec >= leap_second_epoch(i) || leap_second_epoch(i+1) == -1) {
-				if ((int64_t)TAIsec == leap_second_epoch(i) && 
-					leap_second_offset(i+1) < leap_second_offset(i)) { 
-					// If the resulting TAI is on the leap_second_list, the conversion is ambiguous 
+				if ((int64_t)TAIsec == leap_second_epoch(i) &&
+					leap_second_offset(i+1) < leap_second_offset(i)) {
+					// If the resulting TAI is on the leap_second_list, the conversion is ambiguous
 					// In this case the 'leap' argument is used to distinguish the two possible TAI values
 					// The second part of the condition limits this case to the positive leap seconds
-					if (leap) { 
+					if (leap) {
 						// the later of the two identical UTC seconds
 						*offset = leap_second_offset(i)*UINT64_C(1000000000);
 						return 1;
@@ -179,7 +181,7 @@ namespace saftlib
 
 	void test_UTC_offset()
 	{
-		for (int i = 0; i <  LEAP_SECONDS_TABLE.size();++i) {
+		for (size_t i = 0; i <  LEAP_SECONDS_TABLE.size();++i) {
 			uint64_t TAI = leap_second_epoch(i)*UINT64_C(1000000000);
 			uint64_t UTC = TAI_to_UTC(TAI);
 			int64_t offset;
@@ -190,7 +192,7 @@ namespace saftlib
 
 	void test_UTC_difference()
 	{
-		for (int i = 0; i <  LEAP_SECONDS_TABLE.size();++i) {
+		for (size_t i = 0; i <  LEAP_SECONDS_TABLE.size();++i) {
 			uint64_t TAI = leap_second_epoch(i)*UINT64_C(1000000000);
 			uint64_t UTC = TAI_to_UTC(TAI);
 			int64_t difference;
@@ -201,7 +203,7 @@ namespace saftlib
 
 		for (int i = 0; LEAP_SECONDS_TABLE.size();++i) {
 
-			for (int j = 0; LEAP_SECONDS_TABLE.size();++j) {
+			for (size_t j = 0; LEAP_SECONDS_TABLE.size();++j) {
 
 				uint64_t TAIi = leap_second_epoch(i)*UINT64_C(1000000000);
 				uint64_t TAIj = leap_second_epoch(j)*UINT64_C(1000000000);
@@ -220,9 +222,9 @@ namespace saftlib
 		}
 	}
 
-	void test_conversion_forth_and_back() 
+	void test_conversion_forth_and_back()
 	{
-		for (int i = 0; i < LEAP_SECONDS_TABLE.size(); ++i) {
+		for (size_t i = 0; i < LEAP_SECONDS_TABLE.size(); ++i) {
 			// second scale
 			uint64_t TAI0 = leap_second_epoch(i);
 			for (uint64_t t = TAI0-10; t < TAI0+10; ++t) {
@@ -286,7 +288,7 @@ namespace saftlib
 		uint64_t TAI;
 		if (UTC_to_TAI(UTC, isLeap, &TAI)) {
 			return Time(TAI);
-		} 
+		}
 		throw Time(0);
 	}
 	Time makeTimeTAI(uint64_t TAI) {
