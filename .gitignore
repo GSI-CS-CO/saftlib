@@ -5,6 +5,8 @@
 .*
 *.m4
 .libs/
+html/
+latex/
 saftbus-ctl
 saftbusd
 missing
