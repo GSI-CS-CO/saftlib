@@ -80,17 +80,22 @@ $(function() {
   <div class="headertitle"><div class="title">saftlib::Time Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>The saftlib <a class="el" href="classsaftlib_1_1Time.html" title="The saftlib Time class. Member functions include conversion functions between UTC and TAI values....">Time</a> class. Member functions include conversion functions between UTC and TAI values. All time values are in nanoseconds All functions handle negative leap seconds (in case they will be introduced in the future)  
+ <a href="classsaftlib_1_1Time.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="Time_8hpp_source.html">Time.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:af64013828807b74409a1dd8fd9c13eac"><td class="memItemLeft" align="right" valign="top"><a id="af64013828807b74409a1dd8fd9c13eac" name="af64013828807b74409a1dd8fd9c13eac"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Time</b> (const <a class="el" href="classsaftlib_1_1Time.html">Time</a> &amp;t)</td></tr>
 <tr class="separator:af64013828807b74409a1dd8fd9c13eac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d699eb84e315d8295944f81e21ed5e5"><td class="memItemLeft" align="right" valign="top"><a id="a7d699eb84e315d8295944f81e21ed5e5" name="a7d699eb84e315d8295944f81e21ed5e5"></a>
-uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>getUTC</b> () const</td></tr>
+<tr class="memitem:a7d699eb84e315d8295944f81e21ed5e5"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Time.html#a7d699eb84e315d8295944f81e21ed5e5">getUTC</a> () const</td></tr>
+<tr class="memdesc:a7d699eb84e315d8295944f81e21ed5e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get UTC value.  <a href="classsaftlib_1_1Time.html#a7d699eb84e315d8295944f81e21ed5e5">More...</a><br /></td></tr>
 <tr class="separator:a7d699eb84e315d8295944f81e21ed5e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2e2699c63b41cdf8d1516451151ae070"><td class="memItemLeft" align="right" valign="top"><a id="a2e2699c63b41cdf8d1516451151ae070" name="a2e2699c63b41cdf8d1516451151ae070"></a>
-uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>getTAI</b> () const</td></tr>
+<tr class="memitem:a2e2699c63b41cdf8d1516451151ae070"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Time.html#a2e2699c63b41cdf8d1516451151ae070">getTAI</a> () const</td></tr>
+<tr class="memdesc:a2e2699c63b41cdf8d1516451151ae070"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get TAI value.  <a href="classsaftlib_1_1Time.html#a2e2699c63b41cdf8d1516451151ae070">More...</a><br /></td></tr>
 <tr class="separator:a2e2699c63b41cdf8d1516451151ae070"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a704de301b9ad03800d87052af906d1d9"><td class="memItemLeft" align="right" valign="top"><a id="a704de301b9ad03800d87052af906d1d9" name="a704de301b9ad03800d87052af906d1d9"></a>
 <a class="el" href="classsaftlib_1_1Time.html">Time</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classsaftlib_1_1Time.html">Time</a> &amp;t)</td></tr>
@@ -138,6 +143,85 @@ Friends</h2></td></tr>
 <a class="el" href="classsaftlib_1_1Time.html">Time</a>&#160;</td><td class="memItemRight" valign="bottom"><b>makeTimeTAI</b> (uint64_t TAI)</td></tr>
 <tr class="separator:a266dd528dbbd8ca1081379084efae73a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >The saftlib <a class="el" href="classsaftlib_1_1Time.html" title="The saftlib Time class. Member functions include conversion functions between UTC and TAI values....">Time</a> class. Member functions include conversion functions between UTC and TAI values. All time values are in nanoseconds All functions handle negative leap seconds (in case they will be introduced in the future) </p>
+<p >de.gsi.saftlib.Time: </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a2e2699c63b41cdf8d1516451151ae070" name="a2e2699c63b41cdf8d1516451151ae070"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e2699c63b41cdf8d1516451151ae070">&#9670;&#160;</a></span>getTAI()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint64_t saftlib::Time::getTAI </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get TAI value. </p>
+<dl class="section return"><dt>Returns</dt><dd>TAI in nanoseconds </dd></dl>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftlib_1_1Time_a2e2699c63b41cdf8d1516451151ae070_icgraph.png" border="0" usemap="#aclasssaftlib_1_1Time_a2e2699c63b41cdf8d1516451151ae070_icgraph" alt=""/></div>
+<map name="aclasssaftlib_1_1Time_a2e2699c63b41cdf8d1516451151ae070_icgraph" id="aclasssaftlib_1_1Time_a2e2699c63b41cdf8d1516451151ae070_icgraph">
+<area shape="rect" title="Get TAI value." alt="" coords="207,13,344,38"/>
+<area shape="rect" href="classsaftlib_1_1TimingReceiver.html#a5791ad718cac0a07f1eb0baea35258be" title="Simulate the receipt of a timing event." alt="" coords="5,5,159,45"/>
+</map>
+</div>
+
+</div>
+</div>
+<a id="a7d699eb84e315d8295944f81e21ed5e5" name="a7d699eb84e315d8295944f81e21ed5e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d699eb84e315d8295944f81e21ed5e5">&#9670;&#160;</a></span>getUTC()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint64_t saftlib::Time::getUTC </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get UTC value. </p>
+<dl class="section return"><dt>Returns</dt><dd>UTC in nanoseconds </dd></dl>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="classsaftlib_1_1Time_a7d699eb84e315d8295944f81e21ed5e5_cgraph.png" border="0" usemap="#aclasssaftlib_1_1Time_a7d699eb84e315d8295944f81e21ed5e5_cgraph" alt=""/></div>
+<map name="aclasssaftlib_1_1Time_a7d699eb84e315d8295944f81e21ed5e5_cgraph" id="aclasssaftlib_1_1Time_a7d699eb84e315d8295944f81e21ed5e5_cgraph">
+<area shape="rect" title="Get UTC value." alt="" coords="5,5,148,31"/>
+<area shape="rect" href="namespacesaftlib.html#a021674a69fbeb19ba314ddaf7612365e" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="196,5,332,31"/>
+<area shape="rect" href="namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138" title="Helper function for TAI_to_UTC." alt="" coords="380,5,537,31"/>
+</map>
+</div>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>src/<a class="el" href="Time_8hpp_source.html">Time.hpp</a></li>
 </ul>
