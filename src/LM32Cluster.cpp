@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Michael Reese <m.reese@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -39,13 +39,14 @@
 namespace saftlib {
 
 
-LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver) 
+LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver)
 	: SdbDevice(dev, LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT)
 	, tr(timing_receiver)
 {
 	std::cerr << "LM32Cluster::LM32Cluster" << std::endl;
 
     eb_data_t cpus;
+    bool no_lm32 = false;
     device.read(adr_first, EB_DATA32, &cpus);
 
 	// look for lm32 dual port ram
@@ -53,18 +54,24 @@ LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver
 	device.sdb_find_by_identity(LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, dpram_lm32_devs);
 
 	if (dpram_lm32_devs.size() < 1) {
-		throw saftbus::Error(saftbus::Error::FAILED, "no lm32 user ram found on hardware");
+		std::cerr << "Warning: no lm32 user ram found on hardware" << std::endl;
+		no_lm32 = true;
 	}
 
-	for (auto& dpram_lm32_dev: dpram_lm32_devs) {
-		dpram_lm32_adr_first.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
-		dpram_lm32_adr_last.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_last));
+	if (!no_lm32) {
+		for (auto& dpram_lm32_dev: dpram_lm32_devs) {
+			dpram_lm32_adr_first.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
+			dpram_lm32_adr_last.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_last));
+		}
+
+		num_cores = dpram_lm32_devs.size();
+
+		if (num_cores != cpus) {
+			throw saftbus::Error(saftbus::Error::FAILED, "number of cpus in lm32 cluster rom differs from number of number of user rams");
+		}
 	}
-
-	num_cores = dpram_lm32_devs.size();
-
-	if (num_cores != cpus) {
-		throw saftbus::Error(saftbus::Error::FAILED, "number of cpus in lm32 cluster rom differs from number of number of user rams");
+	else {
+		num_cores = 0;
 	}
 
 	std::cerr << "found " << num_cores << " lm32 cpus" << std::endl;
@@ -82,7 +89,7 @@ void LM32Cluster::SafeHaltCpu(unsigned cpu_idx)
 	if (cpu_idx >= num_cores) {
 		std::ostringstream msg;
 		msg << "there is no user cpu core with index " << cpu_idx;
-		throw std::runtime_error(msg.str());	
+		throw std::runtime_error(msg.str());
 	}
 	// overwrite the RAM with trap instructions (a trap instruction is a jump to the address of the flummi instruction)
 	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
@@ -105,7 +112,7 @@ void LM32Cluster::WriteFirmware(unsigned cpu_idx, const std::string &filename)
 	if (cpu_idx >= num_cores) {
 		std::ostringstream msg;
 		msg << "there is no user cpu core with index " << cpu_idx;
-		throw std::runtime_error(msg.str());	
+		throw std::runtime_error(msg.str());
 	}
 	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
 	eb_address_t last = dpram_lm32_adr_last[cpu_idx];
