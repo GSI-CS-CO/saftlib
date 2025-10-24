@@ -1,5 +1,0 @@
-<map id="saftlib::UTC_offset_UTC" name="saftlib::UTC_offset_UTC">
-<area shape="rect" id="node1" title="get UTC offset (in seconds) for given UTC value. UTC_offset = TAI &#45; UTC" alt="" coords="391,5,553,31"/>
-<area shape="rect" id="node2" href="$namespacesaftlib.html#a4fdba7c54aff36459ce2cfca4004bfe2" title="Convert UTC value to TAI value TAI = UTC + leap seconds." alt="" coords="207,5,343,31"/>
-<area shape="rect" id="node3" href="$namespacesaftlib.html#a60acd4708b95d5b38afdd8dee8da2f85" title="Calculate UTC time difference." alt="" coords="5,5,159,31"/>
-</map>
