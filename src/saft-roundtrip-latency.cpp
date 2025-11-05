@@ -48,7 +48,6 @@ int main(int argc, char *argv[]) {
 
 		auto software_action_sink_object_path = tr->NewSoftwareActionSink("");
 		auto software_action_sink             = saftlib::SoftwareActionSink_Proxy::create(software_action_sink_object_path);
-		//auto condition_object_path            = software_action_sink->NewCondition(true, 0xaffe,-1,0);
 		auto condition_object_path            = software_action_sink->NewCondition(true, eventID,-1,0);
 		auto condition                        = saftlib::SoftwareCondition_Proxy::create(condition_object_path);
 		condition->setAcceptEarly(true);
@@ -67,7 +66,7 @@ int main(int argc, char *argv[]) {
 
 		for (int i = 0; i < N; ++i) {
 			start = std::chrono::steady_clock::now();
-			tr->InjectEvent(0xaffe, 0x0, saftlib::makeTimeTAI(0));
+			tr->InjectEvent(eventID, 0x0, saftlib::makeTimeTAI(0));
 			saftlib::wait_for_signal();
 		}
 
