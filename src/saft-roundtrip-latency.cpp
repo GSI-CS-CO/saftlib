@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 	}
 	try {
 		int eventID;
-		std::istringstream Min(argv[2]);
+		std::istringstream Min(argv[4]);
 		Min >> eventID;
 		if (!Min) {
 			std::cerr << "cannot read event id " << argv[4] << std::endl;
