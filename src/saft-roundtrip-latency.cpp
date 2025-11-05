@@ -27,21 +27,29 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
 } 
 
 int main(int argc, char *argv[]) {
-	if (argc != 4) {
+	if (argc != 5) {
 		std::cerr << "Measure several times the duration from InjectEvent until callback" << std::endl;
 		std::cerr << "function and create a histogram of the measurment results" << std::endl;
-		std::cerr << "usage: " << argv[0] << " <saftlib-device> <number-of-measurements> <histogram-filename> " << std::endl;
+		std::cerr << "usage: " << argv[0] << " <saftlib-device> <number-of-measurements> <histogram-filename> <eventID> " << std::endl;
 		std::cout << std::endl;
 		std::cerr << "   example: " << argv[0] << " tr0 1000 histogram.dat" << std::endl;
 		return 1;
 	}
 	try {
+		int eventID;
+		std::istringstream Min(argv[2]);
+		Min >> eventID;
+		if (!Min) {
+			std::cerr << "cannot read event id " << argv[4] << std::endl;
+			return 1;
+		}
 		auto saftd = saftlib::SAFTd_Proxy::create("/de/gsi/saftlib");
 		auto tr    = saftlib::TimingReceiver_Proxy::create(std::string("/de/gsi/saftlib/")+argv[1]);
 
 		auto software_action_sink_object_path = tr->NewSoftwareActionSink("");
 		auto software_action_sink             = saftlib::SoftwareActionSink_Proxy::create(software_action_sink_object_path);
-		auto condition_object_path            = software_action_sink->NewCondition(true, 0xaffe,-1,0);
+		//auto condition_object_path            = software_action_sink->NewCondition(true, 0xaffe,-1,0);
+		auto condition_object_path            = software_action_sink->NewCondition(true, eventID,-1,0);
 		auto condition                        = saftlib::SoftwareCondition_Proxy::create(condition_object_path);
 		condition->setAcceptEarly(true);
 		condition->setAcceptLate(true);
