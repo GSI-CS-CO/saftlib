@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -g  $(SIGCPP_CFLAGS) $(EB_CFLAGS) -I $(top_srcdir)/saftbus -I $(top_srcdir)/src -I $(top_builddir)/src -I $(top_srcdir)/src/interfaces -I $(top_builddir)/src/interfaces -DDATADIR='"$(datadir)/saftlib"'
+AM_CPPFLAGS = -Wall -g  $(SIGCPP_CFLAGS) $(EB_CFLAGS) $(LIBRTPI_CFLAGS) -I $(top_srcdir)/saftbus -I $(top_srcdir)/src -I $(top_builddir)/src -I $(top_srcdir)/src/interfaces -I $(top_builddir)/src/interfaces -DDATADIR='"$(datadir)/saftlib"'
 
 pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftlib.pc saftbus.pc
@@ -59,6 +59,7 @@ lib_LTLIBRARIES = \
 saftbus_includedir = $(includedir)/saftbus
 
 libsaftbus_la_LDFLAGS = -version-info @SAFTD_API@:@SAFTD_REVISION@:@SAFTD_MINOR@ 
+libsaftbus_la_LIBADD  = -lrtpi
 libsaftbus_la_SOURCES =  \
 	saftbus/loop.cpp      \
 	saftbus/saftbus.cpp    \
