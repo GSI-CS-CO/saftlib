@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <unistd.h>
+#include <atomic>
 
 #include <SAFTd_Proxy.hpp>
 #include <TimingReceiver_Proxy.hpp>
@@ -61,6 +62,10 @@ using namespace std;
 // 0 = silent, 1 = info, 2+ = debug
 static const int loglevel=2;
 static bool UTC = false; // use UTC instead of TAI for absolute time values
+
+const uint32_t NUM_REPS = 100;
+
+std::atomic<bool> loopStopped = false;
 
 static timespec diff(timespec start, timespec end)
 {
@@ -231,8 +236,8 @@ static void* startFg(void *arg)
   if (loglevel>1) {
     std::cout << msg.str() << std::endl; msg.str("");
   }
-  while(true) {
-    saftlib::wait_for_signal();
+  while(!loopStopped) {
+    saftlib::wait_for_signal(10);
   }
   if (loglevel>1) std::cout << "startFg Loop ended" << std::endl;
   std::cerr << "<<<thread stopped" << std::endl;
@@ -338,14 +343,14 @@ int main(int argc, char** argv)
     // Read the data file from stdin ... maybe come up with a better format in the future !!!
     ParamSet params;
     int32_t a, la, b, lb, c, n, s, num;
-    while((num = fscanf(stdin, "%d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n)) == 6) {
+    while((num = fscanf(stdin, "%d %d %d %d %d %d %d\n", &a, &la, &b, &lb, &c, &n, &s)) == 7) {
       // turn off warning
       if (params.coeff_a.empty()) alarm(0);
 
       #define ACCU_OFFSET 40 /* don't ask */
-      la += ACCU_OFFSET;
-      lb += ACCU_OFFSET;
-      s = 5; // 500kHz
+     // la += ACCU_OFFSET;
+      // lb += ACCU_OFFSET;
+      // s = 5; // 500kHz
 
       params.coeff_a.push_back(a);
       params.coeff_b.push_back(b);
@@ -425,6 +430,12 @@ int main(int argc, char** argv)
 void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr<TimingReceiver_Proxy> receiver, ParamSet params, bool eventSet, uint64_t event, bool repeat, bool generate, uint32_t tag)
 {
     map<std::string, std::string> master_fgs = receiver->getInterfaces()["MasterFunctionGenerator"];
+    if(master_fgs.empty())
+    {
+      std::cerr << "No Master Function Generator found on device " << receiver->getName() << std::endl;
+      return;
+    }
+
     std::cerr << "Using Master Function Generator: " << master_fgs.begin()->second << std::endl;
     std::shared_ptr<MasterFunctionGenerator_Proxy> master_gen = MasterFunctionGenerator_Proxy::create(master_fgs.begin()->second);
 
@@ -479,8 +490,8 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
       if (loglevel>1) std::cout << "Created thread for receiving signals " << std::endl;
     }
 
-  //for (int reps=0;reps<1;reps++)
-  for (; names.size()>1; names.pop_back())
+  for (int reps=0;reps< NUM_REPS;reps++)
+  //for (; names.size()>1; names.pop_back())
   {
     master_gen->SetActiveFunctionGenerators(names);
 
@@ -619,6 +630,7 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
       if (!fg_all_stopped)
       {
         all_stopped_cond_var.wait(lock, [](){ return fg_all_stopped==true; });
+        if (names.size() == 2) loopStopped.store(true);
       }
     }
     if (loglevel>0)
