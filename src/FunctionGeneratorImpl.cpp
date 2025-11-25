@@ -169,7 +169,6 @@ bool FunctionGeneratorImpl::lowFill() const
 
 void FunctionGeneratorImpl::refill(bool first)
 {
-  // DRIVER_LOG("channel",-1, channel);
   etherbone::Cycle cycle;
   eb_data_t write_offset_d = 0, read_offset_d = 0;
   
@@ -200,7 +199,9 @@ void FunctionGeneratorImpl::refill(bool first)
   bool amLow = lowFill();
   
   // should we get more data from the user?
-  if (amLow && !wasLow) signal_refill.emit();
+  if (amLow && !wasLow) {
+    signal_refill.emit();
+  }
   
   // our buffers should now agree
   assert (filled == remaining);
@@ -244,24 +245,12 @@ void FunctionGeneratorImpl::refill(bool first)
 
 void FunctionGeneratorImpl::irq_handler(eb_data_t msi)
 {
-  // std::cerr << "FunctionGeneratorImpl::irq_handler " << msi << std::endl;
-  // DRIVER_LOG("msi",-1, msi);
   // ignore spurious interrupt
   if (channel == -1) {
     std::cerr << "FunctionGenerator: received unsolicited IRQ on index " << std::dec << index << std::endl;
     return;
   }
   
- // switch(msi)
- // {
- //   case IRQ_DAT_REFILL         : std::cerr <<  "FG MSI REFILL ch "         << channel << " index " << index << std::endl; break;
- //   case IRQ_DAT_START          : std::cerr <<  "FG MSI START ch "          << channel << " index " << index << std::endl; break;
- //   case IRQ_DAT_STOP_EMPTY     : std::cerr <<  "FG MSI STOP_EMPTY ch "     << channel << " index " << index << std::endl; break;
- //   case IRQ_DAT_STOP_NOT_EMPTY : std::cerr <<  "FG MSI STOP_NOT_EMPTY ch " << channel << " index " << index << std::endl; break;
- //   case IRQ_DAT_ARMED          : std::cerr <<  "FG MSI ARMED ch "          << channel << " index " << index << std::endl; break;
- //   case IRQ_DAT_DISARMED       : std::cerr <<  "FG MSI DISARMED ch "       << channel << " index " << index << std::endl; break;
- //   default : std::cerr <<  "FG Unexpected MSI " << msi << " ch " << channel << " index " << index << std::endl;
- // } 
   // microcontroller cannot break this invariant; we always set channel and enabled together
   assert (enabled);
   
