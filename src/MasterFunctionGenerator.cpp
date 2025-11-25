@@ -97,7 +97,6 @@ void MasterFunctionGenerator::on_fg_running(std::shared_ptr<FunctionGeneratorImp
 
 void MasterFunctionGenerator::on_fg_refill(std::shared_ptr<FunctionGeneratorImpl>& fg)
 {
-  // DRIVER_LOG("channel",-1,fg->channel);
   if (generateIndividualSignals && std::find(activeFunctionGenerators.begin(),activeFunctionGenerators.end(),fg)!=activeFunctionGenerators.end())
   {
     Refill(fg->GetName());

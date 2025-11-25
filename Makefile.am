@@ -499,14 +499,13 @@ saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) libsaftbus.
 saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latency.cpp
 
 saft_burst_ctl_LDADD   =  $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libbg-firmware-proxy.la -ldl #-lltdl
-saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp 
+saft_burst_ctl_SOURCES = src/saft-burst-ctl.cpp
 
 saft_fg_ctl_LDADD   =   $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libfg-firmware-proxy.la -ldl #-lltdl
 saft_fg_ctl_SOURCES = src/saft-fg-ctl.cpp 
 
 saft_mfg_ctl_LDADD   =   $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la libfg-firmware-proxy.la -lpthread -ldl #-lltdl
 saft_mfg_ctl_SOURCES = src/saft-mfg-ctl.cpp 
-
 
 
 if NO_SAFTBUSGEN
@@ -531,3 +530,4 @@ else
 CLEANFILES = $(top_builddir)/src/*_Proxy.*pp $(top_builddir)/src/*_Service.*pp $(top_builddir)/src/.deps/*.*o
 endif
 
+SUBDIRS = . test
