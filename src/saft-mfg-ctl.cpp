@@ -455,7 +455,7 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
 
     // Stop whatever the function generator was doing
  		if (loglevel>0) std::cout << "Abort via Master" << std::endl;
-    master_gen->Abort(false);
+    master_gen->Abort();
 
     // Wait until not Enabled - test polling as alternative to Abort(true)
 
@@ -528,9 +528,7 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
       step,
       freq,
       shift_a,
-      shift_b,
-      true,  // arm?
-      true); // arm ack?
+      shift_b);
       if (loglevel>1) timer_stop();
       if (loglevel>0)
       {
@@ -559,9 +557,7 @@ void test_master_fg(std::shared_ptr<SCUbusActionSink_Proxy> scu, std::shared_ptr
       step,
       freq,
       shift_a,
-      shift_b,
-      false,  // arm?
-      false); // arm ack?
+      shift_b);
       std::cout << "parameters sent" << std::endl;
       master_gen->Arm();
       std::cout << "arm sent" << std::endl;
