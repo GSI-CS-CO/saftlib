@@ -40,17 +40,17 @@ namespace saftbus {
 	struct ClientConnection::Impl {
 		struct pollfd pfd; // file descriptor used to talk to the server
 		int client_id; // the unique id of this client connection on the server
-		static std::unique_lock<rtpi::mutex> base_socket_mutex;
-		std::unique_lock<rtpi::mutex> fd_mutex;
-		std::unique_lock<rtpi::mutex> connection_mutex;
+		static rtpi::mutex base_socket_mutex;
+		rtpi::mutex fd_mutex;
+		rtpi::mutex connection_mutex;
 	};
-	std::unique_lock<rtpi::mutex> ClientConnection::Impl::base_socket_mutex;
+	rtpi::mutex ClientConnection::Impl::base_socket_mutex;
 
 
 	ClientConnection::ClientConnection(const std::string &socket_name) 
 		: d(new Impl)
 	{
-		std::lock_guard<std::unique_lock<rtpi::mutex>> lock1(d->base_socket_mutex);
+		std::lock_guard<rtpi::mutex> lock1(d->base_socket_mutex);
 
 		std::ostringstream msg;
 		// msg << "ClientConnection constructor : ";
@@ -115,7 +115,7 @@ namespace saftbus {
 
 	int ClientConnection::send(Serializer &serializer, int timeout_ms)
 	{
-		std::lock_guard<std::unique_lock<rtpi::mutex>> lock(d->fd_mutex);
+		std::lock_guard<rtpi::mutex> lock(d->fd_mutex);
 		d->pfd.events = POLLOUT | POLLHUP;
 		int result;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
@@ -130,7 +130,7 @@ namespace saftbus {
 	}
 	int ClientConnection::receive(Deserializer &deserializer, int timeout_ms)
 	{
-		std::lock_guard<std::unique_lock<rtpi::mutex>> lock(d->fd_mutex);
+		std::lock_guard<rtpi::mutex> lock(d->fd_mutex);
 		int result;
 		d->pfd.events = POLLIN | POLLHUP;
 		if ((result = poll(&d->pfd, 1, timeout_ms)) > 0) {
@@ -145,7 +145,7 @@ namespace saftbus {
 	}
 
 	int ClientConnection::atomic_send_and_receive(Serializer &serializer, Deserializer &deserializer, int timeout_ms) {
-		std::lock_guard<std::unique_lock<rtpi::mutex>> lock(d->connection_mutex);
+		std::lock_guard<rtpi::mutex> lock(d->connection_mutex);
 		int send_result    = send(serializer, timeout_ms);
 		int receive_result = receive(deserializer, timeout_ms);
 		if (send_result < 0 || receive_result < 0) {
@@ -167,14 +167,14 @@ namespace saftbus {
 		int signal_group_id; // the integer value of the fd on the server side
 		Deserializer received;
 		std::vector<Proxy*> proxies;
-		std::unique_lock<rtpi::mutex> signal_group_mutex;
-		std::unique_lock<rtpi::mutex> fd_mutex;
+		rtpi::mutex signal_group_mutex;
+		rtpi::mutex fd_mutex;
 	};
 
 	struct Proxy::Impl {
 		static std::shared_ptr<ClientConnection> connection;
-		static std::unique_lock<rtpi::mutex> connection_mutex;
-		std::unique_lock<rtpi::mutex> proxy_mutex;
+		static rtpi::mutex connection_mutex;
+		rtpi::mutex proxy_mutex;
 		int saftbus_object_id;
 		int client_id, signal_group_id; // is determined at registration time and needs to be saved for de-registration
 		Serializer   send;
@@ -184,7 +184,7 @@ namespace saftbus {
 		std::map<std::string, int> interface_name2no_map;
 	};
 	std::shared_ptr<ClientConnection> Proxy::Impl::connection;
-	std::unique_lock<rtpi::mutex>                        Proxy::Impl::connection_mutex;
+	rtpi::mutex                       Proxy::Impl::connection_mutex;
 
 	SignalGroup::SignalGroup() 
 		: d(new Impl)
@@ -205,7 +205,7 @@ namespace saftbus {
 
 	int SignalGroup::register_proxy(Proxy *proxy) 
 	{
-		std::lock_guard<std::unique_lock<rtpi::mutex>> lock(d->signal_group_mutex);
+		std::lock_guard<rtpi::mutex> lock(d->signal_group_mutex);
 		// send one of the two socket ends to the server
 		// std::cerr << "register_proxy: sending one fd " << d->fd_pair[0] << " for service to send signals " << std::endl;
 		// std::cerr << "register_proxy: keeping one fd " << d->fd_pair[1] << " for us to receive signals " << std::endl;
@@ -226,7 +226,7 @@ namespace saftbus {
 
 	void SignalGroup::unregister_proxy(Proxy *proxy) 
 	{
-		std::lock_guard<std::unique_lock<rtpi::mutex>> lock(d->signal_group_mutex);
+		std::lock_guard<rtpi::mutex> lock(d->signal_group_mutex);
 		// std::cerr << "unregister_proxy" << std::endl;
 		d->proxies.erase(std::remove(d->proxies.begin(), d->proxies.end(), proxy), d->proxies.end());
 	}
@@ -266,7 +266,7 @@ namespace saftbus {
 		// std::cerr << "wait_for_one_signal(" << timeout_ms << ") on fd " << d->pfd.fd << std::endl;
 		int result;
 		{
-			std::lock_guard<std::unique_lock<rtpi::mutex>> fd_lock(d->fd_mutex);
+			std::lock_guard<rtpi::mutex> fd_lock(d->fd_mutex);
 			result = poll(&d->pfd, 1, timeout_ms);
 			if (result > 0) {
 				if (d->pfd.revents & (POLLIN|POLLHUP) ) {
@@ -284,7 +284,7 @@ namespace saftbus {
 					d->received.get(interface_no);
 					d->received.get(signal_no);
 					{
-						std::lock_guard<std::unique_lock<rtpi::mutex>> lock(d->signal_group_mutex);
+						std::lock_guard<rtpi::mutex> lock(d->signal_group_mutex);
 						for (auto &proxy: d->proxies) {
 							// std::cerr << "proxy object id = " << proxy->d->saftbus_object_id << "  signal_group_id = " << proxy->d->signal_group_id << std::endl;
 							if (proxy->d->saftbus_object_id == saftbus_object_id) {
@@ -330,7 +330,7 @@ namespace saftbus {
 		d->send.put(interface_names);
 		{
 			d->send.put(signal_group.d->signal_group_id); 
-			std::lock_guard<std::unique_lock<rtpi::mutex>> lock(get_client_socket_mutex());
+			std::lock_guard<rtpi::mutex> lock(get_client_socket_mutex());
 			int send_result = get_connection().send(d->send);
 			if (send_result <= 0) {
 				throw saftbus::Error("Proxy cannot send data to server");
@@ -372,7 +372,7 @@ namespace saftbus {
 		// de-register from server
 		// client connection is shared among threads
 		// only one thread can access the connection at a time
-		std::lock_guard<std::unique_lock<rtpi::mutex>> mutex_lock(d->proxy_mutex);
+		std::lock_guard<rtpi::mutex> mutex_lock(d->proxy_mutex);
 		d->send.put(1); // 1 is the special object id that adresses the ContainerService wich provides the unregister_proxy method
 		int interface_no = 0;
 		int function_no = 1; // 1 is unregister_proxy
@@ -382,7 +382,7 @@ namespace saftbus {
 		d->send.put(d->client_id);
 		d->send.put(d->signal_group_id);
 		{
-			std::lock_guard<std::unique_lock<rtpi::mutex>> lock(get_client_socket_mutex());
+			std::lock_guard<rtpi::mutex> lock(get_client_socket_mutex());
 			get_connection().send(d->send);
 		}
 		d->signal_group->unregister_proxy(this);
@@ -397,7 +397,7 @@ namespace saftbus {
 	}
 
 	ClientConnection& Proxy::get_connection() {
-		std::lock_guard<std::unique_lock<rtpi::mutex>> lock(Proxy::Impl::connection_mutex);
+		std::lock_guard<rtpi::mutex> lock(Proxy::Impl::connection_mutex);
 		if (!Proxy::Impl::connection) {
 			Proxy::Impl::connection = std::make_shared<ClientConnection>();
 		}
@@ -416,10 +416,10 @@ namespace saftbus {
 		return d->saftbus_object_id;
 	}
 
-	std::unique_lock<rtpi::mutex>& Proxy::get_client_socket_mutex() {
+	rtpi::mutex& Proxy::get_client_socket_mutex() {
 		return get_connection().d->connection_mutex;
 	}
-	std::unique_lock<rtpi::mutex>& Proxy::get_proxy_mutex() {
+	rtpi::mutex& Proxy::get_proxy_mutex() {
 		return d->proxy_mutex;
 	}
 
@@ -455,7 +455,7 @@ namespace saftbus {
 		return false;
 	}
 	bool Container_Proxy::load_plugin(const std::string & so_filename, const std::vector<std::string> &plugin_args) {
-		std::lock_guard<std::unique_lock<rtpi::mutex>> mutex_lock(get_proxy_mutex());
+		std::lock_guard<rtpi::mutex> mutex_lock(get_proxy_mutex());
 		get_send().put(get_saftbus_object_id());
 		get_send().put(interface_no);
 		get_send().put(2); // function_no
@@ -475,7 +475,7 @@ namespace saftbus {
 		return return_value_result_;
 	}
 	bool Container_Proxy::unload_plugin(const std::string & so_filename, const std::vector<std::string> &plugin_args) {
-		std::lock_guard<std::unique_lock<rtpi::mutex>> mutex_lock(get_proxy_mutex());
+		std::lock_guard<rtpi::mutex> mutex_lock(get_proxy_mutex());
 		get_send().put(get_saftbus_object_id());
 		get_send().put(interface_no);
 		get_send().put(3); // function_no
@@ -495,7 +495,7 @@ namespace saftbus {
 		return return_value_result_;
 	}
 	bool Container_Proxy::remove_object(const std::string & object_path	) {
-		std::lock_guard<std::unique_lock<rtpi::mutex>> mutex_lock(get_proxy_mutex());
+		std::lock_guard<rtpi::mutex> mutex_lock(get_proxy_mutex());
 		get_send().put(get_saftbus_object_id());
 		get_send().put(interface_no);
 		get_send().put(4); // function_no
@@ -514,7 +514,7 @@ namespace saftbus {
 		return return_value_result_;
 	}
 	void Container_Proxy::quit(	) {
-		std::lock_guard<std::unique_lock<rtpi::mutex>> mutex_lock(get_proxy_mutex());
+		std::lock_guard<rtpi::mutex> mutex_lock(get_proxy_mutex());
 		get_send().put(get_saftbus_object_id());
 		get_send().put(interface_no);
 		get_send().put(5); // function_no
@@ -529,7 +529,7 @@ namespace saftbus {
 		assert(function_result_ == saftbus::FunctionResult::RETURN);
 	}
 	SaftbusInfo Container_Proxy::get_status(	) {
-		std::lock_guard<std::unique_lock<rtpi::mutex>> mutex_lock(get_proxy_mutex());
+		std::lock_guard<rtpi::mutex> mutex_lock(get_proxy_mutex());
 		get_send().put(get_saftbus_object_id());
 		get_send().put(interface_no);
 		get_send().put(6); // function_no
