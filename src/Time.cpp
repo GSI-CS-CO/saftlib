@@ -41,7 +41,7 @@ namespace saftlib
 
 	// Reference: IETF Leap Seconds List
 	// Source: https://www.ietf.org/timezones/data/leap-seconds.list
-	// Last updated: [Okt-2025]
+	// Last updated: [December-2025]
 	const std::vector<LeapSecond> LEAP_SECONDS_TABLE {
 		{3'692'217'600, 37}, // 1 Jan 2017
 		{3'644'697'600, 36}, // 1 Jul 2015
