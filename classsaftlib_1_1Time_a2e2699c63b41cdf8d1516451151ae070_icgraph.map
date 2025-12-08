@@ -1,4 +1,0 @@
-<map id="saftlib::Time::getTAI" name="saftlib::Time::getTAI">
-<area shape="rect" id="node1" title="Get TAI value." alt="" coords="207,13,344,38"/>
-<area shape="rect" id="node2" href="$classsaftlib_1_1TimingReceiver.html#a5791ad718cac0a07f1eb0baea35258be" title="Simulate the receipt of a timing event." alt="" coords="5,5,159,45"/>
-</map>

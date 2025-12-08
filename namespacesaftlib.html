@@ -140,8 +140,6 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1IRQ.html">IRQ</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents an <a class="el" href="classsaftlib_1_1IRQ.html" title="Represents an IRQ that is managed by saftlib.">IRQ</a> that is managed by saftlib.  <a href="classsaftlib_1_1IRQ.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsaftlib_1_1LeapSecond.html">LeapSecond</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1LM32Cluster.html">LM32Cluster</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Mailbox.html">Mailbox</a></td></tr>
@@ -191,7 +189,6 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1TempSensor.html">TempSensor</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Time.html">Time</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The saftlib <a class="el" href="classsaftlib_1_1Time.html" title="The saftlib Time class. Member functions include conversion functions between UTC and TAI values....">Time</a> class. Member functions include conversion functions between UTC and TAI values. All time values are in nanoseconds All functions handle negative leap seconds (in case they will be introduced in the future)  <a href="classsaftlib_1_1Time.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1TimingReceiver.html">TimingReceiver</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A timing receiver.  <a href="classsaftlib_1_1TimingReceiver.html#details">More...</a><br /></td></tr>
@@ -234,30 +231,45 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>attach_io_control</b>
 <tr class="memitem:aa2b99c879182c530cb2b135dc7f432c3"><td class="memItemLeft" align="right" valign="top"><a id="aa2b99c879182c530cb2b135dc7f432c3" name="aa2b99c879182c530cb2b135dc7f432c3"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (const std::unique_ptr&lt; <a class="el" href="classsaftlib_1_1ActionSink.html">ActionSink</a> &gt; &amp;up, const <a class="el" href="classsaftlib_1_1ActionSink.html">ActionSink</a> *p)</td></tr>
 <tr class="separator:aa2b99c879182c530cb2b135dc7f432c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0ae07697e3eac196d2d74772c73c2c9"><td class="memItemLeft" align="right" valign="top"><a id="af0ae07697e3eac196d2d74772c73c2c9" name="af0ae07697e3eac196d2d74772c73c2c9"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const char *leap_second_list_filename)</td></tr>
+<tr class="separator:af0ae07697e3eac196d2d74772c73c2c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0b1c4694c3decdb1f62cff7a411cfef"><td class="memItemLeft" align="right" valign="top"><a id="af0b1c4694c3decdb1f62cff7a411cfef" name="af0b1c4694c3decdb1f62cff7a411cfef"></a>
 int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_epoch</b> (int n)</td></tr>
 <tr class="separator:af0b1c4694c3decdb1f62cff7a411cfef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a72a04f87be9cf0c076e1cec4c1eeea00"><td class="memItemLeft" align="right" valign="top"><a id="a72a04f87be9cf0c076e1cec4c1eeea00" name="a72a04f87be9cf0c076e1cec4c1eeea00"></a>
 int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_offset</b> (int n)</td></tr>
 <tr class="separator:a72a04f87be9cf0c076e1cec4c1eeea00"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4f63f297b1cbd14e930a57219b73e138"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138">UTC_offset_TAI</a> (uint64_t TAI)</td></tr>
-<tr class="memdesc:a4f63f297b1cbd14e930a57219b73e138"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function for TAI_to_UTC.  <a href="namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138">More...</a><br /></td></tr>
+<tr class="memitem:a4f63f297b1cbd14e930a57219b73e138"><td class="memItemLeft" align="right" valign="top"><a id="a4f63f297b1cbd14e930a57219b73e138" name="a4f63f297b1cbd14e930a57219b73e138"></a>
+int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>UTC_offset_TAI</b> (uint64_t TAI)</td></tr>
 <tr class="separator:a4f63f297b1cbd14e930a57219b73e138"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a021674a69fbeb19ba314ddaf7612365e"><td class="memItemLeft" align="right" valign="top">uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a021674a69fbeb19ba314ddaf7612365e">TAI_to_UTC</a> (uint64_t TAI)</td></tr>
-<tr class="memdesc:a021674a69fbeb19ba314ddaf7612365e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert TAI value to UTC value. TAI = UTC - leap seconds.  <a href="namespacesaftlib.html#a021674a69fbeb19ba314ddaf7612365e">More...</a><br /></td></tr>
+<tr class="memitem:a021674a69fbeb19ba314ddaf7612365e"><td class="memItemLeft" align="right" valign="top"><a id="a021674a69fbeb19ba314ddaf7612365e" name="a021674a69fbeb19ba314ddaf7612365e"></a>
+uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>TAI_to_UTC</b> (uint64_t TAI)</td></tr>
 <tr class="separator:a021674a69fbeb19ba314ddaf7612365e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36fc12cd3fb1a6771450ed5b889f5f45"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a36fc12cd3fb1a6771450ed5b889f5f45">TAI_is_UTCleap</a> (uint64_t TAI)</td></tr>
-<tr class="memdesc:a36fc12cd3fb1a6771450ed5b889f5f45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if this TAI value falls into a UTC leap second interval.  <a href="namespacesaftlib.html#a36fc12cd3fb1a6771450ed5b889f5f45">More...</a><br /></td></tr>
+<tr class="memitem:a36fc12cd3fb1a6771450ed5b889f5f45"><td class="memItemLeft" align="right" valign="top"><a id="a36fc12cd3fb1a6771450ed5b889f5f45" name="a36fc12cd3fb1a6771450ed5b889f5f45"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>TAI_is_UTCleap</b> (uint64_t TAI)</td></tr>
 <tr class="separator:a36fc12cd3fb1a6771450ed5b889f5f45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf7a4afb73a0f146ef3045d67e7e8332"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#acf7a4afb73a0f146ef3045d67e7e8332">UTC_offset_UTC</a> (uint64_t UTC, int leap, int64_t *offset)</td></tr>
-<tr class="memdesc:acf7a4afb73a0f146ef3045d67e7e8332"><td class="mdescLeft">&#160;</td><td class="mdescRight">get UTC offset (in seconds) for given UTC value. UTC_offset = TAI - UTC  <a href="namespacesaftlib.html#acf7a4afb73a0f146ef3045d67e7e8332">More...</a><br /></td></tr>
+<tr class="memitem:acf7a4afb73a0f146ef3045d67e7e8332"><td class="memItemLeft" align="right" valign="top"><a id="acf7a4afb73a0f146ef3045d67e7e8332" name="acf7a4afb73a0f146ef3045d67e7e8332"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>UTC_offset_UTC</b> (uint64_t UTC, int leap, int64_t *offset)</td></tr>
 <tr class="separator:acf7a4afb73a0f146ef3045d67e7e8332"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fdba7c54aff36459ce2cfca4004bfe2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a4fdba7c54aff36459ce2cfca4004bfe2">UTC_to_TAI</a> (uint64_t UTC, int leap, uint64_t *TAI)</td></tr>
-<tr class="memdesc:a4fdba7c54aff36459ce2cfca4004bfe2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert UTC value to TAI value TAI = UTC + leap seconds.  <a href="namespacesaftlib.html#a4fdba7c54aff36459ce2cfca4004bfe2">More...</a><br /></td></tr>
+<tr class="memitem:a4fdba7c54aff36459ce2cfca4004bfe2"><td class="memItemLeft" align="right" valign="top"><a id="a4fdba7c54aff36459ce2cfca4004bfe2" name="a4fdba7c54aff36459ce2cfca4004bfe2"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>UTC_to_TAI</b> (uint64_t UTC, int leap, uint64_t *TAI)</td></tr>
 <tr class="separator:a4fdba7c54aff36459ce2cfca4004bfe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60acd4708b95d5b38afdd8dee8da2f85"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a60acd4708b95d5b38afdd8dee8da2f85">UTC_difference</a> (uint64_t UTC1, int leap1, uint64_t UTC2, int leap2, int64_t *difference)</td></tr>
-<tr class="memdesc:a60acd4708b95d5b38afdd8dee8da2f85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate UTC time difference.  <a href="namespacesaftlib.html#a60acd4708b95d5b38afdd8dee8da2f85">More...</a><br /></td></tr>
+<tr class="memitem:a60acd4708b95d5b38afdd8dee8da2f85"><td class="memItemLeft" align="right" valign="top"><a id="a60acd4708b95d5b38afdd8dee8da2f85" name="a60acd4708b95d5b38afdd8dee8da2f85"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>UTC_difference</b> (uint64_t UTC1, int leap1, uint64_t UTC2, int leap2, int64_t *difference)</td></tr>
 <tr class="separator:a60acd4708b95d5b38afdd8dee8da2f85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98e092642e44a23d30ecab64f3645351"><td class="memItemLeft" align="right" valign="top"><a id="a98e092642e44a23d30ecab64f3645351" name="a98e092642e44a23d30ecab64f3645351"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>test_UTC_offset</b> ()</td></tr>
+<tr class="separator:a98e092642e44a23d30ecab64f3645351"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c6d18595d0c58507bde9a14c7664815"><td class="memItemLeft" align="right" valign="top"><a id="a7c6d18595d0c58507bde9a14c7664815" name="a7c6d18595d0c58507bde9a14c7664815"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>test_UTC_difference</b> ()</td></tr>
+<tr class="separator:a7c6d18595d0c58507bde9a14c7664815"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3929a1783e95f585fa3d6e680c33e37"><td class="memItemLeft" align="right" valign="top"><a id="af3929a1783e95f585fa3d6e680c33e37" name="af3929a1783e95f585fa3d6e680c33e37"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>test_conversion_forth_and_back</b> ()</td></tr>
+<tr class="separator:af3929a1783e95f585fa3d6e680c33e37"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ce05c542bcc0f41ff4341af54d15bb9"><td class="memItemLeft" align="right" valign="top"><a id="a0ce05c542bcc0f41ff4341af54d15bb9" name="a0ce05c542bcc0f41ff4341af54d15bb9"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>test_special_cases</b> ()</td></tr>
+<tr class="separator:a0ce05c542bcc0f41ff4341af54d15bb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8eafce3bbcb6d64d6987fe20658da80b"><td class="memItemLeft" align="right" valign="top"><a id="a8eafce3bbcb6d64d6987fe20658da80b" name="a8eafce3bbcb6d64d6987fe20658da80b"></a>
 <a class="el" href="classsaftlib_1_1Time.html">Time</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator+</b> (const <a class="el" href="classsaftlib_1_1Time.html">Time</a> &amp;lhs, const int64_t &amp;rhs)</td></tr>
 <tr class="separator:a8eafce3bbcb6d64d6987fe20658da80b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -276,18 +288,6 @@ int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_offset
 <tr class="memitem:acf56c28096f3911dcf00bdc32170014a"><td class="memItemLeft" align="right" valign="top"><a id="acf56c28096f3911dcf00bdc32170014a" name="acf56c28096f3911dcf00bdc32170014a"></a>
 <a class="el" href="classsaftlib_1_1Time.html">Time</a>&#160;</td><td class="memItemRight" valign="bottom"><b>makeTimeTAI</b> (uint64_t TAI)</td></tr>
 <tr class="separator:acf56c28096f3911dcf00bdc32170014a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98e092642e44a23d30ecab64f3645351"><td class="memItemLeft" align="right" valign="top"><a id="a98e092642e44a23d30ecab64f3645351" name="a98e092642e44a23d30ecab64f3645351"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>test_UTC_offset</b> ()</td></tr>
-<tr class="separator:a98e092642e44a23d30ecab64f3645351"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c6d18595d0c58507bde9a14c7664815"><td class="memItemLeft" align="right" valign="top"><a id="a7c6d18595d0c58507bde9a14c7664815" name="a7c6d18595d0c58507bde9a14c7664815"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>test_UTC_difference</b> ()</td></tr>
-<tr class="separator:a7c6d18595d0c58507bde9a14c7664815"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af3929a1783e95f585fa3d6e680c33e37"><td class="memItemLeft" align="right" valign="top"><a id="af3929a1783e95f585fa3d6e680c33e37" name="af3929a1783e95f585fa3d6e680c33e37"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>test_conversion_forth_and_back</b> ()</td></tr>
-<tr class="separator:af3929a1783e95f585fa3d6e680c33e37"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ce05c542bcc0f41ff4341af54d15bb9"><td class="memItemLeft" align="right" valign="top"><a id="a0ce05c542bcc0f41ff4341af54d15bb9" name="a0ce05c542bcc0f41ff4341af54d15bb9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>test_special_cases</b> ()</td></tr>
-<tr class="separator:a0ce05c542bcc0f41ff4341af54d15bb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -298,12 +298,15 @@ Variables</h2></td></tr>
 <tr class="memitem:a7a14bbb3b87b25bb2563c3a6cf878b80"><td class="memItemLeft" align="right" valign="top"><a id="a7a14bbb3b87b25bb2563c3a6cf878b80" name="a7a14bbb3b87b25bb2563c3a6cf878b80"></a>
 const eb_data_t&#160;</td><td class="memItemRight" valign="bottom"><b>MSI_TEST_VALUE</b> = 0x12345678</td></tr>
 <tr class="separator:a7a14bbb3b87b25bb2563c3a6cf878b80"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa97f6c0d6b2717306e9bf9f61d07039d"><td class="memItemLeft" align="right" valign="top"><a id="aa97f6c0d6b2717306e9bf9f61d07039d" name="aa97f6c0d6b2717306e9bf9f61d07039d"></a>
-const uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>EPOCH_OFFSET_1900_TO_1970</b> = 2'208'988'800</td></tr>
-<tr class="separator:aa97f6c0d6b2717306e9bf9f61d07039d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f5b4dc239dc1955a891c696520ffb42"><td class="memItemLeft" align="right" valign="top"><a id="a2f5b4dc239dc1955a891c696520ffb42" name="a2f5b4dc239dc1955a891c696520ffb42"></a>
-const std::vector&lt; <a class="el" href="structsaftlib_1_1LeapSecond.html">LeapSecond</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>LEAP_SECONDS_TABLE</b></td></tr>
-<tr class="separator:a2f5b4dc239dc1955a891c696520ffb42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fc8064051f92e9ed67a6cc01d5ebf2d"><td class="memItemLeft" align="right" valign="top"><a id="a1fc8064051f92e9ed67a6cc01d5ebf2d" name="a1fc8064051f92e9ed67a6cc01d5ebf2d"></a>
+const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>offset_epoch_01_01_1900</b> = 2208988800</td></tr>
+<tr class="separator:a1fc8064051f92e9ed67a6cc01d5ebf2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a114c666468980b02853cf49135a52fe7"><td class="memItemLeft" align="right" valign="top"><a id="a114c666468980b02853cf49135a52fe7" name="a114c666468980b02853cf49135a52fe7"></a>
+const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_list</b> [][2]</td></tr>
+<tr class="separator:a114c666468980b02853cf49135a52fe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b76e60609ca67130e18c0514a4e07cf"><td class="memItemLeft" align="right" valign="top"><a id="a2b76e60609ca67130e18c0514a4e07cf" name="a2b76e60609ca67130e18c0514a4e07cf"></a>
+std::vector&lt; std::array&lt; int64_t, 2 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>leap_second_vector</b></td></tr>
+<tr class="separator:a2b76e60609ca67130e18c0514a4e07cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32e5fd0d4b59617bdc6700f9d28c15a9"><td class="memItemLeft" align="right" valign="top"><a id="a32e5fd0d4b59617bdc6700f9d28c15a9" name="a32e5fd0d4b59617bdc6700f9d28c15a9"></a>
 const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>sec</b> = INT64_C(1000000000)</td></tr>
 <tr class="separator:a32e5fd0d4b59617bdc6700f9d28c15a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -322,347 +325,6 @@ const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>nsec</b> = I
 <p >The classes hide direct register access and provide high level access to the hardware functionality. The code can be used directly by linking the driver library, or by loading the driver library as a plugin into a running saftbusd access them with the saftbus inter process communication library through the driver proxy classes.</p>
 <p >In general, SDB devices on the hardware are represented by a class derived from <a class="el" href="classsaftlib_1_1SdbDevice.html" title="SdbDevices calls sdb_find_by_identity and keeps the starting address of the device registers.">SdbDevice</a> class. All hardware devices, that are MSI masters are represented by a class derived from <a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a> class. An instance of an <a class="el" href="classsaftlib_1_1MsiDevice.html">MsiDevice</a> class can be used to register MSI callback functions at the <a class="el" href="classsaftlib_1_1SAFTd.html" title="An encapsulated etherbone::Socket with some extra features.">SAFTd</a> instance. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="a36fc12cd3fb1a6771450ed5b889f5f45" name="a36fc12cd3fb1a6771450ed5b889f5f45"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a36fc12cd3fb1a6771450ed5b889f5f45">&#9670;&#160;</a></span>TAI_is_UTCleap()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int saftlib::TAI_is_UTCleap </td>
-          <td>(</td>
-          <td class="paramtype">uint64_t&#160;</td>
-          <td class="paramname"><em>TAI</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Check if this TAI value falls into a UTC leap second interval. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">TAI</td><td>nanosecond TAI value (nanoseconds since 01/01/1970) </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname">1</td><td>if this is a positive leap second interval (the UTC second part was repeated) </td></tr>
-    <tr><td class="paramname">0</td><td>if this was outside a leap second interval </td></tr>
-    <tr><td class="paramname">-1</td><td>if the previous second was skipped (only happens if we get negative leap seconds, which didn't happen yet (year 2019)) </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a021674a69fbeb19ba314ddaf7612365e" name="a021674a69fbeb19ba314ddaf7612365e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a021674a69fbeb19ba314ddaf7612365e">&#9670;&#160;</a></span>TAI_to_UTC()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint64_t saftlib::TAI_to_UTC </td>
-          <td>(</td>
-          <td class="paramtype">uint64_t&#160;</td>
-          <td class="paramname"><em>TAI</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Convert TAI value to UTC value. TAI = UTC - leap seconds. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">TAI</td><td>nanosecond TAI value (nanoseconds since 01/01/1970) </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>UTC value that corresponds to the given TAI value. Result is </dd></dl>
-<div class="dynheader">
-Here is the call graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_cgraph.png" border="0" usemap="#anamespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_cgraph" alt=""/></div>
-<map name="anamespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_cgraph" id="anamespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_cgraph">
-<area shape="rect" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="5,5,141,31"/>
-<area shape="rect" href="namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138" title="Helper function for TAI_to_UTC." alt="" coords="189,5,347,31"/>
-</map>
-</div>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_icgraph.png" border="0" usemap="#anamespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_icgraph" alt=""/></div>
-<map name="anamespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_icgraph" id="anamespacesaftlib_a021674a69fbeb19ba314ddaf7612365e_icgraph">
-<area shape="rect" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="601,31,737,56"/>
-<area shape="rect" href="classsaftlib_1_1Time.html#a7d699eb84e315d8295944f81e21ed5e5" title="Get UTC value." alt="" coords="401,5,543,31"/>
-<area shape="rect" href="namespacesaftlib.html#acf7a4afb73a0f146ef3045d67e7e8332" title="get UTC offset (in seconds) for given UTC value. UTC_offset = TAI &#45; UTC" alt="" coords="391,55,553,80"/>
-<area shape="rect" href="namespacesaftlib.html#a4fdba7c54aff36459ce2cfca4004bfe2" title="Convert UTC value to TAI value TAI = UTC + leap seconds." alt="" coords="207,55,343,80"/>
-<area shape="rect" href="namespacesaftlib.html#a60acd4708b95d5b38afdd8dee8da2f85" title="Calculate UTC time difference." alt="" coords="5,55,159,80"/>
-</map>
-</div>
-
-</div>
-</div>
-<a id="a60acd4708b95d5b38afdd8dee8da2f85" name="a60acd4708b95d5b38afdd8dee8da2f85"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a60acd4708b95d5b38afdd8dee8da2f85">&#9670;&#160;</a></span>UTC_difference()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int saftlib::UTC_difference </td>
-          <td>(</td>
-          <td class="paramtype">uint64_t&#160;</td>
-          <td class="paramname"><em>UTC1</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>leap1</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint64_t&#160;</td>
-          <td class="paramname"><em>UTC2</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>leap2</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int64_t *&#160;</td>
-          <td class="paramname"><em>difference</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Calculate UTC time difference. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">UTC1</td><td>nanosecond UTC value </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">leap1</td><td>1 if UTC1 is inside a leap second interval, 0 otherwise (This parameter is only ever looked at, when the UTC value is actually in a leap second interval. For non leap second intervals, this parameter is ignored.) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">UTC2</td><td>see UTC1 </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">leap2</td><td>see leap1 </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">difference</td><td>a pointer to where the number of nanoseconds UTC1-UTC2 is stored (in case of return value 1) </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname">1</td><td>if the difference could be calculated, </td></tr>
-    <tr><td class="paramname">0</td><td>if one of the UTC value value was invalid (nonexistent UTC values will only appear if we get negative leap seconds) </td></tr>
-  </table>
-  </dd>
-</dl>
-<div class="dynheader">
-Here is the call graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_a60acd4708b95d5b38afdd8dee8da2f85_cgraph.png" border="0" usemap="#anamespacesaftlib_a60acd4708b95d5b38afdd8dee8da2f85_cgraph" alt=""/></div>
-<map name="anamespacesaftlib_a60acd4708b95d5b38afdd8dee8da2f85_cgraph" id="anamespacesaftlib_a60acd4708b95d5b38afdd8dee8da2f85_cgraph">
-<area shape="rect" title="Calculate UTC time difference." alt="" coords="5,5,159,31"/>
-<area shape="rect" href="namespacesaftlib.html#a4fdba7c54aff36459ce2cfca4004bfe2" title="Convert UTC value to TAI value TAI = UTC + leap seconds." alt="" coords="207,5,343,31"/>
-<area shape="rect" href="namespacesaftlib.html#acf7a4afb73a0f146ef3045d67e7e8332" title="get UTC offset (in seconds) for given UTC value. UTC_offset = TAI &#45; UTC" alt="" coords="391,5,553,31"/>
-<area shape="rect" href="namespacesaftlib.html#a021674a69fbeb19ba314ddaf7612365e" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="601,5,737,31"/>
-<area shape="rect" href="namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138" title="Helper function for TAI_to_UTC." alt="" coords="785,5,943,31"/>
-</map>
-</div>
-
-</div>
-</div>
-<a id="a4f63f297b1cbd14e930a57219b73e138" name="a4f63f297b1cbd14e930a57219b73e138"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4f63f297b1cbd14e930a57219b73e138">&#9670;&#160;</a></span>UTC_offset_TAI()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int64_t saftlib::UTC_offset_TAI </td>
-          <td>(</td>
-          <td class="paramtype">uint64_t&#160;</td>
-          <td class="paramname"><em>TAI</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Helper function for TAI_to_UTC. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">TAI</td><td>nanosecond leap second offset </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>accumulated leap seconds </dd></dl>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_a4f63f297b1cbd14e930a57219b73e138_icgraph.png" border="0" usemap="#anamespacesaftlib_a4f63f297b1cbd14e930a57219b73e138_icgraph" alt=""/></div>
-<map name="anamespacesaftlib_a4f63f297b1cbd14e930a57219b73e138_icgraph" id="anamespacesaftlib_a4f63f297b1cbd14e930a57219b73e138_icgraph">
-<area shape="rect" title="Helper function for TAI_to_UTC." alt="" coords="785,31,943,56"/>
-<area shape="rect" href="namespacesaftlib.html#a021674a69fbeb19ba314ddaf7612365e" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="601,31,737,56"/>
-<area shape="rect" href="classsaftlib_1_1Time.html#a7d699eb84e315d8295944f81e21ed5e5" title="Get UTC value." alt="" coords="401,5,543,31"/>
-<area shape="rect" href="namespacesaftlib.html#acf7a4afb73a0f146ef3045d67e7e8332" title="get UTC offset (in seconds) for given UTC value. UTC_offset = TAI &#45; UTC" alt="" coords="391,55,553,80"/>
-<area shape="rect" href="namespacesaftlib.html#a4fdba7c54aff36459ce2cfca4004bfe2" title="Convert UTC value to TAI value TAI = UTC + leap seconds." alt="" coords="207,55,343,80"/>
-<area shape="rect" href="namespacesaftlib.html#a60acd4708b95d5b38afdd8dee8da2f85" title="Calculate UTC time difference." alt="" coords="5,55,159,80"/>
-</map>
-</div>
-
-</div>
-</div>
-<a id="acf7a4afb73a0f146ef3045d67e7e8332" name="acf7a4afb73a0f146ef3045d67e7e8332"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acf7a4afb73a0f146ef3045d67e7e8332">&#9670;&#160;</a></span>UTC_offset_UTC()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int saftlib::UTC_offset_UTC </td>
-          <td>(</td>
-          <td class="paramtype">uint64_t&#160;</td>
-          <td class="paramname"><em>UTC</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>leap</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int64_t *&#160;</td>
-          <td class="paramname"><em>offset</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>get UTC offset (in seconds) for given UTC value. UTC_offset = TAI - UTC </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">UTC</td><td>nanosecond UTC value </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">leap</td><td>1 if UTC1 is inside a leap second interval, 0 otherwise (This parameter is only ever looked at, when the UTC value is actually in a leap second interval. For non leap second intervals, this parameter is ignored.) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">offset</td><td>a pointer to where the resulting offset is copied after successful computation (return value 1) the offset is given in nanoseconds </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname">1</td><td>if the conversion could be done, </td></tr>
-    <tr><td class="paramname">0</td><td>if the UTC value value was invalid (nonexistent UTC values will only appear if we get negative leap seconds, which didn't happen yet) </td></tr>
-  </table>
-  </dd>
-</dl>
-<div class="dynheader">
-Here is the call graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_cgraph.png" border="0" usemap="#anamespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_cgraph" alt=""/></div>
-<map name="anamespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_cgraph" id="anamespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_cgraph">
-<area shape="rect" title="get UTC offset (in seconds) for given UTC value. UTC_offset = TAI &#45; UTC" alt="" coords="5,5,168,31"/>
-<area shape="rect" href="namespacesaftlib.html#a021674a69fbeb19ba314ddaf7612365e" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="216,5,352,31"/>
-<area shape="rect" href="namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138" title="Helper function for TAI_to_UTC." alt="" coords="400,5,557,31"/>
-</map>
-</div>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_icgraph.png" border="0" usemap="#anamespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_icgraph" alt=""/></div>
-<map name="anamespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_icgraph" id="anamespacesaftlib_acf7a4afb73a0f146ef3045d67e7e8332_icgraph">
-<area shape="rect" title="get UTC offset (in seconds) for given UTC value. UTC_offset = TAI &#45; UTC" alt="" coords="391,5,553,31"/>
-<area shape="rect" href="namespacesaftlib.html#a4fdba7c54aff36459ce2cfca4004bfe2" title="Convert UTC value to TAI value TAI = UTC + leap seconds." alt="" coords="207,5,343,31"/>
-<area shape="rect" href="namespacesaftlib.html#a60acd4708b95d5b38afdd8dee8da2f85" title="Calculate UTC time difference." alt="" coords="5,5,159,31"/>
-</map>
-</div>
-
-</div>
-</div>
-<a id="a4fdba7c54aff36459ce2cfca4004bfe2" name="a4fdba7c54aff36459ce2cfca4004bfe2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fdba7c54aff36459ce2cfca4004bfe2">&#9670;&#160;</a></span>UTC_to_TAI()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int saftlib::UTC_to_TAI </td>
-          <td>(</td>
-          <td class="paramtype">uint64_t&#160;</td>
-          <td class="paramname"><em>UTC</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>leap</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint64_t *&#160;</td>
-          <td class="paramname"><em>TAI</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Convert UTC value to TAI value TAI = UTC + leap seconds. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">UTC</td><td>nanosecond UTC value </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">leap</td><td>1 if UTC1 is inside a leap second interval, 0 otherwise (This parameter is only ever looked at, when the UTC value is actually in a leap second interval. For non leap second intervals, this parameter is ignored.) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">TAI</td><td>a pointer to where the result of the conversion is copied after successful computation </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname">1</td><td>if the conversion could be done, </td></tr>
-    <tr><td class="paramname">0</td><td>if the UTC value value was invalid (nonexistent UTC values will only appear if we get negative leap seconds) </td></tr>
-  </table>
-  </dd>
-</dl>
-<div class="dynheader">
-Here is the call graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_cgraph.png" border="0" usemap="#anamespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_cgraph" alt=""/></div>
-<map name="anamespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_cgraph" id="anamespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_cgraph">
-<area shape="rect" title="Convert UTC value to TAI value TAI = UTC + leap seconds." alt="" coords="5,5,141,31"/>
-<area shape="rect" href="namespacesaftlib.html#acf7a4afb73a0f146ef3045d67e7e8332" title="get UTC offset (in seconds) for given UTC value. UTC_offset = TAI &#45; UTC" alt="" coords="189,5,352,31"/>
-<area shape="rect" href="namespacesaftlib.html#a021674a69fbeb19ba314ddaf7612365e" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="400,5,536,31"/>
-<area shape="rect" href="namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138" title="Helper function for TAI_to_UTC." alt="" coords="584,5,741,31"/>
-</map>
-</div>
-<div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="namespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_icgraph.png" border="0" usemap="#anamespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_icgraph" alt=""/></div>
-<map name="anamespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_icgraph" id="anamespacesaftlib_a4fdba7c54aff36459ce2cfca4004bfe2_icgraph">
-<area shape="rect" title="Convert UTC value to TAI value TAI = UTC + leap seconds." alt="" coords="207,5,343,31"/>
-<area shape="rect" href="namespacesaftlib.html#a60acd4708b95d5b38afdd8dee8da2f85" title="Calculate UTC time difference." alt="" coords="5,5,159,31"/>
-</map>
-</div>
-
-</div>
-</div>
 <a id="a11d8a59c8ea18315d9c227386709650e" name="a11d8a59c8ea18315d9c227386709650e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a11d8a59c8ea18315d9c227386709650e">&#9670;&#160;</a></span>wait_for_signal()</h2>
 
