@@ -65,6 +65,25 @@ To solve this, you need to provide a folder that contains an etherbone.pc file:
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 
+### librtpi
+
+The [Real-Time Priority Inheritance Library](https://gitlab.com/linux-rt/librtpi) is used in saftlib.
+Please see [librtpi](https://git.gsi.de/saft/librtpi/) on how to install it.
+
+You might encounter this error:
+
+```
+checking for librtpi >= 1.0.2... no
+configure: error: Package requirements (librtpi >= 1.0.2) were not met:
+
+Package 'librtpi', required by 'virtual:world', not found
+```
+
+To solve this, you need to provide a folder that contains an librtpi.pc file:
+
+```bash
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+```
 ### Quickstart
 
 If saftbusd (or any client program) is started by non root users, the socket directory (where the socket for inter process communication is located) should be changed by setting the SAFTBUS_SOCKET_PATH environment variable. For example

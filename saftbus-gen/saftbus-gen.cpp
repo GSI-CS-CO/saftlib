@@ -1440,7 +1440,7 @@ void generate_proxy_implementation(const std::string &outputdirectory, ClassDefi
 			}
 		}
 		cpp_out << "\t) {" << std::endl;
-		cpp_out << "\t\t" << "std::lock_guard<std::mutex> lock(get_proxy_mutex());" << std::endl;
+		cpp_out << "\t\t" << "std::lock_guard<rtpi::mutex> lock(get_proxy_mutex());" << std::endl;
 		cpp_out << "\t\t" << "get_send().put(get_saftbus_object_id());" << std::endl;
 		cpp_out << "\t\t" << "get_send().put(interface_no);" << std::endl;
 		cpp_out << "\t\t" << "get_send().put(" << function_no  << "); // function_no" << std::endl;
