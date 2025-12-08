@@ -5,10 +5,6 @@ AM_CPPFLAGS = -Wall -g  $(SIGCPP_CFLAGS) $(EB_CFLAGS) -I $(top_srcdir)/saftbus -
 pkgdir = @libdir@/pkgconfig
 pkg_DATA = saftlib.pc saftbus.pc
 EXTRA_DIST = saftlib.pc.in saftbus.pc.in
-#the file leap-seconds.list ist needed by the Time class to convert between UTC and WR-time
-leapseconddir = $(datadir)/saftlib
-leapsecond_DATA = leap-seconds.list
-EXTRA_DIST += leap-seconds.list 
 EXTRA_DIST += src/software-tr.sdb
 EXTRA_DIST += saftbus/configurable_chunck_allocator_rt.cpp
 EXTRA_DIST += saftbus/configurable_chunck_allocator_rt.hpp 
