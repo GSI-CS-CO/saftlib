@@ -217,7 +217,7 @@ void MasterFunctionGenerator::InitializeSharedMemory(const std::string& shared_m
 }
 
 
-void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack)
+void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_process)
 {
   // DRIVER_LOG("beam_process",-1,beam_process);
   if (!shm_params)
@@ -280,17 +280,6 @@ void MasterFunctionGenerator::AppendParameterTuplesForBeamProcess(int beam_proce
       } 
     } // end mutex scope
 
-// if requested wait for all fgs to arm
-  	if (arm)
-    {
-      // DRIVER_LOG("arm",-1,-1);
-      arm_all();
-      if (wait_for_arm_ack)
-      {
-        // DRIVER_LOG("wait_for_arm_ack",-1,-1);
-        waitForCondition(std::bind(&MasterFunctionGenerator::all_armed, this), 2000);
-      }
-    }
   } catch (boost::interprocess::interprocess_exception& e) {
     throw saftbus::Error(saftbus::Error::INVALID_ARGS, e.what());
   }
@@ -305,9 +294,7 @@ bool MasterFunctionGenerator::AppendParameterSets(
 	const std::vector< std::vector< unsigned char > >& step, 
 	const std::vector< std::vector< unsigned char > >& freq, 
 	const std::vector< std::vector< unsigned char > >& shift_a, 
-	const std::vector< std::vector< unsigned char > >& shift_b, 
-	bool arm,
-  bool wait_for_arm_ack)
+	const std::vector< std::vector< unsigned char > >& shift_b)
 {
 
   // DRIVER_LOG("coeff_size",-1,coeff_a.size());
@@ -333,19 +320,6 @@ bool MasterFunctionGenerator::AppendParameterSets(
 			lowFill |= activeFunctionGenerators[i]->appendParameterSet(coeff_a[i], coeff_b[i], coeff_c[i], step[i], freq[i], shift_a[i], shift_b[i]);
 		}
 	}
-
-	// if requested wait for all fgs to arm
-	if (arm)
-  {
-      // DRIVER_LOG("arm",-1,-1);
-    arm_all();
-    // wait for arm response ...
-    if (wait_for_arm_ack)
-    {
-        // DRIVER_LOG("wait_for_arm_ack",-1,-1);
-      waitForCondition(std::bind(&MasterFunctionGenerator::all_armed, this), 2000);
-    }
-  }
   // DRIVER_LOG("lowFill",-1,lowFill);
   return lowFill;
 }
@@ -437,16 +411,11 @@ void MasterFunctionGenerator::reset_all()
 	}
 }
 
-void MasterFunctionGenerator::Abort(bool wait_for_abort_ack)
+void MasterFunctionGenerator::Abort()
 {
   // DRIVER_LOG("",-1,-1);
   ownerOnly();
   reset_all();
-  if (wait_for_abort_ack)
-  {
-    // DRIVER_LOG("wait_for_abort_ack",-1,-1);
-    waitForCondition(std::bind(&MasterFunctionGenerator::all_stopped, this), 2000);
-  }
 }
 
 void MasterFunctionGenerator::ownerQuit()
@@ -626,31 +595,8 @@ bool MasterFunctionGenerator::all_stopped()
   return all_stopped; 
 }
 
-void MasterFunctionGenerator::waitForCondition(std::function<bool()> condition, int timeout_ms)
-{
-  // DRIVER_LOG("",-1,-1);
-  struct timespec start, now;
-  clock_gettime(CLOCK_MONOTONIC, &start);
-
-  // std::shared_ptr<Slib::MainContext> context = Slib::MainContext::get_default();
-  do
-  {
-    // context->iteration(false);
-    saftbus::Loop::get_default().iteration(false);
-    usleep(1000);
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    int dt_ms = (now.tv_sec - start.tv_sec)*1000 
-              + (now.tv_nsec - start.tv_nsec)/1000000;
-    if (dt_ms > timeout_ms) {
-      throw saftbus::Error(saftbus::Error::INVALID_ARGS,"MasterFG: Timeout waiting for condition");
-    }              
-  } while (condition() == false) ;
-}
-
 std::string MasterFunctionGenerator::getObjectPath() {
   return objectPath;
 }
-
-
 
 }
