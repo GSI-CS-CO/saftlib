@@ -16,7 +16,6 @@
  *******************************************************************************
  */
 
-// #include <config.h>
 #include "Time.hpp"
 
 #include <assert.h>
@@ -178,7 +177,35 @@ namespace saftlib
 		return 0;
 	}
 
+	Time operator+(const Time& lhs, const int64_t& rhs) {
+		Time result(lhs);
+		return result += rhs;
+	}
+	Time operator-(const Time& lhs, const int64_t& rhs) {
+		Time result(lhs);
+		return result -= rhs;
+	}
+	Time operator+(const int64_t& lhs, const Time& rhs) {
+		return rhs + lhs;
+	}
+	Time operator-(const int64_t& lhs, const Time& rhs) {
+		return rhs - lhs;
+	}
 
+	Time makeTimeUTC(uint64_t UTC, bool isLeap) {
+		uint64_t TAI;
+		if (UTC_to_TAI(UTC, isLeap, &TAI)) {
+			return Time(TAI);
+		}
+		throw Time(0);
+	}
+	Time makeTimeTAI(uint64_t TAI) {
+		return Time(TAI);
+	}
+
+	//
+	// test functions follow
+	// 
 	void test_UTC_offset()
 	{
 		for (size_t i = 0; i <  LEAP_SECONDS_TABLE.size();++i) {
@@ -265,33 +292,5 @@ namespace saftlib
 	    } else {
 	    	assert(0); // not a valid UTC value
 	    }
-	}
-
-
-
-	Time operator+(const Time& lhs, const int64_t& rhs) {
-		Time result(lhs);
-		return result += rhs;
-	}
-	Time operator-(const Time& lhs, const int64_t& rhs) {
-		Time result(lhs);
-		return result -= rhs;
-	}
-	Time operator+(const int64_t& lhs, const Time& rhs) {
-		return rhs + lhs;
-	}
-	Time operator-(const int64_t& lhs, const Time& rhs) {
-		return rhs - lhs;
-	}
-
-	Time makeTimeUTC(uint64_t UTC, bool isLeap) {
-		uint64_t TAI;
-		if (UTC_to_TAI(UTC, isLeap, &TAI)) {
-			return Time(TAI);
-		}
-		throw Time(0);
-	}
-	Time makeTimeTAI(uint64_t TAI) {
-		return Time(TAI);
 	}
 }
