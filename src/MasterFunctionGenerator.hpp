@@ -86,9 +86,6 @@ class MasterFunctionGenerator : public Owned
 
     /// @brief Abort waveform generation in all function generators.
     ///
-    /// @param wait_for_abort_ack: If true, wait for all FGs to transition to the
-    ///   disabled state before returning. 
-    ///
     /// This directs the hardware to stop waveform generation. If the
     /// function generator was Armed, it is disarmed and disabled, without
     /// outputting any waveform data. If the function generator is running, 
@@ -100,7 +97,7 @@ class MasterFunctionGenerator : public Owned
     /// quits without running Disown, the Abort is run automatically.
     /// 
     // @saftbus-export
-    void Abort(bool wait_for_abort_ack);
+    void Abort();
 
     /// @brief Initialze a boost managed_shared_memory region
     ///
@@ -112,13 +109,11 @@ class MasterFunctionGenerator : public Owned
     void InitializeSharedMemory(const std::string& shared_memory_name);
 
     // @saftbus-export
-    void AppendParameterTuplesForBeamProcess(int beam_process, bool arm, bool wait_for_arm_ack);
-
+    void AppendParameterTuplesForBeamProcess(int beam_process);
+    ///
     /// @brief For each function generator, append parameter tuples describing
-    ///
-    /// the waveform to generate.
+    /// waveform to generate.
     /// Each parameter is sent as a vector of vectors: per FG then per tuple element
-    ///
     /// Parameters are sent as a vector of vectors. 
     /// The outside vectors contain a coefficient vector for each FG and must be of the same size
     /// and less or equal the number of active FGs.
@@ -135,8 +130,6 @@ class MasterFunctionGenerator : public Owned
     /// @shift_a:  Exponent of coeff_a, 6-bit unsigned; a = coeff_a*2^shift_a
     /// @shift_b:  Exponent of coeff_b, 6-bit unsigned; b = coeff_b*2^shift_b
     ///
-    /// @arm:      If true, arm each function generator that received data and wait for acknowledgement
-    /// @wait_for_arm_ack:  If true, and arm is true, wait for arm acknowledgements from all fgs before returning
     /// @low_fill: Fill level remains low for at least one FG - use ReadFillLevels
     /// 
     ///
@@ -153,7 +146,7 @@ class MasterFunctionGenerator : public Owned
     /// bits of the resulting 64-bit signed value.
     /// 
     // @saftbus-export
-  	bool AppendParameterSets(const std::vector< std::vector< int16_t > >& coeff_a, const std::vector< std::vector< int16_t > >& coeff_b, const std::vector< std::vector< int32_t > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b, bool arm, bool wait_for_arm_ack);    
+  	bool AppendParameterSets(const std::vector< std::vector< int16_t > >& coeff_a, const std::vector< std::vector< int16_t > >& coeff_b, const std::vector< std::vector< int32_t > >& coeff_c, const std::vector< std::vector< unsigned char > >& step, const std::vector< std::vector< unsigned char > >& freq, const std::vector< std::vector< unsigned char > >& shift_a, const std::vector< std::vector< unsigned char > >& shift_b);    
 
     /// @brief Number of parameter tuples executed by each function generator
     /// 

@@ -1,7 +1,7 @@
 dnl Set these variables before each release:
 m4_define(MAJOR,3)    dnl Increment if removed/changed properties/signals/methods since previous release
-m4_define(MINOR,2)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
-m4_define(REVISION,3) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
+m4_define(MINOR,3)    dnl Increment if added properties/signals/methods; reset to 0 if MAJOR changed
+m4_define(REVISION,0) dnl Increment on each release; reset to 0 if MAJOR/MINOR changed
 m4_define(SONAME,10)   dnl Whenever MAJOR is incremented, add MINOR+1 to this variable
 
 
@@ -16,6 +16,7 @@ AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
 
 PKG_CHECK_MODULES([EB],      [etherbone >= 2.1.0])
 PKG_CHECK_MODULES([SIGCPP],  [sigc++-2.0])
+PKG_CHECK_MODULES([LIBRTPI],  [librtpi >= 1.0.2])
 AC_CHECK_PROG( SAFTBUSGEN_CHECK,saftbus-gen,yes)
 AM_CONDITIONAL([NO_SAFTBUSGEN], [test x"$SAFTBUSGEN_CHECK" != x"yes"])
 
@@ -39,5 +40,15 @@ AC_SUBST([SAFTD_REVISION], REVISION)
 AC_SUBST([SAFTD_API], [$((SONAME+MINOR))]) dnl API incremented on every change
 AC_SUBST([SAFTD_SONAME], SONAME)
 
-AC_CONFIG_FILES([Makefile saftlib.pc saftbus.pc saftbus.service])
+AC_CONFIG_FILES([
+    Makefile
+    test/Makefile
+    test/system/Makefile
+    test/system/FunctionGenerator/Makefile
+    saftlib.pc
+    saftbus.pc
+    saftbus.service
+])
+AC_CONFIG_SUBDIRS([test])
+
 AC_OUTPUT

@@ -40,7 +40,6 @@ void OpenDevice::check_msi_callback(eb_data_t value)
 	check_msi_phase = false;
 	std::cerr << "needs polling? " << (needs_polling?"yes":"no") << std::endl;
 	if (check_irq) check_irq.reset();
-	// saftd->release_irq(irq_adr);
 }
 bool OpenDevice::poll_msi(bool only_once) {
 	// std::cerr << "OpenDevice::poll_msi" << std::endl;
@@ -56,6 +55,7 @@ bool OpenDevice::poll_msi(bool only_once) {
 		cycle.read_config(0x44, EB_DATA32, &msi_dat);
 		cycle.read_config(0x48, EB_DATA32, &msi_cnt);
 		cycle.close();
+
 		if (msi_cnt & 1) {
 			msi_adr = first + (msi_adr & mask);
 			needs_polling = true; // this value is 
