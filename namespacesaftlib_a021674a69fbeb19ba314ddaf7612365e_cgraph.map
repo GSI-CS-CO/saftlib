@@ -1,0 +1,4 @@
+<map id="saftlib::TAI_to_UTC" name="saftlib::TAI_to_UTC">
+<area shape="rect" id="node1" title="Convert TAI value to UTC value. TAI = UTC &#45; leap seconds." alt="" coords="5,5,141,31"/>
+<area shape="rect" id="node2" href="$namespacesaftlib.html#a4f63f297b1cbd14e930a57219b73e138" title="Helper function for TAI_to_UTC." alt="" coords="189,5,347,31"/>
+</map>

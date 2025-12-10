@@ -126,12 +126,12 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:adea8d681438bd465c9bc902a2f79adee"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#adea8d681438bd465c9bc902a2f79adee">get_saftbus_object_id</a> ()</td></tr>
 <tr class="memdesc:adea8d681438bd465c9bc902a2f79adee"><td class="mdescLeft">&#160;</td><td class="mdescRight">The id that was assigned to the <a class="el" href="classsaftbus_1_1Service.html" title="base class of all saftbus Services">Service</a> object of this <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a>.  <a href="classsaftbus_1_1Proxy.html#adea8d681438bd465c9bc902a2f79adee">More...</a><br /></td></tr>
 <tr class="separator:adea8d681438bd465c9bc902a2f79adee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3596bd4c37689f0e1ac94780853c354f"><td class="memItemLeft" align="right" valign="top">std::mutex &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#a3596bd4c37689f0e1ac94780853c354f">get_client_socket_mutex</a> ()</td></tr>
-<tr class="memdesc:a3596bd4c37689f0e1ac94780853c354f"><td class="mdescLeft">&#160;</td><td class="mdescRight">the client socket is a shared resource, it should be locked before using it  <a href="classsaftbus_1_1Proxy.html#a3596bd4c37689f0e1ac94780853c354f">More...</a><br /></td></tr>
-<tr class="separator:a3596bd4c37689f0e1ac94780853c354f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a157e2b8529f867256385be2f0e0de2c4"><td class="memItemLeft" align="right" valign="top">std::mutex &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#a157e2b8529f867256385be2f0e0de2c4">get_proxy_mutex</a> ()</td></tr>
-<tr class="memdesc:a157e2b8529f867256385be2f0e0de2c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">each <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> is a shared resource (mainly the serialization and deserialization buffers) and must be locked before being used  <a href="classsaftbus_1_1Proxy.html#a157e2b8529f867256385be2f0e0de2c4">More...</a><br /></td></tr>
-<tr class="separator:a157e2b8529f867256385be2f0e0de2c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe8945b269ffd999808057b601483d55"><td class="memItemLeft" align="right" valign="top">rtpi::mutex &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#afe8945b269ffd999808057b601483d55">get_client_socket_mutex</a> ()</td></tr>
+<tr class="memdesc:afe8945b269ffd999808057b601483d55"><td class="mdescLeft">&#160;</td><td class="mdescRight">the client socket is a shared resource, it should be locked before using it  <a href="classsaftbus_1_1Proxy.html#afe8945b269ffd999808057b601483d55">More...</a><br /></td></tr>
+<tr class="separator:afe8945b269ffd999808057b601483d55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4652583b926ee15851854044db18f26b"><td class="memItemLeft" align="right" valign="top">rtpi::mutex &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#a4652583b926ee15851854044db18f26b">get_proxy_mutex</a> ()</td></tr>
+<tr class="memdesc:a4652583b926ee15851854044db18f26b"><td class="mdescLeft">&#160;</td><td class="mdescRight">each <a class="el" href="classsaftbus_1_1Proxy.html" title="Base class of all Proxy objects.">Proxy</a> is a shared resource (mainly the serialization and deserialization buffers) and must be locked before being used  <a href="classsaftbus_1_1Proxy.html#a4652583b926ee15851854044db18f26b">More...</a><br /></td></tr>
+<tr class="separator:a4652583b926ee15851854044db18f26b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8eb5f927316e33d4dd4ab84267adf073"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftbus_1_1Proxy.html#a8eb5f927316e33d4dd4ab84267adf073">interface_no_from_name</a> (const std::string &amp;interface_name)</td></tr>
 <tr class="memdesc:a8eb5f927316e33d4dd4ab84267adf073"><td class="mdescLeft">&#160;</td><td class="mdescRight">needs to be called by derived classes in order to determine which interface_no they refer to.  <a href="classsaftbus_1_1Proxy.html#a8eb5f927316e33d4dd4ab84267adf073">More...</a><br /></td></tr>
 <tr class="separator:a8eb5f927316e33d4dd4ab84267adf073"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -162,8 +162,8 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>SignalGroup</b></td>
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a3596bd4c37689f0e1ac94780853c354f" name="a3596bd4c37689f0e1ac94780853c354f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3596bd4c37689f0e1ac94780853c354f">&#9670;&#160;</a></span>get_client_socket_mutex()</h2>
+<a id="afe8945b269ffd999808057b601483d55" name="afe8945b269ffd999808057b601483d55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe8945b269ffd999808057b601483d55">&#9670;&#160;</a></span>get_client_socket_mutex()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -172,7 +172,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>SignalGroup</b></td>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::mutex &amp; saftbus::Proxy::get_client_socket_mutex </td>
+          <td class="memname">rtpi::mutex &amp; saftbus::Proxy::get_client_socket_mutex </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -190,8 +190,8 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>SignalGroup</b></td>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="classsaftbus_1_1Proxy_a3596bd4c37689f0e1ac94780853c354f_cgraph.png" border="0" usemap="#aclasssaftbus_1_1Proxy_a3596bd4c37689f0e1ac94780853c354f_cgraph" alt=""/></div>
-<map name="aclasssaftbus_1_1Proxy_a3596bd4c37689f0e1ac94780853c354f_cgraph" id="aclasssaftbus_1_1Proxy_a3596bd4c37689f0e1ac94780853c354f_cgraph">
+<div class="center"><img src="classsaftbus_1_1Proxy_afe8945b269ffd999808057b601483d55_cgraph.png" border="0" usemap="#aclasssaftbus_1_1Proxy_afe8945b269ffd999808057b601483d55_cgraph" alt=""/></div>
+<map name="aclasssaftbus_1_1Proxy_afe8945b269ffd999808057b601483d55_cgraph" id="aclasssaftbus_1_1Proxy_afe8945b269ffd999808057b601483d55_cgraph">
 <area shape="rect" title="the client socket is a shared resource, it should be locked before using it" alt="" coords="5,5,153,45"/>
 <area shape="rect" href="classsaftbus_1_1Proxy.html#a362a07286ab1a718bb3c997faac17bf8" title="Get the client connection. Open the connection if that didn&#39;t happen before." alt="" coords="201,5,328,45"/>
 </map>
@@ -230,15 +230,15 @@ Here is the caller graph for this function:</div>
 <div class="center"><img src="classsaftbus_1_1Proxy_a362a07286ab1a718bb3c997faac17bf8_icgraph.png" border="0" usemap="#aclasssaftbus_1_1Proxy_a362a07286ab1a718bb3c997faac17bf8_icgraph" alt=""/></div>
 <map name="aclasssaftbus_1_1Proxy_a362a07286ab1a718bb3c997faac17bf8_icgraph" id="aclasssaftbus_1_1Proxy_a362a07286ab1a718bb3c997faac17bf8_icgraph">
 <area shape="rect" title="Get the client connection. Open the connection if that didn&#39;t happen before." alt="" coords="201,37,328,77"/>
-<area shape="rect" href="classsaftbus_1_1Proxy.html#a3596bd4c37689f0e1ac94780853c354f" title="the client socket is a shared resource, it should be locked before using it" alt="" coords="5,5,153,45"/>
+<area shape="rect" href="classsaftbus_1_1Proxy.html#afe8945b269ffd999808057b601483d55" title="the client socket is a shared resource, it should be locked before using it" alt="" coords="5,5,153,45"/>
 <area shape="rect" href="classsaftbus_1_1SignalGroup.html#a10ff4f857dd878a4738e6c1cf950a163" title="used in the Constructor of Proxy objects to connect themselves to this SignalGroup." alt="" coords="8,69,151,109"/>
 </map>
 </div>
 
 </div>
 </div>
-<a id="a157e2b8529f867256385be2f0e0de2c4" name="a157e2b8529f867256385be2f0e0de2c4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a157e2b8529f867256385be2f0e0de2c4">&#9670;&#160;</a></span>get_proxy_mutex()</h2>
+<a id="a4652583b926ee15851854044db18f26b" name="a4652583b926ee15851854044db18f26b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4652583b926ee15851854044db18f26b">&#9670;&#160;</a></span>get_proxy_mutex()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -247,7 +247,7 @@ Here is the caller graph for this function:</div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::mutex &amp; saftbus::Proxy::get_proxy_mutex </td>
+          <td class="memname">rtpi::mutex &amp; saftbus::Proxy::get_proxy_mutex </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
