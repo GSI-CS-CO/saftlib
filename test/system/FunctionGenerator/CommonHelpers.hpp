@@ -51,6 +51,7 @@ namespace test::system::FunctionGenerator::Helpers
     CreateSaftlibComponents();
 
     ParameterSet GenerateRandomWaveformParameters(size_t numberOfParameters);
+    ParameterSet GenerateWaveformParameters1SecondDuration(size_t numberOfParameters);
     ParameterTuple GenerateRandomTuple();
     std::vector<ParameterTuple> GenerateRandomTupleSet(size_t minLength, size_t maxLength);
 

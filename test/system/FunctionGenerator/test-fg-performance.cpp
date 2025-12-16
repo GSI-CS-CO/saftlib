@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     }
 
     */
-    components.masterFunctionGeneratorProxy->AppendParameterTuplesForBeamProcess(1);
+    components.masterFunctionGeneratorProxy->AppendParameterTuplesForBeamProcess(1, false, false);
     components.masterFunctionGeneratorProxy->setStartTag(1337);
     components.masterFunctionGeneratorProxy->Arm();
     while (!AllArmed(*components.masterFunctionGeneratorProxy))

@@ -76,7 +76,7 @@ namespace test::system::FunctionGenerator::Helpers
         auto isRunning = !IsInStartState(fgProxy);
         if (isRunning)
         {
-            fgProxy.Abort();
+            fgProxy.Abort(false);
         }
 
         while (isRunning)
@@ -182,6 +182,50 @@ namespace test::system::FunctionGenerator::Helpers
         return params;
     }
 
+    ParameterSet GenerateWaveformParameters1SecondDuration(size_t numberOfParameters)
+    {   
+        /* static const uint64_t samples[8] = { // fixed in HDL
+            250, 500, 1000, 2000, 4000, 8000, 16000, 32000
+        };
+         static const uint64_t sample_len[8] = { // fixed in HDL
+             62500, // 16kHz in ns    0           
+             31250, // 32kHz          1             
+             15625, // 64kHz          2  
+             8000, // 125kHz          3 
+             4000, // 250kHz          4
+             2000, // 500kHz          5
+             1000, // 1GHz            6
+             500  // 2GHz             7
+        }
+        the maximum possible duration of the waveform
+        duration = samples[step] * sample_len[freq]
+        duration = 32000 * 62500 -> 2 s
+        1 s would therefor be e.g.
+        duration = 16000 * 62500 -> 2 s
+        */
+
+        ParameterSet params;
+        params.coeff_a.resize(numberOfParameters);
+        params.coeff_b.resize(numberOfParameters);
+        params.coeff_c.resize(numberOfParameters);
+        params.step.resize(numberOfParameters);
+        params.freq.resize(numberOfParameters);
+        params.shift_a.resize(numberOfParameters);
+        params.shift_b.resize(numberOfParameters);
+        // Generate random waveform parameters
+        for (size_t i = 0; i < numberOfParameters; ++i)
+        {
+            params.coeff_a[i] = 0;
+            params.coeff_b[i] = 100;
+            params.coeff_c[i] = 4000000000;
+            params.step[i] = 6;
+            params.freq[i] = 0;     // 0-7
+            params.shift_a[i] = 0;  // 0-63
+            params.shift_b[i] = 48; // 0-63
+        }
+        return params;
+    }
+
     std::vector<ParameterTuple> GenerateRandomTupleSet(size_t minLength, size_t maxLength)
     {
         auto length = minLength + static_cast<size_t>(distribution(generator) * (maxLength - minLength));
@@ -216,7 +260,9 @@ namespace test::system::FunctionGenerator::Helpers
                                               parameterSets.step,
                                               parameterSets.freq,
                                               parameterSets.shift_a,
-                                              parameterSets.shift_b);
+                                              parameterSets.shift_b,
+                                              false,
+                                              false);
     }
 
     void FillSingleFunctionGeneratorBuffer(saftlib::MasterFunctionGenerator_Proxy &fgProxy,
@@ -246,7 +292,9 @@ namespace test::system::FunctionGenerator::Helpers
                                     step,
                                     freq,
                                     shift_a,
-                                    shift_b);
+                                    shift_b,
+                                    false,
+                                    false);
     }
 
     void HandleFillRequest(saftlib::MasterFunctionGenerator_Proxy &fgProxy,
