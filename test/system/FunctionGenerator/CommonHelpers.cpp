@@ -14,6 +14,22 @@ namespace
 
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     std::default_random_engine generator;
+
+    // needed for the calculation of the waveform duration
+    static constexpr std::array<int, 8> SAMPLES = {250, 500, 1000, 2000, 4000, 8000, 16000, 32000};
+
+    static constexpr std::array<int, 8> SAMPLE_LEN = {
+             62500, // 16kHz in ns
+             31250, // 32kHz
+             15625, // 64kHz
+              8000, // 125kHz
+              4000, // 250kHz
+              2000, // 500kHz
+              1000, // 1GHz
+               500  // 2GHz
+    };    
+}
+
 } // namespace
 
 namespace test::system::FunctionGenerator::Helpers
@@ -208,23 +224,56 @@ namespace test::system::FunctionGenerator::Helpers
         return data;
     }
 
-    ParameterTuple GenerateRandomDurationTuple(std::chrono::duration next_duration)
+    ParameterTuple GenerateRandomDurationTuple(std::chrono::nanoseconds max_duration)
     {   
-        // WIP
         ParameterTuple data;
         data.coeff_a = 0;
         data.coeff_b = 100;
         data.coeff_c = 4000000000;
-        data.step = 2 + static_cast<unsigned char>(distribution(generator) * 5);
+        
+        data.step = 3 + static_cast<unsigned char>(distribution(generator) * 4);
         data.freq = 6;
         data.shift_a = 0;
         data.shift_b = 48;
         return data;
 
+        
+
     }
-    std::vector<ParameterTuple> GenerateDurationTupleSet(std::chrono::duration whole_duration)
+
+    static std::vector<int> GenerateStepFreqDur(std::chrono::nanoseconds max_duration)
     {
-        // WIP
+        std::vector<int, 3> StepFreqDur;
+        uint8_t step = 0;
+        uint8_t freq = 0;
+        std::chrono::nanoseconds duration = 0;
+        std::chrono::nanoseconds min_step = 2;
+        // the minimum duration is 2ns
+        // this is therefore the minimum step
+        for (;;;)
+        {
+            step = 3 + static_cast<unsigned char>(distribution(generator) * 4);
+            freq = 0 + static_cast<unsigned char>(distribution(generator) * 7);
+            duration = SAMPLES[step] * SAMPLE_LEN[freq];
+            if((duration > (max_duration - min_step)) || (duration != max_duration)) {break;}
+        }
+        StepFreq.push_back(step);
+        StepFreq.push_back(freq);
+        StepFreq.push_back(freq);
+        
+        return StepFreq;
+        
+    }
+
+    // std::chrono::nanoseconds defaults to int64 with max
+    // 9.223.372.036.854.775.807 ns = 166 days 3 hours 42 minutes 31.14 seconds
+    std::vector<ParameterTuple> GenerateDurationTupleSet(std::chrono::nanoseconds whole_duration)
+    {
+        auto time_left = whole_duration;
+        while(whole_duration != 0)
+        {
+
+        }
         std::vector<ParameterTuple> result;
         for (size_t i = 0; i < 10; ++i)
         {
