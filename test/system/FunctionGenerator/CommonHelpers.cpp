@@ -208,6 +208,31 @@ namespace test::system::FunctionGenerator::Helpers
         return data;
     }
 
+    ParameterTuple GenerateRandomDurationTuple(std::chrono::duration next_duration)
+    {   
+        // WIP
+        ParameterTuple data;
+        data.coeff_a = 0;
+        data.coeff_b = 100;
+        data.coeff_c = 4000000000;
+        data.step = 2 + static_cast<unsigned char>(distribution(generator) * 5);
+        data.freq = 6;
+        data.shift_a = 0;
+        data.shift_b = 48;
+        return data;
+
+    }
+    std::vector<ParameterTuple> GenerateDurationTupleSet(std::chrono::duration whole_duration)
+    {
+        // WIP
+        std::vector<ParameterTuple> result;
+        for (size_t i = 0; i < 10; ++i)
+        {
+            result.push_back(GenerateRandomTuple());
+        }
+        return result;
+    }
+
     void FillFunctionGeneratorBuffer(saftlib::MasterFunctionGenerator_Proxy &fgProxy, ParameterSets &parameterSets)
     {
         fillLow = fgProxy.AppendParameterSets(parameterSets.coeff_a,

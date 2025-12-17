@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <variant>
+#include <chrono>
 
 #include "ParameterSet.hpp"
 
@@ -53,6 +54,9 @@ namespace test::system::FunctionGenerator::Helpers
     ParameterSet GenerateRandomWaveformParameters(size_t numberOfParameters);
     ParameterTuple GenerateRandomTuple();
     std::vector<ParameterTuple> GenerateRandomTupleSet(size_t minLength, size_t maxLength);
+
+    ParameterTuple GenerateRandomDurationTuple(std::chrono::duration next_duration);
+    std::vector<ParameterTuple> GenerateDurationTupleSet(std::chrono::duration whole_duration);
 
     void FillFunctionGeneratorBuffer(saftlib::MasterFunctionGenerator_Proxy &fgProxy, ParameterSets &parameterSets);
 
