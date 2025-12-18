@@ -43,7 +43,7 @@ namespace test::system::FunctionGenerator::Helpers
 
     bool IsInStartState(saftlib::MasterFunctionGenerator_Proxy &fgProxy)
     {
-        auto isArmed = fgProxy.ReadRunning();
+        auto isArmed = fgProxy.ReadArmed();
         auto isEnabled = fgProxy.ReadEnabled();
         auto isRunning = fgProxy.ReadRunning();
 
