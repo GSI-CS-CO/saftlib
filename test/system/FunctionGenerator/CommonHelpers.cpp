@@ -27,8 +27,28 @@ namespace
               2000, // 500kHz
               1000, // 1GHz
                500  // 2GHz
-    };    
-}
+    };
+
+    static constexpr auto DURATIONS = []() {
+        std::array<std::array<int, SAMPLES.size()>, SAMPLE_LEN.size()> result{};
+        for (size_t i = 0; i < SAMPLES.size(); ++i) {
+            for (size_t j = 0; j < SAMPLE_LEN.size(); ++j) {
+                result[i][j] = SAMPLES[i] * SAMPLE_LEN[j];
+            }
+        }
+        return result;
+    }();
+
+    // static constexpr auto SORTED_DURATIONS = []() {
+    //     std::array<int, DURATIONS.size() * DURATIONS[0].size()> flattened_durations{};
+
+    //     auto flattened_view = std::ranges::views::join(DURATIONS);
+    //     std::ranges::copy(flattened_view, flattened.begin());
+
+    //     std::ranges::sort(flattened_durations);
+
+    //     return flattened_durations;
+    // }();
 
 } // namespace
 
@@ -59,7 +79,7 @@ namespace test::system::FunctionGenerator::Helpers
 
     bool IsInStartState(saftlib::MasterFunctionGenerator_Proxy &fgProxy)
     {
-        auto isArmed = fgProxy.ReadRunning();
+        auto isArmed = fgProxy.ReadArmed();
         auto isEnabled = fgProxy.ReadEnabled();
         auto isRunning = fgProxy.ReadRunning();
 
@@ -224,61 +244,47 @@ namespace test::system::FunctionGenerator::Helpers
         return data;
     }
 
-    ParameterTuple GenerateRandomDurationTuple(std::chrono::nanoseconds max_duration)
-    {   
+    static ParameterTuple GenerateRandomDurationTuple(uint64_t max_duration_ns)
+    {
+        uint8_t step = 3 + static_cast<unsigned char>(distribution(generator) * 4);
+        uint8_t freq = 0 + static_cast<unsigned char>(distribution(generator) * 7);
         ParameterTuple data;
+
+        uint64_t current_duration = DURATIONS[step][freq];
+
+        while (current_duration > max_duration_ns)
+        {
+            freq -=  freq + static_cast<unsigned char>(distribution(generator) * (7-freq));
+            current_duration = DURATIONS[step][freq];
+        }
+
         data.coeff_a = 0;
         data.coeff_b = 100;
         data.coeff_c = 4000000000;
-        
-        data.step = 3 + static_cast<unsigned char>(distribution(generator) * 4);
-        data.freq = 6;
+        data.step = step;
+        data.freq = freq;
         data.shift_a = 0;
         data.shift_b = 48;
+
         return data;
-
-        
-
-    }
-
-    static std::vector<int> GenerateStepFreqDur(std::chrono::nanoseconds max_duration)
-    {
-        std::vector<int, 3> StepFreqDur;
-        uint8_t step = 0;
-        uint8_t freq = 0;
-        std::chrono::nanoseconds duration = 0;
-        std::chrono::nanoseconds min_step = 2;
-        // the minimum duration is 2ns
-        // this is therefore the minimum step
-        for (;;;)
-        {
-            step = 3 + static_cast<unsigned char>(distribution(generator) * 4);
-            freq = 0 + static_cast<unsigned char>(distribution(generator) * 7);
-            duration = SAMPLES[step] * SAMPLE_LEN[freq];
-            if((duration > (max_duration - min_step)) || (duration != max_duration)) {break;}
-        }
-        StepFreq.push_back(step);
-        StepFreq.push_back(freq);
-        StepFreq.push_back(freq);
-        
-        return StepFreq;
-        
     }
 
     // std::chrono::nanoseconds defaults to int64 with max
     // 9.223.372.036.854.775.807 ns = 166 days 3 hours 42 minutes 31.14 seconds
-    std::vector<ParameterTuple> GenerateDurationTupleSet(std::chrono::nanoseconds whole_duration)
+    std::vector<ParameterTuple> GenerateDurationTupleSet(uint64_t whole_duration_ns)
     {
-        auto time_left = whole_duration;
-        while(whole_duration != 0)
-        {
 
-        }
         std::vector<ParameterTuple> result;
-        for (size_t i = 0; i < 10; ++i)
+
+        auto time_left = whole_duration_ns;
+        while(time_left > 0)
         {
-            result.push_back(GenerateRandomTuple());
+            std::cout << "Time left: " << time_left << std::endl;
+            // mising execption catching eg timout handling
+            result.push_back(GenerateRandomDurationTuple(time_left));
+            time_left -= DURATIONS[result.back().step][result.back().freq];
         }
+
         return result;
     }
 
