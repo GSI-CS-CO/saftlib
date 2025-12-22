@@ -55,7 +55,7 @@ namespace test::system::FunctionGenerator::Helpers
     ParameterTuple GenerateRandomTuple();
     std::vector<ParameterTuple> GenerateRandomTupleSet(size_t minLength, size_t maxLength);
 
-    std::vector<ParameterTuple> GenerateDurationTupleSet(uint64_t whole_duration_ns);
+    // std::vector<ParameterTuple> GenerateDurationTupleSet(uint64_t whole_duration_ns);
 
     void FillFunctionGeneratorBuffer(saftlib::MasterFunctionGenerator_Proxy &fgProxy, ParameterSets &parameterSets);
 

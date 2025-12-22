@@ -15,41 +15,6 @@ namespace
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     std::default_random_engine generator;
 
-    // needed for the calculation of the waveform duration
-    static constexpr std::array<int, 8> SAMPLES = {250, 500, 1000, 2000, 4000, 8000, 16000, 32000};
-
-    static constexpr std::array<int, 8> SAMPLE_LEN = {
-             62500, // 16kHz in ns
-             31250, // 32kHz
-             15625, // 64kHz
-              8000, // 125kHz
-              4000, // 250kHz
-              2000, // 500kHz
-              1000, // 1GHz
-               500  // 2GHz
-    };
-
-    static constexpr auto DURATIONS = []() {
-        std::array<std::array<int, SAMPLES.size()>, SAMPLE_LEN.size()> result{};
-        for (size_t i = 0; i < SAMPLES.size(); ++i) {
-            for (size_t j = 0; j < SAMPLE_LEN.size(); ++j) {
-                result[i][j] = SAMPLES[i] * SAMPLE_LEN[j];
-            }
-        }
-        return result;
-    }();
-
-    // static constexpr auto SORTED_DURATIONS = []() {
-    //     std::array<int, DURATIONS.size() * DURATIONS[0].size()> flattened_durations{};
-
-    //     auto flattened_view = std::ranges::views::join(DURATIONS);
-    //     std::ranges::copy(flattened_view, flattened.begin());
-
-    //     std::ranges::sort(flattened_durations);
-
-    //     return flattened_durations;
-    // }();
-
 } // namespace
 
 namespace test::system::FunctionGenerator::Helpers
@@ -242,50 +207,6 @@ namespace test::system::FunctionGenerator::Helpers
         data.shift_a = 0;
         data.shift_b = 48;
         return data;
-    }
-
-    static ParameterTuple GenerateRandomDurationTuple(uint64_t max_duration_ns)
-    {
-        uint8_t step = 3 + static_cast<unsigned char>(distribution(generator) * 4);
-        uint8_t freq = 0 + static_cast<unsigned char>(distribution(generator) * 7);
-        ParameterTuple data;
-
-        uint64_t current_duration = DURATIONS[step][freq];
-
-        while (current_duration > max_duration_ns)
-        {
-            freq -=  freq + static_cast<unsigned char>(distribution(generator) * (7-freq));
-            current_duration = DURATIONS[step][freq];
-        }
-
-        data.coeff_a = 0;
-        data.coeff_b = 100;
-        data.coeff_c = 4000000000;
-        data.step = step;
-        data.freq = freq;
-        data.shift_a = 0;
-        data.shift_b = 48;
-
-        return data;
-    }
-
-    // std::chrono::nanoseconds defaults to int64 with max
-    // 9.223.372.036.854.775.807 ns = 166 days 3 hours 42 minutes 31.14 seconds
-    std::vector<ParameterTuple> GenerateDurationTupleSet(uint64_t whole_duration_ns)
-    {
-
-        std::vector<ParameterTuple> result;
-
-        auto time_left = whole_duration_ns;
-        while(time_left > 0)
-        {
-            std::cout << "Time left: " << time_left << std::endl;
-            // mising execption catching eg timout handling
-            result.push_back(GenerateRandomDurationTuple(time_left));
-            time_left -= DURATIONS[result.back().step][result.back().freq];
-        }
-
-        return result;
     }
 
     void FillFunctionGeneratorBuffer(saftlib::MasterFunctionGenerator_Proxy &fgProxy, ParameterSets &parameterSets)
