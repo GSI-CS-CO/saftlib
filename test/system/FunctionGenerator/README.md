@@ -20,3 +20,9 @@ uint8_t freq = 0 + static_cast<unsigned char>(distribution(generator) * 7);
 ```
 
 `std::chrono::nanoseconds` defaults to `int64` with maximum  9.223.372.036.854.775.807 ns = 166 days 3 hours 42 minutes 31.14 s
+
+```
+saft-ecpu-ctl tr0 -c 0xcafebabe 0xffffffffffffffff 0  0xdeadbeef -d
+
+saft-ctl tr0 inject 0xcafebabe 0xffffffffffffffff 0 -p
+```

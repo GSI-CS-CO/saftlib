@@ -6,10 +6,8 @@
 #include "CommonFunctions.hpp"
 #include "CommonHelpers.hpp"
 
-#include <chrono>
 #include <random>
 #include <algorithm>
-
 
 using namespace test::system::FunctionGenerator::Helpers;
 
@@ -26,7 +24,7 @@ namespace {
     // duration in  nanoseconds depending on steps
     static constexpr std::array<int, 8> SAMPLES = {250, 500, 1000, 2000, 4000, 8000, 16000, 32000};
 
-    // duration in nanoseconds depending on frequency
+    // duration in nanoseconds depending on frequency parameter
     static constexpr std::array<int, 8> SAMPLE_LEN = {
              62500, // 16kHz in ns
              31250, // 32kHz
@@ -58,15 +56,15 @@ namespace {
         {250000000,4,0},    {256000000,7,3},    {500000000,5,0},    {500000000,7,2},
         {500000000,6,1},    {1000000000,7,1},   {1000000000,6,0},   {2000000000,7,0}
     }};
-    
-    // In MIL-bus settings, a minimum step of 
+
+    // In MIL-bus settings: minimum step parameter of 3 is necessary
     // {ns, steps, frequency}
     constexpr static std::array<std::array<int, 3>, 40> MIL_DURATIONS = {{
         {1000000,3,7},      {2000000,3,6},      {2000000,4,7},      {4000000,5,7},
-        {4000000,3,5},      {4000000,4,6},      {8000000,5,6},      {8000000,4,5},      
-        {8000000,6,7},      {8000000,3,4},      {16000000,7,7},     {16000000,4,4},     
-        {16000000,5,5},     {16000000,6,6},     {16000000,3,3},     {31250000,3,2},     
-        {32000000,4,3},     {32000000,7,6},     {32000000,6,5},     {32000000,5,4},     
+        {4000000,3,5},      {4000000,4,6},      {8000000,5,6},      {8000000,4,5},
+        {8000000,6,7},      {8000000,3,4},      {16000000,7,7},     {16000000,4,4},
+        {16000000,5,5},     {16000000,6,6},     {16000000,3,3},     {31250000,3,2},
+        {32000000,4,3},     {32000000,7,6},     {32000000,6,5},     {32000000,5,4},
         {62500000,4,2},     {62500000,3,1},     {64000000,5,3},     {64000000,7,5},
         {64000000,6,4},     {125000000,3,0},    {125000000,4,1},    {125000000,5,2},
         {128000000,6,3},    {128000000,7,4},    {250000000,6,2},    {250000000,5,1},
@@ -90,12 +88,12 @@ static StepFreqDuration GenerateRandomDurationTuple(uint64_t max_duration_ns)
     uint64_t current_duration = MIL_DURATIONS[index][0];
 
     while (current_duration > max_duration_ns)
-    {   
+    {
         if (index == 0) {break;}
         index--;
         current_duration = MIL_DURATIONS[index][0];
     }
-    
+
     // std::cout << "index: " << index << "\n";
     // std::cout << "MIL_DURATIONS[index][1]: " << MIL_DURATIONS[index][1]<< "\n";
     // std::cout << "MIL_DURATIONS[index][1]: " << MIL_DURATIONS[index][2]<< "\n";
@@ -104,7 +102,7 @@ static StepFreqDuration GenerateRandomDurationTuple(uint64_t max_duration_ns)
     data.freq = static_cast<uint8_t>(MIL_DURATIONS[index][2]);
     data.duration = current_duration;
 
-    // std::cout << std::left 
+    // std::cout << std::left
     //     << std::setw(20) << max_duration_ns
     //     << std::setw(20) << data.duration
     //     << std::setw(20) << static_cast<int>(data.step)
@@ -118,7 +116,7 @@ static ParameterSet GenerateDurationParameterSet(uint64_t whole_duration_ns)
 {
     StepFreqDuration data;
     std::vector<StepFreqDuration> result;
-    
+
     const auto max_iteration = 10000;
     const auto min_duration_ns = 1000000;
     auto left_duration = whole_duration_ns;
@@ -129,7 +127,7 @@ static ParameterSet GenerateDurationParameterSet(uint64_t whole_duration_ns)
         result.push_back(data);
         left_duration -= data.duration;
         if (left_duration < min_duration_ns) break;
-    }  
+    }
 
     ParameterSet params;
     params.coeff_a.resize(result.size());
@@ -139,7 +137,7 @@ static ParameterSet GenerateDurationParameterSet(uint64_t whole_duration_ns)
     params.freq.resize(result.size());
     params.shift_a.resize(result.size());
     params.shift_b.resize(result.size());
-  
+
     for (size_t i = 0; i < result.size(); ++i)
         {
             params.coeff_a[i] = 0;
@@ -160,6 +158,11 @@ int main(int argc, char **argv)
     uint64_t duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::seconds(DURATION_IN_SECONDS)
     ).count();
+
+    const auto min_duration_ns = 1000000;
+    // add minimum duration to overstep desired duration
+    // by less than 1000000 ns = 0.001 seconds
+    duration += min_duration_ns;
 
     // Now let`s do the same things as the other tests
     auto componentsOrError = CreateSaftlibComponents();

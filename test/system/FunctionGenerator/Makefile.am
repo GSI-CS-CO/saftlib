@@ -13,4 +13,4 @@ test_fg_performance_SOURCES = test-fg-performance.cpp CommonHelpers.cpp Function
 test_fg_performance_LDADD   =   $(SIGCPP_LIBS) $(top_builddir)/libsaftbus.la $(top_builddir)/libsaft-proxy.la $(top_builddir)/libfg-firmware-proxy.la -lpthread -ldl
 
 test_mfg_duration_SOURCES   = test-mfg-duration.cpp CommonHelpers.cpp
-test_mfg_durationLDADD      = $(SIGCPP_LIBS) $(top_builddir)/libsaftbus.la $(top_builddir)/libsaft-proxy.la $(top_builddir)/libfg-firmware-proxy.la -lpthread -ldl
+test_mfg_duration_LDADD      = $(SIGCPP_LIBS) $(top_builddir)/libsaftbus.la $(top_builddir)/libsaft-proxy.la $(top_builddir)/libfg-firmware-proxy.la -lpthread -ldl
