@@ -5,6 +5,8 @@
 #include <MasterFunctionGenerator_Proxy.hpp>
 #include <TimingReceiver_Proxy.hpp>
 #include <SCUbusActionSink_Proxy.hpp>
+#include <EmbeddedCPUActionSink_Proxy.hpp>
+#include <EmbeddedCPUCondition_Proxy.hpp>
 #include <SAFTd_Proxy.hpp>
 
 namespace
@@ -264,5 +266,56 @@ namespace test::system::FunctionGenerator::Helpers
                                               parameterSets);
             refillRequested[fillIndex] = false;
         }
+    }
+
+    void SetAndFireECPUCond(const std::shared_ptr<saftlib::TimingReceiver_Proxy>& receiver)
+    {
+        /* This is analog to saft-ecpu-ctl
+            it replaces the manual
+            `saft-ecpu-ctl tr0 -c 0xcafebabe 0xffffffffffffffff 0  0xdeadbeef -d`
+            followed by
+            `saft-ctl tr0 inject 0xcafebabe 0xffffffffffffffff 0 -p`
+        */
+
+        uint64_t eventID      = 0xcafebabe;
+        uint64_t eventMask    = 0xffffffffffffffff;
+        int64_t  offset       = 0x0;
+        int32_t  tag          = 0xdeadbeef;
+        saftlib::Time eventTime;     // time for next event in PTP time
+        saftlib::Time ppsNext;     // time for next PPS
+        saftlib::Time wrTime;     // current WR time
+
+        std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+        if (e_cpus.size() != 1)
+        {
+            std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
+        }else
+        {
+            /* Get connection */
+            std::shared_ptr<saftlib::EmbeddedCPUActionSink_Proxy> e_cpu = saftlib::EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
+
+            /* Setup Condition */
+            std::shared_ptr<saftlib::EmbeddedCPUCondition_Proxy> condition;
+            condition = saftlib::EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
+
+            /* Accept every kind of event */
+            condition->setAcceptConflict(true);
+            condition->setAcceptDelayed(true);
+            condition->setAcceptEarly(true);
+            condition->setAcceptLate(true);
+
+            /* Disown Sink */
+            condition->Disown();
+
+            /* Now we can fire */
+            // Do we need an extra fire here? do we not fire by injecting tag 1337?
+            // inject event
+            wrTime    = receiver->CurrentTime(false);
+            // get  aligned to pps
+            ppsNext   = (wrTime - (wrTime.getTAI() % 1000000000)) + 1000000000;
+            // inject
+            receiver->InjectEvent(eventID, eventMask, ppsNext);
+        }
+
     }
 }

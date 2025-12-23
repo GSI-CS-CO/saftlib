@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <variant>
+#include <map>
 
 #include "ParameterSet.hpp"
 
@@ -63,4 +64,6 @@ namespace test::system::FunctionGenerator::Helpers
     void HandleFillRequest(saftlib::MasterFunctionGenerator_Proxy &fgProxy,
                            std::vector<bool> &refillRequested,
                            ParameterSets &parameterSets);
+
+    void SetAndFireECPUCond(const std::shared_ptr<saftlib::TimingReceiver_Proxy>& receiver);
 }

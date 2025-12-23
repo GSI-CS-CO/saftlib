@@ -264,8 +264,6 @@ int main(int argc, char **argv)
         }
     }
 
-
-    // change stueckel parameter set im index
     for (int32_t i = 0; i < 20; ++i)
     {
         HandleFillRequest(*components.masterFunctionGeneratorProxy,
@@ -292,6 +290,9 @@ int main(int argc, char **argv)
     }
 
     components.scuProxy->InjectTag(1337);
+
+    //Is this the right moment?
+    SetAndFireECPUCond(components.receiver);
 
     while (true)
     {
