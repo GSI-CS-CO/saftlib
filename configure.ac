@@ -16,7 +16,7 @@ AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
 
 PKG_CHECK_MODULES([EB],      [etherbone >= 2.1.0])
 PKG_CHECK_MODULES([SIGCPP],  [sigc++-2.0])
-PKG_CHECK_MODULES([LIBRTPI],  [librtpi >= 1.0.2])
+PKG_CHECK_MODULES([LIBRTPI], [librtpi >= 1.0.1], [], [AC_CHECK_LIB(rtpi, pi_mutex_alloc) AC_CHECK_HEADERS(rtpi.h)])
 AC_CHECK_PROG( SAFTBUSGEN_CHECK,saftbus-gen,yes)
 AM_CONDITIONAL([NO_SAFTBUSGEN], [test x"$SAFTBUSGEN_CHECK" != x"yes"])
 
