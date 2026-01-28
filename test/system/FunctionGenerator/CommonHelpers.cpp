@@ -5,7 +5,11 @@
 #include <MasterFunctionGenerator_Proxy.hpp>
 #include <TimingReceiver_Proxy.hpp>
 #include <SCUbusActionSink_Proxy.hpp>
+#include <EmbeddedCPUActionSink_Proxy.hpp>
+#include <EmbeddedCPUCondition_Proxy.hpp>
 #include <SAFTd_Proxy.hpp>
+
+using test::system::FunctionGenerator::Helpers::StepFreqDuration;
 
 namespace
 {
@@ -14,6 +18,15 @@ namespace
 
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     std::default_random_engine generator;
+
+    // In MIL-bus settings: minimum step parameter of 3 is necessary
+    // {ns, steps, frequency}
+    constexpr std::array<StepFreqDuration, 5> MIL_DURATIONS = {{{std::chrono::nanoseconds(2000000), 3, 6},
+                                                                {std::chrono::nanoseconds(4000000), 4, 6},
+                                                                {std::chrono::nanoseconds(8000000), 5, 6},
+                                                                {std::chrono::nanoseconds(16000000), 6, 6},
+                                                                {std::chrono::nanoseconds(32000000), 7, 6}}};
+
 } // namespace
 
 namespace test::system::FunctionGenerator::Helpers
@@ -43,7 +56,7 @@ namespace test::system::FunctionGenerator::Helpers
 
     bool IsInStartState(saftlib::MasterFunctionGenerator_Proxy &fgProxy)
     {
-        auto isArmed = fgProxy.ReadRunning();
+        auto isArmed = fgProxy.ReadArmed();
         auto isEnabled = fgProxy.ReadEnabled();
         auto isRunning = fgProxy.ReadRunning();
 
@@ -96,6 +109,12 @@ namespace test::system::FunctionGenerator::Helpers
     std::variant<SaftlibComponents, SaftlibInitializationError>
     CreateSaftlibComponents()
     {
+        return CreateSaftlibComponents(FunctionGeneratorScanMode::SkipScan);
+    }
+
+    std::variant<SaftlibComponents, SaftlibInitializationError>
+    CreateSaftlibComponents(FunctionGeneratorScanMode scanMode)
+    {
         auto saftd = saftlib::SAFTd_Proxy::create();
 
         if (!saftd)
@@ -120,6 +139,21 @@ namespace test::system::FunctionGenerator::Helpers
         if (!receiver)
         {
             return SaftlibInitializationError{"Failed to create TimingReceiver proxy"};
+        }
+
+        auto fgFirmwares = receiver->getInterfaces()["FunctionGeneratorFirmware"];
+        auto fgFirmwareProxy = saftlib::FunctionGeneratorFirmware_Proxy::create(fgFirmwares.begin()->second);
+
+        switch (scanMode)
+        {
+        case FunctionGeneratorScanMode::SkipScan:
+            break;
+        case FunctionGeneratorScanMode::ScanSeparateFunctionGenerators:
+            fgFirmwareProxy->ScanFgChannels();
+            break;
+        case FunctionGeneratorScanMode::ScanMasterFunctionGenerator:
+            fgFirmwareProxy->ScanMasterFg();
+            break;
         }
 
         auto fg_names = receiver->getInterfaces()["MasterFunctionGenerator"];
@@ -155,7 +189,8 @@ namespace test::system::FunctionGenerator::Helpers
             .saftd = std::move(saftd),
             .receiver = std::move(receiver),
             .masterFunctionGeneratorProxy = std::move(masterFunctionGeneratorProxy),
-            .scuProxy = std::move(scuActionSink)};
+            .scuProxy = std::move(scuActionSink),
+            .fgFirmwareProxy = std::move(fgFirmwareProxy)};
     }
 
     ParameterSet GenerateRandomWaveformParameters(size_t numberOfParameters)
@@ -263,5 +298,91 @@ namespace test::system::FunctionGenerator::Helpers
                                               parameterSets);
             refillRequested[fillIndex] = false;
         }
+    }
+
+    std::shared_ptr<saftlib::EmbeddedCPUCondition_Proxy> RegisterFireEventCondition(const std::shared_ptr<saftlib::TimingReceiver_Proxy> &receiver)
+    {
+        uint64_t eventID = 0xcafebabe;
+        uint64_t eventMask = 0xffffffffffffffff;
+        int64_t offset = 0x0;
+        int32_t tag = 0xdeadbeef;
+
+        std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+        if (e_cpus.size() != 1)
+        {
+            std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
+            return nullptr;
+        }
+
+        /* Get connection */
+        std::shared_ptr<saftlib::EmbeddedCPUActionSink_Proxy> e_cpu = saftlib::EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
+
+        /* Setup Condition */
+        auto condition = saftlib::EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
+
+        /* Accept every kind of event */
+        condition->setAcceptConflict(true);
+        condition->setAcceptDelayed(true);
+        condition->setAcceptEarly(true);
+        condition->setAcceptLate(true);
+
+        return condition;
+    }
+
+    void TriggerFireCondition(const std::shared_ptr<saftlib::TimingReceiver_Proxy> &receiver)
+    {
+        uint64_t eventID = 0xcafebabe;
+        saftlib::Time eventTime;
+        saftlib::Time ppsNext;
+        saftlib::Time wrTime;
+
+        wrTime = receiver->CurrentTime(false);
+        receiver->InjectEvent(eventID, 0xffffffffffffffff, wrTime);
+    }
+
+    StepFreqDuration GenerateRandomDurationTuple(std::chrono::nanoseconds max_duration_ns)
+    {
+        size_t max_index = 0;
+        for (size_t i = 0; i < MIL_DURATIONS.size(); ++i)
+        {
+            if (MIL_DURATIONS[i].duration <= max_duration_ns)
+            {
+                max_index = i;
+            }
+        }
+
+        uint8_t randomIndex = static_cast<unsigned char>(distribution(generator) * (max_index + 1));
+
+        return MIL_DURATIONS[randomIndex];
+    }
+
+    std::vector<ParameterTuple> GenerateRandomParameterTuples(std::chrono::nanoseconds whole_duration_ns)
+    {
+        StepFreqDuration data;
+        std::vector<StepFreqDuration> result;
+
+        const auto max_iteration = 10000;
+        auto left_duration = whole_duration_ns;
+
+        while (left_duration.count() > 0 && result.size() < max_iteration)
+        {
+            data = GenerateRandomDurationTuple(left_duration);
+            result.push_back(data);
+            left_duration -= data.duration;
+        }
+
+        std::vector<ParameterTuple> params;
+        std::transform(result.begin(), result.end(), std::back_inserter(params), [](const StepFreqDuration &sfd)
+                       {
+                       ParameterTuple tuple;
+                       tuple.coeff_a = 0;
+                       tuple.coeff_b = 100;
+                       tuple.coeff_c = 4000000000;
+                       tuple.step = sfd.step;
+                       tuple.freq = sfd.freq;
+                       tuple.shift_a = 0;
+                       tuple.shift_b = 48;
+                       return tuple; });
+        return params;
     }
 }

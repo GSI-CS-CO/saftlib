@@ -28,6 +28,24 @@
         std::vector<unsigned char> shift_b;
     };
 
+    inline std::vector<ParameterTuple> ConvertParameterSetToTuples(const ParameterSet &parameterSet)
+    {
+        std::vector<ParameterTuple> result;
+        const size_t numberOfTuples = parameterSet.coeff_a.size();
+        result.resize(numberOfTuples);
+        for (size_t i = 0; i < numberOfTuples; ++i)
+        {
+            result[i].coeff_a = parameterSet.coeff_a[i];
+            result[i].coeff_b = parameterSet.coeff_b[i];
+            result[i].coeff_c = parameterSet.coeff_c[i];
+            result[i].step = parameterSet.step[i];
+            result[i].freq = parameterSet.freq[i];
+            result[i].shift_a = parameterSet.shift_a[i];
+            result[i].shift_b = parameterSet.shift_b[i];
+        }
+        return result;
+    }
+
     struct ParameterSetReference
     {
         std::vector<int16_t> &coeff_a;
