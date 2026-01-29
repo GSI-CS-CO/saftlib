@@ -20,11 +20,6 @@ namespace
     std::vector<std::string> FUNCTION_GENERATOR_NAMES;
 }
 
-void FillSharedMemoryWithRandomData()
-{
-
-}
-
 int main(int argc, char **argv)
 {
     auto saftlibComponentsOrError = CreateSaftlibComponents();
@@ -62,7 +57,6 @@ int main(int argc, char **argv)
     for(uint32_t beamProcess = 0; beamProcess < 100; ++beamProcess)
     {
         auto tupleSet = GenerateRandomTupleSet(3000, 3000);
-        auto tupleSetSize = tupleSet.size();
         for(size_t functionGeneratorIndex = 0; functionGeneratorIndex < numberOfFunctionGenerators; ++functionGeneratorIndex)
         {
             sharedMemory.PrepareFgData(tupleSet, functionGeneratorIndex, beamProcess);
