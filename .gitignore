@@ -61,3 +61,7 @@ version.h
 wait-msi
 saft-software-tr
 saft-testbench
+test-fg
+test-fg-performance
+test-mfg
+test-mfg-duration
