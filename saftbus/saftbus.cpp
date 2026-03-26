@@ -42,6 +42,7 @@ namespace saftbus {
 		const char *ptr = buffer;
 		int written_total = 0;
 		do {
+			// LOGGING: add logging here
 			// calls to write are limited to 100 kB 
 			// to avoid "message too long error" 
 			// larger buffers are split into multiple calls to ::write
@@ -90,17 +91,16 @@ namespace saftbus {
 		int result;
 		result = write_all(fd, (char*)&size, sizeof(size));
 		if (result < (int)sizeof(size)) {
-			//std::cerr << "write_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
+			// OLD_DEBUG: std::cerr << "write_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
-		// std::cerr << "write_to " << fd << " so many bytes " << size << std::endl;
+		// OLD_DEBUG: std::cerr << "write_to " << fd << " so many bytes " << size << std::endl;
 		result = write_all(fd, (char*)&_data[0], size);
 		if (result < size) {
 			//std::cerr << "write_all returned " << result << ". Expected result " << size << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
-		// std::cerr << "wrote " << size << " bytes to fd " << fd << std::endl;
-		// put_init();
+		// OLD_DEBUG: std::cerr << "wrote " << size << " bytes to fd " << fd << std::endl;
 		return true;
 	}
 	bool Serializer::empty()
@@ -116,19 +116,19 @@ namespace saftbus {
 		int size;
 		int result;
 		result = read_all(fd, (char*)&size, sizeof(size));
-		// std::cerr << "read_from " << fd << " so many bytes: " << size << std::endl;
+		// OLD_DEBUG: std::cerr << "read_from " << fd << " so many bytes: " << size << std::endl;
 		if (result < (int)sizeof(size)) {
-			//std::cerr << "read_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
+			// OLD_DEBUG: std::cerr << "read_all returned " << result << ". Expected result " << sizeof(size) << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
 		_data.resize(size);
 		result = read_all(fd, (char*)&_data[0], size);
 		if (result < size) {
-			//std::cerr << "read_all returned " << result << ". Expected result " << size << ". errno: " << strerror(errno) << std::endl;
+			// OLD_DEBUG: std::cerr << "read_all returned " << result << ". Expected result " << size << ". errno: " << strerror(errno) << std::endl;
 			return false;
 		}
 		get_init();
-		// std::cerr << "read " << size << " bytes from fd " << fd << std::endl;
+		// OLD_DEBUG: std::cerr << "read " << size << " bytes from fd " << fd << std::endl;
 		return true;
 	}
 	void Deserializer::save() const

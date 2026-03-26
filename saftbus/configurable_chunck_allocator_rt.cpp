@@ -19,7 +19,6 @@ namespace saftbus
 		}
 	}
 	ChunckAllocatorRT::~ChunckAllocatorRT() {
-		// print_size();
 		::free(indices);
 		::free(backindices);
 		::free(chuncks);
@@ -112,7 +111,7 @@ namespace saftbus
 			}
 		}
 		++heap_allocations;
-		// std::cerr << "heap allocation " << n << std::endl;
+		// OLD_DEBUG: std::cerr << "heap allocation " << n << std::endl;
 		return reinterpret_cast<char*>(::malloc(n));
 	}
 	std::string Allocator::fillstate() {
@@ -126,11 +125,7 @@ namespace saftbus
 	}
 
 	void Allocator::free(char *ptr) {
-		// for (size_t i = 0; i < num_allocators; ++i) {
-		// 	allocators[i]->print_size();
-		// }
-		// std::cerr << "heap: " << heap_allocations << std::endl;
-		// std::cerr << "---------" << std::endl;
+		// LOGGING: add logging here
 		for (size_t i = 0; i < num_allocators; ++i) {
 			if (allocators[i]->contains(ptr)) {
 				allocators[i]->free(ptr);

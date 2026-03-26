@@ -41,33 +41,37 @@
 namespace saftbus {
 
 
-	// Client represents the program (running in another process)
-	// that sent us one file descriptor of a socket pair.
-	// The file descriptor integer value serves as a unique id to identify this other process.
+	/* 	
+	/	Client represents the program (running in another process)
+	/   that sent us one file descriptor of a socket pair.
+	/	The file descriptor integer value serves as a unique id to identify this other process.
+	*/
 	struct Client {
 		int socket_fd; // the file descriptor is a unique number and is used as a client id
 		pid_t process_id; // store the clients pid as additional useful information
 		SourceHandle io_source; // use this to disconnect the source in the destructor
 		std::map<int,int> signal_fd_use_count;
+		// LOGGING: add logging here
 		Client(int fd, pid_t pid, SourceHandle h) : socket_fd(fd), process_id(pid), io_source(h)
 		{}
+		// LOGGING: add logging here
 		~Client() {
 			Loop::get_default().remove(io_source);
 			if (signal_fd_use_count.size() > 0) {
-				//===std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
+				// OLD_DEBUG: std::cerr << "not all signal fds of client " << (int)socket_fd << " were closed" << std::endl;
 			}
-			// close socket_fd
+			/* close socket_fd */
 			close(socket_fd);
-			// close all signal_fds
+			/* close all signal_fds */
 			for (auto& fd_use_count: signal_fd_use_count) {
-				// std::cout << "close signal fd " << fd_use_count.first << " with " << fd_use_count.second << " users " << std::endl;
+				// OLD_DEBUG: std::cout << "close signal fd " << fd_use_count.first << " with " << fd_use_count.second << " users " << std::endl;
 				close(fd_use_count.first);
 			}
 		}
 		void use_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
 			++count;
-			// std::cout << "Client::use_signal_fd(" << fd << ") count=" << count << std::endl;
+			// OLD_DEBUG: std::cout << "Client::use_signal_fd(" << fd << ") count=" << count << std::endl;
 		}
 		void release_signal_fd(int fd) {
 			int &count = signal_fd_use_count[fd];
@@ -76,10 +80,12 @@ namespace saftbus {
 				std::cerr << "fatal error: " << __FILE__ << ":" << __LINE__ << " signal use count < 0 must not happen" << std::endl;
 				assert(false);
 			}
-			// don't close even if use count reaches 0, because the client might create other proxies later
-			// if fd would be closed here, client must be able to detect this in the proxy constructor and 
-			// send a new socket-pair-fd so that the connection can be re-established
-			// All signal file descriptors are closed when the client disconnects
+			/*	
+			/	don't close even if use count reaches 0, because the client might create other proxies later
+			/	if fd would be closed here, client must be able to detect this in the proxy constructor and 
+			/ 	send a new socket-pair-fd so that the connection can be re-established
+			/ 	All signal file descriptors are closed when the client disconnects
+			*/
 		}
 	};
 
@@ -109,22 +115,23 @@ namespace saftbus {
 	}
 
 	bool ServerConnection::Impl::accept_client(int fd, int condition) {
+		// LOGGING: add logging here
 		if (condition & POLLIN) {
 			int client_socket_fd = recvfd(fd);
 			if (client_socket_fd == -1) {
 				std::cerr << "cannot receive socket fd" << std::endl;
 				assert(false);
 			}
-			// read process_id from client
+			/* read process_id from client */
 			pid_t pid;
 			int result = read(client_socket_fd, &pid, sizeof(pid));
 			if (result != sizeof(pid)) {
 				std::cerr << "Error in ServerConnection::Impl::accept_client: read unexpected number of bytes" << std::endl;
 			}
 			auto handle = Loop::get_default().connect<IoSource>(std::bind(&ServerConnection::Impl::handle_client_request, this, std::placeholders::_1, std::placeholders::_2), client_socket_fd, POLLIN | POLLHUP | POLLERR);
-			// register the client
+			/* register the client */
 			clients.push_back(std::move(std::unique_ptr<Client>(new Client(client_socket_fd, pid, handle))));
-			// send the ID back to client (the file descriptor integer number is used as ID)
+			/* send the ID back to client (the file descriptor integer number is used as ID) */
 			result = write(client_socket_fd, &client_socket_fd, sizeof(client_socket_fd));
 			if (result != sizeof(client_socket_fd)) {
 				std::cerr << "Error in ServerConnection::Impl::accept_client: write returns unexpected number of bytes" << std::endl;
@@ -134,8 +141,11 @@ namespace saftbus {
 	}
 
 	bool ServerConnection::Impl::handle_client_request(int fd, int condition) {
-		// The calling_client_id should be reset to -1 at end of scope.
-		// This anonymous struct guarantees that this is the case
+
+		/* 
+		/	The calling_client_id should be reset to -1 at end of scope.
+		/	 This anonymous struct guarantees that this is the case
+		*/
 		struct ClientID {
 			int &ref;
 			ClientID(int &id_ref, int id_value) : ref(id_ref) { id_ref = id_value; }
@@ -143,9 +153,12 @@ namespace saftbus {
 		} ccid(calling_client_id, fd); 
 
 		if (condition & (POLLIN|POLLHUP) ) {
-			// if POLLHUP is received, there may still be data inside the pipe
-			// we have to loop and read until all data is read and all remaining actions 
-			// are executed. But not more then 100 times. 
+			// LOGGING: add logging here
+			/* 
+			/	if POLLHUP is received, there may still be data inside the pipe
+			/	we have to loop and read until all data is read and all remaining actions 
+			/	are executed. But not more then 100 times. 
+			*/
 			bool read_result = received.read_from(fd);
 			if (!read_result) {
 				client_hung_up(fd);
@@ -154,8 +167,9 @@ namespace saftbus {
 			unsigned saftbus_object_id;
 			received.get(saftbus_object_id);
 			if (!container_of_services.call_service(saftbus_object_id, fd, received, send)) { 
-				// call_service returns false if the service object was not found
-				// in this case an exception is sent to the Proxy 
+				/* 	call_service returns false if the service object was not found
+				/	in this case an exception is sent to the Proxy
+				*/
 				send.put(saftbus::FunctionResult::EXCEPTION);
 				std::string what("remote call failed because service object was not found");
 				send.put(what);
@@ -167,7 +181,7 @@ namespace saftbus {
 		return true;
 	}
 
-	// operator is used to std::find a client based on the file descriptor
+	/* operator is used to std::find a client based on the file descriptor */
 	bool operator==(const std::unique_ptr<Client> &lhs, int rhs) {
 		return lhs->socket_fd == rhs;
 	}
@@ -178,7 +192,7 @@ namespace saftbus {
 			calling_client_id = -1;
 			assert(false);
 		} else {
-			// remove all signal fds associated with this client from all services
+			/* remove all signal fds associated with this client from all services */
 			for(auto &sigfd_usecount: (*removed_client)->signal_fd_use_count) {
 				int sigfd = sigfd_usecount.first;
 				// int count = sigfd_usecount.second;
@@ -186,8 +200,11 @@ namespace saftbus {
 			}
 			clients.erase(std::remove(clients.begin(), clients.end(), client_fd), clients.end());
 		}
-		// tell the container that a client hung up
-		// the container hast to remove all services previously owned by this client
+		/* 
+		/	tell the container that a client hung up
+		/	the container hast to remove all services previously owned by this client
+		*/
+		// LOGGING: add logging here
 		container_of_services.client_hung_up(client_fd);
 	}
 
@@ -261,6 +278,7 @@ namespace saftbus {
 	void ServerConnection::register_signal_id_for_client(int client_fd, int signal_fd)
 	{
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
+		// LOGGING: add logging here
 		if (client == d->clients.end()) {
 			assert(false);
 		} else {
@@ -270,8 +288,8 @@ namespace saftbus {
 
 	void ServerConnection::unregister_signal_id_for_client(int client_fd, int signal_fd)
 	{
-		// auto client = d->clients.find(client_fd);
 		auto client = std::find(d->clients.begin(), d->clients.end(), client_fd);
+		// LOGGING: add logging here
 		if (client == d->clients.end()) {
 			assert(false);
 		} else {

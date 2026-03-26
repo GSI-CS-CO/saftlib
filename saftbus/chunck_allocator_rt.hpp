@@ -28,6 +28,7 @@
 
 template<size_t MAX_CHUNCKS, size_t CHUNCKSIZE>
 class ChunckAllocatorRT {
+// TODO: add documentation
 public:
 	ChunckAllocatorRT() 
 		: allocated_chuncks(0)
@@ -54,9 +55,9 @@ public:
 		size_t &a_backidx = chuncks[a_idx].index;
 		size_t &b_backidx = chuncks[b_idx].index;
 
-		// std::cerr << "swapping " << a_idx << " <-> " << b_idx << std::endl;
+		// OLD_DEBUG: std::cerr << "swapping " << a_idx << " <-> " << b_idx << std::endl;
 		std::swap(a_idx, b_idx);
-		// std::cerr << "swapping " << a_backidx << " <-> " << b_backidx << std::endl;
+		// OLD_DEBUG: std::cerr << "swapping " << a_backidx << " <-> " << b_backidx << std::endl;
 		std::swap(a_backidx, b_backidx);
 
 		--allocated_chuncks;

@@ -33,6 +33,8 @@
 #include <vector>
 #include <functional>
 
+// TODO: split into service and container
+
 namespace saftbus {
 
 	/// @brief base class of all saftbus Services
@@ -50,6 +52,7 @@ namespace saftbus {
 	///     saftbus-gen driverX.hpp
 	///
 	class Service {
+		// TODO: remove PIMPL
 		struct Impl; std::unique_ptr<Impl> d;
 		friend class Container;
 		friend class Container_Service;
@@ -147,6 +150,7 @@ namespace saftbus {
 	/// register and execute function calls through the Connection.
 	class Container {
 		// @saftbus-default-object-path /saftbus
+		// TODO: remove PIMPL
 		struct Impl; std::unique_ptr<Impl> d;
 		friend class Container_Service;
 	public:

@@ -18,6 +18,7 @@
  *******************************************************************************
  */
 
-// #include "configurable_chunck_allocator_rt.hpp"
+// TODO: to be integrated
+/* remove old include for configurable_chunck_allocator_rt.hpp */ 
 #include "global_allocator.hpp"
 #include "saftbusd-noda.cpp"

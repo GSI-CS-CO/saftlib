@@ -53,7 +53,6 @@ namespace saftbus {
 		std::lock_guard<rtpi::mutex> lock1(d->base_socket_mutex);
 
 		std::ostringstream msg;
-		// msg << "ClientConnection constructor : ";
 		char *socketname_env = getenv("SAFTBUS_SOCKET_PATH");
 		std::string socketname = socket_name;
 		if (socketname_env != nullptr) {
@@ -104,7 +103,7 @@ namespace saftbus {
 			msg << "cannot read client id" << strerror(errno) << std::endl;
 			throw saftbus::Error(msg.str());
 		}
-		// std::cerr << "got client id " << d->client_id << std::endl;
+		// OLD_DEBUG: std::cerr << "got client id " << d->client_id << std::endl;
 	}
 
 	ClientConnection::~ClientConnection() 

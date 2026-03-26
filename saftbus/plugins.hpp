@@ -37,6 +37,7 @@ namespace saftbus {
     /// The create_services function in the shared library can use the container pointer to add
     /// Service objects into the container.
 	class LibraryLoader {
+        // TODO: remove PIMPL
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
 		LibraryLoader(const std::string &so_filename);

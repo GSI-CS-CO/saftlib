@@ -28,6 +28,7 @@ namespace saftbus
 {
 
 	class Error : public std::runtime_error
+	// TODO: add documentation about custom error types
 	{
 	public:
 		enum Type

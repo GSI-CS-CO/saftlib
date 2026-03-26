@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <thread>
 
+// LOGGING: add logging here
 
 void usage(char *argv0) {
 		std::cout << "saftbus-ctl version " << VERSION << std::endl;

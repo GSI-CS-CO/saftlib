@@ -30,12 +30,14 @@
 
 #include <poll.h>
 
+// TODO : split into loop and source
+
 namespace saftbus {
 
 	class Loop;
 	/// @brief Base class of all event sources in a saftbus::Loop
 	class Source {
-		// struct Impl; std::unique_ptr<Impl> d;
+		/* removed dead impl struct */
 	friend class Loop;
 	public:
 		Source();
@@ -76,6 +78,7 @@ namespace saftbus {
 	///   * in case there are no file descriptors, wait until the earliest timeout
 	///   * call Source::dispatch for all sources where Source::check returns true.
 	class Loop {
+		// TODO: remove PIMPL
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
 		Loop();

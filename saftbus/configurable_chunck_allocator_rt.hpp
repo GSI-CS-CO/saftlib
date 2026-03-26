@@ -13,6 +13,7 @@ namespace saftbus
 {
 
 class ChunckAllocatorRT {
+	// TODO: add documentation
 	friend class Allocator;
 public:
 	ChunckAllocatorRT(size_t max_chuncks, size_t chuncksize);
@@ -45,14 +46,9 @@ private:
 	size_t heap_allocations;
 };
 
-// Allocator *get_allocator();
-// void *operator new(std::size_t n) {
-//   return get_allocator()->malloc(n);
-// }
-// void operator delete(void *p) {
-//   char *ptr = reinterpret_cast<char*>(p);
-//   get_allocator()->free(ptr);
-// }
+/*
+	Remove dead get() and free()
+*/
 
 }
 #endif

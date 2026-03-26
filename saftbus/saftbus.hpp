@@ -130,20 +130,15 @@ namespace saftbus {
 		// 	val.serialize(*this);
 		// }
 
-    // template <typename T>
-    // std::enable_if_t<!std::is_base_of<serializable,T>::value> put(const T&) { std::cout << "const T& \n";}
+    	/* removed dead templates */
 
-    // template <typename T>
-    // typename std::enable_if<std::is_base_of<serializable,T>::value>::type put(const T&) { std::cout << "T inherits from serializable \n";}
-
-
-		// Types derived from SerDesAble 
+		/* Types derived from SerDesAble */ 
 		template<typename T>
 		typename std::enable_if<std::is_base_of<SerDesAble,T>::value>::type put(const T &val) {
 			val.serialize(*this);
 		}
 
-		// POD struct and build-in types
+		/* POD struct and build-in types */
 		template<typename T>
 		typename std::enable_if<!std::is_base_of<SerDesAble,T>::value>::type put(const T &val) {
 			while(_data.size()%sizeof(T) != 0) _data.push_back('x'); // insert padding (reading from address that is not aligned to target type is undefined behavior)
@@ -152,7 +147,7 @@ namespace saftbus {
 			_data.insert(_data.end(), begin, end);
 		}
 
-		// std::vector and nested std::vector
+		/* std::vector and nested std::vector */
 		template<typename T>
 		void put(const std::vector<T>& std_vector) {
 			size_t size = std_vector.size();
@@ -170,7 +165,7 @@ namespace saftbus {
 				put(std_vector_vector[i]);
 			}
 		}
-		// std::string 
+		/* std::string */
 		void put(const std::string& std_string) {
 			size_t size = std_string.size();
 			put(size);
@@ -178,7 +173,7 @@ namespace saftbus {
 			const char* end   = begin + size*sizeof(std_string[0]);
 			_data.insert(_data.end(), begin, end);
 		}
-		// std::vector<std::string>
+		/* std::vector<std::string> */
 		void put(const std::vector<std::string>& vector_string) {
 			size_t size = vector_string.size();
 			put(size);
@@ -186,7 +181,7 @@ namespace saftbus {
 				put(vector_string[i]);
 			}
 		}
-		// std::map
+		/* std::map */
 		template<typename K, typename V>
 		void put(const std::map<K,V> &std_map) {
 			size_t size = std_map.size();
@@ -196,15 +191,12 @@ namespace saftbus {
 				put(it->second);
 			}
 		}
-		// // nested Serializer
-		// void put(Serializer &ser) {
-		// 	put(ser._data);
-		// 	ser.put_init();
-		// }
+		
+		/* removed dead nested serializer */
 
 		bool empty();
 
-		// has to be called before first call to put()
+		/* has to be called before first call to put() */
 		void put_init();
 	private:
 
@@ -224,18 +216,18 @@ namespace saftbus {
 			_data.reserve(reserve);
 			_iter = _data.begin();
 		}
-
-		// fill the serdes data buffer by reading data from the file descriptor fd
+ 
+		/* fill the serdes data buffer by reading data from the file descriptor fd */
 		bool read_from(int fd);
 
-		// Types derived from SerDesAble
+		/* Types derived from SerDesAble */
 		template<typename T>
 		typename std::enable_if<std::is_base_of<SerDesAble,T>::value>::type // this method competed in overload resulution with template<typename T> get(T &val). "enable_if" lets this version win if a daughter class of SerDesAble is used.
 		get(T &val) const {
 			val.deserialize(*this);
 		}
 
-		// POD struct and build-in types
+		/* POD struct and build-in types */
 		template<typename T>
 		typename std::enable_if<!std::is_base_of<SerDesAble,T>::value>::type // "enable_if" excludes this method from the overload resolution for all tpes derived from SerDesAble.
 		get(T &val) const {
@@ -244,8 +236,8 @@ namespace saftbus {
 			_iter += sizeof(val);
 		}
 
-		// std::vector and nested std::vector
-		template<typename T>
+		/* std::vector and nested std::vector */
+		template<typename T> 
 		void get(std::vector<T> &std_vector) const {
 			size_t size;
 			get(size);
@@ -265,7 +257,7 @@ namespace saftbus {
 				get(std_vector_vector[i]);
 			}
 		}
-		// std::string 
+		/* std::string  */
 		void get(std::string &std_string) const {
 			size_t size;
 			get(size);
@@ -275,7 +267,7 @@ namespace saftbus {
 			std_string.insert(std_string.end(), begin, end);
 			_iter += size;
 		}
-		// std::vector<std::string>
+		/* std::vector<std::string> */
 		void get(std::vector<std::string> &vector_string) const {
 			size_t size;
 			get(size);
@@ -284,7 +276,7 @@ namespace saftbus {
 				get(vector_string[i]);
 			}
 		}
-		// std::map
+		/* std::map */
 		template<typename K, typename V>
 		void get(std::map<K,V> &std_map) const {
 			std_map.clear();
@@ -298,18 +290,15 @@ namespace saftbus {
 				std_map.insert(std::make_pair(key,value));
 			}
 		}
-		// // nested Deserializer
-		// void get(Deserializer &ser) const {
-		// 	get(ser._data);
-		// 	ser.get_init();
-		// }
+		
+		/* removed dead nested deserializer */
 
 		void save() const;
 		void restore() const;
 
 	private:
 
-		// has to be called before first call to get()
+		/* has to be called before first call to get() */
 		void get_init() const;
 
 		std::vector<char> _data;

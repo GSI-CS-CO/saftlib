@@ -1,0 +1,19 @@
+tags:
+  - TODO
+  - FIXME
+  - BUG
+  - NOTE
+  - LOGGING
+  - OLD_DEBUG
+
+include:
+  - "*.hpp"
+  - "*.cpp"
+
+exclude:
+  - "m4/**"
+  - "firmware-bin/**"
+
+json: false
+flat: false
+no_color: false

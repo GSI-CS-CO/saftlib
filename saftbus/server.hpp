@@ -46,6 +46,7 @@ namespace saftbus {
 	/// the command line tool saftubs-ctl -l <plugin-name> <arg1> <arg2> ... <argn>
 	/// @param socket_name is the name of the UNIX domain socket which will be opened by the ServerConnection
 	class ServerConnection {
+		// TODO: remove PIMPL
 		struct Impl; std::unique_ptr<Impl> d;
 	public:
 		ServerConnection(const std::vector<std::pair<std::string, std::vector<std::string> > > &plugins_and_args = std::vector<std::pair<std::string, std::vector<std::string> > >(), 
