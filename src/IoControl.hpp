@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -30,22 +30,25 @@
 #include <etherbone.h>
 
 #include "Io.hpp"
-#include "SerdesClockGen.hpp"
 #include "SdbDevice.hpp"
+#include "SerdesClockGen.hpp"
 
-namespace saftlib {
+namespace saftlib
+{
 
-/// 
-class IoControl : public SdbDevice {
-	SerdesClockGen clkgen;
+///
+class IoControl : public SdbDevice
+{
+  SerdesClockGen clkgen;
 
-	std::vector<Io> ios;
+  std::vector<Io> ios;
+
 public:
-	IoControl(etherbone::Device &device);
+  IoControl( etherbone::Device& device );
 
-	std::vector<Io> & get_ios();
+  std::vector<Io>& get_ios();
 };
 
-}
+} // namespace saftlib
 
 #endif

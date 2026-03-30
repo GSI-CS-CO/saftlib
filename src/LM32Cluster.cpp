@@ -23,129 +23,145 @@
 
 #include <saftbus/error.hpp>
 
-#include <iostream>
 #include <cassert>
-#include <sstream>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 
-#define LM32_RAM_USER_VENDOR      0x0651             // vendor ID
-#define LM32_RAM_USER_PRODUCT     0x54111351         // product ID
-#define LM32_RAM_USER_VMAJOR      1                  // major revision
-#define LM32_RAM_USER_VMINOR      0                  // minor revision
+#define LM32_RAM_USER_VENDOR  0x0651     // vendor ID
+#define LM32_RAM_USER_PRODUCT 0x54111351 // product ID
+#define LM32_RAM_USER_VMAJOR  1          // major revision
+#define LM32_RAM_USER_VMINOR  0          // minor revision
 
-#define LM32_CLUSTER_ROM_VENDOR   0x651
-#define LM32_CLUSTER_ROM_PRODUCT  0x10040086
+#define LM32_CLUSTER_ROM_VENDOR  0x651
+#define LM32_CLUSTER_ROM_PRODUCT 0x10040086
 
-namespace saftlib {
-
-
-LM32Cluster::LM32Cluster(etherbone::Device &dev, TimingReceiver *timing_receiver)
-	: SdbDevice(dev, LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT)
-	, tr(timing_receiver)
+namespace saftlib
 {
-	std::cerr << "LM32Cluster::LM32Cluster" << std::endl;
 
-    eb_data_t cpus;
-    bool no_lm32 = false;
-    device.read(adr_first, EB_DATA32, &cpus);
+LM32Cluster::LM32Cluster( etherbone::Device& dev, TimingReceiver* timing_receiver )
+    : SdbDevice( dev, LM32_CLUSTER_ROM_VENDOR, LM32_CLUSTER_ROM_PRODUCT )
+    , tr( timing_receiver )
+{
+  std::cerr << "LM32Cluster::LM32Cluster" << std::endl;
 
-	// look for lm32 dual port ram
-	std::vector<sdb_device> dpram_lm32_devs;
-	device.sdb_find_by_identity(LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, dpram_lm32_devs);
+  eb_data_t cpus;
+  bool      no_lm32 = false;
+  device.read( adr_first, EB_DATA32, &cpus );
 
-	if (dpram_lm32_devs.size() < 1) {
-		std::cerr << "Warning: no lm32 user ram found on hardware" << std::endl;
-		no_lm32 = true;
-	}
+  // look for lm32 dual port ram
+  std::vector<sdb_device> dpram_lm32_devs;
+  device.sdb_find_by_identity( LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, dpram_lm32_devs );
 
-	if (!no_lm32) {
-		for (auto& dpram_lm32_dev: dpram_lm32_devs) {
-			dpram_lm32_adr_first.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_first));
-			dpram_lm32_adr_last.push_back(static_cast<eb_address_t>(dpram_lm32_dev.sdb_component.addr_last));
-		}
+  if ( dpram_lm32_devs.size() < 1 )
+  {
+    std::cerr << "Warning: no lm32 user ram found on hardware" << std::endl;
+    no_lm32 = true;
+  }
 
-		num_cores = dpram_lm32_devs.size();
+  if ( !no_lm32 )
+  {
+    for ( auto& dpram_lm32_dev : dpram_lm32_devs )
+    {
+      dpram_lm32_adr_first.push_back( static_cast<eb_address_t>( dpram_lm32_dev.sdb_component.addr_first ) );
+      dpram_lm32_adr_last.push_back( static_cast<eb_address_t>( dpram_lm32_dev.sdb_component.addr_last ) );
+    }
 
-		if (num_cores != cpus) {
-			throw saftbus::Error(saftbus::Error::FAILED, "number of cpus in lm32 cluster rom differs from number of number of user rams");
-		}
-	}
-	else {
-		num_cores = 0;
-	}
+    num_cores = dpram_lm32_devs.size();
 
-	std::cerr << "found " << num_cores << " lm32 cpus" << std::endl;
+    if ( num_cores != cpus )
+    {
+      throw saftbus::Error( saftbus::Error::FAILED,
+                            "number of cpus in lm32 cluster rom differs from number of number of user rams" );
+    }
+  }
+  else
+  {
+    num_cores = 0;
+  }
+
+  std::cerr << "found " << num_cores << " lm32 cpus" << std::endl;
 }
-LM32Cluster::~LM32Cluster() {
+LM32Cluster::~LM32Cluster()
+{
 }
 
 unsigned LM32Cluster::getCpuCount()
 {
-	return dpram_lm32_adr_first.size();
+  return dpram_lm32_adr_first.size();
 }
 
-void LM32Cluster::SafeHaltCpu(unsigned cpu_idx)
+void LM32Cluster::SafeHaltCpu( unsigned cpu_idx )
 {
-	if (cpu_idx >= num_cores) {
-		std::ostringstream msg;
-		msg << "there is no user cpu core with index " << cpu_idx;
-		throw std::runtime_error(msg.str());
-	}
-	// overwrite the RAM with trap instructions (a trap instruction is a jump to the address of the flummi instruction)
-	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
-	eb_address_t last = dpram_lm32_adr_last[cpu_idx];
-	eb_data_t jump_instruction = 0xe0000000;
-	while (adr < last) {
-		etherbone::Cycle cycle;
-		cycle.open(device);
-		for (int i = 0; i < 32 && adr < last; ++i) {
-			cycle.write(adr, EB_DATA32, (eb_data_t)jump_instruction);
-			adr += 4;
-		}
-		cycle.close();
-	}
-	tr->CpuHalt(cpu_idx);
+  if ( cpu_idx >= num_cores )
+  {
+    std::ostringstream msg;
+    msg << "there is no user cpu core with index " << cpu_idx;
+    throw std::runtime_error( msg.str() );
+  }
+  // overwrite the RAM with trap instructions (a trap instruction is a jump to the address of the flummi instruction)
+  eb_address_t adr              = dpram_lm32_adr_first[cpu_idx];
+  eb_address_t last             = dpram_lm32_adr_last[cpu_idx];
+  eb_data_t    jump_instruction = 0xe0000000;
+  while ( adr < last )
+  {
+    etherbone::Cycle cycle;
+    cycle.open( device );
+    for ( int i = 0; i < 32 && adr < last; ++i )
+    {
+      cycle.write( adr, EB_DATA32, (eb_data_t)jump_instruction );
+      adr += 4;
+    }
+    cycle.close();
+  }
+  tr->CpuHalt( cpu_idx );
 }
 
-void LM32Cluster::WriteFirmware(unsigned cpu_idx, const std::string &filename)
+void LM32Cluster::WriteFirmware( unsigned cpu_idx, const std::string& filename )
 {
-	if (cpu_idx >= num_cores) {
-		std::ostringstream msg;
-		msg << "there is no user cpu core with index " << cpu_idx;
-		throw std::runtime_error(msg.str());
-	}
-	eb_address_t adr = dpram_lm32_adr_first[cpu_idx];
-	eb_address_t last = dpram_lm32_adr_last[cpu_idx];
-	std::ifstream firmware_bin(filename.c_str());
-	if (!firmware_bin) {
-		std::ostringstream msg;
-		msg << "cannot open firmware binary file " << filename;
-		throw std::runtime_error(msg.str());
-	}
+  if ( cpu_idx >= num_cores )
+  {
+    std::ostringstream msg;
+    msg << "there is no user cpu core with index " << cpu_idx;
+    throw std::runtime_error( msg.str() );
+  }
+  eb_address_t  adr  = dpram_lm32_adr_first[cpu_idx];
+  eb_address_t  last = dpram_lm32_adr_last[cpu_idx];
+  std::ifstream firmware_bin( filename.c_str() );
+  if ( !firmware_bin )
+  {
+    std::ostringstream msg;
+    msg << "cannot open firmware binary file " << filename;
+    throw std::runtime_error( msg.str() );
+  }
 
-	bool end_of_file = false;
-	while (adr < last) {
-		etherbone::Cycle cycle;
-		cycle.open(device);
-		for (int i = 0; i < 32 && adr < last; ++i) {
-			uint32_t instr, cpu_instr = 0;
-			firmware_bin.read((char*)&instr, sizeof(instr));
-			if (!firmware_bin) {
-				end_of_file = true;
-				break;
-			}
-			cpu_instr |= instr >> 24;
-			cpu_instr |= (0xff0000 & instr) >> 8;
-			cpu_instr |= (0x00ff00 & instr) << 8;
-			cpu_instr |= instr << 24;
-			cycle.write(adr, EB_DATA32, (eb_data_t)cpu_instr);
-			adr += 4;
-		}
-		cycle.close();
-		if (end_of_file) {
-			break;
-		}
-	}
+  bool end_of_file = false;
+  while ( adr < last )
+  {
+    etherbone::Cycle cycle;
+    cycle.open( device );
+    for ( int i = 0; i < 32 && adr < last; ++i )
+    {
+      uint32_t instr, cpu_instr = 0;
+      firmware_bin.read( (char*)&instr, sizeof( instr ) );
+      if ( !firmware_bin )
+      {
+        end_of_file = true;
+        break;
+      }
+      cpu_instr |= instr >> 24;
+      cpu_instr |= ( 0xff0000 & instr ) >> 8;
+      cpu_instr |= ( 0x00ff00 & instr ) << 8;
+      cpu_instr |= instr << 24;
+      cycle.write( adr, EB_DATA32, (eb_data_t)cpu_instr );
+      adr += 4;
+    }
+    cycle.close();
+    if ( end_of_file )
+    {
+      break;
+    }
+  }
 }
 
-} // namespace
+} // namespace saftlib

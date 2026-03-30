@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -26,12 +26,19 @@
 
 #include "SoftwareCondition.hpp"
 
-namespace saftlib {
+namespace saftlib
+{
 
-SoftwareCondition::SoftwareCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, saftbus::Container *container = nullptr)
- : Condition(sink, number, active, id, mask, offset, number, container)
+SoftwareCondition::SoftwareCondition( ActionSink*         sink,
+                                      unsigned            number,
+                                      bool                active,
+                                      uint64_t            id,
+                                      uint64_t            mask,
+                                      int64_t             offset,
+                                      saftbus::Container* container = nullptr )
+    : Condition( sink, number, active, id, mask, offset, number, container )
 {
   // OLD_DEBUG: std::cerr << "SoftwareCondition::SoftwareCondition()" << std::endl;
 }
 
-}
+} // namespace saftlib

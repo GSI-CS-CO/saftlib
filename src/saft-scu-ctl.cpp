@@ -9,18 +9,17 @@
 
 /* Includes */
 /* ==================================================================================================== */
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "interfaces/SAFTd.h"
-#include "interfaces/TimingReceiver.h"
 #include "interfaces/SCUbusActionSink.h"
 #include "interfaces/SCUbusCondition.h"
+#include "interfaces/TimingReceiver.h"
 
 #include "CommonFunctions.h"
 #include "saft-tools-define.hpp"
-
 
 /* Namespaces */
 /* ==================================================================================================== */
@@ -29,16 +28,16 @@ using namespace std;
 
 /* Globals */
 /* ==================================================================================================== */
-static const char *deviceName = NULL; /* Name of the device */
-static const char *program    = NULL; /* Name of the application */
+static const char* deviceName = NULL; /* Name of the device */
+static const char* program    = NULL; /* Name of the application */
 
 /* Prototypes */
 /* ==================================================================================================== */
-static void scu_help (void);
+static void scu_help( void );
 
 /* Function ecpu_help() */
 /* ==================================================================================================== */
-static void scu_help (void)
+static void scu_help( void )
 {
   /* Print arguments and options */
   std::cout << "SCU-CTL for SAFTlib" << std::endl;
@@ -55,7 +54,7 @@ static void scu_help (void)
   std::cout << "  -v:                            Switch to verbose mode" << std::endl;
   std::cout << std::endl;
   std::cout << "Example:" << std::endl;
-  std::cout << program << " device " << "-c 64 58 0x2 0x4 -d"<< std::endl;
+  std::cout << program << " device " << "-c 64 58 0x2 0x4 -d" << std::endl;
   std::cout << "  This will create a new condition and disown it" << std::endl;
   std::cout << std::endl;
   std::cout << BugReportContact << std::endl;
@@ -65,178 +64,260 @@ static void scu_help (void)
 
 /* Function main() */
 /* ==================================================================================================== */
-int main (int argc, char** argv)
+int main( int argc, char** argv )
 {
   /* Helpers */
-  int  opt             = 0;
-  char *pEnd           = NULL;
-  bool create_sink     = false;
-  bool disown_sink     = false;
-  bool destroy_sink    = false;
-  bool verbose_mode    = false;
-  bool show_help       = false;
-  bool translate_mask  = false;
-  bool list_conditions = false;
-  bool negative_offset = false;
-  uint64_t eventID      = 0x0;
-  uint64_t eventMask    = 0x0;
-  int64_t  offset       = 0x0;
-  int32_t  tag          = 0x0;
-  std::string scu_name = "None";
-  std::string scu_sink_name = "Unknown";
-  
+  int         opt             = 0;
+  char*       pEnd            = NULL;
+  bool        create_sink     = false;
+  bool        disown_sink     = false;
+  bool        destroy_sink    = false;
+  bool        verbose_mode    = false;
+  bool        show_help       = false;
+  bool        translate_mask  = false;
+  bool        list_conditions = false;
+  bool        negative_offset = false;
+  uint64_t    eventID         = 0x0;
+  uint64_t    eventMask       = 0x0;
+  int64_t     offset          = 0x0;
+  int32_t     tag             = 0x0;
+  std::string scu_name        = "None";
+  std::string scu_sink_name   = "Unknown";
+
   /* Get the application name */
-  program = argv[0]; 
-  
+  program = argv[0];
+
   /* Parse arguments */
-  while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
+  while ( ( opt = getopt( argc, argv, "c:dgxzlvh" ) ) != -1 )
   {
-    switch (opt)
+    switch ( opt )
     {
-      case 'c': 
-      { 
-        create_sink = true;
-        if (argv[optind-1] != NULL) { eventID = strtoull(argv[optind-1], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event id!" << std::endl; return (-1); }
-        if (argv[optind+0] != NULL) { eventMask = strtoull(argv[optind+0], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event mask!" << std::endl; return (-1); }
-        if (argv[optind+1] != NULL) { offset = strtoull(argv[optind+1], &pEnd, 0);}
-        else                        { std::cerr << "Error: Missing offset!" << std::endl; return (-1); }
-        if (argv[optind+2] != NULL) { tag = strtoul(argv[optind+2], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
-        break;
+    case 'c':
+    {
+      create_sink = true;
+      if ( argv[optind - 1] != NULL )
+      {
+        eventID = strtoull( argv[optind - 1], &pEnd, 0 );
       }
-      case 'd': { disown_sink     = true; break; }
-      case 'g': { negative_offset = true; break; }
-      case 'x': { destroy_sink    = true; break; }
-      case 'z': { translate_mask  = true; break; }
-      case 'l': { list_conditions = true; break; }
-      case 'v': { verbose_mode    = true; break; }
-      case 'h': { show_help       = true; break; }
-      default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
+      else
+      {
+        std::cerr << "Error: Missing event id!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 0] != NULL )
+      {
+        eventMask = strtoull( argv[optind + 0], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing event mask!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 1] != NULL )
+      {
+        offset = strtoull( argv[optind + 1], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing offset!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 2] != NULL )
+      {
+        tag = strtoul( argv[optind + 2], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing tag!" << std::endl;
+        return ( -1 );
+      }
+      break;
+    }
+    case 'd':
+    {
+      disown_sink = true;
+      break;
+    }
+    case 'g':
+    {
+      negative_offset = true;
+      break;
+    }
+    case 'x':
+    {
+      destroy_sink = true;
+      break;
+    }
+    case 'z':
+    {
+      translate_mask = true;
+      break;
+    }
+    case 'l':
+    {
+      list_conditions = true;
+      break;
+    }
+    case 'v':
+    {
+      verbose_mode = true;
+      break;
+    }
+    case 'h':
+    {
+      show_help = true;
+      break;
+    }
+    default:
+    {
+      std::cout << "Unknown argument..." << std::endl;
+      show_help = true;
+      break;
+    }
     }
     /* Break loop if help is needed */
-    if (show_help) { break; }
+    if ( show_help )
+    {
+      break;
+    }
   }
-  
-  if (negative_offset)  { offset = -offset; }
+
+  if ( negative_offset )
+  {
+    offset = -offset;
+  }
 
   /* Plausibility check for arguments */
-  if ((create_sink || disown_sink) && destroy_sink)
+  if ( ( create_sink || disown_sink ) && destroy_sink )
   {
     show_help = true;
     std::cerr << "Incorrect arguments!" << std::endl;
   }
-  
+
   /* Does the user need help */
-  if (show_help)
+  if ( show_help )
   {
     scu_help();
-    return (-1);
+    return ( -1 );
   }
-  
+
   /* List parameters */
-  if (verbose_mode && create_sink)
+  if ( verbose_mode && create_sink )
   {
-    uint64_t mask = translate_mask ? tr_mask(eventMask) : eventMask;
+    uint64_t mask = translate_mask ? tr_mask( eventMask ) : eventMask;
     std::cout << "Action sink/condition parameters:" << std::endl;
-    std::cout << std::hex << "EventID:   0x" << eventID   << std::dec << " (" << eventID   << ")" << std::endl;
-    std::cout << std::hex << "EventMask: 0x" << mask      << std::dec << " (" << mask      << ")" << std::endl;
-    std::cout << std::hex << "Offset:    0x" << offset    << std::dec << " (" << offset    << ")" << std::endl;
-    std::cout << std::hex << "Tag:       0x" << tag       << std::dec << " (" << tag       << ")" << std::endl;
+    std::cout << std::hex << "EventID:   0x" << eventID << std::dec << " (" << eventID << ")" << std::endl;
+    std::cout << std::hex << "EventMask: 0x" << mask << std::dec << " (" << mask << ")" << std::endl;
+    std::cout << std::hex << "Offset:    0x" << offset << std::dec << " (" << offset << ")" << std::endl;
+    std::cout << std::hex << "Tag:       0x" << tag << std::dec << " (" << tag << ")" << std::endl;
   }
-  
+
   /* Get the device name */
   deviceName = argv[optind];
-  
 
   /* Try to connect to saftd */
-  try 
+  try
   {
     /* Search for device name */
-    if (deviceName == NULL)
-    { 
+    if ( deviceName == NULL )
+    {
       std::cerr << "Missing device name!" << std::endl;
-      return (-1);
+      return ( -1 );
     }
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    if (devices.find(deviceName) == devices.end())
+    if ( devices.find( deviceName ) == devices.end() )
     {
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
-      return (-1);
+      return ( -1 );
     }
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create( devices[deviceName] );
+
     /* Search for embedded CPU channel */
     map<std::string, std::string> scus = receiver->getInterfaces()["SCUbusActionSink"];
-    if (scus.size() != 1)
+    if ( scus.size() != 1 )
     {
       std::cerr << "Device '" << receiver->getName() << "' has no SCU bus" << std::endl;
-      return (-1);
+      return ( -1 );
     }
-    
+
     /* Get connection */
-    std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create(scus.begin()->second);
-    
+    std::shared_ptr<SCUbusActionSink_Proxy> scu = SCUbusActionSink_Proxy::create( scus.begin()->second );
+
     /* Create the action sink now */
-    if (create_sink)
+    if ( create_sink )
     {
       /* Setup Condition */
       std::shared_ptr<SCUbusCondition_Proxy> condition;
-      if (translate_mask) { condition = SCUbusCondition_Proxy::create(scu->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
-      else                { condition = SCUbusCondition_Proxy::create(scu->NewCondition(true, eventID, eventMask, offset, tag)); }
-      
+      if ( translate_mask )
+      {
+        condition =
+            SCUbusCondition_Proxy::create( scu->NewCondition( true, eventID, tr_mask( eventMask ), offset, tag ) );
+      }
+      else
+      {
+        condition = SCUbusCondition_Proxy::create( scu->NewCondition( true, eventID, eventMask, offset, tag ) );
+      }
+
       /* Accept every kind of event */
-      condition->setAcceptConflict(true);
-      condition->setAcceptDelayed(true);
-      condition->setAcceptEarly(true);
-      condition->setAcceptLate(true);
-      
+      condition->setAcceptConflict( true );
+      condition->setAcceptDelayed( true );
+      condition->setAcceptEarly( true );
+      condition->setAcceptLate( true );
+
       /* Run the event loop in case the sink should not be disowned */
-      if (disown_sink)
+      if ( disown_sink )
       {
         std::cout << "SCU bus Action sink configured and disowned..." << std::endl;
         condition->Disown();
-        return (0);
+        return ( 0 );
       }
       else
       {
         std::cout << "SCU bus Action sink configured..." << std::endl;
-        while (true) {
+        while ( true )
+        {
           saftlib::wait_for_signal();
         }
       }
     }
-    else if (destroy_sink)
+    else if ( destroy_sink )
     {
       /* Get the conditions */
-      std::vector< std::string > all_conditions = scu->getAllConditions();
-      
+      std::vector<std::string> all_conditions = scu->getAllConditions();
+
       /* Destroy conditions if possible */
-      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      for ( unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++ )
       {
-        std::shared_ptr<SCUbusCondition_Proxy> destroy_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<SCUbusCondition_Proxy> destroy_condition =
+            SCUbusCondition_Proxy::create( all_conditions[condition_it] );
         std::string cond_name = all_conditions[condition_it];
-        if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
-        { 
+        if ( destroy_condition->getDestructible() && ( destroy_condition->getOwner() == "" ) )
+        {
           destroy_condition->Destroy();
-          if (verbose_mode) { std::cout << "Destroyed " << cond_name << "!" << std::endl; }
+          if ( verbose_mode )
+          {
+            std::cout << "Destroyed " << cond_name << "!" << std::endl;
+          }
         }
         else
         {
-          if (verbose_mode) { std::cout << "Found " << cond_name << " but is not destructible!" << std::endl; }
+          if ( verbose_mode )
+          {
+            std::cout << "Found " << cond_name << " but is not destructible!" << std::endl;
+          }
         }
       }
     }
-    else if (list_conditions)
+    else if ( list_conditions )
     {
       /* Get the conditions */
-      std::vector< std::string > all_conditions = scu->getAllConditions();
-      
+      std::vector<std::string> all_conditions = scu->getAllConditions();
+
       /* List conditions */
-      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      for ( unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++ )
       {
-        std::shared_ptr<SCUbusCondition_Proxy> info_condition = SCUbusCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<SCUbusCondition_Proxy> info_condition =
+            SCUbusCondition_Proxy::create( all_conditions[condition_it] );
         std::string cond_name = all_conditions[condition_it];
         std::cout << cond_name << ":" << std::endl;
         std::cout << "  Event ID: 0x" << std::hex << info_condition->getID() << std::endl;
@@ -250,15 +331,14 @@ int main (int argc, char** argv)
     else
     {
       std::cerr << "Missing at least one parameter!" << std::endl;
-      return (-1);
+      return ( -1 );
     }
-    
-  } 
-  catch (const saftbus::Error& error)
+  }
+  catch ( const saftbus::Error& error )
   {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
-  
+
   /* Done */
-  return (0);
+  return ( 0 );
 }

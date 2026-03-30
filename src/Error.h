@@ -3,7 +3,7 @@
 
 // TODO: restructure includes
 
-#include <saftbus/error.hpp>
 #include <CommonFunctions.hpp>
+#include <saftbus/error.hpp>
 
 #endif

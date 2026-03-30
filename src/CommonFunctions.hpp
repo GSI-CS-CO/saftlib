@@ -22,65 +22,64 @@
 #ifndef COMMON_FUNCTIONS_H
 #define COMMON_FUNCTIONS_H
 
-#include <iostream>
-#include <iomanip>
 #include "Time.hpp"
+#include <iomanip>
+#include <iostream>
 
 #include <saftbus/client.hpp>
 
-#include <time.h>
-#include <sys/time.h>
+#include <inttypes.h>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
-#include <sstream>
-#include <inttypes.h>
+#include <sys/time.h>
+#include <time.h>
 
 // modes for printing to cout
-const uint32_t PMODE_NONE     = 0x0;
-const uint32_t PMODE_DEC      = 0x1;
-const uint32_t PMODE_HEX      = 0x2;
-const uint32_t PMODE_VERBOSE  = 0x4;
-const uint32_t PMODE_UTC      = 0x8;
+const uint32_t PMODE_NONE    = 0x0;
+const uint32_t PMODE_DEC     = 0x1;
+const uint32_t PMODE_HEX     = 0x2;
+const uint32_t PMODE_VERBOSE = 0x4;
+const uint32_t PMODE_UTC     = 0x8;
 
 // formatting of mask for action sink
-uint64_t     tr_mask(int i                    	  // number of bits
-                    );
+uint64_t tr_mask( int i // number of bits
+);
 
 // formatting of date for output
-std::string tr_formatDate(saftlib::Time time,     // time [ns]
-                          uint32_t pmode,         // mode for printing
-                          bool     json           // JSON output
-                          );
+std::string tr_formatDate( saftlib::Time time,  // time [ns]
+                           uint32_t      pmode, // mode for printing
+                           bool          json   // JSON output
+);
 
 // formatting of action event ID for output
-std::string tr_formatActionEvent(uint64_t id,       // 64bit event ID
-                                 uint32_t pmode,    // mode for printing
-                                 bool     json      // JSON output
-                                 );
+std::string tr_formatActionEvent( uint64_t id,    // 64bit event ID
+                                  uint32_t pmode, // mode for printing
+                                  bool     json   // JSON output
+);
 
 // formatting of action param for output; the format depends also on evtNo, except if evtNo == 0xFFFF FFFF
-std::string tr_formatActionParam(uint64_t param,    // 64bit parameter
-                                 uint32_t evtNo,    // evtNo (currently 12 bit) - part of the 64 bit event ID
-                                 uint32_t pmode,    // mode for printing
-                                 bool     json      // JSON output
-                                 );
+std::string tr_formatActionParam( uint64_t param, // 64bit parameter
+                                  uint32_t evtNo, // evtNo (currently 12 bit) - part of the 64 bit event ID
+                                  uint32_t pmode, // mode for printing
+                                  bool     json   // JSON output
+);
 
 // formatting of action flags for output
-std::string tr_formatActionFlags(uint16_t flags,    // 16bit flags
-                                 uint64_t delay,    // used in case action was delayed
-                                 uint32_t pmode,    // mode for printing
-                                 bool     json      // JSON output
-                                 );
+std::string tr_formatActionFlags( uint16_t flags, // 16bit flags
+                                  uint64_t delay, // used in case action was delayed
+                                  uint32_t pmode, // mode for printing
+                                  bool     json   // JSON output
+);
 
-namespace saftlib {
-    /// @brief wait for a signal from anay Proxy connected to saftbus::SignalGroup::get_global()
-    /// @param timeout_ms if no signal arrives return after so many milliseconds, default is -1 which means: no timeout
-    /// @return >0 if a signal was received, 0 if timeout was hit, < 0 in case of failure
-    int wait_for_signal(int timeout_ms = -1);
+namespace saftlib
+{
+/// @brief wait for a signal from anay Proxy connected to saftbus::SignalGroup::get_global()
+/// @param timeout_ms if no signal arrives return after so many milliseconds, default is -1 which means: no timeout
+/// @return >0 if a signal was received, 0 if timeout was hit, < 0 in case of failure
+int wait_for_signal( int timeout_ms = -1 );
 
-    typedef saftbus::SignalGroup SignalGroup;
-}
-
-
+typedef saftbus::SignalGroup SignalGroup;
+} // namespace saftlib
 
 #endif /* #ifndef COMMON_FUNCTIONS_H */

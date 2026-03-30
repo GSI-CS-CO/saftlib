@@ -18,43 +18,50 @@
  *******************************************************************************
  */
 
+#include "client.hpp"
 #include "loop.hpp"
 #include "server.hpp"
-#include "client.hpp"
 #include "service.hpp"
 
 #include <cerrno>
 #include <cstring>
 #include <sstream>
 
-
 std::string print_fillstate();
 
 void usage(char *argv0) {
-		std::cout << "saftbusd version " << VERSION << std::endl;
-		std::cout << std::endl;
-		std::cout << "usage: " << argv0 << " [OPTIONS] { <plugin.so> { <plugin-arg> } }" << std::endl;
-		std::cout << std::endl;
-		std::cout << "  <plugin.so>        is the name of a shared object files, it must have" << std::endl;
-		std::cout << "                     contain a function with name \"create_services\"." << std::endl;
-		std::cout << std::endl;
-		std::cout << "  <plugin-arg>       one or more strings can be passed as arguments" << std::endl;
-		std::cout << "                     to each plugin. They are arguments of the " << std::endl;
-		std::cout << "                     \"create_services\" function in the shared library." << std::endl;
-		std::cout << std::endl;
-		std::cout << "options: " << std::endl;
-		std::cout << std::endl;
-		std::cout << " -h | --help         print this help and exit." << std::endl;
-		std::cout << std::endl;
+  std::cout << "saftbusd version " << VERSION << std::endl;
+  std::cout << std::endl;
+  std::cout << "usage: " << argv0
+            << " [OPTIONS] { <plugin.so> { <plugin-arg> } }" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  <plugin.so>        is the name of a shared object files, it "
+               "must have"
+            << std::endl;
+  std::cout << "                     contain a function with name "
+               "\"create_services\"."
+            << std::endl;
+  std::cout << std::endl;
+  std::cout
+      << "  <plugin-arg>       one or more strings can be passed as arguments"
+      << std::endl;
+  std::cout << "                     to each plugin. They are arguments of the "
+            << std::endl;
+  std::cout << "                     \"create_services\" function in the "
+               "shared library."
+            << std::endl;
+  std::cout << std::endl;
+  std::cout << "options: " << std::endl;
+  std::cout << std::endl;
+  std::cout << " -h | --help         print this help and exit." << std::endl;
+  std::cout << std::endl;
 }
 
-
-static bool saftd_already_running()
-{
+static bool saftd_already_running() {
   /* if ClientConnection can be established, saftbus is already running */
   // LOGGING: add logging here
   try {
-  	saftbus::ClientConnection test_connection;
+    saftbus::ClientConnection test_connection;
     return true;
   } catch (...) {
     return false;
@@ -63,83 +70,102 @@ static bool saftd_already_running()
 }
 
 static bool is_int(const std::string &name) {
-	// FIXME: check if safe
-	std::istringstream in(name);
-	unsigned i;
-	in >> i;
-	if (!in) return false;
-	char ch;
-	in >> ch; // nothing must follow the integer
-	if (in) return false;
-	return true;
+  // FIXME: check if safe
+  std::istringstream in(name);
+  unsigned i;
+  in >> i;
+  if (!in)
+    return false;
+  char ch;
+  in >> ch; // nothing must follow the integer
+  if (in)
+    return false;
+  return true;
 }
 
 static bool detect_version(const std::string &name) {
-	if (name.size() < 2) return false;
-	if (name[0] != '.') return false;
-	auto pos = name.substr(1).find(".");
-	if (pos == name.npos) return is_int(name.substr(1));
-	if (!is_int(name.substr(1,pos))) return false;
-	return detect_version(name.substr(pos+1));
+  if (name.size() < 2)
+    return false;
+  if (name[0] != '.')
+    return false;
+  auto pos = name.substr(1).find(".");
+  if (pos == name.npos)
+    return is_int(name.substr(1));
+  if (!is_int(name.substr(1, pos)))
+    return false;
+  return detect_version(name.substr(pos + 1));
 }
 
 static bool detect_so_file(const std::string &name) {
-	const std::string so_ending = ".so";
-	if (name.size() < so_ending.size()) return false;
-	auto pos = name.find(so_ending);
-	if (pos == name.size()-so_ending.size()) return true;
-	if (pos == name.npos) return false;
-	auto rest = name.substr(pos+so_ending.size()); // rest must be a version (dots and numbers) for example like this ".10" or ".10.0.0"
-	if (rest[0] != '.') return false;
-	return detect_version(rest);
+  const std::string so_ending = ".so";
+  if (name.size() < so_ending.size())
+    return false;
+  auto pos = name.find(so_ending);
+  if (pos == name.size() - so_ending.size())
+    return true;
+  if (pos == name.npos)
+    return false;
+  auto rest = name.substr(
+      pos + so_ending.size()); // rest must be a version (dots and numbers) for
+                               // example like this ".10" or ".10.0.0"
+  if (rest[0] != '.')
+    return false;
+  return detect_version(rest);
 }
 
 int main(int argc, char *argv[]) {
-	// LOGGING: add logging here
-	try {
+  // LOGGING: add logging here
+  try {
 
-		std::vector<std::pair<std::string, std::vector<std::string> > > plugins_and_args;
-		for (int i = 1; i < argc; ++i) {
-			std::string argvi(argv[i]);
-			if (argvi == "-h" || argvi == "--help") {
-				usage(argv[0]);
-				return 0;
-			}
-			if (detect_so_file(argvi)) {
-				std::cerr << argvi << " is plugin" << std::endl;
-				plugins_and_args.push_back(std::make_pair(argvi, std::vector<std::string>()));
-			} else {
-				std::cerr << argvi << " is argument" << std::endl;
-				if (plugins_and_args.empty()) {
-					std::cerr << "Error: no plugin specified (these are files ending with .so) before argument " << argvi << std::endl;
-					return 1;
-				} else {
-					plugins_and_args.back().second.push_back(argvi);
-				}
-			}
-		}
+    std::vector<std::pair<std::string, std::vector<std::string>>>
+        plugins_and_args;
+    for (int i = 1; i < argc; ++i) {
+      std::string argvi(argv[i]);
+      if (argvi == "-h" || argvi == "--help") {
+        usage(argv[0]);
+        return 0;
+      }
+      if (detect_so_file(argvi)) {
+        std::cerr << argvi << " is plugin" << std::endl;
+        plugins_and_args.push_back(
+            std::make_pair(argvi, std::vector<std::string>()));
+      } else {
+        std::cerr << argvi << " is argument" << std::endl;
+        if (plugins_and_args.empty()) {
+          std::cerr << "Error: no plugin specified (these are files ending "
+                       "with .so) before argument "
+                    << argvi << std::endl;
+          return 1;
+        } else {
+          plugins_and_args.back().second.push_back(argvi);
+        }
+      }
+    }
 
-		if (saftd_already_running()) {
-			std::cerr << "Cannot start: saftbusd already running" << std::endl;
-			return 1;
-		}
+    if (saftd_already_running()) {
+      std::cerr << "Cannot start: saftbusd already running" << std::endl;
+      return 1;
+    }
 
-		saftbus::ServerConnection server_connection(plugins_and_args);
+    saftbus::ServerConnection server_connection(plugins_and_args);
 
-		/* add allocator fillstate as additional info to be reported by Container::get_status() */
-		if (print_fillstate().size()) server_connection.get_container()->add_additional_info_callback("allocator", &print_fillstate);
+    /* add allocator fillstate as additional info to be reported by
+     * Container::get_status() */
+    if (print_fillstate().size())
+      server_connection.get_container()->add_additional_info_callback(
+          "allocator", &print_fillstate);
 
-		saftbus::Loop::get_default().run();
+    saftbus::Loop::get_default().run();
 
-		/*  delete all remaining source from Loop before the plugins are unloaded */
-		saftbus::Loop::get_default().clear();
+    /*  delete all remaining source from Loop before the plugins are unloaded */
+    saftbus::Loop::get_default().clear();
 
-	} catch (std::runtime_error &e) {
-		// LOGGING: add logging here
-		std::cerr << "Error: " << e.what() << std::endl;
-		saftbus::Loop::get_default().clear();
-		return 1;
-	}
+  } catch (std::runtime_error &e) {
+    // LOGGING: add logging here
+    std::cerr << "Error: " << e.what() << std::endl;
+    saftbus::Loop::get_default().clear();
+    return 1;
+  }
 
-	return 0;
+  return 0;
 }

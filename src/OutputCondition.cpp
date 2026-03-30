@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -22,38 +22,50 @@
 #include "OutputCondition.hpp"
 #include "ActionSink.hpp"
 
-namespace saftlib {
+namespace saftlib
+{
 
-OutputCondition::OutputCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container = nullptr)
- : Condition(sink, number, active, id, mask, offset, tag, container)
+OutputCondition::OutputCondition( ActionSink*         sink,
+                                  unsigned            number,
+                                  bool                active,
+                                  uint64_t            id,
+                                  uint64_t            mask,
+                                  int64_t             offset,
+                                  uint32_t            tag,
+                                  saftbus::Container* container = nullptr )
+    : Condition( sink, number, active, id, mask, offset, tag, container )
 {
 }
-
 
 bool OutputCondition::getOn() const
 {
-	return tag == 2;
+  return tag == 2;
 }
 
-void OutputCondition::setOn(bool v)
+void OutputCondition::setOn( bool v )
 {
-	uint32_t val = v?2:1; // 2 = turn-on, 1 = turn-off
+  uint32_t val = v ? 2 : 1; // 2 = turn-on, 1 = turn-off
 
-	ownerOnly();
-	if (val == tag) {
-		return;
-	}
-	uint32_t old = tag;
+  ownerOnly();
+  if ( val == tag )
+  {
+    return;
+  }
+  uint32_t old = tag;
 
-	tag = val;
-	try {
-		if (active) {
-			sink->compile();
-		}
-	} catch (...) {
-		tag = old;
-		throw;
-	}
+  tag = val;
+  try
+  {
+    if ( active )
+    {
+      sink->compile();
+    }
+  }
+  catch ( ... )
+  {
+    tag = old;
+    throw;
+  }
 }
 
-}
+} // namespace saftlib

@@ -1,4 +1,4 @@
-/* *  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/* *  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -34,27 +34,30 @@
 
 #include "SdbDevice.hpp"
 
-namespace saftlib {
+namespace saftlib
+{
 
-class WhiteRabbit : public SdbDevice {
+class WhiteRabbit : public SdbDevice
+{
 protected:
-	mutable bool locked;
-public:
-	WhiteRabbit(etherbone::Device &device);
+  mutable bool locked;
 
-	/// @brief The timing receiver is locked to the timing grandmaster.
-	/// @return The timing receiver is locked to the timing grandmaster.
-	///
-	/// Upon power-up it takes approximately one minute until the timing
-	/// receiver has a correct timestamp.
-	///
-	// @saftbus-export
-	bool getLocked() const;
-	
-    // @saftbus-export
-    sigc::signal<void, bool> Locked;
+public:
+  WhiteRabbit( etherbone::Device& device );
+
+  /// @brief The timing receiver is locked to the timing grandmaster.
+  /// @return The timing receiver is locked to the timing grandmaster.
+  ///
+  /// Upon power-up it takes approximately one minute until the timing
+  /// receiver has a correct timestamp.
+  ///
+  // @saftbus-export
+  bool getLocked() const;
+
+  // @saftbus-export
+  sigc::signal<void, bool> Locked;
 };
 
-}
+} // namespace saftlib
 
 #endif

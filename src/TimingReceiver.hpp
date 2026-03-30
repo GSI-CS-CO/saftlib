@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -30,18 +30,17 @@
 #include <saftbus/service.hpp>
 
 // direct base classes of TimingReceiver
+#include "BuildIdRom.hpp"
+#include "ECA.hpp"
+#include "ECA_Event.hpp"
+#include "ECA_TLU.hpp"
+#include "LM32Cluster.hpp"
+#include "Mailbox.hpp"
 #include "OpenDevice.hpp"
+#include "Reset.hpp"
+#include "TempSensor.hpp"
 #include "Watchdog.hpp"
 #include "WhiteRabbit.hpp"
-#include "ECA.hpp"
-#include "ECA_TLU.hpp"
-#include "ECA_Event.hpp"
-#include "BuildIdRom.hpp"
-#include "TempSensor.hpp"
-#include "Reset.hpp"
-#include "Mailbox.hpp"
-#include "LM32Cluster.hpp"
-
 
 // classes used by TimingReceiver
 #include "IoControl.hpp"
@@ -51,7 +50,8 @@
 // @saftbus-include
 #include <Time.hpp>
 
-namespace saftlib {
+namespace saftlib
+{
 
 class SAFTd;
 
@@ -61,12 +61,12 @@ class SAFTd;
 ///              on which the MSI arrive.
 /// @param name The logical name of the Timing receiver
 /// @param etherbone_path The etherbone path of the hardware
-/// @param container A pointer to a saftbus container. If an instance of TimingReceiver 
-///                  should run on a saftbus deamon, container must point to the saftbus::Container 
+/// @param container A pointer to a saftbus container. If an instance of TimingReceiver
+///                  should run on a saftbus deamon, container must point to the saftbus::Container
 ///                  instance. If the TimingReceiver is used stand-alone, this pointer must be nullptr.
 ///
 /// Timing receivers are attached to saftlib by specifying a name and an etherbone path.  The
-/// name should denote the logical relationship of the device to saftd. 
+/// name should denote the logical relationship of the device to saftd.
 /// For example, baseboard would be a good name for the timing receiver
 /// attached to an SCU.  If an exploder is being used to output events to
 /// an oscilloscope, a good logical name might be scope.  In these
@@ -89,7 +89,7 @@ class SAFTd;
 /// method.
 ///
 /// Timing receivers always typically have binary outputs lines
-/// (OutputActionSinks), which are listed in the Outputs property. 
+/// (OutputActionSinks), which are listed in the Outputs property.
 /// Similarly, they often have digital inputs (InputEventSources).
 /// Some timing receivers have special purpose interfaces. For example,
 /// an SCU has the SCUbusActionSink which generates 32-bit messages over
@@ -97,104 +97,103 @@ class SAFTd;
 /// interfaces property. The SCU backplane would be found under the
 /// SCUbusActionSink key, and as there is only one, it would be the 0th.
 ///
-class TimingReceiver : public OpenDevice
-                     , public Watchdog
-                     , public WhiteRabbit
-                     , public ECA
-                     , public ECA_TLU
-                     , public ECA_Event
-                     , public BuildIdRom
-                     , public TempSensor
-                     , public Reset
-                     , public Mailbox
-                     , public LM32Cluster {
+class TimingReceiver
+    : public OpenDevice
+    , public Watchdog
+    , public WhiteRabbit
+    , public ECA
+    , public ECA_TLU
+    , public ECA_Event
+    , public BuildIdRom
+    , public TempSensor
+    , public Reset
+    , public Mailbox
+    , public LM32Cluster
+{
 public:
-	TimingReceiver(SAFTd &saftd, const std::string &name, const std::string &etherbone_path, 
-		           int polling_interval_ms = 1, saftbus::Container *container = nullptr);
-	~TimingReceiver();
+  TimingReceiver( SAFTd&              saftd,
+                  const std::string&  name,
+                  const std::string&  etherbone_path,
+                  int                 polling_interval_ms = 1,
+                  saftbus::Container* container           = nullptr );
+  ~TimingReceiver();
 
-	const std::string &getObjectPath() const;
+  const std::string& getObjectPath() const;
 
-	/// @brief Remove the device from saftlib management.
-	///
-	// @saftbus-export
-	void Remove();
+  /// @brief Remove the device from saftlib management.
+  ///
+  // @saftbus-export
+  void Remove();
 
-	/// @brief The logical name with which the device was connected.
-	/// @return The logical name with which the device was connected.
-	///
-	// @saftbus-export
-	std::string getName() const;
+  /// @brief The logical name with which the device was connected.
+  /// @return The logical name with which the device was connected.
+  ///
+  // @saftbus-export
+  std::string getName() const;
 
-	/// @brief The current time of the timingreceiver.
-	/// @return     the current time of the timingreceiver
-	///
-	/// The result type is saftlib::Time, which can be used to obtain 
-	/// either the number of nanoseconds since 1970, or the same value
-	/// minus the current UTC offset.
-	/// Due to delays in software, the returned value is probably several
-	/// milliseconds behind the true time.
-	///
-	// @saftbus-export
-	saftlib::Time CurrentTime(bool devInject = false) const;
+  /// @brief The current time of the timingreceiver.
+  /// @return     the current time of the timingreceiver
+  ///
+  /// The result type is saftlib::Time, which can be used to obtain
+  /// either the number of nanoseconds since 1970, or the same value
+  /// minus the current UTC offset.
+  /// Due to delays in software, the returned value is probably several
+  /// milliseconds behind the true time.
+  ///
+  // @saftbus-export
+  saftlib::Time CurrentTime( bool devInject = false ) const;
 
-	/// @brief        Simulate the receipt of a timing event
-	/// @param event  The event identifier which is matched against Conditions
-	/// @param param  The parameter field, whose meaning depends on the event ID.
-	/// @param time   The execution time for the event, added to condition offsets.
-	///
-	/// Sometimes it is useful to simulate the receipt of a timing event. 
-	/// This allows software to test that configured conditions lead to the
-	/// desired behaviour without needing the data master to send anything.
-	///
-	// @saftbus-export
-	void InjectEvent(uint64_t event, uint64_t param, saftlib::Time time) const;
+  /// @brief        Simulate the receipt of a timing event
+  /// @param event  The event identifier which is matched against Conditions
+  /// @param param  The parameter field, whose meaning depends on the event ID.
+  /// @param time   The execution time for the event, added to condition offsets.
+  ///
+  /// Sometimes it is useful to simulate the receipt of a timing event.
+  /// This allows software to test that configured conditions lead to the
+  /// desired behaviour without needing the data master to send anything.
+  ///
+  // @saftbus-export
+  void InjectEvent( uint64_t event, uint64_t param, saftlib::Time time ) const;
 
+  /// @brief List of all object instances of various hardware.
+  /// @return List of all object instances of various hardware.
+  ///
+  /// The key in the dictionary is the name of the interface.
+  /// The value is all object paths to hardware implementing that interface.
+  ///
+  // @saftbus-export
+  std::map<std::string, std::map<std::string, std::string>> getInterfaces() const;
 
-	/// @brief List of all object instances of various hardware.
-	/// @return List of all object instances of various hardware.
-	///
-	/// The key in the dictionary is the name of the interface.
-	/// The value is all object paths to hardware implementing that interface.	
-	///
-	// @saftbus-export
-	std::map< std::string, std::map< std::string, std::string > > getInterfaces() const;
+  /// @brief saftbus plugins may extend the functionality of a TimingReceiver.
+  ///        They should use this method to publish the additional interfaces.
+  /// @param interface_name the name of the addon
+  /// @param name and object path of instances of interface
+  // void addInterfaces(const std::string &interface_name, const std::map< std::string, std::string > & objects);
 
-	/// @brief saftbus plugins may extend the functionality of a TimingReceiver. 
-	///        They should use this method to publish the additional interfaces.
-	/// @param interface_name the name of the addon
-	/// @param name and object path of instances of interface
-	// void addInterfaces(const std::string &interface_name, const std::map< std::string, std::string > & objects);
+  void installAddon( const std::string& interface_name, std::unique_ptr<TimingReceiverAddon> addon );
 
-	void installAddon(const std::string &interface_name, std::unique_ptr<TimingReceiverAddon> addon);
-
-	void removeAddon(const std::string &interface_name);
+  void removeAddon( const std::string& interface_name );
 
 private:
-	saftbus::Container *container;
+  saftbus::Container* container;
 
-	IoControl io_control;
+  IoControl io_control;
 
-	bool poll();
-	saftbus::SourceHandle poll_timeout_source;
+  bool                  poll();
+  saftbus::SourceHandle poll_timeout_source;
 
-	
-	eb_address_t ats;
+  eb_address_t ats;
 
-	std::string object_path;
-	std::string name;
+  std::string object_path;
+  std::string name;
 
+  bool     activate_msi_polling;
+  unsigned polling_interval_ms;
 
-
-	bool activate_msi_polling;
-	unsigned polling_interval_ms;
-
-
-	// TimingReceiver doesn't own TimingreceiverAddons
-	std::map<std::string, std::unique_ptr<TimingReceiverAddon> > addons;
-
+  // TimingReceiver doesn't own TimingreceiverAddons
+  std::map<std::string, std::unique_ptr<TimingReceiverAddon>> addons;
 };
 
-} // namespace
+} // namespace saftlib
 
 #endif

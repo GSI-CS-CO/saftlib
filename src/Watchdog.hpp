@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -31,16 +31,19 @@
 
 #include "SdbDevice.hpp"
 
-namespace saftlib {
+namespace saftlib
+{
 
-class Watchdog : public SdbDevice {
-	eb_data_t watchdog_value;
+class Watchdog : public SdbDevice
+{
+  eb_data_t watchdog_value;
+
 public:
-	Watchdog(etherbone::Device &device);
-	bool aquire();
-	void update();
+  Watchdog( etherbone::Device& device );
+  bool aquire();
+  void update();
 };
 
-}
+} // namespace saftlib
 
 #endif
