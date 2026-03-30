@@ -40,6 +40,8 @@
 
 #define IO_SER_CLK_GEN_DEBUG_MODE    0
 
+// TODO: add documentation
+
 namespace saftlib {
 
 
@@ -67,9 +69,6 @@ class SerdesClockGen : public SdbDevice
 		uint16_t bit_pattern_skip;
 		uint64_t phase_offset;
 	} s_SerClkGenControl;
-
-	// eb_address_t clkgen_address;
-	// etherbone::Device &device;
 
 	static void CalcClockParameters(double hi, double lo, uint64_t phase, struct SerClkGenControl *control);
 public:

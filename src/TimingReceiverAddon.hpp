@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+// TODO: add documentation
+
 namespace saftlib {
 
 	class TimingReceiverAddon

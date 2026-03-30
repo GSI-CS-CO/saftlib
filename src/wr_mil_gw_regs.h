@@ -1,6 +1,8 @@
 #ifndef WR_MIL_GW_H_
 #define WR_MIL_GW_H_
 
+// TODO: move addresses into regs file
+
 // Magic number to identify the LM32 (if more than one exists) that runs the WR-MIL gateway
 #define WR_MIL_GW_MAGIC_NUMBER       0x1234abcd
 

@@ -31,7 +31,7 @@ namespace saftlib {
 SoftwareCondition::SoftwareCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, saftbus::Container *container = nullptr)
  : Condition(sink, number, active, id, mask, offset, number, container)
 {
-  // std::cerr << "SoftwareCondition::SoftwareCondition()" << std::endl;
+  // OLD_DEBUG: std::cerr << "SoftwareCondition::SoftwareCondition()" << std::endl;
 }
 
 }

@@ -203,7 +203,7 @@ namespace saftlib
 		return Time(TAI);
 	}
 
-	//
+	// TODO: integrate the follwoing legacy tests into new testibg approach
 	// test functions follow
 	// 
 	void test_UTC_offset()

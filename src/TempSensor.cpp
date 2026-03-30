@@ -20,6 +20,8 @@
 
 #include "ats_regs.h"
 
+// TODO: move into module
+
 namespace saftlib {
 
 TempSensor::TempSensor(etherbone::Device &device) 

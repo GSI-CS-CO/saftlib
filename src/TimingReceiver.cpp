@@ -41,6 +41,8 @@
 #include <algorithm>
 
 
+// Logging: central class for logging
+
 namespace saftlib {
 
 TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::string &eb_path, int polling_interval_ms, saftbus::Container *cont)
@@ -60,7 +62,7 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 	, object_path(saftd.getObjectPath() + "/" + n)
 	, name(n)
 {
-	// std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
+	// OLD_DEBUG: std::cerr << "TimingReceiver::TimingReceiver" << std::endl;
 
 	if (find_if(name.begin(), name.end(), [](char c){ return !(isalnum(c) || c == '_');} ) != name.end()) {
 		throw saftbus::Error(saftbus::Error::INVALID_ARGS, "Invalid name; [a-zA-Z0-9_] only");
@@ -120,8 +122,8 @@ TimingReceiver::TimingReceiver(SAFTd &saftd, const std::string &n, const std::st
 
 TimingReceiver::~TimingReceiver() 
 {
-	// std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
-	// std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
+	// OLD_DEBUG: std::cerr << "TimingReceiver::~TimingReceiver" << std::endl;
+	// OLD_DEBUG: std::cerr << "saftbus::Loop::get_default().remove(poll_timeout_source)" << std::endl;
 	saftbus::Loop::get_default().remove(poll_timeout_source);
 
 	// remove the service objects for all addons
@@ -151,7 +153,7 @@ TimingReceiver::~TimingReceiver()
 
 bool TimingReceiver::poll()
 {
-	// std::cerr << "TimingReceiver::poll()" << std::endl;
+	// OLD_DEBUG: std::cerr << "TimingReceiver::poll()" << std::endl;
 	WhiteRabbit::getLocked();
 	Watchdog::update(); 
 	Reset::WdRetrigger();
@@ -184,7 +186,7 @@ saftlib::Time TimingReceiver::CurrentTime(bool devInject) const
 
 void TimingReceiver::InjectEvent(uint64_t event, uint64_t param, saftlib::Time time) const
 {
-	// std::cerr << "TimingReceiver::InjectEvent" << std::endl;
+	// OLD_DEBUG: std::cerr << "TimingReceiver::InjectEvent" << std::endl;
 	ECA_Event::InjectEventRaw(event, param, time.getTAI());
 }
 
@@ -214,13 +216,7 @@ std::map< std::string, std::map< std::string, std::string > > TimingReceiver::ge
 	return result;
 }
 
-
-// void TimingReceiver::addInterfaces(const std::string &interface_name, const std::map< std::string, std::string > & objects)
-// {
-// 	for(auto &object: objects) {
-// 		addon_interfaces[interface_name][object.first] = object.second;
-// 	}
-// }
+/* removed old addInterfaces() */
 
 void TimingReceiver::installAddon(const std::string &addon_name, std::unique_ptr<TimingReceiverAddon> addon)
 {
