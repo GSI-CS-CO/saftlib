@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -22,8 +22,8 @@
 #ifndef saftlib_OUTPUT_CONDITION_HPP
 #define saftlib_OUTPUT_CONDITION_HPP
 
-#include "Owned.hpp"
 #include "Condition.hpp"
+#include "Owned.hpp"
 
 // @saftbus-include
 #include <Time.hpp>
@@ -32,30 +32,38 @@
 
 #include <functional>
 
-namespace saftlib {
+namespace saftlib
+{
 
 class OutputCondition_Service;
 
-class OutputCondition : public Condition 
+class OutputCondition : public Condition
 {
 public:
-	OutputCondition(ActionSink *sink, unsigned number, bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag, saftbus::Container *container);
+  OutputCondition( ActionSink*         sink,
+                   unsigned            number,
+                   bool                active,
+                   uint64_t            id,
+                   uint64_t            mask,
+                   int64_t             offset,
+                   uint32_t            tag,
+                   saftbus::Container* container );
 
-    /// de.gsi.saftlib.OutputCondition:
-    /// @brief: Matched against incoming events on an OutputActionSink.
-    /// 
-    /// OutputConditions are created by OutputActionSinks to select which
-    /// events should generate signal toggles. This interface always implies
-    /// that the object also implements the general Condition interface.
-    // @saftbus-export
-    bool getOn() const;
-    // @saftbus-export
-    void setOn(bool val);
+  /// de.gsi.saftlib.OutputCondition:
+  /// @brief: Matched against incoming events on an OutputActionSink.
+  ///
+  /// OutputConditions are created by OutputActionSinks to select which
+  /// events should generate signal toggles. This interface always implies
+  /// that the object also implements the general Condition interface.
+  // @saftbus-export
+  bool getOn() const;
+  // @saftbus-export
+  void setOn( bool val );
 
-    // this typedef is needed for the ActionSink::NewCondition template function
-    typedef OutputCondition_Service ServiceType;
+  // this typedef is needed for the ActionSink::NewCondition template function
+  typedef OutputCondition_Service ServiceType;
 };
 
-}
+} // namespace saftlib
 
 #endif

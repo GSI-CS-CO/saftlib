@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -29,38 +29,39 @@
 #endif
 #include <etherbone.h>
 
-#include <memory>
 #include <map>
+#include <memory>
 
 #include <saftbus/service.hpp>
 
 #include "SdbDevice.hpp"
 
-namespace saftlib {
+// TODO: add documentation
+
+namespace saftlib
+{
 
 class Input;
 
 /// @brief Interface to the ECA_TLU SdbInterface
-class ECA_TLU : public SdbDevice {
-	saftbus::Container *container;
-	std::vector<std::unique_ptr<Input> > inputs;
+class ECA_TLU : public SdbDevice
+{
+  saftbus::Container*                 container;
+  std::vector<std::unique_ptr<Input>> inputs;
 
 public:
-	ECA_TLU(etherbone::Device &device, saftbus::Container *container = nullptr);
-	~ECA_TLU();
+  ECA_TLU( etherbone::Device& device, saftbus::Container* container = nullptr );
+  ~ECA_TLU();
 
-	/// @brief add source and let ECA take ownership of the sink object
-	void addInput(std::unique_ptr<Input> input);
+  /// @brief add source and let ECA take ownership of the sink object
+  void addInput( std::unique_ptr<Input> input );
 
-	// @saftbus-export
-	std::map< std::string, std::string > getInputs() const;
+  // @saftbus-export
+  std::map<std::string, std::string> getInputs() const;
 
-	void configInput(unsigned channel,
-	                 bool enable,
-	                 uint64_t event,
-	                 uint32_t stable);
+  void configInput( unsigned channel, bool enable, uint64_t event, uint32_t stable );
 };
 
-}
+} // namespace saftlib
 
 #endif

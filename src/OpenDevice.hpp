@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -35,7 +35,8 @@
 
 #include <sys/stat.h>
 
-namespace saftlib {
+namespace saftlib
+{
 
 class SAFTd;
 class IRQ;
@@ -51,64 +52,70 @@ class EB_Forward;
 ///  - Use the Mailbox device to send an MSI value with that specific address
 ///  - start the periodic polling function
 ///  - if the polling function is called and finds the specific MSI value, it continues to poll
-///  - if the MSI callback function is called despite of the polling function not seeing the MSI value, the polling function will be removed from the event loop
+///  - if the MSI callback function is called despite of the polling function not seeing the MSI value, the polling
+///  function will be removed from the event loop
 ///
-class OpenDevice {
+class OpenDevice
+{
 protected:
-	std::string etherbone_path;
-	struct stat dev_stat;	
-	etherbone::Device device;
+  std::string       etherbone_path;
+  struct stat       dev_stat;
+  etherbone::Device device;
 
 public:
-	/// @brief open given etherbone_path on given socket. 
-	/// @param socket the etherbone Socket
-	/// @param etherbone_path path of the etherbone device
-	/// @param polling_interval_ms in case of hardware without native MSIs
-	/// @param saftd must be a valid pointer if MSIs are used
-	OpenDevice(const etherbone::Socket &socket, const std::string& etherbone_path, int polling_interval_ms = 1, SAFTd *saftd = nullptr);
-	virtual ~OpenDevice();
+  /// @brief open given etherbone_path on given socket.
+  /// @param socket the etherbone Socket
+  /// @param etherbone_path path of the etherbone device
+  /// @param polling_interval_ms in case of hardware without native MSIs
+  /// @param saftd must be a valid pointer if MSIs are used
+  OpenDevice( const etherbone::Socket& socket,
+              const std::string&       etherbone_path,
+              int                      polling_interval_ms = 1,
+              SAFTd*                   saftd               = nullptr );
+  virtual ~OpenDevice();
 
-	etherbone::Device &get_device();
+  etherbone::Device& get_device();
 
-	/// @brief The path through which the device is reached.
-	/// @return The path through which the device is reached.
-	///
-	// @saftbus-export
-	std::string getEtherbonePath() const;
+  /// @brief The path through which the device is reached.
+  /// @return The path through which the device is reached.
+  ///
+  // @saftbus-export
+  std::string getEtherbonePath() const;
 
-
-	/// @brief If the device is not capable of multiplexing multiple users
-	///        a /dev/pts/<num> device is created that can be used with eb-tools
-	/// @return The path which can be used by eb-tools to access the device.
-	///         If the etherbone device has multiplexing capability no forwarding device 
-	///         is created and this function returns the original etherbone path of the device
-	///
-	// @saftbus-export
-	std::string getEbForwardPath() const;
+  /// @brief If the device is not capable of multiplexing multiple users
+  ///        a /dev/pts/<num> device is created that can be used with eb-tools
+  /// @return The path which can be used by eb-tools to access the device.
+  ///         If the etherbone device has multiplexing capability no forwarding device
+  ///         is created and this function returns the original etherbone path of the device
+  ///
+  // @saftbus-export
+  std::string getEbForwardPath() const;
 
 private:
-	// etherbone forwading
-	std::unique_ptr<EB_Forward> eb_forward;
-	std::string eb_forward_path;
+  // etherbone forwading
+  std::unique_ptr<EB_Forward> eb_forward;
+  std::string                 eb_forward_path;
 
-	// polling for MSIs on hardware that doesn't support real MSIs
-	bool poll_msi(bool only_once);
-	int polling_interval_ms;
-	saftbus::SourceHandle poll_timeout_source;
-	saftbus::SourceHandle poll_once;
+  // polling for MSIs on hardware that doesn't support real MSIs
+  bool                  poll_msi( bool only_once );
+  int                   polling_interval_ms;
+  saftbus::SourceHandle poll_timeout_source;
+  saftbus::SourceHandle poll_once;
 
-	// following members are for testing MSI capability (real or polled MSIs)
-	void check_msi_callback(eb_data_t value);
-	std::unique_ptr<IRQ> check_irq; // IRQ to check MSI capability
-	SAFTd *saftd;         // a pointer to SAFTd is needed because in case of polled MSIs the OpenDevice needs to call SAFTds write function
-	eb_address_t first, last, mask; // range of addresses that are valid for MSI
-	eb_address_t msi_first, msi_last;         // address offset which needs to be subtracted 
-	eb_address_t irq_adr; // the MSI callback function is registered under this address, and the Mailbox is configured with irq_adr+msi_first
-	bool check_msi_phase, needs_polling; // check_msi_phase is true until the MSI type was determined.
-	                                     // needs_polling is false in the beginning. It is set to true if the poll_msi function receives the injected MSI.
+  // following members are for testing MSI capability (real or polled MSIs)
+  void                 check_msi_callback( eb_data_t value );
+  std::unique_ptr<IRQ> check_irq; // IRQ to check MSI capability
+  SAFTd* saftd; // a pointer to SAFTd is needed because in case of polled MSIs the OpenDevice needs to call SAFTds write
+                // function
+  eb_address_t first, last, mask;   // range of addresses that are valid for MSI
+  eb_address_t msi_first, msi_last; // address offset which needs to be subtracted
+  eb_address_t irq_adr; // the MSI callback function is registered under this address, and the Mailbox is configured
+                        // with irq_adr+msi_first
+  bool check_msi_phase, needs_polling; // check_msi_phase is true until the MSI type was determined.
+                                       // needs_polling is false in the beginning. It is set to true if the poll_msi
+                                       // function receives the injected MSI.
 };
 
-
-} // namespace 
+} // namespace saftlib
 
 #endif

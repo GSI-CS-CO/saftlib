@@ -9,15 +9,15 @@
 
 /* Includes */
 /* ==================================================================================================== */
-#include <stdio.h>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "interfaces/SAFTd.h"
-#include "interfaces/TimingReceiver.h"
 #include "interfaces/SoftwareActionSink.h"
 #include "interfaces/SoftwareCondition.h"
+#include "interfaces/TimingReceiver.h"
 #include "interfaces/WbmActionSink.h"
 #include "interfaces/WbmCondition.h"
 
@@ -31,16 +31,16 @@ using namespace std;
 
 /* Globals */
 /* ==================================================================================================== */
-static const char *deviceName = NULL; /* Name of the device */
-static const char *program    = NULL; /* Name of the application */
+static const char* deviceName = NULL; /* Name of the device */
+static const char* program    = NULL; /* Name of the application */
 
 /* Prototypes */
 /* ==================================================================================================== */
-static void wbm_help (void);
+static void wbm_help( void );
 
 /* Function wbm_help() */
 /* ==================================================================================================== */
-static void wbm_help (void)
+static void wbm_help( void )
 {
   /* Print arguments and options */
   std::cout << "WMB-CTL for SAFTlib" << std::endl;
@@ -59,25 +59,30 @@ static void wbm_help (void)
   std::cout << "  -v:                            Switch to verbose mode" << std::endl;
   std::cout << std::endl;
   std::cout << "Examples:" << std::endl;
-  std::cout << program << " tr0 " << "-c 0xffff000000000000 0xffffffffffffffff 0 3 -d"<< std::endl;
+  std::cout << program << " tr0 " << "-c 0xffff000000000000 0xffffffffffffffff 0 3 -d" << std::endl;
   std::cout << "  This will create a new condition that targets macro at index 3 and disown it" << std::endl;
   std::cout << std::endl;
-  std::cout << program << " tr0 " << "-r 3 0x4060500 0 0x2f"<< std::endl;
-  std::cout << "  This records a macro at index 3 where the hi-part of eventID will be written to addr 0x4060500" << std::endl;
+  std::cout << program << " tr0 " << "-r 3 0x4060500 0 0x2f" << std::endl;
+  std::cout << "  This records a macro at index 3 where the hi-part of eventID will be written to addr 0x4060500"
+            << std::endl;
   std::cout << std::endl;
-  std::cout << program << " tr0 " << "-f 3 <macro file>"<< std::endl;
+  std::cout << program << " tr0 " << "-f 3 <macro file>" << std::endl;
   std::cout << "macro:" << std::endl;
   std::cout << "(line format:  <adr> <data> <flags>\\n):" << std::endl;
   std::cout << "  0x4060500 0 0x4f" << std::endl;
   std::cout << "  0x4060504 0 0x5f" << std::endl;
-  std::cout << "  This records a macro at index 3 where hi- and low-word of 64b parameter are written to addr 0x4060500 onwards" << std::endl;
+  std::cout
+      << "  This records a macro at index 3 where hi- and low-word of 64b parameter are written to addr 0x4060500 onwards"
+      << std::endl;
   std::cout << std::endl;
   std::cout << "macro:" << std::endl;
   std::cout << "  0x4060500 0 0x04f" << std::endl;
   std::cout << "  0x4060504 0 0x15f" << std::endl;
   std::cout << "  0x0200000 0 0x02f" << std::endl;
   std::cout << "  0x0200004 0 0x03f" << std::endl;
-  std::cout << "  This records a macro where parameter and ID are copied to 2 different bus devices. Cycle drop bit is necessary" << std::endl;
+  std::cout
+      << "  This records a macro where parameter and ID are copied to 2 different bus devices. Cycle drop bit is necessary"
+      << std::endl;
   std::cout << std::endl;
   std::cout << "<flags> is an integer bitfield: cddddssss" << std::endl;
   std::cout << "          c is the drop-cycle bit" << std::endl;
@@ -101,257 +106,392 @@ static void wbm_help (void)
 
 /* Function main() */
 /* ==================================================================================================== */
-int main (int argc, char** argv)
+int main( int argc, char** argv )
 {
   /* Helpers */
-  int  opt             = 0;
-  char *pEnd           = NULL;
-  bool create_sink     = false;
-  bool record_macro    = false;
-  bool macro_file      = false;
-  bool disown_sink     = false;
-  bool destroy_sink    = false;
-  bool verbose_mode    = false;
-  bool show_help       = false;
-  bool translate_mask  = false;
-  bool list_conditions = false;
-  bool negative_offset = false;
-  uint64_t eventID      = 0x0;
-  uint64_t eventMask    = 0x0;
-  int64_t  offset       = 0x0;
-  int32_t  tag          = 0x0;
-  uint32_t macroIdx     = 0x0;
-  uint32_t macroAdr     = 0x0;
-  uint32_t macroDat     = 0x0;
-  uint32_t macroFlags   = 0x0;
+  int      opt             = 0;
+  char*    pEnd            = NULL;
+  bool     create_sink     = false;
+  bool     record_macro    = false;
+  bool     macro_file      = false;
+  bool     disown_sink     = false;
+  bool     destroy_sink    = false;
+  bool     verbose_mode    = false;
+  bool     show_help       = false;
+  bool     translate_mask  = false;
+  bool     list_conditions = false;
+  bool     negative_offset = false;
+  uint64_t eventID         = 0x0;
+  uint64_t eventMask       = 0x0;
+  int64_t  offset          = 0x0;
+  int32_t  tag             = 0x0;
+  uint32_t macroIdx        = 0x0;
+  uint32_t macroAdr        = 0x0;
+  uint32_t macroDat        = 0x0;
+  uint32_t macroFlags      = 0x0;
 
   std::string acwbm  = "None";
   std::string e_sink = "Unknown";
   std::string filename;
-  
-  /* Get the application name */
-  program = argv[0]; 
-  
-  /* Parse arguments */
-  while ((opt = getopt(argc, argv, "c:f:r:dgxzlvh")) != -1)
-  {
-    switch (opt)
-    {
-      case 'c': 
-      { 
-        create_sink = true;
-        if (argv[optind-1] != NULL) { eventID = strtoull(argv[optind-1], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event id!" << std::endl; return (-1); }
-        if (argv[optind+0] != NULL) { eventMask = strtoull(argv[optind+0], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing event mask!" << std::endl; return (-1); }
-        if (argv[optind+1] != NULL) { offset = strtoull(argv[optind+1], &pEnd, 0);}
-        else                        { std::cerr << "Error: Missing offset!" << std::endl; return (-1); }
-        if (argv[optind+2] != NULL) { tag = strtoul(argv[optind+2], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing tag!" << std::endl; return (-1); }
-        break;
-      }
 
-      case 'r': 
-      { 
-        record_macro = true;
-        if (argv[optind-1] != NULL) { macroIdx  = strtoull(argv[optind-1], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing macro idx!" << std::endl;      return (-1); }
-        if (argv[optind+0] != NULL) { macroAdr = strtoull(argv[optind+0], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing macro address!" << std::endl;  return (-1); }
-        if (argv[optind+1] != NULL) { macroDat = strtoull(argv[optind+1], &pEnd, 0);}
-        else                        { std::cerr << "Error: Missing macro data!" << std::endl;     return (-1); }
-        if (argv[optind+2] != NULL) { macroFlags = strtoul(argv[optind+2], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing macro flags!" << std::endl;    return (-1); }
-        break;
+  /* Get the application name */
+  program = argv[0];
+
+  /* Parse arguments */
+  while ( ( opt = getopt( argc, argv, "c:f:r:dgxzlvh" ) ) != -1 )
+  {
+    switch ( opt )
+    {
+    case 'c':
+    {
+      create_sink = true;
+      if ( argv[optind - 1] != NULL )
+      {
+        eventID = strtoull( argv[optind - 1], &pEnd, 0 );
       }
-      case 'f': { 
-        macro_file = true;
-        record_macro = true;
-        if (argv[optind-1] != NULL) { macroIdx = strtoull(argv[optind-1], &pEnd, 0); }
-        else                        { std::cerr << "Error: Missing macro idx!" << std::endl; return (-1); }
-        if (argv[optind+0] != NULL) { filename = argv[optind+0]; }
-        else                        { std::cerr << "Error: Missing macro file!" << std::endl; return (-1); }
-        break;
+      else
+      {
+        std::cerr << "Error: Missing event id!" << std::endl;
+        return ( -1 );
       }
-      case 'd': { disown_sink     = true; break; }
-      case 'g': { negative_offset = true; break; }
-      case 'x': { destroy_sink    = true; break; }
-      case 'z': { translate_mask  = true; break; }
-      case 'l': { list_conditions = true; break; }
-      case 'v': { verbose_mode    = true; break; }
-      case 'h': { show_help       = true; break; }
-      default:  { std::cout << "Unknown argument..." << std::endl; show_help = true; break; }
+      if ( argv[optind + 0] != NULL )
+      {
+        eventMask = strtoull( argv[optind + 0], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing event mask!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 1] != NULL )
+      {
+        offset = strtoull( argv[optind + 1], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing offset!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 2] != NULL )
+      {
+        tag = strtoul( argv[optind + 2], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing tag!" << std::endl;
+        return ( -1 );
+      }
+      break;
+    }
+
+    case 'r':
+    {
+      record_macro = true;
+      if ( argv[optind - 1] != NULL )
+      {
+        macroIdx = strtoull( argv[optind - 1], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing macro idx!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 0] != NULL )
+      {
+        macroAdr = strtoull( argv[optind + 0], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing macro address!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 1] != NULL )
+      {
+        macroDat = strtoull( argv[optind + 1], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing macro data!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 2] != NULL )
+      {
+        macroFlags = strtoul( argv[optind + 2], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing macro flags!" << std::endl;
+        return ( -1 );
+      }
+      break;
+    }
+    case 'f':
+    {
+      macro_file   = true;
+      record_macro = true;
+      if ( argv[optind - 1] != NULL )
+      {
+        macroIdx = strtoull( argv[optind - 1], &pEnd, 0 );
+      }
+      else
+      {
+        std::cerr << "Error: Missing macro idx!" << std::endl;
+        return ( -1 );
+      }
+      if ( argv[optind + 0] != NULL )
+      {
+        filename = argv[optind + 0];
+      }
+      else
+      {
+        std::cerr << "Error: Missing macro file!" << std::endl;
+        return ( -1 );
+      }
+      break;
+    }
+    case 'd':
+    {
+      disown_sink = true;
+      break;
+    }
+    case 'g':
+    {
+      negative_offset = true;
+      break;
+    }
+    case 'x':
+    {
+      destroy_sink = true;
+      break;
+    }
+    case 'z':
+    {
+      translate_mask = true;
+      break;
+    }
+    case 'l':
+    {
+      list_conditions = true;
+      break;
+    }
+    case 'v':
+    {
+      verbose_mode = true;
+      break;
+    }
+    case 'h':
+    {
+      show_help = true;
+      break;
+    }
+    default:
+    {
+      std::cout << "Unknown argument..." << std::endl;
+      show_help = true;
+      break;
+    }
     }
     /* Break loop if help is needed */
-    if (show_help) { break; }
+    if ( show_help )
+    {
+      break;
+    }
   }
-  
-  if (negative_offset)  { offset = -offset; }
+
+  if ( negative_offset )
+  {
+    offset = -offset;
+  }
 
   /* Plausibility check for arguments */
-  if (((create_sink || disown_sink) && destroy_sink))
+  if ( ( ( create_sink || disown_sink ) && destroy_sink ) )
   {
     show_help = true;
     std::cerr << "Incorrect arguments!" << std::endl;
   }
-  
+
   /* Does the user need help */
-  if (show_help)
+  if ( show_help )
   {
     wbm_help();
-    return (-1);
+    return ( -1 );
   }
-  
+
   /* List parameters */
-  if (verbose_mode && create_sink)
+  if ( verbose_mode && create_sink )
   {
-    uint64_t mask = translate_mask ? tr_mask(eventMask) : eventMask;
+    uint64_t mask = translate_mask ? tr_mask( eventMask ) : eventMask;
     std::cout << "Action sink/condition parameters:" << std::endl;
-    std::cout << std::hex << "EventID:   0x" << eventID   << std::dec << " (" << eventID   << ")" << std::endl;
-    std::cout << std::hex << "EventMask: 0x" << mask      << std::dec << " (" << mask      << ")" << std::endl;
-    std::cout << std::hex << "Offset:    0x" << offset    << std::dec << " (" << offset    << ")" << std::endl;
-    std::cout << std::hex << "Tag:       0x" << tag       << std::dec << " (" << tag       << ")" << std::endl;
+    std::cout << std::hex << "EventID:   0x" << eventID << std::dec << " (" << eventID << ")" << std::endl;
+    std::cout << std::hex << "EventMask: 0x" << mask << std::dec << " (" << mask << ")" << std::endl;
+    std::cout << std::hex << "Offset:    0x" << offset << std::dec << " (" << offset << ")" << std::endl;
+    std::cout << std::hex << "Tag:       0x" << tag << std::dec << " (" << tag << ")" << std::endl;
   }
-  
+
   /* Get the device name */
   deviceName = argv[optind];
-  
-  
+
   /* Try to connect to saftd */
-  try 
+  try
   {
     /* Search for device name */
-    if (deviceName == NULL)
-    { 
+    if ( deviceName == NULL )
+    {
       std::cerr << "Missing device name!" << std::endl;
-      return (-1);
+      return ( -1 );
     }
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
-    if (devices.find(deviceName) == devices.end())
+    if ( devices.find( deviceName ) == devices.end() )
     {
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
-      return (-1);
+      return ( -1 );
     }
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
-    
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create( devices[deviceName] );
+
     /* Search for embedded CPU channel */
     map<std::string, std::string> acwbms = receiver->getInterfaces()["WbmActionSink"];
-    if (acwbms.size() != 1)
+    if ( acwbms.size() != 1 )
     {
       std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
-      return (-1);
+      return ( -1 );
     }
-    
+
     /* Get connection */
-    std::shared_ptr<WbmActionSink_Proxy> acwbm = WbmActionSink_Proxy::create(acwbms.begin()->second);
-    
+    std::shared_ptr<WbmActionSink_Proxy> acwbm = WbmActionSink_Proxy::create( acwbms.begin()->second );
+
     /* Create the action sink now */
-    if (create_sink)
+    if ( create_sink )
     {
       /* Setup Condition */
       std::shared_ptr<WbmCondition_Proxy> condition;
-      if (translate_mask) {condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, tr_mask(eventMask), offset, tag)); }
-      else                {condition = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, eventMask, offset, tag)); }
-      
+      if ( translate_mask )
+      {
+        condition =
+            WbmCondition_Proxy::create( acwbm->NewCondition( true, eventID, tr_mask( eventMask ), offset, tag ) );
+      }
+      else
+      {
+        condition = WbmCondition_Proxy::create( acwbm->NewCondition( true, eventID, eventMask, offset, tag ) );
+      }
+
       /* Accept every kind of event */
-      condition->setAcceptConflict(true);
-      condition->setAcceptDelayed(true);
-      condition->setAcceptEarly(true);
-      condition->setAcceptLate(true);
-      
+      condition->setAcceptConflict( true );
+      condition->setAcceptDelayed( true );
+      condition->setAcceptEarly( true );
+      condition->setAcceptLate( true );
+
       /* Run the event loop in case the sink should not be disowned */
-      if (disown_sink)
+      if ( disown_sink )
       {
         std::cout << "Action sink configured and disowned..." << std::endl;
         condition->Disown();
-        return (0);
+        return ( 0 );
       }
       else
       {
         std::cout << "Action sink configured..." << std::endl;
-        while(true) {
+        while ( true )
+        {
           saftlib::wait_for_signal();
         }
       }
     }
-    else if (record_macro) 
+    else if ( record_macro )
     {
 
       std::vector<WbmActionCmd> commands;
-      if (macro_file) {
-        std::ifstream infile(filename);
-        if (!infile.is_open()) {
+      if ( macro_file )
+      {
+        std::ifstream infile( filename );
+        if ( !infile.is_open() )
+        {
           std::cerr << "Error: Could not open file " << filename << std::endl;
           return -1;
         }
 
         std::string line;
-        while (std::getline(infile, line)) {
-          std::istringstream iss(line);
-          uint32_t adr, data, flags;
+        while ( std::getline( infile, line ) )
+        {
+          std::istringstream iss( line );
+          uint32_t           adr, data, flags;
 
-          if (!(iss >> std::ws >> std::hex >> adr >> std::hex >> data >> std::hex >> flags)) {
-              std::cerr << "Warning: Skipping malformed line: " << line << std::endl;
-              continue;
+          if ( !( iss >> std::ws >> std::hex >> adr >> std::hex >> data >> std::hex >> flags ) )
+          {
+            std::cerr << "Warning: Skipping malformed line: " << line << std::endl;
+            continue;
           }
-          commands.push_back(WbmActionCmd({adr, data, flags}));
+          commands.push_back( WbmActionCmd( { adr, data, flags } ) );
         }
-      } else {
-        commands.push_back(WbmActionCmd({macroAdr, macroDat, macroFlags}));
+      }
+      else
+      {
+        commands.push_back( WbmActionCmd( { macroAdr, macroDat, macroFlags } ) );
       }
 
-      if(commands.size() > 0) {
-        if(verbose_mode) {
-            std::cout << "Adding Macro at index " << macroIdx << ":" << std::endl;
-            for(auto it : commands) {
-              std::cout << "Adr 0x" << std::hex << it.adr << " Dat 0x" << it.data << " Flg 0x" << it.flags << std::endl;
-            }
+      if ( commands.size() > 0 )
+      {
+        if ( verbose_mode )
+        {
+          std::cout << "Adding Macro at index " << macroIdx << ":" << std::endl;
+          for ( auto it : commands )
+          {
+            std::cout << "Adr 0x" << std::hex << it.adr << " Dat 0x" << it.data << " Flg 0x" << it.flags << std::endl;
+          }
         }
-        acwbm->setEnable(false);
-        acwbm->RecordMacro(macroIdx, commands);
-        acwbm->setEnable(true);
-      } else {
+        acwbm->setEnable( false );
+        acwbm->RecordMacro( macroIdx, commands );
+        acwbm->setEnable( true );
+      }
+      else
+      {
         std::cerr << "Error: Could not find macro commands to add" << std::endl;
         return -1;
-      }  
+      }
     }
-    else if (destroy_sink)
+    else if ( destroy_sink )
     {
       /* clear all macros */
       acwbm->ClearAllMacros();
       /* Get the conditions */
-      std::vector< std::string > all_conditions = acwbm->getAllConditions();
+      std::vector<std::string> all_conditions = acwbm->getAllConditions();
 
       /* Destroy conditions if possible */
-      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      for ( unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++ )
       {
-        std::shared_ptr<WbmCondition_Proxy> destroy_condition = WbmCondition_Proxy::create(all_conditions[condition_it]);
+        std::shared_ptr<WbmCondition_Proxy> destroy_condition =
+            WbmCondition_Proxy::create( all_conditions[condition_it] );
         e_sink = all_conditions[condition_it];
-        if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == ""))
-        { 
+        if ( destroy_condition->getDestructible() && ( destroy_condition->getOwner() == "" ) )
+        {
           destroy_condition->Destroy();
-          if (verbose_mode) { std::cout << "Destroyed " << e_sink << "!" << std::endl; }
+          if ( verbose_mode )
+          {
+            std::cout << "Destroyed " << e_sink << "!" << std::endl;
+          }
         }
         else
         {
-          if (verbose_mode) { std::cout << "Found " << e_sink << " but is not destructible!" << std::endl; }
+          if ( verbose_mode )
+          {
+            std::cout << "Found " << e_sink << " but is not destructible!" << std::endl;
+          }
         }
       }
     }
-    else if (list_conditions)
+    else if ( list_conditions )
     {
       /* Get the conditions */
-      std::vector< std::string > all_conditions = acwbm->getAllConditions();
-      
+      std::vector<std::string> all_conditions = acwbm->getAllConditions();
+
       /* List conditions */
-      for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++)
+      for ( unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++ )
       {
-        std::shared_ptr<WbmCondition_Proxy> info_condition = WbmCondition_Proxy::create(all_conditions[condition_it]);
-        e_sink = all_conditions[condition_it];
+        std::shared_ptr<WbmCondition_Proxy> info_condition = WbmCondition_Proxy::create( all_conditions[condition_it] );
+        e_sink                                             = all_conditions[condition_it];
         std::cout << e_sink << ":" << std::endl;
         std::cout << "  Event ID: 0x" << std::hex << info_condition->getID() << std::endl;
         std::cout << "  Mask:     0x" << std::hex << info_condition->getMask() << std::endl;
-        //std::cout << "  Tag:      0x" << std::hex << info_condition->getTag() << std::endl;
+        // std::cout << "  Tag:      0x" << std::hex << info_condition->getTag() << std::endl;
         std::cout << "  Offset:   " << std::dec << info_condition->getOffset() << std::endl;
         std::cout << "  Owner:    " << info_condition->getOwner() << std::endl;
         std::cout << std::endl;
@@ -360,14 +500,14 @@ int main (int argc, char** argv)
     else
     {
       std::cerr << "Missing at least one parameter!" << std::endl;
-      return (-1);
+      return ( -1 );
     }
-  } 
-  catch (const saftbus::Error& error)
+  }
+  catch ( const saftbus::Error& error )
   {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
-  
+
   /* Done */
-  return (0);
+  return ( 0 );
 }

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -32,110 +32,110 @@
 #include <functional>
 #include <string>
 
-namespace saftlib {
+namespace saftlib
+{
 
 class SerdesClockGen;
 
 /// @brief representaion of a single IO on a TimingReceiver
 ///
 /// On the hardware all IOs are controlled IO_CONTROL sdb device which is represented by IoControl class in saftlib.
-/// This Io class is used by the IoControl class to represent an individual IO. 
+/// This Io class is used by the IoControl class to represent an individual IO.
 /// It encapsulates the register accesses to setup the hardware parameters for the represented IO.
-/// 
+///
 /// This class is also used by the Input and Output classes, which are both part of the user facing API.
-class Io {
-	etherbone::Device &device;
-	std::string io_name;
-	unsigned io_direction;
-	unsigned io_channel;
-	unsigned io_eca_in;
-	unsigned io_eca_out;
-	unsigned io_index;
-	unsigned io_special_purpose;
-	unsigned io_logic_level;
-	bool io_oe_available;
-	bool io_term_available;
-	bool io_spec_out_available;
-	bool io_spec_in_available;
-	eb_address_t io_control_addr;
-	SerdesClockGen &io_clkgen;
+class Io
+{
+  etherbone::Device& device;
+  std::string        io_name;
+  unsigned           io_direction;
+  unsigned           io_channel;
+  unsigned           io_eca_in;
+  unsigned           io_eca_out;
+  unsigned           io_index;
+  unsigned           io_special_purpose;
+  unsigned           io_logic_level;
+  bool               io_oe_available;
+  bool               io_term_available;
+  bool               io_spec_out_available;
+  bool               io_spec_in_available;
+  eb_address_t       io_control_addr;
+  SerdesClockGen&    io_clkgen;
+
 public:
-	Io(etherbone::Device &device
-	   , const std::string &io_name
-	   , unsigned io_direction
-	   , unsigned io_channel
-	   , unsigned eca_in
-	   , unsigned eca_out
-	   , unsigned io_index
-	   , unsigned io_special_purpose
-	   , unsigned io_logic_level
-	   , bool io_oe_available
-	   , bool io_term_available
-	   , bool io_spec_out_available
-	   , bool io_spec_in_available
-	   , eb_address_t io_control_addr
-	   , SerdesClockGen &clkgen
-	);
+  Io( etherbone::Device& device,
+      const std::string& io_name,
+      unsigned           io_direction,
+      unsigned           io_channel,
+      unsigned           eca_in,
+      unsigned           eca_out,
+      unsigned           io_index,
+      unsigned           io_special_purpose,
+      unsigned           io_logic_level,
+      bool               io_oe_available,
+      bool               io_term_available,
+      bool               io_spec_out_available,
+      bool               io_spec_in_available,
+      eb_address_t       io_control_addr,
+      SerdesClockGen&    clkgen );
 
-	const std::string &getName() const;
-	unsigned getDirection() const;
-	// iOutputActionSink
-	uint32_t getIndexOut() const;
-	uint32_t getIndexIn() const;
-	uint32_t getEcaIn() const;
-	uint32_t getEcaOut() const;
-	void WriteOutput(bool value);
-	bool ReadOutput();
-	bool ReadCombinedOutput();
-	bool getOutputEnable() const;
-	void setOutputEnable(bool val);
-	bool getOutputEnableAvailable() const;
-	bool getSpecialPurposeOut() const;
-	void setSpecialPurposeOut(bool val);
-	bool getSpecialPurposeOutAvailable() const;
-	bool getGateOut() const;
-	void setGateOut(bool val);
-	bool getBuTiSMultiplexer() const;
-	void setBuTiSMultiplexer(bool val);
-	bool getPPSMultiplexer() const;
-	void setPPSMultiplexer(bool val);
-	bool StartClock(double high_phase, double low_phase, uint64_t phase_offset);
-	bool StopClock();
-	std::string getLogicLevelOut() const;
-	std::string getTypeOut() const;
+  const std::string& getName() const;
+  unsigned           getDirection() const;
+  // iOutputActionSink
+  uint32_t    getIndexOut() const;
+  uint32_t    getIndexIn() const;
+  uint32_t    getEcaIn() const;
+  uint32_t    getEcaOut() const;
+  void        WriteOutput( bool value );
+  bool        ReadOutput();
+  bool        ReadCombinedOutput();
+  bool        getOutputEnable() const;
+  void        setOutputEnable( bool val );
+  bool        getOutputEnableAvailable() const;
+  bool        getSpecialPurposeOut() const;
+  void        setSpecialPurposeOut( bool val );
+  bool        getSpecialPurposeOutAvailable() const;
+  bool        getGateOut() const;
+  void        setGateOut( bool val );
+  bool        getBuTiSMultiplexer() const;
+  void        setBuTiSMultiplexer( bool val );
+  bool        getPPSMultiplexer() const;
+  void        setPPSMultiplexer( bool val );
+  bool        StartClock( double high_phase, double low_phase, uint64_t phase_offset );
+  bool        StopClock();
+  std::string getLogicLevelOut() const;
+  std::string getTypeOut() const;
 
-	// iInputEventSource
-	bool ReadInput(); // done
-	bool getInputTermination() const;
-	void setInputTermination(bool val);
-	bool getInputTerminationAvailable() const;
-	bool getSpecialPurposeIn() const;
-	void setSpecialPurposeIn(bool val);
-	bool getSpecialPurposeInAvailable() const;
-	bool getGateIn() const;
-	void setGateIn(bool val);
-	std::string getLogicLevelIn() const;
-	std::string getTypeIn() const;
+  // iInputEventSource
+  bool        ReadInput(); // done
+  bool        getInputTermination() const;
+  void        setInputTermination( bool val );
+  bool        getInputTerminationAvailable() const;
+  bool        getSpecialPurposeIn() const;
+  void        setSpecialPurposeIn( bool val );
+  bool        getSpecialPurposeInAvailable() const;
+  bool        getGateIn() const;
+  void        setGateIn( bool val );
+  std::string getLogicLevelIn() const;
+  std::string getTypeIn() const;
 
-	// iInputEventSource
-	uint64_t getResolution() const;
+  // iInputEventSource
+  uint64_t getResolution() const;
 
-	bool ConfigureClock(double high_phase, double low_phase, uint64_t phase_offset);
-	std::string getLogicLevel() const;
-	std::string getType() const;
+  bool        ConfigureClock( double high_phase, double low_phase, uint64_t phase_offset );
+  std::string getLogicLevel() const;
+  std::string getType() const;
 
-
-	std::function< void(bool) > OutputEnable;
-	std::function< void(bool) > SpecialPurposeOut;
-	std::function< void(bool) > GateOut;
-	std::function< void(bool) > BuTiSMultiplexer;
-	std::function< void(bool) > PPSMultiplexer;
-	std::function< void(bool) > InputTermination;
-	std::function< void(bool) > SpecialPurposeIn;
-	std::function< void(bool) > GateIn;
-
+  std::function<void( bool )> OutputEnable;
+  std::function<void( bool )> SpecialPurposeOut;
+  std::function<void( bool )> GateOut;
+  std::function<void( bool )> BuTiSMultiplexer;
+  std::function<void( bool )> PPSMultiplexer;
+  std::function<void( bool )> InputTermination;
+  std::function<void( bool )> SpecialPurposeIn;
+  std::function<void( bool )> GateIn;
 };
 
-}
+} // namespace saftlib
 
 #endif

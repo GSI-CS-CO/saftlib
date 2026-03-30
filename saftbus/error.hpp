@@ -1,4 +1,4 @@
-/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Michael Reese <m.reese@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -24,34 +24,32 @@
 #include <stdexcept>
 #include <string>
 
-namespace saftbus
+namespace saftbus {
+
+class Error : public std::runtime_error
+// TODO: add documentation about custom error types
 {
+public:
+  enum Type {
+    NO_ERROR,
+    INVALID_ARGS,
+    UNKNOWN_METHOD,
+    IO_ERROR,
+    ACCESS_DENIED,
+    FAILED,
+  };
 
-	class Error : public std::runtime_error
-	{
-	public:
-		enum Type
-		{
-			NO_ERROR,
-			INVALID_ARGS,
-			UNKNOWN_METHOD,
-			IO_ERROR,
-			ACCESS_DENIED,
-			FAILED,
-		};
+  Error();
+  Error(Type type, const std::string &msg);
+  Error(const std::string &msg);
+  Error(const Error &error);
 
-		Error();
-		Error(Type type, const std::string &msg);
-		Error(const std::string &msg);
-		Error(const Error& error);
+  Type type() const;
 
-		Type type() const;
+private:
+  Type type_;
+};
 
-	private:
-		Type type_;
-	};
-
-}
-
+} // namespace saftbus
 
 #endif

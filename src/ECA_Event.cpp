@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,7 +13,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -23,36 +23,32 @@
 
 #include "eca_regs.h"
 
+// LOGGING: should logging be added here?
 
-namespace saftlib {
+namespace saftlib
+{
 
+#define EVENT_SDB_DEVICE_ID 0x8752bf45
 
-#define EVENT_SDB_DEVICE_ID             0x8752bf45
-
-
-ECA_Event::ECA_Event(etherbone::Device &device, saftbus::Container *container)
-	: SdbDevice(device, ECA_SDB_VENDOR_ID, EVENT_SDB_DEVICE_ID)
+ECA_Event::ECA_Event( etherbone::Device& device, saftbus::Container* container )
+    : SdbDevice( device, ECA_SDB_VENDOR_ID, EVENT_SDB_DEVICE_ID )
 {
 }
 
-void ECA_Event::InjectEventRaw(uint64_t event, uint64_t param, uint64_t time) const
+void ECA_Event::InjectEventRaw( uint64_t event, uint64_t param, uint64_t time ) const
 {
-	etherbone::Cycle cycle;
+  etherbone::Cycle cycle;
 
-	cycle.open(device);
-	cycle.write(adr_first, EB_DATA32, event >> 32);
-	cycle.write(adr_first, EB_DATA32, event & 0xFFFFFFFFUL);
-	cycle.write(adr_first, EB_DATA32, param >> 32);
-	cycle.write(adr_first, EB_DATA32, param & 0xFFFFFFFFUL);
-	cycle.write(adr_first, EB_DATA32, 0); // reserved
-	cycle.write(adr_first, EB_DATA32, 0); // TEF
-	cycle.write(adr_first, EB_DATA32, time >> 32);
-	cycle.write(adr_first, EB_DATA32, time & 0xFFFFFFFFUL);
-	cycle.close();
+  cycle.open( device );
+  cycle.write( adr_first, EB_DATA32, event >> 32 );
+  cycle.write( adr_first, EB_DATA32, event & 0xFFFFFFFFUL );
+  cycle.write( adr_first, EB_DATA32, param >> 32 );
+  cycle.write( adr_first, EB_DATA32, param & 0xFFFFFFFFUL );
+  cycle.write( adr_first, EB_DATA32, 0 ); // reserved
+  cycle.write( adr_first, EB_DATA32, 0 ); // TEF
+  cycle.write( adr_first, EB_DATA32, time >> 32 );
+  cycle.write( adr_first, EB_DATA32, time & 0xFFFFFFFFUL );
+  cycle.close();
 }
 
-
-
-
-} // namespace
-
+} // namespace saftlib

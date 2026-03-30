@@ -1,6 +1,7 @@
 #include "TimingReceiverAddon.hpp"
 
-namespace saftlib {
+namespace saftlib
+{
 
 TimingReceiverAddon::TimingReceiverAddon()
 {
@@ -10,5 +11,4 @@ TimingReceiverAddon::~TimingReceiverAddon()
 {
 }
 
-
-}
+} // namespace saftlib

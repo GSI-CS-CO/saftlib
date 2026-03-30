@@ -1,4 +1,4 @@
-/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/** Copyright (C) 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Michael Reese <m.reese@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -20,39 +20,19 @@
 
 #include "error.hpp"
 
+namespace saftbus {
 
-namespace saftbus
-{
+Error::Error() : std::runtime_error("no error"), type_(Error::NO_ERROR) {}
 
-	Error::Error()
-		: std::runtime_error("no error")
-		, type_(Error::NO_ERROR)
-	{
-	}
+Error::Error(Type type, const std::string &msg)
+    : std::runtime_error(msg), type_(type) {}
 
-	Error::Error(Type type, const std::string &msg)
-		: std::runtime_error(msg)
-		, type_(type)
-	{
-	}
+Error::Error(const std::string &msg)
+    : std::runtime_error(msg), type_(Type::INVALID_ARGS) {}
 
-	Error::Error(const std::string &msg)
-		: std::runtime_error(msg)
-		, type_(Type::INVALID_ARGS)
-	{
-	}
+Error::Error(const Error &error)
+    : std::runtime_error(error), type_(error.type_) {}
 
-	Error::Error(const Error& error)
-		: std::runtime_error(error)
-		, type_(error.type_)
-	{
-	}
+Error::Type Error::type() const { return type_; }
 
-	Error::Type Error::type() const
-	{
-		return type_;
-	}
-
-
-}
-
+} // namespace saftbus

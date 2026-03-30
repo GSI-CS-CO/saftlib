@@ -1,7 +1,9 @@
 #ifndef ERROR_COMPATIBILITY_H_
 #define ERROR_COMPATIBILITY_H_
 
-#include <saftbus/error.hpp>
+// TODO: restructure includes
+
 #include <CommonFunctions.hpp>
+#include <saftbus/error.hpp>
 
 #endif

@@ -1,5 +1,4 @@
 #include <string>
 
-std::string print_fillstate() {
-	return "";
-}
+// TODO: to be integrated
+std::string print_fillstate() { return ""; }

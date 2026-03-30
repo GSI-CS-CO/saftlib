@@ -1,7 +1,9 @@
 #ifndef SIGNALGROUP_COMPATIBILITY_H_
 #define SIGNALGROUP_COMPATIBILITY_H_
 
-#include <saftbus/error.hpp>
+// TODO: restructure includes
+
 #include <CommonFunctions.hpp>
+#include <saftbus/error.hpp>
 
 #endif

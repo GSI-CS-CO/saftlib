@@ -17,12 +17,14 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+
+// TODO: move into right structure for regs
 #ifndef TEMP_SENSOR_H
 #define TEMP_SENSOR_H
 
-#define ATS_SDB_VENDOR_ID   0x00000651  // Altera temperature sensor (ATS)
-#define ATS_SDB_DEVICE_ID   0x7e3d5e25
+#define ATS_SDB_VENDOR_ID 0x00000651 // Altera temperature sensor (ATS)
+#define ATS_SDB_DEVICE_ID 0x7e3d5e25
 
-#define ALTERA_TEMP_DEGREE  0x04        //Register for Altera temperature sensor (in degree)
+#define ALTERA_TEMP_DEGREE 0x04 // Register for Altera temperature sensor (in degree)
 
 #endif

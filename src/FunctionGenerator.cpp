@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -12,7 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -26,115 +26,121 @@
 
 #include <assert.h>
 
-// #include "RegisteredObject.h"
-#include <TimingReceiver.hpp>
 #include "FunctionGenerator.hpp"
 #include "fg_regs.h"
-// #include "clog.h"
+#include <TimingReceiver.hpp>
 
-namespace saftlib {
+// TODO: function generator needs its own subfolder
+// TODO: integrate into logging, old debug msg should either be logging or deleted
+// LOGGING: add logging here
+// TODO: remove PIMPL
 
-FunctionGenerator::FunctionGenerator(saftbus::Container *container, const std::string &fg_name, const std::string &object_path, std::shared_ptr<FunctionGeneratorImpl> impl)
- : Owned(container),
-   name(fg_name),
-   objectPath(object_path),
-   fgImpl(impl)
+namespace saftlib
 {
-	fgImpl->signal_running.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_running));
-	fgImpl->signal_armed.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_armed));
-	fgImpl->signal_enabled.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_enabled));
-	fgImpl->signal_refill.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_refill));
-	fgImpl->signal_started.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_started));
-	fgImpl->signal_stopped.connect(sigc::mem_fun(*this, &FunctionGenerator::on_fg_stopped));
+
+FunctionGenerator::FunctionGenerator( saftbus::Container*                    container,
+                                      const std::string&                     fg_name,
+                                      const std::string&                     object_path,
+                                      std::shared_ptr<FunctionGeneratorImpl> impl )
+    : Owned( container )
+    , name( fg_name )
+    , objectPath( object_path )
+    , fgImpl( impl )
+{
+  fgImpl->signal_running.connect( sigc::mem_fun( *this, &FunctionGenerator::on_fg_running ) );
+  fgImpl->signal_armed.connect( sigc::mem_fun( *this, &FunctionGenerator::on_fg_armed ) );
+  fgImpl->signal_enabled.connect( sigc::mem_fun( *this, &FunctionGenerator::on_fg_enabled ) );
+  fgImpl->signal_refill.connect( sigc::mem_fun( *this, &FunctionGenerator::on_fg_refill ) );
+  fgImpl->signal_started.connect( sigc::mem_fun( *this, &FunctionGenerator::on_fg_started ) );
+  fgImpl->signal_stopped.connect( sigc::mem_fun( *this, &FunctionGenerator::on_fg_stopped ) );
 }
 
 FunctionGenerator::~FunctionGenerator()
 {
-  // std::cerr << "~FunctionGenerator()" << std::endl;
+  // OLD_DEBUG: std::cerr << "~FunctionGenerator()" << std::endl;
 }
-
 
 // pass sigc signals from impl class to dbus
 // to reduce traffic only generate signals if we have an owner
-void FunctionGenerator::on_fg_running(bool b)
+void FunctionGenerator::on_fg_running( bool b )
 {
-  // std::cerr << "on_fg_running (" << getOwner() << ")" << std::endl;
-  if (!getOwner().empty())
+  // OLD_DEBUG: std::cerr << "on_fg_running (" << getOwner() << ")" << std::endl;
+  if ( !getOwner().empty() )
   {
-    SigRunning(b);
+    SigRunning( b );
   }
 }
 
-void FunctionGenerator::on_fg_armed(bool b)
+void FunctionGenerator::on_fg_armed( bool b )
 {
-  // std::cerr << "on_fg_armed (" << getOwner() << ")" << std::endl;
-  if (!getOwner().empty())
-  {  
- 	  SigArmed(b);
+  // OLD_DEBUG: std::cerr << "on_fg_armed (" << getOwner() << ")" << std::endl;
+  if ( !getOwner().empty() )
+  {
+    SigArmed( b );
   }
 }
 
-void FunctionGenerator::on_fg_enabled(bool b)
+void FunctionGenerator::on_fg_enabled( bool b )
 {
-  // std::cerr << "on_fg_enabled (" << getOwner() << ")" << std::endl;
-  if (!getOwner().empty())
+  // OLD_DEBUG: std::cerr << "on_fg_enabled (" << getOwner() << ")" << std::endl;
+  if ( !getOwner().empty() )
   {
-  	SigEnabled(b);
+    SigEnabled( b );
   }
 }
 
 void FunctionGenerator::on_fg_refill()
 {
-  // std::cerr << "on_fg_refill (" << getOwner() << ")" << std::endl;
-  if (!getOwner().empty())
+  // OLD_DEBUG: std::cerr << "on_fg_refill (" << getOwner() << ")" << std::endl;
+  if ( !getOwner().empty() )
   {
-	  Refill();
+    Refill();
   }
 }
 
-
-void FunctionGenerator::on_fg_started(uint64_t time)
+void FunctionGenerator::on_fg_started( uint64_t time )
 {
-  // std::cerr << "on_fg_started (" << getOwner() << ")" << std::endl;
-  if (!getOwner().empty())
+  // OLD_DEBUG: std::cerr << "on_fg_started (" << getOwner() << ")" << std::endl;
+  if ( !getOwner().empty() )
   {
-    SigStarted(saftlib::makeTimeTAI(time));
+    SigStarted( saftlib::makeTimeTAI( time ) );
   }
 }
 
-void FunctionGenerator::on_fg_stopped(uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
+void FunctionGenerator::on_fg_stopped( uint64_t time,
+                                       bool     abort,
+                                       bool     hardwareUnderflow,
+                                       bool     microcontrollerUnderflow )
 {
-  // std::cerr << "on_fg_stopped (" << getOwner() << ")" << std::endl;
-  if (!getOwner().empty())
+  // OLD_DEBUG: std::cerr << "on_fg_stopped (" << getOwner() << ")" << std::endl;
+  if ( !getOwner().empty() )
   {
-    SigStopped(saftlib::makeTimeTAI(time), abort, hardwareUnderflow, microcontrollerUnderflow);
+    SigStopped( saftlib::makeTimeTAI( time ), abort, hardwareUnderflow, microcontrollerUnderflow );
   }
 }
 
-
+// TODO: can the following be deleted?
 // std::shared_ptr<FunctionGenerator> FunctionGenerator::create(const ConstructorType& args)
 // {
 //   return RegisteredObject<FunctionGenerator>::create(args.objectPath, args);
 // }
 
-
-bool FunctionGenerator::AppendParameterSet(
-  const std::vector< int16_t >& coeff_a,
-  const std::vector< int16_t >& coeff_b,
-  const std::vector< int32_t >& coeff_c,
-  const std::vector< unsigned char >& step,
-  const std::vector< unsigned char >& freq,
-  const std::vector< unsigned char >& shift_a,
-  const std::vector< unsigned char >& shift_b)
+bool FunctionGenerator::AppendParameterSet( const std::vector<int16_t>&       coeff_a,
+                                            const std::vector<int16_t>&       coeff_b,
+                                            const std::vector<int32_t>&       coeff_c,
+                                            const std::vector<unsigned char>& step,
+                                            const std::vector<unsigned char>& freq,
+                                            const std::vector<unsigned char>& shift_a,
+                                            const std::vector<unsigned char>& shift_b )
 {
   ownerOnly();
-  return fgImpl->appendParameterSet(coeff_a, coeff_b, coeff_c, step, freq, shift_a, shift_b);  
+  return fgImpl->appendParameterSet( coeff_a, coeff_b, coeff_c, step, freq, shift_a, shift_b );
 }
 
 void FunctionGenerator::Flush()
 {
   ownerOnly();
- 	fgImpl->Flush();
+  fgImpl->Flush();
 }
 
 uint32_t FunctionGenerator::getVersion() const
@@ -184,9 +190,8 @@ uint64_t FunctionGenerator::ReadFillLevel()
 
 uint32_t FunctionGenerator::ReadExecutedParameterCount()
 {
-	return fgImpl->ReadExecutedParameterCount();
+  return fgImpl->ReadExecutedParameterCount();
 }
-
 
 void FunctionGenerator::Arm()
 {
@@ -194,10 +199,9 @@ void FunctionGenerator::Arm()
   fgImpl->arm();
 }
 
-
 void FunctionGenerator::Reset()
 {
-	fgImpl->Reset();
+  fgImpl->Reset();
 }
 
 void FunctionGenerator::Abort()
@@ -212,10 +216,10 @@ void FunctionGenerator::ownerQuit()
   Reset();
 }
 
-void FunctionGenerator::setStartTag(uint32_t val)
+void FunctionGenerator::setStartTag( uint32_t val )
 {
   ownerOnly();
-  fgImpl->setStartTag(val);
+  fgImpl->setStartTag( val );
 }
 
 std::string FunctionGenerator::getObjectPath()
@@ -223,5 +227,4 @@ std::string FunctionGenerator::getObjectPath()
   return objectPath;
 }
 
-
-}
+} // namespace saftlib

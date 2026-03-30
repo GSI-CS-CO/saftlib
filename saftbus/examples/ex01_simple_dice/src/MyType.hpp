@@ -6,21 +6,19 @@
 
 namespace ex01 {
 
-	struct MyType : public saftbus::SerDesAble {
-		std::string type;
-		std::string name;
-		void serialize(saftbus::Serializer &ser) const {
-			ser.put(type);
-			ser.put(name);
-		}
-		void deserialize(const saftbus::Deserializer &des) {
-			des.get(type);
-			des.get(name);
-		}
-	};
+struct MyType : public saftbus::SerDesAble {
+  std::string type;
+  std::string name;
+  void serialize(saftbus::Serializer &ser) const {
+    ser.put(type);
+    ser.put(name);
+  }
+  void deserialize(const saftbus::Deserializer &des) {
+    des.get(type);
+    des.get(name);
+  }
+};
 
-
-}
-
+} // namespace ex01
 
 #endif

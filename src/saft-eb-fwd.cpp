@@ -11,7 +11,7 @@
 //
 // Usage scenario: saftlib is connected to /dev/ttyUSB0 under logical name tr0.
 //                 If "eb-ls dev/ttyUSB0" would be called now, both saftlib and
-//                 the device will crash, because the serial driver doesn't 
+//                 the device will crash, because the serial driver doesn't
 //                 support multiple connections.
 //                 If instead "eb-ls $(saft-eb-fwd tr0)" is called, eb-ls will
 //                 work as expected.
@@ -34,26 +34,33 @@
 #include "interfaces/SAFTd.h"
 #include <iostream>
 
-int main(int argc, char *argv[])
+int main( int argc, char* argv[] )
 {
-	try {
-		if (argc != 2) {
-			std::cerr << "usage: " << argv[0] << " saftlib-device" << std::endl;
-			std::cerr << std::endl;
-			std::cerr << "example " << argv[0] << " tr0" << std::endl;
-			return 1;
-		}
-    	std::shared_ptr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
-    	std::string path = saftd->EbForward(std::string(argv[1]));
-    	if (path.size()) {
-	    	std::cout << path << std::endl;
-    	} else {
-    		std::cerr << "Device \'" << argv[1] << "\' does not exist" << std::endl;
-    		return 2;
-    	}
-	} catch (saftbus::Error &e) {
-		std::cerr << e.what() << std::endl;
-		return 3;
-	}
-	return 0;
+  try
+  {
+    if ( argc != 2 )
+    {
+      std::cerr << "usage: " << argv[0] << " saftlib-device" << std::endl;
+      std::cerr << std::endl;
+      std::cerr << "example " << argv[0] << " tr0" << std::endl;
+      return 1;
+    }
+    std::shared_ptr<saftlib::SAFTd_Proxy> saftd = saftlib::SAFTd_Proxy::create();
+    std::string                           path  = saftd->EbForward( std::string( argv[1] ) );
+    if ( path.size() )
+    {
+      std::cout << path << std::endl;
+    }
+    else
+    {
+      std::cerr << "Device \'" << argv[1] << "\' does not exist" << std::endl;
+      return 2;
+    }
+  }
+  catch ( saftbus::Error& e )
+  {
+    std::cerr << e.what() << std::endl;
+    return 3;
+  }
+  return 0;
 }

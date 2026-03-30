@@ -1,4 +1,4 @@
-/*  Copyright (C) 2024 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2024 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *
  *******************************************************************************
@@ -11,7 +11,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -24,4 +24,4 @@
 /* Common constants strings for saftlib tools */
 
 const std::string BugReportContact = "Please report bugs to tos-service@gsi.de ";
-const std::string ToolLicenseGPL = "Licensed under the GPL v3.";
+const std::string ToolLicenseGPL   = "Licensed under the GPL v3.";

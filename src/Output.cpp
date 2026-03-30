@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011-2016, 2021-2023 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+/*  Copyright (C) 2011-2016, 2021-2023 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *          Michael Reese <m.reese@gsi.de>
@@ -13,170 +13,174 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
 
-#include "ECA.hpp"
 #include "Output.hpp"
+#include "ECA.hpp"
 #include "OutputCondition.hpp"
 #include "OutputCondition_Service.hpp"
 
-namespace saftlib {
+namespace saftlib
+{
 
-// std::shared_ptr<Output> Output::create(const ConstructorType& args)
-// {
-// 	return RegisteredObject<Output>::create(args.objectPath, args);
-// }
-
-Output::Output(ECA &eca
-     , Io &io_
-     , const std::string &output_object_path
-     , const std::string &input_partner_path
-     , unsigned channel
-     , saftbus::Container *container)
-	: ActionSink(eca, output_object_path, io_.getName(), channel, io_.getEcaOut(), container), io(io_), partnerPath(input_partner_path)
-	, clk_low_phase(0.0)
-	, clk_high_phase(0.0)
-	, clk_phase_offset(0)
+Output::Output( ECA&                eca,
+                Io&                 io_,
+                const std::string&  output_object_path,
+                const std::string&  input_partner_path,
+                unsigned            channel,
+                saftbus::Container* container )
+    : ActionSink( eca, output_object_path, io_.getName(), channel, io_.getEcaOut(), container )
+    , io( io_ )
+    , partnerPath( input_partner_path )
+    , clk_low_phase( 0.0 )
+    , clk_high_phase( 0.0 )
+    , clk_phase_offset( 0 )
 {
 }
 
-std::string Output::NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)
+std::string Output::NewCondition( bool active, uint64_t id, uint64_t mask, int64_t offset, bool on )
 {
-	// the tag parameter is 2 if output should go on 
-	//                  and 1 if output should go off
-	return NewConditionHelper<OutputCondition>(active, id, mask, offset, on?2:1, container);
+  // the tag parameter is 2 if output should go on
+  //                  and 1 if output should go off
+  return NewConditionHelper<OutputCondition>( active, id, mask, offset, on ? 2 : 1, container );
 }
 
 uint32_t Output::getIndexOut() const
 {
-	return io.getIndexOut();
+  return io.getIndexOut();
 }
 
-void Output::WriteOutput(bool value)
+void Output::WriteOutput( bool value )
 {
-	ownerOnly();
-	return io.WriteOutput(value);
+  ownerOnly();
+  return io.WriteOutput( value );
 }
 
 bool Output::ReadOutput()
 {
-	return io.ReadOutput();
+  return io.ReadOutput();
 }
 
 bool Output::ReadCombinedOutput()
 {
-	return io.ReadCombinedOutput();
+  return io.ReadCombinedOutput();
 }
 
 bool Output::getOutputEnable() const
 {
-	return io.getOutputEnable();
+  return io.getOutputEnable();
 }
 
 bool Output::getSpecialPurposeOut() const
 {
-	return io.getSpecialPurposeOut();
+  return io.getSpecialPurposeOut();
 }
 
 bool Output::getGateOut() const
 {
-	return io.getGateOut();
+  return io.getGateOut();
 }
 
 bool Output::getBuTiSMultiplexer() const
 {
-	return io.getBuTiSMultiplexer();
+  return io.getBuTiSMultiplexer();
 }
 
 bool Output::getPPSMultiplexer() const
 {
-	return io.getPPSMultiplexer();
+  return io.getPPSMultiplexer();
 }
 
 bool Output::getOutputEnableAvailable() const
 {
-	return io.getOutputEnableAvailable();
+  return io.getOutputEnableAvailable();
 }
 
 bool Output::getSpecialPurposeOutAvailable() const
 {
-	return io.getSpecialPurposeOutAvailable();
+  return io.getSpecialPurposeOutAvailable();
 }
 
-bool Output::StartClock(double high_phase, double low_phase, uint64_t phase_offset)
+bool Output::StartClock( double high_phase, double low_phase, uint64_t phase_offset )
 {
-	ownerOnly();
-	clk_high_phase   = high_phase;
-	clk_low_phase    = low_phase;
-	clk_phase_offset = phase_offset;
-	return io.StartClock(high_phase, low_phase, phase_offset);
+  ownerOnly();
+  clk_high_phase   = high_phase;
+  clk_low_phase    = low_phase;
+  clk_phase_offset = phase_offset;
+  return io.StartClock( high_phase, low_phase, phase_offset );
 }
 
-bool Output::ClockStatus(double &high_phase, double &low_phase, uint64_t &phase_offset)
+bool Output::ClockStatus( double& high_phase, double& low_phase, uint64_t& phase_offset )
 {
-	high_phase   = clk_high_phase;
-	low_phase    = clk_low_phase;
-	phase_offset = clk_phase_offset;
-	if ((low_phase == 0.0) && (high_phase == 0.0) && (phase_offset == 0)) { return false; }
-	else                                                                  { return true; }
+  high_phase   = clk_high_phase;
+  low_phase    = clk_low_phase;
+  phase_offset = clk_phase_offset;
+  if ( ( low_phase == 0.0 ) && ( high_phase == 0.0 ) && ( phase_offset == 0 ) )
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
 }
 
 bool Output::StopClock()
 {
-	ownerOnly();
-	clk_high_phase   = 0.0;
-	clk_low_phase    = 0.0;
-	clk_phase_offset = 0;
-	return io.StopClock();
+  ownerOnly();
+  clk_high_phase   = 0.0;
+  clk_low_phase    = 0.0;
+  clk_phase_offset = 0;
+  return io.StopClock();
 }
 
 std::string Output::getLogicLevelOut() const
 {
-	return io.getLogicLevelOut();
+  return io.getLogicLevelOut();
 }
 
 std::string Output::getTypeOut() const
 {
-	return io.getTypeOut();
+  return io.getTypeOut();
 }
 
 std::string Output::getInput() const
 {
-	return partnerPath;
+  return partnerPath;
 }
 
-void Output::setOutputEnable(bool val)
+void Output::setOutputEnable( bool val )
 {
-	ownerOnly();
-	return io.setOutputEnable(val);
+  ownerOnly();
+  return io.setOutputEnable( val );
 }
 
-void Output::setSpecialPurposeOut(bool val)
+void Output::setSpecialPurposeOut( bool val )
 {
-	ownerOnly();
-	return io.setSpecialPurposeOut(val);
+  ownerOnly();
+  return io.setSpecialPurposeOut( val );
 }
 
-void Output::setGateOut(bool val)
+void Output::setGateOut( bool val )
 {
-	ownerOnly();
-	return io.setGateOut(val);
+  ownerOnly();
+  return io.setGateOut( val );
 }
 
-void Output::setBuTiSMultiplexer(bool val)
+void Output::setBuTiSMultiplexer( bool val )
 {
-	ownerOnly();
-	return io.setBuTiSMultiplexer(val);
+  ownerOnly();
+  return io.setBuTiSMultiplexer( val );
 }
 
-void Output::setPPSMultiplexer(bool val)
+void Output::setPPSMultiplexer( bool val )
 {
-	ownerOnly();
-	return io.setPPSMultiplexer(val);
+  ownerOnly();
+  return io.setPPSMultiplexer( val );
 }
 
-}
+} // namespace saftlib
