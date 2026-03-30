@@ -291,7 +291,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>test_special_cases</b
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a30d86ad497ac272fe349df1178e2ad52"><td class="memItemLeft" align="right" valign="top">const char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a30d86ad497ac272fe349df1178e2ad52">sourceVersion</a> []</td></tr>
+<tr class="memitem:a30d86ad497ac272fe349df1178e2ad52"><td class="memItemLeft" align="right" valign="top"><a id="a30d86ad497ac272fe349df1178e2ad52" name="a30d86ad497ac272fe349df1178e2ad52"></a>
+const char&#160;</td><td class="memItemRight" valign="bottom"><b>sourceVersion</b> [] = PACKAGE_STRING &quot; (&quot; GIT_ID &quot;): &quot; SOURCE_DATE</td></tr>
 <tr class="separator:a30d86ad497ac272fe349df1178e2ad52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a449d0e7da2e3f65f362cdabc3ca87930"><td class="memItemLeft" align="right" valign="top">const char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesaftlib.html#a449d0e7da2e3f65f362cdabc3ca87930">buildInfo</a> []</td></tr>
 <tr class="separator:a449d0e7da2e3f65f362cdabc3ca87930"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -305,16 +306,16 @@ const uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>EPOCH_OFFSE
 const std::vector&lt; <a class="el" href="structsaftlib_1_1LeapSecond.html">LeapSecond</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>LEAP_SECONDS_TABLE</b></td></tr>
 <tr class="separator:a2f5b4dc239dc1955a891c696520ffb42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32e5fd0d4b59617bdc6700f9d28c15a9"><td class="memItemLeft" align="right" valign="top"><a id="a32e5fd0d4b59617bdc6700f9d28c15a9" name="a32e5fd0d4b59617bdc6700f9d28c15a9"></a>
-const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>sec</b> = INT64_C(1000000000)</td></tr>
+const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>sec</b> = INT64_C( 1000000000 )</td></tr>
 <tr class="separator:a32e5fd0d4b59617bdc6700f9d28c15a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adaecec85944f714b3ade784df1609fc8"><td class="memItemLeft" align="right" valign="top"><a id="adaecec85944f714b3ade784df1609fc8" name="adaecec85944f714b3ade784df1609fc8"></a>
-const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>msec</b> = INT64_C(1000000)</td></tr>
+const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>msec</b> = INT64_C( 1000000 )</td></tr>
 <tr class="separator:adaecec85944f714b3ade784df1609fc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1c55807264932c4ad784cd9a7c5f913"><td class="memItemLeft" align="right" valign="top"><a id="af1c55807264932c4ad784cd9a7c5f913" name="af1c55807264932c4ad784cd9a7c5f913"></a>
-const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>usec</b> = INT64_C(1000)</td></tr>
+const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>usec</b> = INT64_C( 1000 )</td></tr>
 <tr class="separator:af1c55807264932c4ad784cd9a7c5f913"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73ebebcfad8df922edede6c953489099"><td class="memItemLeft" align="right" valign="top"><a id="a73ebebcfad8df922edede6c953489099" name="a73ebebcfad8df922edede6c953489099"></a>
-const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>nsec</b> = INT64_C(1)</td></tr>
+const int64_t&#160;</td><td class="memItemRight" valign="bottom"><b>nsec</b> = INT64_C( 1 )</td></tr>
 <tr class="separator:a73ebebcfad8df922edede6c953489099"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -712,23 +713,7 @@ Here is the call graph for this function:</div>
       </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">=</div>
-<div class="line">  <span class="stringliteral">&quot;built by &quot;</span> USERNAME <span class="stringliteral">&quot; on &quot;</span> __DATE__ <span class="stringliteral">&quot; &quot;</span> __TIME__ <span class="stringliteral">&quot; with &quot;</span> HOSTNAME <span class="stringliteral">&quot; running &quot;</span> OPERATING_SYSTEM</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a30d86ad497ac272fe349df1178e2ad52" name="a30d86ad497ac272fe349df1178e2ad52"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a30d86ad497ac272fe349df1178e2ad52">&#9670;&#160;</a></span>sourceVersion</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">const char saftlib::sourceVersion</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">=</div>
-<div class="line">  PACKAGE_STRING <span class="stringliteral">&quot; (&quot;</span> GIT_ID <span class="stringliteral">&quot;): &quot;</span> SOURCE_DATE</div>
+<div class="line">    <span class="stringliteral">&quot;built by &quot;</span> USERNAME <span class="stringliteral">&quot; on &quot;</span> __DATE__ <span class="stringliteral">&quot; &quot;</span> __TIME__ <span class="stringliteral">&quot; with &quot;</span> HOSTNAME <span class="stringliteral">&quot; running &quot;</span> OPERATING_SYSTEM</div>
 </div><!-- fragment -->
 </div>
 </div>

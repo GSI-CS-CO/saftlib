@@ -76,7 +76,7 @@ $(function() {
   <div class="headertitle"><div class="title">EmbeddedCPUActionSink.hpp</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH </span></div>
+<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*  Copyright (C) 2011-2016, 2021-2022 GSI Helmholtz Centre for Heavy Ion Research GmbH</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment"> *</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment"> *  @author Wesley W. Terpstra &lt;w.terpstra@gsi.de&gt;</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment"> *          Michael Reese &lt;m.reese@gsi.de&gt;</span></div>
@@ -91,7 +91,7 @@ $(function() {
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment"> *  but WITHOUT ANY WARRANTY; without even the implied warranty of</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment"> *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment"> *  Lesser General Public License for more details.</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> *  </span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> *</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"> *  You should have received a copy of the GNU Lesser General Public</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment"> *  License along with this library. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment"> *******************************************************************************</span></div>
@@ -109,31 +109,31 @@ $(function() {
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#include &quot;ActionSink.hpp&quot;</span></div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesaftlib.html">saftlib</a> {</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classsaftlib_1_1EmbeddedCPUActionSink.html">   45</a></span><span class="keyword">class </span><a class="code hl_class" href="classsaftlib_1_1EmbeddedCPUActionSink.html">EmbeddedCPUActionSink</a> : <span class="keyword">public</span> <a class="code hl_class" href="classsaftlib_1_1ActionSink.html">ActionSink</a> {</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <a class="code hl_class" href="classsaftlib_1_1EmbeddedCPUActionSink.html">EmbeddedCPUActionSink</a>(<a class="code hl_class" href="classsaftlib_1_1ECA.html">ECA</a> &amp;eca</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                       , <span class="keyword">const</span> std::string &amp;object_path</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>                       , <span class="keyword">const</span> std::string &amp;name</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                       , <span class="keywordtype">unsigned</span> channel</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                       , <a class="code hl_class" href="classsaftbus_1_1Container.html">saftbus::Container</a> *container = <span class="keyword">nullptr</span>);</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>            </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        std::string <a class="code hl_function" href="classsaftlib_1_1EmbeddedCPUActionSink.html#a0a3a8f26a0c55bf7fd3f22f04dbba946">NewCondition</a>(<span class="keywordtype">bool</span> active, uint64_t <span class="keywordtype">id</span>, uint64_t mask, int64_t offset, uint32_t tag);</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesaftlib.html">saftlib</a></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>{</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="classsaftlib_1_1EmbeddedCPUActionSink.html">   46</a></span><span class="keyword">class </span><a class="code hl_class" href="classsaftlib_1_1EmbeddedCPUActionSink.html">EmbeddedCPUActionSink</a> : <span class="keyword">public</span> <a class="code hl_class" href="classsaftlib_1_1ActionSink.html">ActionSink</a></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>{</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>  <a class="code hl_class" href="classsaftlib_1_1EmbeddedCPUActionSink.html">EmbeddedCPUActionSink</a>( <a class="code hl_class" href="classsaftlib_1_1ECA.html">ECA</a>&amp;                eca,</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>                         <span class="keyword">const</span> std::string&amp;  object_path,</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>                         <span class="keyword">const</span> std::string&amp;  name,</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>                         <span class="keywordtype">unsigned</span>            channel,</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>                         <a class="code hl_class" href="classsaftbus_1_1Container.html">saftbus::Container</a>* container = <span class="keyword">nullptr</span> );</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>  std::string <a class="code hl_function" href="classsaftlib_1_1EmbeddedCPUActionSink.html#a0a3a8f26a0c55bf7fd3f22f04dbba946">NewCondition</a>( <span class="keywordtype">bool</span> active, uint64_t <span class="keywordtype">id</span>, uint64_t mask, int64_t offset, uint32_t tag );</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>};</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>}</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>} <span class="comment">// namespace saftlib</span></div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aclasssaftbus_1_1Container_html"><div class="ttname"><a href="classsaftbus_1_1Container.html">saftbus::Container</a></div><div class="ttdoc">A Container of Service objects.</div><div class="ttdef"><b>Definition:</b> service.hpp:148</div></div>
-<div class="ttc" id="aclasssaftlib_1_1ActionSink_html"><div class="ttname"><a href="classsaftlib_1_1ActionSink.html">saftlib::ActionSink</a></div><div class="ttdoc">An output through which actions flow.</div><div class="ttdef"><b>Definition:</b> ActionSink.hpp:120</div></div>
-<div class="ttc" id="aclasssaftlib_1_1ECA_html"><div class="ttname"><a href="classsaftlib_1_1ECA.html">saftlib::ECA</a></div><div class="ttdoc">ECA (Event Condition Action) ECA is a hardwar unit cabable of executing actions at a given time (1 ns...</div><div class="ttdef"><b>Definition:</b> ECA.hpp:62</div></div>
-<div class="ttc" id="aclasssaftlib_1_1EmbeddedCPUActionSink_html"><div class="ttname"><a href="classsaftlib_1_1EmbeddedCPUActionSink.html">saftlib::EmbeddedCPUActionSink</a></div><div class="ttdoc">An output through which EmbeddedCPU actions flow.</div><div class="ttdef"><b>Definition:</b> EmbeddedCPUActionSink.hpp:45</div></div>
-<div class="ttc" id="aclasssaftlib_1_1EmbeddedCPUActionSink_html_a0a3a8f26a0c55bf7fd3f22f04dbba946"><div class="ttname"><a href="classsaftlib_1_1EmbeddedCPUActionSink.html#a0a3a8f26a0c55bf7fd3f22f04dbba946">saftlib::EmbeddedCPUActionSink::NewCondition</a></div><div class="ttdeci">std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag)</div><div class="ttdoc">Create a condition to match incoming events.</div><div class="ttdef"><b>Definition:</b> EmbeddedCPUActionSink.cpp:49</div></div>
-<div class="ttc" id="anamespacesaftlib_html"><div class="ttname"><a href="namespacesaftlib.html">saftlib</a></div><div class="ttdoc">saftlib is collection of driver objects for FAIR Timing Receiver Hardware</div><div class="ttdef"><b>Definition:</b> ActionSink.cpp:38</div></div>
+<div class="ttc" id="aclasssaftbus_1_1Container_html"><div class="ttname"><a href="classsaftbus_1_1Container.html">saftbus::Container</a></div><div class="ttdoc">A Container of Service objects.</div><div class="ttdef"><b>Definition:</b> service.hpp:187</div></div>
+<div class="ttc" id="aclasssaftlib_1_1ActionSink_html"><div class="ttname"><a href="classsaftlib_1_1ActionSink.html">saftlib::ActionSink</a></div><div class="ttdoc">An output through which actions flow.</div><div class="ttdef"><b>Definition:</b> ActionSink.hpp:121</div></div>
+<div class="ttc" id="aclasssaftlib_1_1ECA_html"><div class="ttname"><a href="classsaftlib_1_1ECA.html">saftlib::ECA</a></div><div class="ttdoc">ECA (Event Condition Action) ECA is a hardwar unit cabable of executing actions at a given time (1 ns...</div><div class="ttdef"><b>Definition:</b> ECA.hpp:65</div></div>
+<div class="ttc" id="aclasssaftlib_1_1EmbeddedCPUActionSink_html"><div class="ttname"><a href="classsaftlib_1_1EmbeddedCPUActionSink.html">saftlib::EmbeddedCPUActionSink</a></div><div class="ttdoc">An output through which EmbeddedCPU actions flow.</div><div class="ttdef"><b>Definition:</b> EmbeddedCPUActionSink.hpp:47</div></div>
+<div class="ttc" id="aclasssaftlib_1_1EmbeddedCPUActionSink_html_a0a3a8f26a0c55bf7fd3f22f04dbba946"><div class="ttname"><a href="classsaftlib_1_1EmbeddedCPUActionSink.html#a0a3a8f26a0c55bf7fd3f22f04dbba946">saftlib::EmbeddedCPUActionSink::NewCondition</a></div><div class="ttdeci">std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, uint32_t tag)</div><div class="ttdoc">Create a condition to match incoming events.</div><div class="ttdef"><b>Definition:</b> EmbeddedCPUActionSink.cpp:47</div></div>
+<div class="ttc" id="anamespacesaftlib_html"><div class="ttname"><a href="namespacesaftlib.html">saftlib</a></div><div class="ttdoc">saftlib is collection of driver objects for FAIR Timing Receiver Hardware</div><div class="ttdef"><b>Definition:</b> ActionSink.cpp:40</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

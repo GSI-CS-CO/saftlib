@@ -203,26 +203,26 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>release_service</b> (
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a5199f8102c8ba588127e736161c8b5da"><td class="memItemLeft" align="right" valign="top"><a id="a5199f8102c8ba588127e736161c8b5da" name="a5199f8102c8ba588127e736161c8b5da"></a>
+<tr class="memitem:a72b60fe660d0132e3df521c68fb477d7"><td class="memItemLeft" align="right" valign="top"><a id="a72b60fe660d0132e3df521c68fb477d7" name="a72b60fe660d0132e3df521c68fb477d7"></a>
 sigc::signal&lt; void, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SigEnabled</b></td></tr>
-<tr class="memdesc:a5199f8102c8ba588127e736161c8b5da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hardware is allowed to generate an output waveform. If a function generator is disabled, its output is constant. Enabled is set to true using Arm and transitions to false either upon completion or after a call to Abort. The current state of Enabled can be obtained using <a class="el" href="classsaftlib_1_1FunctionGenerator.html#ae7e37c1d2f1fa8a7487e80c8fd2599b9" title="Hardware is allowed to generate an output waveform. If a function generator is disabled,...">getEnabled()</a>. <br /></td></tr>
-<tr class="separator:a5199f8102c8ba588127e736161c8b5da"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad939a07724cc815fc0048294d22c49a1"><td class="memItemLeft" align="right" valign="top"><a id="ad939a07724cc815fc0048294d22c49a1" name="ad939a07724cc815fc0048294d22c49a1"></a>
+<tr class="memdesc:a72b60fe660d0132e3df521c68fb477d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hardware is allowed to generate an output waveform. If a function generator is disabled, its output is constant. Enabled is set to true using Arm and transitions to false either upon completion or after a call to Abort. The current state of Enabled can be obtained using <a class="el" href="classsaftlib_1_1FunctionGenerator.html#ae7e37c1d2f1fa8a7487e80c8fd2599b9" title="Hardware is allowed to generate an output waveform. If a function generator is disabled,...">getEnabled()</a>. <br /></td></tr>
+<tr class="separator:a72b60fe660d0132e3df521c68fb477d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a058bce561e6b4ca6ce2c984779739006"><td class="memItemLeft" align="right" valign="top"><a id="a058bce561e6b4ca6ce2c984779739006" name="a058bce561e6b4ca6ce2c984779739006"></a>
 sigc::signal&lt; void, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SigArmed</b></td></tr>
-<tr class="memdesc:ad939a07724cc815fc0048294d22c49a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Upon receipt of StartTag, output will begin. If a function generator is Armed, it is also Enabled. Once waveform data has been loaded into the function generator, Arm it. Shortly thereafter (once the hardware is ready), the Armed property will transition to true, indicating the hardware is ready to react. Once StartTag is received, Armed changes to false and Started is emitted. <a class="el" href="classsaftlib_1_1FunctionGenerator.html#a2e093ac6460bf454da792d22e47d672e" title="Upon receipt of StartTag, output will begin.">getArmed()</a> method can be used to obtain the current state. <br /></td></tr>
-<tr class="separator:ad939a07724cc815fc0048294d22c49a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95e51218dcba228442e56c028a58ae9a"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#a95e51218dcba228442e56c028a58ae9a">SigRunning</a></td></tr>
-<tr class="memdesc:a95e51218dcba228442e56c028a58ae9a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function generator is currently producing a waveform.  <a href="classsaftlib_1_1FunctionGenerator.html#a95e51218dcba228442e56c028a58ae9a">More...</a><br /></td></tr>
-<tr class="separator:a95e51218dcba228442e56c028a58ae9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af54fc52c1aa650be73c467af64250d02"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#af54fc52c1aa650be73c467af64250d02">SigStarted</a></td></tr>
-<tr class="memdesc:af54fc52c1aa650be73c467af64250d02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function generation has begun.  <a href="classsaftlib_1_1FunctionGenerator.html#af54fc52c1aa650be73c467af64250d02">More...</a><br /></td></tr>
-<tr class="separator:af54fc52c1aa650be73c467af64250d02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a27b02c2121558d290819e2ba7e76be6f"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>, bool, bool, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#a27b02c2121558d290819e2ba7e76be6f">SigStopped</a></td></tr>
-<tr class="memdesc:a27b02c2121558d290819e2ba7e76be6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function generation has ended.  <a href="classsaftlib_1_1FunctionGenerator.html#a27b02c2121558d290819e2ba7e76be6f">More...</a><br /></td></tr>
-<tr class="separator:a27b02c2121558d290819e2ba7e76be6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeac20ccacfe44993ae22d48bce176410"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#aeac20ccacfe44993ae22d48bce176410">Refill</a></td></tr>
-<tr class="memdesc:aeac20ccacfe44993ae22d48bce176410"><td class="mdescLeft">&#160;</td><td class="mdescRight">More tuples must be appended to ensure uninterrupted waveform.  <a href="classsaftlib_1_1FunctionGenerator.html#aeac20ccacfe44993ae22d48bce176410">More...</a><br /></td></tr>
-<tr class="separator:aeac20ccacfe44993ae22d48bce176410"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a058bce561e6b4ca6ce2c984779739006"><td class="mdescLeft">&#160;</td><td class="mdescRight">Upon receipt of StartTag, output will begin. If a function generator is Armed, it is also Enabled. Once waveform data has been loaded into the function generator, Arm it. Shortly thereafter (once the hardware is ready), the Armed property will transition to true, indicating the hardware is ready to react. Once StartTag is received, Armed changes to false and Started is emitted. <a class="el" href="classsaftlib_1_1FunctionGenerator.html#a2e093ac6460bf454da792d22e47d672e" title="Upon receipt of StartTag, output will begin.">getArmed()</a> method can be used to obtain the current state. <br /></td></tr>
+<tr class="separator:a058bce561e6b4ca6ce2c984779739006"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af23df2ee9c751d677f81f9b52c23f7bd"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#af23df2ee9c751d677f81f9b52c23f7bd">SigRunning</a></td></tr>
+<tr class="memdesc:af23df2ee9c751d677f81f9b52c23f7bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function generator is currently producing a waveform.  <a href="classsaftlib_1_1FunctionGenerator.html#af23df2ee9c751d677f81f9b52c23f7bd">More...</a><br /></td></tr>
+<tr class="separator:af23df2ee9c751d677f81f9b52c23f7bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b5f3cf2c8359782cff6142d5dbbe398"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#a5b5f3cf2c8359782cff6142d5dbbe398">SigStarted</a></td></tr>
+<tr class="memdesc:a5b5f3cf2c8359782cff6142d5dbbe398"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function generation has begun.  <a href="classsaftlib_1_1FunctionGenerator.html#a5b5f3cf2c8359782cff6142d5dbbe398">More...</a><br /></td></tr>
+<tr class="separator:a5b5f3cf2c8359782cff6142d5dbbe398"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa38cc053198c7f3694145be0475e7130"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>, bool, bool, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#aa38cc053198c7f3694145be0475e7130">SigStopped</a></td></tr>
+<tr class="memdesc:aa38cc053198c7f3694145be0475e7130"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function generation has ended.  <a href="classsaftlib_1_1FunctionGenerator.html#aa38cc053198c7f3694145be0475e7130">More...</a><br /></td></tr>
+<tr class="separator:aa38cc053198c7f3694145be0475e7130"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad849834049e08b79011e5670a9e8fb3d"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1FunctionGenerator.html#ad849834049e08b79011e5670a9e8fb3d">Refill</a></td></tr>
+<tr class="memdesc:ad849834049e08b79011e5670a9e8fb3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">More tuples must be appended to ensure uninterrupted waveform.  <a href="classsaftlib_1_1FunctionGenerator.html#ad849834049e08b79011e5670a9e8fb3d">More...</a><br /></td></tr>
+<tr class="separator:ad849834049e08b79011e5670a9e8fb3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_attribs_classsaftlib_1_1Owned"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_classsaftlib_1_1Owned')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classsaftlib_1_1Owned.html">saftlib::Owned</a></td></tr>
 <tr class="memitem:af862c85d43711cfae99d864a6a77e07d inherit pub_attribs_classsaftlib_1_1Owned"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Owned.html#af862c85d43711cfae99d864a6a77e07d">Destroyed</a></td></tr>
 <tr class="memdesc:af862c85d43711cfae99d864a6a77e07d inherit pub_attribs_classsaftlib_1_1Owned"><td class="mdescLeft">&#160;</td><td class="mdescRight">The object was destroyed.  <a href="classsaftlib_1_1Owned.html#af862c85d43711cfae99d864a6a77e07d">More...</a><br /></td></tr>
@@ -619,14 +619,14 @@ std::shared_ptr&lt; <a class="el" href="classsaftlib_1_1FunctionGeneratorImpl.ht
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="aeac20ccacfe44993ae22d48bce176410" name="aeac20ccacfe44993ae22d48bce176410"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeac20ccacfe44993ae22d48bce176410">&#9670;&#160;</a></span>Refill</h2>
+<a id="ad849834049e08b79011e5670a9e8fb3d" name="ad849834049e08b79011e5670a9e8fb3d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad849834049e08b79011e5670a9e8fb3d">&#9670;&#160;</a></span>Refill</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">sigc::signal&lt; void &gt; saftlib::FunctionGenerator::Refill</td>
+          <td class="memname">sigc::signal&lt;void&gt; saftlib::FunctionGenerator::Refill</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -636,14 +636,14 @@ std::shared_ptr&lt; <a class="el" href="classsaftlib_1_1FunctionGeneratorImpl.ht
 
 </div>
 </div>
-<a id="a95e51218dcba228442e56c028a58ae9a" name="a95e51218dcba228442e56c028a58ae9a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a95e51218dcba228442e56c028a58ae9a">&#9670;&#160;</a></span>SigRunning</h2>
+<a id="af23df2ee9c751d677f81f9b52c23f7bd" name="af23df2ee9c751d677f81f9b52c23f7bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af23df2ee9c751d677f81f9b52c23f7bd">&#9670;&#160;</a></span>SigRunning</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">sigc::signal&lt; void , bool &gt; saftlib::FunctionGenerator::SigRunning</td>
+          <td class="memname">sigc::signal&lt;void, bool&gt; saftlib::FunctionGenerator::SigRunning</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -653,14 +653,14 @@ std::shared_ptr&lt; <a class="el" href="classsaftlib_1_1FunctionGeneratorImpl.ht
 
 </div>
 </div>
-<a id="af54fc52c1aa650be73c467af64250d02" name="af54fc52c1aa650be73c467af64250d02"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af54fc52c1aa650be73c467af64250d02">&#9670;&#160;</a></span>SigStarted</h2>
+<a id="a5b5f3cf2c8359782cff6142d5dbbe398" name="a5b5f3cf2c8359782cff6142d5dbbe398"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b5f3cf2c8359782cff6142d5dbbe398">&#9670;&#160;</a></span>SigStarted</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">sigc::signal&lt; void , <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> &gt; saftlib::FunctionGenerator::SigStarted</td>
+          <td class="memname">sigc::signal&lt;void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>&gt; saftlib::FunctionGenerator::SigStarted</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -675,14 +675,14 @@ std::shared_ptr&lt; <a class="el" href="classsaftlib_1_1FunctionGeneratorImpl.ht
 
 </div>
 </div>
-<a id="a27b02c2121558d290819e2ba7e76be6f" name="a27b02c2121558d290819e2ba7e76be6f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a27b02c2121558d290819e2ba7e76be6f">&#9670;&#160;</a></span>SigStopped</h2>
+<a id="aa38cc053198c7f3694145be0475e7130" name="aa38cc053198c7f3694145be0475e7130"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa38cc053198c7f3694145be0475e7130">&#9670;&#160;</a></span>SigStopped</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">sigc::signal&lt; void , <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> , bool , bool , bool &gt; saftlib::FunctionGenerator::SigStopped</td>
+          <td class="memname">sigc::signal&lt;void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>, bool, bool, bool&gt; saftlib::FunctionGenerator::SigStopped</td>
         </tr>
       </table>
 </div><div class="memdoc">

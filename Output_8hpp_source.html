@@ -76,7 +76,7 @@ $(function() {
   <div class="headertitle"><div class="title">Output.hpp</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*  Copyright (C) 2011-2016, 2021-2023 GSI Helmholtz Centre for Heavy Ion Research GmbH </span></div>
+<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*  Copyright (C) 2011-2016, 2021-2023 GSI Helmholtz Centre for Heavy Ion Research GmbH</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment"> *</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment"> *  @author Wesley W. Terpstra &lt;w.terpstra@gsi.de&gt;</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment"> *          Michael Reese &lt;m.reese@gsi.de&gt;</span></div>
@@ -91,7 +91,7 @@ $(function() {
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment"> *  but WITHOUT ANY WARRANTY; without even the implied warranty of</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment"> *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment"> *  Lesser General Public License for more details.</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> *  </span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> *</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"> *  You should have received a copy of the GNU Lesser General Public</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment"> *  License along with this library. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment"> *******************************************************************************</span></div>
@@ -100,134 +100,128 @@ $(function() {
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="preprocessor">#ifndef saftlib_OUTPUT_HPP</span></div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#define saftlib_OUTPUT_HPP</span></div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#include &quot;Io.hpp&quot;</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#include &quot;ActionSink.hpp&quot;</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#include &quot;ActionSink.hpp&quot;</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#include &quot;Io.hpp&quot;</span></div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesaftlib.html">saftlib</a> {</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno"><a class="line" href="classsaftlib_1_1Output.html">   40</a></span><span class="keyword">class </span><a class="code hl_class" href="classsaftlib_1_1Output.html">Output</a> : <span class="keyword">public</span> <a class="code hl_class" href="classsaftlib_1_1ActionSink.html">ActionSink</a></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>{</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <a class="code hl_class" href="classsaftlib_1_1Output.html">Output</a>(<a class="code hl_class" href="classsaftlib_1_1ECA.html">ECA</a> &amp;eca</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>             , <a class="code hl_class" href="classsaftlib_1_1Io.html">Io</a> &amp;io</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>             , <span class="keyword">const</span> std::string &amp;output_object_path</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>             , <span class="keyword">const</span> std::string &amp;input_partner_path</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>             , <span class="keywordtype">unsigned</span> channel</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>             , <a class="code hl_class" href="classsaftbus_1_1Container.html">saftbus::Container</a> *container = <span class="keyword">nullptr</span>);</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#a0ee9bcf694966eaef57ad3baf26d3d08">NewCondition</a>(<span class="keywordtype">bool</span> active, uint64_t <span class="keywordtype">id</span>, uint64_t mask, int64_t offset, <span class="keywordtype">bool</span> on);</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesaftlib.html">saftlib</a></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>{</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="classsaftlib_1_1Output.html">   41</a></span><span class="keyword">class </span><a class="code hl_class" href="classsaftlib_1_1Output.html">Output</a> : <span class="keyword">public</span> <a class="code hl_class" href="classsaftlib_1_1ActionSink.html">ActionSink</a></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>{</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  <a class="code hl_class" href="classsaftlib_1_1Output.html">Output</a>( <a class="code hl_class" href="classsaftlib_1_1ECA.html">ECA</a>&amp;                eca,</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>          <a class="code hl_class" href="classsaftlib_1_1Io.html">Io</a>&amp;                 io,</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>          <span class="keyword">const</span> std::string&amp;  output_object_path,</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>          <span class="keyword">const</span> std::string&amp;  input_partner_path,</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>          <span class="keywordtype">unsigned</span>            channel,</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>          <a class="code hl_class" href="classsaftbus_1_1Container.html">saftbus::Container</a>* container = <span class="keyword">nullptr</span> );</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>  std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#a0ee9bcf694966eaef57ad3baf26d3d08">NewCondition</a>( <span class="keywordtype">bool</span> active, uint64_t <span class="keywordtype">id</span>, uint64_t mask, int64_t offset, <span class="keywordtype">bool</span> on );</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a63a1acf0d5bf99bc9f6b8193b3d16ef6">WriteOutput</a>(<span class="keywordtype">bool</span> value);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a63a1acf0d5bf99bc9f6b8193b3d16ef6">WriteOutput</a>( <span class="keywordtype">bool</span> value );</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#af5c6ae527a3d76e8ad040d1e344c58c1">ReadOutput</a>();</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a91e5df0706decd4ae88c4e4f26be7dbf">ReadCombinedOutput</a>();</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a1f7295eed369728b5cbc022bfd20f111">StartClock</a>(<span class="keywordtype">double</span> high_phase, <span class="keywordtype">double</span> low_phase, uint64_t phase_offset);</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a8c2a5e86978d25fa7b1b962231f8223a">ClockStatus</a>(<span class="keywordtype">double</span> &amp;high_phase, <span class="keywordtype">double</span> &amp;low_phase, uint64_t &amp;phase_offset);</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a223e9df07e1e2de6d5646ada5bdf61d9">StopClock</a>();</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        uint32_t <a class="code hl_function" href="classsaftlib_1_1Output.html#aa55b90549f0d822b5817ce1ec042cf52">getIndexOut</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        </div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>        <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a949ccb0ee9d7f00283d4d3690354b1ff">setOutputEnable</a>(<span class="keywordtype">bool</span> val);</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        <span class="keywordtype">bool</span> getOutputEnable() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        </div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a2ec4d9f5fb6acca4f7b098818da48135">setSpecialPurposeOut</a>(<span class="keywordtype">bool</span> val);</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        <span class="keywordtype">bool</span> getSpecialPurposeOut() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        </div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#afd0039ae958796539d86bdb9e876b18c">setGateOut</a>(<span class="keywordtype">bool</span> val);</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        <span class="keywordtype">bool</span> getGateOut() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        </div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a2ec275997861ab9165bcceb7696727b8">setBuTiSMultiplexer</a>(<span class="keywordtype">bool</span> val);</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="keywordtype">bool</span> getBuTiSMultiplexer() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        </div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a041a2ad525c3d839dddef5bef294ef59">setPPSMultiplexer</a>(<span class="keywordtype">bool</span> val);</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        <span class="keywordtype">bool</span> getPPSMultiplexer() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span> </div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a0523216b53593e7dd27a9244b0e539fa">getOutputEnableAvailable</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>        </div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#aef989e6561c367b986c65142b5d6186b">getSpecialPurposeOutAvailable</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>        </div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>        std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#a60ad13e6313db241db003e62e36681f2">getLogicLevelOut</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#aa70a8c337a3f7ff6781357ba0ad6b2ab">getTypeOut</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="comment">// @saftbus-export</span></div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#a7d62ee1b55cc095e9d8c5bbb82d16bd1">getInput</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span> </div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#af5c6ae527a3d76e8ad040d1e344c58c1">ReadOutput</a>();</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a91e5df0706decd4ae88c4e4f26be7dbf">ReadCombinedOutput</a>();</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a1f7295eed369728b5cbc022bfd20f111">StartClock</a>( <span class="keywordtype">double</span> high_phase, <span class="keywordtype">double</span> low_phase, uint64_t phase_offset );</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a8c2a5e86978d25fa7b1b962231f8223a">ClockStatus</a>( <span class="keywordtype">double</span>&amp; high_phase, <span class="keywordtype">double</span>&amp; low_phase, uint64_t&amp; phase_offset );</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>  <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a223e9df07e1e2de6d5646ada5bdf61d9">StopClock</a>();</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span> </div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>  uint32_t <a class="code hl_function" href="classsaftlib_1_1Output.html#aa55b90549f0d822b5817ce1ec042cf52">getIndexOut</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a949ccb0ee9d7f00283d4d3690354b1ff">setOutputEnable</a>( <span class="keywordtype">bool</span> val );</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>  <span class="keywordtype">bool</span> getOutputEnable() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a2ec4d9f5fb6acca4f7b098818da48135">setSpecialPurposeOut</a>( <span class="keywordtype">bool</span> val );</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>  <span class="keywordtype">bool</span> getSpecialPurposeOut() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span> </div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#afd0039ae958796539d86bdb9e876b18c">setGateOut</a>( <span class="keywordtype">bool</span> val );</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>  <span class="keywordtype">bool</span> getGateOut() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a2ec275997861ab9165bcceb7696727b8">setBuTiSMultiplexer</a>( <span class="keywordtype">bool</span> val );</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>  <span class="keywordtype">bool</span> getBuTiSMultiplexer() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a041a2ad525c3d839dddef5bef294ef59">setPPSMultiplexer</a>( <span class="keywordtype">bool</span> val );</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>  <span class="keywordtype">bool</span> getPPSMultiplexer() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span> </div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>  <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#a0523216b53593e7dd27a9244b0e539fa">getOutputEnableAvailable</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span> </div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>  <span class="keywordtype">bool</span> <a class="code hl_function" href="classsaftlib_1_1Output.html#aef989e6561c367b986c65142b5d6186b">getSpecialPurposeOutAvailable</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>  std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#a60ad13e6313db241db003e62e36681f2">getLogicLevelOut</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>  std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#aa70a8c337a3f7ff6781357ba0ad6b2ab">getTypeOut</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span> </div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>  <span class="comment">// @saftbus-export</span></div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>  std::string <a class="code hl_function" href="classsaftlib_1_1Output.html#a7d62ee1b55cc095e9d8c5bbb82d16bd1">getInput</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span> </div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>  <span class="comment">// TODO: why were the following signals moved?</span></div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>  <span class="comment">// Property signals</span></div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>  <span class="comment">//   sigc::signal&lt; void, bool &gt; OutputEnable;</span></div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>  <span class="comment">//   sigc::signal&lt; void, bool &gt; SpecialPurposeOut;</span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>  <span class="comment">//   sigc::signal&lt; void, bool &gt; BuTiSMultiplexer;</span></div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span> </div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        <span class="comment">// Property signals</span></div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        <span class="comment">//   sigc::signal&lt; void, bool &gt; OutputEnable;</span></div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        <span class="comment">//   sigc::signal&lt; void, bool &gt; SpecialPurposeOut;</span></div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>        <span class="comment">//   sigc::signal&lt; void, bool &gt; BuTiSMultiplexer;</span></div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span> </div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keyword">protected</span>:</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        <a class="code hl_class" href="classsaftlib_1_1Io.html">Io</a> &amp;io;</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>        std::string partnerPath;</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        <span class="keywordtype">double</span>   clk_low_phase;</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keywordtype">double</span>   clk_high_phase;</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        uint64_t clk_phase_offset;</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>};</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span> </div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>}</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span> </div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span><span class="preprocessor">#endif </span></div>
-<div class="ttc" id="aclasssaftbus_1_1Container_html"><div class="ttname"><a href="classsaftbus_1_1Container.html">saftbus::Container</a></div><div class="ttdoc">A Container of Service objects.</div><div class="ttdef"><b>Definition:</b> service.hpp:148</div></div>
-<div class="ttc" id="aclasssaftlib_1_1ActionSink_html"><div class="ttname"><a href="classsaftlib_1_1ActionSink.html">saftlib::ActionSink</a></div><div class="ttdoc">An output through which actions flow.</div><div class="ttdef"><b>Definition:</b> ActionSink.hpp:120</div></div>
-<div class="ttc" id="aclasssaftlib_1_1ECA_html"><div class="ttname"><a href="classsaftlib_1_1ECA.html">saftlib::ECA</a></div><div class="ttdoc">ECA (Event Condition Action) ECA is a hardwar unit cabable of executing actions at a given time (1 ns...</div><div class="ttdef"><b>Definition:</b> ECA.hpp:62</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Io_html"><div class="ttname"><a href="classsaftlib_1_1Io.html">saftlib::Io</a></div><div class="ttdoc">representaion of a single IO on a TimingReceiver</div><div class="ttdef"><b>Definition:</b> Io.hpp:46</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html"><div class="ttname"><a href="classsaftlib_1_1Output.html">saftlib::Output</a></div><div class="ttdoc">An output through which on/off actions flow.</div><div class="ttdef"><b>Definition:</b> Output.hpp:41</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a041a2ad525c3d839dddef5bef294ef59"><div class="ttname"><a href="classsaftlib_1_1Output.html#a041a2ad525c3d839dddef5bef294ef59">saftlib::Output::setPPSMultiplexer</a></div><div class="ttdeci">void setPPSMultiplexer(bool val)</div><div class="ttdoc">Output PPS signal from White Rabbit core.</div><div class="ttdef"><b>Definition:</b> Output.cpp:176</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a0523216b53593e7dd27a9244b0e539fa"><div class="ttname"><a href="classsaftlib_1_1Output.html#a0523216b53593e7dd27a9244b0e539fa">saftlib::Output::getOutputEnableAvailable</a></div><div class="ttdeci">bool getOutputEnableAvailable() const</div><div class="ttdoc">Can output enable be configured.</div><div class="ttdef"><b>Definition:</b> Output.cpp:100</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a0ee9bcf694966eaef57ad3baf26d3d08"><div class="ttname"><a href="classsaftlib_1_1Output.html#a0ee9bcf694966eaef57ad3baf26d3d08">saftlib::Output::NewCondition</a></div><div class="ttdeci">std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)</div><div class="ttdoc">Create a condition to match incoming events.</div><div class="ttdef"><b>Definition:</b> Output.cpp:47</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a1f7295eed369728b5cbc022bfd20f111"><div class="ttname"><a href="classsaftlib_1_1Output.html#a1f7295eed369728b5cbc022bfd20f111">saftlib::Output::StartClock</a></div><div class="ttdeci">bool StartClock(double high_phase, double low_phase, uint64_t phase_offset)</div><div class="ttdoc">Starts the clock generator with given parameters.</div><div class="ttdef"><b>Definition:</b> Output.cpp:110</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a223e9df07e1e2de6d5646ada5bdf61d9"><div class="ttname"><a href="classsaftlib_1_1Output.html#a223e9df07e1e2de6d5646ada5bdf61d9">saftlib::Output::StopClock</a></div><div class="ttdeci">bool StopClock()</div><div class="ttdoc">Stops the clock generator.</div><div class="ttdef"><b>Definition:</b> Output.cpp:128</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a2ec275997861ab9165bcceb7696727b8"><div class="ttname"><a href="classsaftlib_1_1Output.html#a2ec275997861ab9165bcceb7696727b8">saftlib::Output::setBuTiSMultiplexer</a></div><div class="ttdeci">void setBuTiSMultiplexer(bool val)</div><div class="ttdoc">Output BuTiS t0 with timestamp.</div><div class="ttdef"><b>Definition:</b> Output.cpp:170</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a2ec4d9f5fb6acca4f7b098818da48135"><div class="ttname"><a href="classsaftlib_1_1Output.html#a2ec4d9f5fb6acca4f7b098818da48135">saftlib::Output::setSpecialPurposeOut</a></div><div class="ttdeci">void setSpecialPurposeOut(bool val)</div><div class="ttdoc">Enable or disable the special function.</div><div class="ttdef"><b>Definition:</b> Output.cpp:158</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a60ad13e6313db241db003e62e36681f2"><div class="ttname"><a href="classsaftlib_1_1Output.html#a60ad13e6313db241db003e62e36681f2">saftlib::Output::getLogicLevelOut</a></div><div class="ttdeci">std::string getLogicLevelOut() const</div><div class="ttdoc">Logic level of the output.</div><div class="ttdef"><b>Definition:</b> Output.cpp:137</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a63a1acf0d5bf99bc9f6b8193b3d16ef6"><div class="ttname"><a href="classsaftlib_1_1Output.html#a63a1acf0d5bf99bc9f6b8193b3d16ef6">saftlib::Output::WriteOutput</a></div><div class="ttdeci">void WriteOutput(bool value)</div><div class="ttdoc">Directly manipulate the output value.</div><div class="ttdef"><b>Definition:</b> Output.cpp:59</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a7d62ee1b55cc095e9d8c5bbb82d16bd1"><div class="ttname"><a href="classsaftlib_1_1Output.html#a7d62ee1b55cc095e9d8c5bbb82d16bd1">saftlib::Output::getInput</a></div><div class="ttdeci">std::string getInput() const</div><div class="ttdoc">If non-empty, path of the Input object for the same physical IO.</div><div class="ttdef"><b>Definition:</b> Output.cpp:147</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a8c2a5e86978d25fa7b1b962231f8223a"><div class="ttname"><a href="classsaftlib_1_1Output.html#a8c2a5e86978d25fa7b1b962231f8223a">saftlib::Output::ClockStatus</a></div><div class="ttdeci">bool ClockStatus(double &amp;high_phase, double &amp;low_phase, uint64_t &amp;phase_offset)</div><div class="ttdoc">Get the status of the clock generator.</div><div class="ttdef"><b>Definition:</b> Output.cpp:119</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a91e5df0706decd4ae88c4e4f26be7dbf"><div class="ttname"><a href="classsaftlib_1_1Output.html#a91e5df0706decd4ae88c4e4f26be7dbf">saftlib::Output::ReadCombinedOutput</a></div><div class="ttdeci">bool ReadCombinedOutput()</div><div class="ttdoc">Read the combined output state.</div><div class="ttdef"><b>Definition:</b> Output.cpp:70</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_a949ccb0ee9d7f00283d4d3690354b1ff"><div class="ttname"><a href="classsaftlib_1_1Output.html#a949ccb0ee9d7f00283d4d3690354b1ff">saftlib::Output::setOutputEnable</a></div><div class="ttdeci">void setOutputEnable(bool val)</div><div class="ttdoc">Is the output driver enabled.</div><div class="ttdef"><b>Definition:</b> Output.cpp:152</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_aa55b90549f0d822b5817ce1ec042cf52"><div class="ttname"><a href="classsaftlib_1_1Output.html#aa55b90549f0d822b5817ce1ec042cf52">saftlib::Output::getIndexOut</a></div><div class="ttdeci">uint32_t getIndexOut() const</div><div class="ttdoc">IO index.</div><div class="ttdef"><b>Definition:</b> Output.cpp:54</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_aa70a8c337a3f7ff6781357ba0ad6b2ab"><div class="ttname"><a href="classsaftlib_1_1Output.html#aa70a8c337a3f7ff6781357ba0ad6b2ab">saftlib::Output::getTypeOut</a></div><div class="ttdeci">std::string getTypeOut() const</div><div class="ttdoc">IO type.</div><div class="ttdef"><b>Definition:</b> Output.cpp:142</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_aef989e6561c367b986c65142b5d6186b"><div class="ttname"><a href="classsaftlib_1_1Output.html#aef989e6561c367b986c65142b5d6186b">saftlib::Output::getSpecialPurposeOutAvailable</a></div><div class="ttdeci">bool getSpecialPurposeOutAvailable() const</div><div class="ttdoc">Can special configuration be configured.</div><div class="ttdef"><b>Definition:</b> Output.cpp:105</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_af5c6ae527a3d76e8ad040d1e344c58c1"><div class="ttname"><a href="classsaftlib_1_1Output.html#af5c6ae527a3d76e8ad040d1e344c58c1">saftlib::Output::ReadOutput</a></div><div class="ttdeci">bool ReadOutput()</div><div class="ttdoc">Read the output state.</div><div class="ttdef"><b>Definition:</b> Output.cpp:65</div></div>
-<div class="ttc" id="aclasssaftlib_1_1Output_html_afd0039ae958796539d86bdb9e876b18c"><div class="ttname"><a href="classsaftlib_1_1Output.html#afd0039ae958796539d86bdb9e876b18c">saftlib::Output::setGateOut</a></div><div class="ttdeci">void setGateOut(bool val)</div><div class="ttdoc">Set output gate or get gate status.</div><div class="ttdef"><b>Definition:</b> Output.cpp:164</div></div>
-<div class="ttc" id="anamespacesaftlib_html"><div class="ttname"><a href="namespacesaftlib.html">saftlib</a></div><div class="ttdoc">saftlib is collection of driver objects for FAIR Timing Receiver Hardware</div><div class="ttdef"><b>Definition:</b> ActionSink.cpp:38</div></div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>  <a class="code hl_class" href="classsaftlib_1_1Io.html">Io</a>&amp;         io;</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>  std::string partnerPath;</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span> </div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>  <span class="keywordtype">double</span>   clk_low_phase;</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>  <span class="keywordtype">double</span>   clk_high_phase;</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>  uint64_t clk_phase_offset;</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>};</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span> </div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>} <span class="comment">// namespace saftlib</span></div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span> </div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="aclasssaftbus_1_1Container_html"><div class="ttname"><a href="classsaftbus_1_1Container.html">saftbus::Container</a></div><div class="ttdoc">A Container of Service objects.</div><div class="ttdef"><b>Definition:</b> service.hpp:187</div></div>
+<div class="ttc" id="aclasssaftlib_1_1ActionSink_html"><div class="ttname"><a href="classsaftlib_1_1ActionSink.html">saftlib::ActionSink</a></div><div class="ttdoc">An output through which actions flow.</div><div class="ttdef"><b>Definition:</b> ActionSink.hpp:121</div></div>
+<div class="ttc" id="aclasssaftlib_1_1ECA_html"><div class="ttname"><a href="classsaftlib_1_1ECA.html">saftlib::ECA</a></div><div class="ttdoc">ECA (Event Condition Action) ECA is a hardwar unit cabable of executing actions at a given time (1 ns...</div><div class="ttdef"><b>Definition:</b> ECA.hpp:65</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Io_html"><div class="ttname"><a href="classsaftlib_1_1Io.html">saftlib::Io</a></div><div class="ttdoc">representaion of a single IO on a TimingReceiver</div><div class="ttdef"><b>Definition:</b> Io.hpp:48</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html"><div class="ttname"><a href="classsaftlib_1_1Output.html">saftlib::Output</a></div><div class="ttdoc">An output through which on/off actions flow.</div><div class="ttdef"><b>Definition:</b> Output.hpp:42</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a041a2ad525c3d839dddef5bef294ef59"><div class="ttname"><a href="classsaftlib_1_1Output.html#a041a2ad525c3d839dddef5bef294ef59">saftlib::Output::setPPSMultiplexer</a></div><div class="ttdeci">void setPPSMultiplexer(bool val)</div><div class="ttdoc">Output PPS signal from White Rabbit core.</div><div class="ttdef"><b>Definition:</b> Output.cpp:180</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a0523216b53593e7dd27a9244b0e539fa"><div class="ttname"><a href="classsaftlib_1_1Output.html#a0523216b53593e7dd27a9244b0e539fa">saftlib::Output::getOutputEnableAvailable</a></div><div class="ttdeci">bool getOutputEnableAvailable() const</div><div class="ttdoc">Can output enable be configured.</div><div class="ttdef"><b>Definition:</b> Output.cpp:98</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a0ee9bcf694966eaef57ad3baf26d3d08"><div class="ttname"><a href="classsaftlib_1_1Output.html#a0ee9bcf694966eaef57ad3baf26d3d08">saftlib::Output::NewCondition</a></div><div class="ttdeci">std::string NewCondition(bool active, uint64_t id, uint64_t mask, int64_t offset, bool on)</div><div class="ttdoc">Create a condition to match incoming events.</div><div class="ttdef"><b>Definition:</b> Output.cpp:45</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a1f7295eed369728b5cbc022bfd20f111"><div class="ttname"><a href="classsaftlib_1_1Output.html#a1f7295eed369728b5cbc022bfd20f111">saftlib::Output::StartClock</a></div><div class="ttdeci">bool StartClock(double high_phase, double low_phase, uint64_t phase_offset)</div><div class="ttdoc">Starts the clock generator with given parameters.</div><div class="ttdef"><b>Definition:</b> Output.cpp:108</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a223e9df07e1e2de6d5646ada5bdf61d9"><div class="ttname"><a href="classsaftlib_1_1Output.html#a223e9df07e1e2de6d5646ada5bdf61d9">saftlib::Output::StopClock</a></div><div class="ttdeci">bool StopClock()</div><div class="ttdoc">Stops the clock generator.</div><div class="ttdef"><b>Definition:</b> Output.cpp:132</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a2ec275997861ab9165bcceb7696727b8"><div class="ttname"><a href="classsaftlib_1_1Output.html#a2ec275997861ab9165bcceb7696727b8">saftlib::Output::setBuTiSMultiplexer</a></div><div class="ttdeci">void setBuTiSMultiplexer(bool val)</div><div class="ttdoc">Output BuTiS t0 with timestamp.</div><div class="ttdef"><b>Definition:</b> Output.cpp:174</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a2ec4d9f5fb6acca4f7b098818da48135"><div class="ttname"><a href="classsaftlib_1_1Output.html#a2ec4d9f5fb6acca4f7b098818da48135">saftlib::Output::setSpecialPurposeOut</a></div><div class="ttdeci">void setSpecialPurposeOut(bool val)</div><div class="ttdoc">Enable or disable the special function.</div><div class="ttdef"><b>Definition:</b> Output.cpp:162</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a60ad13e6313db241db003e62e36681f2"><div class="ttname"><a href="classsaftlib_1_1Output.html#a60ad13e6313db241db003e62e36681f2">saftlib::Output::getLogicLevelOut</a></div><div class="ttdeci">std::string getLogicLevelOut() const</div><div class="ttdoc">Logic level of the output.</div><div class="ttdef"><b>Definition:</b> Output.cpp:141</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a63a1acf0d5bf99bc9f6b8193b3d16ef6"><div class="ttname"><a href="classsaftlib_1_1Output.html#a63a1acf0d5bf99bc9f6b8193b3d16ef6">saftlib::Output::WriteOutput</a></div><div class="ttdeci">void WriteOutput(bool value)</div><div class="ttdoc">Directly manipulate the output value.</div><div class="ttdef"><b>Definition:</b> Output.cpp:57</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a7d62ee1b55cc095e9d8c5bbb82d16bd1"><div class="ttname"><a href="classsaftlib_1_1Output.html#a7d62ee1b55cc095e9d8c5bbb82d16bd1">saftlib::Output::getInput</a></div><div class="ttdeci">std::string getInput() const</div><div class="ttdoc">If non-empty, path of the Input object for the same physical IO.</div><div class="ttdef"><b>Definition:</b> Output.cpp:151</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a8c2a5e86978d25fa7b1b962231f8223a"><div class="ttname"><a href="classsaftlib_1_1Output.html#a8c2a5e86978d25fa7b1b962231f8223a">saftlib::Output::ClockStatus</a></div><div class="ttdeci">bool ClockStatus(double &amp;high_phase, double &amp;low_phase, uint64_t &amp;phase_offset)</div><div class="ttdoc">Get the status of the clock generator.</div><div class="ttdef"><b>Definition:</b> Output.cpp:117</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a91e5df0706decd4ae88c4e4f26be7dbf"><div class="ttname"><a href="classsaftlib_1_1Output.html#a91e5df0706decd4ae88c4e4f26be7dbf">saftlib::Output::ReadCombinedOutput</a></div><div class="ttdeci">bool ReadCombinedOutput()</div><div class="ttdoc">Read the combined output state.</div><div class="ttdef"><b>Definition:</b> Output.cpp:68</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_a949ccb0ee9d7f00283d4d3690354b1ff"><div class="ttname"><a href="classsaftlib_1_1Output.html#a949ccb0ee9d7f00283d4d3690354b1ff">saftlib::Output::setOutputEnable</a></div><div class="ttdeci">void setOutputEnable(bool val)</div><div class="ttdoc">Is the output driver enabled.</div><div class="ttdef"><b>Definition:</b> Output.cpp:156</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_aa55b90549f0d822b5817ce1ec042cf52"><div class="ttname"><a href="classsaftlib_1_1Output.html#aa55b90549f0d822b5817ce1ec042cf52">saftlib::Output::getIndexOut</a></div><div class="ttdeci">uint32_t getIndexOut() const</div><div class="ttdoc">IO index.</div><div class="ttdef"><b>Definition:</b> Output.cpp:52</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_aa70a8c337a3f7ff6781357ba0ad6b2ab"><div class="ttname"><a href="classsaftlib_1_1Output.html#aa70a8c337a3f7ff6781357ba0ad6b2ab">saftlib::Output::getTypeOut</a></div><div class="ttdeci">std::string getTypeOut() const</div><div class="ttdoc">IO type.</div><div class="ttdef"><b>Definition:</b> Output.cpp:146</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_aef989e6561c367b986c65142b5d6186b"><div class="ttname"><a href="classsaftlib_1_1Output.html#aef989e6561c367b986c65142b5d6186b">saftlib::Output::getSpecialPurposeOutAvailable</a></div><div class="ttdeci">bool getSpecialPurposeOutAvailable() const</div><div class="ttdoc">Can special configuration be configured.</div><div class="ttdef"><b>Definition:</b> Output.cpp:103</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_af5c6ae527a3d76e8ad040d1e344c58c1"><div class="ttname"><a href="classsaftlib_1_1Output.html#af5c6ae527a3d76e8ad040d1e344c58c1">saftlib::Output::ReadOutput</a></div><div class="ttdeci">bool ReadOutput()</div><div class="ttdoc">Read the output state.</div><div class="ttdef"><b>Definition:</b> Output.cpp:63</div></div>
+<div class="ttc" id="aclasssaftlib_1_1Output_html_afd0039ae958796539d86bdb9e876b18c"><div class="ttname"><a href="classsaftlib_1_1Output.html#afd0039ae958796539d86bdb9e876b18c">saftlib::Output::setGateOut</a></div><div class="ttdeci">void setGateOut(bool val)</div><div class="ttdoc">Set output gate or get gate status.</div><div class="ttdef"><b>Definition:</b> Output.cpp:168</div></div>
+<div class="ttc" id="anamespacesaftlib_html"><div class="ttname"><a href="namespacesaftlib.html">saftlib</a></div><div class="ttdoc">saftlib is collection of driver objects for FAIR Timing Receiver Hardware</div><div class="ttdef"><b>Definition:</b> ActionSink.cpp:40</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

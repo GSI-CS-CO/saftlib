@@ -161,8 +161,9 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>getGenerateIndividual
 <tr class="memitem:a959cd3b36f768b27912eef42e0ff36f7"><td class="memItemLeft" align="right" valign="top">std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#a959cd3b36f768b27912eef42e0ff36f7">ReadRunning</a> ()</td></tr>
 <tr class="memdesc:a959cd3b36f768b27912eef42e0ff36f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the running state of each active FG.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#a959cd3b36f768b27912eef42e0ff36f7">More...</a><br /></td></tr>
 <tr class="separator:a959cd3b36f768b27912eef42e0ff36f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63db1509cf5dbb5d7b187a4be233193b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#a63db1509cf5dbb5d7b187a4be233193b">ResetActiveFunctionGenerators</a> ()</td></tr>
-<tr class="memdesc:a63db1509cf5dbb5d7b187a4be233193b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the list of active function generators handled by this master to all available FGs.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#a63db1509cf5dbb5d7b187a4be233193b">More...</a><br /></td></tr>
+<tr class="memitem:a63db1509cf5dbb5d7b187a4be233193b"><td class="memItemLeft" align="right" valign="top"><a id="a63db1509cf5dbb5d7b187a4be233193b" name="a63db1509cf5dbb5d7b187a4be233193b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>ResetActiveFunctionGenerators</b> ()</td></tr>
+<tr class="memdesc:a63db1509cf5dbb5d7b187a4be233193b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the list of active function generators handled by this master to all available FGs. <br /></td></tr>
 <tr class="separator:a63db1509cf5dbb5d7b187a4be233193b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b1f9287e4877cfdbc6e6c0173e415cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#a3b1f9287e4877cfdbc6e6c0173e415cf">SetActiveFunctionGenerators</a> (const std::vector&lt; std::string &gt; &amp;names)</td></tr>
 <tr class="memdesc:a3b1f9287e4877cfdbc6e6c0173e415cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the list of active function generators handled by this master to the names given.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#a3b1f9287e4877cfdbc6e6c0173e415cf">More...</a><br /></td></tr>
@@ -200,35 +201,35 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>release_service</b> (
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:aec27b2c105401c5c6656db405d026277"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, std::string, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>, bool, bool, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#aec27b2c105401c5c6656db405d026277">SigStopped</a></td></tr>
-<tr class="memdesc:aec27b2c105401c5c6656db405d026277"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stopped signal forwarded from a single Function Generator.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#aec27b2c105401c5c6656db405d026277">More...</a><br /></td></tr>
-<tr class="separator:aec27b2c105401c5c6656db405d026277"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aef8057ba069465a2a0db203727d8f6ac"><td class="memItemLeft" align="right" valign="top"><a id="aef8057ba069465a2a0db203727d8f6ac" name="aef8057ba069465a2a0db203727d8f6ac"></a>
+<tr class="memitem:ad80aa91150600ea5639b5b8182d4c771"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, std::string, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>, bool, bool, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#ad80aa91150600ea5639b5b8182d4c771">SigStopped</a></td></tr>
+<tr class="memdesc:ad80aa91150600ea5639b5b8182d4c771"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stopped signal forwarded from a single Function Generator.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#ad80aa91150600ea5639b5b8182d4c771">More...</a><br /></td></tr>
+<tr class="separator:ad80aa91150600ea5639b5b8182d4c771"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf518e5fdcfc1a8206c2d0ac8df52a75"><td class="memItemLeft" align="right" valign="top"><a id="adf518e5fdcfc1a8206c2d0ac8df52a75" name="adf518e5fdcfc1a8206c2d0ac8df52a75"></a>
 sigc::signal&lt; void, std::string, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Armed</b></td></tr>
-<tr class="memdesc:aef8057ba069465a2a0db203727d8f6ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Armed signal forwarded from a single Function Generator. <br /></td></tr>
-<tr class="separator:aef8057ba069465a2a0db203727d8f6ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e3170656423b35b9e518700812e0b6a"><td class="memItemLeft" align="right" valign="top"><a id="a5e3170656423b35b9e518700812e0b6a" name="a5e3170656423b35b9e518700812e0b6a"></a>
+<tr class="memdesc:adf518e5fdcfc1a8206c2d0ac8df52a75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Armed signal forwarded from a single Function Generator. <br /></td></tr>
+<tr class="separator:adf518e5fdcfc1a8206c2d0ac8df52a75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e33a7b6c62e17345922fc2b263f7b3f"><td class="memItemLeft" align="right" valign="top"><a id="a0e33a7b6c62e17345922fc2b263f7b3f" name="a0e33a7b6c62e17345922fc2b263f7b3f"></a>
 sigc::signal&lt; void, std::string, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Enabled</b></td></tr>
-<tr class="memdesc:a5e3170656423b35b9e518700812e0b6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enabled signal forwarded from a single Function Generator. <br /></td></tr>
-<tr class="separator:a5e3170656423b35b9e518700812e0b6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb934d301681c382bb3844b240c02254"><td class="memItemLeft" align="right" valign="top"><a id="adb934d301681c382bb3844b240c02254" name="adb934d301681c382bb3844b240c02254"></a>
+<tr class="memdesc:a0e33a7b6c62e17345922fc2b263f7b3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enabled signal forwarded from a single Function Generator. <br /></td></tr>
+<tr class="separator:a0e33a7b6c62e17345922fc2b263f7b3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a393b60460133ccdeba35c026d4a4dae1"><td class="memItemLeft" align="right" valign="top"><a id="a393b60460133ccdeba35c026d4a4dae1" name="a393b60460133ccdeba35c026d4a4dae1"></a>
 sigc::signal&lt; void, std::string, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Running</b></td></tr>
-<tr class="memdesc:adb934d301681c382bb3844b240c02254"><td class="mdescLeft">&#160;</td><td class="mdescRight">Running signal forwarded from a single Function Generator. <br /></td></tr>
-<tr class="separator:adb934d301681c382bb3844b240c02254"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b029e9b69f84090eec66edf080c4897"><td class="memItemLeft" align="right" valign="top"><a id="a7b029e9b69f84090eec66edf080c4897" name="a7b029e9b69f84090eec66edf080c4897"></a>
+<tr class="memdesc:a393b60460133ccdeba35c026d4a4dae1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Running signal forwarded from a single Function Generator. <br /></td></tr>
+<tr class="separator:a393b60460133ccdeba35c026d4a4dae1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae387fe6def8a077028f9becdf132091e"><td class="memItemLeft" align="right" valign="top"><a id="ae387fe6def8a077028f9becdf132091e" name="ae387fe6def8a077028f9becdf132091e"></a>
 sigc::signal&lt; void, std::string, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SigStarted</b></td></tr>
-<tr class="memdesc:a7b029e9b69f84090eec66edf080c4897"><td class="mdescLeft">&#160;</td><td class="mdescRight">Started signal forwarded from a single Function Generator. <br /></td></tr>
-<tr class="separator:a7b029e9b69f84090eec66edf080c4897"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20c1a439dbea4b653ef7c1bbba4a7b8f"><td class="memItemLeft" align="right" valign="top"><a id="a20c1a439dbea4b653ef7c1bbba4a7b8f" name="a20c1a439dbea4b653ef7c1bbba4a7b8f"></a>
+<tr class="memdesc:ae387fe6def8a077028f9becdf132091e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Started signal forwarded from a single Function Generator. <br /></td></tr>
+<tr class="separator:ae387fe6def8a077028f9becdf132091e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f6fb20c6a671e044cc111000575d467"><td class="memItemLeft" align="right" valign="top"><a id="a1f6fb20c6a671e044cc111000575d467" name="a1f6fb20c6a671e044cc111000575d467"></a>
 sigc::signal&lt; void, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Refill</b></td></tr>
-<tr class="memdesc:a20c1a439dbea4b653ef7c1bbba4a7b8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Refill signal forwarded from a single Function Generator. <br /></td></tr>
-<tr class="separator:a20c1a439dbea4b653ef7c1bbba4a7b8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a00ba7d3a068342ba53406f7bff1345f1"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#a00ba7d3a068342ba53406f7bff1345f1">SigAllStopped</a></td></tr>
-<tr class="memdesc:a00ba7d3a068342ba53406f7bff1345f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">All Function generators have stopped.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#a00ba7d3a068342ba53406f7bff1345f1">More...</a><br /></td></tr>
-<tr class="separator:a00ba7d3a068342ba53406f7bff1345f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa443c77e48ac324c69454f32aabc148"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#aaa443c77e48ac324c69454f32aabc148">AllArmed</a></td></tr>
-<tr class="memdesc:aaa443c77e48ac324c69454f32aabc148"><td class="mdescLeft">&#160;</td><td class="mdescRight">All Function generators that have a FillLevel&gt;0 are armed.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#aaa443c77e48ac324c69454f32aabc148">More...</a><br /></td></tr>
-<tr class="separator:aaa443c77e48ac324c69454f32aabc148"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a1f6fb20c6a671e044cc111000575d467"><td class="mdescLeft">&#160;</td><td class="mdescRight">Refill signal forwarded from a single Function Generator. <br /></td></tr>
+<tr class="separator:a1f6fb20c6a671e044cc111000575d467"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef260199202725745aa2eb5d33677860"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#aef260199202725745aa2eb5d33677860">SigAllStopped</a></td></tr>
+<tr class="memdesc:aef260199202725745aa2eb5d33677860"><td class="mdescLeft">&#160;</td><td class="mdescRight">All Function generators have stopped.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#aef260199202725745aa2eb5d33677860">More...</a><br /></td></tr>
+<tr class="separator:aef260199202725745aa2eb5d33677860"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cf6c180fcd6baf9baa49ad7442b6c1c"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1MasterFunctionGenerator.html#a0cf6c180fcd6baf9baa49ad7442b6c1c">AllArmed</a></td></tr>
+<tr class="memdesc:a0cf6c180fcd6baf9baa49ad7442b6c1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">All Function generators that have a FillLevel&gt;0 are armed.  <a href="classsaftlib_1_1MasterFunctionGenerator.html#a0cf6c180fcd6baf9baa49ad7442b6c1c">More...</a><br /></td></tr>
+<tr class="separator:a0cf6c180fcd6baf9baa49ad7442b6c1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_attribs_classsaftlib_1_1Owned"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_classsaftlib_1_1Owned')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classsaftlib_1_1Owned.html">saftlib::Owned</a></td></tr>
 <tr class="memitem:af862c85d43711cfae99d864a6a77e07d inherit pub_attribs_classsaftlib_1_1Owned"><td class="memItemLeft" align="right" valign="top">sigc::signal&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsaftlib_1_1Owned.html#af862c85d43711cfae99d864a6a77e07d">Destroyed</a></td></tr>
 <tr class="memdesc:af862c85d43711cfae99d864a6a77e07d inherit pub_attribs_classsaftlib_1_1Owned"><td class="mdescLeft">&#160;</td><td class="mdescRight">The object was destroyed.  <a href="classsaftlib_1_1Owned.html#af862c85d43711cfae99d864a6a77e07d">More...</a><br /></td></tr>
@@ -301,18 +302,18 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>generateIndividualSig
 <tr class="memitem:ac8550323f2a969d55cccb5b8b6d24354"><td class="memItemLeft" align="right" valign="top"><a id="ac8550323f2a969d55cccb5b8b6d24354" name="ac8550323f2a969d55cccb5b8b6d24354"></a>
 sigc::connection&#160;</td><td class="memItemRight" valign="bottom"><b>waitTimeout</b></td></tr>
 <tr class="separator:ac8550323f2a969d55cccb5b8b6d24354"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab37d7cc82dda4dcfb80f7b42c9e96d41"><td class="memItemLeft" align="right" valign="top"><a id="ab37d7cc82dda4dcfb80f7b42c9e96d41" name="ab37d7cc82dda4dcfb80f7b42c9e96d41"></a>
+<tr class="memitem:a215e8fc0f13e7b225d3fb35eeef0ad3d"><td class="memItemLeft" align="right" valign="top"><a id="a215e8fc0f13e7b225d3fb35eeef0ad3d" name="a215e8fc0f13e7b225d3fb35eeef0ad3d"></a>
 std::map&lt; int, std::vector&lt; <a class="el" href="structsaftlib_1_1ParameterTuple.html">ParameterTuple</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>parametersForBeamProcess</b></td></tr>
-<tr class="separator:ab37d7cc82dda4dcfb80f7b42c9e96d41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a215e8fc0f13e7b225d3fb35eeef0ad3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30448421db9dce1d5e7b25be17631e82"><td class="memItemLeft" align="right" valign="top"><a id="a30448421db9dce1d5e7b25be17631e82" name="a30448421db9dce1d5e7b25be17631e82"></a>
 std::unique_ptr&lt; boost::interprocess::managed_shared_memory &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>shm_params</b></td></tr>
 <tr class="separator:a30448421db9dce1d5e7b25be17631e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3088f3af9d0b45115640d680f38c3488"><td class="memItemLeft" align="right" valign="top"><a id="a3088f3af9d0b45115640d680f38c3488" name="a3088f3af9d0b45115640d680f38c3488"></a>
 boost::interprocess::interprocess_mutex *&#160;</td><td class="memItemRight" valign="bottom"><b>shm_mutex</b></td></tr>
 <tr class="separator:a3088f3af9d0b45115640d680f38c3488"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af03b1dccda1123decf20aecb544b2049"><td class="memItemLeft" align="right" valign="top"><a id="af03b1dccda1123decf20aecb544b2049" name="af03b1dccda1123decf20aecb544b2049"></a>
+<tr class="memitem:a86b6043a6f52a0b05f0bea5e460bb7e7"><td class="memItemLeft" align="right" valign="top"><a id="a86b6043a6f52a0b05f0bea5e460bb7e7" name="a86b6043a6f52a0b05f0bea5e460bb7e7"></a>
 std::map&lt; std::string, ParameterVector * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>paramVectors</b></td></tr>
-<tr class="separator:af03b1dccda1123decf20aecb544b2049"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a86b6043a6f52a0b05f0bea5e460bb7e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Interface to multiple Function Generators. </p>
@@ -683,34 +684,6 @@ Here is the call graph for this function:</div>
 
 </div>
 </div>
-<a id="a63db1509cf5dbb5d7b187a4be233193b" name="a63db1509cf5dbb5d7b187a4be233193b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a63db1509cf5dbb5d7b187a4be233193b">&#9670;&#160;</a></span>ResetActiveFunctionGenerators()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void saftlib::MasterFunctionGenerator::ResetActiveFunctionGenerators </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Resets the list of active function generators handled by this master to all available FGs. </p>
-<div class="dynheader">
-Here is the call graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="classsaftlib_1_1MasterFunctionGenerator_a63db1509cf5dbb5d7b187a4be233193b_cgraph.png" border="0" usemap="#aclasssaftlib_1_1MasterFunctionGenerator_a63db1509cf5dbb5d7b187a4be233193b_cgraph" alt=""/></div>
-<map name="aclasssaftlib_1_1MasterFunctionGenerator_a63db1509cf5dbb5d7b187a4be233193b_cgraph" id="aclasssaftlib_1_1MasterFunctionGenerator_a63db1509cf5dbb5d7b187a4be233193b_cgraph">
-<area shape="rect" title="Resets the list of active function generators handled by this master to all available FGs." alt="" coords="5,5,219,45"/>
-<area shape="rect" href="classsaftlib_1_1Owned.html#aed5da441e1295bf94b4b327e8a9445c2" title="Throw an exception if the caller is not the owner." alt="" coords="267,13,437,38"/>
-</map>
-</div>
-
-</div>
-</div>
 <a id="a3b1f9287e4877cfdbc6e6c0173e415cf" name="a3b1f9287e4877cfdbc6e6c0173e415cf"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3b1f9287e4877cfdbc6e6c0173e415cf">&#9670;&#160;</a></span>SetActiveFunctionGenerators()</h2>
 
@@ -799,14 +772,14 @@ Here is the call graph for this function:</div>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="aaa443c77e48ac324c69454f32aabc148" name="aaa443c77e48ac324c69454f32aabc148"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa443c77e48ac324c69454f32aabc148">&#9670;&#160;</a></span>AllArmed</h2>
+<a id="a0cf6c180fcd6baf9baa49ad7442b6c1c" name="a0cf6c180fcd6baf9baa49ad7442b6c1c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0cf6c180fcd6baf9baa49ad7442b6c1c">&#9670;&#160;</a></span>AllArmed</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">sigc::signal&lt; void &gt; saftlib::MasterFunctionGenerator::AllArmed</td>
+          <td class="memname">sigc::signal&lt;void&gt; saftlib::MasterFunctionGenerator::AllArmed</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -816,14 +789,14 @@ Here is the call graph for this function:</div>
 
 </div>
 </div>
-<a id="a00ba7d3a068342ba53406f7bff1345f1" name="a00ba7d3a068342ba53406f7bff1345f1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a00ba7d3a068342ba53406f7bff1345f1">&#9670;&#160;</a></span>SigAllStopped</h2>
+<a id="aef260199202725745aa2eb5d33677860" name="aef260199202725745aa2eb5d33677860"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef260199202725745aa2eb5d33677860">&#9670;&#160;</a></span>SigAllStopped</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">sigc::signal&lt; void , <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> &gt; saftlib::MasterFunctionGenerator::SigAllStopped</td>
+          <td class="memname">sigc::signal&lt;void, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>&gt; saftlib::MasterFunctionGenerator::SigAllStopped</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -839,14 +812,14 @@ Here is the call graph for this function:</div>
 
 </div>
 </div>
-<a id="aec27b2c105401c5c6656db405d026277" name="aec27b2c105401c5c6656db405d026277"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aec27b2c105401c5c6656db405d026277">&#9670;&#160;</a></span>SigStopped</h2>
+<a id="ad80aa91150600ea5639b5b8182d4c771" name="ad80aa91150600ea5639b5b8182d4c771"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad80aa91150600ea5639b5b8182d4c771">&#9670;&#160;</a></span>SigStopped</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">sigc::signal&lt; void , std::string , <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a> , bool , bool , bool &gt; saftlib::MasterFunctionGenerator::SigStopped</td>
+          <td class="memname">sigc::signal&lt;void, std::string, <a class="el" href="classsaftlib_1_1Time.html">saftlib::Time</a>, bool, bool, bool&gt; saftlib::MasterFunctionGenerator::SigStopped</td>
         </tr>
       </table>
 </div><div class="memdoc">
