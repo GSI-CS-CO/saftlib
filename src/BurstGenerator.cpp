@@ -2,14 +2,13 @@
 
 #include <unistd.h>
 
-//#include "RegisteredObject.h"
 #include "BurstGenerator.hpp"
 #include "bg_regs.h"
-//#include "clog.h"
 
-// #include <Output.hpp>
 #include <TimingReceiver.hpp>
 #include <SAFTd.hpp>
+
+// TODO: Burst Generator needs its own subfolder
 
 using namespace etherbone;
 
@@ -221,7 +220,8 @@ namespace saftlib {
       eb_data_t data;
 
       // read burst info from the shared memory
-      /*TODO: cycle read failed! Find out the reason!
+      // FIXME: Check old to-do, can commented out section be safely deleted without further investigation?
+      /* old to do: cycle read failed! Find out the reason!
       Cycle cycle;
       cycle.open(device);
 

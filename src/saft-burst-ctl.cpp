@@ -542,6 +542,7 @@ static int bg_parse_options(const std::string& options, const char* optstring)
   return status;
 }
 
+// FIXME: Can commented out section be safely deleted without further investigation?
 /* Extract options from a single string */
 /*static std::vector<std::string> bg_extract_options(const std::string& str, const std::string& rule)
 {
@@ -1050,7 +1051,8 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
     else if (check == 0) // conditions were not set
     {
       /* Configure ECA with the conditions for eCPU actions */
-      if (ecpu_update(e_id, e_mask, 0, tag, verbose_mode))  // TODO: apply offset?
+      // FIXME: Check old to-do
+      if (ecpu_update(e_id, e_mask, 0, tag, verbose_mode))  // old to do: apply offset?
       {
         std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
         return -1;
@@ -1070,7 +1072,8 @@ static int bg_create_burst(int burst_id, uint64_t e_id, uint64_t e_mask, uint64_
       else if (check == 0) // conditions were not set
       {
         /* Configure ECA with the conditions for eCPU actions */
-        if (ecpu_update(stop_e_id, stop_e_mask, 0, tag, verbose_mode))  // TODO: apply offset?
+        // FIXME: Check old to-do
+        if (ecpu_update(stop_e_id, stop_e_mask, 0, tag, verbose_mode))  // old to do: apply offset?
         {
           std::cerr << "Failed to set conditions for eCPU actions" << std::endl;
           return -1;
@@ -1995,6 +1998,7 @@ static void io_help (void)
   std::cout << "  -e <id> <ctrl>:                     Enable burst: enable if 'ctrl' is non-zero, otherwise disable (ctrl=0)" << std::endl;
   std::cout << "  -r <id>:                            Remove burst" << std::endl;
   std::cout << std::endl;
+  // TODO: Why was the following block deactivated? Is its function still needed?
   /*
   std::cout << "      0x1                                        Print the burst parameters. Arguments: burst_id" << std::endl;
   std::cout << "      0x2                                        Obtain the burst parameters. Arguments: burst_id, delay, conditions, block period, flag, verbose" << std::endl;

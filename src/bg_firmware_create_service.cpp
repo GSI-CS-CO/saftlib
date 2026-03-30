@@ -13,6 +13,7 @@
 #include <map>
 #include <functional>
 
+// TODO: Burst Generator needs its own subfolder
 
 extern "C" 
 void create_services(saftbus::Container *container, const std::vector<std::string> &args) {

@@ -17,6 +17,9 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+
+// TODO: move into right structure for regs, Burst Generator needs its own subfolder
+
 #ifndef BG_REGS_H
 #define BG_REGS_H
 

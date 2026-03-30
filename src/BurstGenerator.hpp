@@ -13,6 +13,9 @@
 
 #include <memory>
 
+// TODO: Burst Generator needs its own subfolder
+// TODO: Burst Generator needs more documentation
+
 namespace saftlib {
 
   ///  @brief Burst generation service

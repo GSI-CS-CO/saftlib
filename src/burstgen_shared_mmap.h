@@ -1,3 +1,6 @@
+
+// TODO: move into right structure for regs, Burst Generator needs its own subfolder
+
 #ifndef BURSTGEN_SHARED_MMAP_H
 #define BURSTGEN_SHARED_MMAP_H
 //Location of Buildid and Shared Section in LM32 Memory, to be used by host
