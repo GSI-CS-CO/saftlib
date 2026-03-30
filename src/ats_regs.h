@@ -17,6 +17,8 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+
+// TODO: move into right structure for regs
 #ifndef TEMP_SENSOR_H
 #define TEMP_SENSOR_H
 
