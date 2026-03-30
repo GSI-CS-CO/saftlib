@@ -9,6 +9,8 @@ tags:
 include:
   - "*.hpp"
   - "*.cpp"
+  - "*.c"
+  - "*.h"
 
 exclude:
   - "m4/**"
