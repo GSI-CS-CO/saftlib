@@ -33,6 +33,9 @@
 #include <sstream>
 #include <memory>
 
+#define SCUB_SOFTWARE_TAG_LO 0x20
+#define SCUB_SOFTWARE_TAG_HI 0x24
+
 namespace saftlib {
 
 SCUbusActionSink::SCUbusActionSink(etherbone::Device &dev
@@ -57,8 +60,6 @@ void SCUbusActionSink::InjectTag(uint32_t tag)
 	ownerOnly();
 	etherbone::Cycle cycle;
 	cycle.open(device);
-#define SCUB_SOFTWARE_TAG_LO 0x20
-#define SCUB_SOFTWARE_TAG_HI 0x24
 	cycle.write(scubus + SCUB_SOFTWARE_TAG_LO, EB_BIG_ENDIAN|EB_DATA16, tag & 0xFFFF);
 	cycle.write(scubus + SCUB_SOFTWARE_TAG_HI, EB_BIG_ENDIAN|EB_DATA16, (tag >> 16) & 0xFFFF);
 	cycle.close();
