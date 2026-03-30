@@ -304,7 +304,6 @@ class ActionSink : public Owned
 		void setOverflowCount(uint64_t val);
 		// @saftbus-signal
 		sigc::signal<void, uint64_t> OverflowCount;
-		//std::function< void(uint64_t val)> OverflowCount;
 
 		/// @brief  The number of actions processed by the Sink.
 		/// @return The number of actions processed by the Sink.
@@ -319,7 +318,6 @@ class ActionSink : public Owned
 		void setActionCount(uint64_t val);
 		// @saftbus-signal
 		sigc::signal<void, uint64_t> ActionCount;
-		//std::function< void(uint64_t val)> ActionCount;
 
 		/// @brief  The number of actions delivered late.
 		/// @return The number of actions delivered late.
@@ -340,7 +338,6 @@ class ActionSink : public Owned
 		void setLateCount(uint64_t val);
 		// @saftbus-signal
 		sigc::signal< void, uint64_t> LateCount;
-		//std::function< void(uint64_t val)> LateCount;
 
 
 		/// @brief:      An example of a late action since last LateCount change.
@@ -357,8 +354,6 @@ class ActionSink : public Owned
 		///
 		// @saftbus-signal		
 		sigc::signal<void, uint32_t, uint64_t, uint64_t, saftlib::Time, saftlib::Time> SigLate;
-		//std::function< void(uint32_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigLate;
-
 
 
 		///	@brief  The number of actions delivered early.
@@ -380,7 +375,6 @@ class ActionSink : public Owned
 		void setEarlyCount(uint64_t val);
 		// @saftbus-signal
 		sigc::signal<void, uint64_t> EarlyCount;
-		// std::function< void(uint64_t val)> EarlyCount;
 
 		/// @brief     An example of an early action since last EarlyCount change.
 		///
@@ -391,7 +385,6 @@ class ActionSink : public Owned
 		/// @param executed The actual execution timestamp.
 		// @saftbus-signal		
 		sigc::signal< void, uint32_t, uint64_t, uint64_t, saftlib::Time, saftlib::Time> SigEarly;
-		// std::function< void(uint32_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigEarly;
 
 		/// @brief  The number of actions which conflicted. 
 		/// @return The number of actions which conflicted. 
@@ -409,7 +402,6 @@ class ActionSink : public Owned
 		void setConflictCount(uint64_t val);
 		// @saftbus-signal
 		sigc::signal<void, uint64_t> ConflictCount;
-		// std::function< void(uint64_t val)> ConflictCount;
 
 		/// @brief   An example of a conflict since last ConflictCount change.
 		///
@@ -421,7 +413,6 @@ class ActionSink : public Owned
 		///
 		// @saftbus-signal		
 		sigc::signal< void, uint64_t, uint64_t, uint64_t, saftlib::Time, saftlib::Time> SigConflict;
-		// std::function< void(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigConflict;
 
 		/// @brief  The number of actions which have been delayed.
 		/// @return The number of actions which have been delayed.
@@ -441,7 +432,6 @@ class ActionSink : public Owned
 		void setDelayedCount(uint64_t val);
 		// @saftbus-signal
 		sigc::signal<void, uint64_t> DelayedCount;
-		// std::function< void(uint64_t val)> DelayedCount;
 
 
 		/// @brief   An example of a delayed action the last DelayedCount change.
@@ -454,7 +444,6 @@ class ActionSink : public Owned
 		///
 		// @saftbus-signal		
 		sigc::signal< void, uint64_t, uint64_t, uint64_t, saftlib::Time, saftlib::Time > SigDelayed;
-		// std::function< void(uint64_t count, uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed) > SigDelayed;
 		
 
 		void compile();
