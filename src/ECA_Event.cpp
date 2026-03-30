@@ -23,6 +23,8 @@
 
 #include "eca_regs.h"
 
+// LOGGING: should logging be added here?
+
 
 namespace saftlib {
 

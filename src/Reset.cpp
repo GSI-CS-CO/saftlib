@@ -24,6 +24,7 @@
 
 #include <iostream>
 
+// TODO: move addresses into regs file
 // this should later #include "bel_projects/tools/wb_slaves.h"
 // for now, just redefine the register offsets
 #define FPGA_RESET_VENDOR            0x0651              // vendor ID
@@ -49,6 +50,8 @@
 
 
 #define FPGA_RESET_WATCHDOG_TRG_VALUE 0xcafebabe
+
+// LOGGING: add logging here 
 
 namespace saftlib {
 

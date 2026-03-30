@@ -32,6 +32,8 @@
 #include "ActionSink.hpp"
 #include "TimingReceiver.hpp"
 
+// TODO: check reasoningn behind the commented ou ownerOnly() below, test
+
 namespace saftlib {
 
 Condition::Condition(ActionSink *sink_, unsigned number_, bool active_, uint64_t id_, uint64_t mask_, int64_t offset_, uint32_t tag_, saftbus::Container *container)

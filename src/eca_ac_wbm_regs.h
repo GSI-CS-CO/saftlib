@@ -1,6 +1,8 @@
 #ifndef _ECA_AC_WBM_H_
 #define _ECA_AC_WBM_H_
 
+// TODO: move into right structure for regs
+
 //| Address Map ------------------------ slave ----------------------------------------------|
 #define SLAVE_STATUS_GET         0x00  // r     _0x000000ff , Shows if the device is rdy/busy
 #define SLAVE_MAX_MACROS_GET     0x04  // r     _0xffffffff , Shows maximum number of macros

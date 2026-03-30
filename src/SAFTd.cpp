@@ -37,6 +37,7 @@
 #include "TimingReceiver.hpp"
 #include "TimingReceiver_Service.hpp"
 
+// LOGGING: add logging here
 
 extern "C" void destroy_service();
 

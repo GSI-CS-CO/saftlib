@@ -202,7 +202,7 @@ class Output : public ActionSink
 		std::string getInput() const;
 
 
-
+		// TODO: why were the following signals moved?
 		// Property signals
 		//   sigc::signal< void, bool > OutputEnable;
 		//   sigc::signal< void, bool > SpecialPurposeOut;

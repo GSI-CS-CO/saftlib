@@ -36,6 +36,8 @@
 #include <deque>
 #include "FunctionGeneratorImpl.hpp"
 
+// TODO: remove PIMPL
+
 namespace saftlib {
 
 // class TimingReceiver;

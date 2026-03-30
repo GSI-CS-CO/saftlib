@@ -17,6 +17,9 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+
+// TODO: move into right structure for regs, function generator needs its own subfolder
+
 #ifndef FG_REGS_H
 #define FG_REGS_H
 

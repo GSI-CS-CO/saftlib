@@ -12,6 +12,8 @@
 #include <map>
 #include <functional>
 
+// TODO: Function generator needs its own subfolder
+// TODO: integrate into classes?
 
 extern "C" 
 void create_services(saftbus::Container *container, const std::vector<std::string> &args) {

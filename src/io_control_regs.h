@@ -20,6 +20,8 @@
 #ifndef IOCONTROL_REGS_H
 #define IOCONTROL_REGS_H
 
+// TODO: io ctl needs its own subfolder
+
 /* Defines */
 /* ==================================================================================================== */
 #define IO_CONTROL_PRODUCT_ID        0x10c05791

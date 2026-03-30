@@ -30,6 +30,8 @@
 #include <functional>
 #include <cassert>
 
+// TODO: integrate into logging, old debug msg should either be logging or deleted
+
 namespace saftlib {
 
 const eb_data_t MSI_TEST_VALUE = 0x12345678;
@@ -42,7 +44,7 @@ void OpenDevice::check_msi_callback(eb_data_t value)
 	if (check_irq) check_irq.reset();
 }
 bool OpenDevice::poll_msi(bool only_once) {
-	// std::cerr << "OpenDevice::poll_msi" << std::endl;
+	// OLD_DEBUG: std::cerr << "OpenDevice::poll_msi" << std::endl;
 	etherbone::Cycle cycle;
 	eb_data_t msi_adr = 0;
 	eb_data_t msi_dat = 0;
@@ -73,14 +75,14 @@ bool OpenDevice::poll_msi(bool only_once) {
 		// MSI we just polled may cause actions that trigger other MSIs.
 		// however, this TimeoutSource will be called only once, because the only_once argument is true
 		bool only_once;
-		// std::cerr << "add an only_once timeout source" << std::endl;
+		// OLD_DEBUG: std::cerr << "add an only_once timeout source" << std::endl;
 		poll_once = saftbus::Loop::get_default().connect<saftbus::TimeoutSource>(
 				std::bind(&OpenDevice::poll_msi, this, only_once=true), std::chrono::milliseconds(0), std::chrono::milliseconds(0)
 			);
 	} 
 
 	if (only_once) {
-		// std::cerr << "polled only_once " << found_msi << std::endl;
+		// OLD_DEBUG: std::cerr << "polled only_once " << found_msi << std::endl;
 		// returning false removes the TimeoutSource from the event loop
 		return false;
 	}
@@ -121,7 +123,7 @@ OpenDevice::OpenDevice(const etherbone::Socket &socket, const std::string& eb_pa
 
 		// assume that only the /dev/ttyUSB<n> devices and /dev/pts/<n> devices need eb-forwarding
 		if (eb_path.find("/ttyUSB") != eb_path.npos || eb_path.find("/pts/") != eb_path.npos ) {
-			// std::cerr << "create forwarding device" << std::endl;
+			// OLD_DEBUG: std::cerr << "create forwarding device" << std::endl;
 			eb_forward = std::unique_ptr<EB_Forward>(new EB_Forward(eb_path, device));
 			eb_forward_path = eb_forward->eb_forward_path();
 		} 

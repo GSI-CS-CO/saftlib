@@ -8,6 +8,8 @@
   * @brief       Register map for Wishbone interface of VHDL entity <eca_tlu_auto>
   */
 
+// TODO: move into right structure for regs
+
 #ifndef _ECA_TLU_H_
 #define _ECA_TLU_H_
 

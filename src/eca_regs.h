@@ -30,6 +30,8 @@
 #ifndef _ECA_H_
 #define _ECA_H_
 
+// TODO: move into right structure for regs
+
   #define ECA_SDB_VENDOR_ID 0x00000651
   #define ECA_SDB_DEVICE_ID 0xb2afc251
 

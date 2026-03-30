@@ -26,10 +26,6 @@
 
 namespace saftlib {
 
-// std::shared_ptr<Output> Output::create(const ConstructorType& args)
-// {
-// 	return RegisteredObject<Output>::create(args.objectPath, args);
-// }
 
 Output::Output(ECA &eca
      , Io &io_

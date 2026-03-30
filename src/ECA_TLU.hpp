@@ -36,6 +36,8 @@
 
 #include "SdbDevice.hpp"
 
+// TODO: add documentation
+
 namespace saftlib {
 
 class Input;

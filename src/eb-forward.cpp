@@ -37,6 +37,8 @@
 #define WR_PPS_DEVICE_ID        0xde0d8ced
 #define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
 
+// TODO: integrate into logging, old debug msg should either be logging or deleted
+
 namespace saftlib {
 
 	void EB_Forward::open_pts() 
@@ -48,7 +50,7 @@ namespace saftlib {
 			                    S_IRGRP | S_IWGRP | 
 			                    S_IROTH | S_IWOTH );
 
-		// std::cerr << "eb-forward " << eb_forward_path() << std::endl;
+		// OLD_DEBUG: std::cerr << "eb-forward " << eb_forward_path() << std::endl;
 		io_source = saftbus::Loop::get_default().connect<saftbus::IoSource>(std::bind(&EB_Forward::accept_connection, this, std::placeholders::_1), _pts_fd, POLLIN);
 	}
 
@@ -82,9 +84,9 @@ namespace saftlib {
 
 	bool EB_Forward::accept_connection(int condition)
 	{
-		// std::cerr << "EB_Forward::accept_connection" << std::endl;
-		// static std::vector<uint8_t> request;  // data from eb-tool
-		// static std::vector<uint8_t> response; // data from device
+		// OLD_DEBUG: std::cerr << "EB_Forward::accept_connection" << std::endl;
+		// OLD_DEBUG: static std::vector<uint8_t> request;  // data from eb-tool
+		// OLD_DEBUG: static std::vector<uint8_t> response; // data from device
 		request.clear();
 		response.clear();
 
@@ -104,7 +106,9 @@ namespace saftlib {
 				if (request.size() == 4) {
 					if ( request[0]     == 0x4e  // test for Etherbone magic word
 					  && request[1]     == 0x6f 
-					  )//&& request[2]     == 0x11 
+					  )
+					  	// FIXME: can below be deleted?
+					 	 //&& request[2]     == 0x11 
 					   //&& (request[3]     == 0xff || request[3] == 0x77)) // on 32 bit systems, the host will send 0x77 while on 64 bit systems the host will send 0xff
 					{
 						// hard-coded response
@@ -147,7 +151,9 @@ namespace saftlib {
 				//  read the response from the device and write the 
 				//   response back to the eb-tool
 				if (request_size && request_size == request.size()) {
-					// std::cerr << _eb_device_fd << " " << _pts_fd << " request_size = " << request.size() << std::endl;
+					// OLD_DEBUG: std::cerr << _eb_device_fd << " " << _pts_fd << " request_size = " << request.size() << std::endl;
+
+					// FIXME: can below be deleted?
 					// all cycle bytes read
 
 					// visu.clear();
@@ -171,6 +177,7 @@ namespace saftlib {
 					}
 					read_all(_eb_device_fd, (char*)&response[0], response.size());
 
+					// FIXME: can below be deleted?
 					// for (int i = 0; i < (int)response.size()/4; ++i) {
 					// 	std::ostringstream resp_out;
 					// 	for (int j = 0; j < 4; ++j) {
@@ -209,12 +216,13 @@ namespace saftlib {
 				ptr += result;
 			} else {
 				std::cerr << "EB_Forward::write_all failed" << std::endl;
+				// FIXME: implement error handling
 				// error... very bad... dont know how to handle this 
 				// this probably means that the device is not connected anymore
 				return;
 			}
 		}
-		// std::cerr << "EB_Forward::write_all done " << size << std::endl;
+		// OLD_DEBUG: std::cerr << "EB_Forward::write_all done " << size << std::endl;
 
 	}
 	void EB_Forward::read_all(int fd, char *ptr, int size) 
@@ -226,12 +234,13 @@ namespace saftlib {
 				ptr += result;
 			} else {
 				std::cerr << "EB_Forward::read_all failed" << std::endl;
+				// FIXME: implement error handling
 				// error... very bad... dont know how to handle this 
 				// this probably means that the device is not connected anymore
 				return;
 			}
 		}
-		// std::cerr << "EB_Forward::read_all done " << size << std::endl;
+		// OLD_DEBUG: std::cerr << "EB_Forward::read_all done " << size << std::endl;
 	}
 
 	std::string EB_Forward::eb_forward_path()

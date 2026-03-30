@@ -152,8 +152,9 @@ void ECA::prepareChannels()
 
 	ECAchannels.resize(channels);
 
-	// std::cerr << "TimingReceiver with " << channels << " ECA channels" << std::endl;
+	// OLD_DEBUG: std::cerr << "TimingReceiver with " << channels << " ECA channels" << std::endl;
 
+	// FIXME: can the follwing be deleted?
 	// Create the IOs (channel 0)
 	// InoutImpl::probe(this, actionSinks, eventSources);
 
@@ -169,7 +170,7 @@ void ECA::prepareChannels()
 		cycle.read (adr_first + ECA_CHANNEL_CAPACITY_GET, EB_DATA32, &raw_capacity);
 		cycle.close();
 
-		// std::cerr << "channel=" << channel_idx << "   raw_max_num=" << raw_max_num <<	std::endl;
+		// OLD_DEBUG: std::cerr << "channel=" << channel_idx << "   raw_max_num=" << raw_max_num <<	std::endl;
 
 		switch(raw_type) {
 			case ECA_LINUX:
@@ -192,7 +193,7 @@ void ECA::prepareChannels()
 				}
 			break;
 			case ECA_WBM: {
-				// std::cerr << "============== FOUND WBM ACTION SINK object_path = " << object_path << std::endl;
+				// OLD_DEBUG: std::cerr << "============== FOUND WBM ACTION SINK object_path = " << object_path << std::endl;
 				std::vector<sdb_device> acwbm;
 				device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x18415778, acwbm);
 				if (acwbm.size() == 1) {
@@ -209,7 +210,7 @@ void ECA::prepareChannels()
 				}
 			} break;
 			case ECA_SCUBUS: {
-				// std::cerr << "============== FOUND SCU_BUS ACTION SINK object_path = " << object_path << std::endl;
+				// OLD_DEBUG: std::cerr << "============== FOUND SCU_BUS ACTION SINK object_path = " << object_path << std::endl;
 				std::vector<sdb_device> scubus;
 				device.sdb_find_by_identity(ECA_SDB_VENDOR_ID, 0x9602eb6f, scubus);
 				if (scubus.size() == 1) {
@@ -226,16 +227,16 @@ void ECA::prepareChannels()
 				}
 			} break;
 			case ECA_EMBEDDED_CPU: {
-				// std::cerr << "ECA: Found queue..." << std::endl;
+				// OLD_DEBUG: std::cerr << "ECA: Found queue..." << std::endl;
 				for (unsigned queue_id = 1; queue_id < channels; ++queue_id) {
 					eb_data_t get_id;
 					cycle.open(device);
 					cycle.read(queue_addresses[queue_id]+ECA_QUEUE_QUEUE_ID_GET, EB_DATA32, &get_id);
 					cycle.close();
-					// std::cerr << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
-					// std::cerr << "ECA: Found queue with ID: " << get_id << std::endl;
+					// OLD_DEBUG: std::cerr << "ECA: Found queue @ 0x" << std::hex << queue_addresses[queue_id] << std::dec << std::endl;
+					// OLD_DEBUG: std::cerr << "ECA: Found queue with ID: " << get_id << std::endl;
 					if (get_id == ECA_EMBEDDED_CPU) {
-						// std::cerr << "ECA: Found embedded CPU channel!" << std::endl;
+						// OLD_DEBUG: std::cerr << "ECA: Found embedded CPU channel!" << std::endl;
 						std::string path = object_path + "/embedded_cpu";
 
 						std::unique_ptr<EmbeddedCPUActionSink> ecpu_sink(new EmbeddedCPUActionSink(*this, path, "embedded_cpu", channel_idx, container));
@@ -259,11 +260,11 @@ void ECA::prepareChannels()
 
 void ECA::msiHandler(eb_data_t msi, unsigned channel)
 {
-	// std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
+	// OLD_DEBUG: std::cerr << "TimingReceiver::msiHandler " << msi << " " << channel << std::endl;
 	unsigned code = msi >> 16;
 	unsigned num  = msi & 0xFFFF;
 
-	// std::cerr << "MSI: " << channel << " " << num << " " << code << std::endl;
+	// OLD_DEBUG: std::cerr << "MSI: " << channel << " " << num << " " << code << std::endl;
 
 	// MAX_FULL is tracked by this object, not the subchannel
 	if (code == ECA_MAX_FULL) {
@@ -294,7 +295,7 @@ void ECA::setHandler(unsigned channel, bool enable, eb_address_t address)
 	cycle.write(adr_first + ECA_CHANNEL_MSI_SET_TARGET_OWR, EB_DATA32, address);
 	cycle.write(adr_first + ECA_CHANNEL_MSI_SET_ENABLE_OWR, EB_DATA32, enable?1:0);
 	cycle.close();
-	// clog << kLogDebug << "TimingReceiver: registered irq 0x" << std::hex << address << std::endl;
+	// OLD_DEBUG: clog << kLogDebug << "TimingReceiver: registered irq 0x" << std::hex << address << std::endl;
 }
 
 
@@ -415,7 +416,7 @@ void ECA::InactivateAll() {
 
 void ECA::compile()
 {
-	// std::cerr << "ECA::compile" << std::endl;
+	// OLD_DEBUG: std::cerr << "ECA::compile" << std::endl;
 	// Store all active conditions into a vector for processing
 	typedef std::vector<ECA_OpenClose> ID_Space;
 	ID_Space id_space;
@@ -444,7 +445,7 @@ void ECA::compile()
 				oc.channel = actionSink->getChannel();
 				oc.num     = actionSink->getNum();
 
-				// std::cerr << "compile condition on channel " << oc.channel << " num " << oc.num << std::endl;
+				// OLD_DEBUG: std::cerr << "compile condition on channel " << oc.channel << " num " << oc.num << std::endl;
 
 				// Push the open record
 				id_space.push_back(oc);
@@ -501,7 +502,8 @@ void ECA::compile()
 		
 		search.push_back(SearchEntry(cursor, next));
 	}
-	
+
+// OLD_DEBUG: block below	
 // #if DEBUG_COMPILE
 // 	clog << kLogDebug << "Table compilation complete!" << std::endl;
 // 	for (i = 0; i < search.size(); ++i)
@@ -578,7 +580,7 @@ ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saft
 	, container(cont)
 	, sas_count(0)
 {
-	// std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
+	// OLD_DEBUG: std::cerr << "ECA::ECA() object_path " << object_path << std::endl;
 	probeConfiguration();
 	compile(); // remove old rules
 	prepareChannels();
@@ -591,18 +593,18 @@ ECA::ECA(SAFTd &saftd, etherbone::Device &dev, const std::string &obj_path, saft
 
 ECA::~ECA() 
 {
-	// std::cerr << "ECA::~ECA()" << std::endl;
+	// OLD_DEBUG: std::cerr << "ECA::~ECA()" << std::endl;
 	if (container) {
 		for (auto &channel: ECAchannels) {
 			for (auto &actionSink: channel) {
 				if (actionSink) {
 					actionSink->Owned::Destroyed.emit();
 					actionSink->Owned::release_service();
-					// std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
+					// OLD_DEBUG: std::cerr << "   remove " << actionSink->getObjectPath() << std::endl;
 					try {
 						container->remove_object(actionSink->getObjectPath());
 					} catch (saftbus::Error &e) {
-						// std::cerr << "removal attempt failed: " << e.what() << std::endl;
+						// OLD_DEBUG: std::cerr << "removal attempt failed: " << e.what() << std::endl;
 					}
 				}
 			}
@@ -674,7 +676,8 @@ static inline bool not_isalnum_(char c)
 }
 
 std::string ECA::NewSoftwareActionSink(const std::string& name_)
-{
+{	
+	// OLD_DEBUG: block following
 	// if (container) {
 	// 	std::cerr << "TimingReceiver::NewSoftwareActionSink client_id = " << container->get_calling_client_id() << std::endl;
 	// }
@@ -684,7 +687,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	}
 
 	// find the first free slot in ECA_LINUX_channel
-	// std::cerr << "ECA::NewSoftwareActionSink:   find 1 in " << std::dec << ECA_LINUX_channel->size() << "slots" << std::endl;
+	// OLD_DEBUG: std::cerr << "ECA::NewSoftwareActionSink:   find 1 in " << std::dec << ECA_LINUX_channel->size() << "slots" << std::endl;
 	unsigned num = 0;
 	for (auto &softwareActionSink: *ECA_LINUX_channel) {
 		if (!softwareActionSink) break;
@@ -720,7 +723,7 @@ std::string ECA::NewSoftwareActionSink(const std::string& name_)
 	}
 	
 	unsigned channel = ECA_LINUX_channel_index;
-	// std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
+	// OLD_DEBUG: std::cerr << "NewSoftwareActionSink: channel = " << channel << " num = " << num << " queue_addresses.size() = " << queue_addresses.size() << std::endl;
 	eb_address_t address = queue_addresses[channel];
 
 	std::string path = object_path;

@@ -26,11 +26,15 @@
 
 #include <assert.h>
 
-// #include "RegisteredObject.h"
 #include <TimingReceiver.hpp>
 #include "FunctionGenerator.hpp"
 #include "fg_regs.h"
-// #include "clog.h"
+
+// TODO: function generator needs its own subfolder
+// TODO: integrate into logging, old debug msg should either be logging or deleted
+// LOGGING: add logging here
+// TODO: remove PIMPL
+
 
 namespace saftlib {
 
@@ -50,7 +54,7 @@ FunctionGenerator::FunctionGenerator(saftbus::Container *container, const std::s
 
 FunctionGenerator::~FunctionGenerator()
 {
-  // std::cerr << "~FunctionGenerator()" << std::endl;
+  // OLD_DEBUG: std::cerr << "~FunctionGenerator()" << std::endl;
 }
 
 
@@ -58,7 +62,7 @@ FunctionGenerator::~FunctionGenerator()
 // to reduce traffic only generate signals if we have an owner
 void FunctionGenerator::on_fg_running(bool b)
 {
-  // std::cerr << "on_fg_running (" << getOwner() << ")" << std::endl;
+  // OLD_DEBUG: std::cerr << "on_fg_running (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
     SigRunning(b);
@@ -67,7 +71,7 @@ void FunctionGenerator::on_fg_running(bool b)
 
 void FunctionGenerator::on_fg_armed(bool b)
 {
-  // std::cerr << "on_fg_armed (" << getOwner() << ")" << std::endl;
+  // OLD_DEBUG: std::cerr << "on_fg_armed (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {  
  	  SigArmed(b);
@@ -76,7 +80,7 @@ void FunctionGenerator::on_fg_armed(bool b)
 
 void FunctionGenerator::on_fg_enabled(bool b)
 {
-  // std::cerr << "on_fg_enabled (" << getOwner() << ")" << std::endl;
+  // OLD_DEBUG: std::cerr << "on_fg_enabled (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
   	SigEnabled(b);
@@ -85,7 +89,7 @@ void FunctionGenerator::on_fg_enabled(bool b)
 
 void FunctionGenerator::on_fg_refill()
 {
-  // std::cerr << "on_fg_refill (" << getOwner() << ")" << std::endl;
+  // OLD_DEBUG: std::cerr << "on_fg_refill (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
 	  Refill();
@@ -95,7 +99,7 @@ void FunctionGenerator::on_fg_refill()
 
 void FunctionGenerator::on_fg_started(uint64_t time)
 {
-  // std::cerr << "on_fg_started (" << getOwner() << ")" << std::endl;
+  // OLD_DEBUG: std::cerr << "on_fg_started (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
     SigStarted(saftlib::makeTimeTAI(time));
@@ -104,14 +108,14 @@ void FunctionGenerator::on_fg_started(uint64_t time)
 
 void FunctionGenerator::on_fg_stopped(uint64_t time, bool abort, bool hardwareUnderflow, bool microcontrollerUnderflow)
 {
-  // std::cerr << "on_fg_stopped (" << getOwner() << ")" << std::endl;
+  // OLD_DEBUG: std::cerr << "on_fg_stopped (" << getOwner() << ")" << std::endl;
   if (!getOwner().empty())
   {
     SigStopped(saftlib::makeTimeTAI(time), abort, hardwareUnderflow, microcontrollerUnderflow);
   }
 }
 
-
+// TODO: can the following be deleted?
 // std::shared_ptr<FunctionGenerator> FunctionGenerator::create(const ConstructorType& args)
 // {
 //   return RegisteredObject<FunctionGenerator>::create(args.objectPath, args);

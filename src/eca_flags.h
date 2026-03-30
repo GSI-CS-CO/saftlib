@@ -20,6 +20,8 @@
 #ifndef ECA_FLAGS_H
 #define ECA_FLAGS_H
 
+// TODO: move into right structure for regs
+
 #define ECA_LATE      0
 #define ECA_EARLY     1
 #define ECA_CONFLICT  2

@@ -30,6 +30,8 @@
 #include <vector>
 #include <iostream>
 
+// TODO: integrate into logging
+
 namespace saftlib {
 
 IoControl::IoControl(etherbone::Device &device)
@@ -96,7 +98,7 @@ IoControl::IoControl(etherbone::Device &device)
 		}
 	}
 
-	// std::cerr << "************** NUM IOS " << (io_GPIOTotal + io_LVDSTotal) << std::endl;
+	// OLD_DEBUG: std::cerr << "************** NUM IOS " << (io_GPIOTotal + io_LVDSTotal) << std::endl;
 	// /* Create an action sink for each IO */
 	unsigned eca_in = 0, eca_out = 0;
 
