@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: saftbus
+Description: Realtime interprocess communication
+Version: @VERSION@
+Libs: -L${libdir} -lsaftbus
+Cflags: -I${includedir}
