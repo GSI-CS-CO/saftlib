@@ -19,6 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(EB REQUIRED etherbone>=2.1.0)
 pkg_check_modules(SIGCPP REQUIRED sigc++-2.0)
+pkg_check_modules(LIBRTPI REQUIRED librtpi>=1.0.1)
 
 # Add these definitions globally
 add_definitions(
@@ -79,14 +80,14 @@ add_library(saftbus SHARED
     ./include/service.hpp
 )
 
-target_include_directories(saftbus
-    PUBLIC
-        ${saftbus_SOURCE_DIR}/include
+target_include_directories(saftbus PUBLIC
+    ${saftbus_SOURCE_DIR}/include
 )
 
 target_compile_options(saftbus PRIVATE
     -fPIC
     ${SIGCPP_CFLAGS}
+    ${LIBRTPI_CFLAGS}
 )
 
 set_target_properties(saftbus PROPERTIES
@@ -97,14 +98,18 @@ set_target_properties(saftbus PROPERTIES
 add_executable(saftbusd)
 target_sources(saftbusd
     PRIVATE
-        saftbusd.cpp
-        configurable_chunck_allocator_rt.cpp
+        ./src/saftbusd.cpp
+        ./src/configurable_chunck_allocator_rt.cpp
 )
 target_link_libraries(saftbusd
     ${SIGCPP_LIBRARIES}
+    ${LIBRTPI_LIBRARIES}
     saftbus
     dl
     pthread
+)
+target_compile_options(saftbusd PRIVATE
+    ${LIBRTPI_CFLAGS}
 )
 target_compile_definitions(saftbusd
     PRIVATE
@@ -115,11 +120,12 @@ target_compile_definitions(saftbusd
 add_executable(saftbusd_sda)
 target_sources(saftbusd_sda
     PRIVATE
-        saftbusd-sda.cpp
-        print_allocator_fillstate.cpp
+        ./src/saftbusd-sda.cpp
+        ./src/print_allocator_fillstate.cpp
 )
 target_link_libraries(saftbusd_sda
     ${SIGCPP_LIBRARIES}
+    ${LIBRTPI_LIBRARIES}
     saftbus
     dl
     pthread
@@ -132,11 +138,12 @@ target_compile_definitions(saftbusd_sda
 add_executable(saftbusd_noda)
 target_sources(saftbusd_noda
     PRIVATE
-        saftbusd-noda.cpp
-        print_allocator_fillstate.cpp
+        ./src/saftbusd-noda.cpp
+        ./src/print_allocator_fillstate.cpp
 )
 target_link_libraries(saftbusd_noda
     ${SIGCPP_LIBRARIES}
+    ${LIBRTPI_LIBRARIES}
     saftbus
     dl
     pthread
@@ -154,6 +161,7 @@ target_sources(saftbus_ctl
 )
 target_link_libraries(saftbus_ctl
     ${SIGCPP_LIBRARIES}
+    ${LIBRTPI_LIBRARIES}
     saftbus
     dl
     pthread
@@ -186,7 +194,16 @@ install(TARGETS saftbus
 
 # Install header files
 install(FILES
-    ${HEADER_LIST}
+    ./include/chunck_allocator_rt.hpp
+    ./include/client.hpp
+    ./include/configurable_chunck_allocator_rt.hpp
+    ./include/error.hpp
+    ./include/global_allocator.hpp
+    ./include/loop.hpp
+    ./include/plugins.hpp
+    ./include/saftbus.hpp
+    ./include/server.hpp
+    ./include/service.hpp
     DESTINATION include/saftbus
 )
 
