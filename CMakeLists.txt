@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.29)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Only set the cxx_standard if it is not set by someone else
 if (NOT DEFINED CMAKE_CXX_STANDARD)
@@ -9,7 +10,7 @@ endif()
 
 # Set the project name and language
 project(
-  saftlib
+  saft
   VERSION 3.3.1
   DESCRIPTION "Simplified API for Timing"
   LANGUAGES CXX C)
@@ -18,10 +19,13 @@ project(
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
-include(cmake/PreventInSourceBuilds.cmake)
-include(cmake/Emscripten.cmake)
-include(ProjectOptions.cmake)
+#include(cmake/PreventInSourceBuilds.cmake)
+#include(cmake/Emscripten.cmake)
+#include(ProjectOptions.cmake)
 
 
 # Adding the src:
-add_subdirectory(src)
+add_subdirectory(saftbus-gen)
+add_subdirectory(saftbus)
+add_subdirectory(saftlib)
+

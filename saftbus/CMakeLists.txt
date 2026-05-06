@@ -15,12 +15,14 @@ project(saftbus
 # Set C++ standard and compiler flags
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
 # Use standard CMake install directories
 include(GNUInstallDirs)
 
 # Find required packages
 find_package(PkgConfig REQUIRED)
+find_package(Threads REQUIRED)
 pkg_check_modules(EB REQUIRED etherbone>=2.1.0)
 pkg_check_modules(SIGCPP REQUIRED sigc++-2.0)
 pkg_check_modules(LIBRTPI REQUIRED librtpi>=1.0.1)
@@ -38,13 +40,13 @@ if(UNIX)
         OUTPUT_VARIABLE USERNAME
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    
+
     execute_process(
         COMMAND hostname
         OUTPUT_VARIABLE HOSTNAME
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    
+
     execute_process(
         COMMAND uname -s
         OUTPUT_VARIABLE OPERATING_SYSTEM
@@ -95,12 +97,6 @@ target_link_libraries(saftbus
         ${LIBRTPI_LIBRARIES}
 )
 
-target_compile_options(saftbus PRIVATE
-    -fPIC
-    ${SIGCPP_CFLAGS}
-    ${LIBRTPI_CFLAGS}
-)
-
 set_target_properties(saftbus PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${SONAME}
@@ -127,12 +123,8 @@ target_link_libraries(saftbusd
         saftbus
         ${SIGCPP_LIBRARIES}
         ${LIBRTPI_LIBRARIES}
-        dl
+        ${CMAKE_DL_LIBS}
         pthread
-)
-
-target_compile_options(saftbusd PRIVATE
-    ${LIBRTPI_CFLAGS}
 )
 
 target_compile_definitions(saftbusd
@@ -161,7 +153,7 @@ target_link_libraries(saftbusd_sda
         saftbus
         ${SIGCPP_LIBRARIES}
         ${LIBRTPI_LIBRARIES}
-        dl
+        ${CMAKE_DL_LIBS}
         pthread
 )
 
@@ -191,7 +183,7 @@ target_link_libraries(saftbusd_noda
         saftbus
         ${SIGCPP_LIBRARIES}
         ${LIBRTPI_LIBRARIES}
-        dl
+        ${CMAKE_DL_LIBS}
         pthread
 )
 
@@ -220,7 +212,7 @@ target_link_libraries(saftbus_ctl
         saftbus
         ${SIGCPP_LIBRARIES}
         ${LIBRTPI_LIBRARIES}
-        dl
+        ${CMAKE_DL_LIBS}
         pthread
 )
 
