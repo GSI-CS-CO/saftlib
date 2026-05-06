@@ -115,7 +115,7 @@ generate_saftbus_files( "${GENERATOR_SOURCES}" generate_sources )
 
 # Source files
 set(LIBSAFT_SERVICE_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/build.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/src/build.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/eb-source.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/eb-forward.cpp
@@ -166,6 +166,13 @@ set_target_properties(saft_service PROPERTIES
     VERSION @SAFTD_API@.@SAFTD_REVISION@.@SAFTD_MINOR@
     SOVERSION @SAFTD_API@
     LINK_FLAGS "-Wl,--export-dynamic"
+)
+
+target_include_directories(saft_service
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${SIGCPP_INCLUDE_DIRS}
+        ${LIBRTPI_INCLUDE_DIRS}
 )
 
 # Link libraries

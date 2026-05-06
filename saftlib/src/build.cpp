@@ -22,7 +22,7 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include "build.hpp"
+// #include "build.hpp"
 #include "version.h"
 
 namespace saftlib
