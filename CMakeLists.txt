@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.21...4.0)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -18,6 +18,8 @@ project(
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+
+include(cmake/generator.cmake)
 
 #include(cmake/PreventInSourceBuilds.cmake)
 #include(cmake/Emscripten.cmake)
