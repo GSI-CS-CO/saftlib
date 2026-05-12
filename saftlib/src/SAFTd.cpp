@@ -32,7 +32,7 @@
 #include "Owned.hpp"
 #include "SAFTd.hpp"
 
-//#include "build.hpp"
+#include "build.hpp"
 
 #include "TimingReceiver.hpp"
 #include "TimingReceiver_Service.hpp"

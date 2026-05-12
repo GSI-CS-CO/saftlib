@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21...4.0)
+cmake_minimum_required(VERSION 3.23...4.0)
 
 set(MAJOR "3")      # Increment if removed/changed properties/signals/methods since previous release
 set(MINOR "2")      # Increment if added properties/signals/methods; reset to 0 if MAJOR changed
@@ -32,33 +32,9 @@ add_compile_definitions(
     PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
 )
 
+include(${CMAKE_SOURCE_DIR}/cmake/environment.cmake)
 # Get username, hostname, and operating system
-if(UNIX)
-    # Use environment variables or system commands to get these
-    execute_process(
-        COMMAND whoami
-        OUTPUT_VARIABLE USERNAME
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    execute_process(
-        COMMAND hostname
-        OUTPUT_VARIABLE HOSTNAME
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    execute_process(
-        COMMAND uname -s
-        OUTPUT_VARIABLE OPERATING_SYSTEM
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-else()
-    # Fallback for non-Unix systems
-    set(USERNAME "$ENV{USERNAME}")
-    set(HOSTNAME "$ENV{COMPUTERNAME}")
-    set(OPERATING_SYSTEM "${CMAKE_SYSTEM_NAME}")
-endif()
-
+get_env()
 # Add definitions for these variables
 add_compile_definitions(
     USERNAME="${USERNAME}"

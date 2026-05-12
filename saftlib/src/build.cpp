@@ -23,7 +23,13 @@
 #define __STDC_CONSTANT_MACROS
 
 // #include "build.hpp"
-#include "version.h"
+// #include "version.h"
+
+//git describe --dirty --always --tags
+#define GIT_ID "GIT_ID"
+
+// SOURCE_DATE "'$(date +'%b %d %Y %H:%M:%S' --date=@$(git log -n1 --pretty='format:%ct'))'"'
+#define SOURCE_DATE "SOURCE_DATE"
 
 namespace saftlib
 {

@@ -12,11 +12,11 @@
 #     get_filename_component(BASENAME ${SRC_FILE} NAME_WE)
 
 #     # Add generated files to lists
-#     list(APPEND SERVICE_GENERATED_SOURCES 
+#     list(APPEND SERVICE_GENERATED_SOURCES
 #         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.cpp
 #         ${CMAKE_BINARY_DIR}/include/generated/${BASENAME}_Service.hpp
 #     )
-#     list(APPEND PROXY_GENERATED_SOURCES 
+#     list(APPEND PROXY_GENERATED_SOURCES
 #         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.cpp
 #         ${CMAKE_BINARY_DIR}/include/generated/${BASENAME}_Proxy.hpp
 #     )
@@ -28,45 +28,45 @@
 # # Generate Service and Proxy files
 # foreach(HEADER ${SAFTBUS_GENERATE_HEADERS})
 #     get_filename_component(BASE_NAME ${HEADER} NAME_WE)
-    
+
 #     # Service files generation
 #     add_custom_command(
-#         OUTPUT 
+#         OUTPUT
 #             ${CMAKE_CURRENT_SOURCE_DIR}/src/${BASE_NAME}_Service.cpp
 #             ${CMAKE_CURRENT_SOURCE_DIR}/src/${BASE_NAME}_Service.hpp
-#         COMMAND 
+#         COMMAND
 #             ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/lock_dir
-#         COMMAND 
+#         COMMAND
 #             flock ${CMAKE_CURRENT_BINARY_DIR}/lock_dir ${SAFTBUS_GEN} ${HEADER} -o src
-#         COMMAND 
+#         COMMAND
 #             ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/lock_dir
-#         DEPENDS 
+#         DEPENDS
 #             ${HEADER}
 #             ${SAFTBUS_GEN}
 #     )
 
 #     # Proxy files generation
 #     add_custom_command(
-# 		OUTPUT 
+# 		OUTPUT
 #             ${CMAKE_CURRENT_SOURCE_DIR}/src/${BASE_NAME}_Proxy.cpp
 #             ${CMAKE_CURRENT_SOURCE_DIR}/src/${BASE_NAME}_Proxy.hpp
-#         COMMAND 
+#         COMMAND
 #             ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/lock_dir
-#         COMMAND 
+#         COMMAND
 #             flock ${CMAKE_CURRENT_BINARY_DIR}/lock_dir ${SAFTBUS_GEN} ${HEADER} -o src
-#         COMMAND 
+#         COMMAND
 #             ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/lock_dir
-#         DEPENDS 
+#         DEPENDS
 #             ${HEADER}
 #             ${SAFTBUS_GEN}
 #     )
 
 #     # Add generated files to lists
-#     list(APPEND SERVICE_GENERATED_SOURCES 
+#     list(APPEND SERVICE_GENERATED_SOURCES
 #         src/${BASE_NAME}_Service.cpp
 #         src/${BASE_NAME}_Service.hpp
 #     )
-#     list(APPEND PROXY_GENERATED_SOURCES 
+#     list(APPEND PROXY_GENERATED_SOURCES
 #         src/${BASE_NAME}_Proxy.cpp
 #         src/${BASE_NAME}_Proxy.hpp
 #     )
@@ -86,6 +86,8 @@ function(generate_saftbus_files
     GIVEN_TARGET
 )
 
+make_directory("${CMAKE_BINARY_DIR}/src/generated/")
+
 foreach(SRC_FILE ${INPUT_FILES})
 
     MESSAGE (STATUS "${SRC_FILE}")
@@ -99,7 +101,7 @@ foreach(SRC_FILE ${INPUT_FILES})
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.hpp
     # )
 
-    # list(APPEND SAFTLIB_GENERATED_FILES 
+    # list(APPEND SAFTLIB_GENERATED_FILES
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.cpp
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.hpp
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.cpp
@@ -107,11 +109,11 @@ foreach(SRC_FILE ${INPUT_FILES})
     # )
 
     # # Add generated files to lists
-    # list(APPEND SERVICE_GENERATED_SOURCES 
+    # list(APPEND SERVICE_GENERATED_SOURCES
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.cpp
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.hpp
     # )
-    # list(APPEND PROXY_GENERATED_SOURCES 
+    # list(APPEND PROXY_GENERATED_SOURCES
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.cpp
     #     ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.hpp
     # )
@@ -123,7 +125,7 @@ foreach(SRC_FILE ${INPUT_FILES})
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.hpp
     )
 
-    list(APPEND SAFTLIB_GENERATED_FILES 
+    list(APPEND SAFTLIB_GENERATED_FILES
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.cpp
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.hpp
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.cpp
@@ -131,11 +133,11 @@ foreach(SRC_FILE ${INPUT_FILES})
     )
 
     # Add generated files to lists
-    list(APPEND SERVICE_GENERATED_SOURCES 
+    list(APPEND SERVICE_GENERATED_SOURCES
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.cpp
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Service.hpp
     )
-    list(APPEND PROXY_GENERATED_SOURCES 
+    list(APPEND PROXY_GENERATED_SOURCES
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.cpp
         ${CMAKE_BINARY_DIR}/src/generated/${BASENAME}_Proxy.hpp
     )

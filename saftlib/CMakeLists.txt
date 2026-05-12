@@ -28,45 +28,24 @@ pkg_check_modules(EB REQUIRED etherbone>=2.1.0)
 pkg_check_modules(SIGCPP REQUIRED sigc++-2.0)
 pkg_check_modules(LIBRTPI REQUIRED librtpi>=1.0.1)
 
-# Add global preprocessor definitions
+
+# ============================================================================
+# Env Foo
+# ===========================================================================
+include(${CMAKE_SOURCE_DIR}/cmake/environment.cmake)
+# Get username, hostname, and operating system
+get_env()
+# Add preprocessor definitions
 add_compile_definitions(
     PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
-)
-
-# Get username, hostname, and operating system
-if(UNIX)
-    # Use environment variables or system commands to get these
-    execute_process(
-        COMMAND whoami
-        OUTPUT_VARIABLE USERNAME
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    execute_process(
-        COMMAND hostname
-        OUTPUT_VARIABLE HOSTNAME
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    execute_process(
-        COMMAND uname -s
-        OUTPUT_VARIABLE OPERATING_SYSTEM
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-else()
-    # Fallback for non-Unix systems
-    set(USERNAME "$ENV{USERNAME}")
-    set(HOSTNAME "$ENV{COMPUTERNAME}")
-    set(OPERATING_SYSTEM "${CMAKE_SYSTEM_NAME}")
-endif()
-
-# Add definitions for these variables
-add_compile_definitions(
     USERNAME="${USERNAME}"
     HOSTNAME="${HOSTNAME}"
     OPERATING_SYSTEM="${OPERATING_SYSTEM}"
 )
 
+# ============================================================================
+# Sources for generator
+# ============================================================================
 include(${CMAKE_SOURCE_DIR}/cmake/generator.cmake)
 
 # ============================================================================
@@ -108,35 +87,35 @@ include(${CMAKE_SOURCE_DIR}/cmake/generator.cmake)
 
 set (GENERATOR_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Owned.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SAFTd.cpp            
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Condition.cpp         
-	${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSink.cpp         
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareCondition.cpp   
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareActionSink.cpp   
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusCondition.cpp       
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusActionSink.cpp       
-	${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUCondition.cpp    
-	${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUActionSink.cpp    
-	${CMAKE_CURRENT_SOURCE_DIR}/src/WbmCondition.cpp              
-	${CMAKE_CURRENT_SOURCE_DIR}/src/WbmActionSink.cpp              
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Output.cpp                      
-	${CMAKE_CURRENT_SOURCE_DIR}/src/OutputCondition.cpp              
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Input.cpp                         
-	${CMAKE_CURRENT_SOURCE_DIR}/src/ECA.cpp                              
-	${CMAKE_CURRENT_SOURCE_DIR}/src/TimingReceiver.cpp                  
-	${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp                  
+	${CMAKE_CURRENT_SOURCE_DIR}/src/SAFTd.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Condition.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSink.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareCondition.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareActionSink.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusCondition.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusActionSink.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUCondition.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUActionSink.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/WbmCondition.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/WbmActionSink.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Output.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/OutputCondition.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Input.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/ECA.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/TimingReceiver.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp                 
- 	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp           
- 	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp         
-	${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp            
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp
 )
 
 
 
 # Set vars now to track all generated files
 set(SERVICE_GENERATED_SOURCES)
-set(PROXY_GENERATED_SOURCES) 
+set(PROXY_GENERATED_SOURCES)
 set(SAFTLIB_GENERATED_FILES)
 
 
@@ -155,12 +134,12 @@ MESSAGE (STATUS "PROXY_GENERATED_SOURCES: ${PROXY_GENERATED_SOURCES} \n")
 MESSAGE (STATUS "SAFTLIB_GENERATED_FILES: ${SAFTLIB_GENERATED_FILES} \n")
 
 # ============================================================================
-# Main Library: saftlib
+# saft services
 # ============================================================================
 
 # Source files
 set(LIBSAFT_SERVICE_SOURCES
-    #${CMAKE_CURRENT_SOURCE_DIR}/src/build.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/build.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/eb-source.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/eb-forward.cpp
@@ -206,7 +185,11 @@ set(LIBSAFT_SERVICE_SOURCES
 # Create the shared library
 add_library(saft_service SHARED ${LIBSAFT_SERVICE_SOURCES})
 
+<<<<<<< HEAD
 add_dependencies(saft_service generate_sources)
+=======
+add_dependencies(saft_service service_files saftbus-gen)
+>>>>>>> 5810630 (maintenance: saftbus-gen generating, service and proxy services building, trouble propagating llib eg for libfgservice)
 
 # Set library properties
 set_target_properties(saft_service PROPERTIES
@@ -217,10 +200,16 @@ set_target_properties(saft_service PROPERTIES
 
 target_include_directories(saft_service
     PUBLIC
+<<<<<<< HEAD
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_BINARY_DIR}/src/generated
     PRIVATE
+=======
+        ${CMAKE_BINARY_DIR}/src/generated/
+>>>>>>> 5810630 (maintenance: saftbus-gen generating, service and proxy services building, trouble propagating llib eg for libfgservice)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
+    PRIVATE
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )
@@ -232,4 +221,103 @@ target_link_libraries(saft_service
         ${SIGCPP_LIBS}
         dl
 )
+
+
+# ============================================================================
+# saft proxies
+# ============================================================================
+
+# Source files
+set(LIBSAFT_PROXY_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
+    ${PROXY_GENERATED_SOURCES}
+)
+
+# Create the shared library
+add_library(saft_proxy SHARED ${LIBSAFT_PROXY_SOURCES})
+
+add_dependencies(saft_proxy proxy_files saftbus-gen)
+
+# Set library properties
+set_target_properties(saft_proxy PROPERTIES
+    VERSION @SAFTD_API@.@SAFTD_REVISION@.@SAFTD_MINOR@
+    SOVERSION @SAFTD_API@
+    LINK_FLAGS "-Wl,--export-dynamic"
+)
+
+target_include_directories(saft_proxy
+    PUBLIC
+        ${CMAKE_BINARY_DIR}/src/generated/
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${SIGCPP_INCLUDE_DIRS}
+        ${LIBRTPI_INCLUDE_DIRS}
+)
+
+# Link libraries
+target_link_libraries(saft_proxy
+    PRIVATE
+        ${EB_LIBS}
+        ${SIGCPP_LIBS}
+        dl
+)
+
+
+# ============================================================================
+# libfg service
+# ============================================================================
+
+# Source files
+set(LIBSAFT_FG_SERVICE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
+	${CMAKE_BINARY_DIR}/src/generated/FunctionGenerator_Service.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
+	${CMAKE_BINARY_DIR}/src/generated/MasterFunctionGenerator_Service.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
+	${CMAKE_BINARY_DIR}/src/generated/FunctionGeneratorFirmware_Service.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/fg_firmware_create_service.cpp
+)
+
+# Function Generator Firmware Service Library
+add_library(saft_fg_service SHARED
+    ${LIBSAFT_FG_SERVICE_SOURCES}
+)
+
+target_link_libraries(saft_fg_service
+    PUBLIC
+        ${SIGCPP_LIBS}
+        saftbus
+        saft-service
+        dl
+)
+
+target_compile_options(saft_fg_service
+    PRIVATE
+        ${SIGCPP_CFLAGS}
+)
+
+target_link_options(saft_fg_service
+    PRIVATE
+        "LINKER:--export-dynamic"
+)
+
+# Set library properties
+set_target_properties(saft_fg_service PROPERTIES
+    VERSION @SAFTD_API@.@SAFTD_REVISION@.@SAFTD_MINOR@
+    SOVERSION @SAFTD_API@
+    LINK_FLAGS "-Wl,--export-dynamic"
+)
+
+target_include_directories(saft_fg_service
+    PUBLIC
+        ${CMAKE_BINARY_DIR}/src/generated/
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/interface
+        ${SIGCPP_INCLUDE_DIRS}
+        ${LIBRTPI_INCLUDE_DIRS}
+)
+
 
