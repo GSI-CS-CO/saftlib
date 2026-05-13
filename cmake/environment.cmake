@@ -25,6 +25,27 @@ if(UNIX)
         OUTPUT_VARIABLE OPERATING_SYSTEM
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+
+    execute_process(
+        COMMAND git describe --dirty --always --tags
+        OUTPUT_VARIABLE GIT_ID
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    execute_process(
+        COMMAND git log -n1 --pretty=format:%ct
+        OUTPUT_VARIABLE COMMIT_TIMESTAMP
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    execute_process(
+        COMMAND date +"%b %d %Y %H:%M:%S" --date=@${COMMIT_TIMESTAMP}
+        OUTPUT_VARIABLE SOURCE_DATE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
 else()
     # Fallback for non-Unix systems
     set(USERNAME "$ENV{USERNAME}")
@@ -35,10 +56,7 @@ endif()
 set(USERNAME            "${USERNAME}" PARENT_SCOPE)
 set(HOSTNAME            "${HOSTNAME}" PARENT_SCOPE)
 set(OPERATING_SYSTEM    "${OPERATING_SYSTEM}" PARENT_SCOPE)
+set(GIT_ID              "${GIT_ID}" PARENT_SCOPE)
+set(SOURCE_DATE         "${SOURCE_DATE}" PARENT_SCOPE)
 
 endfunction()
-
-
-# TODO: remove build.*pp & version.h
-# echo '#define GIT_ID "'$(git describe --dirty --always --tags)'"' > version.h.tmp
-# echo '#define SOURCE_DATE "'$(date +'%b %d %Y %H:%M:%S' --date=@$(git log -n1 --pretty='format:%ct'))'"' >> version.h.tmp

@@ -10,8 +10,6 @@ make_directory("${CMAKE_BINARY_DIR}/src/generated/")
 
 foreach(SRC_FILE ${INPUT_FILES})
 
-    MESSAGE (STATUS "${SRC_FILE}")
-
     get_filename_component(BASENAME ${SRC_FILE} NAME_WE)
 
     set(OUTPUT_FILES
@@ -40,23 +38,17 @@ foreach(SRC_FILE ${INPUT_FILES})
 
     make_directory("${CMAKE_BINARY_DIR}/src/generated/")
 
-    MESSAGE (STATUS "${OUTPUT_FILES}")
-    #MESSAGE (STATUS "${SAFTBUSGEN_EXECUTABLE}")
     add_custom_command(
-        #DEPENDS ${SRC_FILE}
         OUTPUT ${OUTPUT_FILES}
         COMMAND ${SAFTBUSGEN_EXECUTABLE} "${SRC_FILE}" -o "${CMAKE_BINARY_DIR}/src/generated" -I "${CMAKE_CURRENT_SOURCE_DIR}/include" -I "${CMAKE_BINARY_DIR}/src/generated"
-        #DEPENDS ${INPUT_FILES} ${SAFTBUSGEN_EXECUTABLE}
-        #WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Generating saftbus code from ${SRC_FILE}"
     )
-    #MESSAGE (STATUS "${SAFTBUSGEN_EXECUTABLE} ${SRC_FILE} -o ${CMAKE_BINARY_DIR}/src/generated/ -I ${CMAKE_CURRENT_SOURCE_DIR}/include/")
+
 endforeach()
 
 # Return the output files to caller
 set(SAFTLIB_GENERATED_FILES ${SAFTLIB_GENERATED_FILES} PARENT_SCOPE)
 set(SERVICE_GENERATED_SOURCES  ${SERVICE_GENERATED_SOURCES} PARENT_SCOPE)
 set(PROXY_GENERATED_SOURCES ${PROXY_GENERATED_SOURCES} PARENT_SCOPE)
-MESSAGE (STATUS "${OUTPUT_FILES}")
 
 endfunction()

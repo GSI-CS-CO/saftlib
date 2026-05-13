@@ -60,16 +60,19 @@ target_include_directories(saftbus
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/saftbus>
-    PRIVATE
         ${EB_INCLUDE_DIRS}
         ${SIGCPP_INCLUDE_DIRS}
+    PRIVATE
+        #${EB_INCLUDE_DIRS}
+        #${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )
 
 target_link_libraries(saftbus
-    PRIVATE
+    PUBLIC
         ${EB_LIBRARIES}
         ${SIGCPP_LIBRARIES}
+    PRIVATE
         ${LIBRTPI_LIBRARIES}
 )
 

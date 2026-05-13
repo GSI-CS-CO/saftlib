@@ -18,16 +18,7 @@ project(
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
-include(cmake/generator.cmake)
-
-#include(cmake/PreventInSourceBuilds.cmake)
-#include(cmake/Emscripten.cmake)
-#include(ProjectOptions.cmake)
-
-
-# Adding the src:
 add_subdirectory(saftbus-gen)
-#add_subdirectory(saftbus)
+add_subdirectory(saftbus)
 add_subdirectory(saftlib)
-
+add_subdirectory(tools)
