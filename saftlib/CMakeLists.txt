@@ -51,66 +51,39 @@ include(${CMAKE_SOURCE_DIR}/cmake/generator.cmake)
 # ============================================================================
 # Saftbus generator mechanics
 # ============================================================================
-# set (GENERATOR_SOURCES
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSink.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/BuildIdRom.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/Condition.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUActionSink.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/ECA.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/ECA_Event.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/ECA_TLU.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUCondition.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/EventSource.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/Input.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/LM32Cluster.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/OpenDevice.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/Output.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/OutputCondition.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/Owned.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/Reset.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/SAFTd.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusActionSink.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusCondition.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareActionSink.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareCondition.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/TempSensor.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/TimingReceiver.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/WbmActionSink.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/WbmCondition.cpp
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/WhiteRabbit.cpp
-# )
 
 set (GENERATOR_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Owned.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SAFTd.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Condition.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSink.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareCondition.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SoftwareActionSink.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusCondition.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusActionSink.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUCondition.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUActionSink.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/WbmCondition.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/WbmActionSink.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Output.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/OutputCondition.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Input.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/ECA.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/TimingReceiver.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
- 	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
- 	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ActionSink.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/BuildIdRom.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/BurstGenerator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Condition.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ECA.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ECA_Event.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ECA_TLU.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/EmbeddedCPUCondition.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/EmbeddedCPUActionSink.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/EventSource.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/FunctionGenerator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/FunctionGeneratorFirmware.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Input.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LM32Cluster.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/MasterFunctionGenerator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/OpenDevice.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Output.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/OutputCondition.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Owned.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Reset.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/SAFTd.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/SCUbusActionSink.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/SCUbusCondition.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/SoftwareActionSink.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/SoftwareCondition.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/TempSensor.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/TimingReceiver.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/WbmActionSink.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/WbmCondition.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/WhiteRabbit.hpp
 )
-
 
 
 # Set vars now to track all generated files
@@ -122,11 +95,11 @@ set(SAFTLIB_GENERATED_FILES)
 # Create a custom target to ensure generation of all service files
 add_custom_target(all_generated_files DEPENDS ${SAFTLIB_GENERATED_FILES})
 # Create a custom target to ensure generation of all service files
-add_custom_target(service_files DEPENDS ${SERVICE_GENERATED_SOURCES})
+#add_custom_target(service_files DEPENDS ${SERVICE_GENERATED_SOURCES})
 # Create a custom target to ensure generation of all proxy files
-add_custom_target(proxy_files DEPENDS ${PROXY_GENERATED_SOURCES})
+#add_custom_target(proxy_files DEPENDS ${PROXY_GENERATED_SOURCES})
 
-add_custom_target( generate_sources DEPENDS all_generated_files service_files proxy_files)
+add_custom_target( generate_sources DEPENDS all_generated_files)
 generate_saftbus_files( "${GENERATOR_SOURCES}" generate_sources )
 
 MESSAGE (STATUS "SERVICE_GENERATED_SOURCES: ${SERVICE_GENERATED_SOURCES} \n")
@@ -185,11 +158,7 @@ set(LIBSAFT_SERVICE_SOURCES
 # Create the shared library
 add_library(saft_service SHARED ${LIBSAFT_SERVICE_SOURCES})
 
-<<<<<<< HEAD
 add_dependencies(saft_service generate_sources)
-=======
-add_dependencies(saft_service service_files saftbus-gen)
->>>>>>> 5810630 (maintenance: saftbus-gen generating, service and proxy services building, trouble propagating llib eg for libfgservice)
 
 # Set library properties
 set_target_properties(saft_service PROPERTIES
@@ -200,15 +169,9 @@ set_target_properties(saft_service PROPERTIES
 
 target_include_directories(saft_service
     PUBLIC
-<<<<<<< HEAD
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_BINARY_DIR}/src/generated
-    PRIVATE
-=======
-        ${CMAKE_BINARY_DIR}/src/generated/
->>>>>>> 5810630 (maintenance: saftbus-gen generating, service and proxy services building, trouble propagating llib eg for libfgservice)
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
     PRIVATE
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
@@ -237,7 +200,7 @@ set(LIBSAFT_PROXY_SOURCES
 # Create the shared library
 add_library(saft_proxy SHARED ${LIBSAFT_PROXY_SOURCES})
 
-add_dependencies(saft_proxy proxy_files saftbus-gen)
+add_dependencies(saft_proxy generate_sources)
 
 # Set library properties
 set_target_properties(saft_proxy PROPERTIES
@@ -249,8 +212,9 @@ set_target_properties(saft_proxy PROPERTIES
 target_include_directories(saft_proxy
     PUBLIC
         ${CMAKE_BINARY_DIR}/src/generated/
-    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
+    PRIVATE
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )
@@ -289,7 +253,7 @@ target_link_libraries(saft_fg_service
     PUBLIC
         ${SIGCPP_LIBS}
         saftbus
-        saft-service
+        saft_service
         dl
 )
 
@@ -314,8 +278,6 @@ target_include_directories(saft_fg_service
     PUBLIC
         ${CMAKE_BINARY_DIR}/src/generated/
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/interface
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )

@@ -28,6 +28,6 @@ include(cmake/generator.cmake)
 
 # Adding the src:
 add_subdirectory(saftbus-gen)
-add_subdirectory(saftbus)
+#add_subdirectory(saftbus)
 add_subdirectory(saftlib)
 
