@@ -2436,7 +2436,7 @@ int main( int argc, char* argv[] )
   try
   {
 
-    std::string sdb_filename = DATADIR "/software-tr.sdb";
+    std::string sdb_filename = "software-tr.sdb";
     if ( argc != 1 )
     {
       for ( int i = 1; i < argc; i++ )

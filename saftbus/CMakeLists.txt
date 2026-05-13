@@ -111,6 +111,9 @@ target_compile_definitions(saftbusd
         VERSION="${PROJECT_VERSION}"
 )
 
+install(TARGETS saftbusd)
+
+
 # ============================================================================
 # Executable: saftbusd_sda
 # ============================================================================

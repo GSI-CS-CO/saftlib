@@ -33,45 +33,33 @@ pkg_check_modules(LIBRTPI REQUIRED librtpi>=1.0.1)
 # Software Timing Receiver
 # ===========================================================================
 
-# add_executable( saft-software-tr
-#   saft-software-tr.cpp
-# )
+add_executable( saft-software-tr
+  saft-software-tr.cpp
+)
 
-# target_link_libraries( saft-software-tr
-#     PRIVATE
-#         ${EB_LIBS}
-#         pthread
-#         dl
-# )
-
-# target_compile_options( saft-software-tr
-#     PRIVATE
-#         sdb_DATA=software-tr.sdb
-# )
-
-# # software timing receiver program
-# # saft_software_tr_sdb_DATA = src/software-tr.sdb
-# # saft_software_tr_sdbdir   = $(datadir)/saftlib
-# # saft_software_tr_LDADD    = $(EB_LIBS) -lpthread  -ldl #-lltdl
-# # saft_software_tr_SOURCES  = src/saft-software-tr.cpp
+target_link_libraries( saft-software-tr
+    PRIVATE
+        saftbus
+        saft-service
+        pthread
+        dl
+)
 
 
 # ============================================================================
 # Another Software Timing Receiver
 # ===========================================================================
 
-# add_executable( soft-tr
-#   soft-tr.cpp
-# )
+add_executable( soft-tr
+  soft-tr.cpp
+)
 
-# target_link_libraries( soft-tr
-#     PRIVATE
-#         ${EB_LIBS}
-#         ${SIGCPP_LIBS}
-#         saftbus
-#         saft_service
-#         dl
-# )
+target_link_libraries( soft-tr
+    PRIVATE
+        saftbus
+        saft-service
+        dl
+)
 
 
 # ============================================================================
@@ -99,8 +87,6 @@ add_executable( saft-testbench
 
 target_link_libraries( saft-testbench
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -117,8 +103,6 @@ add_executable( saft-ctl
 
 target_link_libraries( saft-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -135,8 +119,6 @@ add_executable( saft-io-ctl
 
 target_link_libraries( saft-io-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -153,8 +135,6 @@ add_executable( saft-pps-gen
 
 target_link_libraries( saft-pps-gen
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -171,8 +151,6 @@ add_executable( saft-scu-ctl
 
 target_link_libraries( saft-scu-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -189,8 +167,6 @@ add_executable( saft-epcu-ctl
 
 target_link_libraries( saft-epcu-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -207,8 +183,6 @@ add_executable( saft-wbm-ctl
 
 target_link_libraries( saft-wbm-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -225,8 +199,6 @@ add_executable( saft-clk-gen
 
 target_link_libraries( saft-clk-gen
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -243,8 +215,6 @@ add_executable( saft-dm
 
 target_link_libraries( saft-dm
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -261,8 +231,6 @@ add_executable( saft-eb-fwd
 
 target_link_libraries( saft-eb-fwd
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -279,8 +247,6 @@ add_executable( saft-gmt-check
 
 target_link_libraries( saft-gmt-check
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -297,8 +263,6 @@ add_executable( saft-uni
 
 target_link_libraries( saft-uni
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
@@ -315,30 +279,26 @@ add_executable( saft-lcd
 
 target_link_libraries( saft-lcd
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
 )
 
 
-# # ============================================================================
-# # Saft Standlone Mailbox
-# # ===========================================================================
+# ============================================================================
+# Saft Standlone Mailbox
+# ===========================================================================
 
-# add_executable( saft-standalone-mbox
-#   saft-standalone-mbox.cpp
-# )
+add_executable( saft-standalone-mbox
+  saft-standalone-mbox.cpp
+)
 
-# target_link_libraries( saft-standalone-mbox
-#     PRIVATE
-#         ${EB_LIBS}
-#         ${SIGCPP_LIBS}
-#         saftbus
-#         saft-service
-#         dl
-# )
+target_link_libraries( saft-standalone-mbox
+    PRIVATE
+        saftbus
+        saft-service
+        dl
+)
 
 
 # ============================================================================
@@ -351,30 +311,26 @@ add_executable( saft-roundtrip-latency
 
 target_link_libraries( saft-roundtrip-latency
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         dl
 )
 
 
-# # ============================================================================
-# # Saft Standalone Roundtrip Latency Measurement
-# # ===========================================================================
+# ============================================================================
+# Saft Standalone Roundtrip Latency Measurement
+# ===========================================================================
 
-# add_executable( saft-standalone-roundtrip-latency
-#   saft-standalone-roundtrip-latency.cpp
-# )
+add_executable( saft-standalone-roundtrip-latency
+  saft-standalone-roundtrip-latency.cpp
+)
 
-# target_link_libraries( saft-standalone-roundtrip-latency
-#     PRIVATE
-#         ${EB_LIBS}
-#         ${SIGCPP_LIBS}
-#         saftbus
-#         saft-service
-#         dl
-# )
+target_link_libraries( saft-standalone-roundtrip-latency
+    PRIVATE
+        saftbus
+        saft-service
+        dl
+)
 
 
 # ============================================================================
@@ -387,8 +343,6 @@ add_executable( saft-fg-ctl
 
 target_link_libraries( saft-fg-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         saft-fg-proxy
@@ -406,8 +360,6 @@ add_executable( saft-mfg-ctl
 
 target_link_libraries( saft-mfg-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         saft-fg-proxy
@@ -426,8 +378,6 @@ add_executable( saft-burst-ctl
 
 target_link_libraries( saft-burst-ctl
     PRIVATE
-        ${EB_LIBS}
-        ${SIGCPP_LIBS}
         saftbus
         saft-proxy
         saft-bg-proxy
