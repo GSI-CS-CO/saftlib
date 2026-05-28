@@ -56,7 +56,6 @@ add_executable( soft-tr
 
 target_link_libraries( soft-tr
     PRIVATE
-        saftbus
         saft-service
         dl
 )
@@ -72,7 +71,6 @@ add_executable( wait-msi
 
 target_link_libraries( wait-msi
     PRIVATE
-        saftbus
         saft-service
         dl
 )
@@ -87,7 +85,6 @@ add_executable( saft-testbench
 
 target_link_libraries( saft-testbench
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -103,7 +100,6 @@ add_executable( saft-ctl
 
 target_link_libraries( saft-ctl
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -119,7 +115,6 @@ add_executable( saft-io-ctl
 
 target_link_libraries( saft-io-ctl
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -135,7 +130,6 @@ add_executable( saft-pps-gen
 
 target_link_libraries( saft-pps-gen
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -151,7 +145,6 @@ add_executable( saft-scu-ctl
 
 target_link_libraries( saft-scu-ctl
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -167,7 +160,6 @@ add_executable( saft-epcu-ctl
 
 target_link_libraries( saft-epcu-ctl
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -183,7 +175,6 @@ add_executable( saft-wbm-ctl
 
 target_link_libraries( saft-wbm-ctl
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -199,7 +190,6 @@ add_executable( saft-clk-gen
 
 target_link_libraries( saft-clk-gen
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -215,7 +205,6 @@ add_executable( saft-dm
 
 target_link_libraries( saft-dm
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -231,7 +220,6 @@ add_executable( saft-eb-fwd
 
 target_link_libraries( saft-eb-fwd
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -247,7 +235,6 @@ add_executable( saft-gmt-check
 
 target_link_libraries( saft-gmt-check
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -263,7 +250,6 @@ add_executable( saft-uni
 
 target_link_libraries( saft-uni
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -279,7 +265,6 @@ add_executable( saft-lcd
 
 target_link_libraries( saft-lcd
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -295,7 +280,6 @@ add_executable( saft-standalone-mbox
 
 target_link_libraries( saft-standalone-mbox
     PRIVATE
-        saftbus
         saft-service
         dl
 )
@@ -311,7 +295,6 @@ add_executable( saft-roundtrip-latency
 
 target_link_libraries( saft-roundtrip-latency
     PRIVATE
-        saftbus
         saft-proxy
         dl
 )
@@ -327,7 +310,6 @@ add_executable( saft-standalone-roundtrip-latency
 
 target_link_libraries( saft-standalone-roundtrip-latency
     PRIVATE
-        saftbus
         saft-service
         dl
 )
@@ -343,7 +325,6 @@ add_executable( saft-fg-ctl
 
 target_link_libraries( saft-fg-ctl
     PRIVATE
-        saftbus
         saft-proxy
         fg-firmware-proxy
         dl
@@ -360,7 +341,6 @@ add_executable( saft-mfg-ctl
 
 target_link_libraries( saft-mfg-ctl
     PRIVATE
-        saftbus
         saft-proxy
         fg-firmware-proxy
         pthread
@@ -378,7 +358,6 @@ add_executable( saft-burst-ctl
 
 target_link_libraries( saft-burst-ctl
     PRIVATE
-        saftbus
         saft-proxy
         bg-firmware-proxy
         dl

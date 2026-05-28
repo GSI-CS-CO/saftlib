@@ -207,6 +207,8 @@ target_include_directories(saft-service
 )
 
 target_link_libraries(saft-service
+    PUBLIC
+        saftbus
     PRIVATE
         ${EB_LIBS}
         ${SIGCPP_LIBS}
@@ -273,6 +275,8 @@ target_include_directories(saft-proxy
 )
 
 target_link_libraries(saft-proxy
+    PUBLIC
+        saftbus
     PRIVATE
         ${EB_LIBS}
         ${SIGCPP_LIBS}

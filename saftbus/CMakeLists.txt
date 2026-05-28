@@ -48,20 +48,56 @@ add_compile_definitions(
 # Main Library: saftbus
 # ============================================================================
 
-add_library(saftbus SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/loop.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/saftbus.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/error.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/client.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/service.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/server.cpp
+add_library(saftbus SHARED)
+
+# add_library(saftbus SHARED
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/loop.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/saftbus.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/error.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/client.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/service.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins.cpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/server.cpp
+# )
+
+target_sources(saftbus
+
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/loop.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/saftbus.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/error.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/client.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/service.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/server.cpp
+    PUBLIC
+        FILE_SET saftbus_public_headers
+        TYPE    HEADERS
+        BASE_DIRS "include/"
+        FILES
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/chunck_allocator_rt.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/client.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/error.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/global_allocator.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/loop.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/plugins.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/saftbus.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/server.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/include/service.hpp"
+    PRIVATE
+        FILE_SET saftbus_private_headers
+        TYPE    HEADERS
+        BASE_DIRS "include/"
+        FILES
+            # here because we do not want it to be installed
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/configurable_chunck_allocator_rt.hpp
+
 )
 
 target_include_directories(saftbus
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/saftbus>
+        #$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        #$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/saftbus>
         ${EB_INCLUDE_DIRS}
         ${SIGCPP_INCLUDE_DIRS}
     PRIVATE
