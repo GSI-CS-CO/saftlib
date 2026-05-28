@@ -286,7 +286,7 @@ target_link_libraries(saft-proxy
 
 # Service
 
-add_library(saft-fg-service SHARED
+add_library(fg-firmware-service SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
 	${CMAKE_BINARY_DIR}/src/generated/FunctionGenerator_Service.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
@@ -297,7 +297,7 @@ add_library(saft-fg-service SHARED
 	${CMAKE_CURRENT_SOURCE_DIR}/src/fg_firmware_create_service.cpp
 )
 
-target_link_libraries(saft-fg-service
+target_link_libraries(fg-firmware-service
     PUBLIC
         ${SIGCPP_LIBS}
         saftbus
@@ -305,12 +305,12 @@ target_link_libraries(saft-fg-service
         dl
 )
 
-target_compile_options(saft-fg-service
+target_compile_options(fg-firmware-service
     PRIVATE
         ${SIGCPP_CFLAGS}
 )
 
-target_include_directories(saft-fg-service
+target_include_directories(fg-firmware-service
     PRIVATE
         ${CMAKE_BINARY_DIR}/src/generated/
         ${SIGCPP_INCLUDE_DIRS}
@@ -318,13 +318,13 @@ target_include_directories(saft-fg-service
 
 # Proxy
 
-add_library(saft-fg-proxy SHARED
+add_library(fg-firmware-proxy SHARED
 	${CMAKE_BINARY_DIR}/src/generated/FunctionGenerator_Proxy.cpp
 	${CMAKE_BINARY_DIR}/src/generated/MasterFunctionGenerator_Proxy.cpp
 	${CMAKE_BINARY_DIR}/src/generated/FunctionGeneratorFirmware_Proxy.cpp
 )
 
-target_link_libraries(saft-fg-proxy
+target_link_libraries(fg-firmware-proxy
     PUBLIC
         ${SIGCPP_LIBS}
         saftbus
@@ -332,12 +332,12 @@ target_link_libraries(saft-fg-proxy
         dl
 )
 
-target_compile_options(saft-fg-proxy
+target_compile_options(fg-firmware-proxy
     PRIVATE
         ${SIGCPP_CFLAGS}
 )
 
-target_include_directories(saft-fg-proxy
+target_include_directories(fg-firmware-proxy
     PRIVATE
         ${CMAKE_BINARY_DIR}/src/generated/
         ${SIGCPP_INCLUDE_DIRS}
@@ -350,13 +350,13 @@ target_include_directories(saft-fg-proxy
 
 # Service
 
-add_library(saft-bg-service SHARED
+add_library(bg-firmware-service SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp
 	${CMAKE_BINARY_DIR}/src/generated/BurstGenerator_Service.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/bg_firmware_create_service.cpp
 )
 
-target_link_libraries(saft-bg-service
+target_link_libraries(bg-firmware-service
     PUBLIC
         ${SIGCPP_LIBS}
         saftbus
@@ -364,28 +364,28 @@ target_link_libraries(saft-bg-service
         dl
 )
 
-target_compile_options(saft-bg-service
+target_compile_options(bg-firmware-service
     PRIVATE
         ${SIGCPP_CFLAGS}
 )
 
-target_include_directories(saft-bg-service
+target_include_directories(bg-firmware-service
     PRIVATE
         ${CMAKE_BINARY_DIR}/src/generated/
         ${SIGCPP_INCLUDE_DIRS}
 )
 
-target_compile_definitions(saft-bg-service PRIVATE
+target_compile_definitions(bg-firmware-service PRIVATE
     DATADIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 # Proxy
 
-add_library(saft-bg-proxy SHARED
+add_library(bg-firmware-proxy SHARED
 	${CMAKE_BINARY_DIR}/src/generated/BurstGenerator_Proxy.cpp
 )
 
-target_link_libraries(saft-bg-proxy
+target_link_libraries(bg-firmware-proxy
     PUBLIC
         ${SIGCPP_LIBS}
         saftbus
@@ -393,12 +393,12 @@ target_link_libraries(saft-bg-proxy
         dl
 )
 
-target_compile_options(saft-bg-proxy
+target_compile_options(bg-firmware-proxy
     PRIVATE
         ${SIGCPP_CFLAGS}
 )
 
-target_include_directories(saft-bg-proxy
+target_include_directories(bg-firmware-proxy
     PRIVATE
         ${CMAKE_BINARY_DIR}/src/generated/
         ${SIGCPP_INCLUDE_DIRS}

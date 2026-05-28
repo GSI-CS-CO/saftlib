@@ -19,6 +19,8 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
 # Use standard CMake install directories
 include(GNUInstallDirs)
+# Enable easy creation of package config files
+include(CMakePackageConfigHelpers)
 
 # Find required packages
 find_package(PkgConfig REQUIRED)
@@ -63,8 +65,6 @@ target_include_directories(saftbus
         ${EB_INCLUDE_DIRS}
         ${SIGCPP_INCLUDE_DIRS}
     PRIVATE
-        #${EB_INCLUDE_DIRS}
-        #${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )
 
@@ -79,6 +79,21 @@ target_link_libraries(saftbus
 set_target_properties(saftbus PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${SONAME}
+)
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/chunck_allocator_rt.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/client.hpp
+    # commented out because was not installed in autotools project
+    # ${CMAKE_CURRENT_SOURCE_DIR}/include/configurable_chunck_allocator_rt.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/error.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/global_allocator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/loop.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/plugins.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/saftbus.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/server.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/service.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 # ============================================================================
@@ -115,22 +130,22 @@ install(TARGETS saftbusd)
 
 
 # ============================================================================
-# Executable: saftbusd_sda
+# Executable: saftbusd-sda
 # ============================================================================
 
-add_executable(saftbusd_sda
+add_executable(saftbusd-sda
     ${CMAKE_CURRENT_SOURCE_DIR}/src/saftbusd-sda.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/print_allocator_fillstate.cpp
 )
 
-target_include_directories(saftbusd_sda
+target_include_directories(saftbusd-sda
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )
 
-target_link_libraries(saftbusd_sda
+target_link_libraries(saftbusd-sda
     PRIVATE
         saftbus
         ${SIGCPP_LIBRARIES}
@@ -139,28 +154,28 @@ target_link_libraries(saftbusd_sda
         pthread
 )
 
-target_compile_definitions(saftbusd_sda
+target_compile_definitions(saftbusd-sda
     PRIVATE
         VERSION="${PROJECT_VERSION}"
 )
 
 # ============================================================================
-# Executable: saftbusd_noda
+# Executable: saftbusd-noda
 # ============================================================================
 
-add_executable(saftbusd_noda
+add_executable(saftbusd-noda
     ${CMAKE_CURRENT_SOURCE_DIR}/src/saftbusd-noda.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/print_allocator_fillstate.cpp
 )
 
-target_include_directories(saftbusd_noda
+target_include_directories(saftbusd-noda
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )
 
-target_link_libraries(saftbusd_noda
+target_link_libraries(saftbusd-noda
     PRIVATE
         saftbus
         ${SIGCPP_LIBRARIES}
@@ -169,27 +184,27 @@ target_link_libraries(saftbusd_noda
         pthread
 )
 
-target_compile_definitions(saftbusd_noda
+target_compile_definitions(saftbusd-noda
     PRIVATE
         VERSION="${PROJECT_VERSION}"
 )
 
 # ============================================================================
-# Executable: saftbus_ctl
+# Executable: saftbus-ctl
 # ============================================================================
 
-add_executable(saftbus_ctl
+add_executable(saftbus-ctl
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/saftbus-ctl.cpp
 )
 
-target_include_directories(saftbus_ctl
+target_include_directories(saftbus-ctl
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
 )
 
-target_link_libraries(saftbus_ctl
+target_link_libraries(saftbus-ctl
     PRIVATE
         saftbus
         ${SIGCPP_LIBRARIES}
@@ -198,7 +213,7 @@ target_link_libraries(saftbus_ctl
         pthread
 )
 
-target_compile_definitions(saftbus_ctl
+target_compile_definitions(saftbus-ctl
     PRIVATE
         VERSION="${PROJECT_VERSION}"
 )
@@ -217,40 +232,53 @@ configure_file(
 # Installation
 # ============================================================================
 
-# Install library
-install(TARGETS saftbus
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftbus
+# include(CMakePackageConfigHelpers)
+# write_basic_package_version_file(
+#     MyLibConfigVersion.cmake
+#     VERSION ${PACKAGE_VERSION}
+#     COMPATIBILITY AnyNewerVersion
+#     )
+
+install(
+    TARGETS saftbus
 )
 
-# Install header files
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/chunck_allocator_rt.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/client.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/configurable_chunck_allocator_rt.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/error.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/global_allocator.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/loop.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/plugins.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/saftbus.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/server.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/service.hpp
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftbus
-)
+#  /usr/bin/mkdir -p '/usr/local/lib'
+#  /bin/bash ./libtool   --mode=install /usr/bin/install -c
+#  libsaftbus.la
+#  libsaft-service.la
+#  libsaft-proxy.la
+#  libfg-firmware-service.la
+#  libfg-firmware-proxy.la
+#  libbg-firmware-service.la
+#  libbg-firmware-proxy.la
+#  '/usr/local/lib'
+# libtool: install: /usr/bin/install -c
+# .libs/libsaftbus.so.10.3.1
+# /usr/local/lib/libsaftbus.so.10.3.1
 
-# Install executables
-install(TARGETS
-    saftbusd
-    saftbusd_sda
-    saftbusd_noda
-    saftbus_ctl
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
 
-# Install pkg-config file
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/saftbus.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
+
+# # Install library
+# install(TARGETS saftbus
+#     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftbus
+# )
+
+# # Install header files
+# install(FILES
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/chunck_allocator_rt.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/client.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/configurable_chunck_allocator_rt.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/error.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/global_allocator.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/loop.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/plugins.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/saftbus.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/server.hpp
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/service.hpp
+#     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftbus
+# )
+

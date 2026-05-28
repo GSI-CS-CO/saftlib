@@ -345,7 +345,7 @@ target_link_libraries( saft-fg-ctl
     PRIVATE
         saftbus
         saft-proxy
-        saft-fg-proxy
+        fg-firmware-proxy
         dl
 )
 
@@ -362,7 +362,7 @@ target_link_libraries( saft-mfg-ctl
     PRIVATE
         saftbus
         saft-proxy
-        saft-fg-proxy
+        fg-firmware-proxy
         pthread
         dl
 )
@@ -380,6 +380,6 @@ target_link_libraries( saft-burst-ctl
     PRIVATE
         saftbus
         saft-proxy
-        saft-bg-proxy
+        bg-firmware-proxy
         dl
 )
