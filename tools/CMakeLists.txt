@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21...4.0)
+cmake_minimum_required(VERSION 3.23...4.0)
 
 set(MAJOR "3")      # Increment if removed/changed properties/signals/methods since previous release
 set(MINOR "2")      # Increment if added properties/signals/methods; reset to 0 if MAJOR changed
