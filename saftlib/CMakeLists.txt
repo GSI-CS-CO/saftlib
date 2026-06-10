@@ -12,7 +12,6 @@ project(saftlib
     LANGUAGES C CXX
 )
 
-
 # Set C++ standard and compiler flags
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,6 +19,8 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
 # Use standard CMake install directories
 include(GNUInstallDirs)
+# Enable easy creation of package config files
+include(CMakePackageConfigHelpers)
 
 # Find required packages
 find_package(PkgConfig REQUIRED)
@@ -32,7 +33,7 @@ pkg_check_modules(LIBRTPI REQUIRED librtpi>=1.0.1)
 # ============================================================================
 # Env Foo
 # ===========================================================================
-include(${CMAKE_SOURCE_DIR}/cmake/environment.cmake)
+include(cmake/environment.cmake)
 # Get username, hostname, and operating system
 get_env()
 # Add preprocessor definitions
@@ -49,11 +50,14 @@ add_compile_definitions(
 # ============================================================================
 # Get generator function
 # ============================================================================
-include(${CMAKE_SOURCE_DIR}/cmake/generator.cmake)
+include(cmake/generator.cmake)
+
 
 # ============================================================================
 # Saftbus generator mechanics
 # ============================================================================
+
+set (SAFTLIB_GENERATOR_DIR "${saftlib_BINARY_DIR}/generated/")
 
 set (GENERATOR_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ActionSink.hpp
@@ -90,6 +94,7 @@ set (GENERATOR_SOURCES
 
 
 # Set vars now to track all generated files
+set(SAFTLIB_GENERATOR_DIR)
 set(SERVICE_GENERATED_SOURCES)
 set(PROXY_GENERATED_SOURCES)
 set(SAFTLIB_GENERATED_FILES)
@@ -98,50 +103,52 @@ set(SAFTLIB_GENERATED_FILES)
 # Create a custom target to ensure generation of all service files
 add_custom_target(all_generated_files DEPENDS ${SAFTLIB_GENERATED_FILES})
 # Create a custom target to ensure generation of all service files
-#add_custom_target(service_files DEPENDS ${SERVICE_GENERATED_SOURCES})
+add_custom_target(service_files DEPENDS ${SERVICE_GENERATED_SOURCES})
 # Create a custom target to ensure generation of all proxy files
-#add_custom_target(proxy_files DEPENDS ${PROXY_GENERATED_SOURCES})
+add_custom_target(proxy_files DEPENDS ${PROXY_GENERATED_SOURCES})
 
-add_custom_target( generate_sources DEPENDS all_generated_files)
-generate_saftbus_files( "${GENERATOR_SOURCES}" generate_sources )
+# add_custom_target( generate_sources DEPENDS all_generated_files)
+# generate_saftbus_files( "${GENERATOR_SOURCES}" generate_sources )
+generate_saftbus_files( "${GENERATOR_SOURCES}" )
 
-#MESSAGE (STATUS "SERVICE_GENERATED_SOURCES: ${SERVICE_GENERATED_SOURCES} \n")
-#MESSAGE (STATUS "PROXY_GENERATED_SOURCES: ${PROXY_GENERATED_SOURCES} \n")
-#MESSAGE (STATUS "SAFTLIB_GENERATED_FILES: ${SAFTLIB_GENERATED_FILES} \n")
+MESSAGE(STATUS "SAFTLIB_GENERATOR_DIR: ${SAFTLIB_GENERATOR_DIR}")
+MESSAGE (STATUS "SERVICE_GENERATED_SOURCES: ${SERVICE_GENERATED_SOURCES} \n")
+MESSAGE (STATUS "PROXY_GENERATED_SOURCES: ${PROXY_GENERATED_SOURCES} \n")
+MESSAGE (STATUS "SAFTLIB_GENERATED_FILES: ${SAFTLIB_GENERATED_FILES} \n")
 
 # ============================================================================
 # saft services
 # ============================================================================
 
 # Source files
-set(LIBSAFT_SERVICE_GEN_SOURCES
-    ${CMAKE_BINARY_DIR}/src/generated/ActionSink_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/BuildIdRom_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Condition_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/ECA_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/ECA_Event_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/ECA_TLU_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/EmbeddedCPUCondition_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/EmbeddedCPUActionSink_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/EventSource_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Input_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/LM32Cluster_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/OpenDevice_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Output_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/OutputCondition_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Owned_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Reset_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SAFTd_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SCUbusActionSink_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SCUbusCondition_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SoftwareActionSink_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SoftwareCondition_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/TempSensor_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/TimingReceiver_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/WbmActionSink_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/WbmCondition_Service.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/WhiteRabbit_Service.cpp
-)
+# set(LIBSAFT_SERVICE_GEN_SOURCES
+#     ${SAFTLIB_GENERATOR_DIR}/ActionSink_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/BuildIdRom_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/Condition_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/ECA_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/ECA_Event_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/ECA_TLU_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/EmbeddedCPUCondition_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/EmbeddedCPUActionSink_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/EventSource_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/Input_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/LM32Cluster_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/OpenDevice_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/Output_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/OutputCondition_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/Owned_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/Reset_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/SAFTd_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/SCUbusActionSink_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/SCUbusCondition_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/SoftwareActionSink_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/SoftwareCondition_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/TempSensor_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/TimingReceiver_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/WbmActionSink_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/WbmCondition_Service.cpp
+#     ${SAFTLIB_GENERATOR_DIR}/WhiteRabbit_Service.cpp
+# )
 
 set(LIBSAFT_SERVICE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/build.cpp
@@ -184,12 +191,13 @@ set(LIBSAFT_SERVICE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TimingReceiverAddon.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/create_service.cpp
-    ${LIBSAFT_SERVICE_GEN_SOURCES}
+    #${LIBSAFT_SERVICE_GEN_SOURCES}
+    ${SERVICE_GENERATED_SOURCES}
 )
 
 add_library(saft-service SHARED ${LIBSAFT_SERVICE_SOURCES})
 
-add_dependencies(saft-service generate_sources)
+add_dependencies(saft-service all_generated_files)
 
 set_target_properties(saft-service PROPERTIES
     VERSION ${MAJOR}.${MINOR}.${REVISION}
@@ -199,7 +207,8 @@ set_target_properties(saft-service PROPERTIES
 target_include_directories(saft-service
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_BINARY_DIR}/src/generated
+        #${saftlib_BINARY_DIR}/generated/
+        ${SAFTLIB_GENERATOR_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
     PRIVATE
         ${SIGCPP_INCLUDE_DIRS}
@@ -220,44 +229,45 @@ target_link_libraries(saft-service
 # saft proxies
 # ============================================================================
 
-set(LIBSAFT_PROXY_GEN_SOURCES
-    ${CMAKE_BINARY_DIR}/src/generated/ActionSink_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/BuildIdRom_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Condition_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/ECA_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/ECA_Event_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/ECA_TLU_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/EmbeddedCPUCondition_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/EmbeddedCPUActionSink_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/EventSource_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Input_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/LM32Cluster_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/OpenDevice_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Output_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/OutputCondition_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Owned_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/Reset_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SAFTd_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SCUbusActionSink_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SCUbusCondition_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SoftwareActionSink_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/SoftwareCondition_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/TempSensor_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/TimingReceiver_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/WbmActionSink_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/WbmCondition_Proxy.cpp
-    ${CMAKE_BINARY_DIR}/src/generated/WhiteRabbit_Proxy.cpp
-)
+# set(LIBSAFT_PROXY_GEN_SOURCES
+#     ${saftlib_BINARY_DIR}/generated/ActionSink_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/BuildIdRom_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/Condition_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/ECA_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/ECA_Event_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/ECA_TLU_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/EmbeddedCPUCondition_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/EmbeddedCPUActionSink_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/EventSource_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/Input_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/LM32Cluster_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/OpenDevice_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/Output_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/OutputCondition_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/Owned_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/Reset_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/SAFTd_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/SCUbusActionSink_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/SCUbusCondition_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/SoftwareActionSink_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/SoftwareCondition_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/TempSensor_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/TimingReceiver_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/WbmActionSink_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/WbmCondition_Proxy.cpp
+#     ${saftlib_BINARY_DIR}/generated/WhiteRabbit_Proxy.cpp
+# )
 
 set(LIBSAFT_PROXY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
-    ${LIBSAFT_PROXY_GEN_SOURCES}
+    #${LIBSAFT_PROXY_GEN_SOURCES}
+    ${PROXY_GENERATED_SOURCES}
 )
 
 add_library(saft-proxy SHARED ${LIBSAFT_PROXY_SOURCES})
 
-add_dependencies(saft-proxy generate_sources)
+add_dependencies(saft-proxy all_generated_files)
 
 set_target_properties(saft-proxy  PROPERTIES
     VERSION ${MAJOR}.${MINOR}.${REVISION}
@@ -266,7 +276,8 @@ set_target_properties(saft-proxy  PROPERTIES
 
 target_include_directories(saft-proxy
     PUBLIC
-        ${CMAKE_BINARY_DIR}/src/generated/
+        #${saftlib_BINARY_DIR}/generated/
+        ${SAFTLIB_GENERATOR_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
     PRIVATE
@@ -290,120 +301,128 @@ target_link_libraries(saft-proxy
 
 # Service
 
-add_library(fg-firmware-service SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
-	${CMAKE_BINARY_DIR}/src/generated/FunctionGenerator_Service.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
-	${CMAKE_BINARY_DIR}/src/generated/MasterFunctionGenerator_Service.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
-	${CMAKE_BINARY_DIR}/src/generated/FunctionGeneratorFirmware_Service.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/fg_firmware_create_service.cpp
-)
-
-target_link_libraries(fg-firmware-service
-    PUBLIC
-        ${SIGCPP_LIBS}
-        saftbus
-        saft-service
-        dl
-)
-
-target_compile_options(fg-firmware-service
-    PRIVATE
-        ${SIGCPP_CFLAGS}
-)
-
-target_include_directories(fg-firmware-service
-    PRIVATE
-        ${CMAKE_BINARY_DIR}/src/generated/
-        ${SIGCPP_INCLUDE_DIRS}
-)
-
-# Proxy
-
-add_library(fg-firmware-proxy SHARED
-	${CMAKE_BINARY_DIR}/src/generated/FunctionGenerator_Proxy.cpp
-	${CMAKE_BINARY_DIR}/src/generated/MasterFunctionGenerator_Proxy.cpp
-	${CMAKE_BINARY_DIR}/src/generated/FunctionGeneratorFirmware_Proxy.cpp
-)
-
-target_link_libraries(fg-firmware-proxy
-    PUBLIC
-        ${SIGCPP_LIBS}
-        saftbus
-        saft-service
-        dl
-)
-
-target_compile_options(fg-firmware-proxy
-    PRIVATE
-        ${SIGCPP_CFLAGS}
-)
-
-target_include_directories(fg-firmware-proxy
-    PRIVATE
-        ${CMAKE_BINARY_DIR}/src/generated/
-        ${SIGCPP_INCLUDE_DIRS}
-)
-
-
-# ============================================================================
-# Burst Generator
-# ============================================================================
-
-# Service
-
-add_library(bg-firmware-service SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp
-	${CMAKE_BINARY_DIR}/src/generated/BurstGenerator_Service.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/bg_firmware_create_service.cpp
-)
-
-target_link_libraries(bg-firmware-service
-    PUBLIC
-        ${SIGCPP_LIBS}
-        saftbus
-        saft-service
-        dl
-)
-
-target_compile_options(bg-firmware-service
-    PRIVATE
-        ${SIGCPP_CFLAGS}
-)
-
-target_include_directories(bg-firmware-service
-    PRIVATE
-        ${CMAKE_BINARY_DIR}/src/generated/
-        ${SIGCPP_INCLUDE_DIRS}
-)
-
-target_compile_definitions(bg-firmware-service PRIVATE
-    DATADIR="${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
-# Proxy
-
-add_library(bg-firmware-proxy SHARED
-	${CMAKE_BINARY_DIR}/src/generated/BurstGenerator_Proxy.cpp
-)
-
-target_link_libraries(bg-firmware-proxy
-    PUBLIC
-        ${SIGCPP_LIBS}
-        saftbus
-        saft-service
-        dl
-)
-
-target_compile_options(bg-firmware-proxy
-    PRIVATE
-        ${SIGCPP_CFLAGS}
-)
-
-target_include_directories(bg-firmware-proxy
-    PRIVATE
-        ${CMAKE_BINARY_DIR}/src/generated/
-        ${SIGCPP_INCLUDE_DIRS}
-)
+#add_library(fg-firmware-service SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
+#	${SAFTLIB_GENERATOR_DIR}/FunctionGenerator_Service.cpp
+#	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
+#	${SAFTLIB_GENERATOR_DIR}/MasterFunctionGenerator_Service.cpp
+#	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
+#	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
+#	${SAFTLIB_GENERATOR_DIR}/FunctionGeneratorFirmware_Service.cpp
+#	${CMAKE_CURRENT_SOURCE_DIR}/src/fg_firmware_create_service.cpp
+#)
+#
+#add_dependencies(fg-firmware-service saft-service)
+#
+#target_link_libraries(fg-firmware-service
+#    PUBLIC
+#        ${SIGCPP_LIBS}
+#        saftbus
+#        saft-service
+#        dl
+#)
+#
+#target_compile_options(fg-firmware-service
+#    PRIVATE
+#        ${SIGCPP_CFLAGS}
+#)
+#
+#target_include_directories(fg-firmware-service
+#    PRIVATE
+#        ${SAFTLIB_GENERATOR_DIR}
+#        ${SIGCPP_INCLUDE_DIRS}
+#)
+#
+## Proxy
+#
+#add_library(fg-firmware-proxy SHARED
+#	${SAFTLIB_GENERATOR_DIR}/FunctionGenerator_Proxy.cpp
+#	${SAFTLIB_GENERATOR_DIR}/MasterFunctionGenerator_Proxy.cpp
+#	${SAFTLIB_GENERATOR_DIR}/FunctionGeneratorFirmware_Proxy.cpp
+#)
+#
+#add_dependencies(fg-firmware-proxy saft-proxy)
+#
+#target_link_libraries(fg-firmware-proxy
+#    PUBLIC
+#        ${SIGCPP_LIBS}
+#        saftbus
+#        saft-service
+#        dl
+#)
+#
+#target_compile_options(fg-firmware-proxy
+#    PRIVATE
+#        ${SIGCPP_CFLAGS}
+#)
+#
+#target_include_directories(fg-firmware-proxy
+#    PRIVATE
+#        ${SAFTLIB_GENERATOR_DIR}
+#        ${SIGCPP_INCLUDE_DIRS}
+#)
+#
+#
+## ============================================================================
+## Burst Generator
+## ============================================================================
+#
+## Service
+#
+#add_library(bg-firmware-service SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp
+#	${SAFTLIB_GENERATOR_DIR}/BurstGenerator_Service.cpp
+#	${CMAKE_CURRENT_SOURCE_DIR}/src/bg_firmware_create_service.cpp
+#)
+#
+#add_dependencies(bg-firmware-service saft-service)
+#
+#target_link_libraries(bg-firmware-service
+#    PUBLIC
+#        ${SIGCPP_LIBS}
+#        saftbus
+#        saft-service
+#        dl
+#)
+#
+#target_compile_options(bg-firmware-service
+#    PRIVATE
+#        ${SIGCPP_CFLAGS}
+#)
+#
+#target_include_directories(bg-firmware-service
+#    PRIVATE
+#        ${SAFTLIB_GENERATOR_DIR}
+#        ${SIGCPP_INCLUDE_DIRS}
+#)
+#
+#target_compile_definitions(bg-firmware-service PRIVATE
+#    DATADIR="${CMAKE_CURRENT_SOURCE_DIR}"
+#)
+#
+## Proxy
+#
+#add_library(bg-firmware-proxy SHARED
+#	${CMAKE_BINARY_DIR}/generated/BurstGenerator_Proxy.cpp
+#)
+#
+#add_dependencies(bg-firmware-proxy saft-proxy)
+#
+#target_link_libraries(bg-firmware-proxy
+#    PUBLIC
+#        ${SIGCPP_LIBS}
+#        saftbus
+#        saft-service
+#        dl
+#)
+#
+#target_compile_options(bg-firmware-proxy
+#    PRIVATE
+#        ${SIGCPP_CFLAGS}
+#)
+#
+#target_include_directories(bg-firmware-proxy
+#    PRIVATE
+#        ${SAFTLIB_GENERATOR_DIR}
+#        ${SIGCPP_INCLUDE_DIRS}
+#)
