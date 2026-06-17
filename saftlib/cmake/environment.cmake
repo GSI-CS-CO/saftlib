@@ -41,7 +41,6 @@ if(UNIX)
     )
 
     execute_process(
-        #COMMAND date +"%b %d %Y %H:%M:%S" --date=@${COMMIT_TIMESTAMP}
         COMMAND date +"%-b %-d %Y %H:%M:%S" --date=@${COMMIT_TIMESTAMP}
         OUTPUT_VARIABLE SOURCE_DATE
         OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -54,16 +53,10 @@ else()
     set(OPERATING_SYSTEM "${CMAKE_SYSTEM_NAME}")
 endif()
 
-#set(USERNAME            "${USERNAME}" PARENT_SCOPE)
-#set(HOSTNAME            "${HOSTNAME}" PARENT_SCOPE)
-#set(OPERATING_SYSTEM    "${OPERATING_SYSTEM}" PARENT_SCOPE)
-#set(GIT_ID              "${GIT_ID}" PARENT_SCOPE)
-#set(SOURCE_DATE         "${SOURCE_DATE}" PARENT_SCOPE)
-
-set(GIT_ID "\"${GIT_COMMIT}\"" PARENT_SCOPE)  # Add escaped quotes
-set(SOURCE_DATE "\"${SOURCE_DATE}\"" PARENT_SCOPE)  # Add escaped quotes
-set(USERNAME "\"${USERNAME}\"" PARENT_SCOPE)
-set(HOSTNAME "\"${HOSTNAME}\"" PARENT_SCOPE)
-set(OPERATING_SYSTEM "\"${OPERATING_SYSTEM}\"" PARENT_SCOPE)
+set(USERNAME            ${USERNAME} PARENT_SCOPE)
+set(HOSTNAME            ${HOSTNAME} PARENT_SCOPE)
+set(OPERATING_SYSTEM    ${OPERATING_SYSTEM} PARENT_SCOPE)
+set(GIT_ID              ${GIT_ID} PARENT_SCOPE)
+set(SOURCE_DATE         ${SOURCE_DATE} PARENT_SCOPE)
 
 endfunction()

@@ -34,15 +34,22 @@ add_compile_definitions(
     PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
 )
 
+# ============================================================================
+# Env Foo
+# ===========================================================================
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/environment.cmake)
 # Get username, hostname, and operating system
 get_env()
-# Add definitions for these variables
-add_compile_definitions(
-    USERNAME="${USERNAME}"
-    HOSTNAME="${HOSTNAME}"
-    OPERATING_SYSTEM="${OPERATING_SYSTEM}"
+
+# MESSAGE (STATUS "GIT_ID: ${GIT_ID}")
+# MESSAGE (STATUS "SOURCE_DATE: ${SOURCE_DATE}")
+
+configure_file(
+    ${PROJECT_SOURCE_DIR}/cmake/version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/version.h
 )
+
 
 # ============================================================================
 # Main Library: saftbus
@@ -226,7 +233,7 @@ target_compile_definitions(saftbus-ctl
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-    MyLibConfigVersion.cmake
+    saftbus.cmake
     VERSION ${VERSION}
     COMPATIBILITY AnyNewerVersion
 )

@@ -33,21 +33,21 @@ pkg_check_modules(LIBRTPI REQUIRED librtpi>=1.0.1)
 # ============================================================================
 # Env Foo
 # ===========================================================================
-include(cmake/environment.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/environment.cmake)
 # Get username, hostname, and operating system
 get_env()
-# Add preprocessor definitions
-add_compile_definitions(
-    PACKAGE_STRING="${PROJECT_NAME} ${PROJECT_VERSION}"
-    USERNAME="${USERNAME}"
-    HOSTNAME="${HOSTNAME}"
-    OPERATING_SYSTEM="${OPERATING_SYSTEM}"
-    GIT_ID="${GIT_ID}"
-    SOURCE_DATE=string"${SOURCE_DATE}"
-)
 
-MESSAGE (STATUS "GIT_ID: ${GIT_ID}")
-MESSAGE (STATUS "SOURCE_DATE: ${SOURCE_DATE}")
+# MESSAGE (STATUS "GIT_ID: ${GIT_ID}")
+# MESSAGE (STATUS "SOURCE_DATE: ${SOURCE_DATE}")
+# MESSAGE (STATUS "USERNAME: ${USERNAME}")
+# MESSAGE (STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")
+# MESSAGE (STATUS "saftlib_VERSION: ${saftlib_VERSION}")
+# MESSAGE (STATUS "PACKAGE_STRING: ${PROJECT_NAME} ${PROJECT_VERSION}")
+
+configure_file(
+    ${PROJECT_SOURCE_DIR}/cmake/version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/version.h
+)
 
 # ============================================================================
 # Saftbus generator mechanics
@@ -119,6 +119,7 @@ target_sources( saft-service
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/eb-source.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/eb-forward.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/build.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Owned.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/SAFTd.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Condition.cpp
@@ -129,6 +130,10 @@ target_sources( saft-service
         ${CMAKE_CURRENT_SOURCE_DIR}/src/SCUbusActionSink.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUCondition.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/EmbeddedCPUActionSink.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/WbmCondition.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/WbmActionSink.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/SdbDevice.cpp
@@ -155,11 +160,13 @@ target_sources( saft-service
         ${CMAKE_CURRENT_SOURCE_DIR}/src/TimingReceiverAddon.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/create_service.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/BurstGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/build.cpp
         ${SERVICE_GENERATED_SOURCES}
 
     # needs to be checked individually - should not be all public
     PUBLIC
-    FILE_SET saftlib_public_headers
+    FILE_SET saft_service_public_headers
     TYPE    HEADERS
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/
     FILES
@@ -223,17 +230,18 @@ target_sources( saft-service
         ${CMAKE_CURRENT_SOURCE_DIR}/include/WbmCondition.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/WhiteRabbit.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/wr_mil_gw_regs.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/build.hpp
 
     # needs to be checked individually - should not be all public
     PUBLIC
-    FILE_SET saftlib_service_generated_headers
+    FILE_SET saft_service_generated_headers
     TYPE    HEADERS
     BASE_DIRS ${SAFTLIB_GENERATOR_DIR}
     FILES
         ${SERVICE_GENERATED_HEADERS}
 
-    INTERFACE
-    FILE_SET saftlib_interface_headers
+    PUBLIC
+    FILE_SET saft_service_interface_headers
     TYPE    HEADERS
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/
     FILES
@@ -285,7 +293,6 @@ target_sources( saft-service
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/WbmActionSink.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/WbmCondition.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/WrMilGateway.h
-
 )
 
 add_dependencies(saft-service all_generated_files)
@@ -297,6 +304,9 @@ set_target_properties(saft-service PROPERTIES
 
 # Should be put into target_sources above
 target_include_directories(saft-service
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
     PRIVATE
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
@@ -316,14 +326,6 @@ target_link_libraries(saft-service
 # saft proxies
 # ============================================================================
 
-
-set(LIBSAFT_PROXY_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
-    #${LIBSAFT_PROXY_GEN_SOURCES}
-    ${PROXY_GENERATED_SOURCES}
-)
-
 add_library(saft-proxy SHARED)
 
 target_sources( saft-proxy
@@ -331,11 +333,11 @@ target_sources( saft-proxy
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/CommonFunctions.cpp
-        ${SERVICE_GENERATED_SOURCES}
+        ${PROXY_GENERATED_SOURCES}
 
     # needs to be checked individually - should not be all public
     PUBLIC
-    FILE_SET saftlib_public_headers
+    FILE_SET saft_proxy_public_headers
     TYPE    HEADERS
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/
     FILES
@@ -402,14 +404,14 @@ target_sources( saft-proxy
 
     # needs to be checked individually - should not be all public
     PUBLIC
-    FILE_SET saftlib_proxy_generated_headers
+    FILE_SET saft_proxy_generated_headers
     TYPE    HEADERS
     BASE_DIRS ${SAFTLIB_GENERATOR_DIR}
     FILES
         ${PROXY_GENERATED_HEADERS}
 
     INTERFACE
-    FILE_SET saftlib_interface_headers
+    FILE_SET saft_proxy_interface_headers
     TYPE    HEADERS
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/
     FILES
@@ -461,7 +463,6 @@ target_sources( saft-proxy
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/WbmActionSink.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/WbmCondition.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces/WrMilGateway.h
-
 )
 
 add_dependencies(saft-proxy all_generated_files)
@@ -471,12 +472,8 @@ set_target_properties(saft-proxy  PROPERTIES
     SOVERSION ${SONAME}
 )
 
+# Should be put into target_sources above
 target_include_directories(saft-proxy
-    PUBLIC
-        #${saftlib_BINARY_DIR}/generated/
-        ${SAFTLIB_GENERATOR_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
     PRIVATE
         ${SIGCPP_INCLUDE_DIRS}
         ${LIBRTPI_INCLUDE_DIRS}
@@ -498,15 +495,19 @@ target_link_libraries(saft-proxy
 
 # Service
 
-add_library(fg-firmware-service SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
-	${SAFTLIB_GENERATOR_DIR}/FunctionGenerator_Service.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
-	${SAFTLIB_GENERATOR_DIR}/MasterFunctionGenerator_Service.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
-	${SAFTLIB_GENERATOR_DIR}/FunctionGeneratorFirmware_Service.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/fg_firmware_create_service.cpp
+add_library( fg-firmware-service SHARED )
+
+target_sources( fg-firmware-service
+
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGenerator.cpp
+        ${SAFTLIB_GENERATOR_DIR}/FunctionGenerator_Service.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/MasterFunctionGenerator.cpp
+        ${SAFTLIB_GENERATOR_DIR}/MasterFunctionGenerator_Service.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorImpl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FunctionGeneratorFirmware.cpp
+        ${SAFTLIB_GENERATOR_DIR}/FunctionGeneratorFirmware_Service.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/fg_firmware_create_service.cpp
 )
 
 add_dependencies(fg-firmware-service saft-service)
@@ -532,10 +533,14 @@ target_include_directories(fg-firmware-service
 
 # Proxy
 
-add_library(fg-firmware-proxy SHARED
-	${SAFTLIB_GENERATOR_DIR}/FunctionGenerator_Proxy.cpp
-	${SAFTLIB_GENERATOR_DIR}/MasterFunctionGenerator_Proxy.cpp
-	${SAFTLIB_GENERATOR_DIR}/FunctionGeneratorFirmware_Proxy.cpp
+add_library(fg-firmware-proxy SHARED)
+
+target_sources(fg-firmware-proxy
+
+    PRIVATE
+    	${SAFTLIB_GENERATOR_DIR}/FunctionGenerator_Proxy.cpp
+    	${SAFTLIB_GENERATOR_DIR}/MasterFunctionGenerator_Proxy.cpp
+    	${SAFTLIB_GENERATOR_DIR}/FunctionGeneratorFirmware_Proxy.cpp
 )
 
 add_dependencies(fg-firmware-proxy saft-proxy)
@@ -623,3 +628,38 @@ target_include_directories(bg-firmware-proxy
         ${SAFTLIB_GENERATOR_DIR}
         ${SIGCPP_INCLUDE_DIRS}
 )
+
+
+# ============================================================================
+# Package Configuration
+# ============================================================================
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    saftlib.cmake
+    VERSION ${VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+# ============================================================================
+# Installation
+# ============================================================================
+
+install(
+    TARGETS
+        saft-service
+        saft-proxy
+        fg-firmware-service
+        fg-firmware-proxy
+        bg-firmware-service
+        bg-firmware-proxy
+
+
+    FILE_SET saft_service_public_headers
+    FILE_SET saft_service_generated_headers
+    FILE_SET saft_service_interface_headers
+    FILE_SET saft_proxy_public_headers
+    FILE_SET saft_proxy_generated_headers
+    FILE_SET saft_proxy_interface_headers
+)
+

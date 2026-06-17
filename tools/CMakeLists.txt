@@ -39,10 +39,7 @@ add_executable( saft-software-tr
 
 target_link_libraries( saft-software-tr
     PRIVATE
-        saftbus
         saft-service
-        pthread
-        dl
 )
 
 
@@ -57,7 +54,6 @@ add_executable( soft-tr
 target_link_libraries( soft-tr
     PRIVATE
         saft-service
-        dl
 )
 
 
@@ -72,7 +68,6 @@ add_executable( wait-msi
 target_link_libraries( wait-msi
     PRIVATE
         saft-service
-        dl
 )
 
 # ============================================================================
@@ -361,4 +356,34 @@ target_link_libraries( saft-burst-ctl
         saft-proxy
         bg-firmware-proxy
         dl
+)
+
+
+# ============================================================================
+# Installation
+# ===========================================================================
+
+install(TARGETS
+    saft-software-tr
+    soft-tr
+    wait-msi
+    saft-testbench
+    saft-ctl
+    saft-io-ctl
+    saft-pps-gen
+    saft-scu-ctl
+    saft-epcu-ctl
+    saft-wbm-ctl
+    saft-clk-gen
+    saft-dm
+    saft-eb-fwd
+    saft-gmt-check
+    saft-uni
+    saft-lcd
+    saft-standalone-mbox
+    saft-roundtrip-latency
+    saft-standalone-roundtrip-latency
+    saft-fg-ctl
+    saft-mfg-ctl
+    saft-burst-ctl
 )

@@ -22,15 +22,14 @@
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
 
+#include "version.h"
 #include "build.hpp"
 
-#define GIT_ID "@GIT_ID@"
-#define SOURCE_DATE "@SOURCE_DATE@"
-
 namespace saftlib
+
 {
 
-const char sourceVersion[] = PACKAGE_STRING " (" GIT_ID "): " SOURCE_DATE;
+const char sourceVersion[] = PROJECT_NAME PROJECT_VERSION " (" GIT_ID "): " SOURCE_DATE;
 const char buildInfo[] =
     "built by " USERNAME " on " __DATE__ " " __TIME__ " with " HOSTNAME " running " OPERATING_SYSTEM;
 
