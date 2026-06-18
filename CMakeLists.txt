@@ -18,7 +18,7 @@ project(
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(saftbus-gen)
 add_subdirectory(saftbus)
+add_subdirectory(saftbus-gen)
 add_subdirectory(saftlib)
 add_subdirectory(tools)
