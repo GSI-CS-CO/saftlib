@@ -48,6 +48,8 @@ foreach(SRC_FILE ${INPUT_FILES})
 
 endforeach()
 
+# MESSAGE ("Include paths for saftbus gen were: -I "${CMAKE_CURRENT_SOURCE_DIR}/include" -I "${CMAKE_SOURCE_DIR}/saftbus/include" -I "${SAFTLIB_GENERATOR_DIR}"")
+
 # Return the output files to caller
 set(SAFTLIB_GENERATED_FILES ${SAFTLIB_GENERATED_FILES} PARENT_SCOPE)
 set(SERVICE_GENERATED_SOURCES  ${SERVICE_GENERATED_SOURCES} PARENT_SCOPE)

@@ -646,20 +646,34 @@ write_basic_package_version_file(
 # ============================================================================
 
 install(
+    TARGETS saft-service
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+    FILE_SET saft_service_public_headers
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+    FILE_SET saft_service_generated_headers
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+    FILE_SET saft_service_interface_headers
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+)
+
+install(
+    TARGETS saft-proxy
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+    FILE_SET saft_proxy_public_headers
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+    FILE_SET saft_proxy_generated_headers
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+    FILE_SET saft_proxy_interface_headers
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/saftlib/
+)
+
+install(
     TARGETS
-        saft-service
-        saft-proxy
         fg-firmware-service
         fg-firmware-proxy
         bg-firmware-service
         bg-firmware-proxy
-
-
-    FILE_SET saft_service_public_headers
-    FILE_SET saft_service_generated_headers
-    FILE_SET saft_service_interface_headers
-    FILE_SET saft_proxy_public_headers
-    FILE_SET saft_proxy_generated_headers
-    FILE_SET saft_proxy_interface_headers
 )
 

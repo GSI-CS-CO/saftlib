@@ -16,8 +16,3 @@ set_target_properties(saftbus-gen PROPERTIES
 target_compile_definitions(saftbus-gen PRIVATE VERSION="local")
 target_compile_options(saftbus-gen PRIVATE -O2 -g)
 set(SAFTBUSGEN_EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/saftbus-gen PARENT_SCOPE)
-
-
-
-
-

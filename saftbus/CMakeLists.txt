@@ -260,12 +260,17 @@ configure_file(
 install(
     TARGETS
         saftbus
+    FILE_SET saftbus_public_headers
+    DESTINATION include/saftbus/
+)
+
+install(
+    TARGETS
+        saftbus
         saftbusd
         saftbusd-sda
         saftbusd-noda
         saftbus-ctl
-
-    FILE_SET saftbus_public_headers
 )
 
 install(
