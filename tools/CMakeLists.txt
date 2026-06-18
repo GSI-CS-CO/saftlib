@@ -30,20 +30,6 @@ pkg_check_modules(LIBRTPI REQUIRED librtpi>=1.0.1)
 
 
 # ============================================================================
-# Software Timing Receiver
-# ===========================================================================
-
-add_executable( saft-software-tr
-  saft-software-tr.cpp
-)
-
-target_link_libraries( saft-software-tr
-    PRIVATE
-        saft-service
-)
-
-
-# ============================================================================
 # Another Software Timing Receiver
 # ===========================================================================
 
@@ -68,20 +54,6 @@ add_executable( wait-msi
 target_link_libraries( wait-msi
     PRIVATE
         saft-service
-)
-
-# ============================================================================
-# Saft Testbench
-# ===========================================================================
-
-add_executable( saft-testbench
-  saft-testbench.cpp
-)
-
-target_link_libraries( saft-testbench
-    PRIVATE
-        saft-proxy
-        dl
 )
 
 
@@ -364,10 +336,8 @@ target_link_libraries( saft-burst-ctl
 # ===========================================================================
 
 install(TARGETS
-    saft-software-tr
     soft-tr
     wait-msi
-    saft-testbench
     saft-ctl
     saft-io-ctl
     saft-pps-gen

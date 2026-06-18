@@ -599,8 +599,9 @@ target_include_directories(bg-firmware-service
 )
 
 target_compile_definitions(bg-firmware-service PRIVATE
-    DATADIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    DATADIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}"
 )
+
 
 # Proxy
 
