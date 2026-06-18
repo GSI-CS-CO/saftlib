@@ -1,0 +1,11 @@
+prefix=${prefix}
+exec_prefix=${prefix}
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+
+Name: saftlib
+Description: Simplified API for Timing
+Requires: sigc++-2.0 saftbus
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lsaft-proxy -lsaft-service -lz
+Cflags: -I${includedir}

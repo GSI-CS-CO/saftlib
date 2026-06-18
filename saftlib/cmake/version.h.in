@@ -1,0 +1,7 @@
+#cmakedefine GIT_ID "@GIT_ID@"
+#cmakedefine SOURCE_DATE @SOURCE_DATE@
+#cmakedefine USERNAME "${USERNAME}"
+#cmakedefine HOSTNAME "${HOSTNAME}"
+#cmakedefine OPERATING_SYSTEM "${OPERATING_SYSTEM}"
+#cmakedefine PROJECT_NAME "@PROJECT_NAME@"
+#cmakedefine PROJECT_VERSION "@PROJECT_VERSION@"

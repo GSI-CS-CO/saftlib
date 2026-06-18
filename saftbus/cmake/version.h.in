@@ -1,0 +1,2 @@
+#cmakedefine @GIT_ID@
+#cmakedefine @SOURCE_DATE@
