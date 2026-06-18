@@ -42,7 +42,7 @@ foreach(SRC_FILE ${INPUT_FILES})
 
     add_custom_command(
         OUTPUT ${OUTPUT_FILES}
-        COMMAND ${SAFTBUSGEN_EXECUTABLE} "${SRC_FILE}" -o "${SAFTLIB_GENERATOR_DIR}" -I "${CMAKE_CURRENT_SOURCE_DIR}/include" -I "${SAFTLIB_GENERATOR_DIR}"
+        COMMAND ${SAFTBUSGEN_EXECUTABLE} "${SRC_FILE}" -o "${SAFTLIB_GENERATOR_DIR}" -I "${CMAKE_CURRENT_SOURCE_DIR}/include" -I "${CMAKE_SOURCE_DIR}/saftbus/include" -I "${SAFTLIB_GENERATOR_DIR}"
         COMMENT "Generating saftbus code from ${SRC_FILE}"
     )
 
