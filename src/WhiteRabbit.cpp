@@ -49,7 +49,7 @@ WhiteRabbit::WhiteRabbit(etherbone::Device &device)
 	: SdbDevice(device, WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID, false)
 	, _has_wr_info_unit(false)
 {
-	if (adr_first == 0) {
+	if (!found) {
 		// no CERN WR PPS generator found, use the GSI wr_info device instead
 		SdbDevice wr_info_device(device, WR_INFO_VENDOR_ID, WR_INFO_DEVICE_ID);
 		adr_first = wr_info_device.get_adr_base();
