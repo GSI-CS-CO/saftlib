@@ -51,6 +51,7 @@ protected:
 public:
 	SdbDevice(etherbone::Device &device, uint32_t VENDOR_ID, uint32_t DEVICE_ID, bool throw_if_not_found = true);
 	virtual ~SdbDevice();
+	eb_address_t get_adr_base() const { return adr_first; }
 };
 
 }

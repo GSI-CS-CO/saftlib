@@ -37,6 +37,10 @@
 #define WR_PPS_DEVICE_ID        0xde0d8ced
 #define WR_PPS_GEN_ESCR         0x1c      //External Sync Control Register
 
+// GSI wr_info device (modules/wr_info) as replacement for the CERN WR PPS generator
+#define WR_INFO_VENDOR_ID       0x00000651
+#define WR_INFO_DEVICE_ID       0x77722d69
+
 namespace saftlib {
 
 	void EB_Forward::open_pts() 
@@ -53,8 +57,15 @@ namespace saftlib {
 	}
 
 	EB_Forward::EB_Forward(const std::string& eb_name, etherbone::Device &device)
-		: SdbDevice(device, WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID)
-	{	
+		: SdbDevice(device, WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID, false)
+		, _has_wr_info_unit(false)
+	{
+		if (adr_first == 0) {
+			// no CERN WR PPS generator found, use the GSI wr_info device instead
+			SdbDevice wr_info_device(device, WR_INFO_VENDOR_ID, WR_INFO_DEVICE_ID);
+			adr_first = wr_info_device.get_adr_base();
+			_has_wr_info_unit = true;
+		}
 		_pts_fd = 0;
 		if (eb_name.size()) {
 			if (eb_name[0] == '/') {
@@ -189,7 +200,12 @@ namespace saftlib {
 
 					// just read once after the forwarding procedure ... maybe this fixes the occasional wrong read
 					eb_data_t data;
-					device.read(adr_first + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+					if (_has_wr_info_unit) {
+						// GSI wr_info: first bit at the first address (no offset)
+						device.read(adr_first, EB_DATA32, &data);
+					} else {
+						device.read(adr_first + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+					}
 
 
 					return true;
