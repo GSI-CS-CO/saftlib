@@ -53,6 +53,7 @@ namespace saftlib {
 		void write_all(int fd, char *ptr, int size);
 		void read_all(int fd, char *ptr, int size);
 		void open_pts();
+		bool    _has_wr_info_unit;
 		int     _eb_device_fd, _pts_fd; 
         saftbus::SourceHandle io_source;
 

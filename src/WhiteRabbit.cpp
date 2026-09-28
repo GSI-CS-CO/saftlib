@@ -40,18 +40,36 @@ namespace saftlib {
 #define WR_PPS_VENDOR_ID        0xce42
 #define WR_PPS_DEVICE_ID        0xde0d8ced
 
+// GSI wr_info device (modules/wr_info) as replacement for the CERN WR PPS generator
+#define WR_INFO_VENDOR_ID       0x00000651
+#define WR_INFO_DEVICE_ID       0x77722d69
+#define WR_INFO_LOCKED_BIT      0x1
 
 WhiteRabbit::WhiteRabbit(etherbone::Device &device)
-	: SdbDevice(device, WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID)
+	: SdbDevice(device, WR_PPS_VENDOR_ID, WR_PPS_DEVICE_ID, false)
+	, _has_wr_info_unit(false)
 {
+	if (!found) {
+		// no CERN WR PPS generator found, use the GSI wr_info device instead
+		SdbDevice wr_info_device(device, WR_INFO_VENDOR_ID, WR_INFO_DEVICE_ID);
+		adr_first = wr_info_device.get_adr_base();
+		_has_wr_info_unit = true;
+	}
 	getLocked();
 }
 
 bool WhiteRabbit::getLocked() const
 {
 	eb_data_t data;
-	device.read(adr_first + WR_PPS_GEN_ESCR, EB_DATA32, &data);
-	bool newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
+	bool newLocked;
+	if (_has_wr_info_unit) {
+		// GSI wr_info: lock info is the first bit at the first address (no offset)
+		device.read(adr_first, EB_DATA32, &data);
+		newLocked = (data & WR_INFO_LOCKED_BIT) != 0;
+	} else {
+		device.read(adr_first + WR_PPS_GEN_ESCR, EB_DATA32, &data);
+		newLocked = (data & WR_PPS_GEN_ESCR_MASK) == WR_PPS_GEN_ESCR_MASK;
+	}
 
 	/* Update signal */
 	if (newLocked != locked) {
