@@ -43,9 +43,11 @@ namespace saftlib {
 			if (throw_if_not_found) {
 				throw saftbus::Error(saftbus::Error::FAILED, msg.str());
 			}
+			found = false;
 			adr_first = 0;
 			return;
 		}
+		found = true;
 		if (devs.size() > 1) {
 			std::cerr << "more than one SDB device found on hardware, taking the first one" << std::endl;
 		}

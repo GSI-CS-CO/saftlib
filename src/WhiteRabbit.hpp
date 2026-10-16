@@ -39,6 +39,8 @@ namespace saftlib {
 class WhiteRabbit : public SdbDevice {
 protected:
 	mutable bool locked;
+private:
+	bool _has_wr_info_unit;
 public:
 	WhiteRabbit(etherbone::Device &device);
 
